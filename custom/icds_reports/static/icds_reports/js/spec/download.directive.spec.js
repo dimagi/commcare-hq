@@ -243,9 +243,7 @@ describe('Download Directive', function () {
         });
 
         it('test to check if current month is enabled after first three days', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(4);
+            var fakeDate = new Date(2019, 8, 4);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
             controller.selectedYear = fakeDate.getFullYear();
@@ -266,9 +264,7 @@ describe('Download Directive', function () {
         });
 
         it('test to check if current month is not enabled before first three days', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(2);
+            var fakeDate = new Date(2019, 8, 2);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
             controller.selectedYear = fakeDate.getFullYear();
@@ -289,9 +285,7 @@ describe('Download Directive', function () {
 
         it('test to check if AWW performance report is downloadable only till last month ' +
             'after current month 15th ', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(17);
+            var fakeDate = new Date(2019, 8, 17);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
@@ -312,9 +306,7 @@ describe('Download Directive', function () {
 
         it('test to check if AWW performance report is downloadable only till last before month ' +
             'before current month 15th ', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(5);
+            var fakeDate = new Date(2019, 8, 5);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
@@ -378,7 +370,7 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
-            var expected = 10;
+            var expected = 11;
 
             var length = controller.indicators.length;
             assert.equal(expected, length);
@@ -484,6 +476,55 @@ describe('Download Directive', function () {
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
             assert.equal(10, length);
+        });
+    });
+
+    describe('Download Directive have access to features', function () {
+        var $scope, $httpBackend, controller;
+
+        pageData.registerUrl('icds-ng-template', 'template');
+        pageData.registerUrl('icds_locations', 'icds_locations');
+        beforeEach(module('icdsApp', function ($provide) {
+            $provide.constant("userLocationId", null);
+            $provide.constant("locationHierarchy", [
+                ['awc', ['supervisor']],
+                ['block', ['district']],
+                ['district', ['state']],
+                ['state', [null]],
+                ['supervisor', ['block']]]);
+            $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("isAlertActive", false);
+        }));
+
+        beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
+            $scope = $rootScope.$new();
+            $httpBackend = _$httpBackend_;
+
+            var mockLocation = {
+                "locations": [{
+                    "location_type_name": "state", "parent_id": null,
+                    "location_id": "9951736acfe54c68948225cc05fbbd63", "name": "Chhattisgarh",
+                }],
+            };
+
+            $httpBackend.expectGET('template').respond(200, '<div></div>');
+            $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
+
+            var fakeDate = new Date(2016, 9, 1);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+
+            var element = window.angular.element("<download data='test'></download>");
+            var compiled = $compile(element)($scope);
+
+            $httpBackend.flush();
+            $scope.$digest();
+            controller = compiled.controller('download');
+            clock.restore();
+        }));
+
+        it('tests that all users have access to ISSNIP monthly register', function () {
+            var length = controller.indicators.length;
+            assert.equal(11, length);
         });
     });
 

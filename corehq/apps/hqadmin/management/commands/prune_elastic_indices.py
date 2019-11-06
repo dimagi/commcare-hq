@@ -1,9 +1,8 @@
 from django.core.management import BaseCommand
 
-import elasticsearch
-
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
+from corehq.util.es.elasticsearch import AuthorizationException
 
 
 class Command(BaseCommand):
@@ -69,7 +68,7 @@ def _delete_indices(es, to_delete):
         for index in to_delete:
             try:
                 es.indices.flush(index)
-            except elasticsearch.exceptions.AuthorizationException:
+            except AuthorizationException:
                 # already closed
                 pass
             es.indices.delete(index)
@@ -89,7 +88,7 @@ def _close_indices(es, to_close, noinput):
         for index in to_close:
             try:
                 es.indices.flush(index)
-            except elasticsearch.exceptions.AuthorizationException:
+            except AuthorizationException:
                 # already closed
                 pass
             es.indices.close(index)

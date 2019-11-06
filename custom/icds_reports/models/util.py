@@ -40,7 +40,7 @@ class ICDSAuditEntryRecord(models.Model):
     post_data = JSONField(default=dict)
     get_data = JSONField(default=dict)
     session_key = models.CharField(max_length=32)
-    time_of_use = models.DateTimeField(auto_now_add=True)
+    time_of_use = models.DateTimeField(auto_now_add=True, db_index=True)
     response_code = models.IntegerField(null=True)
 
     class Meta(object):

@@ -1,5 +1,6 @@
 import inspect
 import logging
+import warnings
 from contextlib import ContextDecorator, contextmanager
 from functools import wraps
 
@@ -80,6 +81,13 @@ class change_log_level(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logger.setLevel(self.original_level)
+
+
+@contextmanager
+def ignore_warning(warning_class):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', warning_class)
+        yield
 
 
 class require_debug_true(ContextDecorator):

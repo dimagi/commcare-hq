@@ -196,6 +196,13 @@ Otherwise reference the slow query section in troubleshooting.
 Currently any errors are emailed to the dashboard aggregation email group.
 The emails contain information such as the aggregation step that failed and a link to the log output of the task.
 
+Useful notes about Citus
+------------------------
+
+## Insert performance
+
+It's generally better to use many inserts to insert data as noted in the
+[Citus docs](https://docs.citusdata.com/en/v8.3/performance/performance_tuning.html#general)
 
 Troubleshooting
 ---------------

@@ -17,6 +17,11 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         from custom.icds_reports.models import AggChildHealth
         return AggChildHealth
 
+    @property
+    def child_temp_tablename(self):
+        from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
+        return ChildHealthMonthlyAggregationDistributedHelper([], self.month).temporary_tablename
+
     def staging_queries(self):
         columns = (
             ('state_id', 'awc_loc.state_id'),
@@ -133,7 +138,6 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             query_cols.append((name, c[1]))
 
         query_cols = ", ".join([f'{q} as {name}' for name, q in query_cols])
-        child_health_monthly_table = 'child_health_monthly'
         tmp_tablename = 'blah_blah_blah'
         final_columns = ", ".join([col[0] for col in columns])
         supervisor_id_ranges = [
@@ -159,7 +163,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             (f"""
             CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
                 {query_cols}
-                FROM "{child_health_monthly_table}" chm
+                FROM "{self.child_temp_tablename}" chm
                 LEFT OUTER JOIN "awc_location" awc_loc ON (
                     awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
                 )

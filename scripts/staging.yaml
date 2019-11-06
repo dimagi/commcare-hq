@@ -54,10 +54,12 @@ branches:
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - nh/dhis2/te  # Norman Oct 2
-  - bmb/odata-permissions  # Biyeun Oct 4
   - MC/SL-229  # Norman Oct 9
   - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
   - sr-session-audit  # Sravan Oct 15
-  - mk/ignore-all-demo-submissions # MK Oct 22
+  - mk/ignore-all-demo-submissions-redone # MK Oct 22
+  - dmr/update-django-security-fix  # Danny Oct 22
+  - nh/blank_row  # Norman Oct 28
+  - jls/add-app-id-to-sms-surveys-and-keywords  # Jenny Oct 30
 submodules: {}

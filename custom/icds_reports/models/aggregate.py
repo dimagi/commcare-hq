@@ -480,6 +480,7 @@ class AggAwc(models.Model, AggregateMixin):
     num_mother_thr_eligible = models.IntegerField(null=True)
     preschool_kit_available = models.IntegerField(blank=True, null=True)
     preschool_kit_usable = models.IntegerField(blank=True, null=True)
+    awc_with_gm_devices = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -737,7 +738,6 @@ class AggAwcDaily(models.Model, AggregateMixin):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     daily_attendance_open = models.IntegerField(null=True)
-    total_eligible_pse = models.IntegerField(null=True)
     total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(null=True)
     num_launched_states = models.IntegerField(null=True)

@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import patch
 
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain

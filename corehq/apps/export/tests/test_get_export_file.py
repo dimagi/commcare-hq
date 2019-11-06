@@ -4,7 +4,7 @@ import re
 from django.core.cache import cache
 from django.test import SimpleTestCase
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
 
