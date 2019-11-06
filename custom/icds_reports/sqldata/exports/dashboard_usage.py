@@ -1,3 +1,4 @@
+import copy
 import datetime
 import re
 from collections import defaultdict
@@ -88,7 +89,8 @@ class DashBoardUsage:
             sub_location_types = self.location_types
 
         for result in results_queryset:
-            row_data = [result['state_id'], result['district_id'], result['block_id']]
+            row_data = [result['state_id'], result['state_name'], result['district_id'],
+                        result['district_name'], result['block_id'], result['block_name']]
             location_matrix.append(row_data)
             # adding only descendants to the main location
             for sub_location in sub_location_types:
@@ -220,21 +222,21 @@ class DashBoardUsage:
                     user_location_row = None
                     # iterating and getting the db row from matrix
                     for row in location_matrix:
-                        if row[column_index] == user_sql_location:
-                            user_location_row = row
+                        if row[2*column_index] == user_sql_location:
+                            user_location_row = copy.deepcopy(row)
                             break
                     user_location_type = self.get_location_type_string_from_location_id(location_type_id)
 
                     if user_location_row is not None:
                         if user_location_type == 'state':
-                            user_location_row[1] = 'All'
-                            user_location_row[2] = 'All'
+                            user_location_row[3] = 'All'
+                            user_location_row[5] = 'All'
                         if user_location_type == 'district':
-                            user_location_row[2] == 'All'
+                            user_location_row[5] = 'All'
                         serial_count += 1
 
-                        excel = [serial_count, user_location_row[0], user_location_row[1],
-                                 user_location_row[2], user['username'], user_location_type,
+                        excel = [serial_count, user_location_row[1], user_location_row[3],
+                                 user_location_row[5], user['username'], user_location_type,
                                  self.get_role_from_username(user['username']),
                                  self.convert_boolean_to_string(self.agg_list[user_sql_location]),
                                  user['last_login'],
@@ -247,7 +249,7 @@ class DashBoardUsage:
         return [
             [
                 self.title,
-                excel_rows
+                sorted(excel_rows, key=lambda x:(x[1], x[2], x[3]))
             ],
             [
                 'Export Info',
