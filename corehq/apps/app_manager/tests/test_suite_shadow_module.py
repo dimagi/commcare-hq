@@ -1,12 +1,10 @@
 from django.test import SimpleTestCase
 
-from mock import patch
-
 from corehq.apps.app_manager.models import Application, Module, ShadowModule
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
+from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, SuiteMixin, TestXmlMixin
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -20,7 +18,7 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('shadow_module_cases')
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 

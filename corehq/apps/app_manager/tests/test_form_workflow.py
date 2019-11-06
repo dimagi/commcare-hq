@@ -1,7 +1,5 @@
 from django.test import SimpleTestCase
 
-from mock import patch
-
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_RAW,
@@ -18,11 +16,11 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
 )
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 from corehq.apps.app_manager.xpath import session_var
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_workflow')
 

@@ -1,12 +1,10 @@
 from django.test import SimpleTestCase
 
-from mock import patch
-
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_training_module(self, *args):

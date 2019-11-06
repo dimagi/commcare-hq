@@ -1,14 +1,12 @@
 from django.test import SimpleTestCase
 
-from mock import patch
-
 from corehq.apps.app_manager.models import MappingItem
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
+from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, patch_get_xform_resource_overrides
 from corehq.util.test_utils import flag_enabled
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 @flag_enabled('APP_BUILDER_CONDITIONAL_NAMES')
 class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')

@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     import_app,
 )
-from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_overrides
+from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
@@ -150,7 +150,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         update_linked_app(linked_app, master_app._id, 'TestLinkedApps user')
         linked_app = LinkedApplication.get(linked_app._id)
 
-        overrides = get_xform_overrides(linked_app.domain, linked_app._id)
+        overrides = get_xform_resource_overrides(linked_app.domain, linked_app._id)
         self.assertEqual(len(overrides), 1)
         override = overrides[master_form.unique_id]
         self.assertEquals(override.pre_id, master_form.unique_id)

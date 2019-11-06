@@ -7,7 +7,7 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, TestXmlMixin
 
 
 class ReleaseFormsSetupMixin(object):
@@ -21,7 +21,7 @@ class ReleaseFormsSetupMixin(object):
         self.basic_form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMixin):
 
     def setUp(self):
@@ -113,7 +113,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
         self.assertXmlPartialEqual(expected, suite, "./menu")
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMixin):
 
     def setUp(self):

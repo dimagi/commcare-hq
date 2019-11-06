@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 
 DOMAIN = 'domain'
 
@@ -25,7 +25,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
 
         self.app = self.factory.app
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_basic_workflow(self, *args):
         # make module_1 as submenu to module_0
         XML = """
@@ -46,7 +46,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_workflow_with_put_in_root(self, *args):
         # make module_1 as submenu to module_0
         self.module_1.put_in_root = True
@@ -96,7 +96,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
 class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     child_module_class = AdvancedModule
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_session_datums_added(self, *args):
         m0f0 = self.module_0.get_form(0)
         self.factory.form_requires_case(m0f0)
@@ -108,7 +108,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added-advanced'), self.app.create_suite(), "./entry")
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_adjust_session_datums(self, *args):
         """
         Test that session datum id's in child module match those in parent module
@@ -135,7 +135,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.assertXmlEqual(self.get_xml('advanced_submodule_xform'), m1f0.render_xform())
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_form_display_condition(self, *args):
         """
         case_id should be renamed in a basic submodule form
@@ -173,7 +173,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     child_module_class = Module
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_session_datums_added(self, *args):
         m0f0 = self.module_0.get_form(0)
         self.factory.form_requires_case(m0f0)
@@ -188,7 +188,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_workflow(m1f0, WORKFLOW_PREVIOUS)
         self.assertXmlPartialEqual(self.get_xml('child-module-form-workflow-previous'), self.app.create_suite(), "./entry")
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_grandparent_as_child_module(self, *args):
         """
         Module 0 case_type = gold-fish
@@ -217,7 +217,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             "./entry"
         )
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_with_parent_select_entry_datums(self, *args):
         """
             m0 - opens 'gold-fish' case.
@@ -256,7 +256,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.assertXmlEqual(self.get_xml('basic_submodule_xform'), m1f0.render_xform())
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_form_display_condition(self, *args):
         """
         case_id should be renamed in a basic submodule form
@@ -285,7 +285,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m1']")
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_menu_display_conditions(self, *args):
         """
         If child uses display only forms, suite should incorporate parent's display condition.
@@ -312,7 +312,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_no_forms_show_case_list(self, *args):
         m0f0 = self.module_0.get_form(0)
         self.factory.form_requires_case(m0f0)
@@ -344,7 +344,7 @@ class UserCaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
     child_module_class = Module
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_child_module_session_datums_added(self, *args):
         m0f0 = self.module_0.get_form(0)
         # m0 is a user-case-only module. m0f0 does not update a normal case, only the user case.
@@ -403,7 +403,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
 
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    @patch_get_xform_resource_overrides()
     def test_incorrect_case_var_for_case_update(self, *args):
         # see http://manage.dimagi.com/default.asp?230013
         factory = AppFactory(build_version='2.9.0')

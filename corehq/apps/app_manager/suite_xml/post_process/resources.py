@@ -20,8 +20,8 @@ class ResourceOverride(models.Model):
         index_together = ('domain', 'app_id', 'root_name')
 
 
-def add_xform_overrides(domain, app_id, pre_to_post_map):
-    overrides_by_pre_id = get_xform_overrides(domain, app_id)
+def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
+    overrides_by_pre_id = get_xform_resource_overrides(domain, app_id)
     for pre, post in pre_to_post_map.items():
         if pre in overrides_by_pre_id:
             if post != overrides_by_pre_id[pre].post_id:
@@ -37,7 +37,7 @@ def add_xform_overrides(domain, app_id, pre_to_post_map):
             override.save()
 
 
-def get_xform_overrides(domain, app_id):
+def get_xform_resource_overrides(domain, app_id):
     return {
         override.pre_id: override
         for override in ResourceOverride.objects.filter(
@@ -54,7 +54,7 @@ class ResourceOverrideHelper(PostProcessor):
         """
         Applies manual overrides of resource ids.
         """
-        overrides_by_pre_id = get_xform_overrides(self.app.domain, self.app.master_id)
+        overrides_by_pre_id = get_xform_resource_overrides(self.app.domain, self.app.master_id)
         resources = getattr(self.suite, FormResourceContributor.section_name)
         for resource in resources:
             if resource.id in overrides_by_pre_id:

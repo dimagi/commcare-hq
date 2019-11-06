@@ -4,10 +4,10 @@ from mock import patch
 
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 
 
-@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 

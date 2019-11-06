@@ -38,6 +38,7 @@ from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     commtrack_enabled,
     parse_normalize,
+    patch_get_xform_resource_overrides,
 )
 from corehq.apps.app_manager.xpath import session_var
 from corehq.apps.hqmedia.models import HQMediaMapItem
@@ -46,7 +47,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
 
-@mock.patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -1258,7 +1259,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
 
-@mock.patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+@patch_get_xform_resource_overrides()
 class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -1320,7 +1321,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
-    def test_location_instance_during_migration(self, sync_patch, overrides_patch):
+    def test_location_instance_during_migration(self, sync_patch):
         # tests for expectations during migration from hierarchical to flat location fixture
         # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_flat_fixture set to False
         # should have hierarchical jr://fixture/commtrack:locations fixture format
