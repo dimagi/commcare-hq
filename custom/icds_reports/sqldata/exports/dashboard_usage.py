@@ -222,7 +222,7 @@ class DashBoardUsage:
                     user_location_row = None
                     # iterating and getting the db row from matrix
                     for row in location_matrix:
-                        if row[2*column_index] == user_sql_location:
+                        if row[2 * column_index] == user_sql_location:
                             user_location_row = copy.deepcopy(row)
                             break
                     user_location_type = self.get_location_type_string_from_location_id(location_type_id)
