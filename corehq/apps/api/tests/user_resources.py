@@ -39,6 +39,18 @@ class TestCommCareUserResource(APIResourceTest):
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self.assertEqual(api_users[0]['id'], backend_id)
+        self.assertEqual(api_users[0], {
+            'default_phone_number': None,
+            'email': '',
+            'first_name': '',
+            'groups': [],
+            'id': backend_id,
+            'last_name': '',
+            'phone_numbers': [],
+            'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'user_data': {'commcare_project': 'qwerty'},
+            'username': 'fake_user'
+        })
 
     @flaky
     def test_get_single(self):
@@ -52,6 +64,18 @@ class TestCommCareUserResource(APIResourceTest):
 
         api_user = json.loads(response.content)
         self.assertEqual(api_user['id'], backend_id)
+        self.assertEqual(api_user, {
+            'default_phone_number': None,
+            'email': '',
+            'first_name': '',
+            'groups': [],
+            'id': backend_id,
+            'last_name': '',
+            'phone_numbers': [],
+            'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'user_data': {'commcare_project': 'qwerty'},
+            'username': 'fake_user',
+        })
 
     def test_create(self):
 
