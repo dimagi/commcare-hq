@@ -11,7 +11,7 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     @classmethod
     def setUp(self):
-        super().setUpClass()
+        super().setUp()
         self.factory = AppFactory(build_version='2.40.0')
         module, form = self.factory.new_basic_module('module0', 'noun')
         self.factory.new_form(module)
