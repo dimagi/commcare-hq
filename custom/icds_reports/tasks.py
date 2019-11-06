@@ -1558,7 +1558,7 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
     )
 
 
-@periodic_task(run_every=crontab(hour=22, minute=0))
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
