@@ -33,7 +33,7 @@ class TestDeliveryForms(BaseFormsTest):
                         "days_visit_late": 46,
                         "next_visit": datetime.date(2017, 10, 30),
                         "num_children_del": 1,
-                        "still_birth": report_value,
+                        "still_live_birth": report_value,
                     }
                 ],
                 {

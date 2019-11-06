@@ -253,7 +253,7 @@
         }
       },
       {
-        "column_id": "still_birth",
+        "column_id": "still_live_birth",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
