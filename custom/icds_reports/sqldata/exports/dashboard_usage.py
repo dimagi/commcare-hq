@@ -186,7 +186,10 @@ class DashBoardUsage:
 
             dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
 
-            usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
+            usernames = []
+            for user in users:
+                if dashboard_uname_rx.match(user['username']):
+                    usernames.append(user['username'])
 
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
                                                                username__in=usernames)
