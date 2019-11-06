@@ -26,7 +26,7 @@
   "report_id": "static-mpr_4b_infra_forms",
   "data_source_table": "static-infrastructure_form",
   "config": {
-    "title": "MPR - 4b - Infra forms (Static)",
+    "title": "MPR - 4b - Infra forms (Static) V2",
     "description": "",
     "visible": false,
     "aggregation_columns": [
