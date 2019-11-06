@@ -11,6 +11,7 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
+        self.prev_month_start = self.month_start - relativedelta(months=1)
         self.next_month_start = self.month_start + relativedelta(months=1)
 
     def aggregate(self, cursor):
@@ -35,7 +36,9 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
         for index_query in index_queries:
             cursor.execute(index_query)
 
-    def _tablename_func(self, month, agg_level):
+    def _tablename_func(self, agg_level, month=None):
+        if month is None:
+            month = self.month_start
         return "{}_{}_{}".format(self.base_tablename, month.strftime("%Y-%m-%d"), agg_level)
 
     def drop_table_if_exists(self, agg_level):
@@ -58,11 +61,7 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def tablename(self):
-        return self._tablename_func(self.month_start, 4)
-
-    @property
-    def prev_month_table(self):
-        return self._tablename_func(self.month_start - relativedelta(months=1), 4)
+        return self._tablename_func(4)
 
     def aggregate_query(self):
         """
@@ -117,13 +116,15 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
         UPDATE "{tablename}" agg_ls SET
             num_supervisor_launched = ut.num_supervisor_launched
         FROM (
-            SELECT supervisor_id, num_supervisor_launched
-            FROM "{prev_month_table}" WHERE num_supervisor_launched=1
+            SELECT supervisor_id,num_supervisor_launched
+            FROM "agg_ls"
+                WHERE num_supervisor_launched=1 AND
+                      month=%(prev_month)s AND
+                      aggregation_level=4
         ) ut
-        agg_ls.supervisor_id = ut.supervisor_id;
+        WHERE agg_ls.supervisor_id = ut.supervisor_id;
         """.format(
             tablename=self.tablename,
-            prev_month_table=self.prev_month_table,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             awc_table=AGG_LS_AWC_VISIT_TABLE,
@@ -131,7 +132,8 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
             beneficiary_table=AGG_LS_BENEFICIARY_TABLE
 
         ), {
-            'start_date': self.month_start
+            'start_date': self.month_start,
+            'prev_month': self.prev_month_start
         }
 
     def indexes(self, aggregation_level):

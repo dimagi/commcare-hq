@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0142_gm_column_agg_awc'),
+        ('icds_reports', '0143_remove_group_by_thr_view'),
     ]
 
     operations = [
