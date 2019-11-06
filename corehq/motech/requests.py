@@ -88,17 +88,14 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        try:
-            if self._session:
-                response = self._session.request(method, *args, **kwargs)
-            else:
-                # Mimics the behaviour of requests.api.request()
-                with requests.Session() as session:
-                    response = session.request(method, *args, **kwargs)
-            if raise_for_status:
-                response.raise_for_status()
-        except requests.RequestException:
-            raise
+        if self._session:
+            response = self._session.request(method, *args, **kwargs)
+        else:
+            # Mimics the behaviour of requests.api.request()
+            with requests.Session() as session:
+                response = session.request(method, *args, **kwargs)
+        if raise_for_status:
+            response.raise_for_status()
         return response
 
     def get_url(self, uri):
