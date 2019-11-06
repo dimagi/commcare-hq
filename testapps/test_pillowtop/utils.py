@@ -1,13 +1,21 @@
 import uuid
+from datetime import datetime
 
 from django.conf import settings
+from django.db.models import Max
 from django.test.utils import override_settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.models import (
+    PostgresPillowCheckpoint,
+    PostgresPillowSettings,
+)
 from corehq.apps.change_feed.topics import get_multi_topic_offset
+from corehq.form_processor.models import XFormInstanceSQL
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.decorators import ContextDecorator
 from pillowtop import get_pillow_by_name
-from pillowtop.pillow.interface import PillowBase
+from pillowtop.pillow.interface import PillowBase, PostgresPillow
 
 
 class process_pillow_changes(ContextDecorator):
@@ -38,10 +46,33 @@ class process_pillow_changes(ContextDecorator):
 
     def __enter__(self):
         self._populate()
-        self.offsets = [
-            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
-            for pillow in self._pillows
-        ]
+        self.offsets = []
+        for pillow in self._pillows:
+            if isinstance(pillow, PostgresPillow):
+                PostgresPillowSettings.objects.get_or_create(
+                    pillow_id=pillow.get_name(),
+                    modulo=1,
+                    batch_size=1
+                )
+                for db_alias in get_db_aliases_for_partitioned_query():
+                    PostgresPillowCheckpoint.objects.get_or_create(
+                        pillow_id=pillow.get_name(),
+                        db_alias=db_alias,
+                        model='corehq.form_processor.models.XFormInstanceSQL',
+                        defaults={
+                            'remainder': 0,
+                            'update_sequence_id': (
+                                XFormInstanceSQL.objects.using(db_alias)
+                                .aggregate(Max('update_sequence_id'))['update_sequence_id__max'] or 0
+                            ),
+                            'last_server_modified_on': datetime.utcnow(),
+                        }
+                    )
+                self.offsets.append(None)
+            else:
+                self.offsets.append(
+                    pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
+                )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for offsets, pillow in zip(self.offsets, self._pillows):
