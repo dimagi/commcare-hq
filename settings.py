@@ -1669,6 +1669,11 @@ PILLOWTOPS = {
             }
         },
         {
+            'name': 'xform-pillow-no-kafka',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow_no_kafka',
+        },
+        {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow_old',

@@ -10,7 +10,11 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+    PostgresChangeFeed,
+)
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
@@ -28,7 +32,7 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
     XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.pillow.interface import ConstructedPillow, PostgresPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
@@ -283,3 +287,47 @@ class SqlFormReindexerFactory(ReindexerFactory):
             doc_transform=transform_xform_for_elasticsearch,
             **self.options
         )
+
+
+def get_xform_pillow_no_kafka(pillow_id='xform-pillow-no-kafka', run_ucr_migrations=True, skip_ucr=False,**kwargs):
+    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
+
+    change_feed = PostgresChangeFeed(pillow_id)
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[
+            DynamicDataSourceProvider('XFormInstance'),
+            StaticDataSourceProvider('XFormInstance')
+        ],
+        run_migrations=run_ucr_migrations,
+    )
+    xform_to_es_processor = BulkElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_elasticsearch,
+        doc_filter_fn=xform_pillow_filter,
+    )
+    unknown_user_form_processor = UnknownUsersProcessor()
+    form_meta_processor = FormSubmissionMetadataTrackerProcessor()
+    processors = [
+        xform_to_es_processor,
+    ]
+    if not skip_ucr:
+        processors.append(ucr_processor)
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        processors.append(unknown_user_form_processor)
+    if settings.RUN_FORM_META_PILLOW:
+        processors.append(form_meta_processor)
+    if not settings.ENTERPRISE_MODE:
+        xform_to_report_es_processor = BulkElasticProcessor(
+            elasticsearch=get_es_new(),
+            index_info=REPORT_XFORM_INDEX_INFO,
+            doc_prep_fn=transform_xform_for_report_forms_index,
+            doc_filter_fn=report_xform_filter
+        )
+        processors.append(xform_to_report_es_processor)
+
+    return PostgresPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        processors=processors,
+    )
