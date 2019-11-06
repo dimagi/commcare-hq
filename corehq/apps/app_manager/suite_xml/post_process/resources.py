@@ -14,6 +14,10 @@ class ResourceOverride(models.Model):
     pre_id = models.CharField(max_length=255, null=False)
     post_id = models.CharField(max_length=255, null=False)
 
+    class Meta(object):
+        unique_together = ('domain', 'app_id', 'root_name', 'pre_id')
+        index_together = ('domain', 'app_id', 'root_name')
+
 
 def add_xform_overrides(domain, app_id, pre_to_post_map):
     overrides_by_pre_id = get_xform_overrides(domain, app_id)

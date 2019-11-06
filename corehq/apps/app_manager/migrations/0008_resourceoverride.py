@@ -67,6 +67,10 @@ class Migration(migrations.Migration):
             name='resourceoverride',
             unique_together=set([('domain', 'app_id', 'root_name', 'pre_id')]),
         ),
+        migrations.AlterIndexTogether(
+            name='resourceoverride',
+            index_together=set([('domain', 'app_id', 'root_name')]),
+        ),
         migrations.RunPython(_add_overrides_for_all_builds,
                              reverse_code=migrations.RunPython.noop,
                              elidable=True),
