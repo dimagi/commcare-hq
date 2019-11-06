@@ -44,5 +44,6 @@ class Command(BaseCommand):
               "which will prevent anyone from reusing that domain)"
               .format(domain_name))
         for domain_obj in domain_objs:
+            assert domain_obj.name == domain_name  # Just to be really sure!
             domain_obj.delete(leave_tombstone=True)
         print("Operation completed")
