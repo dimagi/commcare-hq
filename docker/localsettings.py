@@ -60,7 +60,7 @@ if USE_PARTITIONED_DATABASE:
                 'SERIALIZE': False,
             },
             'PLPROXY': {
-                'SHARDS': [1, 2],
+                'SHARDS': [2, 3],
             }
         },
         'warehouse': {
