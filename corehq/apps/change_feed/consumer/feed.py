@@ -240,10 +240,13 @@ class PostgresChangeFeed(ChangeFeed):
     def __init__(self, pillow_id):
         self.pillow_id = pillow_id
 
-    def iter_changes(self, since, forever):
-        while True:
+    def iter_changes(self, since, forever: bool):
+        number_changes = -1
+
+        while number_changes != 0 or forever:
+            number_changes = 0
             with transaction.atomic():
-                pillow_settings = PostgresPillowSettings.objects.filter(pillow_id=self.pillow_id).first()
+                pillow_settings = PostgresPillowSettings.objects.filter(pillow_id=self.pillow_id)[0]
                 checkpoint = (
                     PostgresPillowCheckpoint.objects
                     .filter(
@@ -251,13 +254,14 @@ class PostgresChangeFeed(ChangeFeed):
                     )
                     .order_by('last_modified')
                     .select_for_update(skip_locked=True)
-                ).first()
+                )[0]
+
                 new_update_seq = checkpoint.update_sequence_id
 
                 model = _model_class_from_name(checkpoint.model)
                 changes = (
                     model.objects.using(checkpoint.db_alias)
-                    .annotate(remainder=F('update_sequence_id') % settings.modulo)
+                    .annotate(remainder=F('update_sequence_id') % pillow_settings.modulo)
                     .filter(
                         update_sequence_id__isnull=False,
                         update_sequence_id__gt=checkpoint.update_sequence_id,
@@ -267,7 +271,17 @@ class PostgresChangeFeed(ChangeFeed):
 
                 for change in changes:
                     new_update_seq = max(change.update_sequence_id, new_update_seq)
+                    number_changes += 1
                     yield change_from_postgres_model(change)
 
                 checkpoint.update_sequence_id = new_update_seq
                 checkpoint.save()
+
+    def get_latest_offsets(self):
+        raise NotImplementedError
+
+    def get_processed_offsets(self):
+        raise NotImplementedError
+
+    def get_latest_offsets_as_checkpoint_value(self):
+        raise NotImplementedError
