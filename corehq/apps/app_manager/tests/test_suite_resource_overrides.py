@@ -9,7 +9,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
-    @classmethod
     def setUp(self):
         super().setUp()
         self.factory = AppFactory(build_version='2.40.0')
