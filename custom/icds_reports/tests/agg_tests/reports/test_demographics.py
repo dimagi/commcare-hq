@@ -69,7 +69,7 @@ class TestDemographics(TestCase):
             "value": 346,
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "month",
-            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification "
                          "has been captured. "
         }
         self.assertDictEqual(expected, data['records'][0][1])
@@ -225,7 +225,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been "
                 "captured. "
             )
         }
@@ -382,7 +382,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has "
                 "been captured. "
             )
         }
