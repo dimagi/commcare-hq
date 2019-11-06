@@ -1048,6 +1048,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
