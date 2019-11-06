@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter
 from django.db import models
 
 from corehq.apps.app_manager.exceptions import ResourceOverrideError
@@ -54,12 +54,12 @@ class ResourceOverrideHelper(PostProcessor):
         Applies manual overrides of resource ids.
         """
         overrides_by_pre_id = get_xform_overrides(self.app.domain, self.app.master_id)
-        id_counts = defaultdict(int)
-        for resource in getattr(self.suite, FormResourceContributor.section_name):
+        resources = getattr(self.suite, FormResourceContributor.section_name)
+        for resource in resources:
             if resource.id in overrides_by_pre_id:
                 resource.id = overrides_by_pre_id[resource.id].post_id
-            id_counts[resource.id] += 1
 
-        duplicates = [id for id, count in id_counts.items() if count > 1]
+        id_counts = Counter(resource.id for resource in resources)
+        duplicates = [key for key, count in id_counts.items() if count > 1]
         if duplicates:
             raise ResourceOverrideError("Duplicate resource ids found: {}".format(", ".join(duplicates)))
