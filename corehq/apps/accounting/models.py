@@ -20,6 +20,7 @@ import stripe
 from django_prbac.models import Role
 from memoized import memoized
 
+from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -1123,12 +1124,11 @@ class Subscription(models.Model):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         get_overdue_invoice.clear(self.subscriber.domain)
 
-        try:
-            Domain.get_by_name(self.subscriber.domain).save()
-        except Exception:
-            # If a subscriber doesn't have a valid domain associated with it
-            # we don't care the pillow won't be updated
-            pass
+        domain = Domain.get_by_name(self.subscriber.domain)
+        # If a subscriber doesn't have a valid domain associated with it
+        # we don't care the pillow won't be updated
+        if domain:
+            publish_domain_saved(domain)
 
     def delete(self, *args, **kwargs):
         super(Subscription, self).delete(*args, **kwargs)

@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from django.contrib import admin
-from .models import PillowError
+
+from pillow_retry.models import PillowError
 
 
+@admin.register(PillowError)
 class PillowErrorAdmin(admin.ModelAdmin):
-
     model = PillowError
     list_display = [
         'pillow',
@@ -14,6 +17,12 @@ class PillowErrorAdmin(admin.ModelAdmin):
         'date_next_attempt'
     ]
     list_filter = ('pillow', 'error_type')
+    actions = [
+        'delete_selected',
+        'reset_attempts',
+    ]
 
+    def reset_attempts(self, request, queryset):
+        queryset.update(current_attempt=0, date_next_attempt=datetime.utcnow())
 
-admin.site.register(PillowError, PillowErrorAdmin)
+    reset_attempts.short_description = "Reset Attempts"

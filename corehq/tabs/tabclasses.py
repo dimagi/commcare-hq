@@ -2036,7 +2036,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
@@ -2049,13 +2048,6 @@ class AdminTab(UITab):
                 {'title': _('System Info'),
                  'url': reverse('system_info'),
                  'icon': 'fa fa-heartbeat'},
-                {'title': _('PillowTop Errors'),
-                 'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',)),
-                 'icon': 'fa fa-bed'},
-                {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname),
-                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
@@ -2068,6 +2060,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Manage deleted domains'),
+                 'url': reverse('tombstone_management'),
+                 'icon': 'fa fa-minus-circle'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),
