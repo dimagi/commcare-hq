@@ -135,7 +135,7 @@
         "sortable": false,
         "description": null,
         "format": "default",
-        "aggregation": "sum",
+        "aggregation": "max",
         "column_id": "use_salt",
         "field": "use_salt",
         "transform": {},
