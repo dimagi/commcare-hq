@@ -19,6 +19,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     run_with_all_backends,
+    use_sql_backend,
 )
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -32,13 +33,15 @@ class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
     password = 'badpassword'
-    pillow_id = 'xform-pillow'
+    pillow_ids = ['xform-pillow']
+    pillow_settings = [{'skip_ucr': True}]
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_form_changes.add_pillow(cls.pillow_id, {'skip_ucr': True})
+        for pillow_id, pillow_settings in zip(cls.pillow_ids, cls.pillow_settings):
+            cls.process_form_changes.add_pillow(pillow_id, pillow_settings)
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
@@ -123,7 +126,7 @@ class XFormPillowTest(TestCase):
         form, metadata = self._create_form_and_sync_to_es()
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
         self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
-        self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
+        self.assertEqual(0, PillowError.objects.filter(pillow__in=self.pillow_ids).count())
 
         process_reporting_metadata_staging()
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
@@ -163,7 +166,7 @@ class XFormPillowTest(TestCase):
 
     @run_with_all_backends
     def test_form_pillow_error_in_form_metadata(self):
-        self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
+        self.assertEqual(0, PillowError.objects.filter(pillow__in=self.pillow_ids).count())
         with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
             mark_latest_submission.side_effect = ResourceConflict('couch sucks')
             case_id, case_name = self._create_form_and_sync_to_es()
@@ -172,7 +175,7 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(1, results.total)
 
-        self.assertEqual(1, PillowError.objects.filter(pillow=self.pillow_id).count())
+        self.assertEqual(1, PillowError.objects.filter(pillow__in=self.pillow_ids).count())
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:
@@ -181,6 +184,17 @@ class XFormPillowTest(TestCase):
             form_processor.save_processed_models([form])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         return form, self.metadata
+
+
+class PostgresXFormPillowTest(XFormPillowTest):
+    pillow_ids = [
+        'xform-pillow',
+        'xform-pillow-no-kafka',
+    ]
+    pillow_settings = [
+        {'skip_ucr': True, 'topics': ['form']},
+        {'skip_ucr': True},
+    ]
 
 
 class TransformXformForESTest(SimpleTestCase):
