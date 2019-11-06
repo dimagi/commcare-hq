@@ -460,6 +460,20 @@ class ConstructedPillow(PillowBase):
         return False
 
 
+class PostgresPillow(ConstructedPillow):
+    def __init__(self, name, change_feed, processors):
+        self._name = name
+        self._change_feed = change_feed
+        self.processors = processors
+        self._change_processed_event_handler = None
+
+    def run(self):
+        pillow_logging.info("Starting pillow %s" % self.__class__)
+        with configure_scope() as scope:
+            scope.set_tag("pillow_name", self.get_name())
+        self.process_changes(since=None, forever=True)
+
+
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
 
