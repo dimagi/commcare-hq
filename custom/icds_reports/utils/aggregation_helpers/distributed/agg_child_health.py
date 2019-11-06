@@ -13,6 +13,10 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     @property
+    def previous_agg_table_name(self):
+        return f"previous_{self.monthly_tablename}"
+
+    @property
     def model(self):
         from custom.icds_reports.models import AggChildHealth
         return AggChildHealth
