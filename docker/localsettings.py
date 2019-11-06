@@ -190,29 +190,30 @@ AUDIT_ADMIN_VIEWS = False
 SECRET_KEY = 'secrettravis'
 
 # No logging
-LOCAL_LOGGING_HANDLERS = {
-    'null': {
-        'level': 'DEBUG',
-        'class': 'logging.NullHandler',
+LOCAL_LOGGING_CONFIG = {
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        }
     },
-}
-
-LOCAL_LOGGING_LOGGERS = {
-    '': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
-    'pillowtop': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
-    'notify': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
+    'loggers': {
+        '': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+        'pillowtop': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+        'notify': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+    }
 }
 
 
