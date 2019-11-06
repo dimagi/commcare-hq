@@ -6,10 +6,7 @@ from django.db.models import Max
 from django.test.utils import override_settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.models import (
-    PostgresPillowCheckpoint,
-    PostgresPillowSettings,
-)
+from corehq.apps.change_feed.models import PostgresPillowCheckpoint
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -49,11 +46,6 @@ class process_pillow_changes(ContextDecorator):
         self.offsets = []
         for pillow in self._pillows:
             if isinstance(pillow, PostgresPillow):
-                PostgresPillowSettings.objects.get_or_create(
-                    pillow_id=pillow.get_name(),
-                    modulo=1,
-                    batch_size=1
-                )
                 for db_alias in get_db_aliases_for_partitioned_query():
                     PostgresPillowCheckpoint.objects.get_or_create(
                         pillow_id=pillow.get_name(),

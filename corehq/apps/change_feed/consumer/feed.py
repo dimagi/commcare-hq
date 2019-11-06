@@ -17,10 +17,7 @@ from pillowtop.models import kafka_seq_to_str
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.change_feed.models import (
-    PostgresPillowCheckpoint,
-    PostgresPillowSettings,
-)
+from corehq.apps.change_feed.models import PostgresPillowCheckpoint
 from corehq.apps.change_feed.topics import validate_offsets
 
 MIN_TIMEOUT = 500
@@ -246,7 +243,6 @@ class PostgresChangeFeed(ChangeFeed):
         while number_changes != 0 or forever:
             number_changes = 0
             with transaction.atomic():
-                pillow_settings = PostgresPillowSettings.objects.filter(pillow_id=self.pillow_id)[0]
                 checkpoint = (
                     PostgresPillowCheckpoint.objects
                     .filter(
@@ -255,19 +251,27 @@ class PostgresChangeFeed(ChangeFeed):
                     .order_by('last_modified')
                     .select_for_update(skip_locked=True)
                 )[0]
+                number_checkpoints = (
+                    PostgresPillowCheckpoint.objects
+                    .filter(
+                        pillow_id=self.pillow_id,
+                        db_alias=checkpoint.db_alias,
+                        model=checkpoint.model,
+                    ).count()
+                )
 
                 new_update_seq = checkpoint.update_sequence_id
 
                 model = _model_class_from_name(checkpoint.model)
                 changes = (
                     model.objects.using(checkpoint.db_alias)
-                    .annotate(remainder=F('update_sequence_id') % pillow_settings.modulo)
+                    .annotate(remainder=F('update_sequence_id') % number_checkpoints)
                     .filter(
                         update_sequence_id__isnull=False,
                         update_sequence_id__gt=checkpoint.update_sequence_id,
                         remainder=checkpoint.remainder
                     )
-                )[:pillow_settings.batch_size]
+                )[:checkpoint.batch_size]
 
                 for change in changes:
                     new_update_seq = max(change.update_sequence_id, new_update_seq)
