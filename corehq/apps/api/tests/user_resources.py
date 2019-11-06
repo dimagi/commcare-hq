@@ -1,13 +1,21 @@
 import json
+import uuid
 from copy import deepcopy
+from unittest import mock
 
+from django.http import QueryDict
+from django.test import RequestFactory
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from tastypie.exceptions import NotFound, ImmediateHttpResponse, BadRequest
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.api.resources.v0_5 import UserDomain, CaseType, UserInfo
+from corehq.apps.app_manager.models import Application, FormBase, ModuleBase
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.analytics import esaccessors
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
@@ -15,8 +23,11 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-
-from .utils import APIResourceTest
+from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import create_and_save_a_case
+from .utils import APIResourceTest, BundleMock
 
 
 class TestCommCareUserResource(APIResourceTest):
@@ -434,3 +445,18 @@ class TestBulkUserAPI(APIResourceTest):
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+    def test_obj_get_list(self):
+        x = v0_5.BulkUserResource()
+        base_bundle = BundleMock(**{'fields': ['username', 'first_name'],
+                                    'limit': '3'
+                                    })
+        actual = x.obj_get_list(bundle=base_bundle, domain=self.domain)
+        self.assertTrue(isinstance(actual, list))
+        self.assertEqual(len(actual), 3)
+
+    def test_obj_get_list_wrong_fields(self):
+        x = v0_5.BulkUserResource()
+        base_bundle = BundleMock(**{'fields': ['wrong_field', 'first_name']})
+        with self.assertRaises(BadRequest):
+            x.obj_get_list(bundle=base_bundle, domain=self.domain)

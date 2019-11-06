@@ -1,10 +1,14 @@
+import uuid
 from collections import OrderedDict
 
-from django.test import TestCase
+from PIL import Image
+from django.http import QueryDict
+from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from django_prbac.models import Role
+from mock import MagicMock
 from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
@@ -13,9 +17,11 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.elastic import get_es_new
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
@@ -72,12 +78,19 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def setUpClass(cls):
         super(APIResourceTest, cls).setUpClass()
-
-        Role.get_cache().clear()
-        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
+        Role.get_cache().clear()
+        user = WebUser.get_by_username(cls.username)
+        if user:
+            user.delete()
+        for domain in Domain.get_all():
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
+            domain.delete()
+
+        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.list_endpoint = cls._get_list_endpoint()
+
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
@@ -180,3 +193,81 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         elif method == "DELETE":
             response = self.client.delete(api_url, post_data, content_type=content_type)
         return response
+
+
+class BundleMock(object):
+
+    def __init__(self, **params):
+        query = ''
+        for querykey in params:
+            query = query + '{}={}&'.format(
+                    querykey,
+                    '&{}='.format(querykey).join(params.get(querykey))
+                    )
+        q = QueryDict(query, mutable=True)
+        request = RequestFactory().get('/api_dispatch_list/')
+        request.GET = q
+        self.request = request
+
+
+class ESTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(ESTest, cls).setUpClass()
+        cls.domain = Domain.get_or_create_with_name('elastico', is_active=True)
+        cls.es = get_es_new()
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(ESTest, cls).tearDownClass()
+
+
+class change_domain:
+    # temporally changes object domain
+
+    def __init__(self, obj, new_domain=None):
+        self.obj = obj
+        self.domain_old = self.obj.domain
+        self.obj.domain = new_domain or uuid.uuid4().hex
+
+    def __enter__(self):
+        return self.obj
+
+    def __exit__(self, type, value, traceback):
+        self.obj.domain = self.domain_old
+
+
+def mock_image(size=None, color=None):
+    size = size or (100, 100)
+    color = color or (255, 255, 255, 1)
+    img = Image.new("RGBA", size, color)
+    return img
+
+
+def cache_meta(**kwargs):
+    meta = {
+        'content_length': kwargs.get('content_length') or 1000,
+        'height': kwargs.get('height') or 1000,
+        'width':  kwargs.get('width') or 1000,
+        'content_type': 'image/jpeg'
+    }
+    return meta
+
+
+def CachedImageMock():
+    def less_cache_meta(**kwargs):
+        meta = {
+            'content_length': 1,
+            'height': 1,
+            'width':  1,
+            'content_type': 'image/jpeg'
+        }
+        return meta
+
+    mock = MagicMock()
+    mock.image = mock_image()
+    mock.get.return_value = (cache_meta(), mock.image)
+    mock.get_size.return_value = (less_cache_meta(), mock.image)
+    return mock
