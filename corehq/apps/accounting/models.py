@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -2039,7 +2039,7 @@ class Invoice(InvoiceBase):
         """
         if self.lineitem_set.count() == 0:
             return Decimal('0.0000')
-        return sum([line_item.total for line_item in self.lineitem_set.all()])
+        return self.lineitem_set.all().aggregate(Sum('total'))['total__sum']
 
     @property
     def applied_tax(self):
@@ -2148,7 +2148,7 @@ class CustomerInvoice(InvoiceBase):
         """
         if self.lineitem_set.count() == 0:
             return Decimal('0.0000')
-        return sum([line_item.total for line_item in self.lineitem_set.all()])
+        return self.lineitem_set.all().aggregate(Sum('total'))['total__sum']
 
     @property
     def applied_tax(self):
