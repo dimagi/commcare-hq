@@ -88,8 +88,7 @@ class DashBoardUsage:
             sub_location_types = self.location_types
 
         for result in results_queryset:
-            row_data = [result['state_id'], result['district_id'], result['block_id'], result['supervisor_id'],
-                        result['doc_id']]
+            row_data = [result['state_id'], result['district_id'], result['block_id']]
             location_matrix.append(row_data)
             # adding only descendants to the main location
             for sub_location in sub_location_types:
@@ -183,7 +182,6 @@ class DashBoardUsage:
             location_matrix, location_ids =\
                 self.convert_rs_to_matrix(all_awc_locations, user_location_type_name)
 
-
             users = self.get_users_by_location(location_ids)
 
             dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
@@ -215,6 +213,8 @@ class DashBoardUsage:
 
                 for user_sql_location in user_sql_location_ids:
                     # getting the location type to look up in matrix
+                    if user_sql_location not in self.sql_locations:
+                        continue
                     location_type_id = self.sql_locations[user_sql_location]
                     column_index = self.location_types.index(location_type_id)
                     user_location_row = None

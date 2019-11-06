@@ -13,7 +13,6 @@ from django.utils.translation import ugettext as _
 import pytz
 from memoized import memoized
 
-from couchexport.util import SerializableFunction
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.web import json_request
 
@@ -314,51 +313,6 @@ def group_filter(doc, group):
         return users_filter(doc, user_ids)
     else:
         return True
-
-
-def users_matching_filter(domain, user_filters):
-    return [
-        user.user_id
-        for user in get_all_users_by_domain(
-            domain,
-            user_filter=user_filters,
-            simplified=True,
-            include_inactive=True
-        )
-    ]
-
-
-def create_export_filter(request, domain, export_type='form'):
-    request_obj = request.POST if request.method == 'POST' else request.GET
-    from corehq.apps.reports.filters.users import UserTypeFilter
-    app_id = request_obj.get('app_id', None)
-
-    user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
-    use_user_filters &= bool(user_filters)
-    group = None if use_user_filters else get_group(**json_request(request_obj))
-
-    if export_type == 'case':
-        if use_user_filters:
-            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
-            filtered_users = users_matching_filter(domain, user_filters)
-            filter = SerializableFunction(case_users_filter,
-                                          users=filtered_users,
-                                          groups=groups)
-        else:
-            filter = SerializableFunction(case_group_filter, group=group)
-    else:
-        filter = SerializableFunction(app_export_filter, app_id=app_id)
-        datespan = request.datespan
-        if datespan.is_valid():
-            datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
-            filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
-        if use_user_filters:
-            filtered_users = users_matching_filter(domain, user_filters)
-            filter &= SerializableFunction(users_filter,
-                                           users=filtered_users)
-        else:
-            filter &= SerializableFunction(group_filter, group=group)
-    return filter
 
 
 def get_possible_reports(domain_name):

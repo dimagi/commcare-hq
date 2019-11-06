@@ -35,6 +35,9 @@ class Command(BaseCommand):
             if confirm != domain_name:
                 print("\n\t\tDomain deletion cancelled.")
                 return
-        print("Deleting domain {}".format(domain_name))
-        domain_obj.delete()
+        print("Soft-Deleting domain {} "
+              "(i.e. switching its type to Domain-Deleted, "
+              "which will prevent anyone from reusing that domain)"
+              .format(domain_name))
+        domain_obj.delete(leave_tombstone=True)
         print("Operation completed")

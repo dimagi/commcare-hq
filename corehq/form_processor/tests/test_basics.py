@@ -11,6 +11,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
@@ -333,8 +334,10 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
     def test_date_opened_coercion(self):
         delete_all_users()
+        clear_domain_names('some-domain')
         self.project = Domain(name='some-domain')
         self.project.save()
+        self.addCleanup(self.project.delete)
         user = create_restore_user(self.project.name)
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()

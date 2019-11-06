@@ -463,6 +463,9 @@ UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -507,8 +510,7 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
-BROKER_URL = CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
