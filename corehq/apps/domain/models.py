@@ -808,13 +808,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
-            def convert_form_unique_id_function(form_unique_id):
-                from corehq.apps.app_manager.models import FormBase
-                form = FormBase.get_form(form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                return form_copy.unique_id
+            def convert_form_unique_id_function(app_id, form_unique_id):
+                app = get_app(self.domain, app_id)
+                form = app.get_form(form_unique_id)
+                m_index, f_index = app.get_form_location(form.unique_id)
+                app_copy = new_app_components[app._id]
+                form_copy = new_app_components[app._id].get_module(m_index).get_form(f_index)
+                return app_copy.get_id, form_copy.unique_id
 
             if share_reminders:
                 for rule in AutomaticUpdateRule.by_domain(
