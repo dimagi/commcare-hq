@@ -1823,3 +1823,10 @@ DAILY_INDICATORS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )
+
+mwcd_indicators = StaticToggle(
+    'mwcd_indicators',
+    'Enable MWCD indicators API',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)

@@ -113,7 +113,7 @@ from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView
 from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
-
+from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -1949,3 +1949,40 @@ class CasDataExportAPIView(View):
             "awc": 3
         }
         return type_map[data_type]
+
+
+@location_safe
+@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
+class MWCDDataView(View):
+
+    def message(self, message_name):
+        error_messages = {
+            "unknown_error": "Unknown Error occured",
+            "no_data": "Data does not exists"
+        }
+
+        return error_messages[message_name]
+
+    def get(self, request, *args, **kwargs):
+
+        try:
+            data = get_mwcd_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
+        except NICIndicatorsView.DoesNotExist:
+            response = dict(isSuccess=False, message=self.message('no_data'))
+            return JsonResponse(response, status=500)
+        except AttributeError:
+            response = dict(isSuccess=False, message=self.message('unknown_error'))
+            return JsonResponse(response, status=500)
+
+    @property
+    @icds_quickcache([])
+    def valid_states(self):
+        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                            state_is_test=0).values_list('state_name', 'state_id')
+        return {state[0]: state[1] for state in states}
