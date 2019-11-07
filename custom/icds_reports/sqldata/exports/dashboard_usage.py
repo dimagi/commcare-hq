@@ -189,7 +189,7 @@ class DashBoardUsage:
 
             usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
 
-            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/'+self.domain+'/cas_export',
+            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/' + self.domain + '/cas_export',
                                                                username__in=usernames)
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
                                                                                                   'username')
