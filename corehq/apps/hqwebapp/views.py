@@ -431,7 +431,7 @@ def login(req):
 
 
 @location_safe
-def domain_login(req, domain):
+def domain_login(req, domain, custom_template_name=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -440,8 +440,9 @@ def domain_login(req, domain):
     # FYI, the domain context_processor will pick this up and apply the
     # necessary domain contexts:
     req.project = project
-
-    return _login(req, domain, get_custom_login_page(req.get_host()))
+    if custom_template_name is None:
+        custom_template_name = get_custom_login_page(req.get_host())
+    return _login(req, domain, custom_template_name)
 
 
 class HQLoginView(LoginView):
