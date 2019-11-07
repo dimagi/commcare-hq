@@ -109,7 +109,7 @@ def db_for_read_write(model, write=True):
     elif app_label == AAA_APP:
         engine_id = AAA_DB_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
+            return connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
