@@ -244,7 +244,7 @@ class DashBoardUsage:
                         excel.extend(indicator_count)
                         excel_rows.append(excel)
             loop_counter += 1
-        excel_rows = sorted(excel_rows, key=lambda x:(x[1], x[2], x[3]))
+        excel_rows = sorted(excel_rows, key=lambda x: (x[1], x[2], x[3]))
         excel_rows.insert(0, headers)
         return [
             [
