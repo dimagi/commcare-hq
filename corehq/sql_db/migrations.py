@@ -51,8 +51,8 @@ def partitioned(cls_or_op=None, apply_to_proxy=True):
 
 def is_partition_alias(db, apply_to_proxy):
     return not settings.USE_PARTITIONED_DATABASE or (
-        (db == partition_config.get_proxy_db() and apply_to_proxy) or
-        db in partition_config.get_form_processing_dbs()
+        (db == partition_config.proxy_db and apply_to_proxy) or
+        db in partition_config.form_processing_dbs
     )
 
 

@@ -169,4 +169,4 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        user.save(fire_signals=False)
+        user.save()

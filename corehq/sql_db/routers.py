@@ -74,18 +74,18 @@ def allow_migrate(db, app_label, model_name=None):
         return app_label != PROXY_APP and db in (DEFAULT_DB_ALIAS, None)
 
     if app_label == PROXY_APP:
-        return db == partition_config.get_proxy_db()
+        return db == partition_config.proxy_db
     elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
         return False
     elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
         return (
-            db == partition_config.get_proxy_db() or
-            db in partition_config.get_form_processing_dbs()
+            db == partition_config.proxy_db or
+            db in partition_config.form_processing_dbs
         )
     elif app_label == SQL_ACCESSORS_APP:
-        return db in partition_config.get_form_processing_dbs()
+        return db in partition_config.form_processing_dbs
     else:
         return db == DEFAULT_DB_ALIAS
 
@@ -115,10 +115,10 @@ def db_for_read_write(model, write=True):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return partition_config.get_proxy_db()
+            return partition_config.proxy_db
         return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
-        return partition_config.get_proxy_db()
+        return partition_config.proxy_db
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
