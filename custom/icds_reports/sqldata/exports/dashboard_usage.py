@@ -234,7 +234,7 @@ class DashBoardUsage:
                         serial_count += 1
 
                         excel = [serial_count, user_location_row[0], user_location_row[1],
-                                 user_location_row[2], user['username'], user_location_type,
+                                 user_location_row[2], user['username'].split('@')[0], user_location_type,
                                  self.get_role_from_username(user['username']),
                                  self.convert_boolean_to_string(self.agg_list[user_sql_location]),
                                  user['last_login'],
