@@ -26,18 +26,17 @@ from memoized import memoized
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Form as CCHQForm, AdvancedForm
+from corehq.apps.app_manager.models import Form as AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reminders.util import get_form_list
+from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -137,7 +136,8 @@ class ContentForm(Form):
         required=False,
         widget=HiddenInput,
     )
-    form_unique_id = ChoiceField(
+    # The app id and form unique id of this form, separated by '|'
+    app_and_form_unique_id = ChoiceField(
         required=False,
         label=ugettext_lazy("Form"),
     )
@@ -189,10 +189,10 @@ class ContentForm(Form):
 
         self.schedule_form = kwargs.pop('schedule_form')
         super(ContentForm, self).__init__(*args, **kwargs)
-        self.set_form_unique_id_choices()
+        self.set_app_and_form_unique_id_choices()
 
-    def set_form_unique_id_choices(self):
-        self.fields['form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
+    def set_app_and_form_unique_id_choices(self):
+        self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
@@ -222,11 +222,11 @@ class ContentForm(Form):
 
         return cleaned_value
 
-    def clean_form_unique_id(self):
+    def clean_app_and_form_unique_id(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
             return None
 
-        value = self.cleaned_data.get('form_unique_id')
+        value = self.cleaned_data.get('app_and_form_unique_id')
         if not value:
             raise ValidationError(_("This field is required"))
 
@@ -316,8 +316,11 @@ class ContentForm(Form):
                 message=self.cleaned_data['message'],
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
+            combined_id = self.cleaned_data['app_and_form_unique_id']
+            app_id, form_unique_id = split_combined_id(combined_id)
             return SMSSurveyContent(
-                form_unique_id=self.cleaned_data['form_unique_id'],
+                app_id=app_id,
+                form_unique_id=form_unique_id,
                 expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
                 reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
                 submit_partially_completed_forms=
@@ -362,7 +365,10 @@ class ContentForm(Form):
                 ),
             ),
             crispy.Div(
-                crispy.Field('form_unique_id'),
+                crispy.Field(
+                    'app_and_form_unique_id',
+                    css_class="hqwebapp-select2",
+                ),
                 data_bind=(
                     "visible: $root.content() === '%s' || $root.content() === '%s'" %
                     (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_IVR_SURVEY)
@@ -436,7 +442,10 @@ class ContentForm(Form):
             result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
-            result['form_unique_id'] = content.form_unique_id
+            result['app_and_form_unique_id'] = get_combined_id(
+                content.app_id,
+                content.form_unique_id
+            )
             result['survey_expiration_in_hours'] = content.expire_after // 60
             if (content.expire_after % 60) != 0:
                 # The old framework let you enter minutes. If it's not an even number of hours, round up.
@@ -451,7 +460,10 @@ class ContentForm(Form):
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
-            result['form_unique_id'] = content.form_unique_id
+            result['app_and_form_unique_id'] = get_combined_id(
+                content.app_id,
+                content.form_unique_id
+            )
             result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
             result['max_question_attempts'] = content.max_question_attempts
         elif isinstance(content, SMSCallbackContent):
@@ -1394,18 +1406,17 @@ class ScheduleForm(Form):
         return self.initial_schedule and self.initial_schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE
 
     @memoized
-    def get_form_and_app(self, form_unique_id):
+    def get_form_and_app(self, app_and_form_unique_id):
         """
         Returns the form and app associated with the primary application
         document (i.e., not a build).
         """
         error_msg = _("Please choose a form")
         try:
-            form, app = CCHQForm.get_form(form_unique_id, and_app=True)
+            app_id, form_unique_id = split_combined_id(app_and_form_unique_id)
+            app = get_app(self.domain, app_id)
+            form = app.get_form(form_unique_id)
         except:
-            raise ValidationError(error_msg)
-
-        if app.domain != self.domain:
             raise ValidationError(error_msg)
 
         return form, app
@@ -2833,16 +2844,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-    def split_app_and_form_unique_id(self, value):
-        return value.split('|')
-
     @property
     def current_visit_scheduler_form(self):
         value = self['visit_scheduler_app_and_form_unique_id'].value()
         if not value:
             return {}
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        app_id, form_unique_id = split_combined_id(value)
         try:
             form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         except:
@@ -3316,7 +3324,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if not value:
             raise ValidationError(_("This field is required"))
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        app_id, form_unique_id = split_combined_id(value)
         form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
 
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
@@ -3356,7 +3364,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if value is None or value <= 0:
             raise ValidationError(_("Please enter a number greater than 0"))
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(visit_scheduler_app_and_form_unique_id)
+        app_id, form_unique_id = split_combined_id(visit_scheduler_app_and_form_unique_id)
         form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         self.validate_visit(form, value - 1)
 
@@ -3427,7 +3435,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(
+        app_id, form_unique_id = split_combined_id(
             self.cleaned_data['visit_scheduler_app_and_form_unique_id']
         )
 
