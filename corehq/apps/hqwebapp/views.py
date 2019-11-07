@@ -153,6 +153,9 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
+    if settings.UNIT_TESTING:
+        return HttpResponse(status=500)
+
     return HttpResponseServerError(t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
