@@ -2775,6 +2775,9 @@ class AnonymousCouchUser(object):
         return False
 
 
+reporting_update_freq = timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY)
+
+
 class UserReportingMetadataStaging(models.Model):
     domain = models.TextField()
     user_id = models.TextField()
@@ -2810,7 +2813,7 @@ class UserReportingMetadataStaging(models.Model):
 
         save = False
 
-        if (received_on - obj.received_on) > timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY):
+        if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
             obj.received_on = received_on
             save = True
         if build_id != obj.build_id:
@@ -2836,7 +2839,7 @@ class UserReportingMetadataStaging(models.Model):
         if created:
             return
 
-        if sync_date > obj.sync_date:
+        if not obj.sync_date or sync_date > obj.sync_date:
             obj.sync_date = sync_date
             obj.build_id = build_id
             obj.device_id = device_id

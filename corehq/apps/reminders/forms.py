@@ -128,8 +128,8 @@ class RecordListField(Field):
 
 
 class KeywordForm(Form):
-    domain = None
-    survey_keyword_id = None
+    _cchq_domain = None
+    _sk_id = None
     keyword = CharField(label=ugettext_noop("Keyword"))
     description = TrimmedCharField(label=ugettext_noop("Description"))
     override_open_sessions = BooleanField(
@@ -216,7 +216,7 @@ class KeywordForm(Form):
 
     def __init__(self, *args, **kwargs):
         if 'domain' in kwargs:
-            self.domain = kwargs.pop('domain')
+            self._cchq_domain = kwargs.pop('domain')
 
         self.process_structured_sms = False
         if 'process_structured' in kwargs:
@@ -422,7 +422,7 @@ class KeywordForm(Form):
                     type='submit',
                 ),
                 crispy.HTML('<a href="%s" class="btn btn-default">Cancel</a>'
-                            % reverse(KeywordsListView.urlname, args=[self.domain]))
+                            % reverse(KeywordsListView.urlname, args=[self._cchq_domain]))
             ),
         ])
         self.helper.layout = crispy.Layout(*layout_fields)
@@ -434,7 +434,7 @@ class KeywordForm(Form):
     @property
     @memoized
     def group_choices(self):
-        group_ids = Group.ids_by_domain(self.domain)
+        group_ids = Group.ids_by_domain(self._cchq_domain)
         groups = []
         for group_doc in iter_docs(Group.get_db(), group_ids):
             groups.append((group_doc['_id'], group_doc['name']))
@@ -443,7 +443,7 @@ class KeywordForm(Form):
     @property
     @memoized
     def form_choices(self):
-        return form_choices(self.domain)
+        return form_choices(self._cchq_domain)
 
     @property
     def current_values(self):
@@ -460,8 +460,8 @@ class KeywordForm(Form):
             raise ValidationError(_("This field is required."))
         if len(value.split()) > 1:
             raise ValidationError(_("Keyword should be one word."))
-        duplicate = Keyword.get_keyword(self.domain, value)
-        if duplicate and duplicate.couch_id != self.survey_keyword_id:
+        duplicate = Keyword.get_keyword(self._cchq_domain, value)
+        if duplicate and duplicate.couch_id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))
         return value
 
@@ -482,7 +482,7 @@ class KeywordForm(Form):
                     "Please create a form first, and then add a keyword "
                     "for it."
                 ))
-            validate_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self._cchq_domain)
             return value
         else:
             return None
@@ -504,7 +504,7 @@ class KeywordForm(Form):
                     "Please create a form first, and then "
                     "add a keyword for it."
                 ))
-            validate_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self._cchq_domain)
             return value
         else:
             return None
@@ -517,7 +517,7 @@ class KeywordForm(Form):
                     "Please create a form first, and then add a "
                     "keyword for it."
                 ))
-            validate_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self._cchq_domain)
             return value
         else:
             return None
@@ -601,7 +601,7 @@ class KeywordForm(Form):
             try:
                 g = Group.get(value)
                 assert g.doc_type == "Group"
-                assert g.domain == self.domain
+                assert g.domain == self._cchq_domain
             except Exception:
                 raise ValidationError("Invalid Group.")
             return value

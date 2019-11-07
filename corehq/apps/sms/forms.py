@@ -568,7 +568,7 @@ class SettingsForm(Form):
             self.section_chat,
         ]
 
-        if self.is_previewer:
+        if self._cchq_is_previewer:
             result.append(self.section_internal)
 
         result.append(
@@ -583,9 +583,9 @@ class SettingsForm(Form):
 
         return result
 
-    def __init__(self, data=None, domain=None, is_previewer=False, *args, **kwargs):
-        self.domain = domain
-        self.is_previewer = is_previewer
+    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, *args, **kwargs):
+        self._cchq_domain = cchq_domain
+        self._cchq_is_previewer = cchq_is_previewer
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
         self.helper = HQFormHelper()
@@ -679,12 +679,12 @@ class SettingsForm(Form):
         return value
 
     def clean_use_custom_chat_template(self):
-        if not self.is_previewer:
+        if not self._cchq_is_previewer:
             return None
         return self.cleaned_data.get("use_custom_chat_template") == CUSTOM
 
     def clean_custom_chat_template(self):
-        if not self.is_previewer:
+        if not self._cchq_is_previewer:
             return None
         value = self._clean_dependent_field("use_custom_chat_template",
             "custom_chat_template")
@@ -771,7 +771,7 @@ class SettingsForm(Form):
     def get_user_group_or_location(self, object_id):
         try:
             return SQLLocation.active_objects.get(
-                domain=self.domain,
+                domain=self._cchq_domain,
                 location_id=object_id,
                 location_type__shares_cases=True,
             )
@@ -780,7 +780,7 @@ class SettingsForm(Form):
 
         try:
             group = Group.get(object_id)
-            if group.doc_type == 'Group' and group.domain == self.domain and group.case_sharing:
+            if group.doc_type == 'Group' and group.domain == self._cchq_domain and group.case_sharing:
                 return group
             elif group.is_deleted:
                 return None
@@ -792,7 +792,7 @@ class SettingsForm(Form):
     def get_user(self, object_id):
         try:
             user = CommCareUser.get(object_id)
-            if user.doc_type == 'CommCareUser' and user.domain == self.domain:
+            if user.doc_type == 'CommCareUser' and user.domain == self._cchq_domain:
                 return user
         except ResourceNotFound:
             pass
@@ -836,7 +836,7 @@ class SettingsForm(Form):
         return int(self.cleaned_data.get("sms_conversation_length"))
 
     def clean_custom_daily_outbound_sms_limit(self):
-        if not self.is_previewer:
+        if not self._cchq_is_previewer:
             return None
 
         if self.cleaned_data.get('override_daily_outbound_sms_limit') != ENABLED:
@@ -850,8 +850,8 @@ class SettingsForm(Form):
 
 
 class BackendForm(Form):
-    domain = None
-    backend_id = None
+    _cchq_domain = None
+    _cchq_backend_id = None
     name = CharField(
         label=ugettext_noop("Name")
     )
@@ -880,7 +880,7 @@ class BackendForm(Form):
 
     @property
     def is_global_backend(self):
-        return self.domain is None
+        return self._cchq_domain is None
 
     @property
     def general_fields(self):
@@ -903,8 +903,8 @@ class BackendForm(Form):
                 ),
             ])
 
-        if self.backend_id:
-            backend = SQLMobileBackend.load(self.backend_id)
+        if self._cchq_backend_id:
+            backend = SQLMobileBackend.load(self._cchq_backend_id)
             if backend.show_inbound_api_key_during_edit:
                 self.fields['inbound_api_key'].initial = backend.inbound_api_key
                 fields.append(crispy.Field('inbound_api_key'))
@@ -913,8 +913,8 @@ class BackendForm(Form):
 
     def __init__(self, *args, **kwargs):
         button_text = kwargs.pop('button_text', _("Create SMS Gateway"))
-        self.domain = kwargs.pop('domain')
-        self.backend_id = kwargs.pop('backend_id')
+        self._cchq_domain = kwargs.pop('domain')
+        self._cchq_backend_id = kwargs.pop('backend_id')
         super(BackendForm, self).__init__(*args, **kwargs)
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
@@ -943,7 +943,7 @@ class BackendForm(Form):
             ),
         )
 
-        if self.backend_id:
+        if self._cchq_backend_id:
             #   When editing, don't allow changing the name because name might be
             # referenced as a contact-level backend preference.
             #   By setting disabled to True, Django makes sure the value won't change
@@ -968,15 +968,15 @@ class BackendForm(Form):
             # ensure name is not duplicated among other global backends
             is_unique = SQLMobileBackend.name_is_unique(
                 value,
-                backend_id=self.backend_id
+                backend_id=self._cchq_backend_id
             )
         else:
             # We're using the form to create a domain-level backend, so
             # ensure name is not duplicated among other backends owned by this domain
             is_unique = SQLMobileBackend.name_is_unique(
                 value,
-                domain=self.domain,
-                backend_id=self.backend_id
+                domain=self._cchq_domain,
+                backend_id=self._cchq_backend_id
             )
 
         if not is_unique:
