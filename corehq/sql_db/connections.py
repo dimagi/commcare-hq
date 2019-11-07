@@ -165,20 +165,18 @@ class ConnectionManager(object):
         if reporting_db_config:
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
-                weighted_read_dbs = None
-                if isinstance(db_config, dict):
-                    write_db = db_config['WRITE']
-                    weighted_read_dbs = db_config['READ']
-                    dbs = [db for db, weight in weighted_read_dbs]
-                    assert set(dbs).issubset(set(settings.DATABASES))
+                if not isinstance(db_config, dict):
+                    self.engine_id_django_db_map[engine_id] = write_db
+                    continue
 
+                write_db = db_config['WRITE']
                 self.engine_id_django_db_map[engine_id] = write_db
+                weighted_read_dbs = db_config['READ']
+                dbs = [db for db, weight in weighted_read_dbs]
+                assert set(dbs).issubset(set(settings.DATABASES))
+
                 if weighted_read_dbs:
                     self.read_database_mapping[engine_id] = weighted_read_dbs
-                    for read_db, weighting in weighted_read_dbs:
-                        assert read_db == write_db or read_db not in self.engine_id_django_db_map, read_db
-                        if read_db != write_db:
-                            self.engine_id_django_db_map[read_db] = read_db
 
         for app, weighted_read_dbs in settings.LOAD_BALANCED_APPS.items():
             self.read_database_mapping[app] = weighted_read_dbs
