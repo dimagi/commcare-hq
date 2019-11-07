@@ -15,7 +15,7 @@ from custom.icds_reports.views import (
     DailyIndicators
 )
 
-dashboardurls = [
+dashboard_urls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
     url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
@@ -125,7 +125,7 @@ awc_infrastructure_urls = [
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', LegacyTableauRedirectView.as_view(),
         name='icds_tableau'),
-    url(r'^icds_dashboard/', include(dashboardurls)),
+    url(r'^icds_dashboard/', include(dashboard_urls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
@@ -159,4 +159,4 @@ urlpatterns = [
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
 ]
 
-DASHBOARD_URL_GROUPS = urlpatterns + dashboardurls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls
+DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls
