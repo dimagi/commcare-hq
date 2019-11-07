@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from django.test import override_settings
@@ -127,6 +128,30 @@ class XFormPillowTest(TestCase):
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
         self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
         self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
+
+        process_reporting_metadata_staging()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
+        self.assertEqual(
+            last_submission.submission_date,
+            string_to_utc_datetime(self.metadata.received_on),
+        )
+        self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
+    def test_app_metadata_tracker_synclog_processed(self):
+        UserReportingMetadataStaging.add_sync(
+            self.domain, self.user._id, self.metadata.app_id,
+            '123', datetime.utcnow(), self.metadata.device_id
+        )
+
+        form, metadata = self._create_form_and_sync_to_es()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
 
         process_reporting_metadata_staging()
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)

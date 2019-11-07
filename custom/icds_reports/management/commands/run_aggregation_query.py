@@ -1,20 +1,42 @@
+from django.core.management.base import BaseCommand
+
 import attr
 from gevent.pool import Pool
 
-from django.core.management.base import BaseCommand
+from dimagi.utils.dates import force_to_date
 
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
-    _aggregate_gm_forms, _aggregate_df_forms, _aggregate_cf_forms, _aggregate_ccs_cf_forms,
-    _aggregate_child_health_thr_forms, _aggregate_ccs_record_thr_forms, _aggregate_child_health_pnc_forms,
-    _aggregate_ccs_record_pnc_forms, _aggregate_delivery_forms, _aggregate_bp_forms,
-    _aggregate_awc_infra_forms, _agg_ls_awc_mgt_form, _agg_ls_vhnd_form,
-    _agg_beneficiary_form, create_all_mbt, setup_aggregation, _agg_ls_table,
-    _update_months_table, _daily_attendance_table, _agg_child_health_table,
-    _ccs_record_monthly_table, _agg_ccs_record_table, _agg_awc_table,
-    aggregate_awc_daily, _child_health_monthly_aggregation, update_child_health_monthly_table
+    _agg_awc_table,
+    _agg_beneficiary_form,
+    _agg_ccs_record_table,
+    _agg_child_health_table,
+    _agg_ls_awc_mgt_form,
+    _agg_ls_table,
+    _agg_ls_vhnd_form,
+    _aggregate_awc_infra_forms,
+    _aggregate_bp_forms,
+    _aggregate_ccs_cf_forms,
+    _aggregate_ccs_record_pnc_forms,
+    _aggregate_ccs_record_thr_forms,
+    _aggregate_cf_forms,
+    _aggregate_child_health_pnc_forms,
+    _aggregate_child_health_thr_forms,
+    _aggregate_delivery_forms,
+    _aggregate_df_forms,
+    _aggregate_gm_forms,
+    _ccs_record_monthly_table,
+    _child_health_monthly_aggregation,
+    _daily_attendance_table,
+    _update_months_table,
+    aggregate_awc_daily,
+    create_all_mbt,
+    setup_aggregation,
+    update_child_health_monthly_table,
 )
-
+from custom.icds_reports.utils.aggregation_helpers import (
+    previous_month_aggregation_should_run,
+)
 
 STATE_TASKS = {
     'aggregate_gm_forms': _aggregate_gm_forms,
@@ -75,6 +97,9 @@ class Command(BaseCommand):
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
         agg_date = agg_record.agg_date
+        if (agg_record.interval != 0
+                and not previous_month_aggregation_should_run(force_to_date(agg_date))):
+            return
         state_ids = agg_record.state_ids
         query = self.function_map[query_name]
         if query.by_state == SINGLE_STATE:

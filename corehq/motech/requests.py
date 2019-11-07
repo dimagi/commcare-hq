@@ -11,8 +11,6 @@ from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 
-logger = logging.getLogger('motech')
-
 
 def log_request(func):
 
@@ -90,21 +88,14 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        try:
-            if self._session:
-                response = self._session.request(method, *args, **kwargs)
-            else:
-                # Mimics the behaviour of requests.api.request()
-                with requests.Session() as session:
-                    response = session.request(method, *args, **kwargs)
-            if raise_for_status:
-                response.raise_for_status()
-        except requests.RequestException:
-            # commented out since these are spamming Sentry
-            # err_request, err_response = parse_request_exception(err)
-            # logger.error('Request: %s', err_request)
-            # logger.error('Response: %s', err_response)
-            raise
+        if self._session:
+            response = self._session.request(method, *args, **kwargs)
+        else:
+            # Mimics the behaviour of requests.api.request()
+            with requests.Session() as session:
+                response = session.request(method, *args, **kwargs)
+        if raise_for_status:
+            response.raise_for_status()
         return response
 
     def get_url(self, uri):
