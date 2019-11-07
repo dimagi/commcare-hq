@@ -400,10 +400,10 @@ class SnapshotSettingsForm(forms.Form):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
-        app_ids = self._get_apps_to_publish()
+        item_ids = self._get_items_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=app_ids):
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=app_ids)]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=item_ids):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=item_ids)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
@@ -414,7 +414,7 @@ class SnapshotSettingsForm(forms.Form):
             referenced_pairs = AutomaticUpdateRule.get_referenced_app_form_pairs_from_sms_surveys(self.dom.name)
             if referenced_pairs:
                 all_apps_by_id = {app.get_id: app for app in get_apps_in_domain(self.dom.name)}
-                referenced_apps = [all_apps_by_id[app_id] for app_id in app_ids]
+                referenced_apps = [all_apps_by_id[item_id] for item_id in item_ids if item_id in all_apps_by_id]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in referenced_apps] for f in forms]
                 nonexistent_pairs = [pair for pair in referenced_pairs if pair[1] not in app_forms]
                 if nonexistent_pairs:
@@ -426,16 +426,19 @@ class SnapshotSettingsForm(forms.Form):
 
         return cleaned_data
 
-    def _get_apps_to_publish(self):
-        app_ids = []
+    def _get_items_to_publish(self):
+        """
+        Returns ids of apps and lookup tables.
+        """
+        ids = []
         for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
             if d[1] == 'publish' and val == 'on':
-                app_ids.append(d[0])
+                ids.append(d[0])
 
-        return app_ids
+        return ids
 
 ########################################################################################################
 
