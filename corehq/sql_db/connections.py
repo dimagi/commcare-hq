@@ -80,6 +80,9 @@ class SessionHelper(object):
 class ConnectionManager(object):
     """
     Object for dealing with sqlalchemy engines and sessions.
+
+    Maintains a mapping of `engine_id` to Django db alias as well as load balancing configuration
+    from the `REPORTING_DATABASES` setting.
     """
 
     def __init__(self):
@@ -124,8 +127,7 @@ class ConnectionManager(object):
     def get_load_balanced_read_db_alias(self, engine_id, default=None):
         """
         returns the load balanced read db alias based on list of read databases
-            and their weights obtained from settings.REPORTING_DATABASES and
-            settings.LOAD_BALANCED_APPS.
+            and their weights obtained from settings.REPORTING_DATABASES
 
             If a suitable db is not found returns the `default` or `engine_id` itself
         """

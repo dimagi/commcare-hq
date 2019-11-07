@@ -1,9 +1,12 @@
+import mock as mock
 from django.db import DEFAULT_DB_ALIAS
 from mock import patch, MagicMock
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from nose.tools import assert_equal
 
-from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP
+from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP, get_load_balanced_app_db
+from corehq.sql_db.tests.test_connections import _get_db_config
 
 WAREHOUSE_DB = 'warehouse'
 db_dict = {'NAME': 'commcarehq_warehouse', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
@@ -70,3 +73,23 @@ class AllowMigrateTest(SimpleTestCase):
         self.assertIs(False, allow_migrate('synclogs', 'accounting'))
         self.assertIs(True, allow_migrate(None, 'accounting'))
         self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'accounting'))
+
+
+@mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+def test_load_balanced_read_apps(mock):
+    load_balanced_apps = {
+        'users': [
+            ('users_db1', 5),
+        ]
+    }
+
+    with override_settings(
+        LOAD_BALANCED_APPS=load_balanced_apps,
+        DATABASES={
+            DEFAULT_DB_ALIAS: _get_db_config('default'),
+            'users_db1': _get_db_config('users_db1')}):
+
+        assert_equal(get_load_balanced_app_db('users', default="default_option"), 'users_db1')
+
+    # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
+    assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')
