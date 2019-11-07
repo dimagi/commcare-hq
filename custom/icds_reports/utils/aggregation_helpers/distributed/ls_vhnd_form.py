@@ -30,14 +30,15 @@ class LSVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
                 state_id,
                 location_id as supervisor_id,
                 %(start_date)s::DATE AS month,
-                count(*) as vhnd_observed
+                count(*) FILTER (WHERE submitted_on >= %(start_date)s AND
+                   submitted_on < %(end_date)s) as form_count,
+                count(*) FILTER (WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s) as vhnd_observed
                 FROM "{ucr_tablename}"
-                WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
-                AND state_id=%(state_id)s
+                WHERE state_id=%(state_id)s
                 GROUP BY state_id,location_id
         );
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, vhnd_observed
+        state_id, supervisor_id, month, form_count, vhnd_observed
         ) (
              SELECT * FROM "{temp_table}"
         )
