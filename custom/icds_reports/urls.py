@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 
-from corehq.apps.hqwebapp import views as hqwebapp_views
+from . import mobile_views
 from custom.icds_reports.views import (
     LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView,
     PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView,
@@ -125,7 +125,7 @@ awc_infrastructure_urls = [
 
 
 mobile_dashboard_urls = [
-    url(r'^login/$', hqwebapp_views.domain_login, name="cas_mobile_dashboard_login"),
+    url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
 ]
 
 
