@@ -178,11 +178,6 @@ class ConnectionManager(object):
                 if weighted_read_dbs:
                     self.read_database_mapping[engine_id] = weighted_read_dbs
 
-        for app, weighted_read_dbs in settings.LOAD_BALANCED_APPS.items():
-            self.read_database_mapping[app] = weighted_read_dbs
-            dbs = [db for db, weight in weighted_read_dbs]
-            assert set(dbs).issubset(set(settings.DATABASES))
-
         if DEFAULT_ENGINE_ID not in self.engine_id_django_db_map:
             self.engine_id_django_db_map[DEFAULT_ENGINE_ID] = DEFAULT_DB_ALIAS
         if UCR_ENGINE_ID not in self.engine_id_django_db_map:

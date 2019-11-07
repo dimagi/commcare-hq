@@ -10,6 +10,7 @@ from corehq.sql_db.connections import (
     connection_manager,
     get_aaa_db_alias,
     get_icds_ucr_citus_db_alias)
+from corehq.sql_db.util import select_db_for_read
 
 from .config import partition_config
 
@@ -122,8 +123,13 @@ def db_for_read_write(model, write=True):
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
-            return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
+            return get_load_balanced_app_db(app_label, default_db)
         return default_db
+
+
+def get_load_balanced_app_db(app_name: str, default: str) -> str:
+    read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
+    return select_db_for_read(read_dbs) or default
 
 
 def get_cursor(model):
