@@ -88,10 +88,10 @@ class ConnectionManager(object):
         self.engine_id_django_db_map = {}
         self._populate_connection_map()
 
-    def _get_or_create_helper(self, engine_id):
-        if engine_id not in self._session_helpers:
-            self._session_helpers[engine_id] = SessionHelper(self.get_connection_string(engine_id))
-        return self._session_helpers[engine_id]
+    def _get_or_create_helper(self, connection_string):
+        if connection_string not in self._session_helpers:
+            self._session_helpers[connection_string] = SessionHelper(connection_string)
+        return self._session_helpers[connection_string]
 
     def get_django_db_alias(self, engine_id):
         return self.engine_id_django_db_map[engine_id]
@@ -99,12 +99,14 @@ class ConnectionManager(object):
     def engine_id_is_available(self, engine_id):
         return engine_id in self.engine_id_django_db_map
 
-    def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID):
+    def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID, readonly=False):
         """
         Returns the SessionHelper object associated with this engine id
         """
         # making this separate from _get_or_create in case we ever want to fail differently here
-        return self._get_or_create_helper(engine_id)
+        if readonly:
+            engine_id = self.get_load_balanced_read_db_alias(engine_id)
+        return self._get_or_create_helper(self.get_connection_string(engine_id))
 
     def get_scoped_session(self, engine_id=DEFAULT_ENGINE_ID):
         """
