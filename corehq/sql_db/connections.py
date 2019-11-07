@@ -208,11 +208,6 @@ class ConnectionManager(object):
             **db_settings
         )
 
-    def _get_db_alias_from_settings_key(self, db_alias_settings_key):
-        db_alias = getattr(settings, db_alias_settings_key, None)
-        if db_alias in settings.DATABASES:
-            return db_alias
-
     def resolves_to_unique_dbs(self, engine_ids):
         # return True if all in the list of engine_ids point to a different database
         return len(engine_ids) == len({connection_manager.get_django_db_alias(e) for e in engine_ids})
