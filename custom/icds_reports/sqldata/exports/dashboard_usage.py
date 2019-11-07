@@ -206,6 +206,8 @@ class DashBoardUsage:
                 user_indicators[record['username']].append(record['count'])
             # accumulating the indicator counts
             for user in users:
+                if not dashboard_uname_rx.match(user['username']):
+                    continue
                 indicator_count = user_indicators[user['username']]
                 user_sql_location_ids = user['assigned_location_ids']
                 if isinstance(user_sql_location_ids, str):
