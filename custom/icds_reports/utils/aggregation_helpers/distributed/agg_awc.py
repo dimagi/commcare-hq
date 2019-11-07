@@ -22,6 +22,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
 
+    @property
+    def child_temp_tablename(self):
+        from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
+        return ChildHealthMonthlyAggregationDistributedHelper([], self.month_start).temporary_tablename
+
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
         update_queries = self.updates()
@@ -346,7 +351,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_child";
         """.format(
             tablename=self.tablename,
-            child_health_monthly="child_health_monthly",
+            child_health_monthly=self.child_temp_tablename,
         ), {
             "month": self.month_start
         }

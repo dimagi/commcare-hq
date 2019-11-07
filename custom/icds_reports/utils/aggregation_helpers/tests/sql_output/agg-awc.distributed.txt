@@ -224,7 +224,7 @@
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
             sum(immunization_in_month) AS num_children_immunized
-        FROM "child_health_monthly"
+        FROM "tmp_child_health_monthly_2019-01-01"
         WHERE month = %(month)s and valid_in_month = 1
         GROUP BY awc_id;
         UPDATE "agg_awc_2019-01-01_5" agg_awc SET
