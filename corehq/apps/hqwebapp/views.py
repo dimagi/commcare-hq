@@ -357,7 +357,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name):
+def _login(req, domain_name, custom_login_page):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -382,7 +382,6 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_login_page = get_custom_login_page(req.get_host())
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -428,7 +427,7 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain)
+    return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
 @location_safe
@@ -442,7 +441,7 @@ def domain_login(req, domain):
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain)
+    return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
 class HQLoginView(LoginView):
