@@ -50,6 +50,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -381,17 +382,9 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    default_template_name = 'login_and_password/login.html'
-    template_name = default_template_name
-    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
-    if custom_landing_page:
-        if isinstance(custom_landing_page, str):
-            template_name = custom_landing_page
-        else:
-            template_name = custom_landing_page.get(req.get_host())
-            if template_name is None:
-                template_name = custom_landing_page.get('default', default_template_name)
-    elif domain_name:
+    custom_login_page = get_custom_login_page(req)
+    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
