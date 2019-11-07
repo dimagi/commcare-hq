@@ -381,7 +381,8 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = 'login_and_password/login.html'
+    default_template_name = 'login_and_password/login.html'
+    template_name = default_template_name
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
         if isinstance(custom_landing_page, str):
@@ -389,7 +390,7 @@ def _login(req, domain_name):
         else:
             template_name = custom_landing_page.get(req.get_host())
             if template_name is None:
-                template_name = custom_landing_page.get('default', template_name)
+                template_name = custom_landing_page.get('default', default_template_name)
     elif domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
