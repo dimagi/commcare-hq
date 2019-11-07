@@ -382,7 +382,7 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_login_page = get_custom_login_page(req)
+    custom_login_page = get_custom_login_page(req.get_host())
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
