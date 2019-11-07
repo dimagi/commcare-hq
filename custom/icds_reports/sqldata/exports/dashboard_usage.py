@@ -186,10 +186,7 @@ class DashBoardUsage:
 
             dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
 
-            usernames = []
-            for user in users:
-                if dashboard_uname_rx.match(user['username']):
-                    usernames.append(user['username'])
+            usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
 
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
                                                                username__in=usernames)
@@ -209,6 +206,8 @@ class DashBoardUsage:
                 user_indicators[record['username']].append(record['count'])
             # accumulating the indicator counts
             for user in users:
+                if not dashboard_uname_rx.match(user['username']):
+                    continue
                 indicator_count = user_indicators[user['username']]
                 user_sql_location_ids = user['assigned_location_ids']
                 if isinstance(user_sql_location_ids, str):
