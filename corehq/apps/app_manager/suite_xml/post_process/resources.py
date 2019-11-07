@@ -17,7 +17,6 @@ class ResourceOverride(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'app_id', 'root_name', 'pre_id')
-        index_together = ('domain', 'app_id', 'root_name')
 
 
 def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
