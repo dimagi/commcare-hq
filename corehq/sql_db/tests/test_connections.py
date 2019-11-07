@@ -34,29 +34,21 @@ REPORTING_DATABASES = {
 
 @override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
-    @override_settings(UCR_DATABASE_URL='ucr-url', REPORTING_DATABASES=None)
-    def test_legacy_settings(self):
-        manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'ucr-url'
-        })
-
     @override_settings(REPORTING_DATABASES={})
     def test_new_settings_empty(self):
         manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'postgresql+psycopg2://:@localhost:5432/default'
+        self.assertEqual(manager.engine_id_django_db_map, {
+            'default': 'default',
+            'ucr': 'default'
         })
 
     @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS, 'ucr': 'ucr', 'other': 'other'})
     def test_new_settings(self):
         manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-            'other': 'postgresql+psycopg2://:@localhost:5432/other'
+        self.assertEqual(manager.engine_id_django_db_map, {
+            'default': 'default',
+            'ucr': 'ucr',
+            'other': 'other'
         })
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
@@ -69,10 +61,10 @@ class ConnectionManagerTests(SimpleTestCase):
         }
         with override_settings(REPORTING_DATABASES=reporting_dbs):
             manager = ConnectionManager()
-            self.assertEqual(manager.db_connection_map, {
-                'default': 'postgresql+psycopg2://:@localhost:5432/default',
-                'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-                'other': 'postgresql+psycopg2://:@localhost:5432/other'
+            self.assertEqual(manager.engine_id_django_db_map, {
+                'default': 'default',
+                'ucr': 'ucr',
+                'other': 'other'
             })
 
             # test that load balancing works with a 10% margin for randomness

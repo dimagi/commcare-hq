@@ -6,6 +6,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.utils.functional import cached_property
 
 import sqlalchemy
+from memoized import memoized
 from six.moves.urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
@@ -83,7 +84,6 @@ class ConnectionManager(object):
 
     def __init__(self):
         self._session_helpers = {}
-        self.db_connection_map = {}
         self.read_database_mapping = {}
         self.engine_id_django_db_map = {}
         self._populate_connection_map()
@@ -119,7 +119,7 @@ class ConnectionManager(object):
         Get an engine by ID. This should be a unique field identifying the connection,
         e.g. "report-db-1"
         """
-        return self._get_or_create_helper(engine_id).engine
+        return self.get_session_helper(engine_id).engine
 
     def get_load_balanced_read_db_alias(self, engine_id, default=None):
         """
@@ -132,7 +132,7 @@ class ConnectionManager(object):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         load_balanced_db = select_db_for_read(read_dbs)
 
-        return load_balanced_db or default or engine_id
+        return load_balanced_db or default or self.get_django_db_alias(engine_id)
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
@@ -157,8 +157,8 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        connection_string = self.db_connection_map.get(engine_id)
-        return connection_string or self.db_connection_map[DEFAULT_DB_ALIAS]
+        db_alias = self.engine_id_django_db_map.get(engine_id, DEFAULT_DB_ALIAS)
+        return self._connection_string_from_django(db_alias)
 
     def _populate_connection_map(self):
         reporting_db_config = settings.REPORTING_DATABASES
@@ -172,32 +172,25 @@ class ConnectionManager(object):
                     dbs = [db for db, weight in weighted_read_dbs]
                     assert set(dbs).issubset(set(settings.DATABASES))
 
-                self._add_django_db(engine_id, write_db)
+                self.engine_id_django_db_map[engine_id] = write_db
                 if weighted_read_dbs:
                     self.read_database_mapping[engine_id] = weighted_read_dbs
                     for read_db, weighting in weighted_read_dbs:
-                        assert read_db == write_db or read_db not in self.db_connection_map, read_db
+                        assert read_db == write_db or read_db not in self.engine_id_django_db_map, read_db
                         if read_db != write_db:
-                            self._add_django_db(read_db, read_db)
+                            self.engine_id_django_db_map[read_db] = read_db
 
         for app, weighted_read_dbs in settings.LOAD_BALANCED_APPS.items():
             self.read_database_mapping[app] = weighted_read_dbs
             dbs = [db for db, weight in weighted_read_dbs]
             assert set(dbs).issubset(set(settings.DATABASES))
 
-        if DEFAULT_ENGINE_ID not in self.db_connection_map:
-            self._add_django_db(DEFAULT_ENGINE_ID, DEFAULT_DB_ALIAS)
-        if UCR_ENGINE_ID not in self.db_connection_map:
-            self._add_django_db(UCR_ENGINE_ID, DEFAULT_DB_ALIAS)
+        if DEFAULT_ENGINE_ID not in self.engine_id_django_db_map:
+            self.engine_id_django_db_map[DEFAULT_ENGINE_ID] = DEFAULT_DB_ALIAS
+        if UCR_ENGINE_ID not in self.engine_id_django_db_map:
+            self.engine_id_django_db_map[UCR_ENGINE_ID] = DEFAULT_DB_ALIAS
 
-    def _get_reporting_db_config(self):
-        return getattr(settings, 'REPORTING_DATABASES', None)
-
-    def _add_django_db(self, engine_id, db_alias):
-        self.engine_id_django_db_map[engine_id] = db_alias
-        connection_string = self._connection_string_from_django(db_alias)
-        self.db_connection_map[engine_id] = connection_string
-
+    @memoized
     def _connection_string_from_django(self, django_alias):
         db_settings = settings.DATABASES[django_alias].copy()
         db_settings['PORT'] = db_settings.get('PORT', '5432')
@@ -230,15 +223,22 @@ signals.request_finished.connect(_close_connections)
 @unit_testing_only
 @contextmanager
 def override_engine(engine_id, connection_url, db_alias=None):
-    original_url = connection_manager.get_connection_string(engine_id)
+    get_connection_string = connection_manager.get_connection_string
+
+    def _get_conn_string(e_id):
+        if e_id == engine_id:
+            return connection_url
+        else:
+            return get_connection_string(e_id)
+
+    connection_manager.get_connection_string = _get_conn_string
     original_alias = connection_manager.engine_id_django_db_map.get(engine_id, None)
-    connection_manager.db_connection_map[engine_id] = connection_url
     if db_alias:
         connection_manager.engine_id_django_db_map[engine_id] = db_alias
     try:
         yield
     finally:
-        connection_manager.db_connection_map[engine_id] = original_url
+        connection_manager.get_connection_string = get_connection_string
         connection_manager.engine_id_django_db_map[engine_id] = original_alias
 
 
