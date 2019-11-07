@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
 from corehq.apps.domain.models import Domain
 
 
@@ -111,7 +111,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
         ))
 
     def _assign_community_subscriptions(self):
-        ensure_explicit_community_subscription(
+        ensure_community_or_paused_subscription(
             self.domain.name, self.from_date, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY
         )
 

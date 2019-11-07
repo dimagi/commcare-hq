@@ -1,0 +1,99 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div id="registration-choose-plan-container"
+     class="reg-form-container reg-plan-container">
+  <div class="row">
+
+    <div class="col-xs-6">
+      <div class="plan-container plan-container-professional">
+        <div class="plan-header">
+          <h2>
+            <small>CommCare</small>
+            Professional
+          </h2>
+        </div>
+        <p class="lead">
+          {% blocktrans %}
+            For organizations running programs at any scale.
+          {% endblocktrans %}
+        </p>
+        {% include 'registration/partials/feature_list.html' with features=professional_features %}
+        <p class="plan-price">
+          {% blocktrans %}
+            See <a href="{{ pricing_url }}">pricing</a> options.
+          {% endblocktrans %}
+        </p>
+        <div class="plan-cta">
+          <a href="#cta-form-start-trial"
+             id="js-get-trial"
+             data-toggle="modal"
+             class="btn btn-primary">
+            {% blocktrans %}
+              Get Trial
+            {% endblocktrans %}
+          </a>
+          <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
+          <script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
+          <span class="wistia_embed
+                       wistia_async_jzm3ggrinr
+                       popover=true
+                       popoverPreventScroll=true
+                       popoverBorderRadius=10
+                       popoverOverlayOpacity=.75
+                       playbar=true
+                       smallPlayButton=true
+                       volumeControl=false
+                       settingsControl=false
+                       fullscreenButton=true
+                       controlsVisibleOnLoad=false
+                       popoverContent=link">
+            <a href="#">
+              <i class="fa fa-play-circle"></i>
+              {% blocktrans %}
+                Watch Demo
+              {% endblocktrans %}
+            </a>
+          </span>
+        </div>
+        <p class="plan-footnote">
+          {% blocktrans %}
+            Questions? <a href="#" id="js-chat-now-cta">Chat now</a> with a product expert.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+
+    <div class="col-xs-6">
+      <div class="plan-container plan-container-community">
+        <div class="plan-header">
+          <h2>
+            <small>CommCare</small>
+            Community
+          </h2>
+        </div>
+        <p class="lead">
+          {% blocktrans %}
+            For individuals exploring mobile data collection.
+          {% endblocktrans %}
+        </p>
+        {% include 'registration/partials/feature_list.html' with features=community_features %}
+        <p class="plan-price">
+          {% blocktrans %}
+            Free for personal use.
+          {% endblocktrans %}
+        </p>
+        <div class="plan-cta">
+          <a href="#"
+             id="js-create-account"
+             class="btn btn-default">
+            {% blocktrans %}
+              Create Account
+            {% endblocktrans %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
