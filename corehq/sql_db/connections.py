@@ -161,10 +161,8 @@ class ConnectionManager(object):
         return connection_string or self.db_connection_map[DEFAULT_DB_ALIAS]
 
     def _populate_connection_map(self):
-        reporting_db_config = self._get_reporting_db_config()
-        if not reporting_db_config:
-            self._populate_from_legacy_settings()
-        else:
+        reporting_db_config = settings.REPORTING_DATABASES
+        if reporting_db_config:
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
                 weighted_read_dbs = None
@@ -191,12 +189,6 @@ class ConnectionManager(object):
             self._add_django_db(DEFAULT_ENGINE_ID, DEFAULT_DB_ALIAS)
         if UCR_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(UCR_ENGINE_ID, DEFAULT_DB_ALIAS)
-
-    def _populate_from_legacy_settings(self):
-        default_db = self._connection_string_from_django(DEFAULT_DB_ALIAS)
-        ucr_db_reporting_url = getattr(settings, 'UCR_DATABASE_URL', None)
-        self.db_connection_map[DEFAULT_ENGINE_ID] = default_db
-        self.db_connection_map[UCR_ENGINE_ID] = ucr_db_reporting_url or default_db
 
     def _get_reporting_db_config(self):
         return getattr(settings, 'REPORTING_DATABASES', None)
