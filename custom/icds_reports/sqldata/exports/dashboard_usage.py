@@ -155,7 +155,6 @@ class DashBoardUsage:
                    'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
                    'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
                    'Take Home Ration']
-        excel_rows.append(headers)
         serial_count = 0
         logged_in_user_locations = list(self.user.get_sql_locations(self.domain))
         if not logged_in_user_locations:
@@ -245,11 +244,12 @@ class DashBoardUsage:
                         excel.extend(indicator_count)
                         excel_rows.append(excel)
             loop_counter += 1
-
+        excel_rows = sorted(excel_rows, key=lambda x:(x[1], x[2], x[3]))
+        excel_rows.insert(0, headers)
         return [
             [
                 self.title,
-                sorted(excel_rows, key=lambda x:(x[1], x[2], x[3]))
+                excel_rows
             ],
             [
                 'Export Info',
