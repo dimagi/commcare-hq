@@ -172,7 +172,7 @@ class DashBoardUsage:
                 user_location = logged_in_user_locations[loop_counter]
                 user_location_type_name = \
                     self.get_location_id_string_from_location_type(user_location.location_type_name)
-                location_type_filter[user_location_type_name]: user_location.get_id
+                location_type_filter[user_location_type_name] = user_location.get_id
             else:
                 user_location_type_name = None
             for test_location in self.location_test_fields:
