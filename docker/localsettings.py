@@ -30,6 +30,10 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'PROXY': True,
+                'PLPROXY_HOST': 'localhost'
+            }
         },
         'p1': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -41,6 +45,9 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'SHARDS': [0, 1],
+            }
         },
         'p2': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -52,6 +59,9 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'SHARDS': [2, 3],
+            }
         },
         'warehouse': {
              'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -65,20 +75,6 @@ if USE_PARTITIONED_DATABASE:
              },
          },
     })
-
-    PARTITION_DATABASE_CONFIG = {
-        'shards': {
-            'p1': [0, 1],
-            'p2': [2, 3]
-        },
-        'groups': {
-            'proxy': ['proxy'],
-            'form_processing': ['p1', 'p2'],
-        },
-        'host_map': {
-            'postgres': 'localhost'
-        }
-    }
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
