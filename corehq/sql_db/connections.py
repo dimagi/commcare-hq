@@ -124,7 +124,7 @@ class ConnectionManager(object):
         """
         return self.get_session_helper(engine_id).engine
 
-    def get_load_balanced_read_db_alias(self, engine_id, default=None):
+    def get_load_balanced_read_db_alias(self, engine_id):
         """
         returns the load balanced read db alias based on list of read databases
             and their weights obtained from settings.REPORTING_DATABASES
@@ -134,7 +134,7 @@ class ConnectionManager(object):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         load_balanced_db = select_db_for_read(read_dbs)
 
-        return load_balanced_db or default or self.get_django_db_alias(engine_id)
+        return load_balanced_db or self.get_django_db_alias(engine_id)
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
