@@ -1262,6 +1262,8 @@ if LOCAL_LOGGING_CONFIG:
     for key, config in LOCAL_LOGGING_CONFIG.items():
         if key in ('handlers', 'loggers', 'formatters', 'filters'):
             LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
