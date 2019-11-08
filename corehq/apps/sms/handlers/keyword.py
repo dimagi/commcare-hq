@@ -296,6 +296,9 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     Returns (app, module, form, error, error_code)
     """
     try:
+        if app_id is None:
+            from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+            app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
         app = get_app(domain, app_id)
         form = app.get_form(form_unique_id)
         module = form.get_module()
