@@ -30,7 +30,7 @@
       <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
-      <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+      <li><a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% endif %}
   </ul>
   <div class="tab-content" id="settings">
@@ -68,6 +68,24 @@
       <div class="tab-pane" id="user-permanent">
         <div class="panel-body">
           <div class="form form-horizontal">
+            <fieldset>
+              <legend>{% trans 'Hard Refresh Device Data' %}</legend>
+              <div>
+                <p>
+                  <a class="btn btn-primary {% if not has_any_sync_logs %} disabled{% endif %}" href="#force_user_412_{{ couch_user.user_id }}" data-toggle="modal" {% if not has_any_sync_logs %}aria-disabled="true"{% endif %}>
+                    <i class="fa fa-refresh"></i> {% trans "Hard Refresh Device Data" %}
+                  </a>
+                </p>
+                {% if not has_any_sync_logs %}
+                  <p class="help-block">
+                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                      Mobile Worker {{ friendly_name }} is already set to do a full refresh
+                      the next time they sync.
+                    {% endblocktrans %}
+                  </p>
+                {% endif %}
+              </div>
+            </fieldset>
             <fieldset>
               <legend>{% trans 'Delete Mobile Worker' %}</legend>
               <div class="alert alert-danger">
@@ -208,4 +226,45 @@
       </div>
     </div>
   {% endif %}
+
+  <div id="force_user_412_{{ couch_user.user_id }}" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Hard Refresh Device Data for Mobile Worker {{ friendly_name }}?{% endblocktrans %}
+          </h4>
+        </div>
+        <form class="form-horizontal"
+              style="margin: 0; padding: 0"
+              action="{% url "force_user_412" domain couch_user.user_id %}"
+              method="post"
+              data-bind="submit: submit">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p>
+              {% blocktrans %}
+              Certain data cleaning operations may disrupt a devices ability
+                to completely sync data. If you observe irregularities in
+                the data on this user's device that are not fixed by a normal sync,
+                you can use this button to force the device to sync from scratch
+                the next time it does a sync.
+                A hard refresh may take longer than a normal sync.
+              {% endblocktrans %}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+            <button type="submit" class="btn btn-primary" data-bind="
+                           css: {disabled: disabled()},
+                           attr: {disabled: disabled()}
+                       ">
+              {% trans "Hard Refresh Device Data" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 {% endblock %}
