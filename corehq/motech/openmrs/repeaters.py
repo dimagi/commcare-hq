@@ -2,7 +2,6 @@ import json
 from collections import defaultdict
 from itertools import chain
 
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,6 +19,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -142,6 +142,10 @@ class OpenmrsRepeater(CaseRepeater):
                     # don't get overwritten by later ones:
                     obs_mappings[obs_mapping.concept].append(obs_mapping)
         return obs_mappings
+
+    @cached_property
+    def get_first_user(self):
+        return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
     def payload_doc(self, repeat_record):

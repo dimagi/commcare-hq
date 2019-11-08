@@ -8,6 +8,7 @@ from casexml.apps.case.models import (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
 )
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
@@ -166,6 +167,7 @@ class OpenmrsCaseConfig(DocumentSchema):
 
 
 class IndexedCaseMapping(DocumentSchema):
+    identifier = StringProperty(required=True, default=DEFAULT_PARENT_IDENTIFIER)
     case_type = StringProperty(required=True)
     relationship = StringProperty(required=True, choices=INDEX_RELATIONSHIPS,
                                   default=INDEX_RELATIONSHIP_EXTENSION)
