@@ -10,6 +10,12 @@ class TestViews(TestCase):
         response = self.client.get(reverse("login"), follow=False)
         self._assertProductionLogin(response)
 
+    @override_settings(SERVER_ENVIRONMENT='icds')
+    def test_icds_env_login_redirect(self):
+        response = self.client.get(reverse("login"), follow=False)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual('/a/icds-cas/login/', response.url)
+
     @override_settings(CUSTOM_LANDING_TEMPLATE='icds/login.html', SERVER_ENVIRONMENT='production')
     def test_custom_login_old_format(self):
         response = self.client.get(reverse("login"), follow=False)
