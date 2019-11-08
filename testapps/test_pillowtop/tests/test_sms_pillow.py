@@ -7,7 +7,7 @@ from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.sms import get_sql_sms_pillow
-from corehq.util.elastic import ensure_index_deleted
+from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
@@ -22,7 +22,7 @@ class SqlSMSPillowTest(TestCase):
     def setUp(self):
         super(SqlSMSPillowTest, self).setUp()
         self.elasticsearch = get_es_new()
-        ensure_index_deleted(SMS_INDEX_INFO.index)
+        reset_es_index(SMS_INDEX_INFO)
 
     def tearDown(self):
         ensure_index_deleted(SMS_INDEX_INFO.index)

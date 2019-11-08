@@ -34,6 +34,7 @@ from corehq.toggles import (
     ECD_MIGRATED_DOMAINS,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import json_format_datetime
@@ -247,9 +248,12 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    query = {'query': CaseSearchES().domain(domain).raw_query['query']}
-    get_es_new().delete_by_query(
-        index=CASE_SEARCH_INDEX,
-        doc_type=CASE_ES_TYPE,
-        body=query,
-    )
+    get_es_new().indices.refresh(CASE_SEARCH_INDEX)
+    case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
+
+    ElasticsearchInterface(get_es_new()).bulk_ops([{
+        "_op_type": "delete",
+        "_index": CASE_SEARCH_INDEX,
+        "_type": CASE_ES_TYPE,
+        "_id": case_id,
+    } for case_id in case_ids])
