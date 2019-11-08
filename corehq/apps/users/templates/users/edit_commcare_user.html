@@ -236,10 +236,8 @@
           </h4>
         </div>
         <form class="form-horizontal"
-              style="margin: 0; padding: 0"
               action="{% url "force_user_412" domain couch_user.user_id %}"
-              method="post"
-              data-bind="submit: submit">
+              method="post">
           {% csrf_token %}
           <div class="modal-body">
             <p>
@@ -255,10 +253,7 @@
           </div>
           <div class="modal-footer">
             <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-            <button type="submit" class="btn btn-primary" data-bind="
-                           css: {disabled: disabled()},
-                           attr: {disabled: disabled()}
-                       ">
+            <button type="submit" class="btn btn-primary disable-on-submit">
               {% trans "Hard Refresh Device Data" %}
             </button>
           </div>
