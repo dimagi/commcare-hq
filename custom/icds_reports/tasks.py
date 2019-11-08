@@ -859,7 +859,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             export_info = excel_data[1][1]
             generated_timestamp = date_parser.parse(export_info[0][1])
             formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-            data_type = 'Dashboard usage Report(Last 7 days)__{}'.format(formatted_timestamp)
+            data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
             if file_format == 'xlsx':
                 cache_key = get_dashboard_usage_excel_file(
                     excel_data,
