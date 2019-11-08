@@ -1,4 +1,3 @@
-import mock as mock
 from django.db import DEFAULT_DB_ALIAS
 from mock import patch, MagicMock
 from django.test import SimpleTestCase
@@ -75,7 +74,7 @@ class AllowMigrateTest(SimpleTestCase):
         self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'accounting'))
 
 
-@mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+@patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
 def test_load_balanced_read_apps(mock):
     load_balanced_apps = {
         'users': [
