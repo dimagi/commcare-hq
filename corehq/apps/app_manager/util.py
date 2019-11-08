@@ -28,6 +28,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
     PracticeUserException,
     SuiteError,
     SuiteValidationError,
@@ -711,3 +712,24 @@ def get_latest_enabled_versions_per_profile(app_id):
         LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
             Max('version'))
     }
+
+def get_app_id_from_form_unique_id(domain, form_unique_id):
+    """
+    Do not use. This is here to support migrations and temporary cose for *removing*
+    the constraint that form ids be lgobally unique. It will stop working as more
+    duplicated form unique ids appear.
+    """
+    return _get_app_ids_by_form_unique_id(domain).get(form_unique_id)
+
+
+@quickcache(['domain'], timeout=1 * 60 * 60)
+def _get_app_ids_by_form_unique_id(domain):
+    apps = get_apps_in_domain(domain)
+    app_ids = {}
+    for app in apps:
+        for module in app.modules:
+            for form in module.get_forms():
+                if form.unique_id in app_ids:
+                    raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
+                app_ids[form.unique_id] = app.get_id
+    return app_ids

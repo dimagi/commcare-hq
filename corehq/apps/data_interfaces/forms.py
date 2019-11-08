@@ -232,7 +232,7 @@ class CaseUpdateRuleForm(forms.Form):
         required=True,
     )
 
-    def compute_initial(self, rule):
+    def compute_initial(self, domain, rule):
         return {
             'name': rule.name,
         }
@@ -245,7 +245,7 @@ class CaseUpdateRuleForm(forms.Form):
 
         rule = kwargs.pop('rule', None)
         if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+            kwargs['initial'] = self.compute_initial(domain, rule)
 
         super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
@@ -300,7 +300,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'MATCH_REGEX': MatchPropertyDefinition.MATCH_REGEX,
         }
 
-    def compute_initial(self, rule):
+    def compute_initial(self, domain, rule):
         initial = {
             'case_type': rule.case_type,
             'filter_on_server_modified': 'true' if rule.filter_on_server_modified else 'false',
@@ -369,7 +369,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.initial_rule = kwargs.pop('rule', None)
         if self.initial_rule:
-            kwargs['initial'] = self.compute_initial(self.initial_rule)
+            kwargs['initial'] = self.compute_initial(domain, self.initial_rule)
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 
@@ -399,7 +399,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.case_type_helper.layout = Layout(
             Fieldset(
                 _("Rule Criteria"),
-                Field('case_type', data_bind="value: caseType")
+                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2")
             )
         )
 
@@ -610,7 +610,7 @@ class CaseRuleActionsForm(forms.Form):
             'custom_action_definitions': json.loads(self['custom_action_definitions'].value()),
         }
 
-    def compute_initial(self, rule):
+    def compute_initial(self, domain, rule):
         initial = {}
         custom_action_definitions = []
 
@@ -636,7 +636,7 @@ class CaseRuleActionsForm(forms.Form):
 
         rule = kwargs.pop('rule', None)
         if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+            kwargs['initial'] = self.compute_initial(domain, rule)
 
         super(CaseRuleActionsForm, self).__init__(*args, **kwargs)
 
