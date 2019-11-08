@@ -960,9 +960,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 'Cannot delete domain without leaving a tombstone except during testing')
         self._pre_delete()
         if leave_tombstone:
-            if not self.doc_type.endswith('-Deleted'):
-                self.doc_type = '{}-Deleted'.format(self.doc_type)
-            self.save()
+            domain = self.get(self._id)
+            if not domain.doc_type.endswith('-Deleted'):
+                domain.doc_type = '{}-Deleted'.format(domain.doc_type)
+                domain.save()
         else:
             super().delete()
 
