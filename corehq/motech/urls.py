@@ -1,15 +1,20 @@
 from django.conf.urls import url
 
-from corehq.motech.dhis2.views import config_dhis2_repeater
+from corehq.motech.dhis2.views import (
+    config_dhis2_entity_repeater,
+    config_dhis2_repeater,
+)
 from corehq.motech.openmrs.views import config_openmrs_repeater
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
+    AddDhis2EntityRepeaterView,
     AddDhis2RepeaterView,
     AddFormRepeaterView,
     AddOpenmrsRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
+    EditDhis2EntityRepeaterView,
     EditDhis2RepeaterView,
     EditFormRepeaterView,
     EditOpenmrsRepeaterView,
@@ -31,6 +36,8 @@ urlpatterns = [
         {'repeater_type': 'OpenmrsRepeater'}, name=AddOpenmrsRepeaterView.urlname),
     url(r'^forwarding/new/Dhis2Repeater/$', AddDhis2RepeaterView.as_view(),
         {'repeater_type': 'Dhis2Repeater'}, name=AddDhis2RepeaterView.urlname),
+    url(r'^forwarding/new/Dhis2EntityRepeater/$', AddDhis2EntityRepeaterView.as_view(),
+        {'repeater_type': 'Dhis2EntityRepeater'}, name=AddDhis2EntityRepeaterView.urlname),
     url(r'^forwarding/new/SearchByParamsRepeater/$', AddCaseRepeaterView.as_view(),
         {'repeater_type': 'SearchByParamsRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
@@ -43,6 +50,8 @@ urlpatterns = [
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
     url(r'^forwarding/edit/Dhis2Repeater/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
         {'repeater_type': 'Dhis2Repeater'}, name=EditDhis2RepeaterView.urlname),
+    url(r'^forwarding/edit/Dhis2EntityRepeater/(?P<repeater_id>\w+)/$', EditDhis2EntityRepeaterView.as_view(),
+        {'repeater_type': 'Dhis2EntityRepeater'}, name=EditDhis2EntityRepeaterView.urlname),
     url(r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 
@@ -50,6 +59,8 @@ urlpatterns = [
         name='config_openmrs_repeater'),
     url(r'^forwarding/config/Dhis2Repeater/(?P<repeater_id>\w+)/$', config_dhis2_repeater,
         name='config_dhis2_repeater'),
+    url(r'^forwarding/config/Dhis2EntityRepeater/(?P<repeater_id>\w+)/$', config_dhis2_entity_repeater,
+        name='config_dhis2_entity_repeater'),
     url(r'^forwarding/config/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', lambda: None,
         name='config_repeater'),
 
