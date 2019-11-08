@@ -101,7 +101,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.showWarning = function () {
         return (
             vm.now === vm.selectedMonth &&
-            new Date().getFullYear() === vm.selectedYear
+            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected()
         );
     };
     vm.levels = [
