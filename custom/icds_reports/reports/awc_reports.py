@@ -896,6 +896,8 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
             infant_weighing_scale=Sum('infra_infant_weighing_scale'),
             adult_weighing_scale=Sum('infra_adult_weighing_scale'),
             num_awc_infra_last_update=Sum('num_awc_infra_last_update'),
+            infantometer=Sum('infantometer'),
+            stadiometer=Sum('stadiometer')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -963,6 +965,26 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
                     'label': _('Medicine Kit'),
                     'help_text': None,
                     'value': get_infa_value(kpi_data, 'medicine_kits'),
+                    'all': '',
+                    'format': 'string',
+                    'show_percent': False,
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('Infantometer'),
+                    'help_text': None,
+                    'value': get_infa_value(kpi_data, 'infantometer'),
+                    'all': '',
+                    'format': 'string',
+                    'show_percent': False,
+                    'frequency': 'month'
+                }
+            ],
+            [
+                {
+                    'label': _('Stadiometer'),
+                    'help_text': None,
+                    'value': get_infa_value(kpi_data, 'stadiometer'),
                     'all': '',
                     'format': 'string',
                     'show_percent': False,
