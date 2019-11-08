@@ -61,6 +61,5 @@ branches:
   - mk/ignore-all-demo-submissions-redone # MK Oct 22
   - dmr/update-django-security-fix  # Danny Oct 22
   - nh/blank_row  # Norman Oct 28
-  - jls/add-app-id-to-sms-surveys-and-keywords  # Jenny Oct 30
-  - jls/fix-get  # Jenny Nov 7
+  - jls/sms-survey-app-ids-part-1 # Jenny Nov 8
 submodules: {}
