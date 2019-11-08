@@ -16,7 +16,6 @@ from corehq.apps.export.models import (
     FormExportInstance,
     TableConfiguration,
 )
-from corehq.util.test_utils import flag_enabled
 
 
 class TestODataCaseFeed(TestCase, OdataTestMixin):

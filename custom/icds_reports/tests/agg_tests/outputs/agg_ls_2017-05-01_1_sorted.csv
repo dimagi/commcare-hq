@@ -1,4 +1,4 @@
-state_id,district_id,block_id,supervisor_id,awc_visits,vhnd_observed,beneficiary_vists,month,aggregation_level
-st1,All,All,All,2,3,5,2017-05-01,1
-st2,All,All,All,2,0,3,2017-05-01,1
-st3,All,All,All,0,0,0,2017-05-01,1
+state_id,district_id,block_id,supervisor_id,awc_visits,vhnd_observed,beneficiary_vists,month,aggregation_level,num_supervisor_launched
+st1,All,All,All,2,3,5,2017-05-01,1,4
+st2,All,All,All,2,0,3,2017-05-01,1,2
+st3,All,All,All,0,0,0,2017-05-01,1,0

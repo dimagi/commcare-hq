@@ -359,7 +359,7 @@ class CaseOwnerAncestorLocationField(ValueSource):
 class FormUserAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location is the form
-    user's location, or the first ancestor location of the case owner
+    user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
     location_field = StringProperty()
