@@ -17,6 +17,8 @@ import dateutil
 from memoized import memoized
 from PIL import Image
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import get_ip, get_site_domain
 
 from corehq.apps.domain.decorators import domain_admin_required
