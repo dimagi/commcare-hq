@@ -431,7 +431,7 @@ class ContentForm(Form):
         ]
 
     @staticmethod
-    def compute_initial(content):
+    def compute_initial(domain, content):
         """
         :param content: An instance of a subclass of corehq.messaging.scheduling.models.abstract.Content
         """
@@ -442,8 +442,12 @@ class ContentForm(Form):
             result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
+            app_id = content.app_id
+            if app_id is None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                content.app_id,
+                app_id,
                 content.form_unique_id
             )
             result['survey_expiration_in_hours'] = content.expire_after // 60
@@ -460,8 +464,12 @@ class ContentForm(Form):
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
+            app_id = content.app_id
+            if app_id is None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                content.app_id,
+                app_id,
                 content.form_unique_id
             )
             result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
@@ -585,7 +593,7 @@ class CustomEventForm(ContentForm):
         return minutes_to_wait
 
     @staticmethod
-    def compute_initial(event):
+    def compute_initial(domain, event):
         """
         :param event: An instance of a subclass of corehq.messaging.scheduling.models.abstract.Event
         """
@@ -606,7 +614,7 @@ class CustomEventForm(ContentForm):
         else:
             raise TypeError("Unexpected event type: %s" % type(event))
 
-        result.update(ContentForm.compute_initial(event.content))
+        result.update(ContentForm.compute_initial(domain, event.content))
 
         return result
 
@@ -1223,14 +1231,14 @@ class ScheduleForm(Form):
     def add_initial_for_custom_daily_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_DAILY
         initial['custom_event_formset'] = [
-            CustomEventForm.compute_initial(event)
+            CustomEventForm.compute_initial(self.domain, event)
             for event in self.initial_schedule.memoized_events
         ]
 
     def add_initial_for_custom_immediate_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_IMMEDIATE
         initial['custom_event_formset'] = [
-            CustomEventForm.compute_initial(event)
+            CustomEventForm.compute_initial(self.domain, event)
             for event in self.initial_schedule.memoized_events
         ]
 
@@ -1332,7 +1340,7 @@ class ScheduleForm(Form):
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
-    def compute_initial(self):
+    def compute_initial(self, domain):
         result = {}
         schedule = self.initial_schedule
         if schedule:
@@ -1450,14 +1458,15 @@ class ScheduleForm(Form):
         schedule_form_initial = {}
         standalone_content_form_initial = {}
         if schedule:
-            schedule_form_initial = self.compute_initial()
+            schedule_form_initial = self.compute_initial(domain)
             if schedule.ui_type in (
                 Schedule.UI_TYPE_IMMEDIATE,
                 Schedule.UI_TYPE_DAILY,
                 Schedule.UI_TYPE_WEEKLY,
                 Schedule.UI_TYPE_MONTHLY,
             ):
-                standalone_content_form_initial = ContentForm.compute_initial(schedule.memoized_events[0].content)
+                standalone_content_form_initial = ContentForm.compute_initial(domain,
+                                                                              schedule.memoized_events[0].content)
 
         super(ScheduleForm, self).__init__(*args, initial=schedule_form_initial, **kwargs)
         self.standalone_content_form = ContentForm(
@@ -2595,8 +2604,8 @@ class BroadcastForm(ScheduleForm):
         result.extend(super(BroadcastForm, self).get_scheduling_layout_fields())
         return result
 
-    def compute_initial(self):
-        result = super(BroadcastForm, self).compute_initial()
+    def compute_initial(self, domain):
+        result = super(BroadcastForm, self).compute_initial(self.domain)
         if self.initial_broadcast:
             result['schedule_name'] = self.initial_broadcast.name
             self.add_initial_recipients(self.initial_broadcast.recipients, result)
@@ -2954,8 +2963,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 # capturing any number of name, value pairs
                 break
 
-    def compute_initial(self):
-        result = super(ConditionalAlertScheduleForm, self).compute_initial()
+    def compute_initial(self, domain):
+        result = super(ConditionalAlertScheduleForm, self).compute_initial(self.domain)
 
         if self.initial_rule:
             action_definition = self.initial_rule.memoized_actions[0].definition
@@ -3571,7 +3580,7 @@ class ConditionalAlertForm(Form):
             raise ValueError("Initial values are set by the form")
 
         if self.initial_rule:
-            kwargs['initial'] = self.compute_initial()
+            kwargs['initial'] = self.compute_initial(domain)
 
         super(ConditionalAlertForm, self).__init__(*args, **kwargs)
 
@@ -3585,7 +3594,7 @@ class ConditionalAlertForm(Form):
             ),
         )
 
-    def compute_initial(self):
+    def compute_initial(self, domain):
         return {
             'name': self.initial_rule.name,
         }

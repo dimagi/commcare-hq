@@ -190,10 +190,14 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 'allow_keyword_use_by': 'users',
             })
         for action in self.keyword.keywordaction_set.all():
+            app_id = action.app_id
+            if app_id is None and action.form_unique_id is not None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(self.domain, form_unique_id)
             if action.action == KeywordAction.ACTION_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
-                        'structured_sms_app_and_form_unique_id': get_combined_id(action.app_id,
+                        'structured_sms_app_and_form_unique_id': get_combined_id(app_id,
                                                                                  action.form_unique_id),
                         'use_custom_delimiter': self.keyword.delimiter is not None,
                         'use_named_args_separator': action.named_args_separator is not None,
@@ -205,7 +209,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 initial.update({
                     'sender_content_type': action.action,
                     'sender_message': action.message_content,
-                    'sender_app_and_form_unique_id': get_combined_id(action.app_id, action.form_unique_id),
+                    'sender_app_and_form_unique_id': get_combined_id(app_id, action.form_unique_id),
                 })
             else:
                 initial.update({
@@ -213,7 +217,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                     'other_recipient_id': action.recipient_id,
                     'other_recipient_content_type': action.action,
                     'other_recipient_message': action.message_content,
-                    'other_recipient_app_and_form_unique_id': get_combined_id(action.app_id,
+                    'other_recipient_app_and_form_unique_id': get_combined_id(app_id,
                                                                               action.form_unique_id),
                 })
         return initial
