@@ -5892,8 +5892,12 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 delivery_amt_owed = element.get('delivery_amt_owed', None) or {'html': 0}
                 delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
 
-                self._save_value_if_unique(delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], date))
-                self._save_value_if_unique(delivery_total_margin_dict, pps_name, (delivery_total_margin['html'], date))
+                self._save_value_if_unique(
+                    delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], date)
+                )
+                self._save_value_if_unique(
+                    delivery_total_margin_dict, pps_name, (delivery_total_margin['html'], date)
+                )
 
         rows['Total Versements PPS']['html'] = self._sum_up(delivery_amt_owed_dict)
         rows['Frais Participation PPS']['html'] = self._sum_up(delivery_total_margin_dict)
@@ -6003,7 +6007,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
             if add_amount_owed_column:
                 amount_sum = self._get_amount_owed(pps_data)
-                
+
                 row.append(amount_sum)
 
             if add_latest_visit_column:
