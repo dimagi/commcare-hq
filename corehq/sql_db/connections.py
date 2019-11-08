@@ -233,6 +233,7 @@ def override_engine(engine_id, connection_url, db_alias=None):
     try:
         yield
     finally:
+        connection_manager.dispose_engine(engine_id)
         connection_manager.get_connection_string = get_connection_string
         connection_manager.engine_id_django_db_map[engine_id] = original_alias
 
