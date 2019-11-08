@@ -26,7 +26,7 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.exceptions import DuplicateCaseMatch
 from corehq.motech.openmrs.openmrs_config import (
-    ObservationMapping,
+    JsonpathMapping,
     OpenmrsCaseConfig,
     OpenmrsConfig,
 )
@@ -42,9 +42,8 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
+    CaseProperty,
     CaseTriggerInfo,
-    ConstantString,
-    FormQuestionMap,
     get_case_location,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -621,7 +620,6 @@ def test_observation_mappings():
                 "openmrs_observations": [
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
-                        "case_property": "abnormal_temperature",
                         "value": {
                             "doc_type": "FormQuestionMap",
                             "form_question": "/data/abnormal_temperature",
@@ -629,14 +627,15 @@ def test_observation_mappings():
                                 "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
                                 "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
                             },
+                            "direction": "out",
                         },
                     },
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
                         "case_property": "bahmni_abnormal_temperature",
                         "value": {
-                            "doc_type": "ConstantString",
-                            "value": "",
+                            "doc_type": "CaseProperty",
+                            "case_property": "bahmni_abnormal_temperature",
                             "direction": "in",
                         },
                     },
@@ -647,25 +646,15 @@ def test_observation_mappings():
     observation_mappings = repeater.observation_mappings
     eq(observation_mappings, {
         '397b9631-2911-435a-bf8a-ae4468b9c1d4': [
-            ObservationMapping(
+            JsonpathMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
-                case_property='abnormal_temperature',
-                value=FormQuestionMap(
-                    form_question='/data/abnormal_temperature',
-                    value_map={
-                        'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
-                        'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
-                    }
-                )
-            ),
-            ObservationMapping(
-                concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
-                case_property='bahmni_abnormal_temperature',
-                value=ConstantString(
-                    direction='in',
-                    doc_type='ConstantString',
-                    value=''
-                )
+                jsonpath_valuesource={
+                    'value': CaseProperty(
+                        direction='in',
+                        doc_type='CaseProperty',
+                        case_property="bahmni_abnormal_temperature",
+                    )
+                }
             )
         ]
     })

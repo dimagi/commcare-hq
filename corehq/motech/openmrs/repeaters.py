@@ -132,12 +132,17 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
-                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
-                    # It's possible that an OpenMRS concept appears more
-                    # than once in form_configs. We are using a
-                    # defaultdict(list) so that earlier definitions
-                    # don't get overwritten by later ones:
-                    obs_mappings[obs_mapping.concept].append(obs_mapping)
+                for jsonpath, value_source in obs_mapping.jsonpath_valuesource.items():
+                    if (
+                        value_source.check_direction(DIRECTION_IMPORT)
+                        and hasattr(value_source, "case_property")  # CaseProperty or CasePropertyMap
+                    ):
+                        # It's possible that an OpenMRS concept appears more
+                        # than once in form_configs. We are using a
+                        # defaultdict(list) so that earlier definitions
+                        # don't get overwritten by later ones:
+                        obs_mappings[obs_mapping.concept].append(obs_mapping)
+                        break
         return obs_mappings
 
     @cached_property

@@ -176,18 +176,20 @@ class IndexedCaseMapping(DocumentSchema):
     case_properties = SchemaListProperty(CasePropertyJsonPath, required=True)
 
 
-class ObservationMapping(DocumentSchema):
-    concept = StringProperty()
-    value = SchemaProperty(ValueSource)
+class JsonpathMapping(DocumentSchema):
+    """
+    Uses JSONPath to get multiple values from an Observation or
+    BahmniDiagnosis.
 
-    # Import Observations as case updates from Atom feed. (Case type is
-    # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
-    # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
-    case_property = StringProperty(required=False)
+    This is useful for populating multiple extension case properties
+    from an Observation or BahmniDiagnosis.
+    """
+    concept = StringProperty()
+    jsonpath_valuesource = SchemaDictProperty(ValueSource)
 
     # Use indexed_case_mapping to create an extension case or a child
     # case instead of setting a case property. Used for referrals.
-    indexed_case_mapping = SchemaProperty(IndexedCaseMapping,
+    jsonpath_indexedcasemapping = SchemaProperty(IndexedCaseMapping,
         required=False, default=None, exclude_if_none=True
     )
 
@@ -195,9 +197,22 @@ class ObservationMapping(DocumentSchema):
         return (
             isinstance(other, self.__class__)
             and other.concept == self.concept
-            and other.value == self.value
-            and other.case_property == self.case_property
+            and other.jsonpath_valuesource == self.jsonpath_valuesource
+            and other.jsonpath_indexedcasemapping == self.jsonpath_indexedcasemapping
         )
+
+    @classmethod
+    def wrap(cls, data):
+
+        def convert_observation_mapping_to_jsonpath_mapping():
+            data["doc_type"] = "JsonpathMapping"  # Not "ObservationMapping"
+            value = data.pop("value")
+            data["jsonpath_valuesource"] = {"value": value}
+            data.pop("case_property", None)
+
+        if "value" in data:
+             convert_observation_mapping_to_jsonpath_mapping()
+        return super().wrap(data)
 
 
 class OpenmrsFormConfig(DocumentSchema):
@@ -212,7 +227,7 @@ class OpenmrsFormConfig(DocumentSchema):
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
     openmrs_form = StringProperty()
-    openmrs_observations = ListProperty(ObservationMapping)
+    openmrs_observations = ListProperty(JsonpathMapping)
 
 
 class OpenmrsConfig(DocumentSchema):
