@@ -259,7 +259,7 @@ class DashboardView(TemplateView):
                 app_id=build_id,
                 module_id=0,
             )
-        return super(DashboardView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)
 
 
 @location_safe
