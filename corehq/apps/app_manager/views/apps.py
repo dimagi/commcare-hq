@@ -20,6 +20,7 @@ import urllib3
 from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 from toggle.shortcuts import set_toggle
