@@ -50,6 +50,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -152,6 +153,12 @@ def server_error(request, template_name='500.html'):
     traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
+
+    if settings.UNIT_TESTING:
+        # Explicitly don't render the 500 page during unit tests to prevent
+        # obfuscating errors in templatetags / context processor. More context here:
+        # https://github.com/dimagi/commcare-hq/pull/25835#discussion_r343997006
+        return HttpResponse(status=500)
 
     return HttpResponseServerError(t.render(
         context={
@@ -353,7 +360,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name):
+def _login(req, domain_name, custom_login_page):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -378,16 +385,8 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = 'login_and_password/login.html'
-    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
-    if custom_landing_page:
-        if isinstance(custom_landing_page, str):
-            template_name = custom_landing_page
-        else:
-            template_name = custom_landing_page.get(req.get_host())
-            if template_name is None:
-                template_name = custom_landing_page.get('default', template_name)
-    elif domain_name:
+    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
@@ -431,11 +430,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain)
+    return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
 @location_safe
-def domain_login(req, domain):
+def domain_login(req, domain, custom_template_name=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -444,8 +443,9 @@ def domain_login(req, domain):
     # FYI, the domain context_processor will pick this up and apply the
     # necessary domain contexts:
     req.project = project
-
-    return _login(req, domain)
+    if custom_template_name is None:
+        custom_template_name = get_custom_login_page(req.get_host())
+    return _login(req, domain, custom_template_name)
 
 
 class HQLoginView(LoginView):
