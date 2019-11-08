@@ -967,6 +967,14 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         else:
             super().delete()
 
+        # The save signals can undo effect of clearing the cache within the save
+        # because they query the stale view (but attaches the up to date doc).
+        # This is only a problem on delete/soft-delete,
+        # because these change the presence in the index, not just the doc content.
+        # Since this is rare, I'm opting to just re-clear the cache here
+        # rather than making the signals use a strict lookup or something like that.
+        self.clear_caches()
+
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
