@@ -146,8 +146,11 @@ class ConnectionManager(object):
         Also removes it from the session manager.
         If not found, does nothing.
         """
-        if engine_id in self._session_helpers:
-            helper = self._session_helpers.pop(engine_id)
+        self._dispose_engine(self.get_connection_string(engine_id))
+
+    def _dispose_engine(self, connection_string):
+        if connection_string in self._session_helpers:
+            helper = self._session_helpers.pop(connection_string)
             helper.Session.remove()
             helper.engine.dispose()
 
@@ -155,8 +158,8 @@ class ConnectionManager(object):
         """
         Dispose all engines associated with this. Useful for tests.
         """
-        for engine_id in list(self._session_helpers.keys()):
-            self.dispose_engine(engine_id)
+        for connection_string in list(self._session_helpers.keys()):
+            self._dispose_engine(connection_string)
 
     def get_connection_string(self, engine_id):
         db_alias = self.engine_id_django_db_map.get(engine_id, DEFAULT_DB_ALIAS)
