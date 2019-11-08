@@ -155,6 +155,9 @@ def server_error(request, template_name='500.html'):
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
     if settings.UNIT_TESTING:
+        # Explicitly don't render the 500 page during unit tests to prevent
+        # obfuscating errors in templatetags / context processor. More context here:
+        # https://github.com/dimagi/commcare-hq/pull/25835#discussion_r343997006
         return HttpResponse(status=500)
 
     return HttpResponseServerError(t.render(
