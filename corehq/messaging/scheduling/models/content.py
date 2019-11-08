@@ -176,7 +176,7 @@ class SMSSurveyContent(Content):
             app_id = self.app_id
             if app_id is None:
                 from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
+                app_id = get_app_id_from_form_unique_id(domain, self.form_unique_id)
             app = get_app(domain, app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()

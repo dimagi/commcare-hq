@@ -330,7 +330,7 @@ class AutomaticUpdateRule(models.Model):
         app_id = original_content.app_id
         if app_id is None and original_content.form_unique_id is not None:
             from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-            app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
+            app_id = get_app_id_from_form_unique_id(self.domain, original_content.form_unique_id)
         copied_content.app_id, copied_content.form_unique_id = convert_form_unique_id_function(
             app_id, original_content.form_unique_id
         )

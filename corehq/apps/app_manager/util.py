@@ -713,6 +713,7 @@ def get_latest_enabled_versions_per_profile(app_id):
             Max('version'))
     }
 
+
 def get_app_id_from_form_unique_id(domain, form_unique_id):
     """
     Do not use. This is here to support migrations and temporary cose for *removing*

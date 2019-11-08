@@ -445,7 +445,7 @@ class ContentForm(Form):
             app_id = content.app_id
             if app_id is None:
                 from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
+                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
                 app_id,
                 content.form_unique_id
@@ -467,7 +467,7 @@ class ContentForm(Form):
             app_id = content.app_id
             if app_id is None:
                 from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
+                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
                 app_id,
                 content.form_unique_id

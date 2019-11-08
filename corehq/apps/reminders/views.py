@@ -193,7 +193,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             app_id = action.app_id
             if app_id is None and action.form_unique_id is not None:
                 from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(self.domain, form_unique_id)
+                app_id = get_app_id_from_form_unique_id(self.domain, action.form_unique_id)
             if action.action == KeywordAction.ACTION_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
