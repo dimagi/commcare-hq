@@ -103,10 +103,13 @@ class Command(BaseCommand):
         state_ids = agg_record.state_ids
         query = self.function_map[query_name]
         if query.by_state == SINGLE_STATE:
+            greenlets = []
             pool = Pool(10)
             for state in state_ids:
-                pool.spawn(query.func, state, agg_date)
+                greenlets.append(pool.spawn(query.func, state, agg_date))
             pool.join(raise_error=True)
+            for g in greenlets:
+                g.get()
         elif query.by_state == NO_STATES:
             query.func(agg_date)
         else:
