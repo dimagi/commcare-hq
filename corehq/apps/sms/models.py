@@ -1154,6 +1154,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_form_name_or_none(cls, domain, app_id, form_unique_id):
         try:
+            if app_id is None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
             app = get_app(domain, app_id)
             form = app.get_form(form_unique_id)
             return form.full_path_name
