@@ -327,8 +327,12 @@ class AutomaticUpdateRule(models.Model):
         return new_rule
 
     def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
+        app_id = original_content.app_id
+        if app_id is None and original_content.form_unique_id is not None:
+            from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+            app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
         copied_content.app_id, copied_content.form_unique_id = convert_form_unique_id_function(
-            original_content.app_id, original_content.form_unique_id
+            app_id, original_content.form_unique_id
         )
 
     def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):

@@ -809,7 +809,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 copy_data_items(doc_id, component._id)
 
             def convert_form_unique_id_function(app_id, form_unique_id):
-                app = get_app(self.domain, app_id)
+                app = get_app(self.name, app_id)
                 form = app.get_form(form_unique_id)
                 m_index, f_index = app.get_form_location(form.unique_id)
                 app_copy = new_app_components[app._id]
