@@ -278,13 +278,7 @@ class ConstantValue(ConstantString):
         )
 
     def deserialize(self, external_value):
-        """
-        Ignores ``external_value`` and returns ``self.value`` cast from
-        ``self.value_data_type`` to ``self.commcare_data_type``.
-        """
-        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
-                      or serializers.get((None, self.commcare_data_type)))
-        return serializer(self.value) if serializer else self.value
+        return self._get_commcare_value(self.value)
 
     def _get_commcare_value(self, case_trigger_info):
         """
@@ -292,7 +286,9 @@ class ConstantValue(ConstantString):
 
         Used by ``self.get_value()``.
         """
-        return self.deserialize(self.value)
+        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
+                      or serializers.get((None, self.commcare_data_type)))
+        return serializer(self.value) if serializer else self.value
 
 
 class CasePropertyMap(CaseProperty):
