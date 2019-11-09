@@ -187,7 +187,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         self.repeater.requests.get.return_value = response
 
         with patch('corehq.motech.openmrs.atom_feed.submit_case_blocks') as submit_case_blocks_patch, \
-                patch('corehq.motech.openmrs.atom_feed.importer_util') as importer_util_patch:
+                patch('corehq.motech.openmrs.atom_feed.importer_util') as importer_util_patch, \
+                patch('corehq.motech.openmrs.repeaters.get_one_commcare_user_at_location'):
             importer_util_patch.lookup_case.return_value = (self.case, None)
 
             import_encounter(self.repeater, 'c719b87f-d221-493b-bec7-c212aa813f5d')
@@ -210,20 +211,24 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
     def test_get_case_block_kwargs_from_observations(self):
         encounter = self.get_json('encounter')
         observations = encounter['observations']
-        case_block_kwargs = get_case_block_kwargs_from_observations(
+        case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
-            self.repeater.observation_mappings
+            self.repeater.observation_mappings,
+            None, None, None
         )
         self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
+        self.assertEqual(case_blocks, [])
 
     def test_get_case_block_kwargs_from_bahmni_diagnoses(self):
         encounter = self.get_json('encounter_with_diagnoses')
         bahmni_diagnoses = encounter['bahmniDiagnoses']
-        case_block_kwargs = get_case_block_kwargs_from_bahmni_diagnoses(
+        case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings
+            self.repeater.observation_mappings,
+            None, None, None
         )
         self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
+        self.assertEqual(case_blocks, [])
 
 
 def test_doctests():
