@@ -132,6 +132,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_pull_app_resource_overrides(self):
         master_app = Application.new_app(self.domain, "Master Application")
         master_app.linked_whitelist = [self.linked_domain]
