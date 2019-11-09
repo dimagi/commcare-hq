@@ -620,13 +620,19 @@ class ProductLineItemFactory(LineItemFactory):
     def unit_description(self):
         if self.is_prorated:
             return ungettext(
-                "%(num_days)s day of %(plan_name)s Software Plan.",
-                "%(num_days)s days of %(plan_name)s Software Plan.",
+                "{num_days} day of {plan_name} Software Plan."
+                "{subscription_date_range}",
+                "{num_days} days of {plan_name} Software Plan."
+                "{subscription_date_range}",
                 self.num_prorated_days
-            ) % {
-                'num_days': self.num_prorated_days,
-                'plan_name': self.plan_name,
-            }
+            ).format(
+                num_days=self.num_prorated_days,
+                plan_name=self.plan_name,
+                subscription_date_range=(
+                    " ({})".format(self.subscription_date_range)
+                    if self.subscription_date_range is not None else ""
+                ),
+            )
 
     @property
     def unit_cost(self):
