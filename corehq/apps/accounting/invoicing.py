@@ -823,7 +823,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             is_valid=True,
             date_sent__gte=self.invoice.date_start,
             date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
-        ).order_by('-date_sent')
+        ).order_by('date_sent')
 
     @property
     @memoized
