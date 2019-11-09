@@ -2,14 +2,13 @@ hqDefine('app_manager/js/multimedia_size_util',[
     'jquery',
     'underscore',
     'knockout',
-    'hqwebapp/js/initial_page_data',
-], function ($, _, ko, initialPageData) {
+], function ($, _, ko) {
     var multimediaSize = function (name, size) {
         var self = {};
         self.name = ko.observable(name);
         self.size = ko.observable(size);
         return self;
-    }
+    };
     var multimediaSizesView = function (url) {
         var self = {};
         self.sizes = ko.observableArray();
@@ -20,7 +19,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
             $.ajax({
                 url: url,
                 success: function (content) {
-                    _.each(content, function(mmsize, mmType) {
+                    _.each(content, function (mmsize, mmType) {
                         self.sizes.push(multimediaSize(mmType, mmsize));
                     });
                     self.load_state('loaded');
@@ -40,5 +39,5 @@ hqDefine('app_manager/js/multimedia_size_util',[
     };
     return {
         multimediaSizesView: multimediaSizesView,
-    }
+    };
 });
