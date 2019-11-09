@@ -11,8 +11,57 @@
         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'repeaters/js/repeat_record_report.js' %}"></script>
+        <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
     {% endcompress %}
 {% endblock js %}
+
+{% block filter_panel %} {{ block.super }}
+  <div>
+      {% if total > 0 %}
+        <div id ="form_options" class="well form-inline" style="margin: 1em">
+          <div>
+            <button id="resendAll" class="btn btn-default">Resend selected</button>
+            <button id="cancelAll" class="btn btn-default">Cancel selected</button>
+            <button id="requeueAll" class="btn btn-default">Requeue selected</button>
+            <label class="checkbox" >
+              <input type="checkbox" id="select_all" value="{{ form_query_string|urlencode }}"
+                     onclick="selectAll()" style="margin-left: 1em;">
+                {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="cancel_all" value="{{ form_query_string_cancellable|urlencode }}"
+                     onclick="selectCallable()" style="margin-left: 1em;">
+                {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="requeue_all" value="{{ form_query_string_requeue|urlencode }}"
+                     onclick="selectRequeue()" style="margin-left: 1em;">
+                {% blocktrans %}Select {{ total_requeue }} requeue payloads{% endblocktrans %}
+            </label>
+          </div>
+        </div>
+      {% endif %}
+  </div>
+  <div id="warning" class="alert alert-warning" style="display: none;">
+    <p><strong>You need to select at least one payload!</strong></p>
+  </div>
+  <div id="notAllowed" class="alert alert-warning" style="display: none;">
+    <p><strong>This action is not allowed for some of selected payloads!</strong></p>
+  </div>
+  <div id="areYouSure" style="position: fixed; width: 100%; height: 100%; z-index: 99; display: none;
+                              overflow: hidden; background: rgba(0, 0, 0, 0.5); filter: alpha(opacity=50);
+                              top: 0; left: 0;">
+    <div class="well" style="position: fixed; top: 50%; left: 50%; width: 400px;
+                             height: 200px; margin-left: -200px; margin-top: -100px;
+                             z-index: 100; text-align: center">
+      <h3><strong>Are you sure you want to do that?</strong></h3>
+      <div style="margin-top: 18%;">
+        <button id="sendConfirm" style="margin-right: 5em;" class="btn btn-default">Yes</button>
+        <button id="sendCancel" class="btn btn-default">No</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {% block additional_initial_page_data %} {{ block.super }}
     {% registerurl 'repeat_record' domain %}
