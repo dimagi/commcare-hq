@@ -732,14 +732,25 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def unit_description(self):
+        prorated_notice = ""
+        if self.is_prorated:
+            prorated_notice = _(" (Prorated for {date_range})").format(
+                date_range=(
+                    self.subscription_date_range
+                    if self.subscription_date_range is not None else ""
+                )
+            )
         if self.quantity > 0:
             return ungettext(
-                "Per User fee exceeding limit of %(monthly_limit)s user.",
-                "Per User fee exceeding limit of %(monthly_limit)s users.",
+                "Per-user fee exceeding limit of {monthly_limit} user "
+                "with plan above.{prorated_notice}",
+                "Per-user fee exceeding limit of {monthly_limit} users "
+                "with plan above.{prorated_notice}",
                 self.rate.monthly_limit
-            ) % {
-                'monthly_limit': self.rate.monthly_limit,
-            }
+            ).format(
+                monthly_limit=self.rate.monthly_limit,
+                prorated_notice=prorated_notice,
+            )
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
