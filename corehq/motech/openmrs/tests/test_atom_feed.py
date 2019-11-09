@@ -157,7 +157,9 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                                 "form_question": "/data/height"
                             },
                             "case_property": "height"
-                        },
+                        }
+                    ],
+                    "bahmni_diagnoses": [
                         {
                             "doc_type": "ObservationMapping",
                             "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
@@ -221,7 +223,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings
+            self.repeater.diagnosis_mappings
         )
         self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
 
