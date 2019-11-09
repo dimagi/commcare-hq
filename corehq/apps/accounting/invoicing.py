@@ -529,15 +529,66 @@ class LineItemFactory(object):
 
     @property
     @memoized
-    def is_prorated(self):
+    def _subscription_ends_before_invoice(self):
+        return (
+            self.subscription.date_end is not None
+            and self.subscription.date_end < self.invoice.date_end
+        )
+
+    @property
+    @memoized
+    def _subscription_starts_after_invoice(self):
+        return (
+            self.subscription.date_start > self.invoice.date_start
+        )
+
+    @property
+    @memoized
+    def subscription_date_range(self):
+        if self._subscription_ends_before_invoice or self._subscription_starts_after_invoice:
+            date_start = (
+                self.subscription.date_start
+                if self._subscription_starts_after_invoice
+                else self.invoice.date_start
+            )
+            date_end = (
+                self.subscription.date_end - datetime.timedelta(days=1)
+                if self._subscription_ends_before_invoice
+                else self.invoice.date_end
+            )
+            return "{} - {}".format(
+                date_start.strftime("%b %-d"),
+                date_end.strftime("%b %-d")
+            )
+
+    @property
+    def _is_partial_invoice(self):
         return not (
             self.invoice.date_end.day == self._days_in_billing_period
             and self.invoice.date_start.day == 1
         )
 
     @property
+    @memoized
+    def is_prorated(self):
+        return (
+            self._subscription_ends_before_invoice
+            or self._subscription_starts_after_invoice
+            or self._is_partial_invoice
+        )
+
+    @property
     def num_prorated_days(self):
-        return self.invoice.date_end.day - self.invoice.date_start.day + 1
+        day_start = self.invoice.date_start.day
+        day_end = self.invoice.date_end.day
+
+        if self._subscription_starts_after_invoice:
+            day_start = self.subscription.date_start.day
+
+        if self._subscription_ends_before_invoice:
+            day_end = self.subscription.date_end.day - 1
+
+        return day_end - day_start + 1
 
     @property
     def _days_in_billing_period(self):
