@@ -346,7 +346,7 @@ class CouchSqlDomainMigrator(object):
         note: does not diff cases
         """
         migrated = 0
-        with self.counter('skipped_forms', 'XFormInstance') as add_form:
+        with self.counter('skipped_forms', 'XFormInstance.id') as add_form:
             for doc in self._iter_skipped_forms():
                 try:
                     form = XFormInstance.wrap(doc)
@@ -358,6 +358,8 @@ class CouchSqlDomainMigrator(object):
                     migrated += 1
                     if migrated % 100 == 0:
                         log.info("migrated %s previously skipped forms", migrated)
+            if not self.stopper.clean_break:
+                self.counter.pop("XFormInstance.id")
         log.info("finished migrating %s previously skipped forms", migrated)
 
     def _check_for_migration_restrictions(self, domain_name):
@@ -371,12 +373,15 @@ class CouchSqlDomainMigrator(object):
         if msgs:
             raise MigrationRestricted("{}: {}".format(domain_name, "; ".join(msgs)))
 
-    def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
+    def _with_progress(self, doc_types, iterable, progress_name='Migrating', offset_key=None):
         doc_count = sum([
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
             for doc_type in doc_types
         ])
-        offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
+        if offset_key is None:
+            offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
+        else:
+            offset = self.counter.get(offset_key)
         if self.timing_context:
             current_timer = self.timing_context.peek()
             current_timer.normalize_denominator = doc_count
@@ -888,12 +893,13 @@ def _iter_skipped_forms(domain, migration_id, stopper, with_progress):
 def _iter_skipped_form_ids(domain, migration_id, stopper, with_progress):
     resume_key = "%s.%s.%s" % (domain, "XFormInstance.id", migration_id)
     couch_ids = _iter_docs(domain, "XFormInstance.id", resume_key, stopper)
-    couch_ids = with_progress(["XFormInstance"], couch_ids, "Scanning")
+    couch_ids = with_progress(
+        ["XFormInstance"], couch_ids, "Scanning", offset_key="XFormInstance.id")
     for batch in chunked(couch_ids, _iter_skipped_form_ids.chunk_size, list):
         yield from _drop_sql_form_ids(batch, domain)
     if not stopper.clean_break:
         # discard iteration state on successful completion so it is possible
-        # to run another skipped forms iteration later (if necessary)
+        # to run another skipped forms iteration later
         ResumableFunctionIterator(resume_key, None, None, None).discard_state()
 
 
