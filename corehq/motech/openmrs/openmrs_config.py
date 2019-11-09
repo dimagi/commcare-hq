@@ -187,6 +187,7 @@ class OpenmrsFormConfig(DocumentSchema):
     openmrs_encounter_type = StringProperty()
     openmrs_form = StringProperty()
     openmrs_observations = ListProperty(ObservationMapping)
+    bahmni_diagnoses = ListProperty(ObservationMapping)
 
 
 class OpenmrsConfig(DocumentSchema):

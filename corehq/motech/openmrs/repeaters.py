@@ -140,6 +140,15 @@ class OpenmrsRepeater(CaseRepeater):
                     obs_mappings[obs_mapping.concept].append(obs_mapping)
         return obs_mappings
 
+    @cached_property
+    def diagnosis_mappings(self):
+        diag_mappings = defaultdict(list)
+        for form_config in self.openmrs_config.form_configs:
+            for diag_mapping in form_config.bahmni_diagnoses:
+                if diag_mapping.value.check_direction(DIRECTION_IMPORT) and diag_mapping.case_property:
+                    diag_mappings[diag_mapping.concept].append(diag_mapping)
+        return diag_mappings
+
     @memoized
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
