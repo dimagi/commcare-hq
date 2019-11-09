@@ -118,7 +118,7 @@
         "column_id": "use_salt",
         "type": "field",
         "field": "use_salt",
-        "aggregation": "sum"
+        "aggregation": "max"
       }
     ],
     "sort_expression": [],
