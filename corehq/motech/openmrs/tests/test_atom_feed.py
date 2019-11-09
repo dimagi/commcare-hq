@@ -138,48 +138,98 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         )
 
     def setUpRepeater(self):
-        self.repeater = OpenmrsRepeater.wrap({
-            "_id": "123456",
-            "domain": "test_domain",
-            "username": "foo",
-            "password": "bar",
-            "white_listed_case_types": ['patient'],
-            "openmrs_config": {
-                "form_configs": [{
-                    "doc_type": "OpenmrsFormConfig",
-                    "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
-                    "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_observations": [
-                        {
-                            "doc_type": "ObservationMapping",
-                            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            "value": {
-                                "doc_type": "FormQuestion",
-                                "form_question": "/data/height"
-                            },
-                            "case_property": "height"
-                        },
-                        {
-                            "doc_type": "ObservationMapping",
-                            "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
-                            "value": {
-                                "doc_type": "FormQuestionMap",
-                                "form_question": "/data/bahmni_hypothermia",
-                                "value_map": {
-                                    "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
-                                },
-                                "direction": "in",
-                            },
-                            "case_property": "owner_id"
-                        }
-                    ]
-                }]
+        observations = [
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "value": {
+                    "doc_type": "FormQuestion",
+                    "form_question": "/data/height"
+                },
+                "case_property": "height"
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "FormQuestionMap",
+                    "form_question": "/data/bahmni_hypothermia",
+                    "value_map": {
+                        "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
+                    },
+                    "direction": "in",
+                },
+                "case_property": "owner_id"
             }
-        })
+        ]
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
 
     def setUpRepeaterForExtCase(self):
-        self.repeater = OpenmrsRepeater.wrap({
+        observations = [
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "value": {
+                    "doc_type": "FormQuestion",
+                    "form_question": "/data/height"
+                },
+                "indexed_case_mapping": {
+                    "identifier": "parent",
+                    "case_type": "observation",
+                    "relationship": "extension",
+                    "case_properties": [
+                        {
+                            "doc_type": "JsonPathCaseProperty",
+                            "jsonpath": "concept.name",
+                            "case_property": "case_name",
+                        },
+                        {
+                            "doc_type": "JsonPathCaseProperty",
+                            "jsonpath": "value",
+                            "case_property": "observation_value",
+                        }
+                    ]
+                }
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "FormQuestionMap",
+                    "form_question": "/data/bahmni_hypothermia",
+                    "value_map": {
+                        "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
+                    },
+                    "direction": "in",
+                },
+                "indexed_case_mapping": {
+                    "identifier": "parent",
+                    "case_type": "diagnosis",
+                    "relationship": "extension",
+                    "case_properties": [
+                        {
+                            "doc_type": "JsonPathCaseProperty",
+                            "jsonpath": "codedAnswer.name",
+                            "case_property": "case_name",
+                        },
+                        {
+                            "doc_type": "JsonPathCaseProperty",
+                            "jsonpath": "certainty",
+                            "case_property": "certainty",
+                        },
+                        {
+                            "doc_type": "JsonPathCaseProperty",
+                            "jsonpath": "order",
+                            "case_property": "primary_or_secondary",
+                        },
+                    ]
+                }
+            }
+        ]
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
+
+    def get_repeater_dict(self, observations):
+        return {
             "_id": "123456",
             "domain": "test_domain",
             "username": "foo",
@@ -191,70 +241,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_observations": [
-                        {
-                            "doc_type": "ObservationMapping",
-                            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            "value": {
-                                "doc_type": "FormQuestion",
-                                "form_question": "/data/height"
-                            },
-                            "indexed_case_mapping": {
-                                "identifier": "parent",
-                                "case_type": "observation",
-                                "relationship": "extension",
-                                "case_properties": [
-                                    {
-                                        "doc_type": "JsonPathCaseProperty",
-                                        "jsonpath": "concept.name",
-                                        "case_property": "case_name",
-                                    },
-                                    {
-                                        "doc_type": "JsonPathCaseProperty",
-                                        "jsonpath": "value",
-                                        "case_property": "observation_value",
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "doc_type": "ObservationMapping",
-                            "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
-                            "value": {
-                                "doc_type": "FormQuestionMap",
-                                "form_question": "/data/bahmni_hypothermia",
-                                "value_map": {
-                                    "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
-                                },
-                                "direction": "in",
-                            },
-                            "indexed_case_mapping": {
-                                "identifier": "parent",
-                                "case_type": "diagnosis",
-                                "relationship": "extension",
-                                "case_properties": [
-                                    {
-                                        "doc_type": "JsonPathCaseProperty",
-                                        "jsonpath": "codedAnswer.name",
-                                        "case_property": "case_name",
-                                    },
-                                    {
-                                        "doc_type": "JsonPathCaseProperty",
-                                        "jsonpath": "certainty",
-                                        "case_property": "certainty",
-                                    },
-                                    {
-                                        "doc_type": "JsonPathCaseProperty",
-                                        "jsonpath": "order",
-                                        "case_property": "primary_or_secondary",
-                                    },
-                                ]
-                            }
-                        }
-                    ]
+                    "openmrs_observations": observations
                 }]
             }
-        })
+        }
 
     def test_import_encounter(self):
         """
