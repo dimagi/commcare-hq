@@ -448,7 +448,7 @@ class InvoiceTemplate(object):
 
             description = Paragraph(item.description,
                                     ParagraphStyle('',
-                                                   fontSize=12,
+                                                   fontSize=DEFAULT_FONT_SIZE,
                                                    ))
             description.wrapOn(self.canvas, description_x - inches(0.2),
                                -header_height)
