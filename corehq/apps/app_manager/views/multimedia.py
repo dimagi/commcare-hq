@@ -1,11 +1,14 @@
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
+from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
+from corehq.apps.app_manager.views.utils import get_multimedia_sizes_for_build
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.quickcache import quickcache
 
 
 @require_deploy_apps
@@ -27,3 +30,17 @@ def multimedia_ajax(request, domain, app_id):
         return render(request, "app_manager/partials/settings/multimedia_ajax.html", context)
     else:
         raise Http404()
+
+
+@require_deploy_apps
+@quickcache(['domain', 'app_id'], timeout=60 * 60)
+def get_multimedia_sizes(request, domain, app_id):
+    mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id)
+    if mm_sizes:
+        mm_sizes['Total'] = sum(mm_sizes.values())
+        mm_sizes = {
+            mm_type: filesizeformat(mm_size)
+            for mm_type, mm_size in
+            mm_sizes.items()
+        }
+    return JsonResponse(mm_sizes)

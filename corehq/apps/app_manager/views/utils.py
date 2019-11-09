@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from functools import partial
 
 from django.contrib import messages
@@ -10,6 +11,7 @@ from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_app_cached,
     get_apps_in_domain,
     get_current_app,
     wrap_app,
@@ -411,3 +413,18 @@ def clear_xmlns_app_id_cache(domain):
 
 def form_has_submissions(domain, app_id, xmlns):
     return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0
+
+
+def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
+    build = get_app_cached(domain, build_id)
+    assert build.copy_of, _("Size calculation available only for builds")
+    build_profile = build.build_profiles[build_profile_id] if build_profile_id else None
+    # path: HQMediaMapItem object
+    multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)
+    # path: CommCareMultimedia object
+    media_objects = dict(build.get_media_objects(multimedia_map=multimedia_map_for_build))
+    total_size = defaultdict(lambda: 0)
+    for path, media_item in multimedia_map_for_build.items():
+        media_object = media_objects[path]
+        total_size[media_object.doc_type] += media_object.content_length
+    return total_size
