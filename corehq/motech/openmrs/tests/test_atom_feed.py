@@ -136,6 +136,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             type='patient',
             _id='abcdef',
         )
+
+    def setUpRepeater(self):
         self.repeater = OpenmrsRepeater.wrap({
             "_id": "123456",
             "domain": "test_domain",
@@ -176,12 +178,91 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             }
         })
 
+    def setUpRepeaterForExtCase(self):
+        self.repeater = OpenmrsRepeater.wrap({
+            "_id": "123456",
+            "domain": "test_domain",
+            "username": "foo",
+            "password": "bar",
+            "white_listed_case_types": ['patient'],
+            "openmrs_config": {
+                "form_configs": [{
+                    "doc_type": "OpenmrsFormConfig",
+                    "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+                    "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_observations": [
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "value": {
+                                "doc_type": "FormQuestion",
+                                "form_question": "/data/height"
+                            },
+                            "indexed_case_mapping": {
+                                "identifier": "parent",
+                                "case_type": "observation",
+                                "relationship": "extension",
+                                "case_properties": [
+                                    {
+                                        "doc_type": "JsonPathCaseProperty",
+                                        "jsonpath": "concept.name",
+                                        "case_property": "case_name",
+                                    },
+                                    {
+                                        "doc_type": "JsonPathCaseProperty",
+                                        "jsonpath": "value",
+                                        "case_property": "observation_value",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                            "value": {
+                                "doc_type": "FormQuestionMap",
+                                "form_question": "/data/bahmni_hypothermia",
+                                "value_map": {
+                                    "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
+                                },
+                                "direction": "in",
+                            },
+                            "indexed_case_mapping": {
+                                "identifier": "parent",
+                                "case_type": "diagnosis",
+                                "relationship": "extension",
+                                "case_properties": [
+                                    {
+                                        "doc_type": "JsonPathCaseProperty",
+                                        "jsonpath": "codedAnswer.name",
+                                        "case_property": "case_name",
+                                    },
+                                    {
+                                        "doc_type": "JsonPathCaseProperty",
+                                        "jsonpath": "certainty",
+                                        "case_property": "certainty",
+                                    },
+                                    {
+                                        "doc_type": "JsonPathCaseProperty",
+                                        "jsonpath": "order",
+                                        "case_property": "primary_or_secondary",
+                                    },
+                                ]
+                            }
+                        }
+                    ]
+                }]
+            }
+        })
+
     def test_import_encounter(self):
         """
         Importing the given encounter should update the case's "height" property
         """
         response = Mock()
         response.json.return_value = self.get_json('encounter')
+        self.setUpRepeater()
         self.repeater.requests  # Initialise cached value
         self.repeater.__dict__["requests"] = Mock()
         self.repeater.requests.get.return_value = response
@@ -209,6 +290,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
     def test_get_case_block_kwargs_from_observations(self):
+        self.setUpRepeater()
         encounter = self.get_json('encounter')
         observations = encounter['observations']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
@@ -220,6 +302,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         self.assertEqual(case_blocks, [])
 
     def test_get_case_block_kwargs_from_bahmni_diagnoses(self):
+        self.setUpRepeater()
         encounter = self.get_json('encounter_with_diagnoses')
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
@@ -229,6 +312,77 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         )
         self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
         self.assertEqual(case_blocks, [])
+
+    def test_get_case_blocks_from_observations(self):
+        self.setUpRepeaterForExtCase()
+        encounter = self.get_json('encounter')
+        observations = encounter['observations']
+        case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
+            observations,
+            self.repeater.observation_mappings,
+            'test-case-id',
+            'patient',
+            Mock(user_id='default-owner-id')
+        )
+        self.assertEqual(case_block_kwargs, {'update': {}})
+        self.assertEqual(len(case_blocks), 1)
+        date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
+        date_opened = case_blocks[0].date_opened
+        case_block = f"""
+            <case case_id="{case_blocks[0].case_id}" »
+                  date_modified="{date_modified}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <create>
+                <case_type>observation</case_type>
+                <case_name>HEIGHT</case_name>
+                <owner_id>default-owner-id</owner_id>
+              </create>
+              <update>
+                <date_opened>{date_opened}</date_opened>
+                <observation_value>105</observation_value>
+              </update>
+              <index>
+                <parent case_type="patient" relationship="extension">test-case-id</parent>
+              </index>
+            </case>"""
+        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        self.assertEqual(case_blocks[0].as_text(), case_block)
+
+    def test_get_case_blocks_from_bahmni_diagnoses(self):
+        self.setUpRepeaterForExtCase()
+        encounter = self.get_json('encounter_with_diagnoses')
+        bahmni_diagnoses = encounter['bahmniDiagnoses']
+        case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
+            bahmni_diagnoses,
+            self.repeater.observation_mappings,
+            'test-case-id',
+            'patient',
+            Mock(user_id='default-owner-id')
+        )
+        self.assertEqual(case_block_kwargs, {'update': {}})
+        self.assertEqual(len(case_blocks), 1)
+        date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
+        date_opened = case_blocks[0].date_opened
+        case_block = f"""
+            <case case_id="{case_blocks[0].case_id}" »
+                  date_modified="{date_modified}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <create>
+                <case_type>diagnosis</case_type>
+                <case_name>Hypothermia</case_name>
+                <owner_id>default-owner-id</owner_id>
+              </create>
+              <update>
+                <date_opened>{date_opened}</date_opened>
+                <certainty>CONFIRMED</certainty>
+                <primary_or_secondary>PRIMARY</primary_or_secondary>
+              </update>
+              <index>
+                <parent case_type="patient" relationship="extension">test-case-id</parent>
+              </index>
+            </case>"""
+        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        self.assertEqual(case_blocks[0].as_text(), case_block)
 
 
 def test_doctests():
