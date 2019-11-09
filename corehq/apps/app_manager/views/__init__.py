@@ -81,7 +81,10 @@ from corehq.apps.app_manager.views.modules import (
     view_module,
     view_module_legacy,
 )
-from corehq.apps.app_manager.views.multimedia import multimedia_ajax
+from corehq.apps.app_manager.views.multimedia import (
+    get_multimedia_sizes,
+    multimedia_ajax,
+)
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,
     LanguageProfilesView,
