@@ -1,0 +1,14 @@
+{% load i18n %}
+
+<ul class="check-list">
+  {% for feature in features %}
+    <li>
+      <i class="fa fa-check-square"></i>
+      {{ feature.desc }}
+      {% if feature.url %}
+        (<a href="{{ feature.url }}"
+           target="_blank">{% trans "Learn More" %}</a>)
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
