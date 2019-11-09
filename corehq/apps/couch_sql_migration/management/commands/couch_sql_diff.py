@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 import sys
 from contextlib import contextmanager
 
@@ -198,8 +199,17 @@ def add_missing_docs(data, couch_cases, sql_case_ids):
 
 
 def init_worker(*args):
+    def on_break(signum, frame):
+        nonlocal clean_break
+        if clean_break:
+            raise KeyboardInterrupt
+        print("clean break... (Ctrl+C to abort)")
+        clean_break = True
+
     global _state
     _state = WorkerState(*args)
+    clean_break = False
+    signal.signal(signal.SIGINT, on_break)
 
 
 @attr.s
