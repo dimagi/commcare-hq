@@ -322,9 +322,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_sub and last_sub.get('build_profile_id'):
                 last_build_profile_name = _("Unknown")
                 last_build_profile_id = last_sub.get('build_profile_id')
-                app = self._get_app(last_sub['app_id'])
-                if app and last_build_profile_id in app.build_profiles:
-                    last_build_profile_name = app.build_profiles[last_build_profile_id].name
+                if last_build_profile_id:
+                    build_profiles = self._get_app_details(last_sub['app_id'])
+                    if last_build_profile_id in build_profiles:
+                        last_build_profile_name = build_profiles[last_build_profile_id].name
             if last_sync and last_sync.get('sync_date'):
                 last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
             if last_build:
