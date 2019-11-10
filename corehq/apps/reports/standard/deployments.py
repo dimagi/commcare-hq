@@ -168,15 +168,20 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
     @quickcache(['app_id'], timeout=60 * 60)
-    def _get_app(self, app_id):
+    def _get_app_details(self, app_id):
         try:
-            return get_app(self.domain, app_id)
+            app = get_app(self.domain, app_id)
         except ResourceNotFound:
-            return None
+            return {}
+        return {
+            'name': app.name,
+            'build_profiles': {
+                profile.id: profile.name for profile in app.build_profiles
+            }
+        }
 
     def get_app_name(self, app_id):
-        app = self._get_app(app_id)
-        return app.name if app else None
+        return self._get_app_details(app_id).get('name')
 
     def get_data_for_app(self, options, app_id):
         try:
