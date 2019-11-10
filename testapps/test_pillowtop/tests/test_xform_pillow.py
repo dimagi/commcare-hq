@@ -1,10 +1,10 @@
+from datetime import datetime
 from decimal import Decimal
 
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceConflict
-from elasticsearch.exceptions import ConnectionError
 from mock import patch
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -34,12 +34,13 @@ class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
     password = 'badpassword'
+    pillow_id = 'xform-pillow'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_form_changes.add_pillow('xform-pillow', {'skip_ucr': True})
+        cls.process_form_changes.add_pillow(cls.pillow_id, {'skip_ucr': True})
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
@@ -122,6 +123,36 @@ class XFormPillowTest(TestCase):
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
         self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
 
+        # Test two forms before updating
+        form, metadata = self._create_form_and_sync_to_es()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
+        self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
+
+        process_reporting_metadata_staging()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
+        self.assertEqual(
+            last_submission.submission_date,
+            string_to_utc_datetime(self.metadata.received_on),
+        )
+        self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
+    def test_app_metadata_tracker_synclog_processed(self):
+        UserReportingMetadataStaging.add_sync(
+            self.domain, self.user._id, self.metadata.app_id,
+            '123', datetime.utcnow(), self.metadata.device_id
+        )
+
+        form, metadata = self._create_form_and_sync_to_es()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
+
         process_reporting_metadata_staging()
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
         user = CommCareUser.get_by_user_id(self.user._id, self.domain)
@@ -136,7 +167,7 @@ class XFormPillowTest(TestCase):
 
     @run_with_all_backends
     def test_form_pillow_error_in_form_metadata(self):
-        self.assertEqual(0, PillowError.objects.filter(pillow='xform-pillow').count())
+        self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
         with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
             mark_latest_submission.side_effect = ResourceConflict('couch sucks')
             case_id, case_name = self._create_form_and_sync_to_es()
@@ -145,7 +176,7 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(1, results.total)
 
-        self.assertEqual(1, PillowError.objects.filter(pillow='xform-pillow').count())
+        self.assertEqual(1, PillowError.objects.filter(pillow=self.pillow_id).count())
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:

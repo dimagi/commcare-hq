@@ -77,7 +77,9 @@ class UserSyncHistoryProcessor(PillowProcessor):
         device_id = synclog.get('device_id')
         app_id = synclog.get('app_id')
 
-        if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+        # WebApps syncs do not provide the app_id.
+        # For those syncs we go ahead and mark the last synclog synchronously.
+        if app_id and settings.USER_REPORTING_METADATA_BATCH_ENABLED:
             UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
         else:
             mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)

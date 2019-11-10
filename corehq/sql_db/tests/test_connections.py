@@ -34,29 +34,21 @@ REPORTING_DATABASES = {
 
 @override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
-    @override_settings(UCR_DATABASE_URL='ucr-url', REPORTING_DATABASES=None)
-    def test_legacy_settings(self):
-        manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'ucr-url'
-        })
-
     @override_settings(REPORTING_DATABASES={})
     def test_new_settings_empty(self):
         manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'postgresql+psycopg2://:@localhost:5432/default'
+        self.assertEqual(manager.engine_id_django_db_map, {
+            'default': 'default',
+            'ucr': 'default'
         })
 
     @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS, 'ucr': 'ucr', 'other': 'other'})
     def test_new_settings(self):
         manager = ConnectionManager()
-        self.assertEqual(manager.db_connection_map, {
-            'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-            'other': 'postgresql+psycopg2://:@localhost:5432/other'
+        self.assertEqual(manager.engine_id_django_db_map, {
+            'default': 'default',
+            'ucr': 'ucr',
+            'other': 'other'
         })
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
@@ -69,12 +61,10 @@ class ConnectionManagerTests(SimpleTestCase):
         }
         with override_settings(REPORTING_DATABASES=reporting_dbs):
             manager = ConnectionManager()
-            self.assertEqual(manager.db_connection_map, {
-                'default': 'postgresql+psycopg2://:@localhost:5432/default',
-                'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-                'other': 'postgresql+psycopg2://:@localhost:5432/other'
+            self.assertEqual(manager.engine_id_django_db_map, {
+                'default': 'default',
+                'ucr': 'ucr',
             })
-
 
             # test that load balancing works with a 10% margin for randomness
             total_requests = 10000
@@ -110,38 +100,6 @@ class ConnectionManagerTests(SimpleTestCase):
                 ['other', 'other', 'other'],
                 [manager.get_load_balanced_read_db_alias('ucr_engine') for i in range(3)]
             )
-
-    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
-    def test_load_balanced_read_apps(self, mock):
-        load_balanced_apps = {
-            'users': [
-                ('users_db1', 5),
-            ]
-        }
-
-        with override_settings(
-            LOAD_BALANCED_APPS=load_balanced_apps,
-            DATABASES={
-                DEFAULT_DB_ALIAS: _get_db_config('default'),
-                'users_db1': _get_db_config('users_db1')}):
-            manager = ConnectionManager()
-            self.assertEqual(
-                manager.get_load_balanced_read_db_alias('users', default="default_option"),
-                'users_db1'
-            )
-
-        with override_settings(LOAD_BALANCED_APPS=load_balanced_apps):
-            # load_balanced_db should be part of settings.DATABASES
-            with self.assertRaises(AssertionError):
-                ConnectionManager().get_load_balanced_read_db_alias('users')
-
-
-        # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
-        manager = ConnectionManager()
-        self.assertEqual(
-            manager.get_load_balanced_read_db_alias('users', default='default_option'),
-            'default_option'
-        )
 
     def test_filter_out_stale_standbys(self, *args):
         with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 2, 'default': 4}.get(x, 0)):

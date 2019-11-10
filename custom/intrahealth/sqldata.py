@@ -5656,6 +5656,7 @@ class RecapPassageOneData(IntraHealthSqlData):
     @property
     def aggregated_data(self):
         rows = self.get_data()
+
         data = {
             'Total Facture': 0,
             'Net à Payer': 0,
@@ -5687,6 +5688,7 @@ class RecapPassageOneData(IntraHealthSqlData):
         for pps_values in delivery_amt_owed_dict.values():
             for pps_value in pps_values:
                 net_a_payer += pps_value[0]
+
         data['Net à Payer'] = round(float(net_a_payer), 2)
         rows = []
         headers = data.keys()
@@ -5876,18 +5878,30 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         }
         data = self.recap_rows
 
+        delivery_amt_owed_dict = {}
+        delivery_total_margin_dict = {}
         for pps in data.keys():
             pps_data = data[pps]
 
             for element in pps_data:
                 if element['product_name'] not in self.product_names:
                     continue
+                pps_name = element['pps_name']
+                date = element['real_date_repeat'].strftime('%Y/%m/%d')
 
                 delivery_amt_owed = element.get('delivery_amt_owed', None) or {'html': 0}
                 delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
-                rows['Total Versements PPS']['html'] += delivery_amt_owed['html']
-                rows['Frais Participation PPS']['html'] += delivery_total_margin['html']
-                break
+
+                self._save_value_if_unique(
+                    delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], date)
+                )
+                self._save_value_if_unique(
+                    delivery_total_margin_dict, pps_name, (delivery_total_margin['html'], date)
+                )
+
+        rows['Total Versements PPS']['html'] = self._sum_up(delivery_amt_owed_dict)
+        rows['Frais Participation PPS']['html'] = self._sum_up(delivery_total_margin_dict)
+
 
         rows['Total Facturation District']['html'] = \
             rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
@@ -5986,19 +6000,13 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             row = [pps_name]
 
             most_recent_pps_data = self._get_most_recent_visits(pps_data)
-            pps_product_values = self.get_row_product_values(most_recent_pps_data, displayed_values)
+            pps_product_values = self.get_row_product_values(pps_data, displayed_values)
             for name in self.product_names:
                 product_value = pps_product_values.get(name, {'html': 0})
                 row.append(product_value)
 
             if add_amount_owed_column:
-                products_amount = self.get_row_product_values(most_recent_pps_data, 'amount_owed')
-                amount_sum = {
-                    'html': 0
-                }
-                for name in self.product_names:
-                    product_value = products_amount.get(name, {'html': 0})
-                    amount_sum['html'] += product_value['html']
+                amount_sum = self._get_amount_owed(pps_data)
 
                 row.append(amount_sum)
 
@@ -6048,7 +6056,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         sum_row = self.create_row_with_column_values_sum(row_name, rows)
         return sum_row
 
-    def _get_most_recent_visits(self, data):
+    @staticmethod
+    def _get_most_recent_visits(data):
         data_to_return = []
         fresh_records_dict = {}
         for row in data:
@@ -6073,10 +6082,12 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
         return data_to_return
 
-    def _get_latest_date(self, data):
+    @staticmethod
+    def _get_latest_date(data):
         return data[0]['real_date_repeat'].strftime('%Y/%m/%d')
 
-    def _get_visits_for_pps(self, data):
+    @staticmethod
+    def _get_visits_for_pps(data):
         visits = set()
         for record in data:
             visits.add(record['doc_id'])
@@ -6093,6 +6104,39 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             'html': f'{availability}%',
             'percent': True,
         }
+
+    @staticmethod
+    def _get_amount_owed(ppses_data):
+        to_return = 0
+        elements = []
+        for el in ppses_data:
+            el_name = el['pps_name']
+            amount = el.get('amount_owed', {'html': 0})['html']
+            date = el['real_date_repeat'].strftime('%Y/%m/%d')
+            product_name = el['product_name']
+            el_data = (amount, product_name, date, el_name)
+            if el_data not in elements:
+                elements.append(el_data)
+                to_return += amount
+
+        return {'html': to_return}
+
+    @staticmethod
+    def _save_value_if_unique(dictionary, dictionary_key, value):
+        if dictionary.get(dictionary_key, None):
+            dictionary[dictionary_key].add(value)
+        else:
+            dictionary[dictionary_key] = set()
+            dictionary[dictionary_key].add(value)
+
+    @staticmethod
+    def _sum_up(dictionary):
+        number = 0
+        for values in dictionary.values():
+            for value in values:
+                number += value[0]
+
+        return number
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):
