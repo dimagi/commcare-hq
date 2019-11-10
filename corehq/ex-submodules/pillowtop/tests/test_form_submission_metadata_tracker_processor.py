@@ -13,6 +13,7 @@ class MarkLatestSubmissionTest(TestCase):
     password = '***'
     app_id = 'app-id'
     build_id = 'build-id'
+    build_profile_id = 'build-profile-id'
     version = '2'
     metadata = {
         'deviceID': 'device-id'
@@ -44,6 +45,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -66,6 +68,10 @@ class MarkLatestSubmissionTest(TestCase):
             self.build_id,
         )
         self.assertEqual(
+            last_submission.build_profile_id,
+            self.build_profile_id,
+        )
+        self.assertEqual(
             last_submission.device_id,
             self.metadata['deviceID'],
         )
@@ -83,6 +89,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -95,6 +102,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             previous_date,
@@ -112,6 +120,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -124,6 +133,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -135,6 +145,7 @@ class MarkLatestSubmissionTest(TestCase):
             'bad-user',
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -148,6 +159,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             self.app_id,
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
@@ -157,6 +169,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.user._id,
             'other-app-id',
             self.build_id,
+            self.build_profile_id,
             self.version,
             self.metadata,
             submission_date,
