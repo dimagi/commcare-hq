@@ -70,7 +70,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                 )
             else:
                 mark_latest_submission(
-                    domain, user_id, app_id, build_id, build_profile_id, 
+                    domain, user_id, app_id, build_id, build_profile_id,
                     version, metadata, received_on
                 )
 
