@@ -319,10 +319,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                         commcare_version = _get_commcare_version(device['commcare_version'])
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
-            if last_sub and last_sub.get('build_profile_id'):
-                last_build_profile_name = _("Unknown")
+            if last_sub:
                 last_build_profile_id = last_sub.get('build_profile_id')
                 if last_build_profile_id:
+                    last_build_profile_name = _("Unknown")
                     build_profiles = self._get_app_details(last_sub['app_id'])
                     if last_build_profile_id in build_profiles:
                         last_build_profile_name = build_profiles[last_build_profile_id].name
