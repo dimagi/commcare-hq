@@ -66,7 +66,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
         if user_id and domain and received_on:
             if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
                 UserReportingMetadataStaging.add_submission(
-                    domain, user_id, app_id, build_id, version, metadata, received_on
+                    domain, user_id, app_id, build_id, build_profile_id, version, metadata, received_on
                 )
             else:
                 mark_latest_submission(

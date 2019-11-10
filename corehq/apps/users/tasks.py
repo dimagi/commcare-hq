@@ -314,7 +314,7 @@ def process_reporting_metadata_staging():
         for record in records:
             if record.received_on:
                 mark_latest_submission(
-                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.domain, record.user_id, record.app_id, record.build_id, record.build_profile_id,
                     record.xform_version, record.form_meta, record.received_on
                 )
             if record.device_id or record.sync_date:

@@ -2787,6 +2787,7 @@ class UserReportingMetadataStaging(models.Model):
 
     # should build_id actually be nullable?
     build_id = models.TextField(null=True)
+    build_profile_id = models.TextField(null=True)
 
     # The following properties are null if a user has not submitted a form since their last sync
     xform_version = models.IntegerField(null=True)
@@ -2798,11 +2799,12 @@ class UserReportingMetadataStaging(models.Model):
     sync_date = models.DateTimeField(null=True)
 
     @classmethod
-    def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
+    def add_submission(cls, domain, user_id, app_id, build_id, build_profile_id, version, metadata, received_on):
         obj, created = cls.objects.get_or_create(
             domain=domain, user_id=user_id, app_id=app_id,
             defaults={
                 'build_id': build_id,
+                'build_profile_id': build_profile_id,
                 'xform_version': version,
                 'form_meta': metadata,
                 'received_on': received_on,
