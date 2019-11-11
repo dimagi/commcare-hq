@@ -68,6 +68,25 @@ def check_standby_configs(app_configs, **kwargs):
 
 
 @register(Tags.database, deploy=True)
+def check_standby_databases(app_configs, **kwargs):
+    from corehq.sql_db.util import get_standby_databases
+
+    standbys = {
+        db
+        for db, config in settings.DATABASES
+        if config.get('STANDBY', {}).get('MASTER')
+    }
+    confirmed_standbys = get_standby_databases(standbys)
+    badly_configured = standbys - set(confirmed_standbys)
+    if badly_configured:
+        return [
+            Error("Some databases configured as STANDBY are not in recovery mode: {}".format(
+                ', '.join(badly_configured)
+            ))
+        ]
+
+
+@register(Tags.database, deploy=True)
 def check_db_tables(app_configs, **kwargs):
     from corehq.sql_db.routers import ICDS_REPORTS_APP
     from corehq.sql_db.models import PartitionedModel
