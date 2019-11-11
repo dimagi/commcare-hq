@@ -113,8 +113,7 @@ class SubmissionPost(object):
         if self.date_header:
             xform.date_header = self.date_header
 
-        if self.build_profile_id:
-            xform.build_profile_id = self.build_profile_id
+        xform.build_profile_id = self.build_profile_id
         xform.app_id = self.app_id
         xform.build_id = self.build_id
         xform.export_tag = ["domain", "xmlns"]
