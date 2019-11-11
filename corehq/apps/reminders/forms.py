@@ -24,10 +24,10 @@ from memoized import memoized
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Form as CCHQForm
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.reminders.util import DotExpandedDict, get_form_list, split_combined_id
+from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.sms.models import Keyword
 
 from .models import (
@@ -51,6 +51,11 @@ KEYWORD_RECIPIENT_CHOICES = (
 )
 
 
+def form_choices(domain):
+    available_forms = get_form_list(domain)
+    return [(form['code'], form['name']) for form in available_forms]
+
+
 def validate_time(value):
     if isinstance(value, time):
         return value
@@ -64,18 +69,18 @@ def validate_time(value):
         raise ValidationError(error_msg)
 
 
-def validate_app_and_form_unique_id(app_and_form_unique_id, domain):
+def validate_form_unique_id(form_unique_id, domain):
     error_msg = _('Invalid form chosen.')
     try:
-        app_id, form_unique_id = split_combined_id(app_and_form_unique_id)
-        app = get_app(domain, app_id)
+        form = CCHQForm.get_form(form_unique_id)
+        app = form.get_app()
     except Exception:
         raise ValidationError(error_msg)
 
     if app.domain != domain:
         raise ValidationError(error_msg)
 
-    return app_and_form_unique_id
+    return form_unique_id
 
 
 class RecordListWidget(Widget):
@@ -110,7 +115,7 @@ class RecordListField(Field):
     initial = None
     widget = None
     help_text = None
-
+    
     # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
 
     def __init__(self, *args, **kwargs):
@@ -149,7 +154,7 @@ class KeywordForm(Form):
         required=False,
         label=ugettext_noop("Message"),
     )
-    sender_app_and_form_unique_id = ChoiceField(
+    sender_form_unique_id = ChoiceField(
         required=False,
         label=ugettext_noop("Survey"),
     )
@@ -172,7 +177,7 @@ class KeywordForm(Form):
         required=False,
         label=ugettext_noop("Message"),
     )
-    other_recipient_app_and_form_unique_id = ChoiceField(
+    other_recipient_form_unique_id = ChoiceField(
         required=False,
         label=ugettext_noop("Survey"),
     )
@@ -180,7 +185,7 @@ class KeywordForm(Form):
         required=False,
         label=ugettext_noop("Process incoming keywords as a Structured Message"),
     )
-    structured_sms_app_and_form_unique_id = ChoiceField(
+    structured_sms_form_unique_id = ChoiceField(
         required=False,
         label=ugettext_noop("Survey"),
     )
@@ -223,9 +228,9 @@ class KeywordForm(Form):
         self.fields['other_recipient_content_type'].choices = self.content_type_choices
 
         self.fields['other_recipient_id'].choices = self.group_choices
-        self.fields['sender_app_and_form_unique_id'].choices = self.form_choices
-        self.fields['other_recipient_app_and_form_unique_id'].choices = self.form_choices
-        self.fields['structured_sms_app_and_form_unique_id'].choices = self.form_choices
+        self.fields['sender_form_unique_id'].choices = self.form_choices
+        self.fields['other_recipient_form_unique_id'].choices = self.form_choices
+        self.fields['structured_sms_form_unique_id'].choices = self.form_choices
 
         from corehq.apps.reminders.views import KeywordsListView
         self.helper = FormHelper()
@@ -253,9 +258,8 @@ class KeywordForm(Form):
                 crispy.Fieldset(
                     _("Structured Message Options"),
                     crispy.Field(
-                        'structured_sms_app_and_form_unique_id',
-                        data_bind="value: structuredSmsAppAndFormUniqueId",
-                        css_class="hqwebapp-select2",
+                        'structured_sms_form_unique_id',
+                        data_bind="value: structuredSmsFormUniqueId",
                     ),
                     hqcrispy.B3MultiField(
                         _("Delimiters"),
@@ -357,9 +361,8 @@ class KeywordForm(Form):
                 ),
                 crispy.Div(
                     crispy.Field(
-                        'sender_app_and_form_unique_id',
-                        data_bind="value: senderAppAndFormUniqueId",
-                        css_class="hqwebapp-select2",
+                        'sender_form_unique_id',
+                        data_bind="value: senderFormUniqueId"
                     ),
                     data_bind="visible: isMessageSurvey",
                 ),
@@ -394,9 +397,8 @@ class KeywordForm(Form):
                         ),
                         crispy.Div(
                             crispy.Field(
-                                'other_recipient_app_and_form_unique_id',
-                                data_bind="value: otherRecipientAppAndFormUniqueId",
-                                css_class="hqwebapp-select2",
+                                'other_recipient_form_unique_id',
+                                data_bind="value: otherRecipientFormUniqueId",
                             ),
                             data_bind="visible: otherRecipientContentType() == 'survey'",
                         ),
@@ -441,8 +443,7 @@ class KeywordForm(Form):
     @property
     @memoized
     def form_choices(self):
-        available_forms = get_form_list(self.domain)
-        return [('', '')] + [(form['code'], form['name']) for form in available_forms]
+        return form_choices(self.domain)
 
     @property
     def current_values(self):
@@ -473,15 +474,15 @@ class KeywordForm(Form):
         else:
             return None
 
-    def clean_sender_app_and_form_unique_id(self):
-        value = self.cleaned_data.get("sender_app_and_form_unique_id")
+    def clean_sender_form_unique_id(self):
+        value = self.cleaned_data.get("sender_form_unique_id")
         if self.cleaned_data.get("sender_content_type") == METHOD_SMS_SURVEY:
             if value is None:
                 raise ValidationError(_(
                     "Please create a form first, and then add a keyword "
                     "for it."
                 ))
-            validate_app_and_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self.domain)
             return value
         else:
             return None
@@ -495,28 +496,28 @@ class KeywordForm(Form):
         else:
             return None
 
-    def clean_other_recipient_app_and_form_unique_id(self):
-        value = self.cleaned_data.get("other_recipient_app_and_form_unique_id")
+    def clean_other_recipient_form_unique_id(self):
+        value = self.cleaned_data.get("other_recipient_form_unique_id")
         if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS_SURVEY:
             if value is None:
                 raise ValidationError(_(
                     "Please create a form first, and then "
                     "add a keyword for it."
                 ))
-            validate_app_and_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self.domain)
             return value
         else:
             return None
 
-    def clean_structured_sms_app_and_form_unique_id(self):
-        value = self.cleaned_data.get("structured_sms_app_and_form_unique_id")
+    def clean_structured_sms_form_unique_id(self):
+        value = self.cleaned_data.get("structured_sms_form_unique_id")
         if self.process_structured_sms:
             if value is None:
                 raise ValidationError(_(
                     "Please create a form first, and then add a "
                     "keyword for it."
                 ))
-            validate_app_and_form_unique_id(value, self.domain)
+            validate_form_unique_id(value, self.domain)
             return value
         else:
             return None

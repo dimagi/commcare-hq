@@ -34,6 +34,7 @@ from corehq.messaging.scheduling.forms import (
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
+    ContentForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
