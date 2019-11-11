@@ -1,7 +1,11 @@
-from couchdbkit import BadValueError
 from django.test import SimpleTestCase
 
-from corehq.motech.dhis2.repeaters import is_dhis2_version
+from couchdbkit import BadValueError
+
+from corehq.motech.dhis2.repeaters import (
+    is_dhis2_version,
+    is_dhis2_version_or_blank,
+)
 
 
 class IsDhis2VersionTests(SimpleTestCase):
@@ -23,3 +27,20 @@ class IsDhis2VersionTests(SimpleTestCase):
     def test_nan(self):
         with self.assertRaises(BadValueError):
             is_dhis2_version('not a number')
+
+    def test_none(self):
+        with self.assertRaises(BadValueError):
+            is_dhis2_version(None)
+
+    def test_blank(self):
+        with self.assertRaises(BadValueError):
+            is_dhis2_version("")
+
+
+class IsDhis2VersionOrBlankTests(SimpleTestCase):
+
+    def test_none(self):
+        self.assertTrue(is_dhis2_version_or_blank(None))
+
+    def test_blank(self):
+        self.assertTrue(is_dhis2_version_or_blank(""))

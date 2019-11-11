@@ -24,7 +24,18 @@ from corehq.toggles import DHIS2_INTEGRATION
 def is_dhis2_version(value):
     if re.match(r'^2\.\d+(\.\d)?$', value):
         return True
-    raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" or "2.xy.z".'))
+    raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
+                          'or "2.xy.z".'))
+
+
+def is_dhis2_version_or_blank(value):
+    if value is None or value == "":
+        return True
+    try:
+        return is_dhis2_version(value)
+    except BadValueError:
+        raise BadValueError(_('Value must be a DHIS2 version in the format '
+                              '"2.xy" or "2.xy.z", or blank.'))
 
 
 class Dhis2Repeater(FormRepeater):
