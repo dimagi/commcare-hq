@@ -326,6 +326,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
     @property
     @memoized
     def account(self):
@@ -1050,7 +1051,6 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     return render(request, template, context)
 
 
-
 @require_can_edit_commcare_users
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
@@ -1112,7 +1112,6 @@ def count_users(request, domain):
     return json_response({
         'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
     })
-
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):

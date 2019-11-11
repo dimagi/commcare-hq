@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET
 
 from couchdbkit.exceptions import ResourceConflict
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.logging import notify_exception
 
 from corehq import privileges, toggles
