@@ -693,7 +693,7 @@ def create_billable_for_sms(msg, delay=True):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
-    if not msg.domain:
+    if not settings.ENTERPRISE_MODE or not msg.domain:
         return
 
     try:
