@@ -235,10 +235,6 @@ class ConstantValue(ConstantString):
         external_value = serializer(self.value) if serializer else self.value
         return ValueSource.deserialize(self, external_value)
 
-    def get_import_value(self, external_data):
-        external_value = self._get_external_value(external_data)
-        return self.deserialize(external_value)
-
 
 class CasePropertyMap(CaseProperty):
     """
