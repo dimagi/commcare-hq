@@ -416,22 +416,22 @@ def form_has_submissions(domain, app_id, xmlns):
 
 
 def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, build_profile_id=None):
+    def _get_mm_map_by_id(multimedia_map):
+        return {
+            media_map_item['multimedia_id']: media_map_item
+            for path, media_map_item in
+            multimedia_map.items()
+        }
+
     source_build = get_app_cached(domain, source_build_id)
     target_build = get_app_cached(domain, target_build_id)
     assert source_build.copy_of, _("Size calculation available only for builds")
     assert target_build.copy_of, _("Size calculation available only for builds")
     build_profile = source_build.build_profiles[build_profile_id] if build_profile_id else None
-    multimedia_map_for_source_build_by_id = {
-        media_item['multimedia_id']: media_item
-        for path, media_item in
-        source_build.multimedia_map_for_build(build_profile=build_profile).items()
-    }
+    multimedia_map_for_source_build = source_build.multimedia_map_for_build(build_profile=build_profile)
     multimedia_map_for_target_build = target_build.multimedia_map_for_build(build_profile=build_profile)
-    multimedia_map_for_target_build_by_id = {
-        media_item['multimedia_id']: media_item
-        for path, media_item in
-        multimedia_map_for_target_build.items()
-    }
+    multimedia_map_for_source_build_by_id = _get_mm_map_by_id(multimedia_map_for_source_build)
+    multimedia_map_for_target_build_by_id = _get_mm_map_by_id(multimedia_map_for_target_build)
     added = set(multimedia_map_for_target_build_by_id.keys()).difference(
         set(multimedia_map_for_source_build_by_id.keys()))
     media_objects = {
