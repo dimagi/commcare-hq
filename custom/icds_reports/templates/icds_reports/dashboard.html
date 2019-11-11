@@ -243,6 +243,14 @@ related to angular not being defined. But if we split it here it works fine.
                   </div>
                   <div class="row no-margin">
                     {% include 'icds_reports/partials/register_dashboard_urls.html' %}
+                    {% initial_page_data 'location_hierarchy' location_hierarchy %}
+                    {% initial_page_data 'user_location_id' user_location_id %}
+                    {% initial_page_data 'all_user_location_id' all_user_location_id %}
+                    {% initial_page_data 'report_an_issue_url' report_an_issue_url %}
+                    {% initial_page_data 'is_web_user' is_web_user %}
+                    {% initial_page_data 'have_access_to_features' have_access_to_features %}
+                    {% initial_page_data 'have_access_to_all_locations' have_access_to_all_locations %}
+                    {% initial_page_data 'state_level_access' state_level_access %}
                     <div class="ng-view"></div>
                   </div>
               </div>
@@ -282,19 +290,24 @@ related to angular not being defined. But if we split it here it works fine.
 {% block initial_analytics_data %}
   {# do not override this block, use initial_analytics_data template tag to populate #}
 {% endblock %}
+  <div class="initial-page-data hide">
+    {% block initial_page_data %}
+      {# do not override this block, use initial_page_data template tag to populate #}
+    {% endblock %}
+  </div>
 </div>
-
 {% block js-inline %}{% endblock js-inline %}
 <script>
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
-    angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
-    angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
-    angular.module('icdsApp').constant('allUserLocationId', {{ all_user_location_id | JSON }});
-    angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
-    angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
-    angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access_to_features | JSON }});
-    angular.module('icdsApp').constant('haveAccessToAllLocations', {{ have_access_to_all_locations | JSON }});
-    angular.module('icdsApp').constant('stateLevelAccess', {{ state_level_access | JSON }});
+    angular.module('icdsApp').constant('locationHierarchy', initialPageData.get("location_hierarchy"));
+    angular.module('icdsApp').constant('userLocationId', initialPageData.get("user_location_id"));
+    angular.module('icdsApp').constant('allUserLocationId', initialPageData.get("all_user_location_id"));
+    angular.module('icdsApp').constant('reportAnIssueUrl', initialPageData.get("report_an_issue_url"));
+    angular.module('icdsApp').constant('isWebUser', initialPageData.get("is_web_user"));
+    angular.module('icdsApp').constant('haveAccessToFeatures', initialPageData.get("have_access_to_features"));
+    angular.module('icdsApp').constant('haveAccessToAllLocations', initialPageData.get("have_access_to_all_locations"));
+    angular.module('icdsApp').constant('stateLevelAccess', initialPageData.get("state_level_access"));
     angular.module('icdsApp').constant('genders', [
         {id: '', name: 'All'},
         {id: 'M', name: 'Male'},
