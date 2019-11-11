@@ -1,20 +1,36 @@
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, DeviceAppMeta
-from corehq.apps.users.util import update_latest_builds, update_last_sync, update_device_meta
-from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
-from corehq.util.doc_processor.couch import CouchDocumentProvider
+from django.conf import settings
 
+from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.parsing import string_to_utc_datetime
-
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
-from pillowtop.feed.interface import Change
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.receiverwrapper.util import get_version_from_build_id
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    UserReportingMetadataStaging,
+    WebUser,
+)
+from corehq.apps.users.util import (
+    update_device_meta,
+    update_last_sync,
+    update_latest_builds,
+)
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.interface import (
+    BaseDocProcessor,
+    DocumentProcessorController,
+)
 
 SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
@@ -46,32 +62,50 @@ class UserSyncHistoryProcessor(PillowProcessor):
         if not synclog:
             return
 
-        version = None
-        app_id = None
+        user_id = synclog.get('user_id')
+        domain = synclog.get('domain')
+
+        if not user_id or not domain:
+            return
+
         try:
             sync_date = string_to_utc_datetime(synclog.get('date'))
         except (ValueError, AttributeError):
             return
+
         build_id = synclog.get('build_id')
-        if build_id:
-            version, app_id = get_version_and_app_from_build_id(synclog.get('domain'), build_id)
-        user_id = synclog.get('user_id')
+        device_id = synclog.get('device_id')
+        app_id = synclog.get('app_id')
 
-        if user_id:
-            user = CouchUser.get_by_user_id(user_id)
-            save = update_last_sync(user, app_id, sync_date, version)
-            if version:
-                save |= update_latest_builds(user, app_id, sync_date, version)
+        # WebApps syncs do not provide the app_id.
+        # For those syncs we go ahead and mark the last synclog synchronously.
+        if app_id and settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+            UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
+        else:
+            mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)
 
-            app_meta = None
-            device_id = synclog.get('device_id')
-            if device_id:
-                if app_id:
-                    app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
-                save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
 
-            if save:
-                user.save(fire_signals=False)
+def mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id):
+    user = CouchUser.get_by_user_id(user_id)
+    if not user:
+        return
+
+    version = None
+    if build_id:
+        version = get_version_from_build_id(domain, build_id)
+
+    save = update_last_sync(user, app_id, sync_date, version)
+    if version:
+        save |= update_latest_builds(user, app_id, sync_date, version)
+
+    app_meta = None
+    if device_id:
+        if app_id:
+            app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
+        save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
+
+    if save:
+        user.save(fire_signals=False)
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
@@ -99,11 +133,11 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         # of the given user, for the synclog pillow to process.
         # this means we wont have to iterate through all synclogs
         # when reindexing.
-        synclogs = get_synclogs_for_user(doc['_id'], limit=10)
+        synclogs = SyncLogSQL.objects.filter(user_id=doc['_id']).order_by('date')[:10]
         changes = [Change(
-            id=res['doc']['_id'],
+            id=res.doc['_id'],
             sequence_id=None,
-            document=res['doc']
+            document=res.doc
         ) for res in synclogs]
         return changes
 

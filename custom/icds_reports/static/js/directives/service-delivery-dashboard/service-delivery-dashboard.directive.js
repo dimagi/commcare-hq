@@ -73,7 +73,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(renderCellValue('percentage','num_awcs_conducted_cbe')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_vhnd')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
@@ -114,25 +114,25 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return renderHeaderTooltip('Growth Monitoring', 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.');
     }
     function renderCommunityBasedEventsTooltip() {
-        return renderHeaderTooltip('Community Based Events', 'Total number of Anganwadi Centers who have conducted at least 1 Community Based Events in the given month.');
+        return renderHeaderTooltip('Community Based Events', 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.');
     }
     function renderVHSNDTooltip() {
         return renderHeaderTooltip('VHSND', 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.');
     }
     function renderTakeHomeRationTooltip() {
-        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
+        return renderHeaderTooltip('Take Home Ration (21+ days)', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
     }
     function renderCommunityBasedEventsTooltipAWC() {
-        return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 1 CBE in the current month then Yes otherwise No.');
+        return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.');
     }
     function renderVHSNDTooltipAWC() {
         return renderHeaderTooltip('VHSND', 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.');
     }
     function renderSupplementaryNutritionTooltip() {
-        return renderHeaderTooltip('Supplementary Nutrition', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.');
+        return renderHeaderTooltip('Supplementary Nutrition (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.');
     }
     function renderPreSchoolEducationTooltip() {
-        return renderHeaderTooltip('Pre-school Education', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.');
+        return renderHeaderTooltip('Pre-school Education (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.');
     }
     function renderGrowthMonitoring36Tooltip() {
         return renderHeaderTooltip('Growth Monitoring', 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>');
@@ -179,6 +179,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "thr": return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
                         case "pse": return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
                         case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
+                        case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.cbe, full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
 
                     }
                     break;

@@ -83,6 +83,7 @@ ISSNIP_MONTHLY_REGISTER_PDF = 7
 AWW_INCENTIVE_REPORT = 8
 LS_REPORT_EXPORT = 9
 THR_REPORT_EXPORT = 10
+DASHBOARD_USAGE_EXPORT = 11
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -137,3 +138,9 @@ REFERENCE_TABLES = [
     'awc_location',
     'icds_months'
 ]
+
+AADHAR_SEEDED_BENEFICIARIES = 'Aadhaar-seeded Beneficiaries'
+CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Services'
+PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
+LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
+ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'

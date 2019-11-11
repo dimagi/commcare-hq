@@ -6,6 +6,8 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
+        get_service_delivery_data.clear('icds-cas', 0, 10, None, False,
+                                        {'aggregation_level': 1}, 2017, 5, 'pw_lw_children')
         data = get_service_delivery_data(
             'icds-cas',
             0,
@@ -31,7 +33,7 @@ class TestServiceDelivery(TestCase):
                     'supervisor_name': 'Data Not Entered',
                     'total_thr_candidates': 279,
                     'awc_name': 'Data Not Entered',
-                    'num_awcs_conducted_cbe': 1,
+                    'num_awcs_conducted_cbe': 0,
                     'thr_given_21_days': 80,
                     'valid_visits': 3,
                     'expected_visits': 304,
@@ -41,7 +43,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.99 %'
+                    'home_visits': '0.99 %',
+                    'cbe': '0.00 %'
                 },
                 {
                     'state_name': 'st2',
@@ -60,7 +63,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 171,
                     'gm_0_3': 139,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.00 %',
+                    'cbe': '9.09 %'
                 },
                 {
                     'state_name': 'st7',
@@ -79,7 +83,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 0,
                     'gm_0_3': 0,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.00 %',
+                    'cbe': '0.00 %'
                 }
             ],
         }
@@ -112,7 +117,7 @@ class TestServiceDelivery(TestCase):
                     'supervisor_name': 'Data Not Entered',
                     'total_thr_candidates': 279,
                     'awc_name': 'Data Not Entered',
-                    'num_awcs_conducted_cbe': 1,
+                    'num_awcs_conducted_cbe': 0,
                     'thr_given_21_days': 80,
                     'valid_visits': 3,
                     'expected_visits': 304,
@@ -122,7 +127,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'd1',
-                    'home_visits': '0.99 %'
+                    'home_visits': '0.99 %',
+                    'cbe': '0.00 %'
                 }
             ],
         }
@@ -164,18 +170,18 @@ class TestServiceDelivery(TestCase):
                     'num_launched_awcs': 10
                 },
                 {
-                    'gm_3_5': 240,
+                    'gm_3_5': 239,
                     'state_name': 'st2',
-                    'children_3_6': 498,
-                    'children_3_5': 343,
-                    'pse': '12.05 %',
+                    'children_3_6': 497,
+                    'children_3_5': 342,
+                    'pse': '11.87 %',
                     'block_name': 'Data Not Entered',
                     'sn': '2.41 %',
                     'district_name': 'Data Not Entered',
                     'lunch_count_21_days': 12,
-                    'gm': '69.97 %',
+                    'gm': '69.88 %',
                     'supervisor_name': 'Data Not Entered',
-                    'pse_attended_21_days': 60,
+                    'pse_attended_21_days': 59,
                     'awc_name': 'Data Not Entered',
                     'num_launched_awcs': 11
                 },

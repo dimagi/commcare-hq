@@ -2,26 +2,15 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    StateBasedAggregationDistributedHelper,
+)
 
 
-class ComplementaryFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+class ComplementaryFormsCcsRecordAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'complementary-forms-ccs-record'
     ucr_data_source_id = 'static-complementary_feeding_forms'
-    tablename = AGG_CCS_RECORD_CF_TABLE
-
-    def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
-        agg_query, agg_params = self.aggregation_query()
-
-        cursor.execute(drop_query, drop_params)
-        cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        return (
-            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
-            {'month': month_formatter(self.month), 'state': self.state_id}
-        )
+    aggregate_parent_table = AGG_CCS_RECORD_CF_TABLE
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -74,14 +63,15 @@ class ComplementaryFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregatio
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
           COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
+          FULL OUTER JOIN (
+             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+          ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
             AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
             AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
             ucr_table_query=ucr_query,
-            tablename=self.tablename
+            tablename=self.aggregate_parent_table
         ), query_params

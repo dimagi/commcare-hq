@@ -111,9 +111,9 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -125,7 +125,8 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.LoggingSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -225,7 +226,6 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
@@ -261,6 +261,7 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -307,7 +308,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
@@ -389,10 +389,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/billing/statements/',
+    '/a/%(domain)s/settings/project/billing_information/',
+    '/a/%(domain)s/settings/project/flags/',
     '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/flags/'
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/project_limits/',
+    '/a/%(domain)s/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -458,6 +462,9 @@ UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -502,7 +509,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
@@ -725,6 +731,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -892,6 +899,8 @@ UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+DEFAULT_ODATA_FEED_LIMIT = 25
+
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
@@ -900,6 +909,23 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1021,6 +1047,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1114,6 +1143,14 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
             'filename': MAIN_COUCH_SQL_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
@@ -1212,12 +1249,21 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
-        }
+        },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1864,11 +1910,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
-
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
     plist.extend(v)
@@ -2030,6 +2071,7 @@ DATADOG_DOMAINS = {
     ("production", "rec"),
     ("production", "isth-production"),
     ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####

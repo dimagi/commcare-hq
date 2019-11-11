@@ -388,6 +388,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
 
+    # Allowed number of max OData feeds that this domain can create.
+    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    odata_feed_limit = IntegerProperty()
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
@@ -649,14 +653,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
         from corehq.apps.domain.utils import get_domain_url_slug
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
-        if Domain.get_by_name(name):
+        if domain_or_deleted_domain_exists(name):
             prefix = name
             while len(prefix):
                 name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
-                if Domain.get_by_name(name):
+                if domain_or_deleted_domain_exists(name):
                     # should never happen
                     raise NameUnavailableException
                 if len(name) <= max_length:
@@ -690,14 +695,24 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
+        ).all()] + [d['key'] for d in Domain.view(
+            "domain/deleted_domains",
+            startkey=prefix,
+            endkey=prefix + "zzz",
+            reduce=False,
+            include_docs=False
         ).all()]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+
         self.last_modified = datetime.utcnow()
         if not self._rev:
+            if domain_or_deleted_domain_exists(self.name):
+                raise NameUnavailableException(self.name)
             # mark any new domain as timezone migration complete
             set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
@@ -939,9 +954,17 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def copies_of_parent(self):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
-    def delete(self):
+    def delete(self, leave_tombstone=False):
+        if not leave_tombstone and not settings.UNIT_TESTING:
+            raise ValueError(
+                'Cannot delete domain without leaving a tombstone except during testing')
         self._pre_delete()
-        super(Domain, self).delete()
+        if leave_tombstone:
+            if not self.doc_type.endswith('-Deleted'):
+                self.doc_type = '{}-Deleted'.format(self.doc_type)
+            self.save()
+        else:
+            super().delete()
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete

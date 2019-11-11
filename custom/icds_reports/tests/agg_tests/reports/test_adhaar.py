@@ -1,6 +1,6 @@
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.const import ChartColors, MapColors, AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
@@ -18,7 +18,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -34,7 +34,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -56,7 +56,7 @@ class TestAdhaar(TestCase):
                  'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
                  'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 2, 'fillKey': '0%-25%'},
                  'st1': {'in_month': 192, 'original_name': ['st1'], 'all': 775, 'fillKey': '0%-25%'},
-                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 833, 'fillKey': '0%-25%'},
+                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 832, 'fillKey': '0%-25%'},
                  'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
@@ -82,7 +82,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 21.490683229813666)
+        self.assertEqual(data['rightLegend']['average'], 21.504039776258544)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adhaar_data_map(
@@ -102,7 +102,7 @@ class TestAdhaar(TestCase):
                 },
                 {
                     'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': '21.49%'
+                    'value': '21.50%'
                 }
             ]
         )
@@ -135,7 +135,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'adhaar')
+        self.assertEqual(data['slug'], 'adhaar')
 
     def test_map_data_label(self):
         data = get_adhaar_data_map(
@@ -146,7 +146,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Aadhaar-seeded Beneficiaries')
+        self.assertEqual(data['label'], AADHAR_SEEDED_BENEFICIARIES)
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_adhaar_data_map(
@@ -205,7 +205,7 @@ class TestAdhaar(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st2', 'percent': 18.509615384615383},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
@@ -217,24 +217,28 @@ class TestAdhaar(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
+                                "in_month": 0,
                                 "y": 0.0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
+                                "in_month": 0,
                                 "y": 0.0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 0.19528178243774574,
+                                "in_month": 298,
+                                "y": 0.19540983606557377,
                                 "x": 1491004800000,
-                                "all": 1526
+                                "all": 1525
                             },
                             {
-                                "y": 0.21490683229813665,
+                                "in_month": 346,
+                                "y": 0.21504039776258546,
                                 "x": 1493596800000,
-                                "all": 1610
+                                "all": 1609
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
@@ -242,7 +246,7 @@ class TestAdhaar(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st2', 'percent': 18.509615384615383},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},

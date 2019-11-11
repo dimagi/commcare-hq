@@ -14,12 +14,13 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent, OUTGOING
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
     LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
 
 
 class LatePMTUsers(SqlData):
-    engine_id = 'default'
+    engine_id = DEFAULT_ENGINE_ID
 
     @property
     def table_name(self):

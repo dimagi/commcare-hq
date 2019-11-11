@@ -305,14 +305,6 @@ class _CaseExpressionColumn(ReportColumn):
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
-    @classmethod
-    def restricted_to_static(cls):
-        # The conditional expressions used here don't have sufficient safety checks,
-        # so this column type is only available for static reports.  To release this,
-        # we should require that conditions be expressed using a PreFilterValue type
-        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
-
     _agg_column_type = None
 
     def get_column_config(self, data_source_config, lang):
@@ -341,19 +333,50 @@ class _CaseExpressionColumn(ReportColumn):
         return [self.column_id]
 
 
-class ConditionalAggregationColumn(_CaseExpressionColumn):
+class IntegerBucketsColumn(_CaseExpressionColumn):
     """Used for grouping by SQL conditionals"""
-    type = TypeProperty('conditional_aggregation')
+    type = TypeProperty('integer_buckets')
     _agg_column_type = ConditionalAggregation
+    field = StringProperty(required=True)
+    ranges = DictProperty()
 
     def get_whens(self):
-        return {k: bindparam(None, v) for k, v in self.whens.items()}
+        whens = {}
+        for value, bounds in self.ranges.items():
+            if len(bounds) != 2:
+                raise BadSpecError('Range must contain 2 items, contains {}'.format(len(bounds)))
+            try:
+                bounds = [int(b) for b in bounds]
+            except ValueError:
+                raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
+            whens.update({self._base_expression(bounds): bindparam(None, value)})
+        return whens
+
+    def _base_expression(self, bounds):
+        return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
+
+
+class AgeInMonthsBucketsColumn(IntegerBucketsColumn):
+    type = TypeProperty('age_in_months_buckets')
+
+    def _base_expression(self, bounds):
+        return "extract(year from age({}))*12 + extract(month from age({})) BETWEEN {} and {}".format(
+            self.field, self.field, bounds[0], bounds[1])
 
 
 class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
     else_ = IntegerProperty(default=0)
     _agg_column_type = SumWhen
+
+    @classmethod
+    def restricted_to_static(cls):
+        # The conditional expressions used here don't have sufficient safety checks,
+        # so this column type is only available for static reports.  To release this,
+        # we should require that conditions be expressed using a PreFilterValue type
+        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
+        return True
+
 
 
 class PercentageColumn(ReportColumn):

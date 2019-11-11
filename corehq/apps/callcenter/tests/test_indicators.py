@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.core import cache
+from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -34,7 +35,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, use_sql_backend
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -414,7 +415,7 @@ class CallCenterTests(BaseCCTests):
             set(indicator_set.user_to_case_map),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
-        self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
+        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
 
@@ -605,7 +606,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         self.cc_domain, self.cc_user = create_domain_and_user(self.domain_name, 'user_ucr')
 
         self.ucr_db_name = 'cchq_ucr_tests'
-        db_conn_parts = connection_manager.get_connection_string('default').split('/')
+        db_conn_parts = connection_manager.get_connection_string(DEFAULT_DB_ALIAS).split('/')
         db_conn_parts[-1] = self.ucr_db_name
         self.ucr_db_url = '/'.join(db_conn_parts)
 
@@ -621,7 +622,6 @@ class TestSavingToUCRDatabase(BaseCCTests):
         connection_manager.dispose_engine('ucr')
         self.db_context.__exit__(None, None, None)
 
-    @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_standard_indicators(self, mock):
@@ -636,3 +636,8 @@ class TestSavingToUCRDatabase(BaseCCTests):
                 custom_cache=locmem_cache
             )
             self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
+
+
+@use_sql_backend
+class TestSavingToUCRDatabaseSQL(TestSavingToUCRDatabase):
+    pass

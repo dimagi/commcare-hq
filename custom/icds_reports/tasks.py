@@ -26,17 +26,20 @@ from couchexport.models import Format
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
+from pillowtop.feed.interface import ChangeMeta
 
-from corehq import toggles
+from corehq.apps.change_feed import data_sources, topics
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.sql_db.routers import db_for_read_write, force_citus_engine
 from corehq.util.celery_utils import periodic_task_on_envs
@@ -58,6 +61,7 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THR_REPORT_EXPORT,
     THREE_MONTHS,
+    DASHBOARD_USAGE_EXPORT,
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -94,6 +98,7 @@ from custom.icds_reports.models.aggregate import (
     DailyAttendance,
 )
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.util import UcrReconciliationStatus
 from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
@@ -105,6 +110,7 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import (
 )
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
@@ -125,15 +131,15 @@ from custom.icds_reports.utils import (
     icds_pre_release_features,
     track_time,
     zip_folder,
+    get_dashboard_usage_excel_file,
 )
-from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    ChildHealthMonthlyAggregationHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    ChildHealthMonthlyAggregationDistributedHelper,
 )
-from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
-    AwcMbtHelper,
-    CcsMbtHelper,
-    ChildHealthMbtHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
+    AwcMbtDistributedHelper,
+    CcsMbtDistributedHelper,
+    ChildHealthMbtDistributedHelper,
 )
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -206,9 +212,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
-                    icds_aggregation_task.si(
-                        date=calculation_date, func_name='_aggregate_df_forms', force_citus=force_citus
+                    icds_state_aggregation_task.si(
+                        state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms',
+                        force_citus=force_citus
                     )
+                    for state_id in state_ids
                 ])
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
@@ -374,7 +382,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_agg_ls_table': _agg_ls_table,
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
-            '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -417,13 +424,14 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_aggregate_child_health_pnc_forms': _aggregate_child_health_pnc_forms,
             '_aggregate_ccs_record_pnc_forms': _aggregate_ccs_record_pnc_forms,
             '_aggregate_delivery_forms': _aggregate_delivery_forms,
+            '_aggregate_df_forms': _aggregate_df_forms,
             '_aggregate_bp_forms': _aggregate_bp_forms,
             '_aggregate_awc_infra_forms': _aggregate_awc_infra_forms,
             '_child_health_monthly_table': _child_health_monthly_table,
             '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
             '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
             '_agg_beneficiary_form': _agg_beneficiary_form,
-            '_agg_thr_table': _agg_thr_table
+            '_agg_thr_table': _agg_thr_table,
         }[func_name]
 
         db_alias = get_icds_ucr_citus_db_alias()
@@ -467,8 +475,8 @@ def _aggregate_gm_forms(state_id, day):
 
 
 @track_time
-def _aggregate_df_forms(day):
-    AggregateChildHealthDailyFeedingForms.aggregate(force_to_date(day))
+def _aggregate_df_forms(state_id, day):
+    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -546,9 +554,13 @@ def get_cursor(model, write=True):
     return connections[db].cursor()
 
 
-@track_time
 def _child_health_monthly_table(state_ids, day):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    _child_health_monthly_data(state_ids, day)
+    update_child_health_monthly_table.delay(day, state_ids)
+
+
+def _child_health_monthly_data(state_ids, day):
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -563,13 +575,13 @@ def _child_health_monthly_table(state_ids, day):
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
 
+
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
+def update_child_health_monthly_table(day, state_ids):
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
-
-    celery_task_logger.info("Dropping temporary table")
-    with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(helper.drop_temporary_table())
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
@@ -579,6 +591,7 @@ def _child_health_helper(query, params, force_citus=False):
         celery_task_logger.info("Running child_health_helper with %s", params)
         with get_cursor(ChildHealthMonthly) as cursor:
             cursor.execute(query, params)
+    celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
@@ -838,8 +851,25 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 )
             else:
                 cache_key = create_excel_file(excel_data, data_type, file_format)
+        elif indicator == DASHBOARD_USAGE_EXPORT:
+            excel_data = DashBoardUsage(
+                couch_user=config['couch_user'],
+                domain=config['domain']
+            ).get_excel_data()
+            export_info = excel_data[1][1]
+            generated_timestamp = date_parser.parse(export_info[0][1])
+            formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+            data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
+            if file_format == 'xlsx':
+                cache_key = get_dashboard_usage_excel_file(
+                    excel_data,
+                    data_type
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT):
+        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
+                             DASHBOARD_USAGE_EXPORT):
             if file_format == 'xlsx' and beta:
                 cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
             else:
@@ -1022,14 +1052,8 @@ def _get_value(data, field):
     acks_late=True,
     queue='icds_aggregation_queue'
 )
-def collect_inactive_awws_task():
-    collect_inactive_awws.delay()
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        collect_inactive_awws.delay(force_citus=True)
-
-
-@task(queue='icds_aggregation_queue')
 def collect_inactive_awws(force_citus=False):
+    from custom.icds.messaging.indicators import is_aggregate_inactive_aww_data_fresh
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive AWW")
         filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1065,18 +1089,12 @@ def collect_inactive_awws(force_citus=False):
         sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
         sync.store_file_in_blobdb(export_file)
         sync.save()
+        is_aggregate_inactive_aww_data_fresh.clear()
         celery_task_logger.info("Ended updating the Inactive AWW")
 
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
-def collect_inactive_dashboard_users_task():
-    collect_inactive_dashboard_users.delay()
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        collect_inactive_dashboard_users.delay(force_citus=True)
-
-
-@task(queue='background_queue')
 def collect_inactive_dashboard_users(force_citus=False):
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive Dashboard users")
@@ -1199,6 +1217,9 @@ def build_incentive_report(agg_date=None):
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+
+    aggregate_validation_helper.delay(agg_date)
+
     for file_format in ['xlsx', 'csv']:
         for location in locations:
             if location.location_type.name == 'state':
@@ -1207,6 +1228,212 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
             else:
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
+def aggregate_validation_helper(agg_date):
+    """
+    Validates the performance reports vs aggregate reports and send mails with mismatches
+    """
+    awc_performance_rows_list = list(AWWIncentiveReport.objects.filter(month=agg_date)
+                                     .values('awc_id', 'is_launched', 'valid_visits', 'visit_denominator',
+                                             'wer_weighed', 'wer_eligible', 'incentive_eligible')
+                                     .order_by('awc_id'))
+    awc_aggregate_rows_list = list(AggAwc.objects.filter(aggregation_level=5, month=agg_date)
+                                   .values('awc_id', 'is_launched', 'valid_visits', 'expected_visits')
+                                   .order_by('awc_id'))
+    is_launched_check_bad_data = []
+    home_conduct_check_bad_data = []
+    eligibility_check_bad_data = []
+    missed_ids_from_performance = []
+    missed_ids_from_aggregate = []
+    performance_index = 0
+    aggregate_index = 0
+    while performance_index < len(awc_performance_rows_list) and aggregate_index < len(awc_aggregate_rows_list):
+        awc_from_performance = awc_performance_rows_list[performance_index]
+        awc_from_aggregate = awc_aggregate_rows_list[aggregate_index]
+        awc_id_from_performance = awc_from_performance['awc_id']
+        awc_id_from_aggregate = awc_from_aggregate['awc_id']
+        # skipping unmatched rows
+        while awc_id_from_performance != awc_id_from_aggregate:
+            if awc_id_from_performance > awc_id_from_aggregate:
+                missed_ids_from_performance.append(awc_id_from_performance)
+                aggregate_index += 1
+            else:
+                missed_ids_from_aggregate.append(awc_id_from_aggregate)
+                performance_index += 1
+            awc_from_performance = awc_performance_rows_list[performance_index]
+            awc_from_aggregate = awc_aggregate_rows_list[aggregate_index]
+
+        # check for launched AWCs
+        row_data = get_awc_is_launched_mismatch_row(awc_from_performance, awc_from_aggregate)
+        if row_data is not None:
+            is_launched_check_bad_data.append(row_data)
+
+        # check for home conduct percentage
+        row_data = get_awc_home_conduct_mismatch_row(awc_from_performance, awc_from_aggregate)
+        if row_data is not None:
+            home_conduct_check_bad_data.append(row_data)
+
+        # check for eligibility
+        row_data = get_awc_eligibility_mismatch_row(awc_from_performance)
+        if row_data is not None:
+            eligibility_check_bad_data.append(row_data)
+
+        # incrementing the indexes
+        performance_index += 1
+        aggregate_index += 1
+
+    mismatched_performance_awc_ids_length = len(missed_ids_from_performance)
+    mismatched_aggregate_awc_ids_length = len(missed_ids_from_aggregate)
+
+    awc_ids_mismatch_count = mismatched_performance_awc_ids_length
+    if mismatched_performance_awc_ids_length < mismatched_aggregate_awc_ids_length:
+        awc_ids_mismatch_count = mismatched_aggregate_awc_ids_length
+
+    # merging two mismatched awc_ids into a single list
+    awc_ids_mismatched_list = []
+    for i in range(awc_ids_mismatch_count):
+        try:
+            awc_id_mismatched_row = [missed_ids_from_performance[i], missed_ids_from_aggregate[i]]
+        except IndexError:
+            if i >= mismatched_performance_awc_ids_length:
+                missed_ids_from_performance.append('')
+            if i >= mismatched_aggregate_awc_ids_length:
+                missed_ids_from_aggregate.append('')
+            awc_id_mismatched_row = [missed_ids_from_performance[i], missed_ids_from_aggregate[i]]
+        awc_ids_mismatched_list.append(awc_id_mismatched_row)
+
+    file_attachments = []
+    if len(is_launched_check_bad_data) > 0:
+        csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
+        file_attachments.append({"csv_columns": csv_columns, "data": is_launched_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_is_launched_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
+
+    if len(home_conduct_check_bad_data) > 0:
+        csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
+        file_attachments.append({"csv_columns": csv_columns, "data": home_conduct_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_home_conduct mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
+
+    if len(eligibility_check_bad_data) > 0:
+        csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
+        file_attachments.append({"csv_columns": csv_columns, "data": eligibility_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
+
+    if awc_ids_mismatch_count > 0:
+        csv_columns = ['awc_ids_from_performance', 'awc_ids_from_aggregate']
+        file_attachments.append({"csv_columns": csv_columns, "data": awc_ids_mismatched_list,
+                                 "filename": datetime.now().strftime('incentive_report_awc_ids_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
+
+    if len(file_attachments) > 0:
+        # sending email with mismatches
+        _send_incentive_report_validation_email(file_attachments)
+
+
+def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from
+     aggregate report, is_launched from performance report and is_launched from aggregate report
+    """
+    is_launched_from_awc = False
+    if awcagg_row['is_launched'].lower() == 'yes':
+        is_launched_from_awc = True
+    # checking if is_launched from incentive report is same as that of aggregate
+    if performance_row['is_launched'] != is_launched_from_awc:
+        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], performance_row['is_launched'],
+                    is_launched_from_awc]
+        return row_data
+    return None
+
+
+def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from
+     aggregate report, home_conduct percentage from performance report and home_conduct percentage
+     from aggregate report
+    """
+    # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
+    if performance_row['valid_visits'] is None or performance_row['visit_denominator'] in [0, None]:
+        home_conduct_from_report = 'None'
+    else:
+        home_conduct_from_report = performance_row['valid_visits'] / performance_row['visit_denominator']
+    if awcagg_row['valid_visits'] is None or awcagg_row['expected_visits'] in [0, None]:
+        home_conduct_from_awc = 'None'
+    else:
+        home_conduct_from_awc = awcagg_row['valid_visits'] / awcagg_row['expected_visits']
+    # checking if home conduct (valid_visits/valid_denominator) from incentive report is same as that of aggregate
+    if home_conduct_from_report != home_conduct_from_awc:
+        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], home_conduct_from_report,
+                    home_conduct_from_awc]
+        return row_data
+    return None
+
+
+def get_awc_eligibility_mismatch_row(performance_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :return: None if no mismatch or return a row with expected eligibility and actual eligibility
+    """
+    # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
+    if performance_row['valid_visits'] is None or performance_row['visit_denominator'] in [0, None]:
+        is_eligible = True
+    else:
+        # checking if valid_visits/valid_denominator > 0.6(60%)
+        home_conduct_from_report = performance_row['valid_visits'] / performance_row['visit_denominator']
+        if home_conduct_from_report > 0.6:
+            is_eligible = True
+        else:
+            is_eligible = False
+    if is_eligible:
+        # checking if wer_weighed or wer_eligible is zero or None as they are treated as valid cases
+        if performance_row['wer_weighed'] is None or performance_row['wer_eligible'] in [0, None]:
+            is_eligible = True
+        else:
+            # checking if wer_weighed/wer_eligible > 0.6(60%)
+            weigh_eligibility = performance_row['wer_weighed'] / performance_row['wer_eligible']
+            if weigh_eligibility > 0.6:
+                is_eligible = True
+            else:
+                is_eligible = False
+    if not performance_row['incentive_eligible']:
+        if is_eligible and performance_row['is_launched']:
+            return [performance_row['awc_id'], is_eligible and performance_row['is_launched'],
+                    performance_row['incentive_eligible']]
+    else:
+        if not (is_eligible and performance_row['is_launched']):
+            return [performance_row['awc_id'], is_eligible and performance_row['is_launched'],
+                    performance_row['incentive_eligible']]
+    return None
+
+
+def _send_incentive_report_validation_email(mail_data_list):
+    attachments_list = []
+    for mail_item in mail_data_list:
+        csv_file = io.StringIO()
+        writer = csv.writer(csv_file)
+        writer.writerow(mail_item['csv_columns'])
+        for data in mail_item['data']:
+            writer.writerow(data)
+        attachments_list.append({'file_obj': csv_file, 'title': mail_item['filename'],
+                                 'mimetype': 'text/csv'})
+    email_content = """
+    Please see the attachments for mismatch in awc performance report vs awc aggregate report
+    """
+    send_HTML_email(
+        '[{}] - ICDS Dashboard AWC Incentive Report Mismatch'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content, file_attachments=attachments_list
+    )
 
 
 @task(queue='icds_dashboard_reports_queue', serializer='pickle')
@@ -1244,9 +1471,9 @@ def create_all_mbt(month, state_ids):
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
-        helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
+        helpers = (CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper)
         for helper_class in helpers:
-            helper = get_helper(helper_class.helper_key)(state_id, month)
+            helper = helper_class(state_id, month)
             # run on primary DB to avoid "conflict with recovery" errors
             with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
                 cursor.copy_expert(helper.query(), f)
@@ -1280,7 +1507,7 @@ def setup_aggregation(agg_date):
 
 
 def _child_health_monthly_aggregation(day, state_ids):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
@@ -1290,12 +1517,6 @@ def _child_health_monthly_aggregation(day, state_ids):
     for query, params in helper.pre_aggregation_queries():
         pool.spawn(_child_health_helper, query, params)
     pool.join()
-
-    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
-        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
-
-    with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(helper.drop_temporary_table())
 
 
 @task
@@ -1335,3 +1556,98 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
         '[{}] - ICDS Dashboard Location Table Changed'.format(settings.SERVER_ENVIRONMENT),
         DASHBOARD_TEAM_EMAILS, email_content,
     )
+
+
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
+def create_reconciliation_records():
+    # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
+    UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
+
+
+@task(queue='background_queue')
+def reconcile_data_not_in_ucr(reconciliation_status_pk):
+    status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
+    number_documents_missing = 0
+
+    # republish_kafka_changes
+    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+        number_documents_missing += 1
+        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
+        send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
+
+    status_record.last_processed_date = datetime.utcnow()
+    status_record.documents_missing = number_documents_missing
+    if number_documents_missing == 0:
+        status_record.verified_date = datetime.utcnow()
+    status_record.save()
+
+    return number_documents_missing
+
+
+def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
+    producer.send_change(
+        topics.FORM_SQL if is_form else topics.CASE_SQL,
+        ChangeMeta(
+            document_id=doc_id,
+            data_source_type=data_sources.SOURCE_SQL,
+            data_source_name=data_sources.FORM_SQL if is_form else data_sources.CASE_SQL,
+            document_type='XFormInstance' if is_form else 'CommCareCase',
+            document_subtype=doc_subtype,
+            domain=DASHBOARD_DOMAIN,
+            is_deletion=False,
+        )
+    )
+
+
+def get_data_not_in_ucr(status_record):
+    domain = DASHBOARD_DOMAIN
+    if status_record.is_form_ucr:
+        matching_records_for_db = _get_primary_data_for_forms(
+            status_record.db_alias, domain, status_record.day, status_record.doc_type_filter
+        )
+    else:
+        matching_records_for_db = _get_primary_data_for_cases(
+            status_record.db_alias, domain, status_record.day, status_record.doc_type_filter
+        )
+    chunk_size = 1000
+    for chunk in chunked(matching_records_for_db, chunk_size):
+        doc_ids = [val[0] for val in chunk]
+        docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        for doc_id, doc_subtype, sql_modified_on in chunk:
+            if doc_id not in docs_in_ucr:
+                yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+
+
+def _get_docs_in_ucr(domain, table_id, doc_ids):
+    table_name = get_table_name(domain, table_id)
+    with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
+        query = f'''
+            SELECT doc_id
+            FROM "{table_name}"
+            WHERE doc_id = ANY(%(doc_ids)s);
+        '''
+        cursor.execute(query, {'doc_ids': doc_ids})
+        return dict(cursor.fetchall())
+
+
+def _get_primary_data_for_forms(db, domain, day, xmlns):
+    start_date, end_date = day, day + timedelta(days=1)
+    matching_xforms = XFormInstanceSQL.objects.using(db).filter(
+        domain=domain,
+        received_on__gte=start_date,
+        received_on__lte=end_date,
+        state=XFormInstanceSQL.NORMAL,
+        xmlns=xmlns,
+    )
+    return matching_xforms.values_list('form_id', 'xmlns', 'received_on')
+
+
+def _get_primary_data_for_cases(db, domain, day, case_type):
+    start_date, end_date = day, day + timedelta(days=1)
+    matching_cases = CommCareCaseSQL.objects.using(db).filter(
+        domain=domain,
+        server_modified_on__gte=start_date,
+        server_modified_on__lte=end_date,
+        type=case_type
+    )
+    return matching_cases.values_list('case_id', 'type', 'server_modified_on')

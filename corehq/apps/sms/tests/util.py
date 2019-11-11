@@ -257,7 +257,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return case
 
     def assertCasePropertyEquals(self, case, prop, value):
-        self.assertEquals(case.get_case_property(prop), value)
+        self.assertEqual(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
         result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
@@ -265,14 +265,14 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()
-        self.assertEquals(last_submission.form_id, new_submission.form_id)
+        self.assertEqual(last_submission.form_id, new_submission.form_id)
 
     def assertFormQuestionEquals(self, form, question, value, cast=None):
         self.assertIn(question, form.form_data)
         form_value = form.form_data[question]
         if cast:
             form_value = cast(form_value)
-        self.assertEquals(form_value, value)
+        self.assertEqual(form_value, value)
 
     def get_last_outbound_sms(self, contact):
         return SMS.get_last_log_for_recipient(

@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from elasticsearch.client import IndicesClient, SnapshotClient
+from corehq.util.es.elasticsearch import IndicesClient, SnapshotClient
 
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances

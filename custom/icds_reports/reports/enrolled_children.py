@@ -9,7 +9,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_children_enrolled_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
-    indian_formatted_number, get_child_locations
+    indian_formatted_number
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -177,14 +177,10 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['valid'] or 0
         all_children = row['all'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         row_values = {
             'valid': valid,
@@ -197,10 +193,6 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         chart_data['blue'].append([
             name, valid
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

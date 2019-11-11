@@ -46,16 +46,6 @@ class FormProcessorInterface(object):
 
     @property
     @memoized
-    def sync_log_model(self):
-        from casexml.apps.phone.models import SyncLog
-
-        if self.use_sql_domain:
-            return SyncLog
-        else:
-            return SyncLog
-
-    @property
-    @memoized
     def processor(self):
         from corehq.form_processor.backends.couch.processor import FormProcessorCouch
         from corehq.form_processor.backends.sql.processor import FormProcessorSQL

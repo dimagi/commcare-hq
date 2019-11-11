@@ -123,7 +123,19 @@ def test_iter_cases_with_unprocessed_forms():
             Config(id="b", total_forms=2, processed_forms=1),
             Config(id="c", total_forms=4, processed_forms=1),
         ])
-        eq(list(db.iter_cases_with_unprocessed_forms()), ["a", "b", "c"])
+        eq(list(db.iter_cases_with_unprocessed_forms()),
+            [("a", 2), ("b", 2), ("c", 4)])
+
+
+def test_get_forms_count():
+    with init_db() as db:
+        db.update_cases([
+            Config(id="a", total_forms=2, processed_forms=1),
+            Config(id="b", total_forms=2, processed_forms=3),
+        ])
+        eq(db.get_forms_count("a"), 2)
+        eq(db.get_forms_count("b"), 2)
+        eq(db.get_forms_count("c"), 0)
 
 
 @with_setup(teardown=delete_db)
@@ -147,6 +159,12 @@ def test_no_action_case_forms():
         # verify that memoized result is cleared on add
         db.add_no_action_case_form("def")
         eq(db.get_no_action_case_forms(), {"abc", "def"})
+
+
+def test_duplicate_no_action_case_form():
+    with init_db() as db:
+        db.add_no_action_case_form("abc")
+        db.add_no_action_case_form("abc")  # should not raise
 
 
 @with_setup(teardown=delete_db)
@@ -252,7 +270,7 @@ def test_clone_casediff_data_from():
         main.close()
 
         with StateDB.open(main.db_filepath) as db:
-            eq(list(db.iter_cases_with_unprocessed_forms()), ["a", "b", "c"])
+            eq(list(db.iter_cases_with_unprocessed_forms()), [("a", 2), ("b", 2), ("c", 2)])
             eq(list(db.iter_problem_forms()), ["problem"])
             eq(db.get_no_action_case_forms(), {"no-action"})
             with db.pop_resume_state("CaseState", "nope") as value:

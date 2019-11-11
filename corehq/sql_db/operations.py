@@ -2,7 +2,7 @@ import os
 import re
 
 from django.conf import settings
-from django.db import connection, router
+from django.db import router
 from django.db.migrations import RunPython, RunSQL
 from django.template import engines
 
@@ -133,7 +133,7 @@ def _validate_identifier(name):
 
 def _rename_table_indexes(from_table, to_table):
     def fcn(apps, schema_editor):
-        with connection.cursor() as cursor:
+        with schema_editor.connection.cursor() as cursor:
             cursor.execute('SELECT indexname FROM pg_indexes WHERE tablename = %s', [from_table])
             indexes = [row[0] for row in cursor.fetchall()]
             for index_name in indexes:

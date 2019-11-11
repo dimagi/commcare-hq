@@ -63,6 +63,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
                 thr_given_21_days=get_value_or_data_not_entered(row_data, 'thr_given_21_days'),
                 total_thr_candidates=get_value_or_data_not_entered(row_data, 'total_thr_candidates'),
                 thr=percent_or_not_entered(row_data['thr_given_21_days'], row_data['total_thr_candidates']),
+                cbe=percent_or_not_entered(row_data['num_awcs_conducted_cbe'], row_data['num_launched_awcs'])
             )
         else:
             return dict(

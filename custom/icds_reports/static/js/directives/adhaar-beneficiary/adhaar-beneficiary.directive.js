@@ -7,7 +7,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.label = "Percent Aadhaar-seeded Beneficiaries";
+    vm.label = "Aadhaar-seeded Beneficiaries";
     vm.steps = {
         'map': {route: '/demographics/adhaar/map', label: 'Map View'},
         'chart': {route: '/demographics/adhaar/chart', label: 'Chart View'},
@@ -17,7 +17,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
+        info: 'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -50,7 +50,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
+        'captionContent': ' Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
 

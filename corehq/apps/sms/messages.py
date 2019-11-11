@@ -44,7 +44,9 @@ MSG_REGISTRATION_INSTALL_COMMCARE = "sms.registration.installcommcare"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
-    MSG_TOUCHFORMS_DOWN: ugettext_noop("An error has occurred. Please try again later. If the problem persists, try restarting the survey."),
+    MSG_TOUCHFORMS_DOWN: ugettext_noop(
+        "Our system is receiving a lot of messages now. "
+        "Can you re-send in 15 minutes? Apologies for the inconvenience!"),
     MSG_TOUCHFORMS_ERROR: ugettext_noop("Internal server error."),
     MSG_CHOICE_OUT_OF_RANGE: ugettext_noop("Answer is out of range."),
     MSG_INVALID_CHOICE: ugettext_noop("Invalid choice."),

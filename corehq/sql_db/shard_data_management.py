@@ -128,13 +128,13 @@ def _get_counts_by_shard_query_for_testing(model):
             "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
             " & {total_shard_count}"
         ).format(
-            total_shard_count=partition_config.num_shards - 1,
+            total_shard_count=partition_config.shard_count - 1,
             id_field=model.partition_attr,
         )
     elif _is_a_string_field(field_type):
         # todo: are there any other types we need to worry about?
         shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
-            total_shard_count=partition_config.num_shards - 1,
+            total_shard_count=partition_config.shard_count - 1,
             id_field=model.partition_attr,
         )
     else:

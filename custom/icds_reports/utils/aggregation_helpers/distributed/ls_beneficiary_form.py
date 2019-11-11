@@ -1,22 +1,17 @@
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_LS_BENEFICIARY_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    StateBasedAggregationPartitionedHelper,
+)
 
 
-class LSBeneficiaryFormAggDistributedHelper(BaseICDSAggregationDistributedHelper):
+class LSBeneficiaryFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
     helper_key = 'ls-beneficiary-form'
     ucr_data_source_id = 'static-ls_home_visit_forms_filled'
     aggregate_parent_table = AGG_LS_BENEFICIARY_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_beneficiary_form_'
-
-    def aggregate(self, cursor):
-        drop_query = self.drop_table_query()
-        curr_month_query, curr_month_params = self.create_table_query()
-        agg_query, agg_param = self.aggregate_query()
-        cursor.execute(drop_query)
-        cursor.execute(curr_month_query, curr_month_params)
-        cursor.execute(agg_query, agg_param)
 
     def aggregate_query(self):
         month = self.month.replace(day=1)
@@ -35,15 +30,17 @@ class LSBeneficiaryFormAggDistributedHelper(BaseICDSAggregationDistributedHelper
             state_id,
             location_id as supervisor_id,
             %(start_date)s::DATE AS month,
-            count(*) as beneficiary_vists
+            count(*) as form_count,
+            count(*) FILTER (
+                        WHERE visit_type_entered is not null AND
+                        visit_type_entered <> '') as beneficiary_vists
             FROM "{ucr_tablename}"
-            WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
-            AND visit_type_entered is not null AND visit_type_entered <> ''
-            AND  state_id=%(state_id)s
+            WHERE  state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
+                   submitted_on < %(end_date)s
             GROUP BY state_id,location_id
         );
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, beneficiary_vists
+        state_id, supervisor_id, month, form_count, beneficiary_vists
         ) (
              SELECT * FROM "{temp_table}"
         )

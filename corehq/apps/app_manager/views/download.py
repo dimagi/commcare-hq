@@ -1,4 +1,5 @@
 import json
+import pytz
 import re
 from collections import OrderedDict, defaultdict
 
@@ -35,6 +36,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -293,7 +295,9 @@ def download_file(request, domain, app_id, path):
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
-            response['X-CommCareHQ-AppReleasedOn'] = request.app.last_released.isoformat()
+            last_released = request.app.last_released.replace(microsecond=0)    # mobile doesn't want microseconds
+            last_released = ServerTime(last_released).user_time(pytz.UTC).done().isoformat()
+            response['X-CommCareHQ-AppReleasedOn'] = last_released
         response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
@@ -447,21 +451,15 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    if ajax and "blank form" in [error.get('type') for error in errors] and not form.form_type == "shadow_form":
+    if ajax and "blank form" in [error.get('type') for error in errors]:
         response_html = ""
     else:
-        if form.form_type == "shadow_form":
-            # Don't display the blank form error if its a shadow form
-            errors = [e for e in errors if e['type'] != "blank form"]
         response_html = render_to_string("app_manager/partials/build_errors.html", {
-            'request': request,
             'app': app,
-            'form': form,
             'build_errors': errors,
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
-            'lang': lang
         })
 
     if ajax:

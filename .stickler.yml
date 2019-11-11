@@ -1,6 +1,7 @@
 files:
   ignore:
     - '*.min.js'
+    - '**/_design/**/*.js'
 
 linters:
   flake8:

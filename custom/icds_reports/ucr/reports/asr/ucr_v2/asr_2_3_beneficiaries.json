@@ -109,13 +109,14 @@
       {
         "display": "Age Group",
         "column_id": "age_group",
-        "type": "conditional_aggregation",
-        "whens": {
-          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 0 and 5": "0_to_5",
-          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 6 and 11": "6_to_11",
-          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 12 and 35": "12_to_35",
-          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 36 and 59": "36_to_59",
-          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 60 and 71": "60_to_71"
+        "type": "age_in_months_buckets",
+        "field": "dob",
+        "ranges": {
+          "0_to_5": [0, 5],
+          "6_to_11": [6, 11],
+          "12_to_35": [12, 35],
+          "36_to_59": [36, 59],
+          "60_to_71": [60, 71]
         }
       },
       {
