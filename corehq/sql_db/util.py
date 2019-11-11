@@ -7,7 +7,8 @@ from random import choices
 from django import db
 from django.conf import settings
 from django.db import OperationalError
-from django.db.utils import InterfaceError as DjangoInterfaceError, DEFAULT_DB_ALIAS
+from django.db.utils import DEFAULT_DB_ALIAS
+from django.db.utils import InterfaceError as DjangoInterfaceError
 
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError

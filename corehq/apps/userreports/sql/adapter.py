@@ -18,7 +18,6 @@ from corehq.apps.userreports.exceptions import (
     translate_programming_error,
 )
 from corehq.apps.userreports.sql.columns import column_to_sql
-from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -38,7 +37,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     def __init__(self, config, override_table_name=None, engine_id=None):
         super(IndicatorSqlAdapter, self).__init__(config)
-        self.engine_id = engine_id or get_engine_id(config)
+        self.engine_id = engine_id or config.engine_id
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine

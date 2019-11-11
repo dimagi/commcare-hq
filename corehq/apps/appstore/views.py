@@ -3,6 +3,7 @@ from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -100,6 +101,11 @@ class BaseCommCareExchangeSectionView(BaseSectionPageView):
     def dispatch(self, request, *args, **kwargs):
         if self.include_unapproved and not self.request.user.is_superuser:
             raise Http404()
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseCommCareExchangeSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
