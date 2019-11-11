@@ -8,7 +8,7 @@ By default CommCare will use the `default` Django database for all SQL data.
 
 .. image:: images/django_db_monolith.png
 
-Synlog Data
+Synclog Data
 ~~~~~~~~~~~
 Synclog data may be stored in a separate database specified by the
 `SYNCLOGS_SQL_DB_ALIAS` setting. The value of this setting must be a DB
