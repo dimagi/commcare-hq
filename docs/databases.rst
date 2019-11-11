@@ -80,7 +80,7 @@ Rules for shards
 
 
 Sending read queries to standby databases
-=========================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By including details for standby databases in the Django `DATABASES` setting we can configure
 CommCare to route certain READ queries to them.
