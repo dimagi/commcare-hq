@@ -28,6 +28,7 @@ from corehq.apps.users.models import Permissions
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
+    Dhis2RepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
@@ -227,13 +228,25 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
 
 class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
-    repeater_form_class = GenericRepeaterForm
+    repeater_form_class = Dhis2RepeaterForm
     page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
     page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super().set_repeater_attr(repeater, cleaned_data)
+        repeater.dhis2_version = self.add_repeater_form.cleaned_data['dhis2_version']
+        return repeater
+
+
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
+    urlname = 'new_dhis2_entity_repeater$'
+    repeater_form_class = Dhis2RepeaterForm
+    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
 
 
 class EditRepeaterView(BaseRepeaterView):
@@ -318,6 +331,11 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
     page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
+
+
+class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
+    urlname = 'edit_dhis2_entity_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
 
 
 @require_POST

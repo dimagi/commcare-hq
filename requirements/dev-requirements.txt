@@ -106,6 +106,7 @@ jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.17
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
+jsonschema==3.0.2
 kafka-python==1.4.4
 kombu==4.2.2.post1
 laboratory==0.2.0
@@ -145,6 +146,8 @@ pygooglechart==0.4.0
 pyjwt==1.7.1              # via pygithub, twilio
 pyparsing==2.4.5          # via packaging
 pyphen==0.9.5             # via weasyprint
+<<<<<<< HEAD
+pyrsistent==0.15.4        # via jsonschema
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
 python-dateutil==2.8.0
