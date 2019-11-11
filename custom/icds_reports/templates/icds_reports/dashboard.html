@@ -243,14 +243,7 @@ related to angular not being defined. But if we split it here it works fine.
                   </div>
                   <div class="row no-margin">
                     {% include 'icds_reports/partials/register_dashboard_urls.html' %}
-                    {% initial_page_data 'location_hierarchy' location_hierarchy %}
-                    {% initial_page_data 'user_location_id' user_location_id %}
-                    {% initial_page_data 'all_user_location_id' all_user_location_id %}
-                    {% initial_page_data 'report_an_issue_url' report_an_issue_url %}
-                    {% initial_page_data 'is_web_user' is_web_user %}
-                    {% initial_page_data 'have_access_to_features' have_access_to_features %}
-                    {% initial_page_data 'have_access_to_all_locations' have_access_to_all_locations %}
-                    {% initial_page_data 'state_level_access' state_level_access %}
+                    {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
                     <div class="ng-view"></div>
                   </div>
               </div>
