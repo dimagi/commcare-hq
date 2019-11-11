@@ -1,0 +1,167 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-sql",
+    "icds-test",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "static-ls_usage_forms",
+    "display_name": "Forms - LS Usage (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "in",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "property_value": [
+          "http://openrosa.org/formdesigner/b8273b657bb097eb6ba822663b7191ff6bc276ff",
+          "http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309",
+          "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551",
+          "http://openrosa.org/formdesigner/E198C45D-F141-4278-BF61-1ACA92C4E271",
+          "http://openrosa.org/formdesigner/4A8AAB51-D607-4EB6-8F08-3F3DE54869AE",
+          "http://openrosa.org/formdesigner/1A1FAD02-1EFE-4B28-8A97-3682A22E6442",
+          "http://openrosa.org/formdesigner/d6398a94fd5ee9c82f7898fecba226735d4eb505",
+          "http://openrosa.org/formdesigner/6D256BEB-3B0C-4F1C-87EC-3363FC03C8BC",
+          "http://openrosa.org/formdesigner/F5E0038C-F4C1-4003-BEC7-F5A8F254C37A",
+          "http://openrosa.org/formdesigner/612d0eccd4c9152fe74ef4564879df0d6b60be9e",
+          "http://openrosa.org/formdesigner/c6efabe366e48700765f2b02870de98207f0f71c",
+          "http://openrosa.org/formdesigner/CC35B7CD-ACE4-4A0C-A6BF-6A0707990F1A",
+          "http://openrosa.org/formdesigner/7e0c7e6b714abfada807620c132ef9870603355e",
+          "http://openrosa.org/formdesigner/462B19FA-F298-4540-9010-ECF26BC9C47F",
+          "http://openrosa.org/formdesigner/a884320881555582efdc2182b4af8f71429e345a",
+          "http://openrosa.org/formdesigner/e3a0e229d481f8ef6815b9dff283ec45202e66df",
+          "http://openrosa.org/formdesigner/58f155adce34955edd30f995d4a97acdcfdf267e",
+          "http://openrosa.org/formdesigner/BB672B78-DDA9-445A-AABF-7B775047270B"
+      ]
+    },
+    "validations": [
+      {
+        "name": "submitted_by_supervisor",
+        "error_message": "Form not submitted by supervisor",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "supervisor"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": false,
+        "is_primary_key": true,
+        "column_id": "location_id",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        }
+      },
+        {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "type": "expression"
+      },
+     {
+        "type": "count",
+        "display_name": "Count",
+        "column_id": "count"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "datetime",
+        "expression": {
+          "expression": {
+            "datatype": "datetime",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "submitted_on",
+        "type": "expression"
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "icds-ucr-citus",
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "location_id"
+      },
+      "primary_key": ["location_id","doc_id"]
+    }
+  }
+}
