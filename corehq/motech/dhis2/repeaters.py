@@ -7,7 +7,7 @@ from couchdbkit import BadValueError
 from memoized import memoized
 
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import SchemaProperty
+from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
@@ -21,8 +21,11 @@ from corehq.motech.requests import Requests
 from corehq.toggles import DHIS2_INTEGRATION
 
 
+api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
+
+
 def is_dhis2_version(value):
-    if re.match(r'^2\.\d+(\.\d)?$', value):
+    if api_version_re.match(value):
         return True
     raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
                           'or "2.xy.z".'))
@@ -46,6 +49,7 @@ class Dhis2Repeater(FormRepeater):
     friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
+    dhis2_version = StringProperty(validators=[is_dhis2_version_or_blank])
     dhis2_config = SchemaProperty(Dhis2Config)
 
     _has_config = True
@@ -77,6 +81,17 @@ class Dhis2Repeater(FormRepeater):
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
         return json.loads(payload)
+
+    @property
+    def api_version(self):
+        """
+        Check API version to determine what calls/schema are supported
+        by the remote system.
+
+        e.g. Not all CRUD operations are supported before version 15.
+        """
+        if self.dhis2_version:
+            return api_version_re.match(self.dhis2_version).groups(1)
 
     def send_request(self, repeat_record, payload):
         """
