@@ -1549,9 +1549,13 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
     # Fill data
     for row_index, row in enumerate(excel_data[0][1][1:]):
         for col_index, col_value in enumerate(row):
+            if col_index == 0:
+                col_value = row_index + 1
             row_num = row_index + 3
             column_name = get_column_letter(col_index + 1)
             cell = worksheet['{}{}'.format(column_name, row_num)]
+            if col_index > 6 and (col_value == '' or col_value == 0):
+                col_value = 'N/A'
             cell.value = col_value
             cell.border = thin_border
             cell.font = bold_font_black
