@@ -1,7 +1,9 @@
 import json
+import re
 
 from django.utils.translation import ugettext_lazy as _
 
+from couchdbkit import BadValueError
 from memoized import memoized
 
 from couchforms.signals import successful_form_received
@@ -15,10 +17,14 @@ from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
 from corehq.toggles import DHIS2_INTEGRATION
-from corehq.util import reverse
+
+
+def is_dhis2_version(value):
+    if re.match(r'^2\.\d+(\.\d)?$', value):
+        return True
+    raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" or "2.xy.z".'))
 
 
 class Dhis2Repeater(FormRepeater):
