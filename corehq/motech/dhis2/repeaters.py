@@ -1,11 +1,13 @@
 import json
+import re
 
 from django.utils.translation import ugettext_lazy as _
 
+from couchdbkit import BadValueError
 from memoized import memoized
 
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import SchemaProperty
+from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
@@ -22,6 +24,26 @@ from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
+
+
+api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
+
+
+def is_dhis2_version(value):
+    if api_version_re.match(value):
+        return True
+    raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
+                          'or "2.xy.z".'))
+
+
+def is_dhis2_version_or_blank(value):
+    if value is None or value == "":
+        return True
+    try:
+        return is_dhis2_version(value)
+    except BadValueError:
+        raise BadValueError(_('Value must be a DHIS2 version in the format '
+                              '"2.xy" or "2.xy.z", or blank.'))
 
 
 class Dhis2EntityRepeater(CaseRepeater):
@@ -92,6 +114,7 @@ class Dhis2Repeater(FormRepeater):
     friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
+    dhis2_version = StringProperty(validators=[is_dhis2_version_or_blank])
     dhis2_config = SchemaProperty(Dhis2Config)
 
     _has_config = True
@@ -123,6 +146,17 @@ class Dhis2Repeater(FormRepeater):
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
         return json.loads(payload)
+
+    @property
+    def api_version(self):
+        """
+        Check API version to determine what calls/schema are supported
+        by the remote system.
+
+        e.g. Not all CRUD operations are supported before version 15.
+        """
+        if self.dhis2_version:
+            return api_version_re.match(self.dhis2_version).groups(1)
 
     def send_request(self, repeat_record, payload):
         """
