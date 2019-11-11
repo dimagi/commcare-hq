@@ -214,7 +214,7 @@ class DashboardView(TemplateView):
     downtime_template_name = 'icds_reports/dashboard_down.html'
 
     def get_template_names(self):
-        return self.template_name if not self.show_downtime else self.downtime_template_name
+        return [self.template_name] if not self.show_downtime else [self.downtime_template_name]
 
     @property
     def domain(self):
