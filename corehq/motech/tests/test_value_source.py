@@ -6,11 +6,16 @@ from django.test import SimpleTestCase
 from couchdbkit import BadValueError
 
 import corehq.motech.value_source
-from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 from corehq.motech.value_source import (
     CaseProperty,
     CaseTriggerInfo,
     ConstantString,
+    ConstantValue,
     FormQuestionMap,
     ValueSource,
     get_form_question_values,
@@ -141,6 +146,35 @@ class ConstantStringTests(SimpleTestCase):
         external_value = "bar"
         value = constant.deserialize(external_value)
         self.assertIsNone(value)
+
+
+class ConstantValueTests(SimpleTestCase):
+
+    def test_serialize(self):
+        """
+        serialize() should convert from CommCare data type to external
+        data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
+            "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+        })
+        self.assertEqual(one.serialize("foo"), '1')
+
+    def test_deserialize(self):
+        """
+        deserialize() should convert from external data type to CommCare
+        data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
+            "external_data_type": COMMCARE_DATA_TYPE_INTEGER,
+        })
+        self.assertEqual(one.deserialize("foo"), '1')
 
 
 class WrapTests(SimpleTestCase):

@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -21,6 +21,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_start_15yr = self.month_start - relativedelta(years=15)
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
+
+    @property
+    def child_temp_tablename(self):
+        return get_child_health_temp_tablename(self.month_start)
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -346,7 +350,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_child";
         """.format(
             tablename=self.tablename,
-            child_health_monthly="child_health_monthly",
+            child_health_monthly=self.child_temp_tablename,
         ), {
             "month": self.month_start
         }
