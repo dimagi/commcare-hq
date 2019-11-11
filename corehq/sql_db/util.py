@@ -297,7 +297,10 @@ def get_standby_delays_by_db():
     return ret
 
 
-@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
+@quickcache(
+    ['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING,
+    memoize_timeout=STALE_CHECK_FREQUENCY, session_function=None
+)
 def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
