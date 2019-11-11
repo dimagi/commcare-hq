@@ -150,6 +150,10 @@ class DashBoardUsage:
     def get_excel_data(self):
         excel_rows = []
         filters = [['Generated at', india_now()]]
+
+        end_date = datetime.datetime.utcnow()
+        start_date = end_date - datetime.timedelta(days=7)
+
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
                    'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
                    'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
@@ -191,7 +195,9 @@ class DashBoardUsage:
 
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/{}/icds_export_indicator'
                                                                .format(self.domain),
-                                                               username__in=usernames)
+                                                               username__in=usernames,
+                                                               time_of_use__gte=start_date,
+                                                               time_of_use__lt=end_date)
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
                                                                                                   'username')
                            .annotate(count=Count('indicator')).order_by('username', 'indicator'))
