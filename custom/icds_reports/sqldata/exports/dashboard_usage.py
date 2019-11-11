@@ -237,10 +237,10 @@ class DashBoardUsage:
 
                     if user_location_row is not None:
                         if user_location_type == 'state':
-                            user_location_row[3] = 'All'
-                            user_location_row[5] = 'All'
+                            user_location_row[3] = ''
+                            user_location_row[5] = ''
                         if user_location_type == 'district':
-                            user_location_row[5] = 'All'
+                            user_location_row[5] = ''
                         serial_count += 1
 
                         excel = [serial_count, user_location_row[1], user_location_row[3],
