@@ -118,7 +118,7 @@ class SyncLogPillowTest(TestCase):
 
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
         UserReportingMetadataStaging.add_submission(
-            self.domain.name, self.ccuser._id, '123', None, None, {}, datetime.datetime.utcnow()
+            self.domain.name, self.ccuser._id, '123', None, None, None, {}, datetime.datetime.utcnow()
         )
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
 
