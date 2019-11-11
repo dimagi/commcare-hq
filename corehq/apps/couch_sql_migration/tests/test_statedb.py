@@ -138,6 +138,13 @@ def test_get_forms_count():
         eq(db.get_forms_count("c"), 0)
 
 
+def test_add_diffed_cases():
+    with init_db() as db:
+        case_ids = ["a", "b", "c"]
+        db.add_diffed_cases(case_ids)
+        eq(list(db.iter_diffed_cases()), case_ids)
+
+
 @with_setup(teardown=delete_db)
 def test_problem_forms():
     with init_db(memory=False) as db:
@@ -314,6 +321,7 @@ def test_clone_casediff_data_from_tables():
     eq(set(mod.Base.metadata.tables), {m.__tablename__ for m in [
         mod.CaseForms,
         mod.Diff,
+        mod.DiffedCase,
         mod.KeyValue,
         mod.DocCount,
         mod.MissingDoc,

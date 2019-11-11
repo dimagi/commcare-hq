@@ -427,7 +427,7 @@ class CouchSqlDomainMigrator:
         yield from _iter_skipped_forms(
             self.domain, migration_id, self.stopper, self._with_progress)
 
-    def _get_resumable_iterator(self, doc_types):
+    def _get_resumable_iterator(self, doc_types, **kw):
         # resumable iteration state is associated with statedb.unique_id,
         # so it will be reset (orphaned in couch) if that changes
         migration_id = self.statedb.unique_id
@@ -435,7 +435,7 @@ class CouchSqlDomainMigrator:
             yield from iter_unmigrated_docs(
                 self.domain, doc_types, migration_id, self.counter)
         docs = self._iter_docs(doc_types, migration_id)
-        yield from self._with_progress(doc_types, docs)
+        yield from self._with_progress(doc_types, docs, **kw)
 
     def _iter_docs(self, doc_types, migration_id):
         for doc_type in doc_types:
@@ -1002,6 +1002,7 @@ class DocCounter:
 
     def __enter__(self):
         self.timing.start()
+        return self
 
     def __exit__(self, *exc_info):
         self.timing.stop()

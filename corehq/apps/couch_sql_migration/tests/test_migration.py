@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from functools import wraps
 from signal import SIGINT
@@ -129,9 +129,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration(self, domain=None, action=MIGRATE, **options):
+    def _do_migration(self, domain=None, action=MIGRATE, chunk_size=0, **options):
         if domain is None:
             domain = self.domain_name
+        if chunk_size:
+            patch_chunk_size = self.patch_migration_chunk_size(chunk_size)
+        else:
+            patch_chunk_size = suppress()  # until nullcontext with py3.7
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
@@ -140,7 +144,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
-        ):
+        ), patch_chunk_size:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True

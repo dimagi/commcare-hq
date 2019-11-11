@@ -192,6 +192,15 @@ class StateDB(DiffDB):
             query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
             return query.scalar() or 0
 
+    def add_diffed_cases(self, case_ids):
+        with self.session() as session:
+            session.bulk_save_objects([DiffedCase(id=id) for id in case_ids])
+
+    def iter_diffed_cases(self):
+        query = self.Session().query(DiffedCase.id)
+        for case_id, in iter_large(query, DiffedCase.id):
+            yield case_id
+
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
 
@@ -413,6 +422,12 @@ class CaseForms(Base):
     case_id = Column(String(50), nullable=False, primary_key=True)
     total_forms = Column(Integer, nullable=False)
     processed_forms = Column(Integer, nullable=False, default=0)
+
+
+class DiffedCase(Base):
+    __tablename__ = 'diffed_case'
+
+    id = Column(String(50), nullable=False, primary_key=True)
 
 
 class DocCount(Base):
