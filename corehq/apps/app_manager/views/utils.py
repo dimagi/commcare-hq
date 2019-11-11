@@ -424,7 +424,7 @@ def get_new_multimedia_between_builds(domain, source_build_id, target_build_id, 
     multimedia_map_for_source_build_by_id = {
         media_item['multimedia_id']: media_item
         for path, media_item in
-        source_build.multimedia_map_for_build(build_profile=build_profile)
+        source_build.multimedia_map_for_build(build_profile=build_profile).items()
     }
     multimedia_map_for_target_build = target_build.multimedia_map_for_build(build_profile=build_profile)
     multimedia_map_for_target_build_by_id = {
@@ -435,8 +435,8 @@ def get_new_multimedia_between_builds(domain, source_build_id, target_build_id, 
     added = set(multimedia_map_for_target_build_by_id.keys()).difference(
         set(multimedia_map_for_source_build_by_id.keys()))
     media_objects = {
-        media_map_item['multimedia_id']: media_map_item
-        for path, media_map_item in
+        mm_object.get_id: mm_object
+        for path, mm_object in
         target_build.get_media_objects(multimedia_map=multimedia_map_for_target_build)
     }
     total_size = defaultdict(lambda: 0)
