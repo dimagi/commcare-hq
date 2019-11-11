@@ -3,7 +3,7 @@ from functools import cmp_to_key
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.smsforms.api import (
     TouchformsError,
     current_question,
@@ -291,13 +291,16 @@ def get_case_id(contact, case=None):
     return case_id
 
 
-def get_app_module_form(form_unique_id, logged_subevent=None):
+def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     """
     Returns (app, module, form, error, error_code)
     """
     try:
-        form = Form.get_form(form_unique_id)
-        app = form.get_app()
+        if app_id is None:
+            from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+            app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
+        app = get_app(domain, app_id)
+        form = app.get_form(form_unique_id)
         module = form.get_module()
         return (app, module, form, False, None)
     except:
@@ -370,8 +373,8 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
-    app, module, form, error_occurred, error_code = get_app_module_form(
-        survey_keyword_action.form_unique_id, logged_subevent)
+    app, module, form, error_occurred, error_code = get_app_module_form(domain,
+        survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
         clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
@@ -488,7 +491,12 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            form = Form.get_form(action.form_unique_id)
+            app_id = action.app_id
+            if app_id is None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(survey_keyword.domain, action.form_unique_id)
+            app = get_app(survey_keyword.domain, app_id)
+            form = app.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
     return False
@@ -645,6 +653,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 content.set_context(case=case)
             elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
                 content = SMSSurveyContent(
+                    app_id=survey_keyword_action.app_id,
                     form_unique_id=survey_keyword_action.form_unique_id,
                     expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
                 )
