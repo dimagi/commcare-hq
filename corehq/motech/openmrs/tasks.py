@@ -10,6 +10,7 @@ from datetime import datetime
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from jinja2 import Template
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from toggle.shortcuts import find_domains_with_toggle_enabled
@@ -68,6 +69,10 @@ def parse_params(params, location=None):
 def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
+
+    raises RequestException on request error
+    raises ValueError if response is not JSON
+    raises IndexError, KeyError, TypeError on unexpected JSON format
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
@@ -141,7 +146,20 @@ def get_updatepatient_caseblock(case, patient, importer):
 
 
 def import_patients_of_owner(requests, importer, domain_name, owner_id, location=None):
-    openmrs_patients = get_openmrs_patients(requests, importer, location)
+    try:
+        openmrs_patients = get_openmrs_patients(requests, importer, location)
+    except RequestException as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Error calling API: {err}'
+        )
+        return
+    except (KeyError, IndexError, TypeError, ValueError) as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Unexpected response format: {err}'
+        )
+        return
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
         case, error = importer_util.lookup_case(
