@@ -265,6 +265,13 @@ class LoggingSessionMiddleware(SessionMiddleware):
         return (toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER) and
             any(rx.match(request.path_info) for rx in self.bypass_re))
 
+    def process_response(self, request, response):
+        datadog_counter(
+            'commcare.bypass_sessions.requests_count',
+            tags=['bypass_sessions:{}'.format(self._bypass_sessions(request)),
+            'response_code:{}'.format(response.status_code)])
+        return super().process_response(request, response)
+
     def process_request(self, request):
         try:
             match = re.search(r'/a/[0-9a-z-]+', request.path)
