@@ -35,6 +35,10 @@ hqDefine('app_manager/js/source_files', [
                 initialPageData.reverse("get_multimedia_sizes", secondAppID));
             multimediaSizes2.load();
             $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizes2);
+            var multimediaSizesDiff = multimediaSizeUtil.multimediaSizesView(
+                initialPageData.reverse("compare_multimedia_sizes"));
+            multimediaSizesDiff.load();
+            $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
         }
     });
 });
