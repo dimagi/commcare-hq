@@ -23,7 +23,6 @@ from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
-from memoized import memoized
 
 try:
     import psutil
@@ -260,7 +259,6 @@ class LoggingSessionMiddleware(SessionMiddleware):
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
-    @memoized
     def _bypass_sessions(self, request):
         return (toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER) and
             any(rx.match(request.path_info) for rx in self.bypass_re))
