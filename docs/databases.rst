@@ -16,7 +16,7 @@ alias in the Django `DATABASES` setting.
 
 UCR Data
 ~~~~~~~~
-Data created by the UCR framework can be stored in multiple separate databases.
+Data created by the `UCR framework  <ucr.html>`_ can be stored in multiple separate databases.
 Each UCR defines an `engine_id` parameter which tells it which configured
 database engine to use. These *engines* are defined in the `REPORTING_DATABASES`
 Django setting which maps the `engine_id` to a Django database alias defined
