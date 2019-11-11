@@ -2,8 +2,8 @@ import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
-from corehq.apps.app_manager.exceptions import XFormIdNotUnique
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
@@ -19,13 +19,13 @@ from corehq.apps.sms.api import (
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
 
@@ -147,6 +147,7 @@ class EmailContent(Content):
 
 
 class SMSSurveyContent(Content):
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126)
 
     # See corehq.apps.smsforms.models.SQLXFormsSession for an
@@ -161,6 +162,7 @@ class SMSSurveyContent(Content):
         See Content.create_copy() for docstring
         """
         return SMSSurveyContent(
+            app_id=None,
             form_unique_id=None,
             expire_after=self.expire_after,
             reminder_intervals=deepcopy(self.reminder_intervals),
@@ -171,13 +173,14 @@ class SMSSurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            form = Form.get_form(self.form_unique_id)
-            app = form.get_app()
+            app_id = self.app_id
+            if app_id is None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(domain, self.form_unique_id)
+            app = get_app(domain, app_id)
+            form = app.get_form(self.form_unique_id)
             module = form.get_module()
-        except (ResourceNotFound, XFormIdNotUnique):
-            return None, None, None, None
-
-        if app.domain != domain:
+        except (Http404, FormNotFoundException):
             return None, None, None, None
 
         return app, module, form, form_requires_input(form)
@@ -355,6 +358,7 @@ class IVRSurveyContent(Content):
     """
 
     # The unique id of the form that will be used as the IVR Survey
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126)
 
     # If empty list, this is ignored. Otherwise, this is a list of intervals representing

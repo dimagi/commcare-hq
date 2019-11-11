@@ -70,8 +70,8 @@ class NewRemindersEWSBroadcastForm(NewRemindersBroadcastForm):
     def clean_user_data_property_value(self):
         return None
 
-    def compute_initial(self):
-        result = super(NewRemindersEWSBroadcastForm, self).compute_initial()
+    def compute_initial(self, domain):
+        result = super(NewRemindersEWSBroadcastForm, self).compute_initial(domain)
         if self.initial_schedule:
             if (
                 self.initial_schedule.user_data_filter and
