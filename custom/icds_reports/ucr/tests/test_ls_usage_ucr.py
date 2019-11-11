@@ -1,4 +1,3 @@
-import datetime
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
@@ -40,4 +39,3 @@ class TestLsUsage(BaseFormsTest):
                 'count': 1
             }
             ])
-
