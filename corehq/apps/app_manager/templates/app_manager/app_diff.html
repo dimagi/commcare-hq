@@ -16,6 +16,7 @@
 {% block mm_block %}
   {% initial_page_data 'first_app_id' app.id %}
   {% initial_page_data 'second_app_id' other_app.id %}
+  {% registerurl 'compare_multimedia_sizes' app.domain app.id other_app.id %}
   <div id="multimedia-sizes-diff-container">
     <h2>{% trans 'MultiMedia Sizes' %}</h2>
     <div id="multimedia-sizes-container-1">
@@ -23,6 +24,14 @@
     </div>
     <div id="multimedia-sizes-container-2">
       {% include 'app_manager/partials/multimedia_sizes.html' with version=other_app.version %}
+    </div>
+    <div id="multimedia-sizes-diff">
+      <b>
+      {% blocktrans with from_version=other_app.version to_version=app.version %}
+        Multimedia download needed to update from {{ from_version }} to {{ to_version }}
+      {% endblocktrans %}
+      </b>
+      {% include 'app_manager/partials/multimedia_sizes.html' %}
     </div>
   </div>
 {% endblock %}

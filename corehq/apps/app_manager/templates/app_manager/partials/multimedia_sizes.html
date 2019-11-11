@@ -1,5 +1,7 @@
 {% load i18n %}
-<b>{% trans 'Version' %} {{ version }}</b>
+{% if version %}
+  <b>{% trans 'Version' %} {{ version }}</b>
+{% endif %}
 <div data-bind="if: load_state() === 'loading'">
   <i class="fa fa-spin fa-spinner"></i>
   {% trans "Loading Multimedia Sizes..." %}
