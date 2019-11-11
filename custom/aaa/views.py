@@ -260,37 +260,6 @@ class LocationFilterAPI(View):
         })
 
 
-@method_decorator([login_and_domain_required, require_superuser_or_contractor], name='dispatch')
-class AggregationScriptPage(BaseDomainView):
-    page_title = 'Aggregation Script'
-    urlname = 'aaa_aggregation_script_page'
-    template_name = 'icds_reports/aggregation_script.html'
-
-    @use_daterangepicker
-    def dispatch(self, *args, **kwargs):
-        if settings.SERVER_ENVIRONMENT != 'india':
-            return HttpResponse("This page is only available for QA and not available for production instances.")
-
-        couch_user = self.request.couch_user
-        if couch_user.is_domain_admin(self.domain):
-            return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
-
-        raise PermissionDenied()
-
-    def section_url(self):
-        return
-
-    def post(self, request, *args, **kwargs):
-        date_param = self.request.POST.get('date')
-        if not date_param:
-            messages.error(request, 'Date is required')
-            return redirect(self.urlname, domain=self.domain)
-        date = force_to_date(date_param)
-        run_aggregation(self.domain, date)
-        messages.success(request, 'Aggregation task has run.')
-        return redirect(self.urlname, domain=self.domain)
-
-
 @method_decorator([login_and_domain_required], name='dispatch')
 class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
     template_name = 'aaa/reports/unified_beneficiary_details.html'

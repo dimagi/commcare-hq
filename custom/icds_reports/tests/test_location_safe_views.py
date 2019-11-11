@@ -8,7 +8,6 @@ from custom.icds_reports import views
 
 
 NON_LOCATION_SAFE_VIEWS = [
-    'AggregationScriptPage',
     'BaseDomainView',
     'TemplateView',
     'BugReportView',

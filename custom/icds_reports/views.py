@@ -1586,42 +1586,6 @@ class AdultWeightScaleView(BaseReportView):
 
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
-class AggregationScriptPage(BaseDomainView):
-    page_title = 'Aggregation Script'
-    urlname = 'aggregation_script_page'
-    template_name = 'icds_reports/aggregation_script.html'
-
-    @use_daterangepicker
-    def dispatch(self, *args, **kwargs):
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-            return HttpResponse("This page is only available for QA and not available for production instances.")
-
-        couch_user = self.request.couch_user
-        domain = self.domain
-        domain_membership = couch_user.get_domain_membership(domain)
-        bhd_role = UserRole.by_domain_and_name(
-            domain, BHD_ROLE
-        )
-        if couch_user.is_domain_admin(domain) or (bhd_role or bhd_role[0].get_id == domain_membership.role_id):
-            return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
-        else:
-            raise PermissionDenied()
-
-    def section_url(self):
-        return
-
-    def post(self, request, *args, **kwargs):
-        date_param = self.request.POST.get('date')
-        if not date_param:
-            messages.error(request, 'Date is required')
-            return redirect(self.urlname, domain=self.domain)
-        date = force_to_date(date_param)
-        move_ucr_data_into_aggregation_tables.delay(date)
-        messages.success(request, 'Aggregation task is running. Data should appear soon.')
-        return redirect(self.urlname, domain=self.domain)
-
-
 class ICDSBugReportView(BugReportView):
     @property
     def recipients(self):

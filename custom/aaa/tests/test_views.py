@@ -5,7 +5,6 @@ from django.views.generic.base import View
 from custom.aaa import views
 
 NON_LOCATION_SAFE_VIEWS = [
-    'AggregationScriptPage',
     'BaseDomainView',
     'TemplateView',
 ]
