@@ -11,10 +11,10 @@ from nose.tools import assert_equal, assert_true
 
 from corehq.motech.requests import Requests
 
-DHIS2_API_VERSION = "29"  # Overrides const.DHIS2_API_VERSION ("26")
-DHIS2_STABLE_VERSION = "2.31.4"
+dhis2_version = "2.32.2"
+api_version = re.match(r'2\.(\d+)', dhis2_version).group(1)
 
-base_url = f"https://play.dhis2.org/{DHIS2_STABLE_VERSION}/"
+base_url = f"https://play.dhis2.org/{dhis2_version}/"
 username = "admin"
 password = "district"
 domain_name = "test-domain"
@@ -111,7 +111,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_get_index(self):
-        endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances"
+        endpoint = f"/api/{api_version}/trackedEntityInstances"
         params = {"ou": allen_town_health_post_ou}
         response = self.requests.get(endpoint, params=params)
 
@@ -124,7 +124,7 @@ class Dhis2ApiTests(SimpleTestCase):
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_query(self):
         last_name = "Pierce"
-        endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances"
+        endpoint = f"/api/{api_version}/trackedEntityInstances"
         params = {
             "ou": allen_town_health_post_ou,
             "filter": f"{last_name_attr_id}:EQ:{last_name}",
@@ -142,7 +142,7 @@ class Dhis2ApiTests(SimpleTestCase):
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_grid_query(self):
         city = "Johannesburg"
-        endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/query"
+        endpoint = f"/api/{api_version}/trackedEntityInstances/query"
         params = {
             "ou": allen_town_health_post_ou,
             "filter": f"{city_attr_id}:EQ:{city}",
@@ -157,7 +157,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_create(self):
-        endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances"
+        endpoint = f"/api/{api_version}/trackedEntityInstances"
         json_data = {
             "trackedEntityType": person_te_type_id,
             "orgUnit": allen_town_health_post_ou,
@@ -188,7 +188,7 @@ class Dhis2ApiTests(SimpleTestCase):
         with get_tracked_entity(self.requests, tei_id) as person:
             _update_attr(person, first_name_attr_id, "Nelson")
             _update_attr(person, last_name_attr_id, "Mandela")
-            endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
+            endpoint = f"/api/{api_version}/trackedEntityInstances/{tei_id}"
 
             response = self.requests.put(endpoint, json=person)
             _assert_status_2xx(response)
@@ -226,7 +226,7 @@ def get_tracked_entity(requests, te_id):
     """
     Context manager that resets a tracked entity instance
     """
-    endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{te_id}"
+    endpoint = f"/api/{api_version}/trackedEntityInstances/{te_id}"
     params = {"fields": "*"}  # Tells DHIS2 to return everything
     response = requests.get(endpoint, params=params)
     orig_data = response.json()
