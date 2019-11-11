@@ -1810,11 +1810,12 @@ SESSION_MIDDLEWARE_LOGGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BYPASS_SESSIONS = StaticToggle(
-    'bypass_sessions',
+BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
+    'bypass_sessions_r',
     'Bypass sessions for select mobile URLS',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0
 )
 
 DAILY_INDICATORS = StaticToggle(
