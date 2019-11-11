@@ -1979,10 +1979,3 @@ class MWCDDataView(View):
         except AttributeError:
             response = dict(isSuccess=False, message=self.message('unknown_error'))
             return JsonResponse(response, status=500)
-
-    @property
-    @icds_quickcache([])
-    def valid_states(self):
-        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
-                                            state_is_test=0).values_list('state_name', 'state_id')
-        return {state[0]: state[1] for state in states}
