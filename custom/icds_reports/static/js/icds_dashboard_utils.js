@@ -1,7 +1,6 @@
 /* global angular hqImport */
 
 function populateDashboardConstants() {
-    console.log('populating constants from initial page data;');
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
     angular.module('icdsApp').constant('locationHierarchy', initialPageData.get("location_hierarchy"));
