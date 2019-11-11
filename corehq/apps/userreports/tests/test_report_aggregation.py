@@ -1099,7 +1099,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         ]:
             self.assertIn(table_row, table)
 
-
         report_config = self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
