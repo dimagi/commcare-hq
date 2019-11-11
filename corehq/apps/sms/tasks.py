@@ -48,7 +48,6 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     DailyOutboundSMSLimitReached,
-    MigrationStatus,
     PhoneLoadBalancingMixin,
     PhoneNumber,
     QueuedSMS,
@@ -57,7 +56,6 @@ from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
 from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
