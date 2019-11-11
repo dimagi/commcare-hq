@@ -42,6 +42,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
     THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
 from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -230,29 +231,9 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
-        kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
-            self.kwargs['domain']
-        ).location_ids())
-        kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
-                self.kwargs['domain']
-            )]
-        )
-        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
-        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
-            self.domain, 'access_all_locations'
-        )
+        kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
 
-        if kwargs['have_access_to_all_locations']:
-            kwargs['user_location_id'] = None
-
-        is_commcare_user = self.couch_user.is_commcare_user()
-
-        if self.couch_user.is_web_user():
-            kwargs['is_web_user'] = True
-        elif is_commcare_user and self._has_helpdesk_role():
+        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
