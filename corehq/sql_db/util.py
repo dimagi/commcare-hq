@@ -7,7 +7,8 @@ from random import choices
 from django import db
 from django.conf import settings
 from django.db import OperationalError
-from django.db.utils import InterfaceError as DjangoInterfaceError, DEFAULT_DB_ALIAS
+from django.db.utils import DEFAULT_DB_ALIAS
+from django.db.utils import InterfaceError as DjangoInterfaceError
 
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
@@ -162,7 +163,7 @@ def get_db_alias_for_partitioned_doc(partition_value):
 
 def get_db_aliases_for_partitioned_query():
     if settings.USE_PARTITIONED_DATABASE:
-        db_names = partition_config.get_form_processing_dbs()
+        db_names = partition_config.form_processing_dbs
     else:
         db_names = [DEFAULT_DB_ALIAS]
     return db_names

@@ -2060,6 +2060,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Manage deleted domains'),
+                 'url': reverse('tombstone_management'),
+                 'icon': 'fa fa-minus-circle'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),

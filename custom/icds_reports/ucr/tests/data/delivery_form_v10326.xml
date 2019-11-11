@@ -38,7 +38,7 @@
 		<child_temp_name_final>Anushree 's daughter</child_temp_name_final>
 		<child_current_name>Test Delivery8</child_current_name>
 		<child_cried>yes</child_cried>
-		<still_live_birth>live</still_live_birth>
+		<still_live_birth>{still_live}</still_live_birth>
 		<open_child_case>yes</open_child_case>
 		<child_died_check>0</child_died_check>
 		<child_birth_weight_recorded>yes</child_birth_weight_recorded>

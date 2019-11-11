@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from corehq.util.es.elasticsearch import TransportError
 from corehq.util.es.elasticsearch import bulk
+from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
     initialize_mapping_if_necessary,
@@ -212,8 +213,9 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         for change, exception in error_collector.errors:
             pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
 
+        es_interface = ElasticsearchInterface(self.es)
         try:
-            bulk(self.es, bulk_changes)
+            es_interface.bulk_ops(bulk_changes)
         except Exception:
             pillow_logging.exception("\tException sending payload to ES")
             return False
