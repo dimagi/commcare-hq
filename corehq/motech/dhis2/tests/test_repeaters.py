@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from couchdbkit import BadValueError
 
 from corehq.motech.dhis2.repeaters import (
+    Dhis2Repeater,
     is_dhis2_version,
     is_dhis2_version_or_blank,
 )
@@ -44,3 +45,22 @@ class IsDhis2VersionOrBlankTests(SimpleTestCase):
 
     def test_blank(self):
         self.assertTrue(is_dhis2_version_or_blank(""))
+
+
+class ApiVersionTests(SimpleTestCase):
+
+    def test_2_xy_z(self):
+        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34.5"})
+        self.assertEqual(repeater.api_version, "34")
+
+    def test_2_xy(self):
+        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34"})
+        self.assertEqual(repeater.api_version, "34")
+
+    def test_none(self):
+        repeater = Dhis2Repeater.wrap({"dhis2_version": None})
+        self.assertIsNone(repeater.api_version)
+
+    def test_blank(self):
+        repeater = Dhis2Repeater.wrap({"dhis2_version": ""})
+        self.assertIsNone(repeater.api_version)
