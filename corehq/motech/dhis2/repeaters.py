@@ -11,12 +11,12 @@ from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
-from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
+from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
+from corehq.motech.repeaters.models import CaseRepeater, FormRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -24,7 +24,6 @@ from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
-
 
 api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
 
@@ -60,7 +59,7 @@ class Dhis2EntityRepeater(CaseRepeater):
     _has_config = True
 
     def __str__(self):
-        return f'Forwarding cases to "{self.url}" as DHIS2 Tracked Entity instances'
+        return Repeater.__str__(self)
 
     def allowed_to_forward(self, payload):
         return True
@@ -104,12 +103,9 @@ class Dhis2EntityRepeater(CaseRepeater):
             self.username,
             self.plaintext_password,
             verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
-        return send_dhis2_entities(
-            requests,
-            self.dhis2_entity_config,
-            case_trigger_infos,
-        )
+        return send_dhis2_entities(requests, self, case_trigger_infos)
 
 
 class Dhis2Repeater(FormRepeater):

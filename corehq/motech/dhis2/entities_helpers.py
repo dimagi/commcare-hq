@@ -20,14 +20,14 @@ from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo
 
 
-def send_dhis2_entities(requests, dhis2_entity_config, case_trigger_infos):
+def send_dhis2_entities(requests, repeater, case_trigger_infos):
     """
     Send request to register / update tracked entities
     """
     errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        case_config = get_case_config_for_case_type(info.type, dhis2_entity_config)
+        case_config = get_case_config_for_case_type(info.type, repeater.dhis2_entity_config)
         if not case_config:
             # This payload includes a case of a case type that does not correspond to a tracked entity type
             continue
@@ -41,10 +41,11 @@ def send_dhis2_entities(requests, dhis2_entity_config, case_trigger_infos):
                 save_tracked_entity_instance_id(requests.domain_name, tracked_entity, info, case_config)
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
-            requests.notify_exception(str(err))
 
     if errors:
-        return RepeaterResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
+        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
+        requests.notify_error(errors_str)
+        return RepeaterResponse(400, 'Bad Request', errors_str)
     return RepeaterResponse(200, "OK")
 
 
