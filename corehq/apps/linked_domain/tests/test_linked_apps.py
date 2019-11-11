@@ -133,7 +133,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         )
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_pull_app_resource_overrides(self):
+    def test_pull_app_resource_overrides(self, *args):
         master_app = Application.new_app(self.domain, "Master Application")
         master_app.linked_whitelist = [self.linked_domain]
         master_module = master_app.add_module(Module.new_module('M1', None))
