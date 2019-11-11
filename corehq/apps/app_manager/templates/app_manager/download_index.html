@@ -53,6 +53,13 @@
   {% endif %}
 {% endblock %}
 
+{% block mm_block %}
+  {% initial_page_data 'app_id' app.id %}
+  <h2>{% trans 'MultiMedia Sizes' %}</h2>
+  <div id="multimedia-sizes-container">
+    {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+  </div>
+{% endblock %}
 {% block downloads %}
   <h2>Downloads</h2>
   <table class="table table-condensed">

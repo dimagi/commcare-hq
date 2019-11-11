@@ -1,0 +1,17 @@
+{% load i18n %}
+<b>{% trans 'Version' %} {{ version }}</b>
+<div data-bind="if: load_state() === 'loading'">
+  <i class="fa fa-spin fa-spinner"></i>
+  {% trans "Loading Multimedia Sizes..." %}
+</div>
+<div data-bind="if: load_state() === 'loaded'">
+  <span data-bind="visible: !sizes().length" style="display:none">
+    {% trans 'No Multimedia' %}
+  </span>
+  <ul data-bind="foreach: sizes, visible: sizes().length" style="display:none">
+    <li>
+      <span data-bind="text: name"></span>:
+      <span data-bind="text: size"> </span>
+    </li>
+  </ul>
+</div>
