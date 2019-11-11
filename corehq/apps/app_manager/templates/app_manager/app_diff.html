@@ -24,6 +24,12 @@
     <div id="multimedia-sizes-container-2">
       {% include 'app_manager/partials/multimedia_sizes.html' with version=other_app.version %}
     </div>
+    <div id="multimedia-sizes-diff">
+      {% blocktrans with from_version=other_app.version to_version=app.version %}
+          Multimedia download needed to update from {{ from_version }} to {{ to_version }}
+        {% endblocktrans %}
+      {% include 'app_manager/partials/multimedia_sizes.html' %}
+    </div>
   </div>
 {% endblock %}
 
