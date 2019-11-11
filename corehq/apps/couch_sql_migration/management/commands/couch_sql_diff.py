@@ -21,6 +21,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
+from corehq.util.log import with_progress_bar
 
 from ...casediff import ProcessNotAllowed, filter_missing_cases, get_casediff_state_path
 from ...couchsqlmigration import (
@@ -35,6 +36,7 @@ from ...util import get_ids_from_string_or_file
 log = logging.getLogger(__name__)
 
 DIFF_BATCH_SIZE = 100
+PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
 
 
 class Command(BaseCommand):
@@ -61,7 +63,8 @@ class Command(BaseCommand):
         parser.add_argument('--cases',
             help='''
                 Diff specific cases. The value of this option should
-                be a space-delimited list of case ids OR a path to a file
+                be 'pending' to clear out in-process diffs OR a
+                space-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
             ''')
@@ -106,6 +109,8 @@ def do_case_diffs(migrator, cases):
     with casediff.context() as add_cases:
         for data in casediff.iter_case_diff_results():
             save_result(data)
+    if casediff.should_diff_pending():
+        return PENDING_WARNING
 
 
 class CaseDiffTool:
@@ -140,9 +145,11 @@ class CaseDiffTool:
                 yield add_cases
 
     def iter_case_diff_results(self):
-        if self.cases is not None:
-            return self.iter_diff_specific_cases()
-        return self.resumable_iter_diff_cases()
+        if self.cases is None:
+            return self.resumable_iter_diff_cases()
+        if self.cases == "pending":
+            return self.iter_diff_pending_cases()
+        return self.iter_diff_specific_cases()
 
     def iter_diff_specific_cases(self):
         case_ids = get_ids_from_string_or_file(self.cases)
@@ -152,9 +159,23 @@ class CaseDiffTool:
             yield diff_cases(batch, log_cases=True)
 
     def resumable_iter_diff_cases(self):
-        batches = chunked(self.iter_case_ids(), DIFF_BATCH_SIZE, list)
-        pool = Pool(initializer=init_worker, initargs=self.initargs, maxtasksperchild=100)
-        yield from pool.imap_unordered(diff_cases, batches)
+        batches = chunked(self.iter_case_ids(), DIFF_BATCH_SIZE, self.diff_batch)
+        yield from self.pool.imap_unordered(diff_cases, batches)
+
+    def iter_diff_pending_cases(self):
+        def list_or_stop(items):
+            if self.is_stopped():
+                raise StopIteration
+            return list(items)
+
+        pending = self.get_pending_cases()
+        batches = chunked(pending, DIFF_BATCH_SIZE, list_or_stop)
+        yield from self.pool.imap_unordered(diff_cases, batches)
+
+    def diff_batch(self, case_ids):
+        case_ids = list(case_ids)
+        self.statedb.add_cases_to_diff(case_ids)
+        return case_ids
 
     def is_stopped(self):
         return self.migrator.stopper.clean_break
@@ -165,6 +186,21 @@ class CaseDiffTool:
             progress_name="Diff",
             offset_key='CommCareCase.id',
         )
+
+    def get_pending_cases(self):
+        count = self.statedb.count_undiffed_cases()
+        if not count:
+            return []
+        pending = self.statedb.iter_undiffed_case_ids()
+        return with_progress_bar(
+            pending, count, prefix="Pending case diffs", oneline=False)
+
+    def should_diff_pending(self):
+        return self.cases is None and self.get_pending_cases()
+
+    @property
+    def pool(self):
+        return Pool(initializer=init_worker, initargs=self.initargs, maxtasksperchild=100)
 
     @property
     def initargs(self):

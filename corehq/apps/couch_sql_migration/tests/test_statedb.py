@@ -138,11 +138,16 @@ def test_get_forms_count():
         eq(db.get_forms_count("c"), 0)
 
 
-def test_add_diffed_cases():
+def test_case_diff_lifecycle():
     with init_db() as db:
         case_ids = ["a", "b", "c"]
+        db.add_cases_to_diff(case_ids)
+        db.add_cases_to_diff(["d"])
         db.add_diffed_cases(case_ids)
-        eq(list(db.iter_diffed_cases()), case_ids)
+        eq(list(db.iter_undiffed_case_ids()), ["d"])
+        eq(db.count_undiffed_cases(), 1)
+        db.add_diffed_cases(case_ids)  # add again should not error
+        db.add_diffed_cases([])  # no ids should not error
 
 
 @with_setup(teardown=delete_db)
@@ -320,6 +325,7 @@ def test_clone_casediff_data_from_tables():
     # to be updated.
     eq(set(mod.Base.metadata.tables), {m.__tablename__ for m in [
         mod.CaseForms,
+        mod.CaseToDiff,
         mod.Diff,
         mod.DiffedCase,
         mod.KeyValue,

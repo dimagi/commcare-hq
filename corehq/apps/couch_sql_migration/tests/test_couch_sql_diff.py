@@ -48,6 +48,23 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             ('CommCareCase', Diff('diff', ['age'], old='35', new='27')),
         ])
 
+    def test_pending_diff(self):
+        def diff_none(case_ids):
+            return mod.DiffData([])
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self._do_migration(case_diff='none')
+        clear_local_domain_sql_backend_override(self.domain_name)
+        case = self._get_case("case-1")
+        case.age = '35'
+        case.save()
+        with patch.object(mod, "diff_cases", diff_none):
+            result = self.do_case_diffs()
+        self.assertEqual(result, mod.PENDING_WARNING)
+        self.do_case_diffs(cases="pending")
+        self._compare_diffs([
+            ('CommCareCase', Diff('diff', ['age'], old='35', new='27')),
+        ])
+
     def test_live_diff(self):
         # do not diff case modified since most recent case created in SQL
         self.submit_form(make_test_form("form-1", case_id="case-1"), timedelta(minutes=-90))
