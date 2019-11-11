@@ -110,7 +110,7 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView, MWCDReportView
 from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
 from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
@@ -1973,7 +1973,7 @@ class MWCDDataView(View):
                             'response': data
                         }}
             return JsonResponse(response)
-        except NICIndicatorsView.DoesNotExist:
+        except MWCDReportView.DoesNotExist:
             response = dict(isSuccess=False, message=self.message('no_data'))
             return JsonResponse(response, status=500)
         except AttributeError:

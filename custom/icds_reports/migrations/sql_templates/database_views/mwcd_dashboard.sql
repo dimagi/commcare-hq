@@ -1,7 +1,6 @@
 DROP VIEW IF EXISTS mwcd_report CASCADE;
 CREATE VIEW mwcd_report AS
 SELECT
-
 "awc_location_local"."state_id" AS "state_id",
 "awc_location_local"."state_name" AS "state_name",
 "awc_location_local"."state_site_code" AS "state_site_code",
@@ -16,7 +15,7 @@ COALESCE(agg_awc.cases_child_health,0) as cases_child_health,
 COALESCE(agg_awc.cases_ccs_pregnant+ agg_awc.cases_ccs_lactating,0) as total_mothers,
 COALESCE(agg_ls.num_supervisor_launched,0) as num_ls_launched
 
-FROM (select * from "public"."awc_location_local" where aggregation_level=1) "awc_location_local"
+FROM "awc_location_local"
 LEFT join agg_awc on (
         ("agg_awc"."state_id" = "awc_location_local"."state_id") AND
         ("agg_awc"."aggregation_level" = "awc_location_local"."aggregation_level") AND
