@@ -960,11 +960,20 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 'Cannot delete domain without leaving a tombstone except during testing')
         self._pre_delete()
         if leave_tombstone:
-            if not self.doc_type.endswith('-Deleted'):
-                self.doc_type = '{}-Deleted'.format(self.doc_type)
-            self.save()
+            domain = self.get(self._id)
+            if not domain.doc_type.endswith('-Deleted'):
+                domain.doc_type = '{}-Deleted'.format(domain.doc_type)
+                domain.save()
         else:
             super().delete()
+
+        # The save signals can undo effect of clearing the cache within the save
+        # because they query the stale view (but attaches the up to date doc).
+        # This is only a problem on delete/soft-delete,
+        # because these change the presence in the index, not just the doc content.
+        # Since this is rare, I'm opting to just re-clear the cache here
+        # rather than making the signals use a strict lookup or something like that.
+        self.clear_caches()
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
