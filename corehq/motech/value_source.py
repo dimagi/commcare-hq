@@ -168,15 +168,8 @@ class CaseProperty(ValueSource):
         >>> info = CaseTriggerInfo(
         ...     domain='test-domain',
         ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
-        ...     type='case',
-        ...     name='',
-        ...     owner_id='c0ffee',
-        ...     modified_by='c0ffee',
         ...     updates={'foo': 1},
-        ...     created=False,
-        ...     closed=False,
         ...     extra_fields={'foo': 0, 'bar': 2},
-        ...     form_question_values={},
         ... )
         >>> CaseProperty(case_property="foo")._get_commcare_value(info)
         1
@@ -359,7 +352,7 @@ class CaseOwnerAncestorLocationField(ValueSource):
 class FormUserAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location is the form
-    user's location, or the first ancestor location of the case owner
+    user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
     location_field = StringProperty()

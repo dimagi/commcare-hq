@@ -110,7 +110,6 @@ def get_databases():
     ]
 
     all_dbs = OrderedDict()
-    all_dbs['commcarehq'] = None  # make this DB first in list
     couchdbs_by_name = couch_config.all_dbs_by_db_name
     for dbname in sorted(couchdbs_by_name):
         all_dbs[dbname] = _CouchDb(couchdbs_by_name[dbname])

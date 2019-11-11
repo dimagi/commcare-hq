@@ -6,26 +6,14 @@ from custom.icds_reports.utils.aggregation_helpers import (
     transform_day_to_month,
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
-    BaseICDSAggregationDistributedHelper,
+    StateBasedAggregationDistributedHelper,
 )
 
 
-class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'daily-feeding-forms-child-health'
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
-    tablename = AGG_DAILY_FEEDING_TABLE
-
-    def __init__(self, month):
-        self.month = transform_day_to_month(month)
-
-    def aggregate(self, cursor):
-        agg_query, agg_params = self.aggregation_query()
-
-        cursor.execute(f'TRUNCATE "{self.tablename}"')
-        cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        raise NotImplementedError
+    aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
 
     def aggregation_query(self):
         current_month_start = month_formatter(self.month)
@@ -35,10 +23,11 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
             "month": month_formatter(self.month),
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
+            "state_id": self.state_id,
         }
 
         return f"""
-        INSERT INTO "{self.tablename}" (
+        INSERT INTO "{self.aggregate_parent_table}" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           sum_attended_child_ids, lunch_count
         ) (
@@ -55,8 +44,9 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
             ucr.supervisor_id = daily_attendance.supervisor_id AND
             daily_attendance.month=%(current_month_start)s
           )
-          WHERE ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s AND
-                ucr.child_health_case_id IS NOT NULL
+          WHERE ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s
+              AND ucr.child_health_case_id IS NOT NULL
+              AND ucr.state_id = %(state_id)s
           WINDOW w AS (PARTITION BY ucr.supervisor_id, ucr.child_health_case_id)
         )
         """, query_params

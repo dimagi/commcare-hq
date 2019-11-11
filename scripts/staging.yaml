@@ -55,11 +55,10 @@ branches:
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - nh/dhis2/te  # Norman Oct 2
   - MC/SL-229  # Norman Oct 9
-  - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
   - sr-session-audit  # Sravan Oct 15
-  - mk/ignore-all-demo-submissions-redone # MK Oct 22
-  - dmr/update-django-security-fix  # Danny Oct 22
   - nh/blank_row  # Norman Oct 28
-  - jls/add-app-id-to-sms-surveys-and-keywords  # Jenny Oct 30
+  - jls/add-app-id-to-sms-surveys-and-keywords # Jenny Nov 8
+  - mk/compare-mm-size-1 # Nov 10
+  - mk/compare-mm-size-2 # Nov 11
 submodules: {}

@@ -26,8 +26,10 @@ from couchexport.models import Format
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
+from pillowtop.feed.interface import ChangeMeta
 
-from corehq import toggles
+from corehq.apps.change_feed import data_sources, topics
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -37,6 +39,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.sql_db.routers import db_for_read_write, force_citus_engine
 from corehq.util.celery_utils import periodic_task_on_envs
@@ -95,6 +98,7 @@ from custom.icds_reports.models.aggregate import (
     DailyAttendance,
 )
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.util import UcrReconciliationStatus
 from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
@@ -208,9 +212,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
-                    icds_aggregation_task.si(
-                        date=calculation_date, func_name='_aggregate_df_forms', force_citus=force_citus
+                    icds_state_aggregation_task.si(
+                        state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms',
+                        force_citus=force_citus
                     )
+                    for state_id in state_ids
                 ])
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
@@ -376,7 +382,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_agg_ls_table': _agg_ls_table,
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
-            '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -419,13 +424,14 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_aggregate_child_health_pnc_forms': _aggregate_child_health_pnc_forms,
             '_aggregate_ccs_record_pnc_forms': _aggregate_ccs_record_pnc_forms,
             '_aggregate_delivery_forms': _aggregate_delivery_forms,
+            '_aggregate_df_forms': _aggregate_df_forms,
             '_aggregate_bp_forms': _aggregate_bp_forms,
             '_aggregate_awc_infra_forms': _aggregate_awc_infra_forms,
             '_child_health_monthly_table': _child_health_monthly_table,
             '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
             '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
             '_agg_beneficiary_form': _agg_beneficiary_form,
-            '_agg_thr_table': _agg_thr_table
+            '_agg_thr_table': _agg_thr_table,
         }[func_name]
 
         db_alias = get_icds_ucr_citus_db_alias()
@@ -469,8 +475,8 @@ def _aggregate_gm_forms(state_id, day):
 
 
 @track_time
-def _aggregate_df_forms(day):
-    AggregateChildHealthDailyFeedingForms.aggregate(force_to_date(day))
+def _aggregate_df_forms(state_id, day):
+    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -1550,3 +1556,98 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
         '[{}] - ICDS Dashboard Location Table Changed'.format(settings.SERVER_ENVIRONMENT),
         DASHBOARD_TEAM_EMAILS, email_content,
     )
+
+
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
+def create_reconciliation_records():
+    # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
+    UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
+
+
+@task(queue='background_queue')
+def reconcile_data_not_in_ucr(reconciliation_status_pk):
+    status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
+    number_documents_missing = 0
+
+    # republish_kafka_changes
+    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+        number_documents_missing += 1
+        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
+        send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
+
+    status_record.last_processed_date = datetime.utcnow()
+    status_record.documents_missing = number_documents_missing
+    if number_documents_missing == 0:
+        status_record.verified_date = datetime.utcnow()
+    status_record.save()
+
+    return number_documents_missing
+
+
+def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
+    producer.send_change(
+        topics.FORM_SQL if is_form else topics.CASE_SQL,
+        ChangeMeta(
+            document_id=doc_id,
+            data_source_type=data_sources.SOURCE_SQL,
+            data_source_name=data_sources.FORM_SQL if is_form else data_sources.CASE_SQL,
+            document_type='XFormInstance' if is_form else 'CommCareCase',
+            document_subtype=doc_subtype,
+            domain=DASHBOARD_DOMAIN,
+            is_deletion=False,
+        )
+    )
+
+
+def get_data_not_in_ucr(status_record):
+    domain = DASHBOARD_DOMAIN
+    if status_record.is_form_ucr:
+        matching_records_for_db = _get_primary_data_for_forms(
+            status_record.db_alias, domain, status_record.day, status_record.doc_type_filter
+        )
+    else:
+        matching_records_for_db = _get_primary_data_for_cases(
+            status_record.db_alias, domain, status_record.day, status_record.doc_type_filter
+        )
+    chunk_size = 1000
+    for chunk in chunked(matching_records_for_db, chunk_size):
+        doc_ids = [val[0] for val in chunk]
+        docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        for doc_id, doc_subtype, sql_modified_on in chunk:
+            if doc_id not in docs_in_ucr:
+                yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+
+
+def _get_docs_in_ucr(domain, table_id, doc_ids):
+    table_name = get_table_name(domain, table_id)
+    with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
+        query = f'''
+            SELECT doc_id
+            FROM "{table_name}"
+            WHERE doc_id = ANY(%(doc_ids)s);
+        '''
+        cursor.execute(query, {'doc_ids': doc_ids})
+        return dict(cursor.fetchall())
+
+
+def _get_primary_data_for_forms(db, domain, day, xmlns):
+    start_date, end_date = day, day + timedelta(days=1)
+    matching_xforms = XFormInstanceSQL.objects.using(db).filter(
+        domain=domain,
+        received_on__gte=start_date,
+        received_on__lte=end_date,
+        state=XFormInstanceSQL.NORMAL,
+        xmlns=xmlns,
+    )
+    return matching_xforms.values_list('form_id', 'xmlns', 'received_on')
+
+
+def _get_primary_data_for_cases(db, domain, day, case_type):
+    start_date, end_date = day, day + timedelta(days=1)
+    matching_cases = CommCareCaseSQL.objects.using(db).filter(
+        domain=domain,
+        server_modified_on__gte=start_date,
+        server_modified_on__lte=end_date,
+        type=case_type
+    )
+    return matching_cases.values_list('case_id', 'type', 'server_modified_on')

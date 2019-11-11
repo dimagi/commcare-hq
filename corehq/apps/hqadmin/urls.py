@@ -1,8 +1,8 @@
 from django.conf.urls import include, url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
 from corehq.apps.hqadmin.views.data import doc_in_es, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
@@ -15,11 +15,9 @@ from corehq.apps.hqadmin.views.reports import (
     top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
-    RecentCouchChangesView,
     SystemInfoView,
     branches_on_staging,
     check_services,
-    download_recent_changes,
     pillow_operation_api,
     system_ajax,
 )
@@ -39,9 +37,6 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
-    url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
-        name=RecentCouchChangesView.urlname),
-    url(r'^system/recent_changes/download/$', download_recent_changes, name="download_recent_changes"),
     url(r'^system/system_ajax$', system_ajax, name="system_ajax"),
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
@@ -53,6 +48,8 @@ urlpatterns = [
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
+    url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
+    url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),

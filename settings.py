@@ -113,8 +113,7 @@ SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -309,7 +308,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
@@ -464,6 +462,9 @@ UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -508,7 +509,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
@@ -1047,6 +1047,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1255,8 +1258,12 @@ LOGGING = {
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -2064,6 +2071,7 @@ DATADOG_DOMAINS = {
     ("production", "rec"),
     ("production", "isth-production"),
     ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####

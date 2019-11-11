@@ -99,17 +99,17 @@ class CasePropertyValidationTests(SimpleTestCase):
         CaseProperty.wrap({"case_property": "foo"})
 
     def test_blank_case_property(self):
-        with self.assertRaisesRegexp(BadValueError, "Value cannot be blank."):
+        with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
             CaseProperty.wrap({"case_property": ""})
 
     def test_missing_case_property(self):
         case_property = CaseProperty.wrap({})
-        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
             case_property.validate()
 
     def test_null_case_property(self):
         case_property = CaseProperty.wrap({"case_property": None})
-        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
             case_property.validate()
 
 
