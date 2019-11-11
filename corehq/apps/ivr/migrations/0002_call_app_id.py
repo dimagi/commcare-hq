@@ -9,7 +9,7 @@ def _populate_app_id(apps, schema_editor):
     Call = apps.get_model('ivr', 'Call')
     for call in Call.objects.distinct('domain', 'form_unique_id').filter(app_id__isnull=True,
                                                                          form_unique_id__isnull=False):
-        app_id = get_app_id_from_form_unique_id(call.form_unique_id)
+        app_id = get_app_id_from_form_unique_id(call.domain, call.form_unique_id)
         if app_id:
             Call.objects.filter(form_unique_id=call.form_unique_id).update(app_id=app_id)
 
