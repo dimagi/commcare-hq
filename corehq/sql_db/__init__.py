@@ -29,6 +29,44 @@ def custom_db_checks(app_configs, **kwargs):
     return errors
 
 
+@register(Tags.database)
+def check_standby_configs(app_configs, **kwargs):
+    standby_to_master = {
+        db: config.get('STANDBY', {}).get('MASTER')
+        for db, config in settings.DATABASES
+        if config.get('STANDBY', {}).get('MASTER')
+    }
+    all_masters = {
+        db for db, config in settings.DATABASES
+        if 'STANDBY' not in config and 'HQ_ACCEPTABLE_STANDBY_DELAY' not in config
+    }
+
+    errors = []
+    custom_db_settings = [
+        'REPORTING_DATABASES',
+        'LOAD_BALANCED_APPS'
+    ]
+    for setting_name in custom_db_settings:
+        setting = getattr(settings, setting_name)
+        if not setting:
+            continue
+        for key, config in setting.items():
+            if 'READ' in config:
+                read_dbs = {db for db, weight in config['READ']}
+                masters = read_dbs & all_masters
+                standby_masters = {
+                    standby_to_master[db]
+                    for db in read_dbs
+                    if db in standby_to_master
+                }
+                if len(masters | standby_masters) > 1:
+                    errors.append(Error(
+                        '"settings.{}.{}" refers to multiple master databases. All READ database'
+                        'must be refer to the same master database.'.format(setting_name, key)
+                    ))
+    return errors
+
+
 @register(Tags.database, deploy=True)
 def check_db_tables(app_configs, **kwargs):
     from corehq.sql_db.routers import ICDS_REPORTS_APP

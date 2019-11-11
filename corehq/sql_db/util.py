@@ -291,7 +291,10 @@ def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
 def get_standby_delays_by_db():
     ret = {}
     for _db, config in settings.DATABASES.items():
-        delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
+        delay = config.get('STANDBY', {}).get('ACCEPTABLE_REPLICATION_DELAY')
+        if delay is None:
+            # try legacy setting
+            delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
         if delay:
             ret[_db] = delay
     return ret

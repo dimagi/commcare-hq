@@ -1,6 +1,6 @@
-import mock
 from collections import Counter
 
+import mock
 from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
@@ -9,22 +9,28 @@ from corehq.sql_db.connections import ConnectionManager
 from corehq.sql_db.util import filter_out_stale_standbys
 
 
-def _get_db_config(db_name):
-    return {
+def _get_db_config(db_name, master=None, delay=None):
+    config = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': db_name,
         'USER': '',
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432',
-        'HQ_ACCEPTABLE_STANDBY_DELAY': 3
     }
+    if master:
+        config['STANDBY'] = {
+            'MASTER': master
+        }
+        if delay:
+            config['STANDBY']['ACCEPTABLE_REPLICATION_DELAY'] = delay
+    return config
 
 
 DATABASES = {
     DEFAULT_DB_ALIAS: _get_db_config('default'),
-    'ucr': _get_db_config('ucr'),
-    'other': _get_db_config('other')
+    'ucr': _get_db_config('ucr', 'default', 5),
+    'other': _get_db_config('other', 'default')
 }
 REPORTING_DATABASES = {
     'default': DEFAULT_DB_ALIAS,
@@ -85,7 +91,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
-    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 4}.get(x, 0))
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 6}.get(x, 0))
     def test_standby_filtering(self, *args):
         reporting_dbs = {
             'ucr_engine': {
@@ -101,9 +107,16 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias('ucr_engine') for i in range(3)]
             )
 
-    def test_filter_out_stale_standbys(self, *args):
-        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 2, 'default': 4}.get(x, 0)):
-            self.assertEqual(
-                filter_out_stale_standbys(['ucr', 'default']),
-                ['ucr']
-            )
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 6, 'other': 4}[x])
+    def test_filter_out_stale_standbys_filter(self, *args):
+        self.assertEqual(
+            filter_out_stale_standbys(['ucr', 'other']),
+            []
+        )
+
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 5, 'other': 3}[x])
+    def test_filter_out_stale_standbys_keep(self, *args):
+        self.assertEqual(
+            filter_out_stale_standbys(['ucr', 'other']),
+            ['ucr', 'other']
+        )
