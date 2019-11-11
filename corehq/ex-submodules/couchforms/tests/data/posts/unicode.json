@@ -27,6 +27,7 @@
     "app_id": null,
     "auth_context": {"doc_type": "DefaultAuthContext"},
     "build_id": null,
+    "build_profile_id": null,
     "date_header": null,
     "domain": "test-domain",
     "last_sync_token": null,
