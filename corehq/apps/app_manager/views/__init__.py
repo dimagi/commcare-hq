@@ -82,6 +82,7 @@ from corehq.apps.app_manager.views.modules import (
     view_module_legacy,
 )
 from corehq.apps.app_manager.views.multimedia import (
+    compare_multimedia_sizes,
     get_multimedia_sizes,
     multimedia_ajax,
 )

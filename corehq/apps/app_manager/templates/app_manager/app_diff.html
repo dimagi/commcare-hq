@@ -16,6 +16,7 @@
 {% block mm_block %}
   {% initial_page_data 'first_app_id' app.id %}
   {% initial_page_data 'second_app_id' other_app.id %}
+  {% registerurl 'compare_multimedia_sizes' app.domain app.id other_app.id %}
   <div id="multimedia-sizes-diff-container">
     <h2>{% trans 'MultiMedia Sizes' %}</h2>
     <div id="multimedia-sizes-container-1">
