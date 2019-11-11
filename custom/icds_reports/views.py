@@ -223,8 +223,8 @@ class DashboardView(TemplateView):
     @property
     def show_downtime(self):
         return (
-            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain) and
-            not self.request.GET.get('bypass-downtime')
+            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
+            and not self.request.GET.get('bypass-downtime')
         )
 
     @property
