@@ -76,7 +76,7 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                     "filter": {
                         "and": [
                             {
-                                'and': [
+                                'and': (
                                     {
                                         "not": {
                                             "term": {
@@ -91,7 +91,7 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                                             }
                                         }
                                     },
-                                ]
+                                )
                             },
                             {"match_all": {}}
                         ]

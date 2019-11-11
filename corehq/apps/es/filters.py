@@ -52,7 +52,7 @@ def NOT(filter_):
         # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
         # but accepts the same logic
         # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
-        return {"and": [NOT(condition) for condition in filter_['or']]}
+        return AND(*(NOT(condition) for condition in filter_['or']))
     else:
         return {"not": filter_}
 
