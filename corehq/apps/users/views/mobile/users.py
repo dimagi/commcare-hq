@@ -158,7 +158,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def has_any_sync_logs(self):
-        return bool(SyncLogSQL.objects.filter(user_id=self.editable_user_id)[:1])
+        return SyncLogSQL.objects.filter(user_id=self.editable_user_id).exists()
 
     @property
     @memoized
