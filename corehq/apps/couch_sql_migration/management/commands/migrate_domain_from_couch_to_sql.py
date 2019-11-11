@@ -129,6 +129,9 @@ class Command(BaseCommand):
                 local: diff cases in the migration process.
                 none: do not diff cases.
             ''')
+        parser.add_argument('--skipped-forms',
+            dest="skipped_forms", action='store_true', default=False,
+            help="Migrate forms skipped by previous migration")
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
 
     def handle(self, domain, action, **options):
@@ -142,6 +145,7 @@ class Command(BaseCommand):
             "live_migrate",
             "case_diff",
             "rebuild_state",
+            "skipped_forms",
             "rewind",
         ]:
             setattr(self, opt, options[opt])
@@ -173,6 +177,7 @@ class Command(BaseCommand):
             live_migrate=self.live_migrate,
             diff_process=CASE_DIFF[self.case_diff],
             rebuild_state=self.rebuild_state,
+            skipped_forms=self.skipped_forms
         )
 
         return_code = 0
