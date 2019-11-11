@@ -61,4 +61,3 @@ def compare_multimedia_sizes(request, domain, app_id, other_build_id):
             mm_sizes.items()
         }
     return JsonResponse(mm_sizes)
-
