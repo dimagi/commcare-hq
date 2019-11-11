@@ -428,16 +428,15 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
     assert source_build.copy_of, _("Size calculation available only for builds")
     assert target_build.copy_of, _("Size calculation available only for builds")
     build_profile = source_build.build_profiles[build_profile_id] if build_profile_id else None
-    multimedia_map_for_source_build = source_build.multimedia_map_for_build(build_profile=build_profile)
-    multimedia_map_for_target_build = target_build.multimedia_map_for_build(build_profile=build_profile)
-    multimedia_map_for_source_build_by_id = _get_mm_map_by_id(multimedia_map_for_source_build)
-    multimedia_map_for_target_build_by_id = _get_mm_map_by_id(multimedia_map_for_target_build)
-    added = set(multimedia_map_for_target_build_by_id.keys()).difference(
-        set(multimedia_map_for_source_build_by_id.keys()))
+    source_mm_map = source_build.multimedia_map_for_build(build_profile=build_profile)
+    target_mm_map = target_build.multimedia_map_for_build(build_profile=build_profile)
+    source_mm_map_by_id = _get_mm_map_by_id(source_mm_map)
+    target_mm_map_by_id = _get_mm_map_by_id(target_mm_map)
+    added = set(target_mm_map_by_id.keys()).difference(set(source_mm_map_by_id.keys()))
     media_objects = {
-        mm_object.get_id: mm_object
-        for path, mm_object in
-        target_build.get_media_objects(multimedia_map=multimedia_map_for_target_build)
+        mm.get_id: mm
+        for path, mm in
+        target_build.get_media_objects(multimedia_map=target_mm_map)
     }
     total_size = defaultdict(lambda: 0)
     for multimedia_id in added:
