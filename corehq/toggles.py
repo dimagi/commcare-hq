@@ -1013,6 +1013,16 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
+
+ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
+    'icds_dashboard_temporary_downtime',
+    'ICDS: Temporarily disable the ICDS dashboard by showing a downtime page. '
+    'This can be cicurmvented by adding "?bypass-downtime=True" to the end of the url.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
