@@ -24,7 +24,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def child_temp_tablename(self):
-        return get_child_health_temp_tablename(self.month)
+        return get_child_health_temp_tablename(self.month_start)
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()

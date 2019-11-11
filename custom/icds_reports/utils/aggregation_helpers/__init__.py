@@ -14,7 +14,7 @@ def date_to_string(date):
 
 def get_child_health_temp_tablename(month):
     from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
-    base_tablename = ChildHealthMonthlyAggregationDistributedHelper.base_tablename 
+    base_tablename = ChildHealthMonthlyAggregationDistributedHelper.base_tablename
     month_string = month.strftime("%Y-%m-%d")
     return f"tmp_{base_tablename}_{month_string}"
 
