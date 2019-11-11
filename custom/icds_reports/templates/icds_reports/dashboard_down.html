@@ -1,0 +1,27 @@
+{% extends "error_base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% block title %}{% trans "ICDS Dashboard is Under Maintenance" %}{% endblock %}
+{% block tabs %}{% endblock tabs %}
+{% block page_name %}{% trans "Apologies, the ICDS Dashboard is currently under maintenance." %}{% endblock %}
+{% block page_content %}
+  <section class="section">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-3">
+          <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="ICDS-CAS"/>
+        </div>
+        <div class="col-sm-9">
+          <div>
+            <p class="lead">
+              {% blocktrans %}
+              We are working hard to restore this service and it will be back online as soon as possible.
+              You may continue to use other parts of this site.
+              {% endblocktrans %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
