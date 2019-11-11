@@ -415,7 +415,7 @@ def form_has_submissions(domain, app_id, xmlns):
     return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0
 
 
-def get_new_multimedia_between_builds(domain, source_build_id, target_build_id, build_profile_id=None):
+def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, build_profile_id=None):
     source_build = get_app_cached(domain, source_build_id)
     target_build = get_app_cached(domain, target_build_id)
     assert source_build.copy_of, _("Size calculation available only for builds")
