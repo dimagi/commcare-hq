@@ -54,6 +54,7 @@ class Dhis2EntityRepeater(CaseRepeater):
     friendly_name = _("Forward Cases as DHIS2 Tracked Entities")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
+    dhis2_version = StringProperty(validators=[is_dhis2_version_or_blank])
     dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
 
     _has_config = True
@@ -79,6 +80,11 @@ class Dhis2EntityRepeater(CaseRepeater):
     def get_payload(self, repeat_record):
         payload = super().get_payload(repeat_record)
         return json.loads(payload)
+
+    @property
+    def api_version(self):
+        if self.dhis2_version:
+            return api_version_re.match(self.dhis2_version).groups(1)
 
     def send_request(self, repeat_record, payload):
         value_sources = []

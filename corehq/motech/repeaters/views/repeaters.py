@@ -242,19 +242,11 @@ class AddDhis2RepeaterView(AddRepeaterView):
         return repeater
 
 
-class AddDhis2EntityRepeaterView(AddRepeaterView):
-    # Extends AddRepeaterView instead of AddCaseRepeaterView because we
-    # don't need AddCaseRepeaterView's additional properties:
-    # * white_listed_case_types: only configured case types are forwarded
-    # * black_listed_users: yagni
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
     urlname = 'new_dhis2_entity_repeater$'
-    repeater_form_class = GenericRepeaterForm
+    repeater_form_class = Dhis2RepeaterForm
     page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
     page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
 
 
 class EditRepeaterView(BaseRepeaterView):
