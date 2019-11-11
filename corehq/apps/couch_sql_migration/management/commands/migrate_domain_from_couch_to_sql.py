@@ -58,6 +58,8 @@ REWIND = "rewind"
 STATS = "stats"
 DIFF = "diff"
 
+CASE_DIFF = {"process": True, "local": False, "none": None}
+
 
 class Command(BaseCommand):
     help = """
@@ -119,12 +121,13 @@ class Command(BaseCommand):
                 in SQL, which means that some cases that were previously
                 queued to diff may not be diffed.
             """)
-        parser.add_argument('--no-diff-process',
-            dest='diff_process', action='store_false', default=True,
+        parser.add_argument('--case-diff',
+            dest='case_diff', default="process",
+            choices=["process", "local", "none"],
             help='''
-                Migrate forms and diff cases in the same process. The
-                case diff queue will run in a separate process if this
-                option is not specified.
+                process: diff cases in a separate process (default).
+                local: diff cases in the migration process.
+                none: do not diff cases.
             ''')
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
 
@@ -137,7 +140,7 @@ class Command(BaseCommand):
             "verbose",
             "state_dir",
             "live_migrate",
-            "diff_process",
+            "case_diff",
             "rebuild_state",
             "rewind",
         ]:
@@ -149,6 +152,8 @@ class Command(BaseCommand):
             raise CommandError("--live only allowed with `MIGRATE`")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
+        if action != MIGRATE and self.skipped_forms:
+            raise CommandError("--skipped-forms only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
         if action != REWIND and self.rewind:
@@ -166,7 +171,7 @@ class Command(BaseCommand):
             self.state_dir,
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
-            diff_process=self.diff_process,
+            diff_process=CASE_DIFF[self.case_diff],
             rebuild_state=self.rebuild_state,
         )
 

@@ -82,7 +82,7 @@ from corehq.util.pagination import (
 from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
-from .casediff import CaseDiffProcess, CaseDiffQueue
+from .casediff import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
@@ -137,7 +137,12 @@ class CouchSqlDomainMigrator(object):
         self.counter = DocCounter(self.statedb)
         if rebuild_state:
             self.statedb.is_rebuild = True
-        diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
+        if diff_process is None:
+            diff_queue = NoCaseDiff
+        elif diff_process:
+            diff_queue = CaseDiffProcess
+        else:
+            diff_queue = CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
 
     def migrate(self):

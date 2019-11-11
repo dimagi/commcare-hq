@@ -133,7 +133,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
-        options.setdefault("diff_process", False)
+        options.setdefault("case_diff", "local")
+        assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
@@ -1117,7 +1118,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
         with self.patch_migration_chunk_size(1), \
                 self.on_doc("XFormInstance", "one", interrupt, **kw):
-            self._do_migration(live=True, diff_process=True)
+            self._do_migration(live=True, case_diff="process")
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
@@ -1230,7 +1231,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name, diff_process=True)
+        self._do_migration_and_assert_flags(self.domain_name, case_diff="process")
 
         # This may change in the future: it may be possible to rebuild the
         # XML using parsed form JSON from couch.
