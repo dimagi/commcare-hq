@@ -268,16 +268,17 @@ class LoggingSessionMiddleware(SessionMiddleware):
     def process_response(self, request, response):
         datadog_counter(
             'commcare.bypass_sessions.requests_count',
-            tags=['bypass_sessions:{}'.format(self._bypass_sessions(request)),
+            tags=['bypass_sessions:{}'.format(request.__bypass_sessions),
             'response_code:{}'.format(response.status_code)])
         return super().process_response(request, response)
 
     def process_request(self, request):
+        request.__bypass_sessions = self._bypass_sessions(request)
         try:
             match = re.search(r'/a/[0-9a-z-]+', request.path)
             if match:
                 domain = match.group(0).split('/')[-1]
-                if self._bypass_sessions(request):
+                if request.__bypass_sessions:
                     session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
                     request.session = self.SessionStore(session_key)
                     request.session.save = lambda *x: None
