@@ -1377,13 +1377,6 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-LOGIN_AS_ALWAYS_OFF = StaticToggle(
-    'always_turn_login_as_off',
-    'Always turn login as off',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
