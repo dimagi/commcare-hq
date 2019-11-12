@@ -177,9 +177,6 @@ def _get_form_designer_view(request, domain, app, module, form):
 def get_form_data_schema(request, domain, app_id, form_unique_id):
     """Get data schema
 
-    One of `app_id` or `form_unique_id` is required. `app_id` is ignored
-    if `form_unique_id` is provided.
-
     :returns: A list of data source schema definitions. A data source schema
     definition is a dictionary. For details on the content of the dictionary,
     see https://github.com/dimagi/Vellum/blob/master/src/datasources.js

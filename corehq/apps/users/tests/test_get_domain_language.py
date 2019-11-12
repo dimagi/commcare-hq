@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from pillowtop.es_utils import initialize_index_and_mapping
 

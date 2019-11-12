@@ -24,22 +24,12 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
-  ],
   "config": {
     "table_id": "static-it_report_follow_issue",
     "referenced_doc_type": "XFormInstance",
     "display_name": "Issue Tracker - Report/Follow Issue",
     "description": "Data source for Report and Follow Up with Issue forms in Issue Tracker application",
-    "engine_id": "icds-ucr-non-dashboard",
+    "engine_id": "icds-ucr-citus",
     "base_item_expression": {},
     "configured_filter": {
       "comment": "0AD845EA-69E8-4479-9140-4072A14AA0E5 -> Report Issue; 32083FFC-9AD7-46A8-B256-1B9431469262 -> Follow up with Issue",

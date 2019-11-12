@@ -120,7 +120,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return renderHeaderTooltip('VHSND', 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.');
     }
     function renderTakeHomeRationTooltip() {
-        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
+        return renderHeaderTooltip('Take Home Ration (21+ days)', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
     }
     function renderCommunityBasedEventsTooltipAWC() {
         return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.');
@@ -129,10 +129,10 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return renderHeaderTooltip('VHSND', 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.');
     }
     function renderSupplementaryNutritionTooltip() {
-        return renderHeaderTooltip('Supplementary Nutrition', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.');
+        return renderHeaderTooltip('Supplementary Nutrition (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.');
     }
     function renderPreSchoolEducationTooltip() {
-        return renderHeaderTooltip('Pre-school Education', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.');
+        return renderHeaderTooltip('Pre-school Education (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.');
     }
     function renderGrowthMonitoring36Tooltip() {
         return renderHeaderTooltip('Growth Monitoring', 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>');

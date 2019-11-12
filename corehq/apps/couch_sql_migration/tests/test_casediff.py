@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from glob import glob
 from inspect import signature
+from signal import SIGINT
 
 from django.test import SimpleTestCase
 
@@ -135,7 +136,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.assertRaises(Error), self.queue() as queue:
             # HACK mutate queue internal state
             # currently there is no easier way to stop non-empty cases_to_diff
-            queue.cases_to_diff.append("a")
+            queue.cases_to_diff["a"] = 1
             raise Error("do not process_remaining_diffs")
         self.assertTrue(queue.cases_to_diff)
         with self.queue() as queue:
@@ -289,6 +290,28 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update(["b", "c", "d"], "f2")
         self.assertDiffed("a b c d")
 
+    def test_case_with_new_forms_since_first_seen(self):
+        self.add_cases("a b", "f0")
+        self.add_cases("a b c d", "f1")
+        self.add_cases("e f g h", "f2")
+        with self.queue() as queue:
+            queue.update({"a", "b"}, "f0")
+            queue.flush(complete=False)
+            self.assertDiffed([])
+
+            self.add_cases("b", "fx")
+            queue.update(["a", "b", "c", "d"], "f1")
+            flush(queue.pool)
+            flush(queue.diff_pool)
+            self.assertDiffed("a c d")
+
+            queue.update(["b"], "fx")
+            queue.update(["e", "f", "g", "h"], "f2")
+            flush(queue.pool)
+            flush(queue.diff_pool)
+            self.assertDiffed("a b c d e")
+        self.assertDiffed("a b c d e f g h")
+
     def test_status_logger(self):
         event = Event()
         with patch.object(mod, "log_status") as log_status:
@@ -301,7 +324,11 @@ class TestCaseDiffQueue(SimpleTestCase):
     def queue(self):
         log.info("init CaseDiffQueue")
         with mod.CaseDiffQueue(self.statedb) as queue:
-            yield queue
+            try:
+                yield queue
+            except Exception as err:
+                log.error("%s: %s", type(err).__name__, err)
+                raise
 
     def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
         """Add cases with updating form ids
@@ -426,6 +453,12 @@ class TestCaseDiffProcess(SimpleTestCase):
             with self.assertRaises(mod.ProcessNotAllowed):
                 mod.CaseDiffProcess(statedb)
 
+    def test_clean_break(self):
+        with self.process() as proc:
+            self.assertEqual(proc.get_status(), [0, 0, 0])
+            os.kill(proc.process.pid, SIGINT)
+            self.assertEqual(proc.get_status(), [0, 0, 1])
+
     def test_fake_case_diff_queue_interface(self):
         tested = set()
         for name in dir(FakeCaseDiffQueue):
@@ -477,6 +510,7 @@ class FakeCaseDiffQueue(object):
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
         self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
+        self.clean_break = False
 
     def __enter__(self):
         with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
@@ -490,10 +524,12 @@ class FakeCaseDiffQueue(object):
     def update(self, case_ids, form_id):
         self.stats["pending"] += len(case_ids)
 
-    def enqueue(self, case_id):
+    def enqueue(self, case_id, num_forms=None):
         self.stats["loaded"] += 1
 
     def get_status(self):
+        if self.clean_break:
+            self.stats["diffed"] = 1
         return self.stats
 
 

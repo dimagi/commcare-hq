@@ -480,6 +480,7 @@ class AggAwc(models.Model, AggregateMixin):
     num_mother_thr_eligible = models.IntegerField(null=True)
     preschool_kit_available = models.IntegerField(blank=True, null=True)
     preschool_kit_usable = models.IntegerField(blank=True, null=True)
+    awc_with_gm_devices = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -500,7 +501,7 @@ class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
-
+    form_count = models.IntegerField(blank=True, null=True)
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
@@ -513,6 +514,7 @@ class AggregateLsVhndForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
+    form_count = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
@@ -526,6 +528,7 @@ class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
+    form_count = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE
@@ -548,6 +551,7 @@ class AggLs(models.Model, AggregateMixin):
     block_id = models.TextField()
     supervisor_id = models.TextField()
     aggregation_level = models.SmallIntegerField()
+    num_supervisor_launched = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = 'agg_ls'
@@ -737,7 +741,6 @@ class AggAwcDaily(models.Model, AggregateMixin):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     daily_attendance_open = models.IntegerField(null=True)
-    total_eligible_pse = models.IntegerField(null=True)
     total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(null=True)
     num_launched_states = models.IntegerField(null=True)

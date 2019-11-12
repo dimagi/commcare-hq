@@ -1,10 +1,11 @@
 import re
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.config import partition_config, parse_existing_shard, get_shards_to_update
+from corehq.sql_db.config import ShardMeta, partition_config
 
 SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 
@@ -60,6 +61,17 @@ class Command(BaseCommand):
             create_pl_proxy_cluster(verbose)
 
 
+def parse_existing_shard(shard_option):
+    shard_name, options = shard_option.split('=', 1)
+    assert shard_name[0] == 'p'
+    shard_id = int(shard_name[1:])
+    options = options.split(' ')
+    option_kwargs = dict(tuple(option.split('=')) for option in options)
+    if 'port' in option_kwargs:
+        option_kwargs['port'] = int(option_kwargs['port'])
+    return ShardMeta(id=shard_id, **option_kwargs)
+
+
 def _get_current_shards(existing_config):
     existing_shards = [
         parse_existing_shard(option)
@@ -98,7 +110,7 @@ def _update_pl_proxy_cluster(existing_config, verbose):
             if verbose:
                 print(alter_sql)
 
-            with connections[partition_config.get_proxy_db()].cursor() as cursor:
+            with connections[partition_config.proxy_db].cursor() as cursor:
                 cursor.execute(alter_sql)
         else:
             print('Abort')
@@ -117,7 +129,7 @@ def _get_alter_server_sql(shards_to_update):
 
 
 def create_pl_proxy_cluster(verbose=False, drop_existing=False):
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
 
     if drop_existing:
         with connections[proxy_db].cursor() as cursor:
@@ -141,7 +153,7 @@ def get_drop_server_sql():
 
 
 def _get_existing_cluster_config(cluster_name):
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
     with connections[proxy_db].cursor() as cursor:
         cursor.execute('SELECT * from pg_foreign_server where srvname = %s', [cluster_name])
         results = list(fetchall_as_namedtuple(cursor))
@@ -161,7 +173,7 @@ def get_pl_proxy_server_config_sql(shards):
 
 
 def get_user_mapping_sql():
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
     proxy_db_config = settings.DATABASES[proxy_db].copy()
     proxy_db_config['server_name'] = settings.PL_PROXY_CLUSTER_NAME
     return USER_MAPPING_TEMPLATE.format(**proxy_db_config)
@@ -170,3 +182,14 @@ def get_user_mapping_sql():
 def _confirm(msg):
     confirm_update = input(msg + ' [yes / no] ')
     return confirm_update == 'yes'
+
+
+def get_shards_to_update(existing_shards, new_shards):
+    assert len(existing_shards) == len(new_shards)
+    shards_to_update = []
+    for existing, new in zip(existing_shards, new_shards):
+        assert existing.id == new.id, '{} != {}'.format(existing.id, new.id)
+        if existing != new:
+            shards_to_update.append(new)
+
+    return shards_to_update

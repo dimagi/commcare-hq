@@ -89,7 +89,6 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
-    FormBase,
     LatestEnabledBuildProfiles,
     RemoteApp,
 )
@@ -401,10 +400,10 @@ class SnapshotSettingsForm(forms.Form):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
-        app_ids = self._get_apps_to_publish()
+        item_ids = self._get_items_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=app_ids):
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=app_ids)]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=item_ids):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=item_ids)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
@@ -412,31 +411,38 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                self.dom.name)
-            if referenced_forms:
-                apps = [Application.get(app_id) for app_id in app_ids]
-                app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
-                nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
-                if nonexistent_forms:
-                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+            referenced_pairs = AutomaticUpdateRule.get_referenced_app_form_pairs_from_sms_surveys(self.dom.name)
+            if referenced_pairs:
+                all_apps_by_id = {app.get_id: app for app in get_apps_in_domain(self.dom.name)}
+                referenced_apps = [all_apps_by_id[item_id] for item_id in item_ids if item_id in all_apps_by_id]
+                referenced_forms = [f.unique_id
+                                    for forms in [app.get_forms() for app in referenced_apps] for f in forms]
+                nonexistent_pairs = [pair for pair in referenced_pairs if pair[1] not in referenced_forms]
+                if nonexistent_pairs:
+                    form_names = [
+                        all_apps_by_id[pair[0]].get_form(pair[1]) if pair[0] in all_apps_by_id else _("Unknown")
+                        for pair in nonexistent_pairs
+                    ]
                     msg = _("Your reminders reference forms that are not being published. Make sure the following "
-                            "forms are being published: %s") % forms_str
+                            "forms are being published: %s") % ", ".join([form.default_name()
+                                                                          for form in form_names])
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
 
-    def _get_apps_to_publish(self):
-        app_ids = []
+    def _get_items_to_publish(self):
+        """
+        Returns a mix of app and lookup table ids.
+        """
+        item_ids = []
         for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
             if d[1] == 'publish' and val == 'on':
-                app_ids.append(d[0])
+                item_ids.append(d[0])
 
-        return app_ids
+        return item_ids
 
 ########################################################################################################
 
@@ -1106,6 +1112,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1000,
     )
+    use_custom_odata_feed_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
+            settings.DEFAULT_ODATA_FEED_LIMIT),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    odata_feed_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed OData Feeds"),
+        required=False,
+        min_value=1,
+    )
     granted_messaging_access = forms.BooleanField(
         label="Enable Messaging",
         required=False,
@@ -1178,6 +1198,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('auto_case_update_limit'),
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
+                crispy.Field(
+                    'use_custom_odata_feed_limit',
+                    data_bind="value: use_custom_odata_feed_limit",
+                ),
+                crispy.Div(
+                    crispy.Field('odata_feed_limit'),
+                    data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
+                ),
                 'granted_messaging_access',
             ),
             crispy.Fieldset(
@@ -1198,6 +1226,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     def current_values(self):
         return {
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
 
     def _get_user_or_fail(self, field):
@@ -1220,6 +1249,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         value = self.cleaned_data.get('auto_case_update_limit')
         if not value:
             raise forms.ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_odata_feed_limit(self):
+        if self.cleaned_data.get('use_custom_odata_feed_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('odata_feed_limit')
+        if not value:
+            raise forms.ValidationError(_("Please specify a limit for OData feeds."))
 
         return value
 
@@ -1254,6 +1293,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],

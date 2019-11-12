@@ -69,7 +69,7 @@
                     </ui-select>
                     </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 0px !important;">
+                <div class="form-group" style="margin-bottom: 0px !important;" ng-if="($ctrl.showLocationFilter())">
                     <label class="control-label col-sm-2" for="location">Location: <i class="fa fa-info-circle" uib-popover="Select the location for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -97,7 +97,7 @@
                         </ui-select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" ng-if="($ctrl.showMonthFilter())">
                     <label class="control-label col-sm-2" for="month">Month: <i class="fa fa-info-circle" uib-popover="Select the calendar month for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -110,7 +110,7 @@
                         </ui-select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" ng-if="($ctrl.showYearFilter())">
                     <label class="control-label col-sm-2" for="year">Year: <i class="fa fa-info-circle" uib-popover="Select the year for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>

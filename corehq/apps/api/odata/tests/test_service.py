@@ -19,16 +19,17 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
     def setUpClass(cls):
         super(TestCaseServiceDocument, cls).setUpClass()
         cls._set_up_class()
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
+        cls._teardown_accounting()
         super(TestCaseServiceDocument, cls).tearDownClass()
 
     def test_successful_request(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
@@ -49,16 +50,17 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
     def setUpClass(cls):
         super(TestFormServiceDocument, cls).setUpClass()
         cls._set_up_class()
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
+        cls._teardown_accounting()
         super(TestFormServiceDocument, cls).tearDownClass()
 
     def test_successful_request(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {

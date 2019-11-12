@@ -7,6 +7,7 @@ import logging
 import re
 import time
 import uuid
+import urllib3
 from io import BytesIO
 
 from django.conf import settings
@@ -34,7 +35,7 @@ from corehq.celery_monitoring.heartbeat import (
     HeartbeatNeverRecorded,
 )
 from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
-from corehq.util.decorators import change_log_level
+from corehq.util.decorators import change_log_level, ignore_warning
 from corehq.util.timer import TimingContext
 
 
@@ -66,7 +67,7 @@ def check_all_rabbitmq():
     unwell_rabbits = []
     ip_regex = re.compile(r'[0-9]+.[0-9]+.[0-9]+.[0-9]+')
 
-    for broker_url in settings.BROKER_URL.split(';'):
+    for broker_url in settings.CELERY_BROKER_URL.split(';'):
         check_status, failure = check_rabbitmq(broker_url)
         if not check_status:
             failed_rabbit_ip = ip_regex.search(broker_url).group()
@@ -94,7 +95,7 @@ def check_rabbitmq(broker_url):
             return False, 'RabbitMQ Offline'
         except Exception as e:
             return False, "RabbitMQ Error: %s" % e
-    elif settings.BROKER_URL.startswith('redis'):
+    elif settings.CELERY_BROKER_URL.startswith('redis'):
         return True, "RabbitMQ Not configured, but not needed"
     else:
         return False, "RabbitMQ Not configured"
@@ -215,6 +216,7 @@ def check_couch():
     return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
+@ignore_warning(urllib3.exceptions.InsecureRequestWarning)
 def check_formplayer():
     try:
         # Setting verify=False in this request keeps this from failing for urls with self-signed certificates.

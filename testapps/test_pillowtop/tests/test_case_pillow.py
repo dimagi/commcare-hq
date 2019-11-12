@@ -3,8 +3,6 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from elasticsearch.exceptions import ConnectionError
-
 from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -18,6 +16,7 @@ from corehq.form_processor.tests.utils import (
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
 

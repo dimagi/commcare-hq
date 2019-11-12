@@ -19,7 +19,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Taux de Rupture par Produit"
     slug = 'taux_de_rupture_par_produit_report'
-    comment = 'Indicateur logistique: Taux de rupture par produit'
+    comment = 'Nombre de PPS avec le produit en rupture de stock / Nombre de PPS visités'
     default_rows = 10
     exportable = True
 
@@ -115,12 +115,9 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             DataTablesColumn(self.selected_location_type),
         )
 
-        if self.selected_location_type != 'PPS':
-            products = self.products
-            for product in products:
-                headers.add_column(DataTablesColumn(product))
-        else:
-            headers.add_column(DataTablesColumn('Produits en rupture de stock'))
+        products = self.products
+        for product in products:
+            headers.add_column(DataTablesColumn(product))
 
         return headers
 
@@ -146,7 +143,6 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     @property
-    @memoized
     def clean_rows(self):
         return TauxDeRuptureRateData(config=self.config).rows
 
@@ -213,34 +209,14 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                             'all_ppses': 0,
                         })
 
-            if self.selected_location_type != 'PPS':
-                for location, products in locations_with_products.items():
-                    stocks_to_return.append([
-                        location,
-                    ])
-                    products_list = sorted(products, key=lambda x: x['product_name'])
-                    for product_info in products_list:
-                        out_in_ppses = product_info['out_in_ppses']
-                        all_ppses = product_info['all_ppses']
-                        percent = (out_in_ppses / float(all_ppses) * 100) \
-                            if all_ppses != 0 else 'pas de données'
-                        if percent != 'pas de données':
-                            percent = '{:.2f} %'.format(percent)
-                        stocks_to_return[-1].append({
-                            'html': '{}'.format(percent),
-                            'sort_key': percent,
-                        })
-            else:
-                for location, products in locations_with_products.items():
-                    stocks_to_return.append([
-                        location,
-                    ])
-                    products_list = sorted(products, key=lambda x: x['product_name'])
-                    out_in_ppses = 0
-                    all_ppses = 0
-                    for product_info in products_list:
-                        out_in_ppses += product_info['out_in_ppses']
-                        all_ppses += product_info['all_ppses']
+            for location, products in locations_with_products.items():
+                stocks_to_return.append([
+                    location,
+                ])
+                products_list = sorted(products, key=lambda x: x['product_name'])
+                for product_info in products_list:
+                    out_in_ppses = product_info['out_in_ppses']
+                    all_ppses = product_info['all_ppses']
                     percent = (out_in_ppses / float(all_ppses) * 100) \
                         if all_ppses != 0 else 'pas de données'
                     if percent != 'pas de données':
@@ -274,25 +250,16 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                         data_for_total_row[r][0] += out_in_ppses
                         data_for_total_row[r][1] += all_ppses
 
-            if self.selected_location_type != 'PPS':
-                for data in data_for_total_row:
-                    out_in_ppses = data[0]
-                    all_ppses = data[1]
-                    percent = (out_in_ppses / float(all_ppses) * 100) \
-                        if all_ppses != 0 else 0
-                    total_row_to_return.append({
-                        'html': '<b>{:.2f} %</b>'.format(percent),
-                        'sort_key': percent,
-                    })
-            else:
-                out_in_ppses = sum(x[0] for x in data_for_total_row)
-                all_ppses = sum(x[1] for x in data_for_total_row)
+            for data in data_for_total_row:
+                out_in_ppses = data[0]
+                all_ppses = data[1]
                 percent = (out_in_ppses / float(all_ppses) * 100) \
                     if all_ppses != 0 else 0
                 total_row_to_return.append({
                     'html': '<b>{:.2f} %</b>'.format(percent),
                     'sort_key': percent,
                 })
+
             return total_row_to_return
 
         rows = data_to_rows(self.clean_rows)
@@ -340,47 +307,13 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                                 product_data['all_ppses'] += all_ppses
 
             products = sorted(products_data, key=lambda x: x['product_name'])
-            if self.selected_location_type != 'PPS':
-                for product in products:
-                    product_name = product['product_name']
-                    out_in_ppses = product['out_in_ppses']
-                    all_ppses = product['all_ppses']
-                    percent = (out_in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
-                    stocks_to_return.append([
-                        product_name,
-                        {
-                            'html': '{}'.format(percent),
-                            'sort_key': percent
-                        }
-                    ])
-            else:
-                added_locations = []
-                availability_for_ppses = {}
-                for product in products:
-                    location_id = product['location_id']
-                    location_name = product['location_name']
-                    out_in_ppses = product['out_in_ppses']
-                    all_ppses = product['all_ppses']
-                    if location_id not in added_locations:
-                        added_locations.append(location_id)
-                        availability_for_ppses[location_id] = {
-                            'location_name': location_name,
-                            'out_in_ppses': out_in_ppses,
-                            'all_ppses': all_ppses,
-                        }
-                    else:
-                        availability_for_ppses[location_id]['out_in_ppses'] += out_in_ppses
-                        availability_for_ppses[location_id]['all_ppses'] += all_ppses
-
-                out_in_ppses = all_ppses = 0
-                for location_id, location_info in availability_for_ppses.items():
-                    out_in_ppses += location_info['out_in_ppses']
-                    all_ppses += location_info['all_ppses']
-
-                location_name = 'Synthese'
+            for product in products:
+                product_name = product['product_name']
+                out_in_ppses = product['out_in_ppses']
+                all_ppses = product['all_ppses']
                 percent = (out_in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
                 stocks_to_return.append([
-                    location_name,
+                    product_name,
                     {
                         'html': '{}'.format(percent),
                         'sort_key': percent

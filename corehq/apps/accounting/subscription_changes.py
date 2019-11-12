@@ -112,7 +112,7 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 
     result = []
     for rule in rules:
-        schedule = rule.get_messaging_rule_schedule()
+        schedule = rule.get_schedule()
         if schedule.active and (not survey_only or schedule.memoized_uses_sms_survey):
             result.append(rule)
 
@@ -167,7 +167,7 @@ def _deactivate_schedules(domain, survey_only=False):
         for more information.
         """
         with transaction.atomic():
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             if isinstance(schedule, AlertSchedule):
                 AlertSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
             elif isinstance(schedule, TimedSchedule):

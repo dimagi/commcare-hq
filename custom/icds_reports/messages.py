@@ -92,7 +92,7 @@ def awcs_launched_help_text():
 
 def percent_aadhaar_seeded_beneficiaries_help_text():
     return _(
-        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar '
+        'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar '
         'identification has been captured. '
     )
 
