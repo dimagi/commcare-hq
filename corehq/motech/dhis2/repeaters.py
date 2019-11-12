@@ -25,8 +25,11 @@ api_version_re = re.compile(r'^2\.(\d+)(?:\.\d)?$')
 
 
 def is_dhis2_version(value):
-    if api_version_re.match(value):
-        return True
+    try:
+        if api_version_re.match(value):
+            return True
+    except TypeError:
+        pass
     raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
                           'or "2.xy.z".'))
 
