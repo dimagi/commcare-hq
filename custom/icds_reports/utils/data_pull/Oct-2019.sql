@@ -68,16 +68,8 @@ count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
 count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
 count(*) FILTER (WHERE infra_functional_toilet=1) AS "Available functional toilet",
 count(*) FILTER (WHERE infra_functional_toilet=0) AS "Unavailable functional toilet"
-FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "public"."agg_awc" "agg_awc" ON (
-        ("awc_location_months"."month" = "agg_awc"."month") AND
-        ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
-        ("awc_location_months"."state_id" = "agg_awc"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_awc"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_awc"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
-    )
-WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01' AND awc_is_test<>1 AND supervisor_is_test<>1 AND block_is_test<>1 AND district_is_test<>1
+FROM agg_awc_monthly
+WHERE aggregation_level=5 AND month='2019-10-01'
 GROUP BY state_name
 
 /*
@@ -122,7 +114,7 @@ FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "publi
         ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
     )
-WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01' AND awc_is_test<>1 AND supervisor_is_test<>1 AND block_is_test<>1 AND district_is_test<>1
+WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01'
 GROUP BY state_name
 
 /*
@@ -162,16 +154,8 @@ count(*) FILTER (WHERE infra_infant_weighing_scale=1) AS "Available infant weigh
 count(*) FILTER (WHERE infra_infant_weighing_scale=0) AS "Unavailable infant weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "Available mother and child weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "Unavailable mother and child weighing scale"
-FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "public"."agg_awc" "agg_awc" ON (
-        ("awc_location_months"."month" = "agg_awc"."month") AND
-        ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
-        ("awc_location_months"."state_id" = "agg_awc"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_awc"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_awc"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
-    )
-WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01' AND awc_is_test<>1 AND supervisor_is_test<>1 AND block_is_test<>1 AND district_is_test<>1
+FROM agg_awc_monthly
+WHERE aggregation_level=5 AND month='2019-10-01'
 GROUP BY state_name
 
 /*
@@ -215,7 +199,7 @@ FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "publi
         ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
     )
-WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01' AND awc_is_test<>1 AND supervisor_is_test<>1 AND block_is_test<>1 AND district_is_test<>1
+WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01'
 GROUP BY state_name
 
 /*
