@@ -531,7 +531,7 @@ class LineItemFactory(object):
     @memoized
     def _subscription_ends_before_invoice(self):
         return (
-            self.subscription.date_end is not None
+            self.subscription.date_end
             and self.subscription.date_end < self.invoice.date_end
         )
 
@@ -630,7 +630,7 @@ class ProductLineItemFactory(LineItemFactory):
                 plan_name=self.plan_name,
                 subscription_date_range=(
                     " ({})".format(self.subscription_date_range)
-                    if self.subscription_date_range is not None else ""
+                    if self.subscription_date_range else ""
                 ),
             )
 
@@ -737,7 +737,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
             prorated_notice = _(" (Prorated for {date_range})").format(
                 date_range=(
                     self.subscription_date_range
-                    if self.subscription_date_range is not None else ""
+                    if self.subscription_date_range else ""
                 )
             )
         if self.quantity > 0:
@@ -794,7 +794,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             if sms_count <= self.rate.monthly_limit:
                 # don't count fees until the free monthly limit is exceeded
                 continue
-            elif self._start_date_count_sms is not None and (
+            elif self._start_date_count_sms and (
                 billable.date_sent.date() < self._start_date_count_sms
             ):
                 # count the SMS billables sent before the start date toward
@@ -836,7 +836,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                 monthly_limit=self.rate.monthly_limit,
                 date_range=(
                     _(" from {}").format(self.subscription_date_range)
-                    if self.subscription_date_range is not None else ""
+                    if self.subscription_date_range else ""
                 )
             )
         else:
@@ -855,7 +855,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                 monthly_limit=self.rate.monthly_limit,
                 date_range=(
                     _(" from {}").format(self.subscription_date_range)
-                    if self.subscription_date_range is not None else ""
+                    if self.subscription_date_range else ""
                 )
             )
 
@@ -872,7 +872,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             # subscription related to this line item. Save it for the
             # next subscription in the invoice.
             date_sent__lt=(
-                self._end_date_count_sms if self._end_date_count_sms is not None
+                self._end_date_count_sms if self._end_date_count_sms
                 else self.invoice.date_end + datetime.timedelta(days=1)
             ),
 
