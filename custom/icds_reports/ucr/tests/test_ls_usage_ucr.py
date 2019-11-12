@@ -15,8 +15,7 @@ class TestLsUsage(BaseFormsTest):
             'ls_vhnd_observation_form', [{
                 'submitted_on': None,
                 'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-                'count': 1
+                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
             }
             ])
 
@@ -25,8 +24,7 @@ class TestLsUsage(BaseFormsTest):
             'awc_visit_form_with_location', [{
                 'submitted_on': None,
                 'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-                'count': 1
+                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
             }
             ])
 
@@ -35,7 +33,6 @@ class TestLsUsage(BaseFormsTest):
             'ls_home_visits', [{
                 'submitted_on': None,
                 'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-                'count': 1
+                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
             }
             ])
