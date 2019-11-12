@@ -25,12 +25,15 @@ from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
-api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
+api_version_re = re.compile(r'^2\.(\d+)(?:\.\d)?$')
 
 
 def is_dhis2_version(value):
-    if api_version_re.match(value):
-        return True
+    try:
+        if api_version_re.match(value):
+            return True
+    except TypeError:
+        pass
     raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
                           'or "2.xy.z".'))
 
@@ -158,7 +161,7 @@ class Dhis2Repeater(FormRepeater):
         e.g. Not all CRUD operations are supported before version 15.
         """
         if self.dhis2_version:
-            return api_version_re.match(self.dhis2_version).groups(1)
+            return api_version_re.match(self.dhis2_version).group(1)
 
     def send_request(self, repeat_record, payload):
         """
