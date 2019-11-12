@@ -419,10 +419,11 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     build = get_app_cached(domain, build_id)
     assert build.copy_of, _("Size calculation available only for builds")
     build_profile = build.build_profiles[build_profile_id] if build_profile_id else None
-    multimedia_map_for_build = {
+    multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)
+    multimedia_map_for_build_by_id = {
         media_map_item['multimedia_id']: media_map_item
         for path, media_map_item in
-        build.multimedia_map_for_build(build_profile=build_profile).items()
+        multimedia_map_for_build.items()
     }
     media_objects = {
         mm_object.get_id: mm_object
@@ -430,7 +431,7 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
         build.get_media_objects(multimedia_map=multimedia_map_for_build)
     }
     total_size = defaultdict(lambda: 0)
-    for multimedia_id, media_item in multimedia_map_for_build.items():
+    for multimedia_id, media_item in multimedia_map_for_build_by_id.items():
         media_object = media_objects[multimedia_id]
         total_size[media_object.doc_type] += media_object.content_length
     return total_size
