@@ -404,17 +404,17 @@ DROP TABLE IF EXISTS staging_agg_child_health
 {}
 DROP TABLE IF EXISTS "previous_agg_child_health_2019-01-01"
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_1" ON "agg_child_health_2019-01-01" (aggregation_level, state_id)
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_1" ON "staging_agg_child_health" (aggregation_level, state_id)
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_2" ON "agg_child_health_2019-01-01" (aggregation_level, gender)
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_2" ON "staging_agg_child_health" (aggregation_level, gender)
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_3" ON "agg_child_health_2019-01-01" (aggregation_level, age_tranche)
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_3" ON "staging_agg_child_health" (aggregation_level, age_tranche)
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_4" ON "agg_child_health_2019-01-01" (aggregation_level, district_id) WHERE aggregation_level > 1
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_4" ON "staging_agg_child_health" (aggregation_level, district_id) WHERE aggregation_level > 1
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_5" ON "agg_child_health_2019-01-01" (aggregation_level, block_id) WHERE aggregation_level > 2
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_5" ON "staging_agg_child_health" (aggregation_level, block_id) WHERE aggregation_level > 2
 {}
-CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_6" ON "agg_child_health_2019-01-01" (aggregation_level, supervisor_id) WHERE aggregation_level > 3
+CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_6" ON "staging_agg_child_health" (aggregation_level, supervisor_id) WHERE aggregation_level > 3
 {}
 DROP TABLE IF EXISTS "agg_child_health_2019-01-01_1"
 {}
