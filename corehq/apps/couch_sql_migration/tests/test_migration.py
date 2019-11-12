@@ -1455,7 +1455,7 @@ _real_atomic = transaction.atomic
 
 
 @attr.s(cmp=False)
-class Diff(object):
+class Diff:
 
     type = attr.ib(default=ANY)
     path = attr.ib(default=ANY)

@@ -118,7 +118,7 @@ def do_couch_to_sql_migration(domain, state_dir, **kw):
     CouchSqlDomainMigrator(domain, state_dir, **kw).migrate()
 
 
-class CouchSqlDomainMigrator(object):
+class CouchSqlDomainMigrator:
     def __init__(
         self,
         domain,
