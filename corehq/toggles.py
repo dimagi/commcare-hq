@@ -1080,13 +1080,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EWS_INVALID_REPORT_RESPONSE = StaticToggle(
-    'ews_invalid_report_response',
-    'EWS: Send response about invalid stock on hand',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'use_sms_with_inactive_contacts',
     'Use SMS with inactive contacts',
