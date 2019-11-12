@@ -21,7 +21,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
                 url: url,
                 success: function (content) {
                     self.sizes(_.map(content, function (mmsize, mmType) {
-                        return multimediaSize(mmType, mmsize)
+                        return multimediaSize(mmType, mmsize);
                     }));
                     self.loadState('loaded');
                 },
