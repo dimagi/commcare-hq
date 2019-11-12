@@ -35,17 +35,22 @@ def multimedia_ajax(request, domain, app_id):
         raise Http404()
 
 
+def _update_mm_sizes(mm_sizes):
+    mm_sizes['Total'] = sum(mm_sizes.values())
+    mm_sizes = {
+        mm_type: filesizeformat(mm_size)
+        for mm_type, mm_size in
+        mm_sizes.items()
+    }
+    return mm_sizes
+
+
 @require_deploy_apps
 @quickcache(['domain', 'app_id'], timeout=60 * 60)
 def get_multimedia_sizes(request, domain, app_id):
     mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id)
     if mm_sizes:
-        mm_sizes['Total'] = sum(mm_sizes.values())
-        mm_sizes = {
-            mm_type: filesizeformat(mm_size)
-            for mm_type, mm_size in
-            mm_sizes.items()
-        }
+        mm_sizes = _update_mm_sizes(mm_sizes)
     return JsonResponse(mm_sizes)
 
 
@@ -54,10 +59,5 @@ def get_multimedia_sizes(request, domain, app_id):
 def compare_multimedia_sizes(request, domain, app_id, other_build_id):
     mm_sizes = get_new_multimedia_between_builds(domain, app_id, other_build_id)
     if mm_sizes:
-        mm_sizes['Total'] = sum(mm_sizes.values())
-        mm_sizes = {
-            mm_type: filesizeformat(mm_size)
-            for mm_type, mm_size in
-            mm_sizes.items()
-        }
+        mm_sizes = _update_mm_sizes(mm_sizes)
     return JsonResponse(mm_sizes)
