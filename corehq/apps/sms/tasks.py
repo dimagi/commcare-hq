@@ -1,18 +1,12 @@
-import calendar
 import hashlib
 import math
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.core.management import call_command
 from django.db import DataError, transaction
-from django.urls import reverse
 
 from celery.schedules import crontab
-from celery.task.base import periodic_task
-from dateutil.relativedelta import relativedelta
 
-from dimagi.utils import web
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -20,7 +14,6 @@ from dimagi.utils.couch import (
     release_lock,
 )
 from dimagi.utils.rate_limit import rate_limit
-from soil.util import expose_cached_download
 
 from corehq import privileges
 from corehq.apps.accounting.utils import (
@@ -28,7 +21,6 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.api import (
     DelayProcessing,
     create_billable_for_sms,
@@ -610,25 +602,3 @@ def queued_sms():
 
 
 datadog_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
-
-if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0))
-    def send_monthly_sms_report():
-        start_date = date.today().replace(day=1) - relativedelta(months=1)
-        _, last_day = calendar.monthrange(start_date.year, start_date.month)
-        end_date = start_date.replace(day=last_day)
-        filename = call_command('get_icds_sms_usage', 'icds-cas', str(start_date), str(end_date))
-        with open(filename, 'rb') as f:
-            cached_download = expose_cached_download(f.read(), expiry=24 * 60 * 60, file_extension='xlsx')
-        link = "%s%s" % (web.get_url_base(), reverse('retrieve_download',
-                                                     kwargs={'download_id': cached_download.download_id}))
-        message = """
-        Hi,
-        Please download the sms report for last month at {link}.
-        The report is available only till midnight today.
-        """.format(link=link)
-        subject = _('Monthy SMS report')
-        recipients = ['mkangia@dimagi.com', 'ayogi@dimagi.com', 'adhaar.kaul@gmail.com',
-                      'umra.liaqat@gmail.com']
-        send_html_email_async.delay(subject, recipients, message,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
