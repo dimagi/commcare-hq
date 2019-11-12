@@ -163,21 +163,18 @@ class TestFilterDsl(SimpleTestCase):
         expected_filter = {
             "and": (
                 {
-                    "not": {
-                        "not": {
-                            "nested": {
-                                "path": "case_properties",
+
+                    "nested": {
+                        "path": "case_properties",
+                        "query": {
+                            "filtered": {
                                 "query": {
-                                    "filtered": {
-                                        "query": {
-                                            "match_all": {
-                                            }
-                                        },
-                                        "filter": {
-                                            "term": {
-                                                "case_properties.key.exact": "property"
-                                            }
-                                        }
+                                    "match_all": {
+                                    }
+                                },
+                                "filter": {
+                                    "term": {
+                                        "case_properties.key.exact": "property"
                                     }
                                 }
                             }
