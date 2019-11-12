@@ -255,17 +255,13 @@ def get_standby_databases():
     return standby_dbs
 
 
-def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
+def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-
-    if db_alias not in get_standby_databases(relevant_dbs):
-        return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
     try:
@@ -287,29 +283,41 @@ def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
 
 
 @memoized
-def get_standby_delays_by_db():
+def get_acceptible_replication_delays():
+    """This returns a dict mapping DB alias to max replication delay.
+    Note: this assigns a default value to any DB that does not have
+    an explicit value set (including master databases)."""
     ret = {}
-    for _db, config in settings.DATABASES.items():
+    for db, config in settings.DATABASES.items():
         delay = config.get('STANDBY', {}).get('ACCEPTABLE_REPLICATION_DELAY')
         if delay is None:
             # try legacy setting
             delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
-        if delay:
-            ret[_db] = delay
+            if delay is None:
+                delay = ACCEPTABLE_STANDBY_DELAY_SECONDS
+
+        ret[db] = delay
     return ret
 
 
-@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
-def filter_out_stale_standbys(dbs):
-    # from given list of databases filters out those with more than
-    #   acceptable standby delay, if that database is a standby
-    delays_by_db = get_standby_delays_by_db()
-    relevant_dbs = tuple(dbs)
-    return [
-        db
-        for db in dbs
-        if get_replication_delay_for_standby(db, relevant_dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
-    ]
+@quickcache([], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
+def get_standbys_with_acceptible_delay():
+    """:returns: set of database aliases that are configured as standbys and have replication
+                 delay below the configured threshold
+    """
+    delays_by_db = get_acceptible_replication_delays()
+    return {
+        db for db in get_standby_databases()
+        if get_replication_delay_for_standby(db) <= delays_by_db[db]
+    }
+
+
+def get_databases_for_read_query(candidate_dbs):
+    all_standbys = get_standby_databases()
+    queryable_standbys = get_standbys_with_acceptible_delay()
+    masters = candidate_dbs - all_standbys
+    ok_standbys = candidate_dbs & queryable_standbys
+    return masters | ok_standbys
 
 
 def select_db_for_read(weighted_dbs):
@@ -329,11 +337,9 @@ def select_db_for_read(weighted_dbs):
     if not weighted_dbs:
         return
 
-    # convert to a db to weight dictionary
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
+    fresh_dbs = get_databases_for_read_query(set(weights_by_db))
 
-    # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
     dbs = []
     weights = []
     for _db, weight in weights_by_db.items():
