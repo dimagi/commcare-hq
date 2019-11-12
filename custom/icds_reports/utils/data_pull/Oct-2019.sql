@@ -27,7 +27,7 @@ GROUP BY state_name
 # of AWCs that reported unavailable functional toilet
 */
 SELECT state_name,
-count(*) FILTER (WHERE infra_clean_water IN (1,2,3,5)) AS "Available drinking water",
+count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
 count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
 count(*) FILTER (WHERE infra_functional_toilet=1) AS "Available functional toilet",
 count(*) FILTER (WHERE infra_functional_toilet=0) AS "Unavailable functional toilet"
@@ -70,8 +70,8 @@ GROUP BY state_name
 SELECT state_name,
 count(*) FILTER (WHERE infra_medicine_kits=1) AS "Available medicine kit",
 count(*) FILTER (WHERE infra_medicine_kits=0) AS "Unavailable medicine kit",
-count(*) FILTER (WHERE infra_baby_weighing_scale=1) AS "Available infant weighing scale",
-count(*) FILTER (WHERE infra_baby_weighing_scale=0) AS "Unavailable infant weighing scale",
+count(*) FILTER (WHERE infra_infant_weighing_scale=1) AS "Available infant weighing scale",
+count(*) FILTER (WHERE infra_infant_weighing_scale=0) AS "Unavailable infant weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "Available mother and child weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "Unavailable mother and child weighing scale"
 FROM agg_awc_monthly
