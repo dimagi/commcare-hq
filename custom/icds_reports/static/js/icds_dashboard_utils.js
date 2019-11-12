@@ -1,6 +1,6 @@
 /* global angular hqImport */
 
-function populateDashboardConstants() {
+window.populateDashboardConstants = function populateDashboardConstants() {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
     angular.module('icdsApp').constant('locationHierarchy', initialPageData.get("location_hierarchy"));
@@ -30,4 +30,4 @@ function populateDashboardConstants() {
         {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
         {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
     ]);
-}
+};
