@@ -136,7 +136,7 @@ GROUP BY state_name
 
 -- # Children (0-6y)
 SELECT state_name,
-Count(*) FILTER (WHERE age_tranche::integer<=72 OR age_tranche IS null) AS "0-6y"
-FROM agg_child_health_monthly
+SUM(cases_child_health) AS "0-6y"
+FROM agg_awc_monthly
 WHERE aggregation_level=1 AND month='2019-10-01'
 GROUP BY state_name
