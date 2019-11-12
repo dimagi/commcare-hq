@@ -224,6 +224,8 @@ class CouchSqlDomainMigrator:
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
+        except MissingFormXml:
+            log.error("Missing form XML: %s", couch_form.form_id)
         except Exception:
             proc = "" if form_is_processed else " unprocessed"
             log.exception("Error migrating%s form %s", proc, couch_form.form_id)
