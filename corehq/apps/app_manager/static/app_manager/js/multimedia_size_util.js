@@ -13,10 +13,10 @@ hqDefine('app_manager/js/multimedia_size_util',[
     var multimediaSizesView = function (url) {
         var self = {};
         self.sizes = ko.observableArray();
-        self.load_state = ko.observable(null);
+        self.loadState = ko.observable(null);
         self.showSpinner = ko.observable(false);
         self.load = function () {
-            self.load_state('loading');
+            self.loadState('loading');
             $.ajax({
                 url: url,
                 success: function (content) {
@@ -32,7 +32,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
                     else {
                         alert(gettext('Oops, there was a problem loading this section. Please try again.'));
                     }
-                    self.load_state('error');
+                    self.loadState('error');
                 },
             });
         };
