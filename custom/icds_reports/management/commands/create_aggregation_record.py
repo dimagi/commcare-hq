@@ -40,6 +40,7 @@ class Command(BaseCommand):
             AggregationRecord.objects.create(
                 agg_uuid=self.agg_uuid,
                 agg_date=agg_date,
+                run_date=run_date,
                 state_ids=state_ids,
                 interval=interval,
             )
