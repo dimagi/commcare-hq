@@ -69,7 +69,7 @@ class ICDSAuditEntryRecord(models.Model):
 
 class AggregationRecord(models.Model):
     agg_date = models.DateField()
-    run_date = models.DateField(auto_now_add=True)
+    run_date = models.DateField()
     state_ids = ArrayField(models.CharField(max_length=255), null=True)
     agg_uuid = models.UUIDField(unique=True, default=uuid.uuid4)
     interval = models.IntegerField(null=True)
