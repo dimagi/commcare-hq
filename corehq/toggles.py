@@ -991,14 +991,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CUSTOM_MENU_BAR = StaticToggle(
-    'custom_menu_bar',
-    "Hide Dashboard and Applications from top menu bar "
-    "for non-admin users",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
