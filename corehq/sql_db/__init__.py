@@ -33,11 +33,11 @@ def custom_db_checks(app_configs, **kwargs):
 def check_standby_configs(app_configs, **kwargs):
     standby_to_master = {
         db: config.get('STANDBY', {}).get('MASTER')
-        for db, config in settings.DATABASES
+        for db, config in settings.DATABASES.items()
         if config.get('STANDBY', {}).get('MASTER')
     }
     all_masters = {
-        db for db, config in settings.DATABASES
+        db for db, config in settings.DATABASES.items()
         if 'STANDBY' not in config and 'HQ_ACCEPTABLE_STANDBY_DELAY' not in config
     }
 
@@ -74,7 +74,7 @@ def check_standby_databases(app_configs, **kwargs):
     standbys = {
         db
         for db, config in settings.DATABASES
-        if config.get('STANDBY', {}).get('MASTER')
+        if 'STANDBY' in config or 'HQ_ACCEPTABLE_STANDBY_DELAY' in config
     }
     confirmed_standbys = get_standby_databases()
     badly_configured = standbys - confirmed_standbys
