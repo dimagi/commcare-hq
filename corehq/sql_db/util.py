@@ -137,7 +137,7 @@ def estimate_row_count(query, db_name="default"):
     sql = f"EXPLAIN {sql}"
     if isinstance(db_name, str):
         return count(db_name)
-    return sum(count(db) for db in db_name)
+    return sum(count(db_) for db_ in db_name)
 
 
 def split_list_by_db_partition(partition_values):
@@ -288,7 +288,7 @@ def get_acceptible_replication_delays():
     Note: this assigns a default value to any DB that does not have
     an explicit value set (including master databases)."""
     ret = {}
-    for db, config in settings.DATABASES.items():
+    for db_, config in settings.DATABASES.items():
         delay = config.get('STANDBY', {}).get('ACCEPTABLE_REPLICATION_DELAY')
         if delay is None:
             # try legacy setting
@@ -296,7 +296,7 @@ def get_acceptible_replication_delays():
             if delay is None:
                 delay = ACCEPTABLE_STANDBY_DELAY_SECONDS
 
-        ret[db] = delay
+        ret[db_] = delay
     return ret
 
 
@@ -307,8 +307,8 @@ def get_standbys_with_acceptible_delay():
     """
     delays_by_db = get_acceptible_replication_delays()
     return {
-        db for db in get_standby_databases()
-        if get_replication_delay_for_standby(db) <= delays_by_db[db]
+        db_ for db_ in get_standby_databases()
+        if get_replication_delay_for_standby(db_) <= delays_by_db[db_]
     }
 
 
@@ -337,7 +337,7 @@ def select_db_for_read(weighted_dbs):
     if not weighted_dbs:
         return
 
-    weights_by_db = {_db: weight for _db, weight in weighted_dbs}
+    weights_by_db = {db_: weight for db_, weight in weighted_dbs}
     fresh_dbs = get_databases_for_read_query(set(weights_by_db))
 
     dbs = []
