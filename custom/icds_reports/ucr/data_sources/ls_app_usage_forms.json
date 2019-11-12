@@ -107,11 +107,6 @@
         "column_id": "state_id",
         "type": "expression"
       },
-     {
-        "type": "count",
-        "display_name": "Count",
-        "column_id": "count"
-      },
       {
         "display_name": null,
         "transform": {},
