@@ -19,8 +19,8 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0))
     def send_monthly_sms_report():
         subject = _('Monthy SMS report')
-        recipients = ['mkangia@dimagi.com', 'ayogi@dimagi.com', 'adhaar.kaul@gmail.com',
-                      'umra.liaqat@gmail.com']
+        recipients = ['jschweers@dimagi.com', 'mkangia@dimagi.com', 'ayogi@dimagi.com',
+                      'adhaar.kaul@gmail.com', 'umra.liaqat@gmail.com']
         try:
             start_date = date.today().replace(day=1) - relativedelta(months=1)
             first_day, last_day = calendar.monthrange(start_date.year, start_date.month)
