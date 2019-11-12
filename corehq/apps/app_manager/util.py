@@ -725,7 +725,7 @@ def get_app_id_from_form_unique_id(domain, form_unique_id):
 
 @quickcache(['domain'], timeout=1 * 60 * 60)
 def _get_app_ids_by_form_unique_id(domain):
-    apps = get_apps_in_domain(domain)
+    apps = get_apps_in_domain(domain, include_remote=False)
     app_ids = {}
     for app in apps:
         for module in app.modules:
