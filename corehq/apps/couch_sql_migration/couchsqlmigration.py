@@ -343,7 +343,17 @@ class CouchSqlDomainMigrator:
         if forms == "skipped":
             self._process_skipped_forms()
             return
-        for form_id in forms.split():
+        if forms.startswith(("./", "/")):
+            log.info("loading form ids from file: %s", forms)
+            with open(forms, encoding="utf-8") as fh:
+                form_ids = [x.rstrip("\n") for x in fh if x.strip()]
+            orig_ids = set(form_ids)
+            form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
+            if form_ids != orig_ids:
+                log.info("forms already migrated: %s", orig_ids - set(form_ids))
+        else:
+            form_ids = [x for x in forms.split() if x]
+        for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
             self._migrate_form_and_associated_models(form, replace_diffs=True)
