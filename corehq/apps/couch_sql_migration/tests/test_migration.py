@@ -1080,11 +1080,11 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migrate_skipped_forms(self):
         def skip_forms(form_ids):
-            def maybe_migrate_form(self, form):
+            def maybe_migrate_form(self, form, **kw):
                 if form.form_id in form_ids:
                     log.info("skipping %s", form.form_id)
                 else:
-                    migrate(self, form)
+                    migrate(self, form, **kw)
 
             migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
             return mock.patch.object(
@@ -1107,12 +1107,12 @@ class MigrationTestCase(BaseMigrationTestCase):
         clear_local_domain_sql_backend_override(self.domain_name)
 
         with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
-            self._do_migration(live=True, skipped_forms=True)
+            self._do_migration(live=True, forms="skipped")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.patch_migration_chunk_size(1):
-            self._do_migration(live=True, skipped_forms=True)
+            self._do_migration(live=True, forms="skipped")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)

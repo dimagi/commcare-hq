@@ -127,7 +127,7 @@ class CouchSqlDomainMigrator:
         live_migrate=False,
         diff_process=True,
         rebuild_state=False,
-        skipped_forms=False,
+        forms=None,
     ):
         self._check_for_migration_restrictions(domain)
         self.domain = domain
@@ -144,7 +144,7 @@ class CouchSqlDomainMigrator:
             diff_queue = CaseDiffProcess
         else:
             diff_queue = CaseDiffQueue
-        self.skipped_forms = skipped_forms
+        self.forms = forms
         self.case_diff_queue = diff_queue(self.statedb)
 
     def migrate(self):
@@ -157,9 +157,10 @@ class CouchSqlDomainMigrator:
         timing = TimingContext("couch_sql_migration")
         with timing as timing_context, patch, self.case_diff_queue, self.stopper:
             self.timing_context = timing_context
-            if self.skipped_forms:
-                with timing_context('skipped_forms'):
-                    self._process_skipped_forms()
+            if self.forms:
+                with timing_context('forms_subset'):
+                    self._process_forms_subset(self.forms)
+                return
             with timing_context('main_forms'):
                 self._process_main_forms()
             with timing_context("unprocessed_forms"):
@@ -186,7 +187,12 @@ class CouchSqlDomainMigrator:
         self._migrate_form_and_associated_models(couch_form)
         self.case_diff_queue.update(case_ids, form_id)
 
-    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
+    def _migrate_form_and_associated_models(
+        self,
+        couch_form,
+        form_is_processed=True,
+        replace_diffs=False,
+    ):
         """
         Copies `couch_form` into a new sql form
         """
@@ -234,12 +240,12 @@ class CouchSqlDomainMigrator:
                 sql_form = None
         finally:
             if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form)
+                self._save_diffs(couch_form, sql_form, replace_diffs)
 
-    def _save_diffs(self, couch_form, sql_form):
+    def _save_diffs(self, couch_form, sql_form, replace):
         couch_json = couch_form.to_json()
         sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json)
+        self.statedb.save_form_diffs(couch_json, sql_json, replace)
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -340,6 +346,15 @@ class CouchSqlDomainMigrator:
         finally:
             self.case_diff_queue.enqueue(couch_case.case_id)
 
+    def _process_forms_subset(self, forms):
+        if forms == "skipped":
+            self._process_skipped_forms()
+            return
+        for form_id in forms.split():
+            log.info("migrating form: %s", form_id)
+            form = XFormInstance.get(form_id)
+            self._migrate_form_and_associated_models(form, replace_diffs=True)
+
     def _process_skipped_forms(self):
         """process forms skipped by a previous migration
 
@@ -351,9 +366,9 @@ class CouchSqlDomainMigrator:
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
-                    log.exception("Error migrating form %s", doc)
+                    log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form)
+                    self._migrate_form_and_associated_models(form, replace_diffs=True)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
