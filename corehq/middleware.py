@@ -260,8 +260,10 @@ class LoggingSessionMiddleware(SessionMiddleware):
         ]
 
     def _bypass_sessions(self, request):
-        return (toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER) and
-            any(rx.match(request.path_info) for rx in self.bypass_re))
+        return (
+            any(rx.match(request.path_info) for rx in self.bypass_re) and
+            toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER)
+        )
 
     def process_response(self, request, response):
         datadog_counter(
