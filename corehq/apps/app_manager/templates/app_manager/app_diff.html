@@ -18,10 +18,10 @@
   {% initial_page_data 'second_app_id' other_app.id %}
   <div id="multimedia-sizes-diff-container">
     <h2>{% trans 'MultiMedia Sizes' %}</h2>
-    <div id="multimedia-sizes-container-1">
+    <div id="multimedia-sizes-container-1" class="ko-template">
       {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
     </div>
-    <div id="multimedia-sizes-container-2">
+    <div id="multimedia-sizes-container-2" class="ko-template">
       {% include 'app_manager/partials/multimedia_sizes.html' with version=other_app.version %}
     </div>
   </div>
