@@ -161,7 +161,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1200.0000'))
+        self.assertEqual(invoice.balance, Decimal('851.6200'))
         self.assertEqual(invoice.account, self.account)
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
