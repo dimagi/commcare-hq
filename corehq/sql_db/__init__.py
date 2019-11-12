@@ -76,8 +76,8 @@ def check_standby_databases(app_configs, **kwargs):
         for db, config in settings.DATABASES
         if config.get('STANDBY', {}).get('MASTER')
     }
-    confirmed_standbys = get_standby_databases(standbys)
-    badly_configured = standbys - set(confirmed_standbys)
+    confirmed_standbys = get_standby_databases()
+    badly_configured = standbys - confirmed_standbys
     if badly_configured:
         return [
             Error("Some databases configured as STANDBY are not in recovery mode: {}".format(

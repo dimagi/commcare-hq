@@ -244,15 +244,14 @@ def _get_all_nested_subclasses(cls):
 
 
 @memoized
-def get_standby_databases(relevant_dbs=None):
-    standby_dbs = []
+def get_standby_databases():
+    standby_dbs = set()
     for db_alias in settings.DATABASES:
-        if relevant_dbs is None or db_alias in relevant_dbs:
-            with db.connections[db_alias].cursor() as cursor:
-                cursor.execute("SELECT pg_is_in_recovery()")
-                [(is_standby, )] = cursor.fetchall()
-                if is_standby:
-                    standby_dbs.append(db_alias)
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute("SELECT pg_is_in_recovery()")
+            [(is_standby, )] = cursor.fetchall()
+            if is_standby:
+                standby_dbs.add(db_alias)
     return standby_dbs
 
 
