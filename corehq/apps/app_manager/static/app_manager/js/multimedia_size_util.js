@@ -2,7 +2,8 @@ hqDefine('app_manager/js/multimedia_size_util',[
     'jquery',
     'underscore',
     'knockout',
-], function ($, _, ko) {
+    'hqwebapp/js/alert_user',
+], function ($, _, ko, alertUser) {
     var multimediaSize = function (name, size) {
         var self = {};
         self.name = ko.observable(name);
@@ -26,7 +27,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
                 },
                 error: function (data) {
                     if (data.hasOwnProperty('responseJSON')) {
-                        alert(data.responseJSON.message);
+                        alertUser.alert_user(data.responseJSON.message, "danger");
                     }
                     else {
                         alert(gettext('Oops, there was a problem loading this section. Please try again.'));
