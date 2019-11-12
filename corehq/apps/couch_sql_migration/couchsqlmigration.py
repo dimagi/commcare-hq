@@ -154,21 +154,14 @@ class CouchSqlDomainMigrator:
             state=self.statedb.unique_id,
         ))
         patch = patch_case_property_validators()
-        timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, patch, self.case_diff_queue, self.stopper:
-            self.timing_context = timing_context
+        with self.counter, patch, self.case_diff_queue, self.stopper:
             if self.forms:
-                with timing_context('forms_subset'):
-                    self._process_forms_subset(self.forms)
+                self._process_forms_subset(self.forms)
                 return
-            with timing_context('main_forms'):
-                self._process_main_forms()
-            with timing_context("unprocessed_forms"):
-                self._copy_unprocessed_forms()
-            with timing_context("unprocessed_cases"):
-                self._copy_unprocessed_cases()
+            self._process_main_forms()
+            self._copy_unprocessed_forms()
+            self._copy_unprocessed_cases()
 
-        self._send_timings(timing_context)
         log.info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
@@ -397,9 +390,7 @@ class CouchSqlDomainMigrator:
             offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
         else:
             offset = self.counter.get(offset_key)
-        if self.timing_context:
-            current_timer = self.timing_context.peek()
-            current_timer.normalize_denominator = doc_count
+        self.counter.normalize_timing(doc_count)
 
         if self.with_progress:
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
@@ -432,20 +423,6 @@ class CouchSqlDomainMigrator:
                 resume_key="%s.%s.%s" % (self.domain, doc_type, migration_id),
                 stopper=self.stopper,
             )
-
-    def _send_timings(self, timing_context):
-        metric_name_template = "commcare.%s.count"
-        metric_name_template_normalized = "commcare.%s.count.normalized"
-        for timing in timing_context.to_list():
-            datadog_counter(
-                metric_name_template % timing.full_name,
-                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
-            normalize_denominator = getattr(timing, 'normalize_denominator', None)
-            if normalize_denominator:
-                datadog_counter(
-                    metric_name_template_normalized % timing.full_name,
-                    tags=['duration:%s' % bucket_value(timing.duration / normalize_denominator,
-                                                       NORMALIZED_TIMING_BUCKETS)])
 
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
@@ -967,8 +944,16 @@ class DocCounter:
     def __init__(self, statedb):
         self.statedb = statedb
         self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.timing = TimingContext("couch_sql_migration")
         self.dd_session = 0
         self.state_session = 0
+
+    def __enter__(self):
+        self.timing.start()
+
+    def __exit__(self, *exc_info):
+        self.timing.stop()
+        self._send_timings()
 
     @contextmanager
     def __call__(self, dd_type, doc_type=None):
@@ -982,10 +967,11 @@ class DocCounter:
         """
         tags = [f"type:{dd_type}"]
         args = (doc_type,) if doc_type else ()
-        try:
-            yield partial(self.add, tags, *args)
-        finally:
-            self.flush(tags)
+        with self.timing(dd_type):
+            try:
+                yield partial(self.add, tags, *args)
+            finally:
+                self.flush(tags)
 
     def add(self, tags, doc_type, count=1):
         self.counts[doc_type] += count
@@ -1011,6 +997,25 @@ class DocCounter:
 
     def pop(self, doc_type):
         return self.counts.pop(doc_type, 0)
+
+    def normalize_timing(self, doc_count):
+        self.timing.peek().normalize_denominator = doc_count
+
+    def _send_timings(self):
+        metric_name_template = "commcare.%s.count"
+        metric_name_template_normalized = "commcare.%s.count.normalized"
+        for timing in self.timing.to_list():
+            datadog_counter(
+                metric_name_template % timing.full_name,
+                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
+            if getattr(timing, "normalize_denominator", 0):
+                datadog_counter(
+                    metric_name_template_normalized % timing.full_name,
+                    tags=['duration:%s' % bucket_value(
+                        timing.duration / timing.normalize_denominator,
+                        NORMALIZED_TIMING_BUCKETS,
+                    )]
+                )
 
 
 def commit_migration(domain_name):
