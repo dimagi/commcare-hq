@@ -19,10 +19,10 @@ hqDefine('app_manager/js/multimedia_size_util',[
             $.ajax({
                 url: url,
                 success: function (content) {
-                    _.each(content, function (mmsize, mmType) {
-                        self.sizes.push(multimediaSize(mmType, mmsize));
-                    });
-                    self.load_state('loaded');
+                    self.sizes(_.map(content, function (mmsize, mmType) {
+                        return multimediaSize(mmType, mmsize)
+                    }));
+                    self.loadState('loaded');
                 },
                 error: function (data) {
                     if (data.hasOwnProperty('responseJSON')) {
