@@ -97,22 +97,21 @@ class Dhis2ConfigForm(forms.Form):
             else:
                 required_msg = _('The "%(property)s" property is required.')
 
+            if not form_config.get('xmlns'):
+                errors.append(ValidationError(
+                    '{} {}'.format(required_msg, _('Please specify the XMLNS of the form.')),
+                    params={'property': 'xmlns'},
+                    code='required_property',
+                ))
             if not form_config.get('program_id'):
                 errors.append(ValidationError(
                     '{} {}'.format(required_msg, _('Please specify the DHIS2 Program of the event.')),
                     params={'property': 'program_id'},
                     code='required_property',
                 ))
-            if not form_config.get('event_date'):
-                errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please provide a FormQuestion, FormQuestionMap or '
-                                                   'ConstantString to determine the date of the event.')),
-                    params={'property': 'event_date'},
-                    code='required_property',
-                ))
             if not form_config.get('datavalue_maps'):
                 errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please map CommCare values to OpenMRS data elements.')),
+                    '{} {}'.format(required_msg, _('Please map CommCare values to DHIS2 data elements.')),
                     params={'property': 'datavalue_maps'},
                     code='required_property',
                 ))

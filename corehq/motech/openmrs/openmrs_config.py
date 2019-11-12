@@ -1,15 +1,19 @@
-
 from itertools import chain
 from operator import eq
 
-import six
 from jsonpath_rw import Child, Fields, Slice, Union, Where
 from jsonpath_rw import parse as parse_jsonpath
 
+from casexml.apps.case.models import (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
+)
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
+    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
@@ -19,6 +23,10 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 from corehq.motech.value_source import ValueSource
 
+INDEX_RELATIONSHIPS = (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
+)
 
 class OpenmrsCaseConfig(DocumentSchema):
 
@@ -149,13 +157,23 @@ class OpenmrsCaseConfig(DocumentSchema):
             data.pop('id_matchers')
         # Set default data types for known properties
         for property_, value_source in chain(
-            six.iteritems(data.get('person_properties', {})),
-            six.iteritems(data.get('person_preferred_name', {})),
-            six.iteritems(data.get('person_preferred_address', {})),
+            data.get('person_properties', {}).items(),
+            data.get('person_preferred_name', {}).items(),
+            data.get('person_preferred_address', {}).items(),
         ):
             data_type = OPENMRS_PROPERTIES[property_]
             value_source.setdefault('external_data_type', data_type)
         return super(OpenmrsCaseConfig, cls).wrap(data)
+
+
+class IndexedCaseMapping(DocumentSchema):
+    identifier = StringProperty(required=True, default=DEFAULT_PARENT_IDENTIFIER)
+    case_type = StringProperty(required=True)
+    relationship = StringProperty(required=True, choices=INDEX_RELATIONSHIPS,
+                                  default=INDEX_RELATIONSHIP_EXTENSION)
+
+    # Sets case property values of a new extension case or child case.
+    case_properties = SchemaListProperty(ValueSource, required=True)
 
 
 class ObservationMapping(DocumentSchema):
@@ -166,6 +184,20 @@ class ObservationMapping(DocumentSchema):
     # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
     # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
     case_property = StringProperty(required=False)
+
+    # Use indexed_case_mapping to create an extension case or a child
+    # case instead of setting a case property. Used for referrals.
+    indexed_case_mapping = SchemaProperty(
+        IndexedCaseMapping, required=False, default=None, exclude_if_none=True
+    )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and other.concept == self.concept
+            and other.value == self.value
+            and other.case_property == self.case_property
+        )
 
 
 class OpenmrsFormConfig(DocumentSchema):

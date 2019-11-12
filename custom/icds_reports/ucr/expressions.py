@@ -2,7 +2,6 @@ from datetime import datetime
 
 from jsonobject.base_properties import DefaultProperty
 from quickcache.django_quickcache import get_django_quickcache
-from six.moves import filter
 
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xform import extract_case_blocks
@@ -199,7 +198,7 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
             return context.get_cache_value(cache_key)
 
         source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
-        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids)
         context.set_cache_value(cache_key, forms)
         return forms
 
@@ -232,7 +231,7 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     @staticmethod
     def _bulk_get_form_json_from_es(forms):
         form_ids = [form.form_id for form in forms]
-        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
+        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids)
         return {
             f['_id']: f for f in es_forms
         }
@@ -250,15 +249,14 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return (XFORM_CACHE_KEY_PREFIX, form.form_id)
 
     @staticmethod
-    def _bulk_get_forms_from_elasticsearch(form_ids, source):
-        forms = mget_query('forms', form_ids, source)
+    def _bulk_get_forms_from_elasticsearch(form_ids):
+        forms = mget_query('forms', form_ids)
         return list(filter(None, [
             FormsInDateExpressionSpec._transform_time_end_and_filter_bad_data(f) for f in forms
         ]))
 
     @staticmethod
     def _transform_time_end_and_filter_bad_data(xform):
-        xform = xform.get('_source', {})
         if not xform.get('xmlns', None):
             return None
         try:

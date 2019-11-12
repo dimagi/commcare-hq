@@ -5,7 +5,6 @@ from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-import six
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
@@ -25,7 +24,7 @@ def add_prefix(field_dict, prefix):
     """
     return {
         "{}-{}".format(prefix, k): v
-        for k, v in six.iteritems(field_dict)
+        for k, v in field_dict.items()
     }
 
 
@@ -133,7 +132,7 @@ class CustomDataEditor(object):
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:

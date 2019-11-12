@@ -1,7 +1,4 @@
-
 from collections import namedtuple
-
-from six.moves import map
 
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 

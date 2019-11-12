@@ -3,7 +3,6 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 
 from couchdbkit import Database
-from six.moves import input
 
 from dimagi.utils.couch.database import get_design_docs
 

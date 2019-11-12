@@ -1,4 +1,3 @@
-
 from django.test import RequestFactory, TestCase, override_settings
 
 import mock
@@ -40,7 +39,6 @@ class TestSendToHubspot(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        cls.user.delete()
         super(TestSendToHubspot, cls).tearDownClass()
 
     def get_request(self):

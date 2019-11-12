@@ -96,6 +96,7 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
         ret['view_mode'] = 'submissions'
         tabular_context = PatientDetailsReport(self.request).report_context
         tabular_context.update(ret)
+        self.base_template = "succeed/patient_submissions.html"
         self.report_template_path = "patient_submissions.html"
         tabular_context['patient_id'] = self.request_params['patient_id']
         return tabular_context

@@ -3,6 +3,7 @@ from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -10,7 +11,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
@@ -70,7 +70,7 @@ def rewrite_url(request, path):
 
 
 def inverse_dict(d):
-    return dict([(v, k) for k, v in six.iteritems(d)])
+    return dict([(v, k) for k, v in d.items()])
 
 
 def can_view_app(req, dom):
@@ -101,6 +101,11 @@ class BaseCommCareExchangeSectionView(BaseSectionPageView):
     def dispatch(self, request, *args, **kwargs):
         if self.include_unapproved and not self.request.user.is_superuser:
             raise Http404()
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseCommCareExchangeSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -184,7 +189,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            six.text_type(e), res['_source']['_id'])
+                            str(e), res['_source']['_id'])
                     )
                 )
 

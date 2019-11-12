@@ -1,4 +1,3 @@
-
 from django.core.management.base import BaseCommand, CommandError
 
 from couchforms.dbaccessors import get_form_ids_by_type

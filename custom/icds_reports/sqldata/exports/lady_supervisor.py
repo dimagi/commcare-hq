@@ -1,4 +1,3 @@
-
 from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn

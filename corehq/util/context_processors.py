@@ -1,4 +1,3 @@
-
 import datetime
 
 from django.conf import settings
@@ -45,20 +44,22 @@ def get_per_domain_context(project, request=None):
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
+    def allow_report_issue(user, domain):
+        if toggles.ICDS.enabled(domain) and user.is_commcare_user():
+            role = user.get_domain_membership(domain).role
+            if not role:
+                return False
+        return user.has_permission(domain, 'report_an_issue')
+
     if getattr(request, 'couch_user', None) and project:
-        allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
+        allow_report_an_issue = allow_report_issue(request.couch_user, project.name)
     elif settings.ENTERPRISE_MODE:
         if not getattr(request, 'couch_user', None):
             allow_report_an_issue = False
         elif request.couch_user.is_web_user():
             allow_report_an_issue = True
         else:
-            domain_name = request.couch_user.domain
-            role = request.couch_user.get_domain_membership(domain_name).role
-            if not role and toggles.ICDS.enabled(domain_name):
-                allow_report_an_issue = False
-            else:
-                allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
+            allow_report_an_issue = allow_report_issue(request.couch_user, request.couch_user.domain)
     else:
         allow_report_an_issue = True
 

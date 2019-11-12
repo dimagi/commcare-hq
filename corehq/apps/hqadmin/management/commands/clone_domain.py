@@ -3,9 +3,6 @@ import uuid
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import Q
 
-import six
-from six.moves import input
-
 from corehq.apps.app_manager.models import Application
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import (
@@ -301,7 +298,7 @@ class Command(BaseCommand):
         attachments = {}
         attachment_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachment_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
+            attachment_stubs = {k: v.to_json() for k, v in doc.blobs.items()}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']

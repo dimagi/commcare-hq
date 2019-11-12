@@ -18,9 +18,8 @@ def simple_pad(bytestring, block_size, char=PAD_CHAR):
     Pad `bytestring` to a multiple of `block_size` in length by appending
     `char`. `char` defaults to space.
 
-    >>> padded = simple_pad(b'xyzzy', 8, b'*')
-    >>> padded == b'xyzzy***'
-    True
+    >>> simple_pad(b'xyzzy', 8, b'*')
+    b'xyzzy***'
 
     """
     assert isinstance(bytestring, bytes)
@@ -35,9 +34,8 @@ def b64_aes_encrypt(message):
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
-    True
+    >>> b64_aes_encrypt('Around you is a forest.')
+    'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
 
     """
     if isinstance(settings.SECRET_KEY, bytes):
@@ -63,9 +61,8 @@ def b64_aes_decrypt(message):
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> decrypted = b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
-    >>> decrypted == 'Around you is a forest.'
-    True
+    >>> b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
+    'Around you is a forest.'
 
     """
     if isinstance(settings.SECRET_KEY, bytes):

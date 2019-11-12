@@ -1,10 +1,8 @@
-
 import traceback
 
 import gevent
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
-from six.moves import input
 
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor, iter_all_ids_chunked
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query

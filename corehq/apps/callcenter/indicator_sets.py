@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from django.core.cache import cache
 
 import pytz
-import six
 from memoized import memoized
 
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -381,7 +380,7 @@ class CallCenterIndicators(object):
 
             cache_timeout = seconds_till_midnight(self.timezone)
             user_to_case_map = self.user_to_case_map
-            for user_id, indicators in six.iteritems(self.data):
+            for user_id, indicators in self.data.items():
                 # only include data for users that we are expecting. There may be partial
                 # data for other users who are part of the same case sharing groups.
                 if user_id in self.users_needing_data:
@@ -400,7 +399,7 @@ class CallCenterIndicators(object):
                         )
                         final_data[user_case_id] = indicators
 
-        for cache_data in six.itervalues(self.cached_data):
+        for cache_data in self.cached_data.values():
             final_data[cache_data.case_id] = cache_data.indicators
 
         return final_data

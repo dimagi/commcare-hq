@@ -1,4 +1,3 @@
-
 import io
 from collections import namedtuple
 
@@ -205,7 +204,7 @@ def _translate_name(names, language):
     try:
         return str(names[language])
     except KeyError:
-        first_name = next(names.items())
+        first_name = next(iter(names.items()))
         return "{} [{}]".format(first_name[1], first_name[0])
 
 

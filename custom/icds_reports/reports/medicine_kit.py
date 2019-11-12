@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
@@ -12,8 +10,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import awcs_reported_medicine_kit_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
-    get_child_locations
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
 from django.db.models import Case, When, Q, IntegerField
 
 
@@ -129,7 +126,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
             'loc_name': key,
             'percent': (value['in_month'] * 100) / float(value['all'] or 1)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -143,7 +140,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['in_month'] / float(value['all'] or 1),
                         'in_month': value['in_month']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Percentage of AWCs that reported having a Medicine Kit",
                 "strokeWidth": 2,
@@ -184,13 +181,9 @@ def get_medicine_kit_sector_data(domain, config, loc_level, location_id, show_te
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -199,17 +192,13 @@ def get_medicine_kit_sector_data(domain, config, loc_level, location_id, show_te
             'all': valid or 0
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

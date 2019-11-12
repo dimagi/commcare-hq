@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -12,8 +10,8 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, format_decimal
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
+    format_decimal
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -80,7 +78,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         data_for_map[on_map_name]['weighed'] += weighed
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
         value = numerator * 100 / (data_for_location['weighed'] or 1)
         if value < 20:
@@ -211,7 +209,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
             'loc_name': key,
             'percent': value
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
@@ -225,7 +223,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% Normal",
                 "strokeWidth": 2,
@@ -239,7 +237,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
@@ -253,7 +251,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,
@@ -303,14 +301,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         'total': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         weighed = row['weighed']
         total = row['total']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
@@ -326,10 +320,6 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
             name,
             ((moderately_underweight or 0) + (severely_underweight or 0)) / float(weighed or 1)
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(
         chart_data['blue'],

@@ -2,8 +2,6 @@ import collections
 import logging
 from abc import ABCMeta, abstractmethod
 
-import six as six
-
 from casexml.apps.phone.exceptions import MissingSyncLog
 
 from memoized import memoized
@@ -324,7 +322,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
             return None
 
 
-class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
+class AbstractSupplyInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod

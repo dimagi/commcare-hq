@@ -104,6 +104,7 @@ You now have two options for how to install it.
 
 Now make sure the build is available in the app settings.  Go to `/builds/edit_menu/`, then add the version and a label. You can also set the default here to be the version you've added.
 
+## For legacy J2ME builds
 Finally, in order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
 acquire a code signing certificate (from e.g. Thawte).
 

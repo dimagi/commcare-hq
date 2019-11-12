@@ -1,4 +1,3 @@
-
 from django.db import migrations
 
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria

@@ -4,7 +4,6 @@ import uuid
 from copy import deepcopy
 
 import pytz
-from six.moves import filter
 
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list

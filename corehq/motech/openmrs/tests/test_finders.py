@@ -1,4 +1,3 @@
-
 import doctest
 
 from django.test import SimpleTestCase

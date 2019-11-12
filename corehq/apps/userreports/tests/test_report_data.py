@@ -3,8 +3,6 @@ from collections import namedtuple
 
 from django.test import TestCase
 
-from six.moves import range
-
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,

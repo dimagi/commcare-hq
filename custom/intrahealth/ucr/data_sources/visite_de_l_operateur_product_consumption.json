@@ -116,7 +116,7 @@
             },
             "location_type": {
               "type": "constant",
-              "constant": "Region"
+              "constant": "R\u00e9gion"
             },
             "location_property": null
           }

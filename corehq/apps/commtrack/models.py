@@ -4,10 +4,8 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
-from six.moves import filter
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
@@ -413,7 +411,7 @@ def sync_supply_point(location, is_deletion=False):
 
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
-    case_id = six.text_type(instance.case_id)
+    case_id = str(instance.case_id)
     try:
         domain_name = instance.__domain
         if not domain_name:

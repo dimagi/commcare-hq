@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from django.contrib import messages
@@ -11,13 +10,15 @@ from django.http.response import (
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import (
+    ugettext as _,
+    ugettext_lazy,
+)
 from django.views.decorators.http import require_POST
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
-    get_build_doc_by_version,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import (
@@ -25,11 +26,13 @@ from corehq.apps.app_manager.models import (
     LatestEnabledBuildProfiles,
 )
 from corehq.apps.domain.forms import (
-    ManageReleasesByAppProfileForm,
+    CreateManageReleasesByAppProfileForm,
+    SearchManageReleasesByAppProfileForm,
     ManageReleasesByLocationForm,
 )
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.permissions import can_manage_releases
 
 
 @method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(),
@@ -105,65 +108,70 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
     page_title = ugettext_lazy("Manage Releases By App Profile")
 
     @cached_property
-    def form(self):
-        return ManageReleasesByAppProfileForm(
+    def creation_form(self):
+        return CreateManageReleasesByAppProfileForm(
             self.request,
             self.domain,
             data=self.request.POST if self.request.method == "POST" else None,
         )
 
     @staticmethod
-    def _get_initial_app_profile_details(domain, version, app_id, build_profile_id):
+    def _get_initial_app_build_profile_details(build_profiles_per_app, app_id, app_build_profile_id):
         # only need to set when performing search to populate with initial values in view
-        if app_id and version:
-            build_doc = get_build_doc_by_version(domain, app_id, version)
-            if build_doc:
-                return [{
-                    'id': _id,
-                    'text': details['name'],
-                    'selected': build_profile_id == _id
-                } for _id, details in build_doc['build_profiles'].items()]
+        if build_profiles_per_app and app_id and app_id in build_profiles_per_app:
+            app_build_profiles = build_profiles_per_app[app_id]
+            return [{
+                'id': _id,
+                'text': details['name'],
+                'selected': app_build_profile_id == _id
+            } for _id, details in app_build_profiles.items()]
 
     @property
     def page_context(self):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        apps_names = {}
+        build_profiles_per_app = {}
+        for app in get_brief_apps_in_domain(self.domain, include_remote=True):
+            apps_names[app.id] = app.name
+            build_profiles_per_app[app.id] = app.build_profiles
         query = LatestEnabledBuildProfiles.objects
         app_id = self.request.GET.get('app_id')
         if app_id:
             query = query.filter(app_id=app_id)
         else:
-            query = query.filter(app_id__in=app_names.keys())
+            query = query.filter(app_id__in=apps_names.keys())
         version = self.request.GET.get('version')
         if version:
             query = query.filter(version=version)
-        build_profile_id = self.request.GET.get('build_profile_id')
-        if build_profile_id:
-            query = query.filter(build_profile_id=build_profile_id)
+        app_build_profile_id = self.request.GET.get('app_build_profile_id')
+        if app_build_profile_id:
+            query = query.filter(build_profile_id=app_build_profile_id)
         status = self.request.GET.get('status')
         if status:
             if status == 'active':
                 query = query.filter(active=True)
             elif status == 'inactive':
                 query = query.filter(active=False)
-        app_releases_by_app_profile = [release.to_json(app_names) for release in query.order_by('-version')]
+        app_releases_by_app_profile = [release.to_json(apps_names) for release in query.order_by('-version')]
         return {
-            'manage_releases_by_app_profile_form': self.form,
+            'creation_form': self.creation_form,
+            'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_profile_details': self._get_initial_app_profile_details(self.domain, version, app_id,
-                                                                                 build_profile_id),
+            'initial_app_build_profile_details': self._get_initial_app_build_profile_details(
+                build_profiles_per_app, app_id, app_build_profile_id),
+            'build_profiles_per_app': build_profiles_per_app,
         }
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            success, error_message = self.form.save()
-            if success:
-                return redirect(self.urlname, self.domain)
-            else:
+        if self.creation_form.is_valid():
+            error_messages, success_messages = self.creation_form.save()
+            for success_message in success_messages:
+                messages.success(request, success_message)
+            for error_message in error_messages:
                 messages.error(request, error_message)
-                return self.get(request, *args, **kwargs)
-        else:
-            return self.get(request, *args, **kwargs)
+            if not error_messages:
+                return redirect(self.urlname, self.domain)
+        return self.get(request, *args, **kwargs)
 
 
 @require_can_edit_apps
@@ -208,6 +216,9 @@ def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
     release = LatestEnabledBuildProfiles.objects.get(id=restriction_id)
     if not release:
         return HttpResponseBadRequest()
+    if not can_manage_releases(request.couch_user, domain, release.app_id):
+        return JsonResponse(data={
+            'message': _("You don't have permission to set restriction for this application")})
     if request.POST.get('active') == 'false':
         return _update_release_restriction_by_app_profile(release, restriction_id, active=False)
     elif request.POST.get('active') == 'true':

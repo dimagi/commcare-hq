@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from mock.mock import MagicMock
 import mock
 
@@ -9,7 +7,6 @@ from custom.up_nrhm.reports.district_functionality_report import DistrictFunctio
 from custom.up_nrhm.tests.utils import UpNrhmTestCase
 from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
-from six.moves import range
 
 RUN_QUERY_VALUE = {
     'hits': {

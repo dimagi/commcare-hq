@@ -3,6 +3,8 @@
 {% load staticfiles %}
 {% load hq_shared_tags %}
 
+{% requirejs_main 'nic_compliance/js/encoder' %}
+
 {% block title %}{% trans "Login to ICDS CAS" %}{% endblock title %}
 {% block title_context %} {% endblock %}
 
@@ -55,11 +57,6 @@
     </div>
 </div>
 {% endblock page_content %}
-
-{% block js %}
-  {{ block.super }}
-  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-{% endblock %}
 
 <!-- get rid of footer -->
 {% block footer %}

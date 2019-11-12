@@ -1,12 +1,9 @@
-
 import re
 
 from django.utils.translation import ugettext as _
 
-import six
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
-from six import integer_types, string_types
 
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
@@ -166,13 +163,13 @@ def build_filter_from_ast(domain, node):
                 serialize(node)
             )
         except XPathFunctionException as e:
-            raise CaseFilterError(six.text_type(e), serialize(node))
+            raise CaseFilterError(str(e), serialize(node))
 
     def _equality(node):
         """Returns the filter for an equality operation (=, !=)
 
         """
-        acceptable_rhs_types = integer_types + (string_types, float, FunctionCall, UnaryExpression)
+        acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
         if isinstance(node.left, Step) and (
                 isinstance(node.right, acceptable_rhs_types)):
             # This is a leaf node
@@ -254,7 +251,7 @@ def build_filter_from_xpath(domain, xpath):
     try:
         return build_filter_from_ast(domain, parse_xpath(xpath))
     except TypeError as e:
-        text_error = re.search(r"Unknown text '(.+)'", six.text_type(e))
+        text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:
             # This often happens if there is a bad operator (e.g. a ~ b)
             bad_part = text_error.groups()[0]
@@ -262,7 +259,7 @@ def build_filter_from_xpath(domain, xpath):
         raise CaseFilterError(_("Malformed search query"), None)
     except RuntimeError as e:
         # eulxml passes us string errors from YACC
-        lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", six.text_type(e))
+        lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", str(e))
         if lex_token_error:
             bad_part = lex_token_error.groups()[1]
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)

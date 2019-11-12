@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 
 from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
@@ -7,7 +6,7 @@ from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
 class LatestEnabledBuildProfileSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = LatestEnabledBuildProfiles
-        fields = ['id', 'app_id', 'active', 'version']
+        fields = ['id', 'app_id', 'active', 'version', 'build_profile_id']
 
     def to_representation(self, instance):
         ret = super(LatestEnabledBuildProfileSerializer, self).to_representation(instance)

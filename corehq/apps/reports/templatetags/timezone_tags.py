@@ -1,7 +1,6 @@
 from django import template
 
 import pytz
-import six
 
 from corehq.util.timezones.conversions import ServerTime
 
@@ -14,6 +13,6 @@ def utc_to_timezone(date, timezone):
         timezone = pytz.utc
     if not date:
         return "---"
-    if isinstance(date, (six.text_type, bytes)):
+    if isinstance(date, (str, bytes)):
         raise ValueError("utc_to_timezone no longer accepts strings")
     return ServerTime(date).user_time(timezone).ui_string()

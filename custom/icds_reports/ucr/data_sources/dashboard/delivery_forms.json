@@ -1,6 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -17,16 +21,6 @@
   "server_environment": [
     "india",
     "icds"
-  ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
   ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
@@ -248,6 +242,39 @@
           "type": "property_path",
           "property_path": ["form", "next_due"]
         }
+      },
+      {
+        "column_id": "num_children_del",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "num_children_del"]
+        }
+      },
+      {
+        "column_id": "still_live_birth",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "child",
+              "still_live_birth"
+            ]
+          },
+          "cases": {
+            "live": 0,
+            "still": 1
+          },
+          "default": {
+              "type": "constant",
+              "constant": null
+          }
+        }
       }
     ],
     "named_expressions": {
@@ -266,7 +293,7 @@
         }
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "disable_destructive_rebuild": true,
     "sql_settings": {
       "citus_config": {

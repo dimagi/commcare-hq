@@ -35,7 +35,6 @@ from dimagi.utils.couch.cache import cache_core
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from suds.wsse import Security, UsernameToken
-import six
 
 
 _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
@@ -454,7 +453,7 @@ class Subject(object):
         event_id = getattr(event_case, 'event_type')
         # If a CommCare form is an OpenClinica repeating item group, then we would need to add a new item
         # group.
-        for key, value in six.iteritems(data):
+        for key, value in data.items():
             if key in _reserved_keys:
                 continue
             if isinstance(value, list):
@@ -491,7 +490,7 @@ class Subject(object):
         been scheduled.
         """
         events = []
-        for study_events in six.itervalues(self.data):
+        for study_events in self.data.values():
             for study_event in study_events:
                 events.append(
                     '"{name}" ({start} - {end})'.format(
@@ -504,11 +503,11 @@ class Subject(object):
         """
         Transform Subject.data into the structure that CdiscOdmExportWriter expects
         """
-        mkitemlist = lambda d: [dict(v, item_oid=k) for k, v in six.iteritems(d)]  # `dict()` updates v with item_oid
+        mkitemlist = lambda d: [dict(v, item_oid=k) for k, v in d.items()]  # `dict()` updates v with item_oid
 
         def mkitemgrouplist(itemgroupdict):
             itemgrouplist = []
-            for oid, item_groups in six.iteritems(itemgroupdict):
+            for oid, item_groups in itemgroupdict.items():
                 for i, item_group in enumerate(item_groups):
                     itemgrouplist.append({
                         'item_group_oid': oid,
@@ -517,11 +516,11 @@ class Subject(object):
                     })
             return itemgrouplist
 
-        mkformslist = lambda d: [{'form_oid': k, 'item_groups': mkitemgrouplist(v)} for k, v in six.iteritems(d)]
+        mkformslist = lambda d: [{'form_oid': k, 'item_groups': mkitemgrouplist(v)} for k, v in d.items()]
 
         def mkeventslist(eventsdict):
             eventslist = []
-            for oid, study_events in six.iteritems(eventsdict):
+            for oid, study_events in eventsdict.items():
                 for i, study_event in enumerate(study_events):
                     eventslist.append({
                         'study_event_oid': oid,

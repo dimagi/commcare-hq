@@ -3,8 +3,7 @@ import math
 
 from django.test import TestCase
 
-from elasticsearch import ConnectionError
-from six.moves import range
+from corehq.util.es.elasticsearch import ConnectionError
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -87,7 +86,6 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             user.delete()
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
-        cls.web_user.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)
         ensure_index_deleted(GROUP_INDEX_INFO.index)
 

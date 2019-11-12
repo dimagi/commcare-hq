@@ -6,16 +6,25 @@ from corehq.apps.accounting.utils import domain_has_privilege
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
+ODATA_FEED_PERMISSION = 'corehq.apps.reports.standard.export.ODataFeedListView'
 SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
 
-EXPORT_PERMISSIONS = {FORM_EXPORT_PERMISSION, DEID_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION}
+EXPORT_PERMISSIONS = {
+    FORM_EXPORT_PERMISSION,
+    DEID_EXPORT_PERMISSION,
+    CASE_EXPORT_PERMISSION,
+    ODATA_FEED_PERMISSION,
+}
 
 ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'])
 
 
 def get_extra_permissions():
     from corehq.apps.export.views.list import (
-        FormExportListView, DeIdFormExportListView, CaseExportListView
+        FormExportListView,
+        DeIdFormExportListView,
+        CaseExportListView,
+        ODataFeedListView,
     )
     from corehq.apps.export.views.download import DownloadNewSmsExportView
     yield ReportPermission(
@@ -27,6 +36,10 @@ def get_extra_permissions():
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
     yield ReportPermission(
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
+    yield ReportPermission(
+        ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
+        lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
+    )
 
 
 def can_download_data_files(domain, couch_user):
@@ -58,15 +71,19 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
 
 
 def can_manage_releases(couch_user, domain, app_id):
+    if _can_manage_releases_for_all_apps(couch_user, domain):
+        return True
+    role = couch_user.get_role(domain)
+    return app_id in role.permissions.manage_releases_list
+
+
+def _can_manage_releases_for_all_apps(couch_user, domain):
     from corehq.apps.users.decorators import get_permission_name
     from corehq.apps.users.models import Permissions
     restricted_app_release = toggles.RESTRICT_APP_RELEASE.enabled(domain)
     if not restricted_app_release:
         return True
-    role = couch_user.get_role(domain)
-    return (
-        couch_user.has_permission(
-            domain, get_permission_name(Permissions.manage_releases),
-            restrict_global_admin=True
-        ) or
-        app_id in role.permissions.manage_releases_list)
+    return couch_user.has_permission(
+        domain, get_permission_name(Permissions.manage_releases),
+        restrict_global_admin=True
+    )

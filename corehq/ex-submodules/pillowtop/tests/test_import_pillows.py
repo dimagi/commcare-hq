@@ -25,12 +25,12 @@ class PillowImportTestCase(SimpleTestCase):
 
     def test_get_all_pillow_classes(self):
         pillows = get_all_pillow_classes()
-        self.assertEquals(len(pillows), 1)
+        self.assertEqual(len(pillows), 1)
         self.assertTrue(isclass(pillows[0]))
 
     def test_get_all_pillow_instances(self):
         pillows = get_all_pillow_instances()
-        self.assertEquals(len(pillows), 1)
+        self.assertEqual(len(pillows), 1)
         self.assertFalse(isclass(pillows[0]))
 
     def test_get_pillow_by_name(self):
@@ -64,14 +64,14 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 
     def test_get_pillow_classes(self):
         pillows = get_all_pillow_classes()
-        self.assertEquals(len(pillows), 1)
+        self.assertEqual(len(pillows), 1)
         pillow_class = pillows[0]
         self.assertTrue(isclass(pillow_class))
         self.assertEqual(FakeConstructedPillow, pillow_class)
 
     def test_get_pillow_instances(self):
         pillows = get_all_pillow_instances()
-        self.assertEquals(len(pillows), 1)
+        self.assertEqual(len(pillows), 1)
         pillow = pillows[0]
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))

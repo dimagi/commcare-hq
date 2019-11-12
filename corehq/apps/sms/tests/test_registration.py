@@ -3,7 +3,6 @@ import json
 
 from django.test import Client, TestCase
 
-import six
 from django_prbac.models import Role
 from mock import Mock, patch
 

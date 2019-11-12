@@ -1,9 +1,7 @@
-
 from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from six.moves import input
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import iter_bulk_delete

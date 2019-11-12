@@ -1,4 +1,3 @@
-
 import copy
 import logging
 import sys
@@ -8,7 +7,6 @@ from io import BytesIO
 
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit import BadValueError
 from ddtrace import tracer
 from PIL import Image
@@ -332,7 +330,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if item not in const.RESTRICTED_PROPERTIES:
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
-                    value = six.text_type(value)
+                    value = str(value)
                 try:
                     self.case[item] = value
                 except (AttributeError, BadValueError):

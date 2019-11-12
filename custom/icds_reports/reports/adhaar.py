@@ -7,12 +7,12 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, \
+    AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
-    get_child_locations, person_has_aadhaar_column, person_is_beneficiary_column
-import six
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number,\
+    person_has_aadhaar_column, person_is_beneficiary_column
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
@@ -49,7 +49,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     return {
         "slug": "adhaar",
-        "label": "Percent Aadhaar-seeded Beneficiaries",
+        "label": AADHAR_SEEDED_BENEFICIARIES,
         "fills": fills,
         "rightLegend": {
             "average": average,
@@ -99,13 +99,9 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -113,7 +109,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
             'in_month': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
@@ -122,10 +118,6 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
             name,
             value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
@@ -196,7 +188,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
         {
             'loc_name': key,
             'percent': (value['in_month'] * 100) / float(value['all'] or 1),
-        } for key, value in six.iteritems(best_worst)
+        } for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -209,8 +201,9 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
                     {
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
+                        'in_month': value['y'],
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Percentage of beneficiaries with Aadhaar numbers",
                 "strokeWidth": 2,

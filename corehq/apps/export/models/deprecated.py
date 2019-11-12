@@ -1,8 +1,6 @@
 import hashlib
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
-from six.moves import map
 
 from dimagi.ext.couchdbkit import (
     Document,
@@ -43,8 +41,8 @@ class FormQuestionSchema(Document):
     xmlns = StringProperty(required=True)
 
     last_processed_version = IntegerProperty(default=0)
-    processed_apps = SetProperty(six.text_type)
-    apps_with_errors = SetProperty(six.text_type)
+    processed_apps = SetProperty(str)
+    apps_with_errors = SetProperty(str)
     question_schema = SchemaDictProperty(QuestionMeta)
 
     class Meta(object):

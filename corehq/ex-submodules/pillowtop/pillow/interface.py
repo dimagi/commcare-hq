@@ -7,6 +7,8 @@ from memoized import memoized
 
 import sys
 
+from sentry_sdk import configure_scope
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
@@ -16,7 +18,6 @@ from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-import six
 
 
 def _topic_for_ddog(topic):
@@ -38,8 +39,11 @@ class PillowRuntimeContext(object):
     def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
 
+    def reset(self):
+        self.changes_seen = 0
 
-class PillowBase(six.with_metaclass(ABCMeta, object)):
+
+class PillowBase(metaclass=ABCMeta):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
     on top of it.
@@ -99,6 +103,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         Main entry point for running pillows forever.
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
+        with configure_scope() as scope:
+            scope.set_tag("pillow_name", self.get_name())
         self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
@@ -198,7 +204,6 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 return set(), 0
 
             changes_chunk = self._deduplicate_changes(changes_chunk)
-            retry_changes = set()
             timer = TimingContext()
             with timer:
                 try:
@@ -206,14 +211,14 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 except Exception as ex:
                     notify_exception(
                         None,
-                        "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                        "{pillow_name} Error in processing changes chunk: {ex}".format(
                             pillow_name=self.get_name(),
-                            change_ids=[c.id for c in changes_chunk],
                             ex=ex
-                        ))
+                        ),
+                        details={
+                            'change_ids': [c.id for c in changes_chunk]
+                        })
                     self._record_batch_exception_in_datadog(processor)
-                    for change in set(changes_chunk) - set(retry_changes):
-                        self._record_change_success_in_datadog(change, processor)
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
                 else:
@@ -255,7 +260,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         return timer.duration
 
     @abstractmethod
-    def process_change(self, change):
+    def process_change(self, change, serial_only=False):
         pass
 
     @abstractmethod
@@ -321,7 +326,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             'pillow_name:{}'.format(self.get_name()),
         ])
         checkpoint_sequence = self._normalize_checkpoint_sequence()
-        for topic, value in six.iteritems(checkpoint_sequence):
+        for topic, value in checkpoint_sequence.items():
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(topic),
@@ -384,7 +389,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         return unique
 
 
-class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
+class ChangeEventHandler(metaclass=ABCMeta):
     """
     A change-event-handler object used in constructed pillows.
     """

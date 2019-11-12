@@ -87,6 +87,16 @@ DATABASES.update({
 })
 ```
 
+And for ICDS dashboard development add the following:
+
+```python
+ICDS_USE_CITUS = True
+
+REPORTING_DATABASES.update({
+    'icds-ucr-citus': 'icds-ucr',
+})
+```
+
 **ROLE**
 
 This setting allows Django to know which DB is the master
@@ -98,7 +108,7 @@ This ROLE is not set for Travis so that we can skip the expensive test setup.
 
 **CITUS_NODE_NAME**
 
-By defaul when Django creates the test database on the master
+By default when Django creates the test database on the master
 node it will add the worker nodes using the `HOST` and `PORT`.
 In some cases this doesn't work e.g. if you
 are running Django outside of Docker. In this case the
@@ -107,13 +117,14 @@ with the same hostname that Django uses. Setting `CITUS_NODE_NAME`
 will override the host and port for master to worker communications.
 
 ## Setting up the database
+
 There are two ways to do the database setup. In both cases you will need
 to manually create the databases:
 
 ```
-$ psql -h localhost -p 5600 -U postgres -c 'create database commcare_ucr_citus;'
-$ psql -h localhost -p 5601 -U postgres -c 'create database commcare_ucr_citus;'
-$ psql -h localhost -p 5602 -U postgres -c 'create database commcare_ucr_citus;'
+$ psql -h localhost -p 5600 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
+$ psql -h localhost -p 5601 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
+$ psql -h localhost -p 5602 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
 ```
 
 Now we can configure the databases in either of the following ways:
@@ -144,7 +155,7 @@ Now we can configure the databases in either of the following ways:
 
     Connect to your database on the master node:
     ```
-    $ psql -h localhost -p 5600 -U postgres commcare_ucr_citus
+    $ psql -h localhost -p 5600 -U commcarehq commcare_ucr_citus
     ```
     ```sql
     CREATE EXTENSION citus;
@@ -158,7 +169,7 @@ Now we can configure the databases in either of the following ways:
     Connect to your database on each worker node:
 
     ```
-    $ psql -h localhost -p 560[1,2] -U postgres commcare_ucr_citus
+    $ psql -h localhost -p 560[1,2] -U commcarehq commcare_ucr_citus
     ```
     ```sql
     CREATE EXTENSION citus;

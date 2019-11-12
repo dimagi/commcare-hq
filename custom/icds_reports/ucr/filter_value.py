@@ -1,4 +1,3 @@
-
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 from corehq.apps.userreports.reports.filters.values import ChoiceListFilterValue
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

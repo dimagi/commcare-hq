@@ -1,9 +1,7 @@
-
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from six.moves import input
 
 
 class Command(BaseCommand):

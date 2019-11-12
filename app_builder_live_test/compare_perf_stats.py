@@ -2,7 +2,6 @@
 
 import sys
 import os
-from six.moves import zip
 
 
 def get_stats(path, build_slug):
@@ -30,7 +29,7 @@ def get_templates(col_widths):
     col_1 = '{{:<{}}}'.format(col_widths[0])
     col_n = ''.join('{{:<{}}}'.format(width) for width in col_widths[1:])
     row_template = col_1 + col_n
-    
+
     return header_template, row_template
 
 

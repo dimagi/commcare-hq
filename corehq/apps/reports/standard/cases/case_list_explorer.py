@@ -1,11 +1,8 @@
-# coding=utf-8
-
 from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 
 from memoized import memoized
-from six.moves import range
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (

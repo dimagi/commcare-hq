@@ -1,11 +1,9 @@
-
 import logging
 import sys
 from functools import cmp_to_key
 
 from django.utils.translation import ugettext as _
 
-import six
 from ddtrace import tracer
 from iso8601 import iso8601
 
@@ -40,7 +38,7 @@ from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.soft_assert import soft_assert
 
-reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']))
 
 
 def _validate_length(length):
@@ -232,11 +230,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_delete(current_attachments[name])
             elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if form_attachment is None:
-                    # Probably an improperly configured form. We need a way to
-                    # convey errors like this to domain admins.
-                    raise AttachmentNotFound(
-                        "%s: %r" % (xform.form_id, att.attachment_src))
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]
                     existing_attachment.from_form_attachment(
@@ -329,7 +322,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % str(e))
 
         return True
 

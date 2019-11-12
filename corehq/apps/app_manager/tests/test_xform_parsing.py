@@ -1,4 +1,3 @@
-# coding=utf-8
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin

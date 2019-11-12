@@ -1,65 +1,70 @@
+{% load compress %}
 {% load hq_shared_tags %}
 
-<script src="{% static 'backbone-1.3.2/backbone.js' %}"></script>
-<script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
-<script src="{% static 'nprogress/nprogress.js' %}"></script>
-<script src="{% static 'moment/min/moment.min.js' %}"></script>
-<script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-<script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-<script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-<script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-<script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-<script src="{% static 'bootstrap-switch/dist/js/bootstrap-switch.js' %}"></script>
-<script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
-<script src="{% static 'cloudcare/js/util.js' %}"></script>
-<script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
-<script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
-<script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
-<script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
-<script src="{% static 'reports/js/readable_form.js' %}"></script>
+{% compress js %}
+  <script src="{% static 'backbone-1.3.2/backbone.js' %}"></script>
+  <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
+  <script src="{% static 'nprogress/nprogress.js' %}"></script>
+  <script src="{% static 'moment/min/moment.min.js' %}"></script>
+  <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
+  <script src="{% static 'bootstrap-switch/dist/js/bootstrap-switch.js' %}"></script>
+  <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
+  <script src="{% static 'cloudcare/js/util.js' %}"></script>
+  <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
+  <script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
+  <script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
+  <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
+  <script src="{% static 'reports/js/readable_form.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/hq.events.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/router.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/hq.events.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/router.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/debugger/debugger.js' %}"></script>
+  <script src="{% static 'cloudcare/js/debugger/debugger.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/layout/views/settings.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/layout/views/phone_navigation.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/layout/views/settings.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/layout/views/phone_navigation.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/users/models.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/users/collections.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/users/controller.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/users/utils.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/users/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/models.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/controller.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/utils.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/views.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/apps/api.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/apps/controller.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/apps/views.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/apps/models.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/apps/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/api.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/controller.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/models.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/collections.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/menus/models.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/models.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
 
-<script src="{% static 'cloudcare/js/formplayer/sessions/api.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/sessions/models.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/sessions/collections.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
-<script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/api.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/models.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
+{% endcompress %}
 
 {% include 'hqwebapp/includes/ui_element_js.html' %}
-<script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
-<script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
-<script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
-<script src="{% static 'cloudcare/js/form_entry/formnav-all.js' %}"></script>
-<script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
-<script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
+{% compress js %}
+  <script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
+  <script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/formnav-all.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
+{% endcompress %}

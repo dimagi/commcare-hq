@@ -1,4 +1,3 @@
-
 from django.db import models, migrations
 import dimagi.utils.couch
 import corehq.form_processor.abstract_models

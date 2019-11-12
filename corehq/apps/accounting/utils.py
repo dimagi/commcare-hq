@@ -6,7 +6,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from django_prbac.models import Grant, Role, UserRole
 
 from dimagi.utils.couch.database import iter_docs
@@ -56,9 +55,9 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'feature_type': feature.feature_type,
         'feature_id': feature.id,
         'rate_id': feature_rate.id,
-        'monthly_fee': six.text_type(feature_rate.monthly_fee),
+        'monthly_fee': str(feature_rate.monthly_fee),
         'monthly_limit': feature_rate.monthly_limit,
-        'per_excess_fee': six.text_type(feature_rate.per_excess_fee),
+        'per_excess_fee': str(feature_rate.per_excess_fee),
     }
 
 
@@ -79,7 +78,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
     return {
         'name': product_rate.name,
         'rate_id': product_rate.id,
-        'monthly_fee': six.text_type(product_rate.monthly_fee),
+        'monthly_fee': str(product_rate.monthly_fee),
     }
 
 

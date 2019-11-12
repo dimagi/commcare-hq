@@ -5,7 +5,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-import six
 from djangular.views.mixins import (
     JSONResponseException,
     JSONResponseMixin,
@@ -61,7 +60,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         try:
             notification.set_as_last_seen(self.request.user)
         except IllegalModelStateException as e:
-            raise JSONResponseException(six.text_type(e))
+            raise JSONResponseException(str(e))
         return {
             'activated': notification.activated
         }
@@ -99,7 +98,7 @@ class ManageNotificationView(BasePageView):
                 'content': alert.content,
                 'url': alert.url,
                 'type': alert.get_type_display(),
-                'activated': six.text_type(alert.activated),
+                'activated': str(alert.activated),
                 'isActive': alert.is_active,
                 'id': alert.id,
             } for alert in Notification.objects.order_by('-created').all()],

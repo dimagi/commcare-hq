@@ -25,8 +25,6 @@ from custom.ewsghana.tasks import send_soh_messages_task
 from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
 from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import map
 
 
 def get_transactions_by_product(transactions):
@@ -43,7 +41,7 @@ class SOHHandler(KeywordHandler):
     def get_valid_reports(self, data):
         filtered_transactions = []
         excluded_products = []
-        for product_id, transactions in six.iteritems(get_transactions_by_product(data['transactions'])):
+        for product_id, transactions in get_transactions_by_product(data['transactions']).items():
             begin_soh = None
             end_soh = None
             receipt = 0
@@ -99,7 +97,7 @@ class SOHHandler(KeywordHandler):
         if bad_codes:
             kwargs['err'] = 'Unrecognized commodity codes: {bad_codes}.'.format(bad_codes=bad_codes)
 
-        self.respond('{} {}'.format(error_message.format(**kwargs), six.text_type(ASSISTANCE_MESSAGE)))
+        self.respond('{} {}'.format(error_message.format(**kwargs), str(ASSISTANCE_MESSAGE)))
 
     def send_ms_alert(self, previous_stockouts, transactions, ms_type):
         stockouts = {
@@ -198,10 +196,10 @@ class SOHHandler(KeywordHandler):
         except NotAUserClassError:
             return False
         except (SMSError, NoDefaultLocationException):
-            self.respond(six.text_type(INVALID_MESSAGE))
+            self.respond(str(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
-            self.respond(six.text_type(e))
+            self.respond(str(e))
             return True
         except Exception as e:
             if settings.UNIT_TESTING or settings.DEBUG:

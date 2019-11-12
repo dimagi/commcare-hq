@@ -4,7 +4,6 @@ from django.db.models import Q
 from django.test import TestCase
 
 from mock import call, patch
-from six.moves import range
 
 from corehq.apps.app_manager.models import (
     AdvancedForm,

@@ -1,4 +1,3 @@
-
 from django.db import migrations
 from corehq.form_processor.models import CaseTransaction
 from corehq.sql_db.operations import RawSQLMigration

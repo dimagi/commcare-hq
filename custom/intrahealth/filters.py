@@ -10,8 +10,6 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
-from six.moves import range
-from six.moves import filter
 
 from custom.intrahealth.sqldata import ProgramData, ProductData, ProductsInProgramWithNameData
 
@@ -205,11 +203,6 @@ class RecapPassageOneProgramFilter(BaseReportFilter):
     template = "yeksi_naa/program_filter.html"
     slug = 'program'
     label = "Programme"
-    included_programs = [
-        'PALUDISME', 'PLANIFICATION FAMILIALE', 'IMPORTANCE VITALE 1',
-        'PRODUITS ESSENTIELS 1', 'PRODUITS ESSENTIELS 2',
-        'TEST PROGRAM'
-    ]
 
     def program(self):
         program_filter = [{
@@ -218,11 +211,10 @@ class RecapPassageOneProgramFilter(BaseReportFilter):
         }]
         programs = ProgramData(config={'domain': self.domain}).rows
         for program in programs:
-            if program[1].upper() in self.included_programs:
-                program_filter.append({
-                    'name': program[1],
-                    'value': program[0],
-                })
+            program_filter.append({
+                'name': program[1],
+                'value': program[0],
+            })
         return program_filter
 
     @property
@@ -237,12 +229,6 @@ class RecapPassageTwoProgramFilter(BaseReportFilter):
     template = "yeksi_naa/program_filter.html"
     slug = 'program'
     label = "Programme"
-    included_programs = [
-        'VIH', 'TUBERCULOSE', 'PRODUITS ESSENTIELS 3',
-        'PRODUITS ESSENTIELS 4', 'PRODUITS ESSENTIELS 5',
-        'PRODUITS ESSENTIELS 6',
-        'TEST PROGRAM'
-    ]
 
     def program(self):
         program_filter = [{
@@ -251,11 +237,10 @@ class RecapPassageTwoProgramFilter(BaseReportFilter):
         }]
         programs = ProgramData(config={'domain': self.domain}).rows
         for program in programs:
-            if program[1].upper() in self.included_programs:
-                program_filter.append({
-                    'name': program[1],
-                    'value': program[0],
-                })
+            program_filter.append({
+                'name': program[1],
+                'value': program[0],
+            })
         return program_filter
 
     @property

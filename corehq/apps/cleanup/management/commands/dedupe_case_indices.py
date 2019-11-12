@@ -8,8 +8,6 @@ from itertools import groupby
 from django.core.management.base import BaseCommand
 from django.db import connections
 
-import six
-
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.models import CommCareCaseIndexSQL
@@ -66,7 +64,7 @@ class Command(BaseCommand):
                 )
                 for case_id, indices in grouped_indices:
                     print('--> Case: {}\n'.format(case_id))
-                    print('    {}'.format('\n    '.join(six.text_type(i) for i in indices)))
+                    print('    {}'.format('\n    '.join(str(i) for i in indices)))
                 print('\n')
             else:
                 print(self.style.WARNING('Attempting to create unique index and constraint for db: {}'.format(db)))

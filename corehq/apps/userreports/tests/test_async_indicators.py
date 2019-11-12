@@ -1,11 +1,8 @@
-
 import uuid
 
 from django.test import SimpleTestCase, TestCase
 
 import mock
-import six
-from six.moves import range
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
@@ -103,7 +100,7 @@ class TestBulkUpdate(TestCase):
         AsyncIndicator.objects.bulk_create([
             AsyncIndicator(
                 doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
-            for doc_id, config_ids in six.iteritems(initial_data)
+            for doc_id, config_ids in initial_data.items()
         ])
         updated_data = {
             'd2': ['c2'],
@@ -215,7 +212,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
         self.datadog_patch = _patch.start()
         # patch docstore to avoid overhead of saving/querying docs
         docstore_patch = mock.patch(
-            'corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents',
+            'corehq.form_processor.document_stores.CaseDocumentStore.iter_documents',
             new=fake_iter_documents
         )
         docstore_patch.start()

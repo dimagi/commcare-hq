@@ -4,7 +4,6 @@ from functools import partial
 from django.test import SimpleTestCase
 
 import mock
-import six
 
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
@@ -46,7 +45,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
         )
 
 
-class ChoiceProviderTestMixin(six.with_metaclass(ABCMeta, object)):
+class ChoiceProviderTestMixin(metaclass=ABCMeta):
     """
     A mixin for a creating uniform tests for different ChoiceProvider subclasses.
 
@@ -135,7 +134,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 location.display_name,
                 searchable_text=[location.site_code, location.name]
             ))
-            for location in six.itervalues(cls.locations)
+            for location in cls.locations.values()
         ]
         choice_tuples.sort()
         choices = [choice for name, choice in choice_tuples]

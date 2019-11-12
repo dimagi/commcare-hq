@@ -1,4 +1,3 @@
-
 import json
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
@@ -6,7 +5,6 @@ from collections import namedtuple
 from django.core.cache import cache
 from django.utils.translation import ugettext as _
 
-import six
 from memoized import memoized
 
 from corehq.apps.reports.v2.exceptions import (
@@ -180,7 +178,7 @@ class BaseDataFormatter(object):
         raise NotImplementedError("please implement get_context")
 
 
-class BaseFilter(six.with_metaclass(ABCMeta)):
+class BaseFilter(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod

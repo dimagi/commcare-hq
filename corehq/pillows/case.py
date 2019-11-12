@@ -21,7 +21,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -94,10 +94,11 @@ def get_case_pillow(
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    case_to_es_processor = ElasticProcessor(
+    case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
@@ -111,7 +112,9 @@ def get_case_pillow(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    processors = [case_to_es_processor, case_search_processor, CaseMessagingSyncProcessor()]
+    processors = [case_to_es_processor, CaseMessagingSyncProcessor()]
+    if settings.RUN_CASE_SEARCH_PILLOW:
+        processors.append(case_search_processor)
     if not settings.ENTERPRISE_MODE:
         processors.append(get_case_to_report_es_processor())
     if not skip_ucr:

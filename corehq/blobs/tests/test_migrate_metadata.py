@@ -1,4 +1,3 @@
-# coding=utf-8
 import uuid
 from itertools import chain
 from os.path import join

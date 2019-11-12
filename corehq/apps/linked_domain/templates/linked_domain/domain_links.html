@@ -10,7 +10,7 @@
   {% registerurl 'domain_links' '---' %}
   {% registerurl 'app_settings' domain '---' %}
 
-  <div id="domain_links">
+  <div id="domain_links" class="ko-template">
     <div data-bind="visible: !master_link && !linked_domains().length">
       <p>
         {% trans "This project has no links to other projects." %}

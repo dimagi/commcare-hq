@@ -25,7 +25,7 @@ class WorkbookJSONReaderTest(SimpleTestCase, TestFileMixin):
     def test_get_workbook(self):
         formula_filepath = self.get_path('formula_sheet', 'xlsx')
         workbook = get_workbook(formula_filepath)
-        self.assertEquals(len(workbook.worksheets), 1)
+        self.assertEqual(len(workbook.worksheets), 1)
         self.assertListEqual([row['name'] for row in workbook.worksheets[0]], ['ben'])
 
     def test_get_workbook_bad_file(self):

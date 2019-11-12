@@ -1,4 +1,3 @@
-
 import uuid
 
 from django.core.files.uploadedfile import UploadedFile

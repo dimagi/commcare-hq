@@ -19,12 +19,14 @@
     {% include 'reports/partials/description.html' %}
 {% else %}
     {% if report %}
-        <br/>
-        <h2 class="media-heading" style="text-align: center">{{ report.report_table.title }}<br/><small>{{ report.report_table.comment }}</small><br/></h2>
 {% include 'yeksi_naa/partials/aggregated_table.html' with report_table=report.aggregated_table %}
 <br/>
-{% include 'yeksi_naa/partials/report_table.html' with report_table=report.report_table aggregated=report.aggregated_table charts=charts %}
+    {% for thisreport in report.report_table.visits %}
         <br/>
+        <h2 class="media-heading" style="text-align: center">{{ thisreport.title }}<br/><small>{{ thisreport.comment }}</small><br/></h2>
+        {% include 'yeksi_naa/partials/report_table.html' with report_table=thisreport %}
+        <br/>
+    {% endfor %}
     {% endif %}
 {% endif %}
 {% endblock %}

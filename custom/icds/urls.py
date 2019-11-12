@@ -1,4 +1,3 @@
-
 from django.conf.urls import url
 from custom.icds.views.hosted_ccz import (
     ManageHostedCCZ,

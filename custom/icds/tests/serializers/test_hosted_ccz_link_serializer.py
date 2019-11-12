@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase
 
 from custom.icds.models import HostedCCZLink

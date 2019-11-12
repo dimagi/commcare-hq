@@ -1,7 +1,4 @@
-
 from functools import cmp_to_key
-
-from six.moves import filter
 
 from dimagi.utils.logging import notify_exception
 

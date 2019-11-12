@@ -2,7 +2,6 @@ from random import sample
 
 from corehq.util.validation import is_url_or_host_banned
 from django.test import TestCase
-from six.moves import range
 
 
 def sample_range(start, stop):

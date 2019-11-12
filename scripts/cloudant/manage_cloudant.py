@@ -4,7 +4,6 @@ See https://cloudant.com/for-developers/faq/auth/ for cloudant reference
 from collections import namedtuple
 from getpass import getpass
 import requests
-from six.moves import input
 
 Auth = namedtuple('Auth', 'username password')
 

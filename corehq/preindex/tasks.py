@@ -1,4 +1,3 @@
-
 from celery.task.base import periodic_task
 
 from corehq.preindex.accessors import index_design_doc, get_preindex_designs

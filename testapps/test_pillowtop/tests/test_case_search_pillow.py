@@ -1,4 +1,3 @@
-
 import uuid
 
 from django.test import override_settings, TestCase

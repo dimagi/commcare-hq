@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord

@@ -10,7 +10,6 @@ from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
-import six
 
 
 @nottest
@@ -102,7 +101,7 @@ class TestSequenceMeta(type):
         return type.__new__(mcs, name, bases, dict)
 
 
-class IndexTreeTest(six.with_metaclass(TestSequenceMeta, BaseSyncTest)):
+class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
     Each testcase is structured as follows:

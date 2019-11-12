@@ -1,4 +1,3 @@
-
 import json
 import logging
 
@@ -141,7 +140,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
 
-    vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
+    vellum_options = _get_base_vellum_options(request, domain, form, context['lang'])
     vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
@@ -175,11 +174,8 @@ def _get_form_designer_view(request, domain, app, module, form):
 
 @require_GET
 @require_can_edit_apps
-def get_form_data_schema(request, domain, form_unique_id):
+def get_form_data_schema(request, domain, app_id, form_unique_id):
     """Get data schema
-
-    One of `app_id` or `form_unique_id` is required. `app_id` is ignored
-    if `form_unique_id` is provided.
 
     :returns: A list of data source schema definitions. A data source schema
     definition is a dictionary. For details on the content of the dictionary,
@@ -187,13 +183,8 @@ def get_form_data_schema(request, domain, form_unique_id):
     """
     data = []
 
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceConflict:
-        raise Http404()
-
-    if app.domain != domain:
-        raise Http404()
+    app = get_app(domain, app_id)
+    form = app.get_form(form_unique_id)
 
     try:
         data.append(get_session_schema(form))
@@ -223,12 +214,13 @@ def ping(request):
     return HttpResponse("pong")
 
 
-def _get_base_vellum_options(request, domain, app, displayLang):
+def _get_base_vellum_options(request, domain, form, displayLang):
     """
     Returns the base set of options that will be passed into Vellum
     when it is initialized.
     :param displayLang: --> derived from the base context
     """
+    app = form.get_app()
     return {
         'intents': {
             'templates': next(app_callout_templates),
@@ -245,7 +237,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
                 'video': reverse("hqmedia_uploader_video", args=[domain, app.id]),
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
-            'objectMap': app.get_object_map(),
+            'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
             'sessionid': request.COOKIES.get('sessionid'),
         },
     }
@@ -259,6 +251,7 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     core = {
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
+                                               'app_id': app.id,
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),

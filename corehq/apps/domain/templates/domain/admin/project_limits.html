@@ -1,0 +1,44 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% comment %}
+This page is for internal admin use only, and thus is not marked up for translation.
+If this page is ever converted to a user-facing UI
+or otherwise intended for a non-English-only audience, it should be translated.
+{% endcomment %}
+
+{% block page_content %}
+
+  {% initial_page_data 'domain' domain %}
+
+  <div class="row">
+    <div class="col-sm-10">
+      <h1>Submission Rate Limits</h1>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Window Size</th>
+            <th>% Usage</th>
+            <th>Usage</th>
+            <th>Limit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rate_limiter in project_limits.submissions %}
+          <tr>
+            <td>{{ rate_limiter.key }}</td>
+            <td>
+              {{ rate_limiter.percent_usage }}%
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped" style="width: {{ rate_limiter.percent_usage }}%"></div>
+              </div>
+            </td>
+            <td>{{ rate_limiter.current_usage }}</td>
+            <td>{{ rate_limiter.limit }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% endblock %}

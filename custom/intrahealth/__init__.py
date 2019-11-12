@@ -1,4 +1,3 @@
-import six
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
 OPERATEUR_XMLNSES = (
@@ -37,7 +36,7 @@ _PRODUCT_NAMES = {
     'collier': ["collier"]
 }
 
-PRODUCT_NAMES = {v: k for k, values in six.iteritems(_PRODUCT_NAMES) for v in values}
+PRODUCT_NAMES = {v: k for k, values in _PRODUCT_NAMES.items() for v in values}
 
 PRODUCT_MAPPING = {
     "collier": "Collier",

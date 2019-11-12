@@ -1,7 +1,8 @@
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
 from corehq.warehouse.const import ALL_TABLES
-from corehq.warehouse.models import get_cls_by_slug, Batch, CommitRecord
+from corehq.warehouse.models import Batch, CommitRecord
+from corehq.warehouse.loaders import get_loader_by_slug
 
 
 USAGE = """Usage: ./manage.py commit_table <slug> <batch_id>
@@ -15,7 +16,7 @@ Slugs:
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py stage_table group_staging 222617b9-8cf0-40a2-8462-7f872e1f1344
+    Example: ./manage.py stage_table group_staging 22
     """
     help = USAGE
 
@@ -30,7 +31,7 @@ class Command(BaseCommand):
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
         try:
-            model = get_cls_by_slug(slug)
+            loader = get_loader_by_slug(slug)
         except KeyError:
             raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
 
@@ -40,7 +41,7 @@ class Command(BaseCommand):
             verified=False,
         )
         try:
-            commit_record.verified = model.commit(batch)
+            commit_record.verified = loader(verbose=True).commit(batch)
         except Exception as e:
             commit_record.error = e
             commit_record.success = False
@@ -50,3 +51,7 @@ class Command(BaseCommand):
         finally:
             commit_record.completed_on = datetime.utcnow()
             commit_record.save()
+            print('commit_table complete for "{} ({})" with status "{}"'.format(
+                slug, batch_id,
+                'SUCCESS' if commit_record.success else 'ERROR'
+            ))

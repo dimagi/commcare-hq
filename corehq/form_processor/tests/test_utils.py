@@ -1,4 +1,3 @@
-
 from collections import OrderedDict
 
 from django.test import SimpleTestCase

@@ -6,9 +6,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.http import HttpResponse
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
-from six.moves import filter
 
 from couchforms import const
 from dimagi.ext.couchdbkit import *
@@ -134,12 +132,12 @@ class ESXFormInstance(DictObject):
                 name: BlobMetaRef(
                     content_length=info.get("length", None),
                     content_type=info.get("content_type", None),
-                ) for name, info in six.iteritems(self._attachments)
+                ) for name, info in self._attachments.items()
             })
         if self.external_blobs:
             blobs.update({
                 name: BlobMetaRef.wrap(info)
-                for name, info in six.iteritems(self.external_blobs)
+                for name, info in self.external_blobs.items()
             })
 
         return blobs

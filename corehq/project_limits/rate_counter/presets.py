@@ -1,4 +1,3 @@
-
 from datetime import timedelta
 
 from corehq.project_limits.rate_counter.rate_counter import \

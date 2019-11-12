@@ -1,10 +1,7 @@
-
 import uuid
 from datetime import datetime
 
 from django.test import TestCase, override_settings
-
-import six
 
 from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -61,7 +58,7 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type='exploder-type',
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         explode_cases(self.domain.name, self.user_id, 10)
@@ -80,7 +77,7 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type='commcare-user',
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         explode_cases(self.domain.name, self.user_id, 10)
@@ -101,7 +98,7 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type=parent_type,
-        ).as_string().decode('utf-8')
+        ).as_text()
 
         child_id = uuid.uuid4().hex
         child_block = CaseBlock(
@@ -111,7 +108,7 @@ class ExplodeCasesDbTest(TestCase):
             owner_id=self.user_id,
             case_type='exploder-child-type',
             index={'parent': (parent_type, parent_id)},
-        ).as_string().decode('utf-8')
+        ).as_text()
 
         submit_case_blocks([parent_block, child_block], self.domain.name)
         self.assertEqual(2, len(self.accessor.get_case_ids_in_domain()))
@@ -269,6 +266,6 @@ class ExplodeLedgersTest(BaseSyncTest):
                 self.assertEqual(len(ledger_values), 0)
             else:
                 self.assertEqual(len(ledger_values), len(self.ledgers))
-                for id, balance in six.iteritems(self.ledgers):
+                for id, balance in self.ledgers.items():
                     self.assertEqual(ledger_values[id].balance, balance.entry.quantity)
                     self.assertEqual(ledger_values[id].entry_id, balance.entry.id)

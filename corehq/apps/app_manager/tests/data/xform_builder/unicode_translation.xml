@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Untitled Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/bafd213a-a20d-473e-a103-cd77dc20773e" uiVersion="1" version="3" name="Untitled Form">
+          <name/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="name-label">
+            <value>What is your name?</value>
+          </text>
+        </translation>
+        <translation lang="bur">
+          <text id="name-label">
+            <value>သင့်နာမည်ဘယ်လိုခေါ်လဲ?</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/name" type="xsd:string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('name-label')"/>
+    </input>
+  </h:body>
+</h:html>

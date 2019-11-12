@@ -11,7 +11,6 @@ import sys
 
 from elasticsearch import Elasticsearch
 from elasticsearch.client import ClusterClient, NodesClient, CatClient, IndicesClient
-from six.moves import input
 
 
 def pprint(data):

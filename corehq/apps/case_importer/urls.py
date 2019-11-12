@@ -1,4 +1,3 @@
-
 from django.conf.urls import url
 
 from corehq.apps.case_importer.tracking.views import (

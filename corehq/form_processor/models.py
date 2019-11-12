@@ -11,7 +11,6 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import attr
-import six
 from io import BytesIO
 from django.db import models
 from jsonfield.fields import JSONField
@@ -19,7 +18,6 @@ from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from PIL import Image
-from six.moves import map
 from lxml import etree
 
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
@@ -110,7 +108,7 @@ class Attachment(IsImageMixin):
         """
         if isinstance(self.raw_content, bytes):
             return len(self.raw_content)
-        if isinstance(self.raw_content, six.text_type):
+        if isinstance(self.raw_content, str):
             return len(self.raw_content.encode('utf-8'))
         pos = self.raw_content.tell()
         try:
@@ -135,7 +133,7 @@ class Attachment(IsImageMixin):
         else:
             data = self.raw_content
 
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode("utf-8")
         return data
 
@@ -149,7 +147,7 @@ class Attachment(IsImageMixin):
         underlying file object and will affect other concurrent readers
         (it is not safe to use this for multiple concurrent reads).
         """
-        if isinstance(self.raw_content, (bytes, six.text_type)):
+        if isinstance(self.raw_content, (bytes, str)):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
@@ -227,7 +225,7 @@ class AttachmentMixin(SaveStateMixin):
         existing_names = {a.name for a in self.attachments_list}
         self.attachments_list.extend(
             Attachment(meta.name, meta, meta.content_type, meta.properties)
-            for meta in six.itervalues(xform.attachments)
+            for meta in xform.attachments.values()
             if meta.name not in existing_names
         )
 
@@ -284,8 +282,6 @@ class AttachmentMixin(SaveStateMixin):
         memory at once.
         """
         attachment = self.get_attachment_meta(attachment_name)
-        if not attachment:
-            raise AttachmentNotFound(attachment_name)
         with attachment.open() as content:
             return content.read()
 
@@ -294,6 +290,7 @@ class AttachmentMixin(SaveStateMixin):
             for attachment in attachments:
                 if attachment.name == attachment_name:
                     return attachment
+            raise AttachmentNotFound(self.get_id, attachment_name)
 
         attachments = getattr(self, '_attachments_list', None)
         if attachments is not None:
@@ -309,7 +306,6 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-@six.python_2_unicode_compatible
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
@@ -454,10 +450,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
+        return state_to_doc_type.get(self.state, 'XFormInstance')
 
     @property
     @memoized
@@ -550,13 +546,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def get_xml(self):
         try:
             return self.get_attachment('form.xml')
-        except NotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
         try:
             return self.get_attachment_meta('form.xml').content_md5()
-        except NotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
@@ -703,7 +699,6 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-@six.python_2_unicode_compatible
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
@@ -775,7 +770,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return OrderedDict(sorted(six.iteritems(self.case_json)))
+        return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
         from .serializers import CommCareCaseSQLAPISerializer
@@ -1030,7 +1025,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-@six.python_2_unicode_compatible
 class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -1073,7 +1067,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
             bucket = self.blob_bucket
         else:
             if self.attachment_id is None:
-                raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
+                raise AttachmentNotFound(self.case_id, self.name)
             bucket = os.path.join('case', self.attachment_id.hex)
         return os.path.join(bucket, self.blob_id)
 
@@ -1110,7 +1104,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         return cls(name=name, attachment_id=uuid.uuid4())
 
     def __str__(self):
-        return six.text_type(
+        return str(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
@@ -1125,7 +1119,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         try:
             return get_blob_db().get(key=self.key)
         except (KeyError, NotFound, BadName):
-            raise AttachmentNotFound(self.name)
+            raise AttachmentNotFound(self.case_id, self.name)
 
     @memoized
     def content_md5(self):
@@ -1141,7 +1135,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         ]
 
 
-@six.python_2_unicode_compatible
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1226,7 +1219,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-@six.python_2_unicode_compatible
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1606,7 +1598,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         unique_together = ("case", "section_id", "entry_id")
 
 
-@six.python_2_unicode_compatible
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()

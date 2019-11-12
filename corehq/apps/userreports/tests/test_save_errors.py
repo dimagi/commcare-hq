@@ -4,7 +4,6 @@ from django.test import TestCase, override_settings
 
 from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
-from six.moves import range
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.const import UCR_SQL_BACKEND

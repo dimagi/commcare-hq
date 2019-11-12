@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
@@ -12,7 +10,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number, get_child_locations
+    indian_formatted_number
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
@@ -150,7 +148,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
             'loc_name': key,
             'percent': val
         }
-        for key, val in six.iteritems(best_worst)
+        for key, val in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
@@ -165,7 +163,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                         'in_month': val['in_month'],
                         'low_birth': val['low_birth'],
                         'all': val['all']
-                    } for key, val in six.iteritems(data['blue'])
+                    } for key, val in data['blue'].items()
                 ],
                 "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,
@@ -208,13 +206,10 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         in_month = row['in_month'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
+
         all_records = row['all'] or 0
         low_birth = row['low_birth'] or 0
 
@@ -227,10 +222,6 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

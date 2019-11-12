@@ -1,7 +1,6 @@
 -r test-requirements.in
 
 django-debug-toolbar
-line_profiler==1.0  # broken in Python 3.7: https://github.com/rkern/line_profiler/issues/132
 jenkinsapi==0.2.28
 fixture==1.5.11
 sniffer==0.4.0
@@ -10,14 +9,14 @@ django-extensions
 ipython==5.2.2
 ipdb==0.11
 wheel==0.29.0
-graphviz==0.7
 transifex-client==0.12.4
 modernize
 gnureadline==6.3.8
 
 # documentation
-Sphinx~=1.8
-sphinx-rtd-theme~=0.3
-docutils==0.14
-sphinxcontrib-django~=0.3
+Sphinx~=2.2.1
+sphinx-rtd-theme~=0.4.3
+docutils==0.15.2
+sphinxcontrib-django~=0.5
 recommonmark
+graphviz==0.13.1

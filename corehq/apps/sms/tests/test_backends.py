@@ -7,7 +7,6 @@ from django.test.client import Client
 from django.test.utils import override_settings
 
 from mock import patch
-from six.moves import range
 from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -1068,12 +1067,12 @@ class SQLMobileBackendTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id(),
         )
 
-        self.assertEquals(
+        self.assertEqual(
             SQLMobileBackend.get_backend_api_id(backend.pk),
             SQLTestSMSBackend.get_api_id()
         )
 
-        self.assertEquals(
+        self.assertEqual(
             SQLMobileBackend.get_backend_api_id(backend.couch_id, is_couch_id=True),
             SQLTestSMSBackend.get_api_id()
         )

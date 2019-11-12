@@ -1,4 +1,3 @@
-
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es

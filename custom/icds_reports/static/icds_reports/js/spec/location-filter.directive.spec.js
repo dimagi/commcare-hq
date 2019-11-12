@@ -39,6 +39,7 @@ describe('Location Filter Controller', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("allUserLocationId", []);
         $provide.constant("haveAccessToAllLocations", true);
+        $provide.constant("isAlertActive", false);
         $provide.constant("locationHierarchy", [
             ['state', [null]],
             ['district', ['state']],
@@ -219,6 +220,7 @@ describe('Location Modal Controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     var scope, modalInstance, controller, $uibModal, $location;
@@ -483,6 +485,7 @@ describe('Location Modal Controller restrictions', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     var scope, modalInstance, controller, $location;

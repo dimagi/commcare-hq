@@ -1,13 +1,11 @@
-
 import hashlib
 import time
 
-import six
-from django.core.cache import caches
+from django.core.cache import caches, DEFAULT_CACHE_ALIAS
 
 from corehq.project_limits.rate_counter.interfaces import AbstractRateCounter
 
-REDIS = caches['default']
+REDIS = caches[DEFAULT_CACHE_ALIAS]
 LOCMEM = caches['locmem']
 
 
@@ -105,7 +103,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
     def _cache_key(self, scope, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
-        if isinstance(scope, six.string_types):
+        if isinstance(scope, str):
             scope = (scope,)
         return self._digest('fwrc-{}-{}-{}'.format(
             self.key,

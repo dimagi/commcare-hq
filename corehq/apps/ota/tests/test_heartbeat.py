@@ -1,4 +1,3 @@
-
 import base64
 from datetime import datetime
 from uuid import uuid4
@@ -10,20 +9,22 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 
+from ..models import DeviceLogRequest
+
 
 class HeartbeatTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(HeartbeatTests, cls).setUpClass()
-        cls.domain = create_domain(uuid4().hex)
-        cls.user = CommCareUser.create(cls.domain.name, 'user1', '123')
+        cls.domain_obj = create_domain(uuid4().hex)
+        cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123')
         cls.app, cls.build = cls._create_app_and_build()
-        cls.url = reverse('phone_heartbeat', args=[cls.domain.name, cls.build.get_id])
+        cls.url = reverse('phone_heartbeat', args=[cls.domain_obj.name, cls.build.get_id])
 
     @classmethod
     def _create_app_and_build(cls):
-        app = Application.new_app(cls.domain.name, 'app')
+        app = Application.new_app(cls.domain_obj.name, 'app')
         app.save()
         build = app.make_build()
         build.save(increment_version=False)
@@ -31,7 +32,7 @@ class HeartbeatTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
+        cls.domain_obj.delete()
         super(HeartbeatTests, cls).tearDownClass()
 
     def _auth_headers(self, user):
@@ -55,6 +56,7 @@ class HeartbeatTests(TestCase):
             'cc_version': cc_version
         }, **self._auth_headers(user))
         self.assertEqual(resp.status_code, response_code)
+        return resp
 
     def test_heartbeat(self):
         self._do_request(
@@ -92,7 +94,25 @@ class HeartbeatTests(TestCase):
         self.assertIsNone(device.get_meta_for_app(self.app.get_id).last_sync)
 
     def test_bad_app_id(self):
-        url = reverse('phone_heartbeat', args=[self.domain.name, 'bad_id'])
+        url = reverse('phone_heartbeat', args=[self.domain_obj.name, 'bad_id'])
         self._do_request(self.user, device_id='test_bad_app_id', app_id='no-app', url=url, response_code=404)
         device = CommCareUser.get(self.user.get_id).get_device('test_bad_app_id')
         self.assertIsNone(device)
+
+    def test_device_log_request(self):
+        def heartbeat_contains_force_logs():
+            response = self._do_request(self.user, device_id='need-logs')
+            return response.json().get('force_logs', False)
+
+        self.assertFalse(heartbeat_contains_force_logs())
+
+        device_log_request = DeviceLogRequest.objects.create(
+            domain=self.domain_obj.name,
+            username=self.user.username,
+            device_id='need-logs',
+        )
+        self.assertTrue(heartbeat_contains_force_logs())
+
+        # ensure the cache was wiped on delete
+        device_log_request.delete()
+        self.assertFalse(heartbeat_contains_force_logs())

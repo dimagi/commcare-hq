@@ -1,7 +1,5 @@
 import random
 
-from six.moves import range
-
 from casexml.apps.case.models import CommCareCase
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 

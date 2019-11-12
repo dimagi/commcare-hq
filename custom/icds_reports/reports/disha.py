@@ -1,10 +1,11 @@
-
 from datetime import datetime
 from django.http import JsonResponse
 
 import json
 import logging
 import re
+
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
 from corehq.util.sentry import is_pg_cancelled_query_exception
@@ -74,7 +75,7 @@ class DishaDump(object):
 
     def _get_rows(self, query_master=False):
         if query_master:
-            objects = DishaIndicatorView.objects.using('icds-ucr')
+            objects = DishaIndicatorView.objects.using(get_icds_ucr_citus_db_alias())
         else:
             objects = DishaIndicatorView.objects
         return objects.filter(

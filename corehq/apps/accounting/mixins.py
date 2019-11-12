@@ -1,4 +1,3 @@
-
 import itertools
 from datetime import date, timedelta
 

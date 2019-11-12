@@ -32,7 +32,6 @@ from dimagi.utils.parsing import string_to_boolean
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import unit_testing_only
-from six.moves import zip
 
 log = logging.getLogger(__name__)
 

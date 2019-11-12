@@ -147,9 +147,9 @@ class TestTransferDomainViews(BaseDomainTest):
         self.rando = WebUser.create(self.domain.name, 'rando', self.password)
 
     def tearDown(self):
-        super(TestTransferDomainViews, self).tearDown()
         self.transfer.delete()
         self.rando.delete()
+        super(TestTransferDomainViews, self).tearDown()
 
     def test_permissions_for_activation(self):
         # No one logged in

@@ -7,8 +7,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-import six
-
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
     track_clicked_deploy_on_hubspot,
@@ -36,7 +34,7 @@ class GreenhouseCandidateView(View):
     def post(self, request, *args, **kwargs):
         digester = hmac.new(
             settings.GREENHOUSE_API_KEY.encode('utf-8')
-            if isinstance(settings.GREENHOUSE_API_KEY, six.text_type) else settings.GREENHOUSE_API_KEY,
+            if isinstance(settings.GREENHOUSE_API_KEY, str) else settings.GREENHOUSE_API_KEY,
             request.body, hashlib.sha256
         )
         calculated_signature = digester.hexdigest()

@@ -1,4 +1,3 @@
-
 from django.conf.urls import url
 
 from corehq.apps.reports.v2.views import endpoint_data, endpoint_options

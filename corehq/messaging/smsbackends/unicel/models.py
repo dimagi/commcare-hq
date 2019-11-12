@@ -1,4 +1,3 @@
-
 import codecs
 
 from corehq.apps.sms.util import clean_phone_number

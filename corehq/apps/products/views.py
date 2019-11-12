@@ -10,10 +10,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from six.moves import map, range
 
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -368,7 +366,7 @@ def download_products(request, domain):
         model_data = {}
         uncategorized_data = {}
 
-        for prop, val in six.iteritems(product.product_data):
+        for prop, val in product.product_data.items():
             if prop in product_data_fields:
                 model_data['data: ' + prop] = encode_if_needed(val)
             else:

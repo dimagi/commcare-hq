@@ -1,4 +1,3 @@
-
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy
 
@@ -9,7 +8,8 @@ from corehq.util import reverse
 
 @require_superuser
 def default(request):
-    return HttpResponseRedirect(reverse('admin_report_dispatcher', args=('user_list',)))
+    from ..reports import UserListReport
+    return HttpResponseRedirect(UserListReport.get_url())
 
 
 def get_hqadmin_base_context(request):

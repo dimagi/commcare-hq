@@ -1,12 +1,11 @@
 from abc import ABCMeta, abstractmethod
 
 from .metadata import MetaDB
-import six
 
 NOT_SET = object()
 
 
-class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
+class AbstractBlobDB(metaclass=ABCMeta):
     """Storage interface for large binary data objects
 
     The constructor of this class creates a `MetaDB` instance for managing

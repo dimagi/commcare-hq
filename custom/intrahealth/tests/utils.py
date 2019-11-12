@@ -18,12 +18,15 @@ import os
 
 class YeksiTestCase(TestCase):
 
-    def setUp(self):
-        self.factory = RequestFactory()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        # gets created + removed in package level setup / teardown
         domain = Domain.get_or_create_with_name('test-pna')
         domain.is_active = True
         domain.save()
-        self.domain = domain
+        cls.domain = domain
         user = WebUser.get_by_username('test')
         if not user:
             user = WebUser.create(domain.name, 'test', 'passwordtest')
@@ -31,10 +34,12 @@ class YeksiTestCase(TestCase):
         user.is_superuser = True
         user.is_authenticated = True
         user.is_active = True
-        self.user = user
+        cls.user = user
 
-    def tearDown(self):
-        self.user.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        super().tearDownClass()
 
 
 class TestDataSourceExpressions(SimpleTestCase):

@@ -1,4 +1,3 @@
-
 import uuid
 from collections import Counter, defaultdict, namedtuple
 
@@ -48,8 +47,7 @@ class _Importer(object):
 
         self.results = _ImportResults()
 
-        self.id_cache = {}
-        self.name_cache = {}
+        self.owner_accessor = _OwnerAccessor(domain, self.user)
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
 
@@ -80,9 +78,7 @@ class _Importer(object):
             config=self.config,
             domain=self.domain,
             user_id=self.user.user_id,
-            name_cache=self.name_cache,
-            id_cache=self.id_cache,
-            locations=self.locations_accessible_to_user,
+            owner_accessor=self.owner_accessor,
         )
         if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
@@ -107,16 +103,6 @@ class _Importer(object):
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
 
-    @cached_property
-    def locations_accessible_to_user(self):
-        if self.user.has_permission(self.domain, 'access_all_locations'):
-            return ALL_LOCATIONS
-        return set(
-            SQLLocation.objects
-            .accessible_to_user(self.domain, self.user)
-            .values_list('location_id', flat=True)
-        )
-
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
         # check if we've reached a reasonable chunksize and if so, submit
@@ -136,7 +122,7 @@ class _Importer(object):
 
         try:
             form, cases = submit_case_blocks(
-                [cb.case.as_string().decode('utf-8') for cb in caseblocks],
+                [cb.case.as_text() for cb in caseblocks],
                 self.domain,
                 self.user.username,
                 self.user.user_id,
@@ -169,15 +155,13 @@ class _Importer(object):
 
 
 class _CaseImportRow(object):
-    def __init__(self, search_id, fields_to_update, config, domain, user_id, name_cache, id_cache, locations):
+    def __init__(self, search_id, fields_to_update, config, domain, user_id, owner_accessor):
         self.search_id = search_id
         self.fields_to_update = fields_to_update
         self.config = config
         self.domain = domain
         self.user_id = user_id
-        self.name_cache = name_cache
-        self.id_cache = id_cache
-        self.accessible_locations = locations
+        self.owner_accessor = owner_accessor
 
         self.case_name = fields_to_update.pop('name', None)
         self.external_id = fields_to_update.pop('external_id', None)
@@ -218,49 +202,14 @@ class _CaseImportRow(object):
         return not self.existing_case
 
     def _get_owner_id(self):
-        owner_id = self.uploaded_owner_id
         if self.uploaded_owner_name:
-            # If an owner name was provided, use the id of the provided or
-            # owner rather than the uploaded_owner_id
-            try:
-                owner_id = _get_id_from_name(
-                    self.uploaded_owner_name, self.domain, self.name_cache
-                )
-            except SQLLocation.MultipleObjectsReturned:
-                raise exceptions.DuplicateLocationName()
-
-            if not owner_id:
-                raise exceptions.InvalidOwnerName('owner_name')
-
-        if owner_id:
-            # If an owner_id mapping exists, verify it is a valid user
-            # or case sharing group and that their location is valid
-            self._check_owner_id(owner_id)
-
-        # if they didn't supply an owner, default to current user
-        return owner_id or self.user_id
-
-    def _check_owner_id(self, owner_id):
-        """
-        Raises InvalidOwnerId if the owner cannot own cases.
-        Raises InvalidLocation if a location-restricted user tries to assign
-            an owner outside their location hierarchy.
-        Returns True if owner ID is valid.
-        """
-        if owner_id in self.id_cache:
-            if isinstance(self.id_cache[owner_id], CaseRowError):
-                raise self.id_cache[owner_id]
-            return True
-
-        owner = get_wrapped_owner(owner_id)
-        try:
-            _check_owner(owner, self.domain, self.user_id, self.accessible_locations)
-        except CaseRowError as err:
-            self.id_cache[owner_id] = err
-            raise
+            return self.owner_accessor.get_id_from_name(self.uploaded_owner_name)
         else:
-            self.id_cache[owner_id] = True
-        return True
+            owner_id = self.uploaded_owner_id
+            if owner_id:
+                self.owner_accessor.check_owner_id(owner_id)
+            # if they didn't supply an owner, default to current user
+            return owner_id or self.user_id
 
     def _get_parent_index(self):
         for column, search_field, search_id in [
@@ -454,68 +403,106 @@ def _populate_updated_fields(config, row):
     return fields_to_update
 
 
-def _check_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
-    owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(domain)
-    owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)
-    if not (owner_is_user or owner_is_casesharing_group or _is_valid_location_owner(owner, domain)):
-        raise exceptions.InvalidOwnerId('owner_id')
-    if not _is_owner_location_accessible_to_user(owner, domain, user_id, locations):
-        raise exceptions.InvalidLocation('owner_id')
-    return True
+class _OwnerAccessor(object):
+    def __init__(self, domain, user):
+        self.domain = domain
+        self.user = user
+        self.id_cache = {}
+        self.name_cache = {}
 
+    def get_id_from_name(self, name):
+        return cached_function_call(self._get_id_from_name, name, self.name_cache)
 
-def _is_valid_location_owner(owner, domain):
-    return (
-        isinstance(owner, SQLLocation) and
-        owner.domain == domain and
-        owner.location_type.shares_cases
-    )
+    def _get_id_from_name(self, name):
+        '''
+        :param name: A username, group name, or location name/site_code
+        :return: Looks for the given name and returns the corresponding id if the
+        user or group exists and None otherwise. Searches for user first, then
+        group, then location
+        '''
 
+        def get_user(name):
+            try:
+                name_as_address = name
+                if '@' not in name_as_address:
+                    name_as_address = format_username(name, self.domain)
+                return CouchUser.get_by_username(name_as_address)
+            except NoResultFound:
+                return None
 
-def _is_owner_location_accessible_to_user(owner, domain, user_id, locations_accessible_to_user):
-    return (
-        owner._id == user_id or
-        locations_accessible_to_user == ALL_LOCATIONS or
-        owner._id in locations_accessible_to_user or
-        (
-            hasattr(owner, 'get_location_id')  # is a user, not a location
-            and owner.get_location_id(domain) in locations_accessible_to_user
+        def get_group(name):
+            return Group.by_name(self.domain, name, one=True)
+
+        def get_location(name):
+            try:
+                return SQLLocation.objects.get_from_user_input(self.domain, name)
+            except SQLLocation.DoesNotExist:
+                return None
+            except SQLLocation.MultipleObjectsReturned:
+                raise exceptions.DuplicateLocationName()
+
+        owner = get_user(name) or get_group(name) or get_location(name)
+        if not owner:
+            raise exceptions.InvalidOwnerName('owner_name')
+        self._check_owner(owner, 'owner_name')
+        return owner._id
+
+    def check_owner_id(self, owner_id):
+        return cached_function_call(self._check_owner_id, owner_id, self.id_cache)
+
+    def _check_owner_id(self, owner_id):
+        """
+        Raises InvalidOwner if the owner cannot own cases.
+        Raises InvalidLocation if a location-restricted user tries to assign
+            an owner outside their location hierarchy.
+        Returns True if owner ID is valid.
+        """
+        owner = get_wrapped_owner(owner_id)
+        self._check_owner(owner, 'owner_id')
+
+    def _check_owner(self, owner, owner_field):
+        is_valid_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
+        is_valid_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
+        is_valid_location = (isinstance(owner, SQLLocation)
+                             and owner.domain == self.domain
+                             and owner.location_type.shares_cases)
+        if not (is_valid_user or is_valid_group or is_valid_location):
+            raise exceptions.InvalidOwner(owner_field)
+        if not self._location_is_accessible(owner):
+            raise exceptions.InvalidLocation(owner_field)
+        return True
+
+    def _location_is_accessible(self, owner):
+        return (
+            self.user.has_permission(self.domain, 'access_all_locations')
+            or (isinstance(owner, CouchUser)
+                and owner.get_location_id(self.domain) in self._accessible_locations)
+            or (isinstance(owner, SQLLocation)
+                and owner.location_id in self._accessible_locations)
         )
-    )
+
+    @cached_property
+    def _accessible_locations(self):
+        return set(
+            SQLLocation.objects
+            .accessible_to_user(self.domain, self.user)
+            .values_list('location_id', flat=True)
+        )
 
 
-def _get_id_from_name(name, domain, cache):
-    '''
-    :param name: A username, group name, or location name/site_code
-    :param domain:
-    :param cache:
-    :return: Looks for the given name and returns the corresponding id if the
-    user or group exists and None otherwise. Searches for user first, then
-    group, then location
-    '''
-    if name in cache:
-        return cache[name]
+def cached_function_call(fn, param, cache):
+    """Calls fn(param), storing the result in cache, including CaseRowErrors"""
+    if param in cache:
+        result = cache[param]
+        if isinstance(result, CaseRowError):
+            raise result
+        return result
 
-    def get_from_user(name):
-        try:
-            name_as_address = name
-            if '@' not in name_as_address:
-                name_as_address = format_username(name, domain)
-            user = CouchUser.get_by_username(name_as_address)
-            return getattr(user, 'couch_id', None)
-        except NoResultFound:
-            return None
-
-    def get_from_group(name):
-        group = Group.by_name(domain, name, one=True)
-        return getattr(group, 'get_id', None)
-
-    def get_from_location(name):
-        try:
-            return SQLLocation.objects.get_from_user_input(domain, name).location_id
-        except SQLLocation.DoesNotExist:
-            return None
-
-    id = get_from_user(name) or get_from_group(name) or get_from_location(name)
-    cache[name] = id
-    return id
+    try:
+        result = fn(param)
+    except CaseRowError as err:
+        cache[param] = err
+        raise
+    else:
+        cache[param] = result
+        return result

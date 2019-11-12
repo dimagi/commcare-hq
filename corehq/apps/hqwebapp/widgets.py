@@ -10,9 +10,6 @@ from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 
-import six
-from six.moves import range
-
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
@@ -56,7 +53,7 @@ class _Select2AjaxMixin():
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, six.text_type)):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, str)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:

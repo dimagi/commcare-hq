@@ -16,7 +16,6 @@ from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
@@ -103,9 +102,7 @@ urlpatterns = [
     url(r'^hq/sms/', include(sms_admin_interface_urls)),
     url(r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     url(r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
-    url(r'^hq/reports/', include(report_urls)),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
-    url(r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),

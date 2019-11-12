@@ -1,4 +1,3 @@
-
 from django.test.testcases import TestCase
 
 import inspect
@@ -14,7 +13,8 @@ NON_LOCATION_SAFE_VIEWS = [
     'TemplateView',
     'BugReportView',
     'RedirectView',
-    'ICDSBugReportView'
+    'ICDSBugReportView',
+    'DailyIndicators'
 ]
 
 

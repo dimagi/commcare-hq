@@ -3,9 +3,6 @@ import os
 from django.test import TestCase
 from django.test.utils import override_settings
 
-import six
-from six.moves import zip
-
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from couchforms.dbaccessors import get_forms_by_type
@@ -77,7 +74,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
             '#export_tag': actual_json['#export_tag'],
             'auth_context': actual_json['auth_context'],
         })
-        for name, meta in six.iteritems(actual_json.get("external_blobs", {})):
+        for name, meta in actual_json.get("external_blobs", {}).items():
             expected_json["external_blobs"][name]["blobmeta_id"] = meta["blobmeta_id"]
             expected_json["external_blobs"][name]["key"] = meta["key"]
         expected_json = XFormInstance.wrap(expected_json).to_json()

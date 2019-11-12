@@ -1,7 +1,5 @@
 from django.test import TestCase
 
-from six.moves import range
-
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_owning_users, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser

@@ -6,8 +6,6 @@ import uuid
 from collections import namedtuple
 from decimal import Decimal
 
-from six.moves import range
-
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import Currency

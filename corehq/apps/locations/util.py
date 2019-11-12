@@ -1,8 +1,6 @@
-
 import tempfile
 from collections import OrderedDict
 
-import six
 from memoized import memoized
 
 from couchexport.models import Format
@@ -105,7 +103,7 @@ def parent_child(domain):
     child types
     """
     return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
-                      data=six.iteritems(dict(location_hierarchy_config(domain))))
+                      data=dict(location_hierarchy_config(domain)).items())
 
 
 def get_location_data_model(domain):

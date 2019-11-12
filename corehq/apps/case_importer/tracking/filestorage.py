@@ -3,9 +3,8 @@ import uuid
 from collections import namedtuple
 from tempfile import mkstemp
 
-from django.core.cache import caches
+from django.core.cache import caches, DEFAULT_CACHE_ALIAS
 
-import six
 from memoized import memoized
 
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
@@ -69,7 +68,7 @@ class TransientFileStore(object):
     """
     def __init__(self, bucket, timeout):
         self._bucket = bucket
-        self._cache = caches['default']
+        self._cache = caches[DEFAULT_CACHE_ALIAS]
         self._timeout = timeout
 
     def _get_key(self, identifier):
@@ -88,7 +87,7 @@ class TransientFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
-            if isinstance(content, six.text_type):
+            if isinstance(content, str):
                 content = content.encode('utf-8')
         except (TypeError, ValueError):
             return None

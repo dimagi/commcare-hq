@@ -5,7 +5,8 @@
          requiredMinor="{{ app.build_spec.minor_release.1 }}"
          uniqueid="{{ uniqueid }}"
          name="{{ name }}"
-         descriptor="{{ descriptor }}">
+         descriptor="{{ descriptor }}"
+         buildProfileID="{% if build_profile_id %}{{ build_profile_id }}{% endif %}">
     <property key="BackupMode" value="file_mode" force="true"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup" force="true"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup" force="true"/>

@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -12,7 +10,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number, get_child_locations
+    indian_formatted_number
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -118,13 +116,10 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
 
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -132,17 +127,13 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
             'children': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
@@ -224,7 +215,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
             'loc_name': key,
             'percent': (value['in_month'] * 100) / float(value['all'] or 1)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -239,7 +230,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "% Children received complete immunizations by 1 year",
                 "strokeWidth": 2,

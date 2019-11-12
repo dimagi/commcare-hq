@@ -1,4 +1,3 @@
-
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_rows
 from corehq.form_processor.change_publishers import change_meta_from_sql_case

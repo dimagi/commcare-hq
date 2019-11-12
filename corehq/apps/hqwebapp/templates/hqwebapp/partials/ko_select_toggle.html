@@ -7,6 +7,13 @@
     </select>
     <div class="btn-group-separated" data-bind="foreach: options">
       <button class="btn btn-default"
-              data-bind="text: $data.text, css: {active: $data.selected}, click: click"></button>
+              data-bind="css: {
+                           active: $data.selected,
+                           disabled: $parent.disabled,
+                         },
+                         click: click">
+        <i data-bind="if: $data.icon, attr: {'class': $data.icon}"></i>
+        <!-- ko text: $data.text --><!-- /ko -->
+      </button>
     </div>
 </script>

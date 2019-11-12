@@ -184,7 +184,6 @@ class ScheduledReportSendingTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        cls.user.delete()
         delete_all_report_notifications()
         super(ScheduledReportSendingTest, cls).tearDownClass()
 

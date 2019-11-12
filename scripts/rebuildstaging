@@ -75,8 +75,8 @@ if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
 then
     rebuildstaging $args && {
         which commcare-cloud \
-        && commcare-cloud staging fab deploy:confirm=no \
-        || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
+        && commcare-cloud staging deploy --quiet \
+        || echo 'Could not auto-deploy for you. Run `commcare-cloud staging deploy` to deploy.'
     }
 else
     rebuildstaging $args

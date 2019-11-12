@@ -1,4 +1,3 @@
-
 from django.db import migrations
 
 from custom.icds_reports.utils.migrations import (

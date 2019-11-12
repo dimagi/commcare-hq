@@ -111,48 +111,25 @@ class BaseSyncTest(TestCase):
         else:
             sync_log = get_properly_wrapped_sync_log(sync_log_or_id)
 
-        if isinstance(sync_log, SimplifiedSyncLog):
-            all_ids = {}
-            all_ids.update(case_id_map)
-            all_ids.update(dependent_case_id_map)
-            self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
-            # livequery sync does not use or populate sync_log.index_tree
-            if self.restore_options['case_sync'] == LIVEQUERY:
-                self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
-            else:
-                self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
-                self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
-                for case_id, indices in case_id_map.items():
-                    if indices:
-                        index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                        self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()),
-                                         'case {} has unexpected indices'.format(case_id))
-                for case_id, indices in dependent_case_id_map.items():
-                    if indices:
-                        index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                        self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()))
-
+        all_ids = {}
+        all_ids.update(case_id_map)
+        all_ids.update(dependent_case_id_map)
+        self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
+        # livequery sync does not use or populate sync_log.index_tree
+        if self.restore_options['case_sync'] == LIVEQUERY:
+            self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
         else:
-            # check case map
-            self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
+            self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
+            self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
             for case_id, indices in case_id_map.items():
-                self.assertTrue(sync_log.phone_has_case(case_id))
-                state = sync_log.get_case_state(case_id)
-                self._checkLists(indices, state.indices)
-
-            # check dependent case map
-            self.assertEqual(len(dependent_case_id_map), len(sync_log.dependent_cases_on_phone))
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()),
+                                     'case {} has unexpected indices'.format(case_id))
             for case_id, indices in dependent_case_id_map.items():
-                self.assertTrue(sync_log.phone_has_dependent_case(case_id))
-                state = sync_log.get_dependent_case_state(case_id)
-                self._checkLists(indices, state.indices)
-
-            # test migration of old to new by migrating and testing again.
-            # this is a lazy way of running tests on a variety of edge cases
-            # without having to write explicit tests for the migration
-            migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
-            self.assertEqual(sync_log.get_state_hash(), migrated_sync_log.get_state_hash())
-            self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()))
 
 
 class DeprecatedBaseSyncTest(BaseSyncTest):

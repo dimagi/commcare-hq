@@ -1,0 +1,12 @@
+{% load i18n %}
+
+{% if not is_case_sharing_enabled %}
+  <div class="well well-sm">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+      Case Sharing Groups are not available on your subscription. This feature
+      is only available on our Pro plan or higher.
+    {% endblocktrans %}
+    {% include "hqwebapp/partials/generic_feature_upgrade.html" %}
+  </div>
+{% endif %}

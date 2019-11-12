@@ -115,7 +115,6 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             'build_errors': errors,
             'domain': domain,
             'langs': langs,
-            'lang': lang,
             'visit_scheduler_enabled': visit_scheduler_enabled,
         })
         return json_response(

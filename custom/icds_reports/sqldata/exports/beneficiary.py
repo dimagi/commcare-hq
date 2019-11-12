@@ -1,5 +1,3 @@
-
-import six
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
@@ -20,11 +18,9 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         config.update({
             '5_years': 60,
+            'true': 1
         })
-        self.config = config
-        self.loc_level = loc_level
-        self.show_test = show_test
-        self.beta = beta
+        super().__init__(config, loc_level, show_test, beta, use_excluded_states=False)
 
     @property
     def group_by(self):
@@ -60,9 +56,9 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
 
     @property
     def filters(self):
-        filters = [LTE('age_in_months', '5_years')]
-        for key, value in six.iteritems(self.config):
-            if key == 'domain' or key == '5_years':
+        filters = [LTE('age_in_months', '5_years'), EQ('valid_in_month', 'true')]
+        for key, value in self.config.items():
+            if key in ['domain', '5_years', 'true']:
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))

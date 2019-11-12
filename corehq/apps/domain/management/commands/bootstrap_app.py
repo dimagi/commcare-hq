@@ -2,7 +2,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain

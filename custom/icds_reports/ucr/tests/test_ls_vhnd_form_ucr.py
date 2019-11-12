@@ -1,4 +1,3 @@
-
 import datetime
 from mock import patch
 

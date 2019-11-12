@@ -1,4 +1,3 @@
-
 from django.apps import apps
 from django.conf import settings
 from django.db import migrations, router
@@ -15,7 +14,6 @@ def get_view_migrations():
         'agg_ccs_record_monthly.sql',
         'agg_child_health_monthly.sql',
         'daily_attendance.sql',
-        'agg_awc_daily.sql',
         'child_health_monthly.sql',
         'disha_indicators.sql',
         'ccs_record_monthly_view.sql',

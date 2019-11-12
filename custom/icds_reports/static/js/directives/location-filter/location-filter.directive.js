@@ -206,6 +206,12 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
 
     vm.open = function () {
+
+        if (storageService.getKey('modal-opened') === 'true') {
+            return;
+        }
+        storageService.setKey('modal-opened', 'true');
+
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
             ariaLabelledBy: 'modal-title',
@@ -279,6 +285,9 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');
+            storageService.setKey('modal-opened', 'false');
+        }, function () {
+            storageService.setKey('modal-opened', 'false');
         });
     };
 

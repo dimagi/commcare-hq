@@ -1,4 +1,3 @@
-
 import logging
 import re
 import sqlite3
@@ -14,7 +13,6 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.management.commands.create_citus_child_tables import keep_child_tables, plain_tables, \
     drop_child_tables, get_parent_child_mapping
 from custom.icds_reports.models import AggregateSQLProfile
-from six.moves import filter
 
 logger = logging.getLogger(__name__)
 
@@ -140,16 +138,18 @@ class Command(BaseCommand):
 
 def get_table_date(sql_insepctor, table):
     def _get_date(string):
-        match = re.match(r'.*(\d{4}-\d{2}-\d{2}).*', string)
-        if match:
-            return match.groups()[0]
+        matches = re.findall(r'(\d{4}-\d{2}-\d{2})', string)
+        if matches:
+            return sorted(matches)[0]
 
     date = _get_date(table)
     if not date:
         constraints = [
-            constraint for constraint in sql_insepctor.get_check_constraints(table)
-            if constraint['name'].startswith(table)
+            _get_date(constraint['sqltext']) for constraint in sql_insepctor.get_check_constraints(table)
         ]
+        constraints = list(filter(None, constraints))
+        if len(constraints) > 1:
+            print('Multiple dates: ', constraints)
         if constraints:
-            date = _get_date(constraints[0]['sqltext'])
+            date = constraints[0]
     return date

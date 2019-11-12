@@ -1,6 +1,6 @@
 {% load i18n %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
+    <div class="row no-margin fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-5">
             <div class="row">
                 <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>

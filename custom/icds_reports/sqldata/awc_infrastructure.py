@@ -1,4 +1,3 @@
-
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
 

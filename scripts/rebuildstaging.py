@@ -35,7 +35,6 @@ from contextlib2 import ExitStack
 import gevent
 import jsonobject
 import sh
-import six
 
 from gitutils import (
     OriginalBranch,
@@ -50,9 +49,9 @@ from sh_verbose import ShVerbose
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
     name = jsonobject.StringProperty()
-    branches = jsonobject.ListProperty(six.text_type)
+    branches = jsonobject.ListProperty(str)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
-    pull_requests = jsonobject.ListProperty(six.text_type)
+    pull_requests = jsonobject.ListProperty(str)
 
     def normalize(self):
         for submodule, subconfig in self.submodules.items():

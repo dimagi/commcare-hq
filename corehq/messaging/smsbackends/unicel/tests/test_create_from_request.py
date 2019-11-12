@@ -1,4 +1,3 @@
-
 import codecs
 from datetime import timedelta
 
@@ -31,6 +30,7 @@ class IncomingPostTest(TestCase):
         super(IncomingPostTest, cls).tearDownClass()
 
     def setUp(self):
+        super().setUp()
         self.domain = Domain(name='mockdomain')
         self.domain.save()
         SMS.by_domain(self.domain.name).delete()
@@ -46,6 +46,7 @@ class IncomingPostTest(TestCase):
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
+        super().tearDown()
 
     def testPostToIncomingAscii(self):
         fake_post = {InboundParams.SENDER: str(self.number),

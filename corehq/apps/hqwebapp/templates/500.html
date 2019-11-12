@@ -66,9 +66,7 @@
               <input type="hidden" id="bug-report-500-when" name="when" value="right now" />
               <input type="hidden" name="five-hundred-report" value="true" />
               <input type="hidden" id="bug-report-500t-traceback" name="500traceback" value="{{ 500traceback }}"/>
-              {% if request.sentry.id %}
-                <input type="hidden" id="bug-report-500-sentry_id" name="sentry_id" value="{{ request.sentry.id }}"/>
-              {% endif %}
+              <input type="hidden" id="bug-report-500-sentry_id" name="sentry_id" value="{{ sentry_event_id }}"/>
 
               {{ now }}
               <fieldset>

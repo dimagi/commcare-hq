@@ -1,4 +1,3 @@
-
 from django.utils.translation import ugettext_noop as _
 
 from corehq.const import ONE_DAY

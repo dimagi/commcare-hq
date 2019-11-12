@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import os
 import tempfile
 from collections import OrderedDict, defaultdict
@@ -8,7 +6,6 @@ from io import BytesIO
 from django.test import SimpleTestCase
 
 from mock import patch
-from six.moves import zip
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -1208,7 +1205,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', ['label', 'default_en', 'image_en', 'audio_en', 'video_en']],
         ])
 
-        self.assertEqual(get_bulk_app_sheet_headers(self.app, lang='fra'),
+        self.assertEqual(get_bulk_app_sheet_headers(self.app, single_sheet=True, lang='fra'),
             ((SINGLE_SHEET_NAME, ('menu_or_form', 'case_property', 'list_or_detail', 'label',
                                   'default_fra', 'image_fra', 'audio_fra', 'video_fra', 'unique_id')),))
 

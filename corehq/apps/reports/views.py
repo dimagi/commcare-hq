@@ -154,6 +154,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
+from corehq.util import cmp
 from corehq.util.view_utils import (
     absolute_reverse,
     get_case_or_404,
@@ -592,7 +593,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     @property
     def is_new(self):
-        return self.report_notification.new_document
+        """True if before this request the ReportNotification object did not exist"""
+        return bool(not self.scheduled_report_id)
 
     @property
     def page_name(self):
@@ -1044,18 +1046,21 @@ class CaseDataView(BaseProjectReportSectionView):
         tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
-        # ledgers
+        product_name_by_id = {
+            product['product_id']: product['name']
+            for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
+        }
+
         def _product_name(product_id):
-            try:
-                return SQLProduct.objects.get(product_id=product_id).name
-            except SQLProduct.DoesNotExist:
-                return (_('Unknown Product ("{}")').format(product_id))
+            return product_name_by_id.get(product_id, _('Unknown Product ("{}")').format(product_id))
 
         ledger_map = LedgerAccessors(self.domain).get_case_ledger_state(self.case_id, ensure_form_id=True)
-        for section, product_map in ledger_map.items():
-            product_tuples = sorted(
-                (_product_name(product_id), product_map[product_id]) for product_id in product_map
-            )
+        for section, entry_map in ledger_map.items():
+            product_tuples = [
+                (_product_name(product_id), entry_map[product_id])
+                for product_id in entry_map
+            ]
+            product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
@@ -1137,7 +1142,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
     timezone = get_timezone_for_user(request.couch_user, domain)
     next_transaction = int(request.GET.get('next_transaction', 0))
 
-    paged_changes, last_trasaction_checked = get_paged_changes_to_case_property(
+    paged_changes, last_transaction_checked = get_paged_changes_to_case_property(
         case,
         case_property_name,
         start=next_transaction,
@@ -1152,7 +1157,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 
     return json_response({
         'changes': changes,
-        'last_transaction_checked': last_trasaction_checked,
+        'last_transaction_checked': last_transaction_checked,
     })
 
 

@@ -1,4 +1,3 @@
-
 from corehq.apps.translations.models import TransifexProject
 
 

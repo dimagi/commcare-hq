@@ -1,4 +1,3 @@
-
 import re
 from datetime import datetime, timedelta
 
@@ -13,7 +12,7 @@ from corehq.apps.accounting.exceptions import EnterpriseReportError
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.domain.calculations import sms_in_in_last
+from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import \
@@ -120,7 +119,7 @@ class EnterpriseDomainReport(EnterpriseReport):
             len(domain_obj.applications()),
             get_mobile_user_count(domain_obj.name, include_inactive=False),
             get_web_user_count(domain_obj.name, include_inactive=False),
-            sms_in_in_last(domain_obj.name, 30),
+            sms_in_last(domain_obj.name, 30),
             self.format_date(get_last_form_submission_received(domain_obj.name)),
         ] + self.domain_properties(domain_obj)]
 

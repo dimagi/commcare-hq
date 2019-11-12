@@ -1,24 +1,54 @@
+import attr
+from couchdbkit import BadValueError
+from jsonpath_rw import parse as parse_jsonpath
 
-from collections import namedtuple
+from couchforms.const import TAG_FORM, TAG_META
+from dimagi.ext.couchdbkit import (
+    DictProperty,
+    DocumentSchema,
+    Property,
+    StringProperty,
+)
 
-from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
-
-from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 = flake8 "'%s' imported but unused"); Used in ValueSource.check_direction doctest; pylint: enable=unused-import,F401
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
+    COMMCARE_DATA_TYPE_TEXT,
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
-    # pylint: disable=unused-import,F401
-    # (F401 = flake8 "'%s' imported but unused")
-    # Used in ValueSource.check_direction doctest
     DIRECTION_EXPORT,
     DIRECTION_IMPORT,
-    # pylint: enable=unused-import,F401
     DIRECTIONS,
 )
 from corehq.motech.serializers import serializers
 
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+@attr.s
+class CaseTriggerInfo:
+    domain = attr.ib()
+    case_id = attr.ib()
+    type = attr.ib(default=None)
+    name = attr.ib(default=None)
+    owner_id = attr.ib(default=None)
+    modified_by = attr.ib(default=None)
+    updates = attr.ib(factory=dict)
+    created = attr.ib(default=None)
+    closed = attr.ib(default=None)
+    extra_fields = attr.ib(factory=dict)
+    form_question_values = attr.ib(factory=dict)
+
+    def __str__(self):
+        if self.name:
+            return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
+        return f"<CaseTriggerInfo {self.case_id}>"
+
+
+def not_blank(value):
+    if not str(value):
+        raise BadValueError("Value cannot be blank.")
 
 
 def recurse_subclasses(cls):
@@ -46,9 +76,10 @@ class ValueSource(DocumentSchema):
                                choices=DIRECTIONS)
 
     def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
         return (
-            isinstance(other, ValueSource)
-            and self.doc_type == other.doc_type
+            self.doc_type == other.doc_type
             and self.external_data_type == other.external_data_type
             and self.commcare_data_type == other.commcare_data_type
             and self.direction == other.direction
@@ -125,7 +156,7 @@ class CaseProperty(ValueSource):
     #       }
     #     }
     #
-    case_property = StringProperty()
+    case_property = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
         """
@@ -136,12 +167,10 @@ class CaseProperty(ValueSource):
         been included in an integration.
 
         >>> info = CaseTriggerInfo(
+        ...     domain='test-domain',
         ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
         ...     updates={'foo': 1},
-        ...     created=False,
-        ...     closed=False,
         ...     extra_fields={'foo': 0, 'bar': 2},
-        ...     form_question_values={},
         ... )
         >>> CaseProperty(case_property="foo")._get_commcare_value(info)
         1
@@ -198,6 +227,80 @@ class ConstantString(ValueSource):
         return self.value
 
 
+class ConstantValue(ConstantString):
+    """
+    ConstantValue provides a ValueSource for constant values.
+
+    ``value`` must be cast as ``value_data_type``.
+
+    ``ConstantValue.deserialize()`` returns the value for import. Use
+    ``commcare_data_type`` to cast the import value.
+
+    ``ConstantValue.get_value(case_trigger_info)`` returns the value for
+    export.
+
+    >>> one = ConstantValue.wrap({
+    ...     "value": 1,
+    ...     "value_data_type": COMMCARE_DATA_TYPE_INTEGER,
+    ...     "commcare_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+    ...     "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+    ... })
+    >>> info = CaseTriggerInfo("test-domain", None)
+    >>> one.deserialize("foo")
+    1.0
+    >>> one.get_value(info)  # Returns '1.0', not '1'. See note below.
+    '1.0'
+
+    .. NOTE::
+       ``one.get_value(info)`` returns  ``'1.0'``, not ``'1'``, because
+       ``ConstantValue.serialize`` casts ``value`` as
+       ``commcare_data_type`` first. ``ValueSource.serialize()`` casts
+       it from ``commcare_data_type`` to ``external_data_type``.
+
+       This may seem counter-intuitive, but we do it to preserve the
+       behaviour of ``serialize()`` because it is public and is used
+       outside the class.
+
+    """
+    value = Property()
+    value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
+
+    def __eq__(self, other):
+        return (
+            super().__eq__(other)
+            and self.value_data_type == other.value_data_type
+        )
+
+    def serialize(self, value):
+        """
+        Convert self.value from CommCare data type to external data type
+        """
+        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
+                      or serializers.get((None, self.commcare_data_type)))
+        commcare_value = serializer(self.value) if serializer else self.value
+        return ValueSource.serialize(self, commcare_value)
+
+    def deserialize(self, external_value):
+        """
+        Convert self.value from external data type to CommCare data type
+        """
+        serializer = (serializers.get((self.value_data_type, self.external_data_type))
+                      or serializers.get((None, self.external_data_type)))
+        external_value = serializer(self.value) if serializer else self.value
+        return ValueSource.deserialize(self, external_value)
+
+    def _get_commcare_value(self, case_trigger_info):
+        # get_value() calls this and serialize(), so this shouldn't call
+        # serialize(), and serialize() shouldn't call this. Just do
+        # nothing, and let `serialize()` cast `self.value` as
+        # `self.commcare_data_type`.
+        pass
+
+    def get_import_value(self, external_data):
+        external_value = self._get_external_value(external_data)
+        return self.deserialize(external_value)
+
+
 class CasePropertyMap(CaseProperty):
     """
     Maps case property values to OpenMRS values or concept UUIDs
@@ -245,13 +348,80 @@ class FormQuestionMap(FormQuestion):
         return reverse_map.get(external_value)
 
 
+class CaseOwnerAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location may be the
+    case owner, the case owner's location, or the first ancestor
+    location of the case owner where the metadata value is set.
+    """
+    location_field = StringProperty()
+
+    def _get_commcare_value(self, case_trigger_info):
+        location = get_case_location(case_trigger_info)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
+
+
+class FormUserAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location is the form
+    user's location, or the first ancestor location of the form user
+    where the metadata value is set.
+    """
+    location_field = StringProperty()
+
+    def _get_commcare_value(self, case_trigger_info):
+        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+        location = get_owner_location(case_trigger_info.domain, user_id)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
+
+
+class JsonPathMixin(DocumentSchema):
+    """
+    Used for importing a value from a JSON document.
+    """
+    jsonpath = StringProperty(required=True, validators=not_blank)
+
+    def _get_external_value(self, external_data):
+        jsonpath = parse_jsonpath(self.jsonpath)
+        matches = jsonpath.find(external_data)
+        values = [m.value for m in matches]
+        if not values:
+            return None
+        elif len(values) == 1:
+            return values[0]
+        else:
+            return values
+
+    def get_import_value(self, external_data):
+        external_value = self._get_external_value(external_data)
+        return self.deserialize(external_value)
+
+
+class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
+    pass
+
+
+class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
+    pass
+
+
+class JsonPathConstantValue(ConstantValue, JsonPathMixin):
+
+    def _get_external_value(self, external_data):
+        pass  # ConstantValue doesn't use external value
+
+
 def get_form_question_values(form_json):
     """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+    Given form JSON, returns question-value pairs, where questions are
+    formatted "/data/foo/bar".
 
-    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    >>> values == {'/data/foo/bar': 'baz'}
-    True
+    e.g. Question "bar" in group "foo" has value "baz":
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
@@ -275,18 +445,42 @@ def get_form_question_values(form_json):
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
+    _recurse_form_questions(form_json[TAG_FORM], [b'/data'], result)  # "/data" is just convention, hopefully
+    # familiar from form builder. The form's data will usually be immediately under "form_json[TAG_FORM]" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
     metadata = {}
-    if 'meta' in form_json['form']:
-        if 'timeStart' in form_json['form']['meta']:
-            metadata['timeStart'] = form_json['form']['meta']['timeStart']
-        if 'timeEnd' in form_json['form']['meta']:
-            metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
+    if 'meta' in form_json[TAG_FORM]:
+        metadata.update(form_json[TAG_FORM][TAG_META])
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
+
+
+def get_ancestor_location_metadata_value(location, metadata_key):
+    assert isinstance(location, SQLLocation), type(location)
+    for location in reversed(location.get_ancestors(include_self=True)):
+        if location.metadata.get(metadata_key):
+            return location.metadata[metadata_key]
+    return None
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    return get_owner_location(case.domain, get_owner_id(case))
+
+
+def get_owner_location(domain, owner_id):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
+        return None
+    if isinstance(owner, SQLLocation):
+        return owner
+    location_id = owner.get_location_id(domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None

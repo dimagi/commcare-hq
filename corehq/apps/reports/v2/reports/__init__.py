@@ -1,4 +1,3 @@
-
 from corehq.apps.reports.v2.exceptions import ReportNotFoundError
 from corehq.apps.reports.v2.reports import explore_case_data
 

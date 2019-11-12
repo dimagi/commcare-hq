@@ -1,9 +1,7 @@
-
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from six.moves import input
 
 
 class Command(BaseCommand):

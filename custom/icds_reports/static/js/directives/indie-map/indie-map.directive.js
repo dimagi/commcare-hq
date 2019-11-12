@@ -94,7 +94,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     return vm.templatePopup({
                         loc: {
                             loc: geography,
-                            row: data,
+                            row: vm.map.data[geography.id],
                         },
                     });
                 },

@@ -15,9 +15,6 @@ import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import re
 from django.utils import html
 from custom.utils.utils import clean_IN_filter_value
-from six.moves import range
-from six.moves import map
-import six
 
 
 def _get_grouping(prop_dict):
@@ -178,7 +175,7 @@ class CareSqlData(SqlData):
     def filters(self):
         filters = [EQ("domain", "domain"), EQ("ppt_year", "ppt_year"), AND([NOTEQ("case_status", "duplicate"),
                                                                             NOTEQ("case_status", "test")])]
-        for k, v in six.iteritems(self.geography_config):
+        for k, v in self.geography_config.items():
             if k in self.config and self.config[k]:
                 filters.append(IN(k, get_INFilter_bindparams(k, self.config[k])))
         if 'value_chain' in self.config and self.config['value_chain']:

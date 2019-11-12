@@ -1,4 +1,3 @@
-
 import doctest
 from collections import namedtuple
 

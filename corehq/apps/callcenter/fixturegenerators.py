@@ -2,7 +2,6 @@ from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
 import pytz
-import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from dimagi.utils.logging import notify_exception
@@ -126,7 +125,7 @@ def gen_fixture(restore_user, indicator_set):
         'date': indicator_set.reference_date.isoformat()
     })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
-    for case_id, indicators in six.iteritems(data):
+    for case_id, indicators in data.items():
         group = ElementTree.SubElement(indicators_node, 'case', {'id': case_id})
         for name, value in indicators.items():
             indicator = ElementTree.SubElement(group, name)

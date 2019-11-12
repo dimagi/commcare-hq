@@ -1,7 +1,5 @@
 from django.utils.translation import ugettext as _
 
-import six
-
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
@@ -27,7 +25,7 @@ class _FixtureWorkbook(object):
         try:
             self.workbook = excel_get_workbook(file_or_filename)
         except WorkbookJSONError as e:
-            raise FixtureUploadError([six.text_type(e)])
+            raise FixtureUploadError([str(e)])
 
     def get_types_sheet(self):
         try:
@@ -106,7 +104,7 @@ class _FixtureTableDefinition(object):
             return is_indexed
 
         def is_number(text):
-            text = six.text_type(text)
+            text = str(text)
             try:
                 float(text)
                 return True

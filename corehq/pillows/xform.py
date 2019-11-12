@@ -30,7 +30,7 @@ from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
@@ -181,8 +181,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
-    xform_to_es_processor = ElasticProcessor(
+    xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
@@ -199,18 +200,21 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    processors = [xform_to_es_processor,
-        form_meta_processor, unknown_user_form_processor]
+    processors = [xform_to_es_processor]
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        processors.append(unknown_user_form_processor)
+    if settings.RUN_FORM_META_PILLOW:
+        processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
-        xform_to_report_es_processor = ElasticProcessor(
+        xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
             doc_filter_fn=report_xform_filter
         )
-        processors = [xform_to_report_es_processor] + processors
+        processors.append(xform_to_report_es_processor)
     if not skip_ucr:
-        processors = [ucr_processor] + processors
+        processors.append(ucr_processor)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

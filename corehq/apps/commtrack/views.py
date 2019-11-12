@@ -8,7 +8,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-import six
 from memoized import memoized
 
 from casexml.apps.stock.models import StockTransaction
@@ -212,7 +211,7 @@ class SMSSettingsView(BaseCommTrackManageView):
         }
 
     def get_other_sms_codes(self):
-        for k, v in six.iteritems(all_sms_codes(self.domain)):
+        for k, v in all_sms_codes(self.domain).items():
             if v[0] == 'product':
                 yield (k, (v[0], v[1].name))
 

@@ -4,10 +4,8 @@ import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
 
-
-class DataDumper(six.with_metaclass(ABCMeta)):
+class DataDumper(metaclass=ABCMeta):
     """
     :param domain: Name of domain to dump data for
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
@@ -33,7 +31,7 @@ class DataDumper(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class DataLoader(six.with_metaclass(ABCMeta)):
+class DataLoader(metaclass=ABCMeta):
     def __init__(self, stdout=None, stderr=None):
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr

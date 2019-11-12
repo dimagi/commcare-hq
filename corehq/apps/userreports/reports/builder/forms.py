@@ -1,4 +1,3 @@
-
 import datetime
 import uuid
 from abc import ABCMeta, abstractproperty
@@ -8,7 +7,6 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-import six
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -248,7 +246,7 @@ class DataSourceProperty(object):
         return self.to_report_column_option()._get_indicator(ui_aggregation)
 
 
-class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
+class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     Abstract interface to a data source in report builder.
 
@@ -354,7 +352,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
     @property
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in six.iteritems(self.data_source_properties):
+        for id_, prop in self.data_source_properties.items():
             options[id_] = prop.to_report_column_option()
 
         return options
@@ -381,7 +379,8 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         self.source_type = source_type
         # source_id is a case type of form id
         self.source_id = source_id
-        self.data_source_meta = get_app_data_source_meta(self.domain, self.source_type, self.source_id)
+        self.data_source_meta = get_app_data_source_meta(self.domain, self.app.id,
+                                                         self.source_type, self.source_id)
         if self.source_type == 'form':
             self.source_form = self.data_source_meta.source_form
             self.source_xform = self.data_source_meta.source_xform
@@ -632,7 +631,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in six.iteritems(self.data_source_properties):
+        for id_, prop in self.data_source_properties.items():
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
@@ -923,7 +922,7 @@ class ConfigureNewReportBase(forms.Form):
                     self._is_multiselect_chart_report,
                 )
                 if data_source.configured_indicators != indicators:
-                    for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
+                    for property_name, value in self._get_data_source_configuration_kwargs().items():
                         setattr(data_source, property_name, value)
                     data_source.save()
                     tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update')

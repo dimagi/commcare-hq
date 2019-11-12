@@ -1,4 +1,3 @@
-
 import re
 from collections import defaultdict
 from datetime import date, datetime
@@ -13,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 from casexml.apps.stock.models import StockTransaction
 
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.es import CaseES, FormES, LedgerES, UserES
+from corehq.apps.es import CaseES, FormES, UserES
 from corehq.apps.es.aggregations import (
     DateHistogram,
     NestedAggregation,
@@ -32,11 +31,13 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
     LedgerTransaction,
+    LedgerValue,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.util import (
+    estimate_row_count,
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
@@ -212,25 +213,27 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Cases updated per user'], final_stats)
 
     def _ledgers_per_case(self):
-        results = (
-            LedgerES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(self.domain).aggregation(
-                TermsAggregation('by_case', 'case_id', size=100)
-            ).size(0).run()
-        )
+        if should_use_sql_backend(self.domain):
+            db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
+            results = (
+                LedgerValue.objects.using(db_name).filter(domain=self.domain)
+                .values('case_id')
+                .annotate(ledger_count=Count('pk'))
+            )[:100]
+        else:
+            raise NotImplementedError
 
-        ledgers_per_case = results.aggregations.by_case
         case_ids = set()
-        ledger_counts = []
-        for case_id, ledger_count in ledgers_per_case.counts_by_bucket().items():
-            case_ids.add(case_id)
-            ledger_counts.append(ledger_count)
+        ledger_count = 0
+        for result in results:
+            case_ids.add(result['case_id'])
+            ledger_count += result['ledger_count']
 
         if not case_ids:
             self.stdout.write("Domain has no ledgers")
             return
 
-        avg_ledgers_per_case = sum(ledger_counts) // len(case_ids)
+        avg_ledgers_per_case = ledger_count // len(case_ids)
         case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
             .domain(self.domain).case_ids(case_ids)\
             .aggregation(TermsAggregation('types', 'type'))\
@@ -290,12 +293,10 @@ class Command(BaseCommand):
             return
 
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        case_count = _get_count_from_explain(
-            db_name, CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
-        )
-        case_index_count = _get_count_from_explain(
-            db_name, CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
-        )
+        case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
+        index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
+        case_count = estimate_row_count(case_query, db_name)
+        case_index_count = estimate_row_count(index_query, db_name)
         self._print_value('Ratio of cases to case indices', case_count // float(case_index_count))
 
     def _attachment_sizes(self):
@@ -336,11 +337,8 @@ class Command(BaseCommand):
         def _get_count(config):
             table_name = get_table_name(config.domain, config.table_id)
             db_name = connection_manager.get_django_db_alias(config.engine_id)
-            return _get_count_from_explain_raw(
-                db_name,
-                'SELECT * FROM "%s"' % table_name,
-                []
-            )
+            query = ('SELECT * FROM "%s"' % table_name, [])
+            return estimate_row_count(query, db_name)
 
         def _get_table_size(config):
             table_name = get_table_name(config.domain, config.table_id)
@@ -363,20 +361,3 @@ class Command(BaseCommand):
             ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size', 'Size (bytes)'],
             rows
         )
-
-
-def _get_count_from_explain(from_db, query):
-    sql, params = query.query.sql_with_params()
-    return _get_count_from_explain_raw(from_db, sql, params)
-
-
-def _get_count_from_explain_raw(from_db, raw_query, params):
-    explain_query = 'EXPLAIN {}'.format(raw_query)
-    db_cursor = connections[from_db].cursor()
-    with db_cursor as cursor:
-        cursor.execute(explain_query, params)
-        for row in cursor.fetchall():
-            search = re.search(r' rows=(\d+)', row[0])
-            if search:
-                return int(search.group(1))
-    return 0

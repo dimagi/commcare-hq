@@ -1,9 +1,7 @@
-
 import json
 
 from django.test import SimpleTestCase
 
-import six
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 
@@ -30,10 +28,9 @@ class TestDhisConfigValidation(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertDictEqual(form.errors, {
             'form_configs': [
+                'The "xmlns" property is required. Please specify the XMLNS of the form.',
                 'The "program_id" property is required. Please specify the DHIS2 Program of the event.',
-                'The "event_date" property is required. Please provide a FormQuestion, FormQuestionMap or '
-                'ConstantString to determine the date of the event.',
-                'The "datavalue_maps" property is required. Please map CommCare values to OpenMRS data elements.'
+                'The "datavalue_maps" property is required. Please map CommCare values to DHIS2 data elements.',
             ]
         })
 
@@ -46,14 +43,14 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
-            "Property program_id is required."
+            str(e.exception),
+            "Property xmlns is required."
         )
 
-    def test_missing_event_date(self):
+    def test_missing_program_id(self):
         config = {
             'form_configs': [{
-                'program_id': 'test program'
+                'xmlns': 'test_xmlns',
             }]
         }
         repeater = Dhis2Repeater()
@@ -61,18 +58,15 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
-            'Property event_date is required.'
+            str(e.exception),
+            'Property program_id is required.'
         )
 
     def test_minimal_config(self):
         config = {
             'form_configs': json.dumps([{
+                'xmlns': 'test_xmlns',
                 'program_id': 'test program',
-                'event_date': {
-                    'doc_type': 'FormQuestion',
-                    'form_question': '/data/event_date'
-                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',
@@ -118,7 +112,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
+            str(e.exception),
             "Property data_element_id is required."
         )
 
@@ -157,6 +151,7 @@ class TestDhisConfigValidation(SimpleTestCase):
     def test_org_unit_id_migration(self):
         config = {
             'form_configs': json.dumps([{
+                'xmlns': 'test_xmlns',
                 'program_id': 'test program',
                 'org_unit_id': 'dhis2_location_id',
                 'event_date': {

@@ -1,0 +1,30 @@
+{% load i18n %}
+<p>
+  {% blocktrans %}
+    Dear {{ username }},
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    The fixture upload for {{ domain }} you started has finished.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Upload start time: {{ time_start }}
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Upload end time: {{ time_end }}
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Upload messages: {{ messages }}
+  {% endblocktrans %}
+</p>

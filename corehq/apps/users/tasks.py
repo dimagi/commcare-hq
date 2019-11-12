@@ -1,18 +1,18 @@
 from datetime import datetime
 
+from django.conf import settings
+from django.db import transaction
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import six
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict
-from six.moves import map
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -23,36 +23,27 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
+from corehq.util.celery_utils import deserialize_run_every_setting
 
 logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle')
 def bulk_upload_async(domain, user_specs, group_specs):
-    from corehq.apps.users.bulkupload import create_or_update_users_and_groups
-    task = bulk_upload_async
-    DownloadBase.set_progress(task, 0, 100)
-    results = create_or_update_users_and_groups(
-        domain,
-        user_specs,
-        group_specs,
-        task=task,
-    )
-    DownloadBase.set_progress(task, 100, 100)
-    return {
-        'messages': results
-    }
+    # remove this after deploying `import_users_and_groups`
+    return import_users_and_groups(domain, user_specs, group_specs)
 
 
 @task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters):
-    from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
+    from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
     errors = []
     try:
         dump_users_and_groups(
@@ -207,7 +198,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         for index_info in indexes_referencing_deleted_cases
         if index_info.case_id not in deleted_ids
     ]
@@ -280,7 +271,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=six.text_type(e))
+        notify_exception(None, message=str(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -305,3 +296,33 @@ def update_domain_date(user_id, domain):
             and today > domain_membership.last_accessed):
         domain_membership.last_accessed = today
         user.save()
+
+
+@periodic_task(
+    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    queue='background_queue',
+)
+def process_reporting_metadata_staging():
+    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.pillows.synclog import mark_last_synclog
+    from pillowtop.processors.form import mark_latest_submission
+
+    records = (
+        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+    )[:100]
+    with transaction.atomic():
+        for record in records:
+            if record.received_on:
+                mark_latest_submission(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.xform_version, record.form_meta, record.received_on
+                )
+            if record.device_id or record.sync_date:
+                mark_last_synclog(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.sync_date, record.device_id
+                )
+            record.delete()
+
+    if UserReportingMetadataStaging.objects.exists():
+        process_reporting_metadata_staging.delay()

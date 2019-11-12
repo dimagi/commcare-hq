@@ -1,7 +1,5 @@
 from functools import wraps
 
-import six
-
 from corehq.apps.userreports.exceptions import BadSpecError
 
 
@@ -30,17 +28,17 @@ def less_than_equal(input, reference):
 
 
 def greater_than(input, reference):
-    if isinstance(input, six.text_type) and isinstance(reference, six.integer_types):
+    if isinstance(input, str) and isinstance(reference, int):
         return True
-    elif isinstance(input, six.integer_types) and isinstance(reference, six.text_type):
+    elif isinstance(input, int) and isinstance(reference, str):
         return False
     return input > reference
 
 
 def greater_than_equal(input, reference):
-    if isinstance(input, six.text_type) and isinstance(reference, six.integer_types):
+    if isinstance(input, str) and isinstance(reference, int):
         return True
-    elif isinstance(input, six.integer_types) and isinstance(reference, six.text_type):
+    elif isinstance(input, int) and isinstance(reference, str):
         return False
     return input >= reference
 

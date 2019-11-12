@@ -1,7 +1,5 @@
 from datetime import datetime
 import pytz
-from six.moves import zip
-from six.moves import range
 
 ALL_TIMEZONE_CHOICES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
 COMMON_TIMEZONE_CHOICES = tuple(zip(pytz.common_timezones, pytz.common_timezones))

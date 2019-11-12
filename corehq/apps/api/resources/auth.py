@@ -4,7 +4,6 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 
-import six
 from tastypie.authentication import Authentication
 
 from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
@@ -30,8 +29,8 @@ def api_auth(view_func):
         try:
             return view_func(req, domain, *args, **kwargs)
         except Http404 as e:
-            if six.text_type(e):
-                return HttpResponse(json.dumps({"error": six.text_type(e)}),
+            if str(e):
+                return HttpResponse(json.dumps({"error": str(e)}),
                                 content_type="application/json",
                                 status=404)
             return HttpResponse(json.dumps({"error": "not authorized"}),

@@ -1,7 +1,8 @@
 /* global moment */
 
-function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId) {
+function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive) {
     var vm = this;
+    vm.isAlertActive = isAlertActive;
 
     vm.months = [];
     vm.monthsCopy = [];
@@ -15,7 +16,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         vm.locations = data.locations;
     });
     var now = moment();
-    if (now.date() <= 7) {
+    if (now.date() <= 6) {
         now.subtract(2, 'months');
     } else {
         now.subtract(1, 'months');
@@ -33,7 +34,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id < new Date().getMonth() || (month.id === new Date().getMonth() && moment().date() > 7);
+            return month.id < new Date().getMonth() || (month.id === new Date().getMonth() && moment().date() > 6);
         });
     } else if (vm.selectedYear === 2017) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
@@ -121,7 +122,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
 }
 
-CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId'];
+CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

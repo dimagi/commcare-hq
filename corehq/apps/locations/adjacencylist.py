@@ -1,4 +1,3 @@
-
 from django.db import models
 from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import EmptyResultSet, Q, QuerySet

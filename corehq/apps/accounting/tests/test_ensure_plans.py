@@ -1,9 +1,6 @@
-
 from decimal import Decimal
 
 from django.apps import apps
-
-import six
 
 from corehq.apps.accounting.bootstrap.config.testing import (
     BOOTSTRAP_CONFIG_TESTING,
@@ -80,7 +77,7 @@ class TestEnsurePlans(BaseAccountingTest):
 
     def _test_plan_versions_ensured(self, bootstrap_config):
         ensure_plans(bootstrap_config, True, apps)
-        for (edition, is_trial, has_report_builder), config in six.iteritems(bootstrap_config):
+        for (edition, is_trial, has_report_builder), config in bootstrap_config.items():
             software_plan_version = DefaultProductPlan.get_default_plan_version(
                 edition=edition, is_trial=is_trial, is_report_builder_enabled=has_report_builder
             )

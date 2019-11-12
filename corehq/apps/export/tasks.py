@@ -5,7 +5,6 @@ from django.conf import settings
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from six.moves import filter
 
 from couchexport.models import Format
 from soil import DownloadBase

@@ -1,4 +1,3 @@
-# coding=utf-8
 from numbers import Number
 
 from memoized import memoized

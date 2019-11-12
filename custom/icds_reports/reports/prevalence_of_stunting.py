@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -11,8 +9,8 @@ from django.utils.translation import ugettext as _
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
+    stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
     default_age_interval, hfa_recorded_in_month_column
 
 
@@ -80,7 +78,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 25:
@@ -220,7 +218,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         data['red'][date_in_miliseconds]['all'] += total
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.items()],
         key=lambda x: (x['percent'], x['loc_name'])
     )
 
@@ -233,7 +231,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
@@ -247,7 +245,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% moderately stunted",
                 "strokeWidth": 2,
@@ -261,7 +259,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% severely stunted",
                 "strokeWidth": 2,
@@ -311,13 +309,9 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
         'total_measured': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         total = row['total'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severe = row['severe'] or 0
         moderate = row['moderate'] or 0
@@ -332,17 +326,13 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
             'total_measured': total_measured,
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (moderate + severe) / float(total_measured or 1)
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

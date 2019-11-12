@@ -1,4 +1,3 @@
-# coding=utf-8
 from mock.mock import MagicMock
 
 from custom.intrahealth.tests.utils import YeksiTestCase

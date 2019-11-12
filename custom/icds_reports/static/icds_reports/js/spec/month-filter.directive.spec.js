@@ -14,6 +14,7 @@ describe('Month Filter Controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(function () {

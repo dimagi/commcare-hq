@@ -7,7 +7,6 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 import attr
 from mock import Mock, patch
-from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -90,13 +89,13 @@ class BaseRepeaterTest(TestCase):
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
-        ).as_string()
+        ).as_text()
 
         update_case_block = CaseBlock(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
-        ).as_string()
+        ).as_text()
 
         cls.instance_id = uuid.uuid4().hex
         cls.xform_xml = XFORM_XML_TEMPLATE.format(
@@ -504,7 +503,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id=black_list_user_id
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             black_list_user_id,
@@ -522,7 +521,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user"
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
@@ -539,7 +538,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id=black_list_user_id,
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             black_list_user_id,
@@ -555,7 +554,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user",
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
@@ -593,7 +592,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
                 repeat_record.fire()
 
-        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
@@ -602,7 +601,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
-        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run
@@ -965,19 +964,19 @@ class Response(object):
         return '' if self.content is None else self.content.decode(self.encoding, errors='replace')
 
 
+class DummyRepeater(Repeater):
+
+    @property
+    def generator(self):
+        return FormRepeaterXMLPayloadGenerator(self)
+
+    def payload_doc(self, repeat_record):
+        return {}
+
+
 class HandleResponseTests(SimpleTestCase):
 
     def setUp(self):
-
-        class DummyRepeater(Repeater):
-
-            @property
-            def generator(self):
-                return FormRepeaterXMLPayloadGenerator(self)
-
-            def payload_doc(self, repeat_record):
-                return {}
-
         self.repeater = DummyRepeater(
             domain="test-domain",
             url="https://example.com/api/",
@@ -1051,3 +1050,50 @@ class FormatResponseTests(SimpleTestCase):
         response = Response(500, 'The core is exposed')
         formatted = RepeatRecord._format_response(response)
         self.assertEqual(formatted, '500: The core is exposed.\n')
+
+
+class NotifyAddressesTests(SimpleTestCase):
+
+    def test_default(self):
+        repeater = DummyRepeater.wrap({})
+        self.assertEqual(repeater.notify_addresses, [])
+
+    def test_empty(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "",
+        })
+        self.assertEqual(repeater.notify_addresses, [])
+
+    def test_one(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com"])
+
+    def test_comma(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com,user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_space(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_commaspace(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com, user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_mess(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com,,, ,  user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])

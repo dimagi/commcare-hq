@@ -1,4 +1,3 @@
-
 import json
 import uuid
 from datetime import datetime
@@ -155,7 +154,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
-            ).as_string().decode('utf-8'),
+            ).as_text(),
             self.domain.name
         )[1][0]
         child_case_id = uuid.uuid4().hex
@@ -164,7 +163,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
-            ).as_string().decode('utf-8'),
+            ).as_text(),
             self.domain.name
         )[1][0]
 
@@ -208,7 +207,6 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass')
         new_user.save()
 
-        self.addCleanup(new_user.delete)
         self.addCleanup(community_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
@@ -223,7 +221,6 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
         new_user.save()
 
-        self.addCleanup(new_user.delete)
         self.addCleanup(community_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')

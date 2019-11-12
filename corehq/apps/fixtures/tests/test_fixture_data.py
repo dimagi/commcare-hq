@@ -2,8 +2,6 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
-import six
-
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw

@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _

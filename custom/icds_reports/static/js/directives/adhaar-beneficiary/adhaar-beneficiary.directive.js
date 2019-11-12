@@ -2,11 +2,12 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdhaarController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
-    vm.label = "Percent Aadhaar-seeded Beneficiaries";
+    vm.isAlertActive = isAlertActive;
+    vm.label = "Aadhaar-seeded Beneficiaries";
     vm.steps = {
         'map': {route: '/demographics/adhaar/map', label: 'Map View'},
         'chart': {route: '/demographics/adhaar/chart', label: 'Chart View'},
@@ -16,7 +17,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
+        info: 'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +50,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
+        'captionContent': ' Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
 
@@ -68,7 +69,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 }
 
-AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('adhaarBeneficiary', function() {
     return {

@@ -1,16 +1,10 @@
-# Use modern Python
-
-# Standard library imports
 import logging
 
-# Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from django_prbac.models import Grant, Role
-from six.moves import input
 
-# External imports
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
 
@@ -158,6 +152,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CHILD_CASES,
              name='Child Cases',
              description='Allows for use of child cases / subcases in applications.'),
+        Role(slug=privileges.ODATA_FEED,
+             name='OData Feed - Tableau / BI Integration',
+             description='Allows usage of Tableau / BI Integration (OData Feeds)'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -222,6 +219,7 @@ class Command(BaseCommand):
         privileges.CUSTOM_INTENTS,
         privileges.ADVANCED_DOMAIN_SECURITY,
         privileges.BUILD_PROFILES,
+        privileges.ODATA_FEED,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

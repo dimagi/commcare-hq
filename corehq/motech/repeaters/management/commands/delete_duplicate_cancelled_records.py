@@ -5,7 +5,6 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 
 from memoized import memoized
-from six.moves import input
 
 from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,

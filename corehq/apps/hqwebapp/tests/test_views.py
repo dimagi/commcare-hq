@@ -56,6 +56,7 @@ class TestBugReport(TestCase):
             'cc': '',
             'email': '',
             '500traceback': '',
+            'sentry_event_id': '',
         }
 
     def _post_bug_report(self, payload):

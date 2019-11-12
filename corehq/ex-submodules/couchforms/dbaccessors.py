@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS

@@ -1,4 +1,3 @@
-
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.linked_domain.util import _clean_json

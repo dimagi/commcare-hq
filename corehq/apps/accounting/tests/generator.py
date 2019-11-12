@@ -8,9 +8,7 @@ from django.apps import apps
 from django.conf import settings
 
 import mock
-import six
 from nose.tools import nottest
-from six.moves import range
 
 from dimagi.utils.data import generator as data_gen
 
@@ -169,7 +167,7 @@ class FakeStripeCard(mock.MagicMock):
     @metadata.setter
     def metadata(self, value):
         """Stripe returns everything as JSON. This will do for testing"""
-        self._metadata = {k: str(v) for k, v in six.iteritems(value)}
+        self._metadata = {k: str(v) for k, v in value.items()}
 
     def save(self):
         pass

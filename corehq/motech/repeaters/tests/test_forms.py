@@ -1,4 +1,3 @@
-
 import doctest
 
 from corehq.motech.repeaters import forms

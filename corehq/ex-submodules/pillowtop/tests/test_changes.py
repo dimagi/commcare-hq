@@ -62,10 +62,11 @@ class TestChangeDocument(SimpleTestCase):
 
     def setUp(self):
         # bootstrap a dao with a doc in it
-        self.dao = MockDocumentStore()
         self.doc_id = uuid.uuid4().hex
         self.doc = {'id': self.doc_id, 'random_property': uuid.uuid4().hex}
-        self.dao.save_document(self.doc_id, self.doc)
+        self.dao = MockDocumentStore({
+            self.doc_id: self.doc
+        })
 
     def test_get_set_document(self):
         change = Change(id='id', sequence_id='')

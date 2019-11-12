@@ -1,4 +1,3 @@
-import six
 from django.test import TestCase
 
 from corehq.apps.sms.models import QueuedSMS

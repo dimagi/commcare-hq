@@ -4,7 +4,6 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from couchdbkit import ResourceNotFound
-from six.moves import input
 
 from dimagi.utils.chunked import chunked
 

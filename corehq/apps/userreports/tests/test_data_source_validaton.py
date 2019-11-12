@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import ValidationError
@@ -64,6 +63,6 @@ class DataSourceValidationTest(SimpleTestCase):
         try:
             self.config.validate_document(sample_doc)
         except ValidationError as e:
-            self.assertEquals(len(e.errors), 2)
+            self.assertEqual(len(e.errors), 2)
         else:
             self.fail("There were no validation errors returned")

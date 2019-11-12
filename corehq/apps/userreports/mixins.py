@@ -1,4 +1,3 @@
-
 from collections import OrderedDict
 
 from sqlagg.columns import SimpleColumn

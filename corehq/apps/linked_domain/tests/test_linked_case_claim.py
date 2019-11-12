@@ -1,4 +1,3 @@
-
 import json
 
 from mock import patch

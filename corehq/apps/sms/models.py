@@ -1096,21 +1096,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
-    def create_ivr_subevent(self, recipient, form_unique_id, case_id=None):
-        recipient_type = MessagingEvent.get_recipient_type(recipient)
-        obj = MessagingSubEvent.objects.create(
-            parent=self,
-            date=datetime.utcnow(),
-            recipient_type=recipient_type,
-            recipient_id=recipient.get_id if recipient_type else None,
-            content_type=MessagingEvent.CONTENT_IVR_SURVEY,
-            form_unique_id=form_unique_id,
-            form_name=MessagingEvent.get_form_name_or_none(form_unique_id),
-            case_id=case_id,
-            status=MessagingEvent.STATUS_IN_PROGRESS,
-        )
-        return obj
-
     @classmethod
     def create_event_for_adhoc_sms(cls, domain, recipient=None,
             content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER):

@@ -4,8 +4,6 @@ from collections import namedtuple
 from django.db import IntegrityError
 from django.http.response import Http404
 
-import six
-
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
@@ -111,10 +109,10 @@ class MALTTableGenerator(object):
         try:
             # try update
             unique_field_dict = {k: v
-                                 for (k, v) in six.iteritems(malt_dict)
+                                 for (k, v) in malt_dict.items()
                                  if k in MALTRow.get_unique_fields()}
             prev_obj = MALTRow.objects.get(**unique_field_dict)
-            for k, v in six.iteritems(malt_dict):
+            for k, v in malt_dict.items():
                 setattr(prev_obj, k, v)
             prev_obj.save()
         except MALTRow.DoesNotExist:

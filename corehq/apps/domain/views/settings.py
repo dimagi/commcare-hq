@@ -15,7 +15,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 
-import six
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -397,7 +396,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         enable = request_json.get('enable')
         fuzzies_by_casetype = request_json.get('fuzzy_properties')
         updated_fuzzies = []
-        for case_type, properties in six.iteritems(fuzzies_by_casetype):
+        for case_type, properties in fuzzies_by_casetype.items():
             fp, created = FuzzyProperties.objects.get_or_create(
                 domain=self.domain,
                 case_type=case_type

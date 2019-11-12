@@ -6,8 +6,49 @@
   <form>
     <fieldset>
       <legend>{% trans "MOTECH Logs" %}</legend>
-      {% if logs %}
-        <tbody class="col-sm-10">
+        <form method="GET">
+          <span class="col-sm-2">
+            <label for="filter_from_date">From date</label>
+            <input class="form-control"
+                   type="text"
+                   name="filter_from_date"
+                   value="{{ filter_from_date }}"
+                   placeholder="yyyy-mm-dd" />
+          </span>
+
+          <span class="col-sm-2">
+            <label for="filter_to_date">To date</label>
+            <input class="form-control"
+                   type="text"
+                   name="filter_to_date"
+                   value="{{ filter_to_date }}"
+                   placeholder="yyyy-mm-dd" />
+          </span>
+
+          <span class="col-sm-4">
+            <label for="filter_url">URL starts with</label>
+            <input class="form-control"
+                   type="text"
+                   name="filter_url"
+                   value="{{ filter_url }}"
+                   placeholder="http..." />
+          </span>
+
+          <span class="col-sm-2">
+            <label for="filter_status">Status</label>
+            <input class="form-control"
+                   type="text"
+                   name="filter_status"
+                   value="{{ filter_status }}"
+                   placeholder="2xx" />
+          </span>
+
+          <span class="col-sm-2">
+            <input class="btn btn-default" type="submit" name="submit" value="Filter"/>
+          </span>
+        </form>
+
+        {% if logs %}
         <table class="table table-striped">
           <thead>
           <th>{% trans "Timestamp" %}</th>
@@ -49,6 +90,7 @@
           <p>No API requests have been logged.</p>
         </div>
       {% endif %}
+      </div>
     </fieldset>
   </form>
 {% endblock %}

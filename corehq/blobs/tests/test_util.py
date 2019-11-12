@@ -1,7 +1,4 @@
-
 from unittest import TestCase
-
-from six.moves import range
 
 import corehq.blobs.util as mod
 

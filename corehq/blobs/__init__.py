@@ -1,4 +1,3 @@
-
 from .exceptions import Error, NotFound  # noqa: F401
 
 _db = []  # singleton/global, stack for tests to push temporary dbs

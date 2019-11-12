@@ -4,7 +4,6 @@ import sys
 import time
 from collections import Counter
 
-import six
 from couchdbkit import ResourceConflict
 
 from couchexport.export import FormattedRow, get_writer
@@ -139,7 +138,7 @@ class _PaginatedExportWriter(object):
 
         with open(self.path, 'wb') as file_handle:
             self.writer.open(
-                six.iteritems(self._get_paginated_headers()),
+                self._get_paginated_headers().items(),
                 file_handle,
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
@@ -221,7 +220,7 @@ class _PaginatedExportWriter(object):
             (<table.path>, <page>): (['Column1', 'Column2'],)
         }
         '''
-        return {self._paged_table_index(table): (headers,) for table, headers in six.iteritems(self.headers)}
+        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.items()}
 
     def _get_paginated_table_titles(self):
         '''
@@ -237,7 +236,7 @@ class _PaginatedExportWriter(object):
         }
         '''
         paginated_table_titles = {}
-        for table, table_name in six.iteritems(self.table_names):
+        for table, table_name in self.table_names.items():
             paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
                 table_name, format(self.pages[table], '03')
             )

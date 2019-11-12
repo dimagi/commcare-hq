@@ -8,19 +8,6 @@ hqDefine("domain/js/info_basic", [
     _
 ) {
     $(function () {
-        // Update project dropdown in page header with potentially new project name
-        var name = $('#id_hr_name').val(),
-            $projectsMenu = $('#nav-projects-menu'),
-            currentHref = $projectsMenu.find(".btn-project-active").attr("href");
-        if ($(".page-level-alert.alert-success").length) {
-            _.each($projectsMenu.find("a"), function (link) {
-                var $link = $(link);
-                if (currentHref.startsWith($link.attr("href"))) {
-                    $link.text(name);
-                }
-            });
-        }
-
         $('#id_default_timezone').select2({
             placeholder: gettext('Select a Timezone...'),
         });

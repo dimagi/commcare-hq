@@ -5,12 +5,12 @@ import mock
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser
-from corehq.warehouse.models import ApplicationDim, ApplicationStatusFact, Batch, UserDim
 from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import AWWSubmissionPerformanceIndicator
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 
 
-@mock.patch('custom.icds.messaging.indicators.get_warehouse_latest_modified_date', return_value=datetime.utcnow())
+@mock.patch('custom.icds.messaging.indicators.is_aggregate_inactive_aww_data_fresh', return_value=True)
 class TestAWWSubmissionPerformanceIndicator(TestCase):
     domain = 'domain'
 
@@ -26,91 +26,67 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
 
         cls.loc_types = setup_location_types(cls.domain, ['awc'])
         cls.loc = make_loc('awc', type='awc', domain=cls.domain)
+        cls.loc2 = make_loc('awc2', type='awc', domain=cls.domain)
         cls.user = make_user('user', cls.loc)
-        cls.user_sans_app_status = make_user('user_sans_app_status', cls.loc)
-        cls.batch = Batch.objects.create(
-            start_datetime=datetime.now(),
-            end_datetime=datetime.now(),
-            completed_on=datetime.now(),
-            dag_slug='batch',
-        )
-        cls.app_dim = ApplicationDim.objects.create(
-            batch=cls.batch,
-            domain=cls.domain,
-            application_id=100007,
-            name='icds-cas',
-            deleted=False,
-        )
-        cls.user_dim = UserDim.objects.create(
-            batch=cls.batch,
-            user_id=cls.user.get_id,
-            username=cls.user.username,
-            user_type=cls.user._get_user_type(),
-            doc_type=cls.user.doc_type,
-            date_joined=datetime.utcnow() - timedelta(days=5000),
-            deleted=False,
-        )
-        cls.app_fact = ApplicationStatusFact.objects.create(
-            batch=cls.batch,
-            app_dim=cls.app_dim,
-            user_dim=cls.user_dim,
-            domain=cls.domain,
-            last_form_submission_date=None,
+        cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc2)
+        cls.agg_inactive_aww = AggregateInactiveAWW.objects.create(
+            awc_site_code=cls.user.raw_username,
+            awc_id=cls.loc._id,
+            last_submission=None,
         )
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super(TestAWWSubmissionPerformanceIndicator, cls).tearDownClass()
-        # warehouse entities are cleaned up by db transaction rollback
 
     @property
     def now(self):
         return datetime.utcnow()
 
     def test_form_sent_today(self, patch):
-        self.app_fact.last_form_submission_date = self.now
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = self.now
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
     def test_form_sent_just_under_seven_days_ago(self, patch):
-        self.app_fact.last_form_submission_date = self.now - timedelta(days=6, hours=23)
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = self.now - timedelta(days=6, hours=23)
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
     def test_form_sent_eight_days_ago(self, patch):
-        self.app_fact.last_form_submission_date = self.now - timedelta(days=8)
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = self.now - timedelta(days=8)
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one week', messages[0])
 
     def test_form_sent_thirty_days_ago(self, patch):
-        self.app_fact.last_form_submission_date = self.now - timedelta(days=29, hours=23)
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = self.now - timedelta(days=29, hours=23)
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one week', messages[0])
 
     def test_form_sent_thirty_one_days_ago(self, patch):
-        self.app_fact.last_form_submission_date = self.now - timedelta(days=31)
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = self.now - timedelta(days=31)
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
     def test_no_last_form_submission(self, patch):
-        self.app_fact.last_form_submission_date = None
-        self.app_fact.save()
+        self.agg_inactive_aww.last_submission = None
+        self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
-    def test_no_app_status_fact(self, patch):
+    def test_no_agg_rows(self, patch):
         messages = run_indicator_for_user(
-            self.user_sans_app_status,
+            self.user_sans_aggregation,
             AWWSubmissionPerformanceIndicator,
             language_code='en',
         )

@@ -1,9 +1,7 @@
-# coding=utf-8
 from collections import defaultdict
 import uuid
 from django.test import SimpleTestCase
 from corehq.toggles import deterministic_random
-from six.moves import range
 
 
 class DeterministicRandomTestCase(SimpleTestCase):

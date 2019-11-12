@@ -1,16 +1,14 @@
-
 from collections import namedtuple
 
 from quickcache import get_quickcache
 from quickcache.django_quickcache import tiered_django_cache
 from quickcache.quickcache import ConfigMixin
 
-from corehq.sql_db.routers import forced_citus
 from corehq.util.quickcache import quickcache_soft_assert, get_session_key
 
 
 def get_default_prefix():
-    return 'c' if forced_citus() else ''
+    return 'c'
 
 
 def get_locmem_prefix():

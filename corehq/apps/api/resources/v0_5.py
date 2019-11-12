@@ -1,4 +1,3 @@
-
 from collections import namedtuple
 from itertools import chain
 
@@ -7,9 +6,8 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
+from memoized import memoized_property
 
-import six
-from six.moves import map
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -20,6 +18,7 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from corehq.apps.export.views.utils import user_can_view_odata_feed
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -75,7 +74,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
@@ -232,7 +230,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(six.text_type(e))
+                            bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
@@ -432,7 +430,7 @@ class GroupResource(v0_4.GroupResource):
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
             except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = six.text_type(e)
+                bundle.data['_id'] = str(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -457,7 +455,7 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
         except AssertionError as e:
-            bundle.data['error_message'] = six.text_type(e)
+            bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -490,10 +488,22 @@ class GroupResource(v0_4.GroupResource):
             obj = bundle_or_obj.obj
         else:
             obj = bundle_or_obj
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=obj.domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
+        return self._get_resource_uri(obj)
+
+    def _get_resource_uri(self, obj):
+        # This function is called up to 1000 times per request
+        # so build url from a known string template
+        # to avoid calling the expensive `reverse` function each time
+        return self._get_resource_uri_template.format(domain=obj.domain, pk=obj._id)
+
+    @memoized_property
+    def _get_resource_uri_template(self):
+        """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
+        return reverse('api_dispatch_detail', kwargs=dict(
+            resource_name=self._meta.resource_name,
+            api_name=self._meta.api_name,
+            domain='__domain__',
+            pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
@@ -760,7 +770,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         try:
             report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
         except Http404 as e:
-            raise NotFound(six.text_type(e))
+            raise NotFound(str(e))
         return report_configuration
 
     def obj_get_list(self, bundle, **kwargs):
@@ -933,29 +943,53 @@ class DomainUsernames(Resource):
         return results
 
 
-class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
-
+class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
     config_id = None
     table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
-            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        if not domain_has_privilege(request.domain, privileges.ODATA_FEED):
+            raise ImmediateHttpResponse(
+                response=HttpResponseNotFound('Feature flag not enabled.')
+            )
         self.config_id = kwargs['config_id']
         self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
-            response = super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
+            response = super(BaseODataResource, self).dispatch(
+                request_type, request, **kwargs
+            )
+
+            # order REALLY matters for the following code. It should be called
+            # AFTER the super's dispatch or request.couch_user will not be present
+            if not user_can_view_odata_feed(request.domain, request.couch_user):
+                raise ImmediateHttpResponse(
+                    response=HttpResponseNotFound('No permission to view feed.')
+                )
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
         return response
 
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+    def create_response(self, request, data, response_class=HttpResponse,
+                        **response_kwargs):
         data['domain'] = request.domain
         data['config_id'] = self.config_id
         data['api_path'] = request.path
         data['table_id'] = self.table_id
-        response = super(ODataCaseResource, self).create_response(
+        response = super(BaseODataResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['_id']
+        }
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
+
+
+class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
@@ -963,12 +997,6 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
         return query
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        # Not sure why this is required but the feed 500s without it
-        return {
-            'pk': get_obj(bundle_or_obj)['_id']
-        }
 
     class Meta(v0_4.CommCareCaseResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)
@@ -985,47 +1013,15 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
 
-    def determine_format(self, request):
-        # Results should be sent as JSON
-        return 'application/json'
 
-
-class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
-
-    config_id = None
-    table_id = None
-
-    def dispatch(self, request_type, request, **kwargs):
-        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
-            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
-        self.config_id = kwargs['config_id']
-        self.table_id = int(kwargs.get('table_id', 0))
-        with TimingContext() as timer:
-            response = super(ODataFormResource, self).dispatch(request_type, request, **kwargs)
-        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
-        return response
-
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
-        data['domain'] = request.domain
-        data['config_id'] = self.config_id
-        data['api_path'] = request.path
-        data['table_id'] = self.table_id
-        response = super(ODataFormResource, self).create_response(
-            request, data, response_class, **response_kwargs)
-        return add_odata_headers(response)
+class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
-        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
         return query
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        # Not sure why this is required but the feed 500s without it
-        return {
-            'pk': get_obj(bundle_or_obj)['_id']
-        }
 
     class Meta(v0_4.XFormInstanceResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)
@@ -1041,7 +1037,3 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
-
-    def determine_format(self, request):
-        # Results should be sent as JSON
-        return 'application/json'

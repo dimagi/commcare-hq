@@ -1,4 +1,3 @@
-
 import glob
 import json
 import os
@@ -14,7 +13,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import ugettext as _
 
-import six
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
@@ -143,7 +141,7 @@ class CitusConfig(DocumentSchema):
 
 
 class SQLSettings(DocumentSchema):
-    partition_config = SchemaListProperty(SQLPartition)
+    partition_config = SchemaListProperty(SQLPartition)  # no longer used
     citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 
@@ -217,7 +215,6 @@ class MirroredEngineIds(DocumentSchema):
     engine_ids = StringListProperty()
 
 
-@six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -626,7 +623,6 @@ class ReportMeta(DocumentSchema):
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
-@six.python_2_unicode_compatible
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
@@ -1013,7 +1009,7 @@ class AsyncIndicator(models.Model):
     saved. Once saved to the data sources, this record will be deleted
     """
     id = models.BigAutoField(primary_key=True)
-    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
+    doc_id = models.CharField(max_length=255, null=False, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
@@ -1128,7 +1124,7 @@ class AsyncIndicator(models.Model):
 
 
 class InvalidUCRData(models.Model):
-    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_id = models.CharField(max_length=255, null=False)
     doc_type = models.CharField(max_length=126, null=False, db_index=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_id = models.CharField(max_length=126, db_index=True)

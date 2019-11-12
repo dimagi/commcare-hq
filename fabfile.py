@@ -1,4 +1,3 @@
-from six.moves import input
 import os
 import time
 

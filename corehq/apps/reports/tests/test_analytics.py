@@ -2,8 +2,6 @@ import uuid
 
 from django.test import TestCase
 
-from six.moves import range
-
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import (
     SimpleFormInfo,

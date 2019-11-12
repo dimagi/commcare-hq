@@ -52,6 +52,24 @@ def get_latest_released_app(domain, app_id):
     return None
 
 
+@quickcache(['domain'], timeout=1 * 60 * 60)
+def get_latest_released_app_versions_by_app_id(domain):
+    """
+    Gets a dict of all apps in domain that have released at least one build
+    and the version of their most recently released build. Note that keys
+    are the app ids, not build ids.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/applications',
+        startkey=['^ReleasedApplications', domain],
+        endkey=['^ReleasedApplications', domain, {}],
+        include_docs=False,
+    ).all()
+    # key[3] will be latest released version since view is ordered by app_id, version asc
+    return {r['key'][2]: r['key'][3] for r in results}
+
+
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)
@@ -236,18 +254,22 @@ def get_apps_in_domain(domain, include_remote=True):
     return apps
 
 
-def get_brief_apps_in_domain(domain, include_remote=True):
+def get_brief_app_docs_in_domain(domain, include_remote=True):
     from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
+    from .util import is_remote_app
     docs = [row['value'] for row in Application.get_db().view(
         'app_manager/applications_brief',
         startkey=[domain],
         endkey=[domain, {}]
     )]
-    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
     if not include_remote:
-        apps = [app for app in apps if not app.is_remote_app()]
-    return sorted(apps, key=lambda app: app.name)
+        docs = [doc for doc in docs if not is_remote_app(doc)]
+    return sorted(docs, key=lambda doc: doc['name'])
+
+
+def get_brief_apps_in_domain(domain, include_remote=True):
+    docs = get_brief_app_docs_in_domain(domain, include_remote)
+    return [wrap_app(doc) for doc in docs]
 
 
 def get_brief_app(domain, app_id):

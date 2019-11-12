@@ -1,4 +1,3 @@
-
 from sqlagg import SumWhen
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn

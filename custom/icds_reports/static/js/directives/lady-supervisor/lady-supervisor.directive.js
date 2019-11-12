@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
+function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
     var vm = this;
     vm.data = {};
     vm.label = "LS Indicators";
@@ -10,6 +10,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
     vm.currentMonth = moment().format("MMMM");
+    vm.isAlertActive = isAlertActive;
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -65,7 +66,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.getData();
 }
 
-LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('ladySupervisor', function () {
     return {

@@ -22,6 +22,7 @@ describe('Children Initiated Directive', function () {
 
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
+        $provide.constant("isAlertActive", false);
 
     }));
 

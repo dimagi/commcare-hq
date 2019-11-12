@@ -1,4 +1,3 @@
-
 from django.core.management import BaseCommand
 
 from corehq.apps.users.models import CommCareUser

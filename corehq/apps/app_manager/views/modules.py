@@ -1,9 +1,5 @@
-# coding=utf-8
-
-
 import json
 import logging
-import uuid
 from collections import OrderedDict
 from distutils.version import LooseVersion
 
@@ -73,6 +69,7 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
+    generate_xmlns,
     is_usercase_in_use,
     is_valid_case_type,
     module_case_hierarchy_has_circular_reference,
@@ -152,7 +149,7 @@ def get_module_view_context(request, app, module, lang=None):
         context.update(_get_report_module_context(app, module))
     else:
         context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
-        context.update(_get_basic_module_view_context(app, module, case_property_builder))
+        context.update(_get_basic_module_view_context(request, app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
     context.update({'module_brief': module_brief})
@@ -223,13 +220,13 @@ def _get_advanced_module_view_context(app, module):
     }
 
 
-def _get_basic_module_view_context(app, module, case_property_builder):
+def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
         'parent_case_modules': _get_modules_with_parent_case_type(
             app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
+            add_ons.show("submenus", request, app, module=module) and not module.is_training_module
         ),
     }
 
@@ -366,7 +363,10 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
     langs = None if lang is None else [lang]
-    options.update({f.unique_id: trans(f.name, langs) for f in forms})
+    options.update({f.unique_id: {
+        'name': trans(f.name, langs),
+        'post_form_workflow': f.post_form_workflow,
+    } for f in forms})
 
     return {
         'options': options,
@@ -979,13 +979,11 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string("app_manager/partials/build_errors.html", {
-        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})
@@ -1084,7 +1082,7 @@ def _init_biometrics_enroll_module(app, lang):
     form_name = _("Enroll New Person")
 
     context = {
-        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'name_label': _("What is your name?"),
         'simprints_enrol_label': _("Scan Fingerprints"),
@@ -1149,7 +1147,7 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     form_name = _("Followup with Person")
 
     context = {
-        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'lang': lang,
         'placeholder_label': mark_safe(_(

@@ -17,6 +17,7 @@ describe('Adhaar Beneficiary Directive', function () {
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -159,7 +160,7 @@ describe('Adhaar Beneficiary Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. '
+            'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. '
         );
     });
 

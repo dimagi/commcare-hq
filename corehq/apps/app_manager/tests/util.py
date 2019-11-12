@@ -8,6 +8,7 @@ from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
 
 import commcare_translations
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.builds.models import (
     BuildSpec,
     CommCareBuild,
@@ -173,15 +174,13 @@ def commtrack_enabled(is_enabled):
 
 @unit_testing_only
 def delete_all_apps():
-    results = Application.get_db().view(
-        'app_manager/applications',
-        reduce=False,
-        include_docs=False,
-    ).all()
-    for result in results:
-        try:
-            app = Application.get(result['id'])
-        except Exception:
-            pass
-        else:
-            app.delete()
+    for doc_type in app_doc_types():
+        res = Application.get_db().view(
+            'all_docs/by_doc_type',
+            startkey=[doc_type],
+            endkey=[doc_type, {}],
+            reduce=False,
+            include_docs=True
+        )
+        for row in res:
+            Application.get_db().delete_doc(row['doc'])

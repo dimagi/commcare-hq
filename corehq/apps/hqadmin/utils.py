@@ -1,4 +1,3 @@
-
 from importlib import import_module
 from itertools import groupby
 
@@ -7,7 +6,6 @@ from django.contrib.auth import SESSION_KEY, get_user_model
 from django.utils.safestring import mark_safe
 
 import requests
-from six.moves import filter
 
 from pillowtop.utils import force_seq_int
 

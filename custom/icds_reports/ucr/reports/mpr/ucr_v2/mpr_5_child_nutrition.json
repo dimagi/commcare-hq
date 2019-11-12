@@ -4,6 +4,10 @@
     "icds-cas-sandbox",
     "cas-lab",
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -121,10 +125,11 @@
       {
         "display": "Age Group",
         "column_id": "age_group",
-        "type": "conditional_aggregation",
-        "whens": {
-            "age_in_months BETWEEN 6 AND 35": "6_to_35",
-            "age_in_months BETWEEN 36 AND 72": "36_to_72"
+        "type": "integer_buckets",
+        "field": "age_in_months",
+        "ranges": {
+            "6_to_35": [6, 35],
+            "36_to_72": [36, 72]
         }
       },
       {

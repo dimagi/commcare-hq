@@ -1,10 +1,7 @@
-
 import logging
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
-
-import six
 
 LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),
@@ -12,9 +9,11 @@ LOG_LEVEL_CHOICES = (
     (logging.INFO, 'Info'),
 )
 
+IMPORT_FREQUENCY_DAILY = 'daily'
 IMPORT_FREQUENCY_WEEKLY = 'weekly'
 IMPORT_FREQUENCY_MONTHLY = 'monthly'
 IMPORT_FREQUENCY_CHOICES = (
+    (IMPORT_FREQUENCY_DAILY, _('Daily')),
     (IMPORT_FREQUENCY_WEEKLY, _('Weekly')),
     (IMPORT_FREQUENCY_MONTHLY, _('Monthly')),
 )
@@ -75,6 +74,7 @@ OPENMRS_DATA_TYPE_DATE = 'omrs_date'
 OPENMRS_DATA_TYPE_TIME = 'omrs_time'
 OPENMRS_DATA_TYPE_DATETIME = 'omrs_datetime'
 OPENMRS_DATA_TYPE_BOOLEAN = 'omrs_boolean'
+OPENMRS_DATA_TYPE_MILLISECONDS = 'posix_milliseconds'
 OPENMRS_DATA_TYPES = (
     OPENMRS_DATA_TYPE_NUMERIC,
     OPENMRS_DATA_TYPE_TEXT,
@@ -82,6 +82,7 @@ OPENMRS_DATA_TYPES = (
     OPENMRS_DATA_TYPE_TIME,
     OPENMRS_DATA_TYPE_DATETIME,
     OPENMRS_DATA_TYPE_BOOLEAN,
+    OPENMRS_DATA_TYPE_MILLISECONDS,
 )
 
 # Standard OpenMRS property names and their data types
@@ -123,7 +124,7 @@ ADDRESS_PROPERTIES = {
     'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
 OPENMRS_PROPERTIES = dict(chain(
-    six.iteritems(PERSON_PROPERTIES),
-    six.iteritems(NAME_PROPERTIES),
-    six.iteritems(ADDRESS_PROPERTIES),
+    PERSON_PROPERTIES.items(),
+    NAME_PROPERTIES.items(),
+    ADDRESS_PROPERTIES.items(),
 ))

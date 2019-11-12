@@ -4,7 +4,6 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from mock import Mock, patch
-from six.moves import range
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 

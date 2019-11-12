@@ -3,17 +3,14 @@
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
-    self.reportContent = o.reportContent ||  $('#report-content');
+    self.reportContent = $('#report-content');
     self.filterForm = o.filterForm || $('#paramSelectorForm');
-    self.loadingIssueModal = o.loadingIssueModal || $('#loadingReportIssueModal');
+    self.loadingIssueModal = $('#loadingReportIssueModal');
     self.issueAttempts = 0;
     self.hqLoading = null;
     self.standardReport = o.standardReport;
     self.filterRequest = null;
     self.reportRequest = null;
-    self.customAsyncUrl = o.customAsyncUrl || null;
-    self.additionalParams = o.additionalParams || '';
-    self.additionalWindowParams = o.additionalWindowParams || '';
     self.loaderClass = '.report-loading';
 
     self.humanReadableErrors = {
@@ -55,9 +52,7 @@ var HQAsyncReport = function (o) {
         }
         self.filterForm.submit(function () {
             var params = hqImport('reports/js/reports.util').urlSerialize(this);
-            history.pushState(null,window.location.title,
-                window.location.pathname + '?' + params
-                + (self.additionalWindowParams ? '&' + self.additionalWindowParams : ''));
+            history.pushState(null,window.location.title, window.location.pathname + '?' + params);
             self.updateFilters(params);
             self.updateReport(false, params, true);
             return false;
@@ -68,7 +63,7 @@ var HQAsyncReport = function (o) {
         self.standardReport.saveDatespanToCookie();
         self.filterRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot + 'filters/') + "?" + form_params + "&" + self.additionalParams,
+                self.standardReport.urlRoot + 'filters/') + "?" + form_params,
             dataType: 'json',
             success: loadFilters,
         });
@@ -94,8 +89,8 @@ var HQAsyncReport = function (o) {
         }
 
         self.reportRequest = $.ajax({
-            url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot + 'async/')) + "?" + process_filters + "&" + params + "&" + self.additionalParams,
+            url: (window.location.pathname.replace(self.standardReport.urlRoot,
+                self.standardReport.urlRoot + 'async/')) + "?" + process_filters + "&" + params,
             dataType: 'json',
             success: function (data) {
                 self.reportRequest = null;

@@ -1,8 +1,4 @@
-
 from django.db import migrations
-
-import six
-from six.moves import range
 
 from corehq.apps.case_importer.exceptions import TooManyMatches
 from corehq.apps.case_importer.tracking.task_status import (
@@ -31,7 +27,7 @@ def migrate_record_duplicates(apps, schema_editor):
                     result['errors'].append(
                         TaskStatusResultError(
                             title=TooManyMatches.title,
-                            description=six.text_type(TooManyMatches.message),
+                            description=str(TooManyMatches.message),
                             rows=[],
                         ).to_json()
                     )

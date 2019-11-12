@@ -3,7 +3,6 @@ import uuid
 from django.test import TestCase
 
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from toggle.models import Toggle
 

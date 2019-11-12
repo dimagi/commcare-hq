@@ -1,4 +1,3 @@
-
 import xml.etree.cElementTree as ET
 
 from django.test import SimpleTestCase

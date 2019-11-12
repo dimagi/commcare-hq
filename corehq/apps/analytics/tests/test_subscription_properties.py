@@ -56,7 +56,6 @@ class TestSubscriptionProperties(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.base_domain.delete()
-        cls.user.delete()
         clear_plan_version_cache()
         super(TestSubscriptionProperties, cls).tearDownClass()
 

@@ -1,9 +1,7 @@
-
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from six.moves import range
 from tastypie import fields
 from tastypie.models import ApiKey
 from tastypie.resources import Resource

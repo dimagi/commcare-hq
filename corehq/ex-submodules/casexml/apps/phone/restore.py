@@ -1,4 +1,3 @@
-
 import logging
 import os
 import shutil
@@ -58,7 +57,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('restore')
 
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
@@ -405,17 +404,12 @@ class RestoreState(object):
                 # just force a fresh sync
                 # This raises MissingSyncLog exception if synclog not found
                 sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                if sync_log.doc_type not in ('SyncLog', 'SimplifiedSyncLog'):
+                if sync_log.doc_type != 'SimplifiedSyncLog':
                     raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
                 elif sync_log.user_id != self.restore_user.user_id:
                     raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
                         self.params.sync_log_id, self.restore_user.user_id, sync_log.user_id
                     ))
-
-                # convert to the right type if necessary
-                if not isinstance(sync_log, SimplifiedSyncLog):
-                    # this call can fail with an IncompatibleSyncLogType error
-                    sync_log = SimplifiedSyncLog.from_other_format(sync_log)
                 self._last_sync_log = sync_log
             else:
                 self._last_sync_log = None
@@ -472,6 +466,8 @@ class RestoreState(object):
             extensions_checked=True,
             device_id=self.params.device_id,
         )
+        if self.params.app:
+            new_synclog.app_id = self.params.app.copy_of or self.params.app_id
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
@@ -566,7 +562,7 @@ class RestoreConfig(object):
                 payload = self.get_payload()
             response = payload.get_http_response()
         except RestoreException as e:
-            logging.exception("%s error during restore submitted by %s: %s" %
+            logger.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
             is_async = False
             response = get_simple_response_xml(
@@ -755,8 +751,7 @@ class RestoreConfig(object):
             else:
                 sync_log = self.restore_state.current_sync_log
                 sync_log_id = sync_log._id if sync_log else 'N/A'
-            log = logging.getLogger(__name__)
-            log.info(
+            logger.info(
                 "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
                 sync_log_id,
                 self.restore_user.username,

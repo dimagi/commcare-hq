@@ -4,17 +4,8 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-  <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-  {% include 'hqwebapp/includes/ui_element_js.html' %}
-  {% if strong_mobile_passwords and not hide_password_feedback %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'registration/js/password.js' %}"></script>
-  {% endif %}
-  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-  <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
-{% endblock %}
+
+{% requirejs_main 'users/js/edit_commcare_user' %}
 
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
@@ -23,6 +14,7 @@
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "path" request.path %}
+  {% initial_page_data "is_delete_allowed" is_delete_allowed %}
   {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">
       {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}

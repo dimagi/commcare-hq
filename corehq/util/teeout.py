@@ -2,11 +2,9 @@ import sys
 import traceback
 from contextlib import contextmanager
 
-import six
-
 
 @contextmanager
-def tee_output(stream):
+def tee_output(stream, sys=sys):
     """Tee stdout and stderr to an additional (combined) output stream
 
     :param stream: File-like object open for writing or file path (str)
@@ -14,7 +12,7 @@ def tee_output(stream):
     context manager.
     """
     if stream:
-        filepath = stream if isinstance(stream, six.text_type) else None
+        filepath = stream if isinstance(stream, str) else None
         if filepath:
             stream = open(filepath, "a", buffering=1, encoding='utf-8')
         real_stdout = sys.stdout
@@ -29,7 +27,7 @@ def tee_output(stream):
         etype, exc, tb = sys.exc_info()
         if stream:
             stream.write("".join(traceback.format_exception(etype, exc, tb)))
-        six.reraise(etype, exc, tb)
+        raise exc
     finally:
         if stream:
             if filepath:

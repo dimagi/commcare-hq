@@ -1,6 +1,5 @@
 import mock
 import postgres_copy
-import six
 import sqlalchemy
 import os
 
@@ -41,10 +40,7 @@ def setUpModule():
             with open(os.path.join(path, file_name), encoding='utf-8') as f:
                 table_name = get_table_name(domain.name, file_name[:-4])
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(
-                    f, table, engine, format='csv' if six.PY3 else b'csv',
-                    null='' if six.PY3 else b'', header=True
-                )
+                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
     except Exception:
         tearDownModule()
         raise

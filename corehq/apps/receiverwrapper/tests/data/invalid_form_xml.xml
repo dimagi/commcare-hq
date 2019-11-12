@@ -1,0 +1,4 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms">
+	<foo>bar</foo
+</form>

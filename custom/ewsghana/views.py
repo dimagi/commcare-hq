@@ -30,7 +30,6 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions, calcula
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
-from six.moves import map
 
 
 @location_safe

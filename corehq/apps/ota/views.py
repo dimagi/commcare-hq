@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -14,7 +13,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-import six
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 
@@ -59,7 +57,7 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
-from .models import MobileRecoveryMeasure, SerialIdBucket
+from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
     demo_user_restore_response,
     get_restore_user,
@@ -116,7 +114,7 @@ def search(request, domain):
 
 
 def _handle_query_merge_exception(request, exception):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         original_query=getattr(exception, "original_query", None),
         query_addition=getattr(exception, "query_addition", None)
@@ -125,7 +123,7 @@ def _handle_query_merge_exception(request, exception):
 
 
 def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         **query_addition_debug_details
     ))
@@ -317,6 +315,8 @@ def heartbeat(request, domain, app_build_id):
                 couch_user = CouchUser.get(couch_user.user_id)
                 update_user_reporting_data(app_build_id, app_id, couch_user, request)
 
+    if _should_force_log_submission(request):
+        info['force_logs'] = True
     return JsonResponse(info)
 
 
@@ -364,6 +364,14 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     )
     if save_user:
         couch_user.save(fire_signals=False)
+
+
+def _should_force_log_submission(request):
+    return DeviceLogRequest.is_pending(
+        request.domain,
+        request.couch_user.username,
+        request.GET.get('device_id', ''),
+    )
 
 
 @location_safe

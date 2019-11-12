@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceNotFound
 from openpyxl import Workbook
-from six.moves import range
 
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_record_count,

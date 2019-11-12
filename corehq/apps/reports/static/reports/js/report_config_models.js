@@ -241,18 +241,12 @@ hqDefine("reports/js/report_config_models", [
         self.modalSaveButton = {
             state: ko.observable(),
             saveOptions: function () {
-                // TODO: Ideally the separator would be defined in one place. Right now it is
-                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-                var separator = "\u001F",
-                    configData = self.configBeingEdited().unwrap();
+                var configData = self.configBeingEdited().unwrap();
                 for (var key in configData.filters) {
                     // remove null filters
                     if (configData.filters.hasOwnProperty(key)) {
                         if (configData.filters[key] === null) {
                             delete configData.filters[key];
-                        }
-                        if (_.isArray(configData.filters[key])) {
-                            configData.filters[key] = configData.filters[key].join(separator);
                         }
                     }
                 }

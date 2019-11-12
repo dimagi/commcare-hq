@@ -1,4 +1,3 @@
-
 from django.template import Template
 
 from corehq.apps.sms.models import MigrationStatus

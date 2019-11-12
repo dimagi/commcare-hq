@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 
 import csv
 import dateutil
-import six
 from dateutil.relativedelta import relativedelta
 
 from dimagi.utils.chunked import chunked
@@ -54,7 +53,7 @@ class Command(BaseCommand):
                     for form in forms:
                         user_id = form['form']['meta']['userID']
                         user_dict[user_id].append(form)
-                    for user_id, forms in six.iteritems(user_dict):
+                    for user_id, forms in user_dict.items():
                         has_two_forms_submitted = False
                         has_case = False
                         unique_forms = set()

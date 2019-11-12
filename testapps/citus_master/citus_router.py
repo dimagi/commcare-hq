@@ -1,4 +1,3 @@
-
 from django.conf import settings
 
 citus_masters = [name for name, db in settings.DATABASES.items() if db.get('ROLE') == 'citus_master']

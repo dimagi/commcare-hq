@@ -1,11 +1,9 @@
-
 from collections import OrderedDict
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
-import six
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 
@@ -60,7 +58,7 @@ class FakeXFormES(object):
         return doc
 
 
-class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
+class APIResourceTest(TestCase, metaclass=PatchMeta):
     """
     Base class for shared API tests. Sets up a domain and user and provides
     some helper methods and properties for accessing the API

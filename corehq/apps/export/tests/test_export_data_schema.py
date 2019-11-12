@@ -3,7 +3,6 @@ import os
 from django.test import SimpleTestCase, TestCase
 
 from mock import patch
-from six.moves import filter, map, zip
 
 from corehq.apps.app_manager.models import (
     AdvancedModule,

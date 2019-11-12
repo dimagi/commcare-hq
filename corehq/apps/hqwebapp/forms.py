@@ -9,12 +9,10 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from memoized import memoized
-from six.moves import map
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
@@ -199,7 +197,7 @@ class FormListForm(object):
                 rows = json.loads(self.data.get('child_form_data', ""))
             except ValueError as e:
                 raise ValidationError("POST request poorly formatted. {}"
-                                      .format(six.text_type(e)))
+                                      .format(str(e)))
         else:
             rows = self.data
         return [

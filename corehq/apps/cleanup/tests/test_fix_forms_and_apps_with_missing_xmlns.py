@@ -4,9 +4,8 @@ import uuid
 from django.core.management import call_command
 from django.test import TestCase
 
-from elasticsearch import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import MagicMock, patch
-from six.moves import range
 from testil import tempdir
 
 from casexml.apps.case.tests.util import delete_all_xforms

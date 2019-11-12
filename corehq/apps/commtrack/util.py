@@ -8,7 +8,6 @@ from xml.etree import cElementTree as ElementTree
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
-import six
 from unidecode import unidecode
 
 from casexml.apps.case.mock import CaseBlock
@@ -219,11 +218,11 @@ def get_case_wrapper(data):
 
 
 def unicode_slug(text):
-    return slugify(six.text_type(unidecode(text)))
+    return slugify(str(unidecode(text)))
 
 
 def encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, six.text_type) else val
+    return val.encode("utf8") if isinstance(val, str) else val
 
 
 def _fetch_ending_numbers(s):

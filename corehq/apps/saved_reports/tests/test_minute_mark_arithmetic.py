@@ -1,4 +1,3 @@
-
 import datetime
 
 from testil import eq

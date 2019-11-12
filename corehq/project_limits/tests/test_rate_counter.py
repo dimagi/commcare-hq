@@ -1,4 +1,3 @@
-
 import functools
 from datetime import timedelta
 import testil

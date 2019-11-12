@@ -11,13 +11,15 @@ from corehq.elastic import (
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
-import six
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -29,8 +31,13 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
     if user_id in WEIRD_USER_IDS:
         user_id = None
 
-    if (user_id and not _user_exists(user_id)
-            and not doc_exists_in_es(USER_INDEX_INFO, user_id)):
+    if not user_id:
+        return
+
+    if _user_exists_in_couch(user_id):
+        return
+
+    if not doc_exists_in_es(USER_INDEX_INFO, user_id):
         doc_type = "AdminUser" if username == "admin" else "UnknownUser"
         doc = {
             "_id": user_id,
@@ -41,7 +48,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        es.create(USER_INDEX, ES_META['users'].type, body=doc, id=user_id)
+        ElasticsearchInterface(es).create_doc(USER_INDEX, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):
@@ -56,7 +63,7 @@ def transform_user_for_elasticsearch(doc_dict):
     doc['__group_names'] = [res.name for res in results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
-        for key, value in six.iteritems(doc['user_data']):
+        for key, value in doc['user_data'].items():
             doc['user_data_es'].append({
                 'key': key,
                 'value': value,
@@ -65,7 +72,7 @@ def transform_user_for_elasticsearch(doc_dict):
 
 
 @quickcache(['user_id'])
-def _user_exists(user_id):
+def _user_exists_in_couch(user_id):
     return CouchUser.get_db().doc_exist(user_id)
 
 
@@ -95,7 +102,7 @@ def add_demo_user_to_user_index():
 
 
 def get_user_es_processor():
-    return ElasticProcessor(
+    return BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
@@ -126,13 +133,14 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
 
 
 def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
-        skip_ucr=False, **kwargs):
+        skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
@@ -145,6 +153,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
+        processor_chunk_size=processor_chunk_size
     )
 
 

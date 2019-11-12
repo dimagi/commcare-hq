@@ -1,4 +1,3 @@
-
 import pytz
 from datetime import datetime
 from django import template

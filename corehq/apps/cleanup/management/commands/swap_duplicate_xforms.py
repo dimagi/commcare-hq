@@ -5,8 +5,6 @@ from uuid import UUID
 
 from django.core.management import BaseCommand
 
-from six.moves import input
-
 from couchforms.models import XFormDuplicate, XFormInstance
 
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "

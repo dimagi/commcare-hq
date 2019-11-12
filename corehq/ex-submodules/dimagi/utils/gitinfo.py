@@ -1,10 +1,6 @@
 import os
 import re
-try:
-    # Backports Popen as context manager for Py2
-    from subprocess32 import Popen, PIPE
-except ImportError:
-    from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 
 def git_file_deltas(git_dir, commit, compare=None):

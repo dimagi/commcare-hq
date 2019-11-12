@@ -1,5 +1,3 @@
-
-
 from django.db import transaction
 from django.http import (
     HttpResponseBadRequest,

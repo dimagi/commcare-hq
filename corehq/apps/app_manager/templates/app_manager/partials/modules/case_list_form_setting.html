@@ -20,8 +20,8 @@
               <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
             {% endif %}
             <option value="">{% trans "Don't Show" %}</option>
-            {% for id, name in case_list_form_options.options.items %}
-              <option value="{{ id }}">{{ name }}</option>
+            {% for id, data in case_list_form_options.options.items %}
+              <option value="{{ id }}">{{ data.name }}</option>
             {% endfor %}
           </select>
           <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
@@ -56,13 +56,21 @@
     </div>
     <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
       <label class="{% css_label_class %} control-label">
-        {% trans "End of Registration action" %}
+        {% trans "End of Registration Action" %}
       </label>
       <div class="{% css_field_class %}">
         <select-toggle data-apply-bindings="false"
+                       data-bind="visible: !formHasEOFNav()"
                        params="name: 'case_list_post_form_workflow',
                                      options: endOfRegistrationOptions,
                                      value: postFormWorkflow"></select-toggle>
+        <div data-bind="visible: formHasEOFNav()" class="alert alert-info">
+          {% blocktrans %}
+            The case list registration action will be the same as the selected form's end of form navigation.
+            To avoid this, set the form's end of form navigation to the default option ('Home Screen') in
+            <a target='_blank' data-bind="attr: {href: caseListFormSettingsUrl() + '#form-settings'}">form settings</a>.
+          {% endblocktrans %}
+        </div>
       </div>
 
     </div>

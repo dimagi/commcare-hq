@@ -1,4 +1,3 @@
-
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     iter_all_ids_chunked,

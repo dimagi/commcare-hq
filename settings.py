@@ -4,7 +4,6 @@ import inspect
 from collections import defaultdict
 import importlib
 import os
-import six
 
 from django.contrib import messages
 import settingshelper as helper
@@ -112,9 +111,9 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -126,7 +125,8 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.LoggingSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -199,7 +199,6 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
-    'raven.contrib.django.raven_compat',
     'django_user_agents',
 )
 
@@ -227,7 +226,6 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
@@ -263,6 +261,7 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -309,7 +308,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
@@ -362,6 +360,8 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.aaa',
+
+    'custom.ccqa',
 )
 
 # any built-in management commands we want to override should go in hqscripts
@@ -389,10 +389,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/billing/statements/',
+    '/a/%(domain)s/settings/project/billing_information/',
+    '/a/%(domain)s/settings/project/flags/',
     '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/flags/'
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/project_limits/',
+    '/a/%(domain)s/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -458,6 +462,9 @@ UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -502,7 +509,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
@@ -700,6 +706,10 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
+RUN_FORM_META_PILLOW = True
+RUN_CASE_SEARCH_PILLOW = True
+RUN_UNKNOWN_USER_PILLOW = True
+
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
 # databases.
@@ -721,6 +731,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -860,10 +871,12 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-SENTRY_PUBLIC_KEY = None
-SENTRY_PRIVATE_KEY = None
-SENTRY_PROJECT_ID = None
-SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_DSN = None
+SENTRY_REPOSITORY = 'dimagi/commcare-hq'
+SENTRY_ORGANIZATION_SLUG = 'dimagi'
+SENTRY_PROJECT_SLUG = 'commcarehq'
+
+# used for creating releases and deploys
 SENTRY_API_KEY = None
 
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
@@ -886,6 +899,8 @@ UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+DEFAULT_ODATA_FEED_LIMIT = 25
+
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
@@ -894,6 +909,23 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -912,7 +944,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if six.text_type(error) != 'No module named localsettings':
+    if str(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1015,6 +1047,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1095,10 +1130,6 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'soft_asserts': {
             "level": "DEBUG",
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1115,6 +1146,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1127,7 +1166,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1142,7 +1181,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1196,11 +1235,6 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': True
         },
-        'sentry.errors.uncaught': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'soft_asserts': {
             'handlers': ['soft_asserts', 'console'],
             'level': 'DEBUG',
@@ -1211,11 +1245,25 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'warehouse': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1245,47 +1293,32 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-if six.PY3:
-    NEW_USERS_GROUPS_DB = 'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-    NEW_FIXTURES_DB = 'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
+NEW_FIXTURES_DB = 'fixtures'
+FIXTURES_DB = NEW_FIXTURES_DB
 
-    NEW_DOMAINS_DB = 'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = NEW_DOMAINS_DB
 
-    NEW_APPS_DB = 'apps'
-    APPS_DB = NEW_APPS_DB
+NEW_APPS_DB = 'apps'
+APPS_DB = NEW_APPS_DB
 
-    META_DB = 'meta'
+META_DB = 'meta'
 
-    _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
-    for _name in ["default", "redis"]:
-        if _name not in CACHES:  # noqa: F405
-            continue
-        _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
-        assert _options.get('SERIALIZER', _serializer) == _serializer, (
-            "Refusing to change SERIALIZER. Remove that option from "
-            "localsettings or whereever redis caching is configured. {}"
-            .format(_options)
-        )
-        _options['SERIALIZER'] = _serializer
-    del _name, _options, _serializer
-else:
-    NEW_USERS_GROUPS_DB = b'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-    NEW_FIXTURES_DB = b'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
-
-    NEW_DOMAINS_DB = b'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
-
-    NEW_APPS_DB = b'apps'
-    APPS_DB = NEW_APPS_DB
-
-    META_DB = b'meta'
+_serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+for _name in ["default", "redis"]:
+    if _name not in CACHES:  # noqa: F405
+        continue
+    _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+    assert _options.get('SERIALIZER', _serializer) == _serializer, (
+        "Refusing to change SERIALIZER. Remove that option from "
+        "localsettings or whereever redis caching is configured. {}"
+        .format(_options)
+    )
+    _options['SERIALIZER'] = _serializer
+del _name, _options, _serializer
 
 
 COUCHDB_APPS = [
@@ -1389,8 +1422,6 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
-if 'icds-ucr' in DATABASES:
-    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1785,20 +1816,6 @@ PILLOWTOPS = {
     ]
 }
 
-REPEATERS = (
-    'corehq.motech.repeaters.models.FormRepeater',
-    'corehq.motech.repeaters.models.CaseRepeater',
-    'corehq.motech.repeaters.models.CreateCaseRepeater',
-    'corehq.motech.repeaters.models.UpdateCaseRepeater',
-    'corehq.motech.repeaters.models.ShortFormRepeater',
-    'corehq.motech.repeaters.models.AppStructureRepeater',
-    'corehq.motech.repeaters.models.UserRepeater',
-    'corehq.motech.repeaters.models.LocationRepeater',
-    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
-    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
-)
-
-
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
     os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
@@ -1821,6 +1838,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
 
 
@@ -1889,12 +1907,8 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
-
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -2036,6 +2050,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
+
+    'ccqa': 'custom.ccqa',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
@@ -2055,6 +2071,7 @@ DATADOG_DOMAINS = {
     ("production", "rec"),
     ("production", "isth-production"),
     ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
@@ -2098,18 +2115,40 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
 
-SENTRY_CONFIGURED = False
-_raven_config = helper.configure_sentry(
-    BASE_DIR,
-    SERVER_ENVIRONMENT,
-    SENTRY_PUBLIC_KEY,
-    SENTRY_PRIVATE_KEY,
-    SENTRY_PROJECT_ID
-)
-if _raven_config:
-    RAVEN_CONFIG = _raven_config
+if not SENTRY_DSN:
+    pub_key = globals().get('SENTRY_PUBLIC_KEY')
+    priv_key = globals().get('SENTRY_PRIVATE_KEY')
+    project_id = globals().get('SENTRY_PROJECT_ID')
+    if pub_key and priv_key and project_id:
+        SENTRY_DSN = 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        )
+
+        import warnings
+        warnings.warn(inspect.cleandoc(f"""SENTRY configuration has changed
+
+            Please replace SENTRY_PUBLIC_KEY, SENTRY_PRIVATE_KEY, SENTRY_PROJECT_ID with SENTRY_DSN:
+
+            SENTRY_DSN = {SENTRY_DSN}
+
+            The following settings are also recommended:
+                SENTRY_ORGANIZATION_SLUG
+                SENTRY_PROJECT_SLUG
+                SENTRY_REPOSITORY
+
+            SENTRY_QUERY_URL is not longer needed.
+            """), DeprecationWarning)
+
+if SENTRY_DSN:
+    if 'SENTRY_QUERY_URL' not in globals():
+        SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
+    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
     SENTRY_CONFIGURED = True
-    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+else:
+    SENTRY_CONFIGURED = False
+
 
 CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:

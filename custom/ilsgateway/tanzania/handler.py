@@ -19,11 +19,10 @@ from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
-import six
 
 
 def choose_handler(keyword, handlers):
-    for k, v in six.iteritems(handlers):
+    for k, v in handlers.items():
         if keyword.lower() in k:
             return v
     return None
@@ -119,5 +118,5 @@ def handle(verified_contact, text, msg):
             return handler.help()
     elif keyword != 'l':
         with localize(verified_contact.owner.get_language_code()):
-            send_sms_to_verified_number(verified_contact, six.text_type(CONTACT_SUPERVISOR))
+            send_sms_to_verified_number(verified_contact, str(CONTACT_SUPERVISOR))
         return True

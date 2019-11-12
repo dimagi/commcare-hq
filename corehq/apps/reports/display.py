@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
 
 from couchforms.analytics import get_form_analytics_metadata
@@ -15,7 +14,7 @@ from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 
 
-class StringWithAttributes(six.text_type):
+class StringWithAttributes(str):
 
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)

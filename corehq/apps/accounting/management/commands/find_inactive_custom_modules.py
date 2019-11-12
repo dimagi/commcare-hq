@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from importlib import import_module
 
@@ -7,8 +6,6 @@ from django.conf import settings
 from django.core.management import BaseCommand
 
 import csv
-import six
-from six.moves import map
 
 from couchforms.analytics import get_last_form_submission_received
 
@@ -83,7 +80,7 @@ class Command(BaseCommand):
             module,
             path[len(settings.FILEPATH) + 1:],
             " | ".join(domains),
-            " | ".join(map(six.text_type, domains_exist)),
+            " | ".join(map(str, domains_exist)),
             " | ".join(plans),
             " | ".join(last_form_submissions),
             in_module_map,

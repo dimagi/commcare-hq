@@ -1,4 +1,3 @@
-
 from django.db import models, migrations
 import jsonfield.fields
 

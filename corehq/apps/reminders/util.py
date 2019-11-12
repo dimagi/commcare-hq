@@ -9,7 +9,6 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.apps.app_manager.models import Form
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
@@ -73,15 +72,6 @@ def get_form_list(domain):
                 for f in m.get_forms():
                     form_list.append({"code": f.unique_id, "name": f.full_path_name})
     return form_list
-
-
-def get_form_name(form_unique_id):
-    try:
-        form = Form.get_form(form_unique_id)
-    except ResourceNotFound:
-        return _("[unknown]")
-
-    return form.full_path_name
 
 
 def get_recipient_name(recipient, include_desc=True):

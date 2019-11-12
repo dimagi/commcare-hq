@@ -25,7 +25,6 @@ from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-import six
 
 
 # The number of minutes after which a schedule instance is considered stale.
@@ -243,7 +242,7 @@ class ScheduleInstance(PartitionedModel):
         if not self.memoized_schedule.user_data_filter:
             return True
 
-        for key, value in six.iteritems(self.memoized_schedule.user_data_filter):
+        for key, value in self.memoized_schedule.user_data_filter.items():
             if key not in contact.user_data:
                 return False
 
@@ -615,9 +614,7 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
 
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_casealertscheduleinstance'
-        index_together = AbstractAlertScheduleInstance.Meta.index_together + (
-            ('case_id', 'alert_schedule_id'),
-        )
+        index_together = AbstractAlertScheduleInstance.Meta.index_together
         unique_together = (
             ('case_id', 'alert_schedule_id', 'recipient_type', 'recipient_id'),
         )
@@ -636,9 +633,7 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
-        index_together = AbstractTimedScheduleInstance.Meta.index_together + (
-            ('case_id', 'timed_schedule_id'),
-        )
+        index_together = AbstractTimedScheduleInstance.Meta.index_together
         unique_together = (
             ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
         )

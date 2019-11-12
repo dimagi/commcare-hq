@@ -11,6 +11,8 @@ from django.conf import settings
 import csv
 from celery.task import task
 
+from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
+from corehq.util.test_utils import unit_testing_only
 from couchexport.models import Format
 from dimagi.utils.django.email import send_HTML_email
 from soil.util import expose_zipped_blob_download
@@ -177,3 +179,10 @@ def silence_during_tests():
         return open(os.devnull, 'w')
     else:
         return sys.stdout
+
+
+@unit_testing_only
+def clear_domain_names(*domain_names):
+    for domain_names in domain_names:
+        for domain in iter_all_domains_and_deleted_domains_with_name(domain_names):
+            domain.delete()

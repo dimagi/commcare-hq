@@ -1,4 +1,3 @@
-
 import uuid
 
 from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty

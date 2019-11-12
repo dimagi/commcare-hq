@@ -11,7 +11,7 @@ WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')
 MOBILE_USER_DOC_TYPES = ('CommCareUser', 'CommCareUser-Deleted')
 DOMAIN_DOC_TYPES = ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE')
 CASE_DOC_TYPES = ('CommCareCase', 'CommCareCase-Deleted')
-SYNCLOG_DOC_TYPES = ('SyncLog', 'SimplifiedSyncLog')
+SYNCLOG_DOC_TYPES = ('SimplifiedSyncLog',)
 
 
 DocumentMetadata = namedtuple(
@@ -85,6 +85,16 @@ def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type,
         document_subtype=doc_meta.subtype,
         domain=doc_meta.domain,
         is_deletion=doc_meta.is_deletion,
+    )
+
+
+def change_meta_from_hard_delete(document, data_source_type, data_source_name):
+    return ChangeMeta(
+        document_id=document['_id'],
+        document_rev=document.get('_rev', None),
+        data_source_type=data_source_type,
+        data_source_name=data_source_name,
+        is_deletion=True,
     )
 
 

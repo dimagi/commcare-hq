@@ -1,4 +1,3 @@
-
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard import CustomProjectReport
 

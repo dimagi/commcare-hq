@@ -1,11 +1,10 @@
-
 import json
 import os
 import time
 
 from django.core.management import BaseCommand
 
-from six.moves import zip_longest
+from itertools import zip_longest
 
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
@@ -20,7 +19,7 @@ from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import (
     get_case_ids_modified_with_owner_since,
 )
-from corehq.doctypemigrations.continuous_migrate import _bulk_get_revs
+from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
 from corehq.util.dates import iso_string_to_date
 from corehq.util.log import with_progress_bar
 
@@ -152,7 +151,7 @@ def prepare_metadata(doc_ids_by_domain):
     domain_id_rev_list = []
     for domain, all_doc_ids in doc_ids_by_domain.items():
         for doc_ids in chunked(all_doc_ids, 500):
-            doc_id_rev_list = _bulk_get_revs(XFormInstance.get_db(), doc_ids)
+            doc_id_rev_list = bulk_get_revs(XFormInstance.get_db(), doc_ids)
             assert len(doc_id_rev_list) == len(doc_ids)
             domain_id_rev_list.extend([[domain, doc_id, doc_rev]
                                        for doc_id, doc_rev in doc_id_rev_list])

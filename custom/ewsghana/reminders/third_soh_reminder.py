@@ -8,7 +8,6 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.utils import send_sms, has_notifications_enabled, report_status
 from dimagi.utils.couch.database import iter_docs
-from six.moves import map
 
 
 class ThirdSOHReminder(SecondSOHReminder):

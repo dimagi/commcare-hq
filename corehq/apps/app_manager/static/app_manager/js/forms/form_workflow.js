@@ -1,5 +1,3 @@
-/* global ko, _, $ */
-
 hqDefine('app_manager/js/forms/form_workflow', function () {
     'use strict';
 
@@ -16,6 +14,11 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
 
         self.workflowfallback = ko.observable(options.workflow_fallback);
         self.hasError = ko.observable(self.workflow() === FormWorkflow.Values.ERROR);
+        self.hasWarning = ko.computed(function () {
+            return !self.hasError()
+                && hqImport("hqwebapp/js/initial_page_data").get("is_case_list_form")
+                && self.workflow() !== FormWorkflow.Values.DEFAULT;
+        });
 
         self.workflow.subscribe(function (value) {
             self.showFormLinkUI(value === FormWorkflow.Values.FORM);

@@ -2,10 +2,11 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
     vm.label = "Adolescent Girls (11-14 years)";
     vm.steps = {
         'map': {route: '/demographics/adolescent_girls/map', label: 'Map View'},
@@ -91,7 +92,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
 }
 
-AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('adolescentGirls', function() {
     return {

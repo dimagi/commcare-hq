@@ -1,7 +1,5 @@
 from decimal import Decimal
 
-from six.moves import zip
-
 from corehq.apps.custom_data_fields.models import (
     CustomDataField,
     CustomDataFieldsDefinition,

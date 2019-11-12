@@ -3,8 +3,6 @@ from datetime import datetime, timedelta
 
 from django.db import transaction
 
-from six.moves import range
-
 from corehq.apps.saved_reports.models import (
     ReportNotification,
     ScheduledReportsCheckpoint,

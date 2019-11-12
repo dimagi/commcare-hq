@@ -5,8 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 import pytz
-import six
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_CREATE
@@ -20,7 +19,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
-    get_aggregated_ledger_values,
     get_all_user_ids_submitted,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
@@ -52,7 +50,6 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -111,7 +108,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
             form_pair.wrapped_form.external_blobs = {name: BlobMetaRef(**meta)
-                for name, meta in six.iteritems(attachment_dict)}
+                for name, meta in attachment_dict.items()}
             form_pair.json_form['external_blobs'] = attachment_dict
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
@@ -327,7 +324,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_completed_out_of_range_by_user(self):
@@ -338,7 +335,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     def test_completed_different_domain_by_user(self):
         start = datetime(2013, 7, 1)
@@ -348,7 +345,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_basic_submission_by_user(self):
@@ -359,7 +356,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on)
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_get_last_form_submission_by_xmlns(self):
@@ -408,7 +405,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=datetime(2013, 7, 15))
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_submission_different_domain_by_user(self):
@@ -420,7 +417,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on, domain='not-in-my-backyard')
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_basic_submission_by_date(self):
@@ -437,7 +434,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             DateSpan(start, end),
             pytz.utc
         )
-        self.assertEquals(results['2013-07-15'], 1)
+        self.assertEqual(results['2013-07-15'], 1)
 
     @run_with_all_backends
     def test_get_paged_forms_by_type(self):
@@ -467,7 +464,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             DateSpan(start, end),
             timezone
         )
-        self.assertEquals(results['2013-07-14'], 1)
+        self.assertEqual(results['2013-07-14'], 1)
 
     @run_with_all_backends
     def test_get_last_form_submission_for_user_for_app(self):
@@ -889,8 +886,8 @@ class TestUserESAccessors(SimpleTestCase):
         self._send_user_to_es('123')
         results = get_user_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'username': self.username,
             'is_active': True,
@@ -904,8 +901,8 @@ class TestUserESAccessors(SimpleTestCase):
         self._send_user_to_es('123', is_active=False)
         results = get_user_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'username': self.username,
             'is_active': False,
@@ -941,8 +938,8 @@ class TestGroupESAccessors(SimpleTestCase):
         self._send_group_to_es('123')
         results = get_group_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'name': self.group_name,
             'case_sharing': self.case_sharing,
@@ -1149,60 +1146,6 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
-
-
-class TestLedgerESAccessors(BaseESAccessorsTest):
-    es_index_info = LEDGER_INDEX_INFO
-    domain = uuid.uuid4().hex
-
-    def _send_ledger_to_es(self, section_id, case_id, entry_id, balance):
-        ledger = {
-            "_id": uuid.uuid4().hex,
-            "domain": self.domain,
-            "section_id": section_id,
-            "case_id": case_id,
-            "entry_id": entry_id,
-            "balance": balance,
-        }
-        send_to_elasticsearch('ledgers', ledger)
-        self.es.indices.refresh(self.es_index_info.index)
-        return ledger
-
-    def _check_result(self, expected, entry_ids=None):
-        result = []
-        for row in get_aggregated_ledger_values(self.domain, 'case', 'section', entry_ids):
-            result.append(row._asdict())
-        self.assertItemsEqual(result, expected)
-
-    def test_one_ledger(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 1}
-        ])
-
-    def test_two_ledger(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 4}
-        ])
-
-    def test_multiple_entries(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._send_ledger_to_es('section', 'case', 'entry_id2', 3)
-        self._check_result([
-            {'entry_id': 'entry_id2', 'balance': 3},
-            {'entry_id': 'entry_id', 'balance': 4},
-        ])
-
-    def test_filter_entries(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._send_ledger_to_es('section', 'case', 'entry_id2', 3)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 4},
-        ], entry_ids=['entry_id'])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
@@ -11,7 +9,6 @@ from django.utils.translation import ugettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from six.moves import range
 
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
@@ -790,8 +787,10 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 "that particular day."
             )
         )
-        return {
+        context = super().template_context
+        context.update({
             'submission_series': submission_series,
             'sync_series': sync_series,
             'total_users': total_users,
-        }
+        })
+        return context

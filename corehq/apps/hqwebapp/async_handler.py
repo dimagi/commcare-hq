@@ -3,8 +3,6 @@ import json
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 
-import six
-
 
 class AsyncHandlerMixin(object):
     """
@@ -68,7 +66,7 @@ class BaseAsyncHandler(object):
     def _fmt_error(self, error):
         return json.dumps({
             'success': False,
-            'error': six.text_type(error),
+            'error': str(error),
         })
 
     def _fmt_success(self, data):

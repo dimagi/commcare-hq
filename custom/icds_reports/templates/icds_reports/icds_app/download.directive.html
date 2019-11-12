@@ -1,13 +1,15 @@
 <div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row fixes-filters" ng-init="updateCssClasses()">
+    <div class="row fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-11">
             <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
-    <info-message></info-message>
-    <div class="report-content report-content-without-message">
+    <div class="report-content report-content-without-message icds-dashboard-title-fix">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
-            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+            <strong>Info!</strong> You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month.
+        </div>
+        <div class="alert alert-info" ng-show="$ctrl.isChildBeneficiaryListSelected()">
+            <strong>Info!</strong> This report contains growth monitoring information for children up to 5 years old.
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
             <strong>Please make the following selections before you can export:</strong>
@@ -67,7 +69,7 @@
                     </ui-select>
                     </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 0px !important;">
+                <div class="form-group" style="margin-bottom: 0px !important;" ng-if="($ctrl.showLocationFilter())">
                     <label class="control-label col-sm-2" for="location">Location: <i class="fa fa-info-circle" uib-popover="Select the location for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -95,7 +97,7 @@
                         </ui-select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" ng-if="($ctrl.showMonthFilter())">
                     <label class="control-label col-sm-2" for="month">Month: <i class="fa fa-info-circle" uib-popover="Select the calendar month for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -108,7 +110,7 @@
                         </ui-select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" ng-if="($ctrl.showYearFilter())">
                     <label class="control-label col-sm-2" for="year">Year: <i class="fa fa-info-circle" uib-popover="Select the year for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>

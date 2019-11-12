@@ -1,4 +1,3 @@
-
 import os
 
 from django.http import HttpResponseRedirect
