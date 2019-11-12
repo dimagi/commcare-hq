@@ -1955,16 +1955,7 @@ class CasDataExportAPIView(View):
 @method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
 class MWCDDataView(View):
 
-    def message(self, message_name):
-        error_messages = {
-            "unknown_error": "Unknown Error occured",
-            "no_data": "Data does not exists"
-        }
-
-        return error_messages[message_name]
-
     def get(self, request, *args, **kwargs):
-
         try:
             data = get_mwcd_indicator_api_data()
             response = {'isSuccess': True,
@@ -1973,9 +1964,6 @@ class MWCDDataView(View):
                             'response': data
                         }}
             return JsonResponse(response)
-        except MWCDReportView.DoesNotExist:
-            response = dict(isSuccess=False, message=self.message('no_data'))
-            return JsonResponse(response, status=500)
-        except AttributeError:
-            response = dict(isSuccess=False, message=self.message('unknown_error'))
+        except Exception:
+            response = dict(isSuccess=False, message='Unknown Error occured')
             return JsonResponse(response, status=500)
