@@ -53,7 +53,9 @@ still reference the to be deleted entity.
 
 Couch
 '''''
-A separate prune_couch_views will need to be run to remove the view from couch
+When removing a view, procedure depends on whether or not you're removing an entire design doc
+(an entire `_design` directory). If the removed view is the last one in the design doc, run
+`prune_couch_views` to remove it. If other views are left in the design doc, a reindex is required.
 
 ElasticSearch
 '''''''''''''
