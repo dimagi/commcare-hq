@@ -1,6 +1,6 @@
 
 COPY (
-select district_name, block_name, supervisor_name,awc_name,
+select district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as pse_eligible,
 SUM(CASE WHEN pse_days_attended is not null and pse_days_attended=0 then 1 ELSE 0 END) as pse_0,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN pse_days_attended is not null and pse_days_attended=0 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_0,
@@ -13,40 +13,39 @@ CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WH
 SUM(CASE WHEN pse_days_attended is not null and pse_days_attended>21 then 1 ELSE 0 END) as pse_gt_21,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN pse_days_attended is not null and pse_days_attended>21 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_gt_21,
 month
-from  awc_location inner join
+from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and child_health.month='2019-10-01'
+    awc_location.supervisor_id = child_health.supervisor_id AND
+    district_is_test<>1 and
+    child_health.month='2019-10-01'
     )
-WHERE child_health.age_in_months>36
-group by  district_name, block_name, supervisor_name,awc_name, month
+WHERE child_health.age_in_months>36 and aggregation_level=5
+group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
 ) To '/tmp/pse_JULY_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
 
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
-   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.awc_name, remote_scan.month
+   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
          Task Count: 64
          Tasks Shown: One of 64
          ->  Task
                Node: host=100.71.184.232 port=5432 dbname=icds_ucr
-               ->  Finalize GroupAggregate  (cost=467268.16..473754.82 rows=29493 width=278)
-                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name, child_health.month
-                     ->  Gather Merge  (cost=467268.16..471174.03 rows=29495 width=118)
-                           Workers Planned: 5
-                           ->  Partial GroupAggregate  (cost=466268.08..466622.02 rows=5899 width=118)
-                                 Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name, child_health.month
-                                 ->  Sort  (cost=466268.08..466282.83 rows=5899 width=78)
-                                       Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name
-                                       ->  Nested Loop  (cost=1.11..465898.62 rows=5899 width=78)
-                                             ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=61099 width=45)
-                                                   Index Cond: (month = '2019-10-01'::date)
-                                                   Filter: (age_in_months > 36)
-                                             ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..0.87 rows=1 width=97)
-                                                   Index Cond: (doc_id = child_health.awc_id)
-                                                   Filter: ((state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (district_is_test = 0) AND (block_is_test = 0) AND (supervisor_is_test = 0) AND (awc_is_test = 0))
-(22 rows)
+               ->  GroupAggregate  (cost=466745.98..466746.11 rows=1 width=310)
+                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name, child_health.month
+                     ->  Sort  (cost=466745.98..466745.98 rows=1 width=110)
+                           Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name
+                           ->  Gather  (cost=1001.11..466745.97 rows=1 width=110)
+                                 Workers Planned: 5
+                                 ->  Nested Loop  (cost=1.11..465745.87 rows=1 width=110)
+                                       ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=61099 width=78)
+                                             Index Cond: (month = '2019-10-01'::date)
+                                             Filter: (age_in_months > 36)
+                                       ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..0.87 rows=1 width=129)
+                                             Index Cond: (doc_id = child_health.awc_id)
+                                             Filter: ((district_is_test <> 1) AND (aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (child_health.supervisor_id = supervisor_id))
+(20 rows)
 
 */
 
@@ -55,7 +54,7 @@ group by  district_name, block_name, supervisor_name,awc_name, month
 
 
 COPY (
-select district_name, block_name, supervisor_name,awc_name,
+select district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as pse_eligible,
 SUM(CASE WHEN pse_days_attended is not null and pse_days_attended=0 then 1 ELSE 0 END) as pse_0,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN pse_days_attended is not null and pse_days_attended=0 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_0,
@@ -68,21 +67,44 @@ CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WH
 SUM(CASE WHEN pse_days_attended is not null and pse_days_attended>21 then 1 ELSE 0 END) as pse_gt_21,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN pse_days_attended is not null and pse_days_attended>21 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_gt_21,
 month
-from  awc_location inner join
+from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and child_health.month='2019-10-01'
+    awc_location.supervisor_id = child_health.supervisor_id AND
+    district_is_test=0 AND
+    child_health.month='2019-10-01'
     )
-WHERE child_health.age_in_months>60
-group by  district_name, block_name,  supervisor_name,awc_name,month
+WHERE child_health.age_in_months>60 and aggregation_level=5
+group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
 ) To '/tmp/pse_JULY_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
-
+/*
+ HashAggregate  (cost=0.00..0.00 rows=0 width=0)
+   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
+   ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+         Task Count: 64
+         Tasks Shown: One of 64
+         ->  Task
+               Node: host=100.71.184.232 port=5432 dbname=icds_ucr
+               ->  GroupAggregate  (cost=444645.32..444645.46 rows=1 width=310)
+                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name, child_health.month
+                     ->  Sort  (cost=444645.32..444645.33 rows=1 width=110)
+                           Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name
+                           ->  Gather  (cost=1001.11..444645.31 rows=1 width=110)
+                                 Workers Planned: 5
+                                 ->  Nested Loop  (cost=1.11..443645.21 rows=1 width=110)
+                                       ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=24200 width=78)
+                                             Index Cond: (month = '2019-10-01'::date)
+                                             Filter: (age_in_months > 60)
+                                       ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..1.30 rows=1 width=129)
+                                             Index Cond: (doc_id = child_health.awc_id)
+                                             Filter: ((aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (district_is_test = 0) AND (child_health.supervisor_id = supervisor_id))
+(20 rows)
+*/
 
 
 
 COPY (
-select district_name, block_name,supervisor_name,awc_name,
+select district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as lunch_eligible,
 SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count=0 then 1 ELSE 0 END) as lunch_0,
 CASE WHEN SUM(pse_eligible) is not null  and SUM(pse_eligible)>0 THEN SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count=0 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_0,
@@ -95,20 +117,19 @@ CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WH
 SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count>21 then 1 ELSE 0 END) as lunch_gt_21,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count>21 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_gt_21,
 month
-from  awc_location inner join
+from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and child_health.month='2019-10-01'
+    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
     )
-WHERE child_health.age_in_months>36
-group by  district_name, block_name,supervisor_name,awc_name,month
+WHERE child_health.age_in_months>36 and aggregation_level=5
+group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
 ) To '/tmp/lunch_Sept_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
 COPY (
-select district_name, block_name,supervisor_name,awc_name,
+select district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as lunch_eligible,
 SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count=0 then 1 ELSE 0 END) as lunch_0,
 CASE WHEN SUM(pse_eligible) is not null  and SUM(pse_eligible)>0 THEN SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count=0 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_0,
@@ -121,20 +142,19 @@ CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WH
 SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count>21 then 1 ELSE 0 END) as lunch_gt_21,
 CASE WHEN SUM(pse_eligible) is not null and SUM(pse_eligible)>0 THEN SUM(CASE WHEN lunch_count is not null and pse_eligible=1 and lunch_count>21 then 1 ELSE 0 END)::float/SUM(pse_eligible)*100 ELSE 0 END as percent_gt_21,
 month
-from  awc_location inner join
+from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and child_health.month='2019-10-01'
+    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
     )
-WHERE child_health.age_in_months>60
-group by  district_name, block_name,supervisor_name,awc_name,month
+WHERE child_health.age_in_months>60 and awc_location.aggregation_level=5
+group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
 ) To '/tmp/lunch_Sept_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
 COPY (
-select district_name,block_name, supervisor_name,awc_name,
+select district_name,block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(CASE WHEN thr_eligible is not null then thr_eligible ELSE 0 END) as mother_thr_eligible,
 
 SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed=0 THEN 1 else 0 END) as mother_thr_0,
@@ -158,40 +178,40 @@ month
 from  awc_location inner join
 "ccs_record_monthly" ccs_record on (awc_location.doc_id=ccs_record.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and
+    district_is_test=0  AND
+    awc_location.supervisor_id = ccs_record.supervisor_id AND
     pregnant=1 and lactating=0 and ccs_record.month = '2019-10-01'
     )
-group by  district_name, block_name, supervisor_name,awc_name, month
+WHERE awc_location.aggregation_level=5
+group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
 ) To '/tmp/thr_preg_Sept.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
-   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.awc_name, remote_scan.month
+   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
          Task Count: 64
          Tasks Shown: One of 64
          ->  Task
                Node: host=100.71.184.232 port=5432 dbname=icds_ucr
-               ->  Finalize GroupAggregate  (cost=106732.13..106955.07 rows=1001 width=278)
-                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name, ccs_record.month
-                     ->  Gather Merge  (cost=106732.13..106867.56 rows=1000 width=126)
-                           Workers Planned: 5
-                           ->  Partial GroupAggregate  (cost=105732.05..105747.05 rows=200 width=126)
-                                 Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name, ccs_record.month
-                                 ->  Sort  (cost=105732.05..105732.55 rows=200 width=78)
-                                       Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.awc_name
-                                       ->  Nested Loop  (cost=0.55..105724.41 rows=200 width=78)
-                                             ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record  (cost=0.00..100622.41 rows=2083 width=45)
-                                                   Filter: ((pregnant = 1) AND (lactating = 0) AND (month = '2019-10-01'::date))
-                                             ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..2.44 rows=1 width=97)
-                                                   Index Cond: (doc_id = ccs_record.awc_id)
-                                                   Filter: ((district_is_test = 0) AND (block_is_test = 0) AND (supervisor_is_test = 0) AND (awc_is_test = 0) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text))
-(21 rows)
+               ->  GroupAggregate  (cost=106719.31..106719.47 rows=1 width=310)
+                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name, ccs_record.month
+                     ->  Sort  (cost=106719.31..106719.32 rows=1 width=110)
+                           Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name
+                           ->  Gather  (cost=1000.55..106719.30 rows=1 width=110)
+                                 Workers Planned: 5
+                                 ->  Nested Loop  (cost=0.55..105719.20 rows=1 width=110)
+                                       ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record  (cost=0.00..100622.41 rows=2083 width=78)
+                                             Filter: ((pregnant = 1) AND (lactating = 0) AND (month = '2019-10-01'::date))
+                                       ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..2.44 rows=1 width=129)
+                                             Index Cond: (doc_id = ccs_record.awc_id)
+                                             Filter: ((district_is_test = 0) AND (aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (ccs_record.supervisor_id = supervisor_id))
+(19 rows)
+
 */
 
 
 COPY (
-select district_name,block_name, supervisor_name,awc_name,
+select district_name,block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(CASE WHEN thr_eligible is not null then thr_eligible ELSE 0 END) as mother_thr_eligible,
 
 SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed=0 THEN 1 else 0 END) as mother_thr_0,
@@ -215,17 +235,17 @@ month
 from  awc_location inner join
 "ccs_record_monthly" ccs_record on (awc_location.doc_id=ccs_record.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and
+    district_is_test=0 and awc_location.supervisor_id = ccs_record.supervisor_id AND
     pregnant=0 and lactating=1 and ccs_record.month = '2019-10-01'
     )
-group by  district_name, block_name,  supervisor_name,awc_name,month
+WHERE awc_location.aggregation_level=5
+group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
 ) To '/tmp/thr_lact_Sept.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
 COPY (
-select district_name, block_name, supervisor_name,awc_name,
+select district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(thr_eligible) as thr_eligible,
 
 SUM(CASE WHEN num_rations_distributed is not null and num_rations_distributed=0 then 1 ELSE 0 END) as child_thr_0,
@@ -240,16 +260,37 @@ CASE WHEN SUM(thr_eligible) is not null and SUM(thr_eligible)>0 THEN SUM(CASE WH
 SUM(CASE WHEN num_rations_distributed is not null and num_rations_distributed>21 then 1 ELSE 0 END) as child_thr_gt_21,
 CASE WHEN SUM(thr_eligible) is not null and SUM(thr_eligible)>0 THEN SUM(CASE WHEN num_rations_distributed is not null and num_rations_distributed>21 then 1 ELSE 0 END)::float/SUM(thr_eligible)*100 ELSE 0 END as percent_child_thr_gt_21,
 month
-from  awc_location inner join
+from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and block_is_test=0 and supervisor_is_test=0 and
-    awc_is_test=0 and child_health.month='2019-10-01'
+    district_is_test=0 and awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
     )
-
-group by  district_name, block_name,  supervisor_name,awc_name,month
+WHERE thr_eligible=1 and awc_location.aggregation_level=5
+group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
 ) To '/tmp/thr_child_July.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
-
+/*
+ HashAggregate  (cost=0.00..0.00 rows=0 width=0)
+   Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
+   ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+         Task Count: 64
+         Tasks Shown: One of 64
+         ->  Task
+               Node: host=100.71.184.232 port=5432 dbname=icds_ucr
+               ->  GroupAggregate  (cost=455173.05..455173.18 rows=1 width=310)
+                     Group Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name, child_health.month
+                     ->  Sort  (cost=455173.05..455173.05 rows=1 width=110)
+                           Sort Key: awc_location.district_name, awc_location.block_name, awc_location.supervisor_name, awc_location.supervisor_id, awc_location.awc_name
+                           ->  Gather  (cost=1001.11..455173.04 rows=1 width=110)
+                                 Workers Planned: 5
+                                 ->  Nested Loop  (cost=1.11..454172.94 rows=1 width=110)
+                                       ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=41400 width=78)
+                                             Index Cond: (month = '2019-10-01'::date)
+                                             Filter: (thr_eligible = 1)
+                                       ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..1.01 rows=1 width=129)
+                                             Index Cond: (doc_id = child_health.awc_id)
+                                             Filter: ((aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (district_is_test = 0) AND (child_health.supervisor_id = supervisor_id))
+(20 rows)
+*/
 
 
 
