@@ -15,15 +15,21 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
        $scope.adjustUIComponentsIfAlertIsActive();
     });
 
-    var locationParams = $location.search();
-    var newKey;
-    for (var key in locationParams) {
-        newKey = key;
-        if (newKey.startsWith('amp;')) {
-            newKey = newKey.slice(4);
-            $location.search(newKey, locationParams[key]).search(key, null);
+    function fixEscapedURLAmpersands() {
+        // if the URL has replaced any "&" characters with "&amp;" then this will fix the
+        // associated parameter keys.
+        var locationParams = $location.search();
+        var newKey;
+        for (var key in locationParams) {
+            newKey = key;
+            if (newKey.startsWith('amp;')) {
+                newKey = newKey.slice(4);
+                $location.search(newKey, locationParams[key]).search(key, null);
+            }
         }
+
     }
+    fixEscapedURLAmpersands();
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
