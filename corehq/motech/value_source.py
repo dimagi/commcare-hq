@@ -432,6 +432,8 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
         warn("JsonPathCasePropertyMap is deprecated; use CaseProperty", DeprecationWarning)
 
 
+# This class is to be replaced by CasePropertyConstantValue.
+# cf. nh/omrs/case_const (PR: https://github.com/dimagi/commcare-hq/pull/25925)
 class JsonPathConstantValue(ConstantValue, JsonPathMixin):
 
     def _get_external_value(self, external_data):
