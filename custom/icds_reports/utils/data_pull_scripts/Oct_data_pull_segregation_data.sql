@@ -92,6 +92,26 @@ from temp_pse_data_pull t join awc_location_local a on a.supervisor_id=t.supervi
 
 
 
+-- BELOW IS similar query for ccs and then same rollup.
+CREATE TEMPORARY TABLE dummy_thr_table AS
+(
+select supervisor_id,
+SUM(CASE WHEN thr_eligible is not null then thr_eligible ELSE 0 END) as mother_thr_eligible,
+SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed=0 THEN 1 else 0 END) as mother_thr_0,
+SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN 1 and 7 THEN 1 else 0 END) as mother_thr_1_7,
+SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN  8 and 14 THEN 1 else 0 END) as mother_thr_8_14,
+SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN  15 and 21 THEN 1 else 0 END) as mother_thr_15_21,
+SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed>21 THEN 1 else 0 END) as mother_thr_gt_21
+from
+"ccs_record_monthly" ccs_record where (
+ccs_record.month='2019-10-01'
+    )
+group by  supervisor_id)
+
+
+
+
+
 
 /*
 Below is another approach. WE should decide which to take
