@@ -12,7 +12,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.dateChanged = false;
 
     angular.element(document).ready(function () {
-       $scope.updateCssClasses();
+       $scope.adjustUIComponentsIfAlertIsActive();
     });
 
     var locationParams = $location.search();
@@ -37,7 +37,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         });
     };
 
-    $scope.updateCssClasses = function () {
+    $scope.adjustUIComponentsIfAlertIsActive = function () {
         // 'fixes-filters'
         if (isAlertActive) {
             var elementsToUpdate = ['left-menu', 'fixed-title', 'main-container'];
