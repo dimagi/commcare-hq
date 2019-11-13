@@ -14,6 +14,7 @@ from corehq.apps.users.models import (
     UserReportingMetadataStaging,
 )
 from corehq.apps.users.util import (
+    WEIRD_USER_IDS,
     filter_by_app,
     update_device_meta,
     update_latest_builds,
@@ -48,12 +49,15 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
+        user_id = doc.get('form', {}).get('meta', {}).get('userID')
+        if user_id in WEIRD_USER_IDS:
+            return
+
         try:
             received_on = string_to_utc_datetime(doc.get('received_on'))
         except ValueError:
             return
 
-        user_id = doc.get('form', {}).get('meta', {}).get('userID')
         app_id = doc.get('app_id')
         version = doc.get('version')
 
