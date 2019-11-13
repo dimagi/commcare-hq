@@ -1481,7 +1481,7 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
 
 def get_dashboard_usage_excel_file(excel_data, data_type):
     export_info = excel_data[1][1]
-    primary_headers = ['', '', '', '', '', '', '', '', '', '', 'Tabular Report Download Frequency']
+    primary_headers = ['', '', '', '', '', '', '', '', '', '', 'Tabular Report Download Frequency (Last 1 week)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1525,7 +1525,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
         cell.fill = cell_pattern_blue
         cell.font = bold_font
         cell.border = thin_border_no_bottom
-        if primary_header == 'Tabular Report Download Frequency':
+        if primary_header == 'Tabular Report Download Frequency (Last 1 week)':
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
                                                    get_column_letter(current_column_location + 10)))
             cell.border = thin_border_no_top
