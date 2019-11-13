@@ -5,7 +5,7 @@
 # Districts launched
 # Avg. # of Days AWCs open
 */
--- Approach 1: Use view agg_awc_monthly
+-- [Used] Approach 1: Use view agg_awc_monthly
 SELECT
 state_name,
 num_awcs,
@@ -63,7 +63,7 @@ FROM
 
 -- Query 2 --
 -- # of AWCs that submitted Infra form
--- Approach 1: Use view agg_awc_monthly
+-- [Used] Approach 1: Use view agg_awc_monthly
 SELECT state_name, sum(num_awc_infra_last_update)
 FROM agg_awc_monthly
 WHERE aggregation_level=1 AND month='2019-10-01'
@@ -155,6 +155,7 @@ GROUP BY state_name;
 # of AWCs that reported available functional toilet
 # of AWCs that reported unavailable functional toilet
 */
+-- Approach 1: Use view agg_awc_monthly without Null
 SELECT state_name,
 count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
 count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
@@ -186,6 +187,7 @@ GROUP BY state_name
 (18 rows)
 */
 
+-- [Used] Approach 2: Use view agg_awc_monthly
 -- include null values which really increases the cost of the query
 # of AWCs that reported available drinking water
 # of AWCs that reported unavailable drinking water
@@ -229,7 +231,7 @@ GROUP BY state_name
 (20 rows)
 */
 
--- just use agg_awc instead of using the view and map state name later,
+-- Approach 3: just use agg_awc instead of using the view and map state name later,
 -- it however appears to be more costly but finds null value with less addition to cost
 
 SELECT state_id,
@@ -258,6 +260,7 @@ GROUP BY state_id
 (13 rows)
 */
 
+-- Approach 4: just use agg_awc instead of using the view and map state name later, include null values
 SELECT state_id,
 count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
 count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
@@ -333,6 +336,7 @@ GROUP BY state_name
 
 /*
 -- Query 4 --
+-- [Used]
 # of AWCs that reported available medicine kit
 # of AWCs that reported unavailable medicine kit
 # of AWCs that reported available infant weighing scale
@@ -378,6 +382,7 @@ GROUP BY state_name
 
 /*
 -- Query 5 --
+-- [Used]
 # of AWCs that reported available electricity line
 # of AWCs that reported unavailable electricity line
 # of AWCs that did not report about electricity line
@@ -426,6 +431,7 @@ GroupAggregate  (cost=269160.09..269160.27 rows=6 width=42)
 
 /*
 -- Query 6 --
+-- [Used]
 # Households Registered
 # Pregnant Women (should this use cases_ccs_pregnant or cases_ccs_pregnant_all)
 # Lactating Mothers (cases_ccs_lactating or cases_ccs_lactating_all)
@@ -462,6 +468,7 @@ GROUP BY state_name
 
 -- Query 7 --
 -- # Children (0-6y)
+-- [Used]
 SELECT state_name,
 SUM(cases_child_health) AS "0-6y"
 FROM agg_awc_monthly
