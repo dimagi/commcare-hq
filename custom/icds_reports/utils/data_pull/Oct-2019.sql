@@ -1,4 +1,5 @@
 /*
+-- Query 1 --
 # Total AWCs
 # AWCs Launched
 # Districts launched
@@ -60,6 +61,7 @@ FROM
 (9 rows)
 */
 
+-- Query 2 --
 -- # of AWCs that submitted Infra form
 -- Approach 1: Use view agg_awc_monthly
 SELECT state_name, sum(num_awc_infra_last_update)
@@ -147,6 +149,7 @@ GROUP BY state_name;
 */
 
 /*
+-- Query 3 --
 # of AWCs that reported available drinking water
 # of AWCs that reported unavailable drinking water
 # of AWCs that reported available functional toilet
@@ -257,6 +260,7 @@ GroupAggregate  (cost=269160.09..269160.30 rows=6 width=42)
 
 
 /*
+-- Query 4 --
 # of AWCs that reported available medicine kit
 # of AWCs that reported unavailable medicine kit
 # of AWCs that reported available infant weighing scale
@@ -298,6 +302,7 @@ GROUP BY state_name
 */
 
 /*
+-- Query 5 --
 # of AWCs that reported available electricity line
 # of AWCs that reported unavailable electricity line
 # AWCs conducted at least 2 CBE events
@@ -342,6 +347,7 @@ GroupAggregate  (cost=269160.09..269160.27 rows=6 width=42)
 */
 
 /*
+-- Query 6 --
 # Households Registered
 # Pregnant Women (should this use cases_ccs_pregnant or cases_ccs_pregnant_all)
 # Lactating Mothers (cases_ccs_lactating or cases_ccs_lactating_all)
@@ -376,6 +382,7 @@ GROUP BY state_name
 (16 rows)
 */
 
+-- Query 7 --
 -- # Children (0-6y)
 SELECT state_name,
 SUM(cases_child_health) AS "0-6y"
