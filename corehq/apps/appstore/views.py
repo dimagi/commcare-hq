@@ -208,48 +208,6 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
         }
 
 
-class ProjectInformationView(BaseCommCareExchangeSectionView):
-    urlname = 'project_info'
-    template_name = 'appstore/project_info.html'
-    page_title = _("Project Information")
-
-    @property
-    def snapshot(self):
-        return self.kwargs['snapshot']
-
-    @property
-    @memoized
-    def project(self):
-        try:
-            return Domain.get(self.snapshot)
-        except ResourceNotFound:
-            return Domain.get_by_name(self.snapshot)
-
-    def dispatch(self, request, *args, **kwargs):
-        if not can_view_app(request, self.project):
-            raise Http404()
-        return super(ProjectInformationView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.snapshot,))
-
-    @property
-    def page_context(self):
-        return {
-            'project': self.project,
-            'applications': self.project.full_applications(include_builds=False),
-            'fixtures': FixtureDataType.by_domain(self.project.name),
-            'copies': self.project.copies_of_parent(),
-            'images': set(),
-            'audio': set(),
-            'url_base': reverse(CommCareExchangeHomeView.urlname),
-            'display_import': getattr(
-                self.request, 'couch_user', ''
-            ) and self.request.couch_user.get_domains(),
-        }
-
-
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", start_at=None, size=None):
     if terms is None:
         terms = ['is_approved', 'sort_by', 'search']
@@ -288,67 +246,6 @@ def approve_app(request, snapshot):
         domain_obj.is_approved = False
         domain_obj.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
-
-
-@login_required
-def copy_snapshot(request, snapshot):
-    user = request.couch_user
-    if not user.is_eula_signed():
-        messages.error(request, _('You must agree to our terms of service to download an app'))
-        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-    domain_obj = Domain.get(snapshot)
-    if request.method == "POST" and domain_obj.is_snapshot:
-        assert domain_obj.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
-
-        from corehq.apps.registration.forms import DomainRegistrationForm
-
-        args = {
-            'domain_name': request.POST['new_project_name'],
-            'hr_name': request.POST['new_project_name'],
-            'eula_confirmed': True,
-        }
-        form = DomainRegistrationForm(args)
-
-        if request.POST.get('new_project_name', ""):
-            if not domain_obj.published:
-                messages.error(request, _("This project is not published and can't be downloaded"))
-                return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-            if not form.is_valid():
-                messages.error(request, form.errors)
-                return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-            new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
-            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(domain_obj.name, new_domain_name)]):
-                try:
-                    new_domain = domain_obj.save_copy(new_domain_name,
-                                                      new_hr_name=form.cleaned_data['hr_name'],
-                                                      user=user)
-                    if new_domain.commtrack_enabled:
-                        new_domain.convert_to_commtrack()
-                    ensure_explicit_community_subscription(
-                        new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-                        web_user=user.username,
-                    )
-                except NameUnavailableException:
-                    messages.error(request, _("A project by that name already exists"))
-                    return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-            def inc_downloads(d):
-                d.downloads += 1
-
-            apply_update(domain_obj, inc_downloads)
-            messages.success(request, render_to_string("appstore/partials/view_wiki.html",
-                                                       {"pre": _("Project copied successfully!")}),
-                             extra_tags="html")
-            return HttpResponseRedirect(reverse('view_app',
-                                                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
-        else:
-            messages.error(request, _("You must specify a name for the new project"))
-            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-    else:
-        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
 
 def project_image(request, snapshot):
