@@ -1,4 +1,4 @@
-/* global angular hqDefine hqImport */
+/* global angular */
 
 hqDefine("js/icds_dashboard_utils", function () {
     function populateDashboardConstants(appName) {
