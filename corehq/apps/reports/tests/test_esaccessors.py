@@ -54,7 +54,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
+from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
@@ -921,6 +921,7 @@ class TestGroupESAccessors(SimpleTestCase):
         self.reporting = True
         self.case_sharing = False
         self.es = get_es_new()
+        reset_es_index(GROUP_INDEX_INFO)
 
     def _send_group_to_es(self, _id=None):
         group = Group(

@@ -300,7 +300,10 @@ def get_acceptible_replication_delays():
     return ret
 
 
-@quickcache([], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
+@quickcache(
+  [], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING,
+  memoize_timeout=STALE_CHECK_FREQUENCY, session_function=None
+)
 def get_standbys_with_acceptible_delay():
     """:returns: set of database aliases that are configured as standbys and have replication
                  delay below the configured threshold

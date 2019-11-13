@@ -14,6 +14,8 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+
+from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
@@ -209,10 +211,21 @@ def get_tableau_access_token(tableau_user, client_ip):
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
+    downtime_template_name = 'icds_reports/dashboard_down.html'
+
+    def get_template_names(self):
+        return [self.template_name] if not self.show_downtime else [self.downtime_template_name]
 
     @property
     def domain(self):
         return self.kwargs['domain']
+
+    @property
+    def show_downtime(self):
+        return (
+            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
+            and not self.request.GET.get('bypass-downtime')
+        )
 
     @property
     def couch_user(self):

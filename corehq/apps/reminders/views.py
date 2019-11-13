@@ -11,7 +11,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
-from corehq.apps.reminders.util import get_form_list
+from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -48,7 +48,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'form': self.keyword_form,
-            'form_list': get_form_list(self.domain),
         }
 
     @property
@@ -82,28 +81,40 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
                 self.keyword.keywordaction_set.all().delete()
                 if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
+                    app_id, form_unique_id = split_combined_id(
+                        self.keyword_form.cleaned_data['sender_app_and_form_unique_id']
+                    )
                     self.keyword.keywordaction_set.create(
                         recipient=KeywordAction.RECIPIENT_SENDER,
                         action=self.keyword_form.cleaned_data['sender_content_type'],
                         message_content=self.keyword_form.cleaned_data['sender_message'],
-                        form_unique_id=self.keyword_form.cleaned_data['sender_form_unique_id'],
+                        app_id=app_id,
+                        form_unique_id=form_unique_id,
                     )
                 if self.process_structured_message:
+                    app_id, form_unique_id = split_combined_id(
+                        self.keyword_form.cleaned_data['structured_sms_app_and_form_unique_id']
+                    )
                     self.keyword.keywordaction_set.create(
                         recipient=KeywordAction.RECIPIENT_SENDER,
                         action=KeywordAction.ACTION_STRUCTURED_SMS,
-                        form_unique_id=self.keyword_form.cleaned_data['structured_sms_form_unique_id'],
+                        app_id=app_id,
+                        form_unique_id=form_unique_id,
                         use_named_args=self.keyword_form.cleaned_data['use_named_args'],
                         named_args=self.keyword_form.cleaned_data['named_args'],
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 if self.keyword_form.cleaned_data['other_recipient_content_type'] != NO_RESPONSE:
+                    app_id, form_unique_id = split_combined_id(
+                        self.keyword_form.cleaned_data['other_recipient_app_and_form_unique_id']
+                    )
                     self.keyword.keywordaction_set.create(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
                         recipient_id=self.keyword_form.cleaned_data['other_recipient_id'],
                         action=self.keyword_form.cleaned_data['other_recipient_content_type'],
                         message_content=self.keyword_form.cleaned_data['other_recipient_message'],
-                        form_unique_id=self.keyword_form.cleaned_data['other_recipient_form_unique_id'],
+                        app_id=app_id,
+                        form_unique_id=form_unique_id,
                     )
 
                 return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
@@ -179,10 +190,15 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 'allow_keyword_use_by': 'users',
             })
         for action in self.keyword.keywordaction_set.all():
+            app_id = action.app_id
+            if app_id is None and action.form_unique_id is not None:
+                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
+                app_id = get_app_id_from_form_unique_id(self.domain, action.form_unique_id)
             if action.action == KeywordAction.ACTION_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
-                        'structured_sms_form_unique_id': action.form_unique_id,
+                        'structured_sms_app_and_form_unique_id': get_combined_id(app_id,
+                                                                                 action.form_unique_id),
                         'use_custom_delimiter': self.keyword.delimiter is not None,
                         'use_named_args_separator': action.named_args_separator is not None,
                         'use_named_args': action.use_named_args,
@@ -193,7 +209,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 initial.update({
                     'sender_content_type': action.action,
                     'sender_message': action.message_content,
-                    'sender_form_unique_id': action.form_unique_id,
+                    'sender_app_and_form_unique_id': get_combined_id(app_id, action.form_unique_id),
                 })
             else:
                 initial.update({
@@ -201,7 +217,8 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                     'other_recipient_id': action.recipient_id,
                     'other_recipient_content_type': action.action,
                     'other_recipient_message': action.message_content,
-                    'other_recipient_form_unique_id': action.form_unique_id,
+                    'other_recipient_app_and_form_unique_id': get_combined_id(app_id,
+                                                                              action.form_unique_id),
                 })
         return initial
 
