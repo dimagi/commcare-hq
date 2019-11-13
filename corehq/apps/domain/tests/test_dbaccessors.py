@@ -10,7 +10,6 @@ from dimagi.utils.couch.database import get_db
 
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
-    count_downloads_for_all_snapshots,
     deleted_domain_exists,
     domain_exists,
     domain_or_deleted_domain_exists,

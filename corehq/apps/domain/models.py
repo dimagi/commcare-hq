@@ -592,10 +592,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
 
-    # TODO: delete
-    def readable_languages(self):
-        return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
-
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
@@ -885,7 +881,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         new_doc.save()
         return new_doc
 
-    # TODO: delete?
     def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
@@ -979,7 +974,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-    # TODO: delete?
     def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
@@ -1052,35 +1046,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def get_form_display(self, form):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
-
-    @property
-    def total_downloads(self):
-        """
-            Returns the total number of downloads from every snapshot created from this domain
-        """
-        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
-        return count_downloads_for_all_snapshots(self.get_id)
-
-    @property
-    @memoized
-    def download_count(self):
-        """
-            Updates and returns the total number of downloads from every sister snapshot.
-        """
-        if self.is_snapshot:
-            self.full_downloads = self.copied_from.total_downloads
-        return self.full_downloads
-
-    @property
-    @memoized
-    def published_by(self):
-        from corehq.apps.users.models import CouchUser
-        pb_id = self.cda.user_id
-        return CouchUser.get_by_user_id(pb_id) if pb_id else None
-
-    @property
-    def name_of_publisher(self):
-        return self.published_by.human_friendly_name if self.published_by else ""
 
     @property
     def location_types(self):
