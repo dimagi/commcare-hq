@@ -75,29 +75,26 @@ For developer documentation, see the module docstring in
 [repeaters/models.py](./repeaters/models.py).
 
 
-DHIS2 Module
-------------
+The DHIS2 Module
+----------------
 
 [DHIS2](https://www.dhis2.org/) is a Health Information System that
-offers organisations and governments a visual dashboard of health-
-related data, across geographical areas, time periods, and demographics.
+offers organisations and governments a visual dashboard of
+health-related data, across geographical areas, time periods, and
+demographics.
 
 DHIS2 allows third-party systems like CommCare to send it two kinds of
 data:
 
-* Data that pertains to single events and individuals, for DHIS2 to
-aggregate within DHIS2.
+* Data that pertains to single events and individuals, to be aggregated
+by DHIS2
 * Data that has already been aggregated
 
-The DHIS2 integration module in MOTECH enables aggregate data to be sent
-to DHIS2. Currently, the DHIS2 module does not send individual data.
+The MOTECH DHIS2 module is able to send both kinds of data.
 
-CommCare aggregates and categorises data for DHIS2 using UCRs, and sends
-it at regular intervals.
+See the [MOTECH DHIS2 module documentation](./dhis2/README.md) for more
+information on configuring and managing integrations with DHIS2.
 
-Configuring a DHIS2 server is done under *Project Settings* >
-*DHIS2 Connection Settings*. Mapping UCR columns to DHIS2 data types is
-done under *Project Settings* > *DHIS2 DataSet Maps*
 
 
 OpenMRS (& Bahmni) Module
