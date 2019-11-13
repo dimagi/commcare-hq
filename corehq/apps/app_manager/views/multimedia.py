@@ -48,6 +48,9 @@ def _update_mm_sizes(mm_sizes):
 @require_deploy_apps
 @quickcache(['domain', 'app_id'], timeout=60 * 60)
 def get_multimedia_sizes(request, domain, app_id):
+    """
+    return size for different multimedia types and total for an app, directly presentable to the user
+    """
     mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
