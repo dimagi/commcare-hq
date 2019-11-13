@@ -39,7 +39,6 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.domain.views.base import select
 from corehq.apps.domain.views.exchange import (
-    ExchangeSnapshotsView,
     set_published_snapshot,
 )
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
@@ -174,7 +173,6 @@ domain_settings = [
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
-    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),

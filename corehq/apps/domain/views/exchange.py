@@ -86,28 +86,3 @@ def set_published_snapshot(request, domain, snapshot_name=''):
         else:
             _publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
-
-
-class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
-    template_name = 'domain/snapshot_settings.html'
-    urlname = 'domain_snapshot_settings'
-    page_title = ugettext_lazy("CommCare Exchange")
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if is_linked_domain(request.domain):
-            raise Http404()
-        msg = """
-            The CommCare Exchange is being retired in early December 2019.
-            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
-        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
-        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'project': self.domain_object,
-            'snapshots': list(self.domain_object.snapshots()),
-            'published_snapshot': self.domain_object.published_snapshot(),
-        }

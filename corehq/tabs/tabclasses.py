@@ -1692,12 +1692,6 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE and not is_linked_domain(domain):
-        administration.extend([
-            {
-                'title': _('CommCare Exchange'),
-                'url': reverse('domain_snapshot_settings', args=[domain])
-            }])
     if not settings.ENTERPRISE_MODE:
         administration.extend([
             {
