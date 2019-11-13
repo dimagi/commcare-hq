@@ -785,13 +785,6 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-LOCATION_TYPE_STOCK_RATES = StaticToggle(
-    'location_type_stock_rates',
-    "Specify stock rates per location type.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
-)
-
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
