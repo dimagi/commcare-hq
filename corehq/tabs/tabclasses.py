@@ -334,7 +334,6 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
-            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -400,11 +399,6 @@ class SetupTab(UITab):
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
             ]
-            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
-                commcare_supply_setup.append({
-                    'title': _(StockLevelsView.page_title),
-                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
