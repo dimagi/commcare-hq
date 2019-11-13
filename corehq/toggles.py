@@ -1738,6 +1738,14 @@ GROUP_API_USE_COUCH_BACKEND = StaticToggle(
 )
 
 
+USER_API_USE_ES_BACKEND = StaticToggle(
+    'user_api_use_es_backend',
+    'Use new ES backend for User API.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
