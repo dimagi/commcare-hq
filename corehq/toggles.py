@@ -1064,13 +1064,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
-    'use_sms_with_inactive_contacts',
-    'Use SMS with inactive contacts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
