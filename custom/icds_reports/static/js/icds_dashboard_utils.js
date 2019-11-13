@@ -1,23 +1,23 @@
 /* global angular hqDefine hqImport */
 
 hqDefine("js/icds_dashboard_utils", function () {
-    function populateDashboardConstants() {
+    function populateDashboardConstants(appName) {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-        angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
-        angular.module('icdsApp').constant('locationHierarchy', initialPageData.get("location_hierarchy"));
-        angular.module('icdsApp').constant('userLocationId', initialPageData.get("user_location_id"));
-        angular.module('icdsApp').constant('allUserLocationId', initialPageData.get("all_user_location_id"));
-        angular.module('icdsApp').constant('reportAnIssueUrl', initialPageData.get("report_an_issue_url"));
-        angular.module('icdsApp').constant('isWebUser', initialPageData.get("is_web_user"));
-        angular.module('icdsApp').constant('haveAccessToFeatures', initialPageData.get("have_access_to_features"));
-        angular.module('icdsApp').constant('haveAccessToAllLocations', initialPageData.get("have_access_to_all_locations"));
-        angular.module('icdsApp').constant('stateLevelAccess', initialPageData.get("state_level_access"));
-        angular.module('icdsApp').constant('genders', [
+        angular.module(appName).constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
+        angular.module(appName).constant('locationHierarchy', initialPageData.get("location_hierarchy"));
+        angular.module(appName).constant('userLocationId', initialPageData.get("user_location_id"));
+        angular.module(appName).constant('allUserLocationId', initialPageData.get("all_user_location_id"));
+        angular.module(appName).constant('reportAnIssueUrl', initialPageData.get("report_an_issue_url"));
+        angular.module(appName).constant('isWebUser', initialPageData.get("is_web_user"));
+        angular.module(appName).constant('haveAccessToFeatures', initialPageData.get("have_access_to_features"));
+        angular.module(appName).constant('haveAccessToAllLocations', initialPageData.get("have_access_to_all_locations"));
+        angular.module(appName).constant('stateLevelAccess', initialPageData.get("state_level_access"));
+        angular.module(appName).constant('genders', [
             {id: '', name: 'All'},
             {id: 'M', name: 'Male'},
             {id: 'F', name: 'Female'},
         ]);
-        angular.module('icdsApp').constant('ages', [
+        angular.module(appName).constant('ages', [
             {id: '', name: 'All'},
             {id: '6', name: '0-6 months (0-180 days)'},
             {id: '12', name: '6-12 months (181-365 days)'},
@@ -27,7 +27,7 @@ hqDefine("js/icds_dashboard_utils", function () {
             {id: '60', name: '48-60 months (1461-1825 days)'},
             {id: '72', name: '60-72 months (1826-2190 days)'},
         ]);
-        angular.module('icdsApp').constant('agesServiceDeliveryDashboard', [
+        angular.module(appName).constant('agesServiceDeliveryDashboard', [
             {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
             {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
         ]);

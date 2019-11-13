@@ -291,8 +291,9 @@ related to angular not being defined. But if we split it here it works fine.
 </div>
 {% block js-inline %}{% endblock js-inline %}
 <script>
-    hqImport("js/icds_dashboard_utils").populateDashboardConstants();
-    angular.module('icdsApp').value('cgBusyDefaults', {
+    var appName = 'icdsApp';
+    hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
+    angular.module(appName).value('cgBusyDefaults', {
       message:'Loading data',
       backdrop: true,
       templateUrl: url('icds-ng-template', 'busy'),
