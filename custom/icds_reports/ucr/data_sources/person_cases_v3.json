@@ -158,6 +158,12 @@
         "property_name": "dob"
       },
       {
+        "column_id": "husband_name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "husband_name"
+      },
+      {
         "comment": "This is the age at registration in years",
         "column_id": "age_at_reg",
         "datatype": "small_integer",

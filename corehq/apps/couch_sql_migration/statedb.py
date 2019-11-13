@@ -180,11 +180,17 @@ class StateDB(DiffDB):
             return [make_result(case_id) for case_id in cases]
 
     def iter_cases_with_unprocessed_forms(self):
-        query = self.Session().query(CaseForms.case_id).filter(
-            CaseForms.total_forms > CaseForms.processed_forms
-        )
-        for case_id, in iter_large(query, CaseForms.case_id):
-            yield case_id
+        query = self.Session().query(
+            CaseForms.case_id,
+            CaseForms.total_forms,
+        ).filter(CaseForms.total_forms > CaseForms.processed_forms)
+        for case_id, total_forms in iter_large(query, CaseForms.case_id):
+            yield case_id, total_forms
+
+    def get_forms_count(self, case_id):
+        with self.session() as session:
+            query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
+            return query.scalar() or 0
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms

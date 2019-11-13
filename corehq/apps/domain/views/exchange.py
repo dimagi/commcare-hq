@@ -102,6 +102,11 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     def dispatch(self, request, *args, **kwargs):
         if is_linked_domain(request.domain):
             raise Http404()
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -122,6 +127,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @method_decorator(domain_admin_required)
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -290,8 +300,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         if self.has_published_apps and self.has_signed_eula and self.has_valid_form:
             new_license = request.POST['license']
             if request.POST.get('share_multimedia', False):
-                app_ids = self.snapshot_settings_form._get_apps_to_publish()
-                media = self.domain_object.all_media(from_apps=app_ids)
+                item_ids = self.snapshot_settings_form._get_items_to_publish()
+                media = self.domain_object.all_media(from_apps=item_ids)
                 for m_file in media:
                     if self.domain not in m_file.shared_by:
                         m_file.shared_by.append(self.domain)

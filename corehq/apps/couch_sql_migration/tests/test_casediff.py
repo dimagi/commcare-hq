@@ -136,7 +136,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.assertRaises(Error), self.queue() as queue:
             # HACK mutate queue internal state
             # currently there is no easier way to stop non-empty cases_to_diff
-            queue.cases_to_diff.append("a")
+            queue.cases_to_diff["a"] = 1
             raise Error("do not process_remaining_diffs")
         self.assertTrue(queue.cases_to_diff)
         with self.queue() as queue:
@@ -290,6 +290,28 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update(["b", "c", "d"], "f2")
         self.assertDiffed("a b c d")
 
+    def test_case_with_new_forms_since_first_seen(self):
+        self.add_cases("a b", "f0")
+        self.add_cases("a b c d", "f1")
+        self.add_cases("e f g h", "f2")
+        with self.queue() as queue:
+            queue.update({"a", "b"}, "f0")
+            queue.flush(complete=False)
+            self.assertDiffed([])
+
+            self.add_cases("b", "fx")
+            queue.update(["a", "b", "c", "d"], "f1")
+            flush(queue.pool)
+            flush(queue.diff_pool)
+            self.assertDiffed("a c d")
+
+            queue.update(["b"], "fx")
+            queue.update(["e", "f", "g", "h"], "f2")
+            flush(queue.pool)
+            flush(queue.diff_pool)
+            self.assertDiffed("a b c d e")
+        self.assertDiffed("a b c d e f g h")
+
     def test_status_logger(self):
         event = Event()
         with patch.object(mod, "log_status") as log_status:
@@ -302,7 +324,11 @@ class TestCaseDiffQueue(SimpleTestCase):
     def queue(self):
         log.info("init CaseDiffQueue")
         with mod.CaseDiffQueue(self.statedb) as queue:
-            yield queue
+            try:
+                yield queue
+            except Exception as err:
+                log.error("%s: %s", type(err).__name__, err)
+                raise
 
     def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
         """Add cases with updating form ids
@@ -498,7 +524,7 @@ class FakeCaseDiffQueue(object):
     def update(self, case_ids, form_id):
         self.stats["pending"] += len(case_ids)
 
-    def enqueue(self, case_id):
+    def enqueue(self, case_id, num_forms=None):
         self.stats["loaded"] += 1
 
     def get_status(self):

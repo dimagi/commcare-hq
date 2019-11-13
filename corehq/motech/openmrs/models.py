@@ -75,7 +75,7 @@ class OpenmrsImporter(Document):
     username = StringProperty()
     password = StringProperty()
 
-    notify_addresses_str = StringProperty()
+    notify_addresses_str = StringProperty(default="")
 
     # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
     location_id = StringProperty()
@@ -118,7 +118,8 @@ class OpenmrsImporter(Document):
     column_map = ListProperty(ColumnMapping)
 
     def __str__(self):
-        return self.server_url
+        url = "@".join((self.username, self.server_url)) if self.username else self.server_url
+        return f"<{self.__class__.__name__} {self._id} {url}>"
 
     @property
     def notify_addresses(self):

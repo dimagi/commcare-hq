@@ -278,6 +278,12 @@
         }
       },
       {
+        "datatype": "date",
+        "column_id": "lmp",
+        "type": "raw",
+        "property_name": "lmp"
+      },
+      {
         "display_name": null,
         "property_path": [],
         "datatype": "date",

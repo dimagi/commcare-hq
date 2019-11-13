@@ -47,6 +47,7 @@ Welcome to CommCareHQ's documentation!
    celery
    ucr
    js-guide/README
+   databases
 
 Tips for documenting
 --------------------

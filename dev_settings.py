@@ -50,17 +50,19 @@ SHELL_PLUS_POST_IMPORTS = (
 INTERNAL_IPS = ['127.0.0.1']
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
-LOCAL_LOGGING_LOGGERS = {
-    'auditcare': {
-        'handlers': ['null'],
-        'level': 'WARNING',
-    },
-    # The following configuration will print out all queries that are run through sqlalchemy on the command line
-    # Useful for UCR debugging
-    # 'sqlalchemy.engine': {
-    #     'handlers': ['console'],
-    #     'level': 'INFO',
-    # },
+LOCAL_LOGGING_CONFIG = {
+    'loggers': {
+        'auditcare': {
+            'handlers': ['null'],
+            'level': 'WARNING',
+        },
+        # The following configuration will print out all queries that are run through sqlalchemy on the command line
+        # Useful for UCR debugging
+        # 'sqlalchemy.engine': {
+        #     'handlers': ['console'],
+        #     'level': 'INFO',
+        # },
+    }
 }
 
 DATABASES = {

@@ -11,6 +11,7 @@ from corehq.elastic import (
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -47,7 +48,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        es.create(USER_INDEX, ES_META['users'].type, body=doc, id=user_id)
+        ElasticsearchInterface(es).create_doc(USER_INDEX, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):

@@ -11,6 +11,7 @@ from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
@@ -75,29 +76,6 @@ def get_version_from_build_id(domain, build_id):
         return None
     else:
         return build.version
-
-
-@quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
-def get_version_and_app_from_build_id(domain, build_id):
-    """
-    fast lookup of app version number given build_id
-
-    implemented as simple caching around _get_version_from_build_id
-
-    """
-    if not build_id:
-        return None, None
-
-    try:
-        build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
-        return None, None
-    if not build.copy_of:
-        return None, None
-    elif domain and build.domain != domain:
-        return None, None
-    else:
-        return build.version, build.copy_of
 
 
 def get_version_from_appversion_text(appversion_text):
@@ -243,6 +221,22 @@ def _submitted_by_demo_user(form_json, domain):
     return False
 
 
+def _notify_ignored_form_submission(request, user_id):
+    message = """
+        Details:
+        Method: {}
+        URL: {}
+        GET Params: {}
+        User ID: {}
+    """.format(request.method, request.get_raw_uri(), request.GET, user_id)
+    send_mail_async.delay(
+        "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        ['mkangia@dimagi.com']
+    )
+
+
 def should_ignore_submission(request):
     """
     If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
@@ -260,6 +254,7 @@ def should_ignore_submission(request):
             return False
         else:
             if _submitted_by_demo_user(form_json, request.domain):
+                _notify_ignored_form_submission(request, form_json['meta']['userID'])
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:

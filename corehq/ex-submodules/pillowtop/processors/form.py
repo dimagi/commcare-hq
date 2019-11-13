@@ -3,14 +3,23 @@ from datetime import timedelta
 from django.conf import settings
 from django.http import Http404
 
-from corehq.apps.users.util import update_device_meta, update_latest_builds, filter_by_app
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
+from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.users.models import (
+    CouchUser,
+    DeviceAppMeta,
+    LastSubmission,
+    UserReportingMetadataStaging,
+)
+from corehq.apps.users.util import (
+    filter_by_app,
+    update_device_meta,
+    update_latest_builds,
+)
 from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
-from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
 
@@ -39,8 +48,12 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
+        try:
+            received_on = string_to_utc_datetime(doc.get('received_on'))
+        except ValueError:
+            return
+
         user_id = doc.get('form', {}).get('meta', {}).get('userID')
-        received_on = doc.get('received_on')
         app_id = doc.get('app_id')
         version = doc.get('version')
 
@@ -50,7 +63,14 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             metadata = None
 
         if user_id and domain and received_on:
-            mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
+            if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+                UserReportingMetadataStaging.add_submission(
+                    domain, user_id, app_id, build_id, version, metadata, received_on
+                )
+            else:
+                mark_latest_submission(
+                    domain, user_id, app_id, build_id, version, metadata, received_on
+                )
 
 
 @quickcache(['domain', 'build_id'], timeout=60 * 60)
@@ -149,4 +169,4 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        user.save(fire_signals=False)
+        user.save()

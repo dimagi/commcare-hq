@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -21,6 +21,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_start_15yr = self.month_start - relativedelta(years=15)
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
+
+    @property
+    def child_temp_tablename(self):
+        return get_child_health_temp_tablename(self.month_start)
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -346,7 +350,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_child";
         """.format(
             tablename=self.tablename,
-            child_health_monthly="child_health_monthly",
+            child_health_monthly=self.child_temp_tablename,
         ), {
             "month": self.month_start
         }
@@ -446,7 +450,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             infra_adequate_space_pse = ut.infra_adequate_space_pse,
             electricity_awc = ut.electricity_awc,
             infantometer = ut.infantometer,
-            stadiometer = ut.stadiometer
+            stadiometer = ut.stadiometer,
+            awc_with_gm_devices = ut.awc_with_gm_devices
         FROM (
             SELECT
                 awc_id,
@@ -474,7 +479,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse,
                 electricity_awc AS electricity_awc,
                 infantometer_usable AS infantometer,
-                stadiometer_usable AS stadiometer
+                stadiometer_usable AS stadiometer,
+                CASE WHEN GREATEST(adult_scale_available, adult_scale_usable, baby_scale_available,
+                              flat_scale_available, baby_scale_usable,
+                              infantometer_usable, stadiometer_usable, 0) > 0 THEN 1 ELSE 0 END as awc_with_gm_devices
             FROM icds_dashboard_infrastructure_forms
             WHERE month = %(start_date)s
         ) ut
@@ -636,6 +644,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
+            ('awc_with_gm_devices', 'COALESCE(sum(awc_with_gm_devices), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
             ('state_is_test', 'MAX(state_is_test)'),

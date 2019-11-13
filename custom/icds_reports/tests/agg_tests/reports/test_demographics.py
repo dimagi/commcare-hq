@@ -62,14 +62,14 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.049606069448492,
+            "percent": 10.045841136893584,
             "value": 346,
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "month",
-            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification "
                          "has been captured. "
         }
         self.assertDictEqual(expected, data['records'][0][1])
@@ -86,11 +86,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "month",
             "help_text": percent_children_enrolled_help_text()
@@ -217,7 +217,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -225,7 +225,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been "
                 "captured. "
             )
         }
@@ -243,11 +243,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
@@ -374,7 +374,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -382,7 +382,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has "
                 "been captured. "
             )
         }
@@ -400,11 +400,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()

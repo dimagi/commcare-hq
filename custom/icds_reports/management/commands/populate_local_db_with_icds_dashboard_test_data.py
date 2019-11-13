@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from psycopg2._psycopg import IntegrityError
 
 import settings
-from custom.icds_reports import tests as icds_tests
+from custom.icds_reports.tests import agg_tests
 
 
 class Command(BaseCommand):
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             'Are you sure you want to proceed? (y/N)\n')
         if proceed_str.lower().strip() == 'y':
             try:
-                icds_tests.setUpModule()
+                agg_tests.setUpModule()
             except IntegrityError:
                 print(
                     '=================================================\n'

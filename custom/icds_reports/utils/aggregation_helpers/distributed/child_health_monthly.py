@@ -8,7 +8,11 @@ from custom.icds_reports.const import (
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
 )
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import (
+    get_child_health_temp_tablename,
+    transform_day_to_month,
+    month_formatter,
+)
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
@@ -57,7 +61,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     @property
     def temporary_tablename(self):
-        return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+        return get_child_health_temp_tablename(self.month)
 
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}

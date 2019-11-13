@@ -1,6 +1,11 @@
+from datetime import date
+
 from django.test import SimpleTestCase
 
 from custom.icds_reports.utils import generate_data_for_map
+from custom.icds_reports.utils.aggregation_helpers import (
+    previous_month_aggregation_should_run,
+)
 
 
 class TestUtils(SimpleTestCase):
@@ -56,3 +61,26 @@ class TestUtils(SimpleTestCase):
             60
         )
         self.assertEqual(average, 0.0)
+
+
+class TestPreviousMonthSkipping(SimpleTestCase):
+    def test_last_day_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 28)))
+
+    def test_first_day_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 1)))
+
+    def test_second_day_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 2)))
+
+    def test_third_day_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 3)))
+
+    def test_eleventh_day_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 11)))
+
+    def test_second_saturday_of_month(self):
+        self.assertTrue(previous_month_aggregation_should_run(date(2019, 2, 9)))
+
+    def test_second_thursday_of_month(self):
+        self.assertFalse(previous_month_aggregation_should_run(date(2019, 2, 14)))

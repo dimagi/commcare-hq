@@ -67,7 +67,7 @@ def check_all_rabbitmq():
     unwell_rabbits = []
     ip_regex = re.compile(r'[0-9]+.[0-9]+.[0-9]+.[0-9]+')
 
-    for broker_url in settings.BROKER_URL.split(';'):
+    for broker_url in settings.CELERY_BROKER_URL.split(';'):
         check_status, failure = check_rabbitmq(broker_url)
         if not check_status:
             failed_rabbit_ip = ip_regex.search(broker_url).group()
@@ -95,7 +95,7 @@ def check_rabbitmq(broker_url):
             return False, 'RabbitMQ Offline'
         except Exception as e:
             return False, "RabbitMQ Error: %s" % e
-    elif settings.BROKER_URL.startswith('redis'):
+    elif settings.CELERY_BROKER_URL.startswith('redis'):
         return True, "RabbitMQ Not configured, but not needed"
     else:
         return False, "RabbitMQ Not configured"
