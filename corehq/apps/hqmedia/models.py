@@ -976,6 +976,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 })
         return totals
 
+    # TODO: delete
     def prepare_multimedia_for_exchange(self):
         """
             Prepares the multimedia in the application for exchanging across domains.

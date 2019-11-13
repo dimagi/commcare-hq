@@ -524,33 +524,3 @@ def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time
             }
         })
     return es_query(params, facets, terms, q)
-
-
-class MediaFilesView(BaseCommCareExchangeSectionView):
-    urlname = 'media_files'
-    template_name = 'appstore/media_files.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not can_view_app(request, self.project):
-            raise Http404()
-        return super(MediaFilesView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def snapshot(self):
-        return self.kwargs['snapshot']
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.snapshot,))
-
-    @property
-    @memoized
-    def project(self):
-        return Domain.get(self.snapshot)
-
-    @property
-    def page_context(self):
-        return {
-            "project": self.project,
-            "url_base": reverse(CommCareExchangeHomeView.urlname)
-        }

@@ -4,7 +4,6 @@ from corehq.apps.appstore.views import (
     CommCareExchangeHomeView,
     DeploymentInfoView,
     DeploymentsView,
-    MediaFilesView,
     ProjectInformationView,
     approve_app,
     copy_snapshot,
@@ -31,6 +30,4 @@ urlpatterns = [
     url(r'^(?P<snapshot>[\w\.-]+)/image/$', project_image, name='appstore_project_image'),
     url(r'^(?P<snapshot>[\w\.-]+)/documentation_file/$', project_documentation_file,
         name='appstore_project_documentation_file'),
-    url(r'^(?P<snapshot>[\w\.-]+)/multimedia/$',
-        MediaFilesView.as_view(), name=MediaFilesView.urlname),
 ]
