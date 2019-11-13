@@ -12,7 +12,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.dateChanged = false;
 
     angular.element(document).ready(function () {
-       $scope.adjustUIComponentsIfAlertIsActive();
+        $scope.adjustUIComponentsIfAlertIsActive();
     });
 
     function fixEscapedURLAmpersands() {
