@@ -354,3 +354,22 @@ def clear_plan_version_cache():
     from corehq.apps.accounting.models import SoftwarePlan
     for software_plan in SoftwarePlan.objects.all():
         SoftwarePlan.get_version.clear(software_plan)
+
+
+def get_paused_plan_context(request, domain):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.domain.views import SelectPlanView
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if not current_sub.plan_version.is_paused:
+        return {}
+
+    previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
+                        if current_sub.previous_subscription else "")
+    return {
+        'is_paused': True,
+        'previous_edition': previous_edition,
+        'paused_date': current_sub.date_start.strftime(USER_DATE_FORMAT),
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+        'can_edit_billing_info': request.couch_user.is_domain_admin(domain),
+    }
