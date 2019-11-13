@@ -86,18 +86,29 @@ By including details for standby databases in the Django `DATABASES` setting we 
 CommCare to route certain READ queries to them.
 
 Standby databases are configured in the same way as normal databases but may have an additional
-property, `HQ_ACCEPTABLE_STANDBY_DELAY`. The value of this must be an integer and configures the
-acceptable replication delay in seconds between the standby and the primary. If the replication delay goes
-above this value then queries will not be routed to this database.
+property group, `STANDBY`. This property group has the following sup-properties:
 
-The default value for `HQ_ACCEPTABLE_STANDBY_DELAY` is 3 seconds.
+MASTER
+    The DB alias of the master database for this standby. This must refer to a database in the `DATABASES`
+    setting.
+
+ACCEPTABLE_REPLICATION_DELAY
+    The value of this must be an integer and configures the acceptable replication delay in seconds
+    between the standby and the master. If the replication delay goes above this value then queries
+    will not be routed to this database.
+
+    The default value for `ACCEPTABLE_REPLICATION_DELAY` is 3 seconds.
 
 .. code-block:: python
 
     DATABASES = {
+        'default': {...}
         'standby1': {
             ...
-            'HQ_ACCEPTABLE_STANDBY_DELAY': N
+            'STANDBY': {
+                'MASTER': 'default',
+                'ACCEPTABLE_REPLICATION_DELAY': 30,
+            }
         }
     }
 
@@ -147,3 +158,10 @@ This setting is used to route read queries from Django models.
 In the configuration above all write queries from models in the `users` app will go to the
 `default` database as well as 20% or read queries. The remaining 80% of read queries will
 be sent to the `standby1` database.
+
+For both the settings above, the following rules apply to the databases listed
+under `READ`:
+
+* There can only be one master database (not a standby database)
+* All standby databases must point to the same master database
+* If a master database is in this list, all standbys must point to this master

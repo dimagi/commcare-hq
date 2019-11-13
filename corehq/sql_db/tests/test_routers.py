@@ -75,7 +75,8 @@ class AllowMigrateTest(SimpleTestCase):
 
 
 @patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
-def test_load_balanced_read_apps(mock):
+@patch('corehq.sql_db.util.get_standby_databases', return_value=set())
+def test_load_balanced_read_apps(_, __):
     load_balanced_apps = {
         'users': [
             ('users_db1', 5),
