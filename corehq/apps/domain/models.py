@@ -885,27 +885,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self, share_reminders, copy_by_id=None):
-        if self.is_snapshot:
-            return self
-        else:
-            try:
-                copy = self.save_copy(
-                    copy_by_id=copy_by_id, share_reminders=share_reminders,
-                    share_user_roles=False)
-            except NameUnavailableException:
-                return None
-            copy.is_snapshot = True
-            head = self.snapshots(limit=1).first()
-            if head and head.snapshot_head:
-                head.snapshot_head = False
-                head.save()
-            copy.snapshot_head = True
-            copy.snapshot_time = datetime.utcnow()
-            del copy.deployment
-            copy.save()
-            return copy
-
+    # TODO: delete?
     def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
