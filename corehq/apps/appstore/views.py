@@ -291,50 +291,6 @@ def approve_app(request, snapshot):
 
 
 @login_required
-@retry_resource(3)
-def import_app(request, snapshot):
-    user = request.couch_user
-    if not user.is_eula_signed():
-        messages.error(request, _('You must agree to our terms of service to download an app'))
-        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-    from_project = Domain.get(snapshot)
-
-    if request.method == 'POST' and from_project.is_snapshot:
-        if not from_project.published:
-            messages.error(request, _("This project is not published and can't be downloaded"))
-            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-        to_project_name = request.POST['project']
-        if not user.is_member_of(to_project_name):
-            messages.error(request, _("You don't belong to that project"))
-            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-        full_apps = from_project.full_applications(include_builds=False)
-        assert full_apps, 'Bad attempt to copy apps from a project without any!'
-        new_doc = None
-        for app in full_apps:
-            try:
-                new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
-            except ReportConfigurationNotFoundError:
-                messages.error(request, _("App was not imported as it "
-                                          "contains references to a user configurable report"))
-
-        if not new_doc:
-            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-        clear_app_cache(request, to_project_name)
-
-        from_project.downloads += 1
-        from_project.save()
-        messages.success(request, render_to_string("appstore/partials/view_wiki.html",
-                                                   {"pre": _("Application successfully imported!")}),
-                         extra_tags="html")
-        return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
-    else:
-        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
-
-
-@login_required
 def copy_snapshot(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
