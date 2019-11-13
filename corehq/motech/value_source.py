@@ -63,9 +63,9 @@ class ValueSource(DocumentSchema):
     Subclasses model a reference to a value, like a case property or a
     form question.
 
-    Use the `get_value()` method to fetch the value using the reference,
-    and serialize it, if necessary, for the external system that it is
-    being sent to.
+    Use the ``get_value()`` method to fetch the value using the
+    reference, and serialize it, if necessary, for the external system
+    that it is being sent to.
     """
     external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
     commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
