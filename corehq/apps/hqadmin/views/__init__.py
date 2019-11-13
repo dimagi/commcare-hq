@@ -14,11 +14,9 @@ from corehq.apps.hqadmin.views.reports import (
     top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
-    RecentCouchChangesView,
     SystemInfoView,
     branches_on_staging,
     check_services,
-    download_recent_changes,
     get_rabbitmq_management_url,
     pillow_operation_api,
     system_ajax,

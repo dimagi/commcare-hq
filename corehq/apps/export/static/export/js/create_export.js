@@ -305,6 +305,7 @@ hqDefine("export/js/create_export", [
             url: options.drilldown_fetch_url,
             data: {
                 is_deid: self.pageOptions.is_deid,
+                is_odata: self.pageOptions.is_odata,
                 model_type: self.pageOptions.model_type,
             },
             success: function (data) {

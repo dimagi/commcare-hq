@@ -3,7 +3,7 @@ import math
 
 from django.test import TestCase
 
-from elasticsearch import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from pillowtop.es_utils import initialize_index_and_mapping
 

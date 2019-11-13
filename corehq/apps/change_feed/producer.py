@@ -1,10 +1,20 @@
 import json
+import logging
+import uuid
+from functools import partial
 
 from django.conf import settings
 
 from kafka import KafkaProducer
 
-from corehq.util.soft_assert import soft_assert
+from dimagi.utils.logging import notify_exception
+
+CHANGE_PRE_SEND = 'PRE-SEND'
+CHANGE_ERROR = 'ERROR'
+CHANGE_SENT = 'SENT'
+KAFKA_AUDIT_LOGGER = 'kafka_producer_audit'
+
+logger = logging.getLogger(KAFKA_AUDIT_LOGGER)
 
 
 class ChangeProducer(object):
@@ -31,19 +41,44 @@ class ChangeProducer(object):
     def send_change(self, topic, change_meta):
         message = change_meta.to_json()
         message_json_dump = json.dumps(message).encode('utf-8')
+        change_meta._transaction_id = uuid.uuid4().hex
         try:
-            self.producer.send(topic, message_json_dump, key=change_meta.document_id)
+            _audit_log(CHANGE_PRE_SEND, change_meta)
+            future = self.producer.send(topic, message_json_dump, key=change_meta.document_id)
             if self.auto_flush:
-                self.producer.flush()
-        except Exception as e:
-            _assert = soft_assert(notify_admins=True)
-            _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
-                message, e, type(e)
-            ))
+                future.get()
+                _audit_log(CHANGE_SENT, change_meta)
+        except Exception:
+            _audit_log('ERROR', change_meta)
+            notify_exception(None, 'Problem sending change to Kafka', details=message)
             raise
+
+        if not self.auto_flush:
+            on_success = partial(_on_success, change_meta)
+            on_error = partial(_on_error, change_meta)
+            future.add_callback(on_success).add_errback(on_error)
 
     def flush(self, timeout=None):
         self.producer.flush(timeout=timeout)
+
+
+def _on_success(change_meta, record_metadata):
+    _audit_log(CHANGE_SENT, change_meta)
+
+
+def _on_error(change_meta, exc_info):
+    _audit_log(CHANGE_ERROR, change_meta)
+    notify_exception(
+        None, 'Problem sending change to Kafka (async)',
+        details=change_meta.to_json(), exec_info=exc_info
+    )
+
+
+def _audit_log(stage, change_meta):
+    logger.debug(
+        '%s,%s,%s,%s', stage,
+        change_meta.document_type, change_meta.document_id, change_meta._transaction_id
+    )
 
 
 producer = ChangeProducer()

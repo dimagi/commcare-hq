@@ -73,6 +73,7 @@ class Call(UUIDGeneratorMixin, Log):
     case_for_case_submission = models.NullBooleanField(default=False)
 
     # The form unique id of the form that plays the survey for the call
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
 
     class Meta(object):

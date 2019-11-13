@@ -1013,19 +1013,21 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
+
+ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
+    'icds_dashboard_temporary_downtime',
+    'ICDS: Temporarily disable the ICDS dashboard by showing a downtime page. '
+    'This can be cicurmvented by adding "?bypass-downtime=True" to the end of the url.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-)
-
-MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
-    'multiple_choice_custom_field',
-    'EWS: Allow project to use multiple choice field in custom fields',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
 SUPPORT = StaticToggle(
@@ -1070,13 +1072,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EWS_INVALID_REPORT_RESPONSE = StaticToggle(
-    'ews_invalid_report_response',
-    'EWS: Send response about invalid stock on hand',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'use_sms_with_inactive_contacts',
     'Use SMS with inactive contacts',
@@ -1115,13 +1110,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-COPY_CONDITIONAL_ALERTS = StaticToggle(
-    'copy_conditional_alerts',
-    'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_USER],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1141,13 +1129,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
-EWS_WEB_USER_EXTENSION = StaticToggle(
-    'ews_web_user_extension',
-    'EWS: Enable EWSGhana web user extension',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1324,22 +1305,6 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
-)
-
-LOCATION_SAFETY_EXEMPTION = StaticToggle(
-    'location_safety_exemption',
-    'Exemption from location restrictions for EWS and ILS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "ewsghana and ilsgateway do some custom location permissions stuff. "
-        "This feature flag grants them access to the web user pages, but it does "
-        "not actually restrict their access at all. This is implemented strictly "
-        "for backwards compatibility and should not be enabled for any other "
-        "project."
-    ),
-    relevant_environments={'production'},
-    always_enabled={'ews-ghana', 'ils-gateway'},
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1707,20 +1672,6 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 )
 
 
-def _enable_bi_integration_preview(domain, enabled):
-    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
-
-
-ODATA = StaticToggle(
-    'odata',
-    'Enable Odata feed.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    save_fn=_enable_bi_integration_preview,
-)
-
-
 DASHBOARD_REACH_REPORT = StaticToggle(
     'dashboard_reach_reports',
     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
@@ -1831,11 +1782,12 @@ SESSION_MIDDLEWARE_LOGGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BYPASS_SESSIONS = StaticToggle(
-    'bypass_sessions',
+BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
+    'bypass_sessions_r',
     'Bypass sessions for select mobile URLS',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0
 )
 
 DAILY_INDICATORS = StaticToggle(

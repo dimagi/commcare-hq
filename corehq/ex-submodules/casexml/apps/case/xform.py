@@ -32,13 +32,10 @@ class CaseProcessingResult(object):
     Lightweight class used to collect results of case processing
     """
 
-    def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
+    def __init__(self, domain, cases, dirtiness_flags):
         self.domain = domain
         self.cases = cases
         self.dirtiness_flags = dirtiness_flags
-        if extensions_to_close is None:
-            extensions_to_close = set()
-        self.extensions_to_close = extensions_to_close
 
     def get_clean_owner_ids(self):
         dirty_flags = self.get_flags_to_save()
@@ -49,18 +46,6 @@ class CaseProcessingResult(object):
 
     def get_flags_to_save(self):
         return {f.owner_id: f.case_id for f in self.dirtiness_flags}
-
-    def close_extensions(self, case_db, device_id):
-        from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
-        if extensions_to_close:
-            return close_cases(
-                extensions_to_close,
-                self.domain,
-                SYSTEM_USER_ID,
-                device_id,
-                case_db,
-            )
 
     def commit_dirtiness_flags(self):
         """
@@ -148,12 +133,10 @@ def _get_or_update_cases(xforms, case_db):
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
-    extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
         dirtiness_flags,
-        extensions_to_close
     )
 
 
@@ -270,20 +253,25 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
     )
 
 
-def get_all_extensions_to_close(domain, case_updates):
+def close_extension_cases(case_db, cases, device_id):
+    from casexml.apps.case.cleanup import close_cases
+    extensions_to_close = get_all_extensions_to_close(case_db.domain, cases)
+    extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
+    if extensions_to_close:
+        return close_cases(
+            extensions_to_close,
+            case_db.domain,
+            SYSTEM_USER_ID,
+            device_id,
+            case_db,
+        )
+
+
+def get_all_extensions_to_close(domain, cases):
     if not EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return set()
-    extensions_to_close = set()
-    for case_update_meta in case_updates:
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
-    return extensions_to_close
-
-
-def get_extensions_to_close(case, domain):
-    if case.closed:
-        return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
-    else:
-        return set()
+    case_ids = [case.case_id for case in cases if case.closed]
+    return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
 
 
 def is_device_report(doc):

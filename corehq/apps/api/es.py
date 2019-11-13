@@ -7,9 +7,10 @@ from django.http import HttpResponse
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-from elasticsearch.exceptions import ElasticsearchException, NotFoundError
+from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
+from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -84,6 +85,7 @@ class ESView(View):
         super(ESView, self).__init__()
         self.domain = domain.lower()
         self.es = get_es_new()
+        self.es_interface = ElasticsearchInterface(self.es)
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -148,7 +150,7 @@ class ESView(View):
             es_query['fields'] = fields
 
         try:
-            es_results = self.es.search(self.index, es_type, body=es_query)
+            es_results = self.es_interface.search(self.index, es_type, body=es_query)
             report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
@@ -333,7 +335,7 @@ class UserES(ESView):
         self.validate_query(es_query)
 
         try:
-            es_results = self.es.search(self.index, es_type, body=es_query)
+            es_results = self.es_interface.search(self.index, es_type, body=es_query)
             report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (

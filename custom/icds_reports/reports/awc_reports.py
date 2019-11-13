@@ -782,7 +782,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _(AADHAR_SEEDED_BENEFICIARIES),
                     'help_text': _(
-                        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification '
+                        'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification '
                         'has been captured. '
                     ),
                     'percent': percent_diff(

@@ -331,6 +331,41 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
     }
 };
 
+/**
+ * Represents the label part of a Combined Multiple Choice question in a Question List
+ */
+function ChoiceLabelEntry(question, options) {
+    var self = this;
+    EntrySingleAnswer.call(this, question, options);
+    self.choices = question.choices;
+    self.templateType = 'choice-label';
+
+    self.hideLabel = ko.observable(options.hideLabel);
+
+    self.colStyle = ko.computed(function () {
+        var colWidth = parseInt(12 / self.choices().length) || 1;
+        return 'col-xs-' + colWidth;
+    });
+
+    self.onClear = function () {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    };
+    self.isValid = function () {
+        return true;
+    };
+}
+ChoiceLabelEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+ChoiceLabelEntry.prototype.constructor = EntrySingleAnswer;
+ChoiceLabelEntry.prototype.onPreProcess = function (newValue) {
+    if (this.isValid(newValue)) {
+        if (newValue === Formplayer.Const.NO_ANSWER) {
+            this.answer(newValue);
+        } else {
+            this.answer(+newValue);
+        }
+    }
+};
+
 function DropdownEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(this, question, options);
@@ -725,6 +760,8 @@ function getEntry(question) {
     var isNumeric = false;
     var isMinimal = false;
     var isCombobox = false;
+    var isLabel = false;
+    var hideLabel = false;
     var style;
 
     if (question.style) {
@@ -771,6 +808,10 @@ function getEntry(question) {
             if (style) {
                 isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
             }
+            if (style) {
+                isLabel = style === Formplayer.Const.LABEL || style === Formplayer.Const.LIST_NOLABEL;
+                hideLabel = style === Formplayer.Const.LIST_NOLABEL;
+            }
 
             if (isMinimal) {
                 entry = new DropdownEntry(question, {});
@@ -787,6 +828,10 @@ function getEntry(question) {
                      * The second word designates the matching type
                      */
                     matchType: question.style.raw().split(' ')[1],
+                });
+            } else if (isLabel) {
+                entry = new ChoiceLabelEntry(question, {
+                    hideLabel: hideLabel,
                 });
             } else {
                 entry = new SingleSelectEntry(question, {});

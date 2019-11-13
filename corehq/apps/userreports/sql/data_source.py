@@ -13,7 +13,6 @@ from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.specs import CalculatedColumn
 from corehq.apps.userreports.reports.util import get_expanded_columns
-from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.sql_db.connections import connection_manager
 
 
@@ -23,7 +22,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         if self._engine_id is not None:
             return self._engine_id
 
-        self._engine_id = get_engine_id(self.config, allow_read_replicas=True)
+        self._engine_id = self.config.engine_id
         return self._engine_id
 
     def override_engine_id(self, engine_id):
@@ -78,7 +77,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         qc = self.query_context()
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             return qc.count(session.connection(), self.filter_values)
 
@@ -97,7 +96,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
 
         qc = self.query_context()
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             totals = qc.totals(
                 session.connection(),

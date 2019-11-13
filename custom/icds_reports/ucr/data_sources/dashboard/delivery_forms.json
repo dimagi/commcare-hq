@@ -242,6 +242,39 @@
           "type": "property_path",
           "property_path": ["form", "next_due"]
         }
+      },
+      {
+        "column_id": "num_children_del",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "num_children_del"]
+        }
+      },
+      {
+        "column_id": "still_live_birth",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "child",
+              "still_live_birth"
+            ]
+          },
+          "cases": {
+            "live": 0,
+            "still": 1
+          },
+          "default": {
+              "type": "constant",
+              "constant": null
+          }
+        }
       }
     ],
     "named_expressions": {

@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.test import TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 import mock
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest

@@ -1,3 +1,4 @@
+from collections import namedtuple
 from functools import lru_cache
 
 from pillowtop.checkpoints.manager import (
@@ -14,7 +15,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.quickcache import quickcache
 
 
@@ -88,7 +88,10 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
     It has been kept to keep the checkpoint consistent, and can be changed at any time.
     """
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO, [topics.LEDGER])
+    IndexInfo = namedtuple('IndexInfo', ['index'])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(
+        pillow_id, IndexInfo("ledgers_2016-03-15"), [topics.LEDGER]
+    )
     change_feed = KafkaChangeFeed(
         topics=[topics.LEDGER], client_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
     )

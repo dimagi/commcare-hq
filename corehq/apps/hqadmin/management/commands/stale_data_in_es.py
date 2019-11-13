@@ -1,22 +1,24 @@
-
 import inspect
+import sys
 from collections import namedtuple
-
-import dateutil
-from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime
 
+from django.core.management.base import BaseCommand, CommandError
+
+import dateutil
+
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.chunked import chunked
+
+from corehq.apps.es import CaseES, FormES
+from corehq.elastic import ES_EXPORT_INSTANCE
+from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from dimagi.utils.chunked import chunked
-
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.es import CaseES, FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.couch_helpers import paginate_view
-
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.log import with_progress_bar
 
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 
@@ -71,8 +73,8 @@ class Command(BaseCommand):
                 for case_id, case_type, es_date, primary_date in get_server_modified_on_for_domain(run_config):
                     print(f"{case_id},CommCareCase,{case_type},{es_date},{primary_date}")
             elif data_model.lower() == 'form':
-                for form_id, xmlns, es_date, primary_date in get_stale_form_data(run_config):
-                    print(f"{form_id},XFormInstance,{xmlns},{es_date},{primary_date}")
+                for form_id, doc_type, xmlns, es_date, primary_date in get_stale_form_data(run_config):
+                    print(f"{form_id},{doc_type},{xmlns},{es_date},{primary_date}")
             else:
                 raise CommandError('Only valid options for data model are "case" and "form"')
 
@@ -158,14 +160,18 @@ def _get_stale_form_data_for_sql_backend(run_config):
     for db in get_db_aliases_for_partitioned_query():
         matching_records_for_db = _get_sql_form_data_for_db(db, run_config)
         chunk_size = 1000
-        for chunk in chunked(matching_records_for_db, chunk_size):
+        length = len(matching_records_for_db) // chunk_size
+        chunk_iter = chunked(matching_records_for_db, chunk_size)
+        for chunk in with_progress_bar(chunk_iter, prefix=f'Processing DB {db}',
+                                       length=length, stream=sys.stderr):
             form_ids = [val[0] for val in chunk]
             es_modified_on_by_ids = _get_es_modified_dates_for_forms(run_config.domain, form_ids)
-            for form_id, xmlns, sql_modified_on in chunk:
+            for form_id, state, xmlns, sql_modified_on in chunk:
+                doc_type = state_to_doc_type.get(state, 'XFormInstance')
                 sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                 es_modified_on = es_modified_on_by_ids.get(form_id)
                 if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                    yield (form_id, xmlns, es_modified_on, sql_modified_on_str)
+                    yield (form_id, doc_type, xmlns, es_modified_on, sql_modified_on_str)
 
 
 def _get_sql_form_data_for_db(db, run_config):
@@ -173,12 +179,15 @@ def _get_sql_form_data_for_db(db, run_config):
         domain=run_config.domain,
         received_on__gte=run_config.start_date,
         received_on__lte=run_config.end_date,
-    ).values_list('form_id', 'xmlns', 'received_on')
+    ).values_list('form_id', 'state', 'xmlns', 'received_on')
 
 
 def _get_es_modified_dates_for_forms(domain, form_ids):
-    results = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    results = (
+        FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+        .remove_default_filters()
         .domain(domain)
         .form_ids(form_ids)
-        .values_list('_id', 'received_on'))
+        .values_list('_id', 'received_on')
+    )
     return dict(results)

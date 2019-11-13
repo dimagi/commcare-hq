@@ -1769,7 +1769,7 @@ class TestAWCReport(TestCase):
                 "label": AADHAR_SEEDED_BENEFICIARIES,
                 "frequency": "day",
                 "help_text": (
-                    "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+                    "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification "
                     "has been captured. "
                 )
             }
@@ -2010,7 +2010,7 @@ class TestAWCReport(TestCase):
                 "label": AADHAR_SEEDED_BENEFICIARIES,
                 "frequency": "day",
                 "help_text": (
-                    "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+                    "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification "
                     "has been captured. "
                 )
             }

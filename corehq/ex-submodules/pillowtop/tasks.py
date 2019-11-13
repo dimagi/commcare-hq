@@ -23,9 +23,14 @@ def pillow_datadog_metrics():
         pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
 
     for pillow in pillow_meta:
+        # The host and group tags are added here to ensure they remain constant
+        # regardless of which celery worker the task get's executed on.
+        # Without this the sum of the metrics get's inflated.
         tags = [
             'pillow_name:{}'.format(pillow['name']),
-            'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka')
+            'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka'),
+            'host:celery',
+            'group:celery'
         ]
 
         datadog_gauge(
