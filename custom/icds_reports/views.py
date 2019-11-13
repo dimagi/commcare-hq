@@ -112,10 +112,10 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView, MWCDReportView
 from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
-
+from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -1962,3 +1962,21 @@ class CasDataExportAPIView(View):
             "awc": 3
         }
         return type_map[data_type]
+
+
+@location_safe
+@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
+class MWCDDataView(View):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data = get_mwcd_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
+        except Exception:
+            response = dict(isSuccess=False, message='Unknown Error occured')
+            return JsonResponse(response, status=500)
