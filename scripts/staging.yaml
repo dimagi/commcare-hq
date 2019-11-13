@@ -58,7 +58,6 @@ branches:
   - bmb/new-plans  # Biyeun Oct 9
   - sr-session-audit  # Sravan Oct 15
   - nh/blank_row  # Norman Oct 28
-  - jls/remove-xforms_index # Jenny Nov 13
   - mk/compare-mm-size-1 # Nov 10
   - mk/compare-mm-size-2 # Nov 11
 submodules: {}
