@@ -991,14 +991,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CUSTOM_MENU_BAR = StaticToggle(
-    'custom_menu_bar',
-    "Hide Dashboard and Applications from top menu bar "
-    "for non-admin users",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -1028,14 +1020,6 @@ OPENMRS_INTEGRATION = StaticToggle(
     'Enable OpenMRS integration',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-)
-
-MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
-    'multiple_choice_custom_field',
-    'EWS: Allow project to use multiple choice field in custom fields',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
 SUPPORT = StaticToggle(
@@ -1080,20 +1064,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EWS_INVALID_REPORT_RESPONSE = StaticToggle(
-    'ews_invalid_report_response',
-    'EWS: Send response about invalid stock on hand',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
-    'use_sms_with_inactive_contacts',
-    'Use SMS with inactive contacts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
@@ -1133,24 +1103,10 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     always_disabled={'icds-cas'}
 )
 
-EWS_BROADCAST_BY_ROLE = StaticToggle(
-    'ews_broadcast_by_role',
-    'EWS: Filter broadcast recipients by role',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
-EWS_WEB_USER_EXTENSION = StaticToggle(
-    'ews_web_user_extension',
-    'EWS: Enable EWSGhana web user extension',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1327,22 +1283,6 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
-)
-
-LOCATION_SAFETY_EXEMPTION = StaticToggle(
-    'location_safety_exemption',
-    'Exemption from location restrictions for EWS and ILS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "ewsghana and ilsgateway do some custom location permissions stuff. "
-        "This feature flag grants them access to the web user pages, but it does "
-        "not actually restrict their access at all. This is implemented strictly "
-        "for backwards compatibility and should not be enabled for any other "
-        "project."
-    ),
-    relevant_environments={'production'},
-    always_enabled={'ews-ghana', 'ils-gateway'},
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1831,6 +1771,13 @@ BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+mwcd_indicators = StaticToggle(
+    'mwcd_indicators',
+    'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )

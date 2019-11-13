@@ -15,7 +15,6 @@ from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
 from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.handlers.helpers.formatter import EWSFormatter
 from custom.ewsghana.handlers.helpers.stock_and_receipt_parser import EWSStockAndReceiptParser, \
@@ -185,13 +184,6 @@ class SOHHandler(KeywordHandler):
             data = parser.parse(formatted_text)
             if not data:
                 return False
-            if EWS_INVALID_REPORT_RESPONSE.enabled(self.domain):
-                filtered_transactions = self.get_valid_reports(data)
-
-                if not filtered_transactions:
-                    return True
-
-                data['transactions'] = filtered_transactions
 
         except NotAUserClassError:
             return False

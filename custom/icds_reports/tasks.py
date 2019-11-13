@@ -166,6 +166,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'child_list', 'name': 'static-child_health_cases'},
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
+    {'type': 'ls_usage','name':'static-ls_usage_forms'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
     {'type': 'cbe_form', 'name': 'static-cbe_form'},
@@ -1630,7 +1631,7 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return dict(cursor.fetchall())
+        return {row[0] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):

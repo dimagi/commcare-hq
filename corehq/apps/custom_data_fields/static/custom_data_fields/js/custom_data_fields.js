@@ -24,7 +24,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.is_required = ko.observable();
         self.choices = ko.observableArray();
         self.validationMode = ko.observable(); // 'choice' or 'regex'
-        self.multiple_choice = ko.observable();
         self.regex = ko.observable();
         self.regex_msg = ko.observable();
 
@@ -55,12 +54,10 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 self.regex(field.regex);
                 self.regex_msg(field.regex_msg);
             }
-            self.multiple_choice(field.is_multiple_choice);
         };
 
         self.serialize = function () {
             var choices = [],
-                is_multiple_choice = null,
                 regex = null,
                 regex_msg = null;
             if (self.validationMode() === 'choice') {
@@ -75,7 +72,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 _.each(choicesToRemove, function (choice) {
                     self.removeChoice(choice);
                 });
-                is_multiple_choice = self.multiple_choice();
             } else if (self.validationMode() === 'regex') {
                 regex = self.regex();
                 regex_msg = self.regex_msg();
@@ -88,7 +84,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regex_msg,
-                'is_multiple_choice': is_multiple_choice,
             };
         };
     }
