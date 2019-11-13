@@ -23,25 +23,3 @@ class InputStockForm(forms.Form):
     units = forms.CharField(required=False)
     monthly_consumption = forms.DecimalField(required=False, widget=forms.HiddenInput())
     default_consumption = forms.DecimalField(min_value=0, required=False)
-
-
-class EWSUserSettings(forms.Form):
-    facility = forms.CharField(required=False)
-    sms_notifications = forms.BooleanField(required=False, label='Needs SMS notifications')
-
-    def __init__(self, *args, **kwargs):
-        self.user_id = kwargs.pop('user_id')
-        domain = None
-        if 'domain' in kwargs:
-            domain = kwargs['domain']
-            del kwargs['domain']
-        super(EWSUserSettings, self).__init__(*args, **kwargs)
-        query_url = reverse('non_administrative_locations_for_select2', args=[domain])
-        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url)
-
-    def save(self, user, domain):
-        ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]
-        ews_extension.domain = domain
-        ews_extension.location_id = self.cleaned_data['facility']
-        ews_extension.sms_notifications = self.cleaned_data['sms_notifications']
-        ews_extension.save()
