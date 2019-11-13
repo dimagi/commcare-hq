@@ -1,3 +1,5 @@
+from warnings import warn
+
 import attr
 from couchdbkit import BadValueError
 from jsonpath_rw import parse as parse_jsonpath
@@ -371,12 +373,20 @@ class CasePropertyMap(CaseProperty):
     """
     value_map = DictProperty(required=True)
 
+    def __init__(self, *args, **kwargs):
+        DocumentSchema.__init__(self, *args, **kwargs)
+        warn("CasePropertyMap is deprecated; use CaseProperty", DeprecationWarning)
+
 
 class FormQuestionMap(FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
     value_map = DictProperty(required=True)
+
+    def __init__(self, *args, **kwargs):
+        DocumentSchema.__init__(self, *args, **kwargs)
+        warn("FormQuestionMap is deprecated; use FormQuestion", DeprecationWarning)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
@@ -409,11 +419,17 @@ class FormUserAncestorLocationField(ValueSource):
 
 
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        DocumentSchema.__init__(self, *args, **kwargs)
+        warn("JsonPathCaseProperty is deprecated; use CaseProperty", DeprecationWarning)
 
 
 class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        DocumentSchema.__init__(self, *args, **kwargs)
+        warn("JsonPathCasePropertyMap is deprecated; use CaseProperty", DeprecationWarning)
 
 
 class JsonPathConstantValue(ConstantValue, JsonPathMixin):
