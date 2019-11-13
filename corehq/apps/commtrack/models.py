@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -148,7 +149,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         self.for_domain.clear(self.__class__, self.domain)
 
     @classmethod
-    @quickcache(vary_on=['domain'])
+    @quickcache(vary_on=['domain'], skip_arg=lambda *args: settings.UNIT_TESTING)
     def for_domain(cls, domain):
         result = get_docs_in_domain_by_class(domain, cls)
         try:
