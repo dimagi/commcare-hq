@@ -24,6 +24,8 @@ from corehq.util.quickcache import quickcache
 
 from .interface import PillowProcessor
 
+ONE_DAY = 24 * 60 * 60
+
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
     """
@@ -77,7 +79,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                 )
 
 
-@quickcache(['domain', 'build_id'], timeout=60 * 60)
+@quickcache(['domain', 'build_id'], timeout=ONE_DAY, memoize_timeout=ONE_DAY)
 def mark_has_submission(domain, build_id):
     app = None
     try:
