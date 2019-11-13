@@ -976,16 +976,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 })
         return totals
 
-    # TODO: delete
-    def prepare_multimedia_for_exchange(self):
-        """
-            Prepares the multimedia in the application for exchanging across domains.
-        """
-        self.remove_unused_mappings()
-        for path, media in self.get_media_objects(remove_unused=True):
-            if not media or (not media.is_shared and self.domain not in media.owners):
-                del self.multimedia_map[path]
-
     def check_media_state(self):
         has_missing_refs = False
 
