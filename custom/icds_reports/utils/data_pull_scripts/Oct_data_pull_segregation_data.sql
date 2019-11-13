@@ -17,14 +17,15 @@ group by supervisor_id;
          Tasks Shown: One of 64
          ->  Task
                Node: host=100.71.184.232 port=5432 dbname=icds_ucr
-               ->  Finalize GroupAggregate  (cost=1000.64..460032.74 rows=307 width=81)
+               ->  Finalize GroupAggregate  (cost=1000.64..417186.39 rows=306 width=81)
                      Group Key: supervisor_id
-                     ->  Gather Merge  (cost=1000.64..460002.81 rows=1535 width=81)
+                     ->  Gather Merge  (cost=1000.64..417156.55 rows=1530 width=81)
                            Workers Planned: 5
-                           ->  Partial GroupAggregate  (cost=0.56..458817.88 rows=307 width=81)
+                           ->  Partial GroupAggregate  (cost=0.56..415972.23 rows=306 width=81)
                                  Group Key: supervisor_id
-                                 ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..453874.90 rows=131731 width=41)
+                                 ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411701.07 rows=113816 width=41)
                                        Index Cond: (month = '2019-10-01'::date)
+(15 rows)
 
 */
 
@@ -47,15 +48,16 @@ group by supervisor_id;
          Tasks Shown: One of 64
          ->  Task
                Node: host=100.71.184.232 port=5432 dbname=icds_ucr
-               ->  Finalize GroupAggregate  (cost=1000.64..457093.50 rows=307 width=81)
+               ->  Finalize GroupAggregate  (cost=1000.64..414646.87 rows=306 width=81)
                      Group Key: supervisor_id
-                     ->  Gather Merge  (cost=1000.64..457063.57 rows=1535 width=81)
+                     ->  Gather Merge  (cost=1000.64..414617.03 rows=1530 width=81)
                            Workers Planned: 5
-                           ->  Partial GroupAggregate  (cost=0.56..455878.64 rows=307 width=81)
+                           ->  Partial GroupAggregate  (cost=0.56..413432.71 rows=306 width=81)
                                  Group Key: supervisor_id
-                                 ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..455850.85 rows=659 width=41)
+                                 ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..413408.31 rows=569 width=41)
                                        Index Cond: (month = '2019-10-01'::date)
                                        Filter: (((age_tranche)::integer >= 37) AND ((age_tranche)::integer <= 72))
+(16 rows)
 */​
 
 
