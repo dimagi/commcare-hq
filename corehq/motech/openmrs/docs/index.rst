@@ -12,24 +12,10 @@ in the context of MOTECH.
    :local:
 
 
-The OpenMRS Repeater
---------------------
+OpenmrsRepeater
+---------------
 
-The OpenMRS repeater is responsible for updating OpenMRS patients with
-changes made to cases in CommCare. It is also responsible for creating
-OpenMRS "visits", "encounters" and "observations" when a corresponding
-visit form is submitted in CommCare.
-
-The ``OpenmrsRepeater`` class is different from most repeater classes in
-three important details:
-
-1. It updates the OpenMRS equivalent of cases like the ``CaseRepeater``
-   class, but it reads forms like the ``FormRepeater`` class. So it
-   subclasses ``CaseRepeater`` but its payload format is ``form_json``.
-
-2. It makes many API calls for each payload.
-
-3. It can have a location.
+.. autoclass:: corehq.motech.openmrs.repeaters.OpenmrsRepeater
 
 
 OpenMRS Repeater Location
@@ -76,18 +62,10 @@ and other mobile workers at the municipality level.
 See also: :ref:`patient_finders-label`
 
 
-``OpenmrsConfig``
------------------
+OpenmrsConfig
+-------------
 
-Configuration for an OpenMRS repeater is stored in an ``OpenmrsConfig``
-document. Patient data, which is mapped from a CommCare case, is stored
-in OpenmrsConfig.case_config, and adheres to the OpenmrsCaseConfig
-document schema. Event, encounter and observation data, which is mapped
-from CommCare forms, is stored in OpenmrsConfig.form_configs.
-
-Currently we support one case type and multiple forms. That may change
-in the future if we need to map multiple CommCare case types to OpenMRS
-patients.
+.. autoclass::  corehq.motech.openmrs.openmrs_config.OpenmrsConfig
 
 
 An OpenMRS Patient
@@ -232,8 +210,8 @@ There are several things here to note:
   names and addresses.
 
 
-``OpenmrsCaseConfig``
----------------------
+OpenmrsCaseConfig
+-----------------
 
 Now that we know what a patient looks like, the ``OpenmrsCaseConfig``
 schema will make more sense. It has the following fields that correspond
@@ -332,8 +310,8 @@ which class of ``PatientFinder`` the OpenMRS repeater must use.
 
 .. _patient_finders-label:
 
-``PatientFinder``
------------------
+PatientFinder
+-------------
 
 .. autoclass:: corehq.motech.openmrs.finders.PatientFinder
 
@@ -368,14 +346,14 @@ an identifier. You can find this out from the OpenMRS Administration UI,
 or by testing the OpenMRS REST API.
 
 
-``WeightedPropertyPatientFinder``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WeightedPropertyPatientFinder
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.motech.openmrs.finders.WeightedPropertyPatientFinder
 
 
-``OpenmrsFormConfig``
----------------------
+OpenmrsFormConfig
+-----------------
 
 MOTECH sends case updates as changes to patient properties and
 attributes. Form submissions can also create Visits, Encounters and

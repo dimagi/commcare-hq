@@ -216,6 +216,17 @@ class OpenmrsFormConfig(DocumentSchema):
 
 
 class OpenmrsConfig(DocumentSchema):
+    """
+    Configuration for an OpenMRS repeater is stored in an
+    ``OpenmrsConfig`` document.
+
+    The ``case_config`` property maps CommCare case properties (mostly)
+    to patient data, and uses the ``OpenmrsCaseConfig`` document schema.
+
+    The ``form_configs`` property maps CommCare form questions (mostly)
+    to event, encounter and observation data, and uses the
+    ``OpenmrsFormConfig`` document schema.
+    """
     openmrs_provider = StringProperty(required=False)
     case_config = SchemaProperty(OpenmrsCaseConfig)
     form_configs = ListProperty(OpenmrsFormConfig)
