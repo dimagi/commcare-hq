@@ -21,10 +21,13 @@ Save those backups to somewhere you'll be able to access from the new environmen
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 3.6](https://www.python.org/downloads/)
+- [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
+  - `sudo apt install python3-distutils python3-dev`
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+- [Pango](https://pango.gnome.org/) 
+  - `sudo apt install libpango1.0-0`
 
 ##### macOS Notes
 
@@ -69,23 +72,6 @@ Next, install the appropriate requirements (only one is necessary).
 (If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
-
-#### Setup for Python 3
-
-- Install [Python 3.6](https://www.python.org/downloads/)
-    - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
-    - For Ubuntu 18.04:
-
-          $ sudo apt install python3.6 python3.6-dev
-
-    - For Ubuntu < 18.04:
-
-          $ sudo add-apt-repository ppa:deadsnakes/ppa
-          $ sudo apt-get update
-          $ sudo apt-get install python3.6
-
-- [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
-- `$ pip install -r requirements/dev-requirements.txt`
 
 #### Setup localsettings
 
@@ -476,5 +462,4 @@ https://github.com/jeffh/sniffer/
 
 ## Other links
 
-+ [Pre-Docker environment setup instructions](https://github.com/dimagi/commcare-hq/blob/master/PRE_DOCKER_SETUP.md)
 + [Common Issues](https://github.com/dimagi/commcare-hq/blob/master/COMMON_ISSUES.md)

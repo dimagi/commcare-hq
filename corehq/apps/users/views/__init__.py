@@ -106,13 +106,6 @@ from corehq.util.view_utils import json_error
 from django_digest.decorators import httpdigest
 
 
-def _is_exempt_from_location_safety(view_fn, *args, **kwargs):
-    return toggles.LOCATION_SAFETY_EXEMPTION.enabled(kwargs.get("domain", None))
-
-
-location_safe_for_ews_ils = conditionally_location_safe(_is_exempt_from_location_safety)
-
-
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
@@ -339,7 +332,6 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.get(request, *args, **kwargs)
 
 
-@location_safe_for_ews_ils
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
@@ -446,7 +438,6 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-@location_safe_for_ews_ils
 class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
@@ -539,10 +530,6 @@ class ListRolesView(BaseRoleAccessView):
                 and self.couch_user.is_domain_admin)
 
     @property
-    def is_location_safety_exempt(self):
-        return toggles.LOCATION_SAFETY_EXEMPTION.enabled(self.domain)
-
-    @property
     def landing_page_choices(self):
         return [
             {'id': None, 'name': _('Use Default')}
@@ -573,7 +560,6 @@ class ListRolesView(BaseRoleAccessView):
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
-            'is_location_safety_exempt': self.is_location_safety_exempt,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
@@ -585,7 +571,6 @@ class ListRolesView(BaseRoleAccessView):
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
-@location_safe_for_ews_ils
 def paginate_web_users(request, domain):
     def _query_es(limit, skip, query=None):
         web_user_filter = [
@@ -644,7 +629,6 @@ def paginate_web_users(request, domain):
 @always_allow_project_access
 @require_can_edit_web_users
 @require_POST
-@location_safe_for_ews_ils
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
     # if no user, very likely they just pressed delete twice in rapid succession so
@@ -669,7 +653,6 @@ def remove_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
-@location_safe_for_ews_ils
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
@@ -910,7 +893,6 @@ def accept_invitation(request, domain, invitation_id):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
-@location_safe_for_ews_ils
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
@@ -926,7 +908,6 @@ def reinvite_web_user(request, domain):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
-@location_safe_for_ews_ils
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
     invitation = Invitation.get(invitation_id)
@@ -937,7 +918,6 @@ def delete_invitation(request, domain):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
-@location_safe_for_ews_ils
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
@@ -958,7 +938,6 @@ class BaseManageWebUserView(BaseUserSettingsView):
         }]
 
 
-@location_safe_for_ews_ils
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
@@ -1091,7 +1070,6 @@ class DomainRequestView(BasePageView):
 @require_POST
 @always_allow_project_access
 @require_permission_to_edit_user
-@location_safe_for_ews_ils
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -1110,7 +1088,6 @@ def make_phone_number_default(request, domain, couch_user_id):
 @require_POST
 @always_allow_project_access
 @require_permission_to_edit_user
-@location_safe_for_ews_ils
 def delete_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -1128,7 +1105,6 @@ def delete_phone_number(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_permission_to_edit_user
-@location_safe_for_ews_ils
 def verify_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters

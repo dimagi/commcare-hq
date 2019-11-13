@@ -1,3 +1,4 @@
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -13,9 +14,17 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     @property
+    def previous_agg_table_name(self):
+        return f"previous_{self.monthly_tablename}"
+
+    @property
     def model(self):
         from custom.icds_reports.models import AggChildHealth
         return AggChildHealth
+
+    @property
+    def child_temp_tablename(self):
+        return get_child_health_temp_tablename(self.month)
 
     def staging_queries(self):
         columns = (
@@ -133,7 +142,6 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             query_cols.append((name, c[1]))
 
         query_cols = ", ".join([f'{q} as {name}' for name, q in query_cols])
-        child_health_monthly_table = 'child_health_monthly'
         tmp_tablename = 'blah_blah_blah'
         final_columns = ", ".join([col[0] for col in columns])
         supervisor_id_ranges = [
@@ -159,7 +167,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             (f"""
             CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
                 {query_cols}
-                FROM "{child_health_monthly_table}" chm
+                FROM "{self.child_temp_tablename}" chm
                 LEFT OUTER JOIN "awc_location" awc_loc ON (
                     awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
                 )
@@ -354,12 +362,12 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         """
 
     def indexes(self):
-        tablename = self.monthly_tablename
+        staging_tablename = self.staging_tablename
         return [
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_1" ON "{tablename}" (aggregation_level, state_id)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_2" ON "{tablename}" (aggregation_level, gender)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_3" ON "{tablename}" (aggregation_level, age_tranche)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_4" ON "{tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_5" ON "{tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_6" ON "{tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, state_id)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, gender)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, age_tranche)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
         ]

@@ -9,8 +9,7 @@ from django.utils.translation import ugettext as _
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
-    get_child_locations
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -212,8 +211,6 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
 
     config['date'] = date.date()
     sector_data = None
@@ -224,7 +221,6 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     for row in sector_data:
         valid = row['all']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         in_day = row['in_day']
         row_values = {
@@ -239,10 +235,6 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

@@ -148,7 +148,7 @@ def save_match_ids(case, case_config, patient):
         if id_type_uuid in case_config_ids:
             case_property = case_config_ids[id_type_uuid]['case_property']
             if case_property == 'external_id':
-                check_duplicate_case_match(case.domain, case.type, value)
+                check_duplicate_case_match(case, value)
                 kwargs['external_id'] = value
             else:
                 case_update[case_property] = value
@@ -161,20 +161,31 @@ def save_match_ids(case, case_config, patient):
     submit_case_blocks([case_block.as_text()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
-def check_duplicate_case_match(domain, case_type, external_id):
-    case, error = importer_util.lookup_case(
+def check_duplicate_case_match(case, external_id):
+
+    def get_case_str(case_):
+        return (f'<Case case_id="{case_.case_id}", domain="{case_.domain}", '
+                f'type="{case_.type}" name="{case_.name}">')
+
+    another_case, error = importer_util.lookup_case(
         importer_util.EXTERNAL_ID,
         external_id,
-        domain,
-        case_type=case_type,
+        case.domain,
+        case_type=case.type,
     )
-    if case:
-        case_str = (f'<Case case_id="{case.case_id}", domain="{domain}", '
-                    f'type="{case_type}" name="{case.name}">')
-        message = f'{case_str} already exists with external_id="{external_id}".'
+    if another_case:
+        case_str = get_case_str(case)
+        another_case_str = get_case_str(another_case)
+        message = (
+            f'Unable to match {case_str} with OpenMRS patient "{external_id}": '
+            f'{another_case_str} already exists with external_id="{external_id}".'
+        )
     elif error == LookupErrors.MultipleResults:
-        message = (f'Multiple cases already exist in domain "{domain}" with '
-                   f'external_id="{external_id}" and case type="{case_type}".')
+        case_str = get_case_str(case)
+        message = (
+            f'Unable to match {case_str} with OpenMRS patient "{external_id}": '
+            f'Multiple cases already exist with external_id="{external_id}".'
+        )
     else: # error == LookupErrors.NotFound:
         return
     raise DuplicateCaseMatch(message)

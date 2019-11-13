@@ -26,7 +26,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
@@ -251,13 +250,11 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            # domain hides Dashboard tab if user is non-admin
-            if not user_has_custom_top_menu(self.domain, self.couch_user):
-                if self.couch_user.is_commcare_user():
-                    # never show the dashboard for mobile workers
-                    return False
-                else:
-                    return domain_has_apps(self.domain)
+            if self.couch_user.is_commcare_user():
+                # never show the dashboard for mobile workers
+                return False
+            else:
+                return domain_has_apps(self.domain)
         return False
 
     @property
@@ -338,7 +335,6 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
-            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -404,11 +400,6 @@ class SetupTab(UITab):
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
             ]
-            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
-                commcare_supply_setup.append({
-                    'title': _(StockLevelsView.page_title),
-                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -933,10 +924,7 @@ class ApplicationsTab(UITab):
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
-                # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user)) and (
-            has_privilege(self._request, privileges.PROJECT_ACCESS)
-        )
+                has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
 class CloudcareTab(UITab):
@@ -2058,7 +2046,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
@@ -2071,13 +2058,6 @@ class AdminTab(UITab):
                 {'title': _('System Info'),
                  'url': reverse('system_info'),
                  'icon': 'fa fa-heartbeat'},
-                {'title': _('PillowTop Errors'),
-                 'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',)),
-                 'icon': 'fa fa-bed'},
-                {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname),
-                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
@@ -2090,6 +2070,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Manage deleted domains'),
+                 'url': reverse('tombstone_management'),
+                 'icon': 'fa fa-minus-circle'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),
