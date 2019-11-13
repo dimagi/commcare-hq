@@ -266,17 +266,6 @@ class DashboardTab(UITab):
         return default_dashboard_url(self._request, self.domain)
 
 
-class ProjectInfoTab(UITab):
-    title = ugettext_noop("Project Info")
-    view = "corehq.apps.appstore.views.project_info"
-
-    url_prefix_formats = ('/exchange/{domain}/info/',)
-
-    @property
-    def _is_viewable(self):
-        return self.project and self.project.is_snapshot
-
-
 class SetupTab(UITab):
     title = ugettext_noop("Setup")
     view = "default_commtrack_setup"
