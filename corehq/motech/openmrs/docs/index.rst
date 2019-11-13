@@ -1,42 +1,28 @@
-MOTECH's OpenMRS Module
-=======================
+The MOTECH OpenMRS & Bahmni Module
+==================================
 
-See the [MOTECH README](../README.md#openMRS----bahmni--module) for a
-brief introduction to OpenMRS and Bahmni in the context of MOTECH.
-
-
-Contents
---------
-
-1. [The OpenmrsRepeater](#the-openmrsrepeater)
-2. [OpenMRS Repeater Location](#openmrs-repeater-location)
-3. [OpenmrsConfig](#openmrsconfig)
-4. [An OpenMRS Patient](#an-openmrs-patient)
-5. [OpenmrsCaseConfig](#openmrscaseconfig)
-6. [PatientFinders](#patientfinders)
-   1. [Creating Missing Patients](#creating-missing-patients)
-   2. [WeightedPropertyPatientFinder](#weightedpropertypatientfinder)
-7. [OpenmrsFormConfig](#openmrsformconfig)
-8. [Provider](#provider)
-9. [Atom Feed Integration](#atom-feed-integration)
-   1. [Adding cases for OpenMRS patients](#adding-cases-for-openmrs-patients)
-10. [Import-Only and Export-Only Values](#import-only-and-export-only-values)
-11. [Data Types](#data-types)
+See the `MOTECH README <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/README.md#the-openmrs--bahmni-module>`_
+for a brief introduction to OpenMRS and Bahmni in the context of MOTECH.
 
 
-The OpenmrsRepeater
--------------------
+.. contents::
+   :local:
 
-The OpenmrsRepeater is responsible for updating OpenMRS patients with
+
+The OpenMRS Repeater
+--------------------
+
+The OpenMRS repeater is responsible for updating OpenMRS patients with
 changes made to cases in CommCare. It is also responsible for creating
 OpenMRS "visits", "encounters" and "observations" when a corresponding
 visit form is submitted in CommCare.
 
-It is different from other repeaters in three important details:
+The ``OpenmrsRepeater`` class is different from most repeater classes in
+three important details:
 
-1. It updates the OpenMRS equivalent of cases like a CaseRepeater, but
-it reads forms like a FormRepeater. So it subclasses CaseRepeater, but
-its payload format is form_json.
+1. It updates the OpenMRS equivalent of cases like the ``CaseRepeater``
+   class, but it reads forms like the ``FormRepeater`` class. So it
+   subclasses ``CaseRepeater`` but its payload format is ``form_json``.
 
 2. It makes many API calls for each payload.
 
@@ -46,29 +32,28 @@ its payload format is form_json.
 OpenMRS Repeater Location
 -------------------------
 
-Assigning an OpenMRS Repeater to a location allows a project to
+Assigning an OpenMRS repeater to a location allows a project to
 integrate with multiple OpenMRS/Bahmni servers.
-
-(A project's locations or organization structure can be managed by
-opening the "User" menu, and choosing "View All". On the left, under the
-heading "Organization", are links to define organization levels, and to
-build the organization structure. You can also build the organization
-structure in a spreadsheet and upload it.)
 
 Imagine a location hierarchy like the following:
 
 * (country) South Africa
-  * (province) Gauteng
-  * (province) Western Cape
-    * (district) City of Cape Town
-    * (district) Central Karoo
+
+  + (province) Gauteng
+
+  + (province) Western Cape
+
+    - (district) City of Cape Town
+
+    - (district) Central Karoo
+
       * (municipality) Laingsburg
 
 Imagine we had an OpenMRS server to store medical records for the city
 of Cape Town, and a second OpenMRS server to store medical records for
 the central Karoo.
 
-When a mobile worker whose primary location is set to Laingburg submits
+When a mobile worker whose primary location is set to Laingsburg submits
 data, MOTECH will search their location and the locations above it until
 it finds an OpenMRS server. That will be the server that their data is
 forwarded to.
@@ -85,13 +70,13 @@ as the OpenMRS server. In the example above, in terms of organization
 levels, it would make sense to have a supervisor at the district level
 and other mobile workers at the municipality level.
 
-See also: PatientFinders: [Creating Missing Patients](#creating-missing-patients)
+See also: :ref:`patient_finders-label`
 
 
-OpenmrsConfig
--------------
+``OpenmrsConfig``
+-----------------
 
-Configuration for an OpenmrsRepeater is stored in an OpenmrsConfig
+Configuration for an OpenMRS repeater is stored in an ``OpenmrsConfig``
 document. Patient data, which is mapped from a CommCare case, is stored
 in OpenmrsConfig.case_config, and adheres to the OpenmrsCaseConfig
 document schema. Event, encounter and observation data, which is mapped
@@ -107,9 +92,8 @@ An OpenMRS Patient
 
 The way we map case properties to an OpenMRS patient is based on how
 OpenMRS represents a patient. Here is an example of an OpenMRS patient
-(with some fields removed):
+(with some fields removed)::
 
-```javascript
     {
       "uuid": "d95bf6c9-d1c6-41dc-aecf-1c06bd71386c",
       "display": "GAN200000 - Test DrugDataOne",
@@ -215,7 +199,6 @@ OpenMRS represents a patient. Here is an example of an OpenMRS patient
         ]
       }
     }
-```
 
 There are several things here to note:
 
@@ -233,12 +216,12 @@ There are several things here to note:
 * There are two kinds of custom person attributes:
 
   1. Attributes that take any value (of its data type). Examples from
-    above are "primaryContact = 1234" and "caste = Tribal".
+     above are "primaryContact = 1234" and "caste = Tribal".
 
   2. Attributes whose values are selected from a set. An example from
-    above is "class", which is set to "General". OpenMRS calls these
-    values "Concepts", and like everything else in OpenMRS each concept
-    value has a UUID.
+     above is "class", which is set to "General". OpenMRS calls these
+     values "Concepts", and like everything else in OpenMRS each concept
+     value has a UUID.
 
 * A person has "names" and a "preferredName", and similarly "addresses"
   and "preferredAddress". Case properties are only mapped to
@@ -246,12 +229,12 @@ There are several things here to note:
   names and addresses.
 
 
-OpenmrsCaseConfig
------------------
+``OpenmrsCaseConfig``
+---------------------
 
-Now that we know what a patient looks like, the OpenmrsCaseConfig schema
-will make more sense. It has the following fields that correspond to
-OpenMRS's fields:
+Now that we know what a patient looks like, the ``OpenmrsCaseConfig``
+schema will make more sense. It has the following fields that correspond
+to OpenMRS's fields:
 
 * patient_identifiers
 * person_properties
@@ -260,33 +243,32 @@ OpenMRS's fields:
 * person_preferred_address
 
 Each of those assigns values to a patient one of three ways, and each
-way is configured in an OpenmrsCaseConfig using a subclass of
-ValueSource:
+way is configured in an ``OpenmrsCaseConfig`` using a subclass of
+``ValueSource``:
 
-1. It can assign a constant. This uses the ConstantString subclass of
-   ValueSource. e.g.
-   ```javascript
+1. It can assign a constant. This uses the ``ConstantString`` subclass
+   of ``ValueSource``. e.g. ::
+
        "person_properties": {
          "birthdate": {
            "doc_type": "ConstantString",
            "value": "Oct 7, 3761 BCE"
          }
        }
-   ```
 
-2. It can assign a case property value. Use CaseProperty for this. e.g.
-   ```javascript
+2. It can assign a case property value. Use ``CaseProperty`` for this.
+   e.g. ::
+
        "person_properties": {
          "birthdate": {
            "doc_type": "CaseProperty",
            "case_property": "dob"
          }
        }
-    ```
 
-3. It can map a case property value to a Concept UUID.
-   CasePropertyMap does this. e.g.
-   ```javascript
+3. It can map a case property value to a concept UUID.
+   ``CasePropertyMap`` does this. e.g. ::
+
        "person_attributes": {
          "c1f455e7-3f10-11e4-adec-0800271c1b75": {
            "doc_type": "CasePropertyMap",
@@ -300,53 +282,57 @@ ValueSource:
            }
          }
        }
-    ```
 
-**GOTCHA**: An easy mistake when configuring "person_attributes": The
-OpenMRS UUID of a Person Attribute Type is different from the UUID of
-its Concept. For the Person Attribute Type UUID, navigate to
-Administration > Person > Manage Person Attribute Types and select the
-Person Attribute Type you want. Note the greyed-out UUID. This is the
-UUID that you need. If the Person Attribute Type is a Concept, navigate
-to Administration > Concepts > View Concept Dictionary and search for
-the Person Attribute Type by name. Select it from the search results.
-Note the UUID of the concept is different. Select each of its Answers.
-Use their UUIDs in the "value_map".
+.. NOTE:: An easy mistake when configuring ``person_attributes``: The
+          OpenMRS UUID of a person attribute type is different from the
+          UUID of its concept. For the person attribute type UUID,
+          navigate to *Administration* > *Person >
+          *Manage PersonAttribute Types* and select the person attribute
+          type you want. Note the greyed-out UUID. This is the UUID that
+          you need. If the person attribute type is a concept, navigate
+          to *Administration* > *Concepts* > *View Concept Dictionary*
+          and search for the person attribute type by name. Select it
+          from the search results. Note the UUID of the concept is
+          different. Select each of its answers. Use their UUIDs in
+          ``value_map``.
 
-There are two more OpenmrsCaseConfig fields:
+There are two more ``OpenmrsCaseConfig`` fields:
 
-* match_on_ids
-* patient_finder
+* ``match_on_ids``
+* ``patient_finder``
 
-`match_on_ids` is a list of patient identifiers. They can be all or a
+``match_on_ids`` is a list of patient identifiers. They can be all or a
 subset of those given in OpenmrsCaseConfig.patient_identifiers. When a
 case is updated in CommCare, these are the IDs to be used to select the
 corresponding patient from OpenMRS. This is done by
-[`repeater_helpers`](repeater_helpers.py)`.get_patient_by_id()`
+``repeater_helpers.get_patient_by_id()``
 
 This is sufficient for projects that import their patient cases from
 OpenMRS, because each CommCare case will have a corresponding OpenMRS
 patient, and its ID, or IDs, will have been set by OpenMRS.
 
-**NOTE**: MOTECH has the ability to create or update the values of
-patient identifiers. If an app offers this ability to users, then that
-identifier should not be included in `match_on_ids`. If the case was
-originally matched using only that identifier and its value changes,
-MOTECH may be unable to match that patient again.
+.. NOTE:: MOTECH has the ability to create or update the values of
+          patient identifiers. If an app offers this ability to users,
+          then that identifier should not be included in
+          ``match_on_ids``. If the case was originally matched using
+          only that identifier and its value changes, MOTECH may be
+          unable to match that patient again.
 
 For projects where patient cases can be registered in CommCare, there
 needs to be a way of finding a corresponding patient, if one exists.
 
-If `repeater_helpers.get_patient_by_id()` does not return a patient, we
-need to search OpenMRS for a corresponding patient. For this we use
-PatientFinders. OpenmrsCaseConfig.patient_finder will determine which
-class of PatientFinder the OpenmrsRepeater must use.
+If ``repeater_helpers.get_patient_by_id()`` does not return a patient,
+we need to search OpenMRS for a corresponding patient. For this we use
+``PatientFinders``. ``OpenmrsCaseConfig.patient_finder`` will determine
+which class of ``PatientFinder`` the OpenMRS repeater must use.
 
 
-PatientFinders
---------------
+.. _patient_finders-label:
 
-The [PatientFinder](finders.py) base class was developed as a way to
+``PatientFinders``
+------------------
+
+The ``PatientFinder`` base class was developed as a way to
 handle situations where patient cases are created in CommCare instead of
 being imported from OpenMRS.
 
@@ -360,30 +346,33 @@ Different projects may focus on different kinds of case properties, so
 it was felt that a base class would allow some flexibility, without too
 much "YAGNI".
 
-The `PatientFinder.wrap()` method allows you to wrap documents of
+The ``PatientFinder.wrap()`` method allows you to wrap documents of
 subclasses.
 
-The `PatientFinder.find_patients()` method must be implemented by
+The ``PatientFinder.find_patients()`` method must be implemented by
 subclasses. It returns a list of zero, one, or many patients. If it
 returns one patient, the OpenmrsRepeater.find_or_create_patient() will
 accept that patient as a true match.
 
-**NOTE**: The consequences of a false positive (a Type II error) are
-severe: A real patient will have their valid values overwritten by those
-of someone else. So PatientFinders should be written and configured to
-skew towards false negatives (Type I errors). In other words, it is much
-better not to choose a patient than to choose the wrong patient.
+.. NOTE:: The consequences of a false positive (a Type II error) are
+          severe: A real patient will have their valid values
+          overwritten by those of someone else. So ``PatientFinder``
+          subclasses should be written and configured to skew towards
+          false negatives (Type I errors). In other words, it is much
+          better not to choose a patient than to choose the wrong
+          patient.
 
 
-### Creating Missing Patients
+Creating Missing Patients
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If a corresponding OpenMRS patient is not found for a CommCare case,
-then a PatientFinder has the option to create a patient in OpenMRS. This
-is an optional property named "create_missing". Its value defaults to
-`false`. If it is set to `true`, then it will create a new patient if
-none are found.
+then a ``PatientFinder`` subclass has the option to create a patient in
+OpenMRS. This is managed with the optional ``create_missing`` property.
+Its value defaults to ``false``. If it is set to ``true``, then it will
+create a new patient if none are found.
 
-For example:
+For example::
 
     "patient_finder": {
         "doc_type": "WeightedPropertyPatientFinder",
@@ -404,19 +393,20 @@ an identifier. You can find this out from the OpenMRS Administration UI,
 or by testing the OpenMRS REST API.
 
 
-### WeightedPropertyPatientFinder
+``WeightedPropertyPatientFinder``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The first (and currently only) subclass of `PatientFinder` is the
-`WeightedPropertyPatientFinder` class. As the name suggests, it assigns
-weights to case properties, and scores the patients it finds in OpenMRS
-to select an OpenMRS patient that matches a CommCare case.
+The first (and currently only) subclass of ``PatientFinder`` is the
+``WeightedPropertyPatientFinder`` class. As the name suggests, it
+assigns weights to case properties, and scores the patients it finds in
+OpenMRS to select an OpenMRS patient that matches a CommCare case.
 
-See [the source code](finders.py) for more details on its properties and
-how to define it.
+See `the source code <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/openmrs/finders.py>`_
+for more details on its properties and how to define it.
 
 
-OpenmrsFormConfig
------------------
+``OpenmrsFormConfig``
+---------------------
 
 MOTECH sends case updates as changes to patient properties and
 attributes. Form submissions can also create Visits, Encounters and
@@ -425,7 +415,7 @@ Observations in OpenMRS.
 Configure this in the "Form configs" section of the OpenMRS Forwarder
 configuration.
 
-An example value of Form configs might look like this:
+An example value of Form configs might look like this::
 
     [
       {
@@ -466,34 +456,36 @@ An example value of Form configs might look like this:
 
 This example uses two form question values, "/data/height" and
 "/data/lost_follow_up/visit_type". They are sent as values of OpenMRS
-concepts 5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA and
-e1e055a2-1d5f-11e0-b929-000c29ad1d07 respectively.
+concepts "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA" and
+"e1e055a2-1d5f-11e0-b929-000c29ad1d07" respectively.
 
 The OpenMRS concept that corresponds to the form question "/data/height"
 accepts a numeric value.
 
 The concept for "/data/lost_follow_up/visit_type" accepts a discrete set
-of values. For this we use a "FormQuestionMap" to map form question
+of values. For this we use ``FormQuestionMap`` to map form question
 values, in this example "Search" and "Support", to their corresponding
 concept UUIDs in OpenMRS.
 
-The "case_property" setting for ObservationMappings is optional. If it
-is set, when Observations are imported from OpenMRS (see
-[Atom Feed Integration](#atom-feed-integration) below) then the given
+The ``case_property`` setting for ``ObservationMapping`` is optional.
+If it is set, when Observations are imported from OpenMRS (see
+:ref:`atom_feed_integration-label` below) then the given
 case property will be updated with the value from OpenMRS. If the
-ObservationMapping is a "FormQuestionMap" with a "value_map" (like the
-"last_visit_type" example above), then the CommCare case will be updated
-with the CommCare value that corresponds to the OpenMRS value's UUID.
+observation mapping is uses ``FormQuestionMap`` or ``CasePropertyMap``
+with ``value_map`` (like the "last_visit_type" example above), then the
+CommCare case will be updated with the CommCare value that corresponds
+to the OpenMRS value's UUID.
 
-Set the UUIDs of Visit type and Encounter type appropriately according
-to the context of the form in the CommCare app.
+Set the UUIDs of ``openmrs_visit_type`` and ``openmrs_encounter_type``
+appropriately according to the context of the form in the CommCare app.
 
-"openmrs_start_datetime" is an optional setting. By default, MOTECH will
-set the start of the Visit and the Encounter to the time when the form
-was completed on the mobile worker's device.
+``openmrs_start_datetime`` is an optional setting. By default, MOTECH
+will set the start of the visit and the encounter to the time when the
+form was completed on the mobile worker's device.
 
-To change which timestamp is used, the following "form questions" are
-available:
+To change which timestamp is used, the following values for
+``form_question`` are available:
+
 * "/metadata/timeStart": The timestamp, according to the mobile worker's
   device, when the form was started
 * "/metadata/timeEnd": The timestamp, according to the mobile worker's
@@ -503,28 +495,28 @@ available:
 
 The value's default data type is datetime. But some organisations may
 need the value to be submitted to OpenMRS as just a date. To do this,
-change the "external_data_type" to "omrs_date", as shown in the example.
+set ``external_data_type`` to ``omrs_date``, as shown in the example.
 
 
 Provider
 --------
 
 Every time a form is completed in OpenMRS, it
-[creates a new Encounter](https://wiki.openmrs.org/display/docs/Encounters+and+observations).
+`creates a new Encounter <https://wiki.openmrs.org/display/docs/Encounters+and+observations>`_.
 
 Observations about a patient, like their height or their blood pressure,
 belong to an Encounter; just as a form submission in CommCare can have
 many form question values.
 
-The OpenMRS [Data Model](https://wiki.openmrs.org/display/docs/Data+Model)
+The OpenMRS `Data Model <https://wiki.openmrs.org/display/docs/Data+Model>`_
 documentation explains that an Encounter can be associated with health
 care providers.
 
 It is useful to label data from CommCare by creating a Provider in
 OpenMRS for CommCare.
 
-OpenMRS Configuration has a field called "Provider UUID", and the value
-entered here is stored in OpenmrsConfig.openmrs_provider.
+OpenMRS configuration has a field called "Provider UUID", and the value
+entered here is stored in ``OpenmrsConfig.openmrs_provider``.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
@@ -565,18 +557,20 @@ provider. Copy the value of the Provider UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
 
 
+.. _atom_feed_integration-label:
+
 Atom Feed Integration
 ---------------------
 
-The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
+The `OpenMRS Atom Feed Module <https://wiki.openmrs.org/display/docs/Atom+Feed+Module>`_
 allows MOTECH to poll feeds of updates to patients and encounters. The
 feed adheres to the
-[Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
+`Atom syndication format <https://validator.w3.org/feed/docs/rfc4287.html>`_.
 
 An example URL for the patient feed would be like
-http://www.example.com/openmrs/ws/atomfeed/patient/recent
+"http://www.example.com/openmrs/ws/atomfeed/patient/recent".
 
-Example content:
+Example content::
 
     <?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
@@ -617,9 +611,9 @@ Example content:
     </feed>
 
 Similarly, an encounter feed URL would be like
-http://www.example.com/openmrs/ws/atomfeed/encounter/recent
+"http://www.example.com/openmrs/ws/atomfeed/encounter/recent".
 
-Example content:
+Example content::
 
     <?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
@@ -661,22 +655,22 @@ Example content:
 
 At the time of writing, the Atom feeds do not use ETags or offer HEAD
 requests. MOTECH uses a GET request to fetch the document, and checks
-the timestamp in the `<updated>` tag to tell whether there is new
+the timestamp in the ``<updated>`` tag to tell whether there is new
 content.
 
 The feeds are paginated, and the page number is given at the end of the
-`href` attribute of the `<link rel="via" ...` tag, which is found at the
-start of the feed. A `<link rel="next-archive" ...` tag indicates that
-there is a next page.
+``href`` attribute of the ``<link rel="via" ...`` tag, which is found at
+the start of the feed. A ``<link rel="next-archive" ...`` tag indicates
+that there is a next page.
 
 MOTECH stores the last page number polled in the
-`OpenmrsRepeater.patients_last_page` and
-`OpenmrsRepeater.encounters_last_page`  properties. When it polls again,
-it starts at this page, and iterates "next-archive" links until all have
-been fetched.
+``OpenmrsRepeater.atom_feed_status["patient"].last_page`` and
+``OpenmrsRepeater.atom_feed_status["encounter"]last_page``  properties.
+When it polls again, it starts at this page, and iterates
+``next-archive`` links until all have been fetched.
 
 If this is the first time MOTECH is polling an Atom feed, it uses the
-`/recent` URL (as given in the example URL above) instead of starting
+``/recent`` URL (as given in the example URL above) instead of starting
 from the very beginning. This is to allow Atom feed integration to be
 enabled for ongoing projects that may have a lot of established data.
 Administrators should be informed that enabling Atom feed integration
@@ -684,7 +678,8 @@ will not import all OpenMRS patients into CommCare, but it will add
 CommCare cases for patients created in OpenMRS from the moment Atom
 feed integration is enabled.
 
-### Adding cases for OpenMRS patients
+Adding cases for OpenMRS patients
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 MOTECH needs three kinds of data in order to add a case for an OpenMRS
 patient:
@@ -725,11 +720,12 @@ In configurations like Atom feed integration that involve both sending
 data to OpenMRS and importing data from OpenMRS, sometimes some values
 should only be imported, or only exported.
 
-Use the "direction" property to determine whether a value should only be
-exported, only imported, or (the default behaviour) both.
+Use the ``direction`` property to determine whether a value should only
+be exported, only imported, or (the default behaviour) both.
 
 For example, to import a patient value named "hivStatus" as a case
-property named "hiv_status" but not export it, use `"direction": "in"`:
+property named "hiv_status" but not export it, use
+``"direction": "in"``::
 
     {
       "hivStatus": {
@@ -740,7 +736,7 @@ property named "hiv_status" but not export it, use `"direction": "in"`:
     }
 
 To export a form question, for example, but not import it, use
-`"direction": "out"`:
+``"direction": "out"``::
 
     {
       "hivStatus": {
@@ -750,8 +746,8 @@ To export a form question, for example, but not import it, use
       }
     }
 
-Omit "direction", or set it to `null`, for values that should be both
-imported and exported.
+Omit ``direction``, or set it to ``null``, for values that should be
+both imported and exported.
 
 
 Data Types
@@ -768,7 +764,7 @@ to a datetime in OpenMRS, or vice-versa. To convert from one to the
 other, set data types for values in the Repeater configuration.
 
 The default is for both the CommCare data type and the external data
-type not to be set. e.g.
+type not to be set. e.g. ::
 
     {
       "expectedDeliveryDate": {
@@ -780,7 +776,7 @@ type not to be set. e.g.
     }
 
 To set the CommCare data type to a date and the OpenMRS data type to a
-datetime for example, use the following:
+datetime for example, use the following::
 
     {
       "expectedDeliveryDate": {
@@ -792,5 +788,6 @@ datetime for example, use the following:
     }
 
 For the complete list of CommCare data types, see
-[MOTECH constants](../const.py). For the complete list of OpenMRS data
-types, see [OpenMRS constants](./const.py).
+`MOTECH constants <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/const.py>`_.
+For the complete list of OpenMRS data types, see
+`OpenMRS constants <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/openmrs/const.py>`_.

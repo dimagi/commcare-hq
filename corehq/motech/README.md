@@ -96,9 +96,8 @@ See the [MOTECH DHIS2 module documentation](./dhis2/README.md) for more
 information on configuring and managing integrations with DHIS2.
 
 
-
-OpenMRS (& Bahmni) Module
--------------------------
+The OpenMRS & Bahmni Module
+---------------------------
 
 [OpenMRS](https://openmrs.org/) is used for storing and managing patient
 data. [Bahmni](https://www.bahmni.org/) is an EMR and hospital system
@@ -107,25 +106,28 @@ with OpenMRS.
 
 ### Importing data from OpenMRS to CommCare
 
-CommCare can import data from OpenMRS using OpenMRS's Reporting API and
-OpenMRS's Atom feed API. The Reporting API is used for periodic imports,
-for example monthly. The Atom feed API is for importing data as it is
-added or changed in OpenMRS.
+MOTECH can import data into CommCare from OpenMRS using OpenMRS's
+Reporting API and OpenMRS's Atom feed API. The Reporting API is used for
+periodic imports, for example monthly. The Atom feed API is for
+importing data as it is added or changed in OpenMRS.
 
 ### Sending data from CommCare to OpenMRS
 
-CommCare sends data to OpenMRS using its Web Services API.
+MOTECH sends CommCare data to OpenMRS using OpenMRS's Web Services API.
 
 All data sent to OpenMRS relates to what OpenMRS refers to as
-"patients", "visits", "encounters" and "observations". In CommCare these
-correspond to properties of one or a handful of case types, and values
-of form questions.
+"patients", "visits", "encounters" and "observations". Values from
+CommCare can be retrieved from case properties, form questions,
+locations, *inter alia*.
 
-CommCare uses Repeaters to build and send a workflow of requests to
-OpenMRS, populated using both cases and forms.
+MOTECH sends a workflow of requests to OpenMRS to update patients and
+create visits, encounters and observations.
 
-Using an OpenMRS Repeater in conjunction with its OpenMRS server's Atom
-feed allows bidirectional live updates.
+Using MOTECH Data Forwarding in conjunction with OpenMRS's Atom feed
+allows bidirectional live updates.
+
+See the [MOTECH OpenMRS and Bahmni module documentation](./openmrs/docs/index.rst)
+for more information on configuring and managing integrations with DHIS2.
 
 
 History
