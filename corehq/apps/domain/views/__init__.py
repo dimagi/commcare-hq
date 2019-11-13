@@ -32,7 +32,6 @@ from corehq.apps.domain.views.base import (
     select,
 )
 from corehq.apps.domain.views.exchange import (
-    CreateNewExchangeSnapshotView,
     ExchangeSnapshotsView,
     set_published_snapshot,
 )

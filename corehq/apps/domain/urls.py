@@ -39,7 +39,6 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.domain.views.base import select
 from corehq.apps.domain.views.exchange import (
-    CreateNewExchangeSnapshotView,
     ExchangeSnapshotsView,
     set_published_snapshot,
 )
@@ -177,7 +176,6 @@ domain_settings = [
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
-    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),

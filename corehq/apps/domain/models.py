@@ -1026,11 +1026,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
         return CommCareMultimedia.view('hqmedia/by_domain', key=dom_with_media.name, include_docs=True).all()
 
-    def most_restrictive_licenses(self, apps_to_check=None):
-        from corehq.apps.hqmedia.utils import most_restrictive
-        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
-        return most_restrictive(licenses)
-
     @classmethod
     def get_module_by_name(cls, domain_name):
         """
