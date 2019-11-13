@@ -4,6 +4,7 @@
 # Districts launched
 # Avg. # of Days AWCs open
 */
+-- Approach 1: Use view agg_awc_monthly
 SELECT
 state_name,
 num_awcs,
@@ -31,7 +32,36 @@ FROM agg_awc_monthly WHERE aggregation_level=1 AND month='2019-10-01'
 (14 rows)
 */
 
+-- Approach 2: Use agg_awc instead and join with awc_location
+SELECT
+    state_name,
+    num_awcs,
+    num_launched_awcs,
+    num_launched_districts,
+    awc_days_open,
+    CASE WHEN num_launched_awcs>0 THEN awc_days_open/num_launched_awcs ELSE awc_days_open END AS average_awc_open
+FROM
+    (SELECT * FROM agg_awc WHERE aggregation_level=1 AND month='2019-10-01') result
+    RIGHT JOIN "public"."awc_location_local" "awc_location" ON (
+        ("awc_location"."aggregation_level" = result."aggregation_level") AND
+        ("awc_location"."state_id" = result."state_id")
+    )
+
+/*
+ Hash Left Join  (cost=2.55..80295.82 rows=713334 width=30)
+   Hash Cond: ((awc_location.aggregation_level = agg_awc.aggregation_level) AND (awc_location.state_id = agg_awc.state_id))
+   ->  Seq Scan on awc_location_local awc_location  (cost=0.00..71297.34 rows=713334 width=47)
+   ->  Hash  (cost=2.52..2.52 rows=2 width=52)
+         ->  Append  (cost=0.00..2.52 rows=2 width=52)
+               ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=52)
+                     Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+               ->  Seq Scan on "agg_awc_2019-10-01_1"  (cost=0.00..2.51 rows=1 width=52)
+                     Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+(9 rows)
+*/
+
 -- # of AWCs that submitted Infra form
+-- Approach 1: Use view agg_awc_monthly
 SELECT state_name, sum(num_awc_infra_last_update)
 FROM agg_awc_monthly
 WHERE aggregation_level=1 AND month='2019-10-01'
@@ -55,6 +85,65 @@ GROUP BY state_name
                      ->  Seq Scan on "agg_awc_2019-10-01_1" agg_awc_1  (cost=0.00..2.51 rows=1 width=172)
                            Filter: ((month = '2019-10-01'::date) AND (aggregation_level = 1))
 (16 rows)
+*/
+
+-- Approach 2: Use agg_awc instead and join with awc_location
+SELECT state_name, total_that_did_awc_infra_last_update
+FROM
+    (SELECT
+        aggregation_level, state_id,
+        sum(num_awc_infra_last_update) AS total_that_did_awc_infra_last_update
+        FROM agg_awc
+        WHERE aggregation_level=1 AND month='2019-10-01'
+        GROUP BY state_id, aggregation_level
+    ) RESULT
+    RIGHT JOIN "public"."awc_location_local" "awc_location" ON (
+        ("awc_location"."state_id" = result."state_id") AND
+        ("awc_location"."aggregation_level" = result."aggregation_level")
+    )
+/*
+--------------------------------------------------------------------------------------------------------------------------
+ Hash Left Join  (cost=2.62..75093.51 rows=713334 width=18)
+   Hash Cond: ((awc_location.state_id = result.state_id) AND (awc_location.aggregation_level = result.aggregation_level))
+   ->  Seq Scan on awc_location_local awc_location  (cost=0.00..71297.34 rows=713334 width=47)
+   ->  Hash  (cost=2.59..2.59 rows=2 width=44)
+         ->  Subquery Scan on result  (cost=2.53..2.59 rows=2 width=44)
+               ->  GroupAggregate  (cost=2.53..2.57 rows=2 width=44)
+                     Group Key: agg_awc.state_id, agg_awc.aggregation_level
+                     ->  Sort  (cost=2.53..2.53 rows=2 width=40)
+                           Sort Key: agg_awc.state_id
+                           ->  Append  (cost=0.00..2.52 rows=2 width=40)
+                                 ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=40)
+                                       Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+                                 ->  Seq Scan on "agg_awc_2019-10-01_1"  (cost=0.00..2.51 rows=1 width=40)
+                                       Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+(14 rows)
+*/
+
+-- Approach 3: Join first, filter later
+SELECT state_name, sum(num_awc_infra_last_update)
+FROM agg_awc awc
+right join awc_location_local loc
+on loc.aggregation_level=awc.aggregation_level and loc.state_id=awc.state_id
+WHERE awc.aggregation_level=1 AND month='2019-10-01'
+GROUP BY state_name;
+
+/*
+ GroupAggregate  (cost=17.93..17.97 rows=2 width=18)
+   Group Key: loc.state_name
+   ->  Sort  (cost=17.93..17.94 rows=2 width=14)
+         Sort Key: loc.state_name
+         ->  Hash Join  (cost=2.97..17.92 rows=2 width=14)
+               Hash Cond: (loc.state_id = awc.state_id)
+               ->  Index Scan using awc_location_local_aggregation_level_idx on awc_location_local loc  (cost=0.42..15.24 rows=33 width=47)
+                     Index Cond: (aggregation_level = 1)
+               ->  Hash  (cost=2.52..2.52 rows=2 width=40)
+                     ->  Append  (cost=0.00..2.52 rows=2 width=40)
+                           ->  Seq Scan on agg_awc awc  (cost=0.00..0.00 rows=1 width=40)
+                                 Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+                           ->  Seq Scan on "agg_awc_2019-10-01_1" awc_1  (cost=0.00..2.51 rows=1 width=40)
+                                 Filter: ((aggregation_level = 1) AND (month = '2019-10-01'::date))
+(14 rows)
 */
 
 /*
@@ -92,6 +181,34 @@ GROUP BY state_name
                ->  Seq Scan on icds_months_local months  (cost=0.00..25.00 rows=6 width=4)
                      Filter: (start_date = '2019-10-01'::date)
 (18 rows)
+*/
+
+-- just use agg_awc instead of using the view, it however appears to be more costly
+
+SELECT state_id,
+count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
+count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
+count(*) FILTER (WHERE infra_functional_toilet=1) AS "Available functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet=0) AS "Unavailable functional toilet"
+FROM agg_awc
+WHERE aggregation_level=5 AND month='2019-10-01'
+GROUP BY state_id
+
+/*
+ Finalize GroupAggregate  (cost=308600.43..308708.21 rows=200 width=65)
+   Group Key: "agg_awc_2019-10-01_5".state_id
+   ->  Gather Merge  (cost=308600.43..308696.21 rows=800 width=65)
+         Workers Planned: 4
+         ->  Sort  (cost=307600.37..307600.87 rows=200 width=65)
+               Sort Key: "agg_awc_2019-10-01_5".state_id
+               ->  Partial HashAggregate  (cost=307590.72..307592.72 rows=200 width=65)
+                     Group Key: "agg_awc_2019-10-01_5".state_id
+                     ->  Parallel Append  (cost=0.00..303739.40 rows=171170 width=41)
+                           ->  Parallel Seq Scan on "agg_awc_2019-10-01_5"  (cost=0.00..302883.55 rows=171170 width=41)
+                                 Filter: ((aggregation_level = 5) AND (month = '2019-10-01'::date))
+                           ->  Parallel Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=40)
+                                 Filter: ((aggregation_level = 5) AND (month = '2019-10-01'::date))
+(13 rows)
 */
 
 /*
