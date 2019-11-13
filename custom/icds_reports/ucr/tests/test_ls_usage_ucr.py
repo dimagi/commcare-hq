@@ -13,26 +13,23 @@ class TestLsUsage(BaseFormsTest):
     def test_vhnd_form_inclusion(self):
         self._test_data_source_results(
             'ls_vhnd_observation_form', [{
-                'submitted_on': None,
-                'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
+                'timeend': None,
+                'doc_id': None
             }
             ])
 
     def test_awc_mngt_form_inclusion(self):
         self._test_data_source_results(
             'awc_visit_form_with_location', [{
-                'submitted_on': None,
-                'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
+                'timeend': None,
+                'doc_id': None
             }
             ])
 
     def test_ls_home_visit_form_inclusion(self):
         self._test_data_source_results(
             'ls_home_visits', [{
-                'submitted_on': None,
-                'doc_id': None,
-                'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa'
+                'timeend': None,
+                'doc_id': None
             }
             ])

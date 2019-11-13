@@ -83,7 +83,7 @@
         "transform": {},
         "is_nullable": false,
         "is_primary_key": true,
-        "column_id": "location_id",
+        "column_id": "supervisor_id",
         "expression": {
           "type": "named",
           "name": "user_location_id"
@@ -151,9 +151,9 @@
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",
-        "distribution_column": "location_id"
+        "distribution_column": "supervisor_id"
       },
-      "primary_key": ["location_id","doc_id"]
+      "primary_key": ["supervisor_id","doc_id"]
     }
   }
 }
