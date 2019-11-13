@@ -60,5 +60,5 @@ branches:
   - nh/blank_row  # Norman Oct 28
   - mk/compare-mm-size-1 # Nov 10
   - mk/compare-mm-size-2 # Nov 11
-  - jls/kill-exchange # Jenny Nov 13
+  #- jls/kill-exchange # Jenny Nov 13
 submodules: {}
