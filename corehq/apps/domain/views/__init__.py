@@ -31,9 +31,6 @@ from corehq.apps.domain.views.base import (
     LoginAndDomainMixin,
     select,
 )
-from corehq.apps.domain.views.exchange import (
-    set_published_snapshot,
-)
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
