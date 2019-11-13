@@ -38,7 +38,6 @@ from corehq.elastic import (
 )
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
-DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
         {"facet": "project_type", "name": ugettext_lazy("Category"), "expanded": True},
@@ -56,11 +55,6 @@ SNAPSHOT_MAPPING = [
             }
         },
         {"facet": "author.exact", "name": ugettext_lazy("Author"), "expanded": True},
-    ]),
-]
-DEPLOYMENT_MAPPING = [
-    ("", True, [
-        {"facet": "deployment.region", "name": "Region", "expanded": True},
     ]),
 ]
 
@@ -417,110 +411,3 @@ def project_documentation_file(request, snapshot):
         return HttpResponse(documentation_file, content_type=project.documentation_file_type)
     else:
         raise Http404()
-
-
-class DeploymentInfoView(BaseCommCareExchangeSectionView):
-    urlname = 'deployment_info'
-    template_name = 'appstore/deployment_info.html'
-
-    @property
-    def snapshot(self):
-        return self.kwargs['snapshot']
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.snapshot))
-
-    @property
-    def project(self):
-        return Domain.get_by_name(self.snapshot)
-
-    def dispatch(self, request, *args, **kwargs):
-        if not self.project or not self.project.deployment.public:
-            raise Http404()
-        return super(DeploymentInfoView, self).dispatch(request, *args, **kwargs)
-
-    def page_context(self):
-        results = es_deployments_query({}, DEPLOYMENT_FACETS)
-        facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
-        return {
-            'domain': self.project,
-            'search_url': reverse(DeploymentsView.urlname),
-            'url_base': reverse(DeploymentsView.urlname),
-            'facet_map': facet_map,
-        }
-
-
-class DeploymentsView(BaseCommCareExchangeSectionView):
-    urlname = 'deployments'
-    template_name = 'appstore/deployments.html'
-    projects_per_page = 10
-
-    @property
-    @memoized
-    def params(self):
-        params, _ = parse_args_for_es(self.request)
-        params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
-        return params
-
-    @property
-    def page(self):
-        return int(self.params.pop('page', 1))
-
-    @property
-    @memoized
-    def results(self):
-        return es_deployments_query(self.params, DEPLOYMENT_FACETS)
-
-    @property
-    @memoized
-    def d_results(self):
-        d_results = [Domain.wrap(res['_source']) for res in self.results['hits']['hits']]
-        return d_results
-
-    @property
-    def page_context(self):
-        more_pages = False if len(self.d_results) <= self.page * self.projects_per_page else True
-        facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, self.results, self.params)
-        include_unapproved = True if self.request.GET.get('is_approved', "") == "false" else False
-        deployments = self.d_results[(self.page - 1) * self.projects_per_page:self.page * self.projects_per_page]
-        return {
-            'deployments': deployments,
-            'page': self.page,
-            'prev_page': self.page - 1,
-            'next_page': (self.page + 1),
-            'more_pages': more_pages,
-            'include_unapproved': include_unapproved,
-            'facet_map': facet_map,
-            'query_str': self.request.META['QUERY_STRING'],
-            'search_url': reverse(self.urlname),
-            'search_query': self.params.get('search', [""])[0]
-        }
-
-
-def deployments_api(request):
-    params, facets = parse_args_for_es(request)
-    params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
-    results = es_deployments_query(params, facets)
-    return HttpResponse(json.dumps(results), content_type="application/json")
-
-
-def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):
-    if terms is None:
-        terms = ['is_approved', 'sort_by', 'search']
-    if facets is None:
-        facets = []
-    q = {"query": {"bool": {"must": [{"match": {'doc_type': "Domain"}},
-                                     {"term": {"deployment.public": True}}]}}}
-
-    search_query = params.get('search', "")
-    if search_query:
-        q['query']['bool']['must'].append({
-            "match": {
-                "_all": {
-                    "query": search_query,
-                    "operator": "and"
-                }
-            }
-        })
-    return es_query(params, facets, terms, q)

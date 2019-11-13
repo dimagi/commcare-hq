@@ -129,6 +129,7 @@ class UpdatableSchema(object):
             self[kw] = new_dict[kw]
 
 
+# TODO: delete? attribute of Domain
 class Deployment(DocumentSchema, UpdatableSchema):
     city = StringProperty()
     countries = StringListProperty()
@@ -591,6 +592,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
 
+    # TODO: delete
     def readable_languages(self):
         return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
 
