@@ -1,6 +1,5 @@
 import json
 import re
-import uuid
 from collections import namedtuple
 from datetime import date
 
@@ -23,7 +22,6 @@ from sqlagg.columns import (
     NonzeroSumColumn,
     SimpleColumn,
     SumWhen,
-    SumWhenWithBinds,
     YearColumn,
 )
 from sqlalchemy import bindparam
@@ -306,7 +304,7 @@ class _CaseExpressionColumn(ReportColumn):
     http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
     """
     type = None
-    whens = ListProperty(ListProperty)      # List of (expression, value) tuples
+    whens = ListProperty(ListProperty)      # List of (expression, bind1, bind2, ... value) tuples
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
@@ -318,7 +316,11 @@ class _CaseExpressionColumn(ReportColumn):
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
-                agg_column=self._agg_column_type(**self._get_agg_column_params()),
+                agg_column=self._agg_column_type(
+                    whens=self.get_whens(),
+                    else_=self.else_,
+                    alias=self.column_id,
+                ),
                 sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
@@ -326,13 +328,6 @@ class _CaseExpressionColumn(ReportColumn):
                 visible=self.visible,
             )],
         )
-
-    def _get_agg_column_params(self):
-        return {
-            "whens": self.get_whens(),
-            "else_": self.else_,
-            "alias": self.column_id,
-        }
 
     def get_whens(self):
         return self.whens
@@ -383,38 +378,20 @@ class SumWhenColumn(_CaseExpressionColumn):
         # so this column type is only available for static reports.  To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
+        return False     # TODO True
 
 
 class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
-    whens = ListProperty(DictProperty)      # List of dicts with keys: when, then, params
-    _agg_column_type = SumWhenWithBinds
-    binds = DictProperty()
 
     @classmethod
     def restricted_to_static(cls):
         return False
 
-    def _get_agg_column_params(self):
-        whens, binds = self.get_whens_and_binds()
-        return {
-            "whens": whens,
-            "binds": binds,
-            "else_": self.else_,
-            "alias": self.column_id,
-        }
-
     def get_whens(self):
-        raise NotImplementedError('Use get_whens_and_binds instead')
-
-    def get_whens_and_binds(self):
         whens = []
-        binds = {}
         for item in self.whens:
-            when = item['when']
-            then = item['then']
-            params = item.get('params', [])
+            when, *binds, then = item
 
             try:
                 expression_class = to_function(when)
@@ -422,29 +399,19 @@ class SumWhenTemplateColumn(SumWhenColumn):
                 raise BadSpecError('Badly formatted expression class: {}'.format(when))
             if not expression_class:
                 raise BadSpecError('Could not find expression class: {}'.format(when))
-            if len(params) != expression_class.param_count():
-                raise BadSpecError('Expected {} parameters, found {}'.format(len(params),
-                                                                             expression_class.param_count()))
+            if len(binds) != expression_class.bind_count():
+                raise BadSpecError('Expected {} binds, found {}'.format(len(binds),
+                                                                        expression_class.bind_count()))
 
-            expression = ''
-            params = list(reversed(params))
-            for letter in expression_class.expression:
-                if letter != '?':
-                    expression += letter
-                else:
-                    param_name = 'p' + uuid.uuid4().hex
-                    expression += ':' + param_name
-                    binds[param_name] = params.pop()
-
-            whens.append((expression, then))
-        return whens, binds
+            whens.append([expression_class.expression] + binds + [then])
+        return whens
 
 
 class SumWhenTemplate(object):
     expression = None
 
     @classmethod
-    def param_count(cls):
+    def bind_count(cls):
         return len(re.sub(r'[^?]', '', cls.expression))
 
 

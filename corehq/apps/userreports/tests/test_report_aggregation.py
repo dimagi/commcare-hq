@@ -1067,11 +1067,9 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'display': 'under_x_month_olds_template',
                     'field': 'age_at_registration',
                     'column_id': 'under_x_month_olds_template',
-                    'whens': [{
-                        "when": "corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate",
-                        "then": 1,
-                        "params": [6],
-                    }],
+                    'whens': [
+                        ["corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate", 6, 1],
+                    ],
                     'else_': 0
                 },
                 {
@@ -1116,11 +1114,10 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'display': 'under_six_month_olds',
                     'field': 'age_at_registration',
                     'column_id': 'under_six_month_olds',
-                    'whens': [{
-                        'when': 'corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate',
-                        'then': 1,
-                        'params': [6, 7],   # Too many params
-                    }],
+                    'whens': [
+                        # Too many binds
+                        ['corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate', 6, 7, 1],
+                    ],
                     'else_': 0
                 },
                 {
