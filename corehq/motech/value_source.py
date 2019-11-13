@@ -145,17 +145,16 @@ class ValueSource(DocumentSchema):
 
 class CaseProperty(ValueSource):
     """
-    A reference to a case property
+    A reference to a case property value.
+
+    e.g. Get the value of a case property named "dob"::
+
+        {
+          "doc_type": "CaseProperty",
+          "case_property": "dob"
+        }
+
     """
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "CaseProperty",
-    #         "case_property": "dob"
-    #       }
-    #     }
-    #
     case_property = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
@@ -187,9 +186,22 @@ class CaseProperty(ValueSource):
 
 class FormQuestion(ValueSource):
     """
-    A reference to a form question
+    A reference to a form question value.
+
+    e.g. Get the value of a form question named "bar" in the group
+    "foo"::
+
+        {
+          "doc_type": "FormQuestion",
+          "form_question": "/data/foo/bar"
+        }
+
+    .. NOTE:: Normal form questions are prefixed with "/data". Form
+              metadata, like "received_on" and "userID", are prefixed
+              with "/metadata".
+
     """
-    form_question = StringProperty()  # e.g. "/data/foo/bar"
+    form_question = StringProperty()
 
     def _get_commcare_value(self, case_trigger_info):
         return case_trigger_info.form_question_values.get(self.form_question)
@@ -197,20 +209,18 @@ class FormQuestion(ValueSource):
 
 class ConstantString(ValueSource):
     """
-    A constant value.
+    A constant string value.
 
     Use the model's data types for the `serialize()` method to convert
-    the value for the external system, if necessary.
+    the value for the external system, if necessary. e.g. ::
+
+        {
+          "doc_type": "ConstantString",
+          "value": "42",
+          "external_data_type": "dhis2_integer"
+        }
+
     """
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "ConstantString",
-    #         "value": "Sep 7, 3761 BC"
-    #       }
-    #     }
-    #
     value = StringProperty()
 
     def __eq__(self, other):
@@ -229,15 +239,12 @@ class ConstantString(ValueSource):
 
 class ConstantValue(ConstantString):
     """
-    ConstantValue provides a ValueSource for constant values.
+    ``ConstantValue`` provides a ``ValueSource`` for constant values.
 
     ``value`` must be cast as ``value_data_type``.
 
-    ``ConstantValue.deserialize()`` returns the value for import. Use
-    ``commcare_data_type`` to cast the import value.
-
-    ``ConstantValue.get_value(case_trigger_info)`` returns the value for
-    export.
+    Use ``commcare_data_type`` to cast the import value, and
+    ``external_data_type`` to cast the export value.
 
     >>> one = ConstantValue.wrap({
     ...     "value": 1,
@@ -253,13 +260,12 @@ class ConstantValue(ConstantString):
 
     .. NOTE::
        ``one.get_value(info)`` returns  ``'1.0'``, not ``'1'``, because
-       ``ConstantValue.serialize`` casts ``value`` as
+       ``ConstantValue.serialize()`` casts ``value`` as
        ``commcare_data_type`` first. ``ValueSource.serialize()`` casts
        it from ``commcare_data_type`` to ``external_data_type``.
 
        This may seem counter-intuitive, but we do it to preserve the
-       behaviour of ``serialize()`` because it is public and is used
-       outside the class.
+       behaviour of ``ValueSource.serialize()``.
 
     """
     value = Property()
@@ -303,21 +309,22 @@ class ConstantValue(ConstantString):
 
 class CasePropertyMap(CaseProperty):
     """
-    Maps case property values to OpenMRS values or concept UUIDs
+    Maps case property values to corresponding values on a remote system.
+
+    Useful for mapping to IDs, like OpenMRS concept UUIDs. ``value_map``
+    maps CommCare values to external values. (i.e. the CommCare value
+    comes first.) e.g. ::
+
+        {
+          "doc_type": "CasePropertyMap",
+          "case_property": "pill",
+          "value_map": {
+            "red": "00ff0000-771d-0000-0000-000000000000",
+            "blue": "000000ff-771d-0000-0000-000000000000"
+          }
+        }
+
     """
-    # Example "person_attribute" value::
-    #
-    #     {
-    #       "00000000-771d-0000-0000-000000000000": {
-    #         "doc_type": "CasePropertyMap",
-    #         "case_property": "pill"
-    #         "value_map": {
-    #           "red": "00ff0000-771d-0000-0000-000000000000",
-    #           "blue": "000000ff-771d-0000-0000-000000000000",
-    #         }
-    #       }
-    #     }
-    #
     value_map = DictProperty()
 
     def serialize(self, value):
@@ -336,7 +343,21 @@ class CasePropertyMap(CaseProperty):
 
 class FormQuestionMap(FormQuestion):
     """
-    Maps form question values to OpenMRS values or concept UUIDs
+    Maps form question values to corresponding values on a remote system.
+
+    Useful for mapping to IDs, like OpenMRS concept UUIDs. ``value_map``
+    maps CommCare values to external values. (i.e. the CommCare value
+    comes first.) e.g. ::
+
+        {
+          "doc_type": "FormQuestionMap",
+          "form_question": "pill",
+          "value_map": {
+            "red": "00ff0000-771d-0000-0000-000000000000",
+            "blue": "000000ff-771d-0000-0000-000000000000"
+          }
+        }
+
     """
     value_map = DictProperty()
 
@@ -353,6 +374,14 @@ class CaseOwnerAncestorLocationField(ValueSource):
     A reference to a location metadata value. The location may be the
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
+
+    e.g. ::
+
+        {
+          "doc_type": "CaseOwnerAncestorLocationField",
+          "location_field": "openmrs_uuid"
+        }
+
     """
     location_field = StringProperty()
 
@@ -367,6 +396,14 @@ class FormUserAncestorLocationField(ValueSource):
     A reference to a location metadata value. The location is the form
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
+
+    e.g. ::
+
+        {
+          "doc_type": "FormUserAncestorLocationField",
+          "location_field": "dhis_id"
+        }
+
     """
     location_field = StringProperty()
 
@@ -400,10 +437,41 @@ class JsonPathMixin(DocumentSchema):
 
 
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
+    """
+    Used for importing a value from a JSON document, and storing it as a
+    case property.
+
+    e.g. ::
+
+        {
+          "doc_type": "JsonPathCaseProperty",
+          "jsonpath": "codedAnswer.name",
+          "case_property": "case_name",
+        }
+
+    """
     pass
 
 
 class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
+    """
+    Used for importing a value from a JSON document, mapping it to a
+    corresponding CommCare value, and storing it as a case property.
+
+    ``value_map`` maps CommCare values to external values. (i.e. the
+    CommCare value comes first.) e.g. ::
+
+        {
+          "doc_type": "JsonPathCasePropertyMap",
+          "jsonpath": "order",
+          "case_property": "is_primary",
+          "value_map": {
+            "yes": "PRIMARY",
+            "no": "SECONDARY"
+          }
+        }
+
+    """
     pass
 
 
