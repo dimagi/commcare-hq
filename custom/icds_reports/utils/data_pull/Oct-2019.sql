@@ -340,7 +340,7 @@ GROUP BY state_name
 # of AWCs that reported available mother and child weighing scale
 # of AWCs that reported unavailable mother and child weighing scale
 */
-SELECT state_id,
+SELECT state_name,
 count(*) FILTER (WHERE infra_medicine_kits=1) AS "Available medicine kit",
 count(*) FILTER (WHERE infra_medicine_kits=0) AS "Unavailable medicine kit",
 count(*) FILTER (WHERE infra_medicine_kits IS NULL) AS "Did not report medicine kit",
@@ -350,9 +350,9 @@ count(*) FILTER (WHERE infra_infant_weighing_scale IS NULL) AS "Did not report i
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "Available mother and child weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "Unavailable mother and child weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale IS NULL) AS "Did not report mother and child weighing scale"
-FROM agg_awc
+FROM agg_awc_monthly
 WHERE aggregation_level=5 AND month='2019-10-01'
-GROUP BY state_id
+GROUP BY state_name
 
 /*
  GroupAggregate  (cost=269160.09..269160.36 rows=6 width=58)
