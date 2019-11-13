@@ -49,17 +49,29 @@ class UserQuerySetAdapterES(object):
     @property
     def _query(self):
         if self.show_archived:
-            return UserES().mobile_users().domain(self.domain).show_only_inactive()
+            return UserES().mobile_users().domain(self.domain).show_only_inactive().sort('username.exact')
         else:
-            return UserES().mobile_users().domain(self.domain)
+            return UserES().mobile_users().domain(self.domain).sort('username.exact')
 
     def __getitem__(self, item):
         if isinstance(item, slice):
             limit = item.stop - item.start
             result = self._query.size(limit).start(item.start).run()
-            return [CommCareUser.wrap(user) for user in result.hits]
+            return [WrappedUser.wrap(user) for user in result.hits]
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
+
+
+class WrappedUser(CommCareUser):
+
+    @classmethod
+    def wrap(cls, data):
+        self = super().wrap(data)
+        self._group_ids = data['__group_ids']
+        return self
+
+    def get_group_ids(self):
+        return self._group_ids
 
 
 class GroupQuerySetAdapterCouch(object):
