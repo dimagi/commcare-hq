@@ -252,6 +252,23 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'professional_features': [
+                _("Custom mobile app builder"),
+                _("Powerful case management"),
+                _("Field staff reports"),
+                _("Unlimited mobile users"),
+                _("Full suite of data tools"),
+                _("3rd party integrations"),
+                _("2-way SMS workflows"),
+                _("Guaranteed tech support"),
+                _("Access to Dimagi's Customer Success team"),
+            ],
+            'community_features': [
+                _("Custom mobile app builder"),
+                _("Basic case management"),
+                _("Field staff reports"),
+                _("5 mobile users"),
+            ],
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
