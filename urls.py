@@ -12,7 +12,7 @@ from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.settings import logo
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
-from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
+from corehq.apps.hqwebapp.views import apache_license, bsd_license, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.registration.tasks import PRICING_LINK
@@ -129,8 +129,6 @@ urlpatterns = [
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
-    url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
-    url(r'^exchange/cda/$', cda, name='cda'),
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
