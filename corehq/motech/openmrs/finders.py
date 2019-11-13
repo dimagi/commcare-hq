@@ -57,13 +57,36 @@ constant_false = ConstantString(
 
 class PatientFinder(DocumentSchema):
     """
-    Subclasses of the PatientFinder class implement particular
-    strategies for finding OpenMRS patients that suit a particular
-    project. (WeightedPropertyPatientFinder was first subclass to be
-    written. A future project with stronger emphasis on patient names
-    might use Levenshtein distance, for example.)
+    The ``PatientFinder`` base class was developed as a way to
+    handle situations where patient cases are created in CommCare
+    instead of being imported from OpenMRS.
 
-    Subclasses must implement the `find_patients()` method.
+    When patients are imported from OpenMRS, they will come with at
+    least one identifier that MOTECH can use to match the case in
+    CommCare with the corresponding patient in OpenMRS. But if the case
+    is registered in CommCare then we may not have an ID, or the ID
+    could be wrong. We need to search for a corresponding OpenMRS
+    patient.
+
+    Different projects may focus on different kinds of case properties,
+    so it was felt that a base class would allow some flexibility.
+
+    The ``PatientFinder.wrap()`` method allows you to wrap documents of
+    subclasses.
+
+    The ``PatientFinder.find_patients()`` method must be implemented by
+    subclasses. It returns a list of zero, one, or many patients. If it
+    returns one patient, the OpenmrsRepeater.find_or_create_patient()
+    will accept that patient as a true match.
+
+    .. NOTE:: The consequences of a false positive (a Type II error) are
+              severe: A real patient will have their valid values
+              overwritten by those of someone else. So ``PatientFinder``
+              subclasses should be written and configured to skew
+              towards false negatives (Type I errors). In other words,
+              it is much better not to choose a patient than to choose
+              the wrong patient.
+
     """
 
     # Whether to create a new patient if no patients are found
@@ -91,12 +114,6 @@ class PatientFinder(DocumentSchema):
         Given a case, search OpenMRS for possible matches. Return the
         best results. Subclasses must define "best". If just one result
         is returned, it will be chosen.
-
-        NOTE:: False positives can result in overwriting one patient
-               with the data of another. It is definitely better to
-               return no results or multiple results than to return a
-               single invalid result. Returned results should be
-               logged.
         """
         raise NotImplementedError
 
@@ -113,9 +130,10 @@ class PropertyWeight(DocumentSchema):
 
 class WeightedPropertyPatientFinder(PatientFinder):
     """
-    Finds patients that match cases by assigning weights to matching
-    property values, and adding those weights to calculate a confidence
-    score.
+    The ``WeightedPropertyPatientFinder`` class finds OpenMRS patients
+    that match CommCare cases by assigning weights to case properties,
+    and adding the weights of matching patient properties to calculate a
+    confidence score.
     """
 
     # Identifiers that are searchable in OpenMRS. e.g.

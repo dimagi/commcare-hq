@@ -1,8 +1,11 @@
 The MOTECH OpenMRS & Bahmni Module
 ==================================
 
-See the `MOTECH README <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/README.md#the-openmrs--bahmni-module>`_
-for a brief introduction to OpenMRS and Bahmni in the context of MOTECH.
+See the `MOTECH README`_ for a brief introduction to OpenMRS and Bahmni
+in the context of MOTECH.
+
+
+.. _MOTECH README: https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/README.md#the-openmrs--bahmni-module>
 
 
 .. contents::
@@ -329,45 +332,17 @@ which class of ``PatientFinder`` the OpenMRS repeater must use.
 
 .. _patient_finders-label:
 
-``PatientFinders``
-------------------
+``PatientFinder``
+-----------------
 
-The ``PatientFinder`` base class was developed as a way to
-handle situations where patient cases are created in CommCare instead of
-being imported from OpenMRS.
-
-When patients are imported from OpenMRS, they will come with at least
-one identifier that MOTECH can use to match the case in CommCare with
-the corresponding patient in OpenMRS. But if the case is registered in
-CommCare then we may not have an ID, or the ID could be wrong. We need
-to search for a corresponding OpenMRS patient.
-
-Different projects may focus on different kinds of case properties, so
-it was felt that a base class would allow some flexibility, without too
-much "YAGNI".
-
-The ``PatientFinder.wrap()`` method allows you to wrap documents of
-subclasses.
-
-The ``PatientFinder.find_patients()`` method must be implemented by
-subclasses. It returns a list of zero, one, or many patients. If it
-returns one patient, the OpenmrsRepeater.find_or_create_patient() will
-accept that patient as a true match.
-
-.. NOTE:: The consequences of a false positive (a Type II error) are
-          severe: A real patient will have their valid values
-          overwritten by those of someone else. So ``PatientFinder``
-          subclasses should be written and configured to skew towards
-          false negatives (Type I errors). In other words, it is much
-          better not to choose a patient than to choose the wrong
-          patient.
+.. autoclass:: corehq.motech.openmrs.finders.PatientFinder
 
 
 Creating Missing Patients
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If a corresponding OpenMRS patient is not found for a CommCare case,
-then a ``PatientFinder`` subclass has the option to create a patient in
+then ``PatientFinder`` has the option to create a patient in
 OpenMRS. This is managed with the optional ``create_missing`` property.
 Its value defaults to ``false``. If it is set to ``true``, then it will
 create a new patient if none are found.
@@ -396,13 +371,7 @@ or by testing the OpenMRS REST API.
 ``WeightedPropertyPatientFinder``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The first (and currently only) subclass of ``PatientFinder`` is the
-``WeightedPropertyPatientFinder`` class. As the name suggests, it
-assigns weights to case properties, and scores the patients it finds in
-OpenMRS to select an OpenMRS patient that matches a CommCare case.
-
-See `the source code <https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/openmrs/finders.py>`_
-for more details on its properties and how to define it.
+.. autoclass:: corehq.motech.openmrs.finders.WeightedPropertyPatientFinder
 
 
 ``OpenmrsFormConfig``
