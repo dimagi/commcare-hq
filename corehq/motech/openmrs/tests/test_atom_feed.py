@@ -208,19 +208,23 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "relationship": "extension",
                     "case_properties": [
                         {
-                            "doc_type": "JsonPathCaseProperty",
+                            "doc_type": "CaseProperty",
                             "jsonpath": "codedAnswer.name",
                             "case_property": "case_name",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
+                            "doc_type": "CaseProperty",
                             "jsonpath": "certainty",
                             "case_property": "certainty",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
+                            "doc_type": "CaseProperty",
                             "jsonpath": "order",
-                            "case_property": "primary_or_secondary",
+                            "case_property": "is_primary",
+                            "value_map": {
+                                "yes": "PRIMARY",
+                                "no": "SECONDARY"
+                            }
                         },
                     ]
                 }
@@ -365,7 +369,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
-                <primary_or_secondary>PRIMARY</primary_or_secondary>
+                <is_primary>yes</is_primary>
               </update>
               <index>
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
