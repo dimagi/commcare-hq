@@ -442,12 +442,8 @@ class ContentForm(Form):
             result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
-            app_id = content.app_id
-            if app_id is None:
-                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                app_id,
+                content.app_id,
                 content.form_unique_id
             )
             result['survey_expiration_in_hours'] = content.expire_after // 60
@@ -464,12 +460,8 @@ class ContentForm(Form):
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
-            app_id = content.app_id
-            if app_id is None:
-                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                app_id,
+                content.app_id,
                 content.form_unique_id
             )
             result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
