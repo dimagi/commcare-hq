@@ -1,3 +1,4 @@
+import json
 import re
 from collections import namedtuple
 
@@ -228,7 +229,7 @@ def _notify_ignored_form_submission(request, user_id):
         URL: {}
         GET Params: {}
         User ID: {}
-    """.format(request.method, request.get_raw_uri(), request.GET, user_id)
+    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), user_id)
     send_mail_async.delay(
         "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
         message,
