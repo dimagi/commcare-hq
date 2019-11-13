@@ -4,7 +4,6 @@ SELECT
 "awc_location_local"."state_id" AS "state_id",
 "awc_location_local"."state_name" AS "state_name",
 "awc_location_local"."state_site_code" AS "state_site_code",
-"awc_location_local"."aggregation_level" AS "aggregation_level",
 agg_awc.month as month,
 COALESCE(agg_awc.num_launched_awcs,0) as num_launched_awcs,
 COALESCE(agg_awc.num_launched_districts,0) as num_launched_districts,

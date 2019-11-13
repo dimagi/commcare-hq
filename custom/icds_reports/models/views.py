@@ -1093,6 +1093,7 @@ class DailyIndicatorsView(models.Model):
 class MWCDReportView(models.Model):
     state_id = models.TextField(primary_key=True)
     state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True)
