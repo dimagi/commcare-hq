@@ -209,7 +209,7 @@ hqDefine('analytix/js/hubspot', [
                                         lastKnownHeight = newHeight;
 
                                     });
-                            });
+                                });
                             // target is the the iframe containing the schedule once form
                             var target = document.getElementById('SOIDIV_CommCareTrial');
                             observer.observe(target, { attributes: true, attributeFilter: ['style'] });
