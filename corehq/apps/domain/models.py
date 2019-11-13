@@ -128,7 +128,6 @@ class UpdatableSchema(object):
             self[kw] = new_dict[kw]
 
 
-# TODO: delete? attribute of Domain
 class Deployment(DocumentSchema, UpdatableSchema):
     city = StringProperty()
     countries = StringListProperty()
