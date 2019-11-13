@@ -136,16 +136,19 @@ class SoftwarePlanEdition(object):
     ENTERPRISE = "Enterprise"
     RESELLER = "Reseller"
     MANAGED_HOSTING = "Managed Hosting"
+    PAUSED = "Paused"
     CHOICES = (
         (COMMUNITY, COMMUNITY),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
         (ENTERPRISE, ENTERPRISE),
+        (PAUSED, PAUSED),
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     SELF_SERVICE_ORDER = [
+        PAUSED,
         COMMUNITY,
         STANDARD,
         PRO,
