@@ -891,14 +891,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             **view_kwargs
         )
 
-    @memoized
-    def published_snapshot(self):
-        snapshots = self.snapshots().all()
-        for snapshot in snapshots:
-            if snapshot.published:
-                return snapshot
-        return None
-
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
         self.save()
