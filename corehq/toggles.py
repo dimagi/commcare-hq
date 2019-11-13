@@ -1110,13 +1110,6 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     always_disabled={'icds-cas'}
 )
 
-EWS_BROADCAST_BY_ROLE = StaticToggle(
-    'ews_broadcast_by_role',
-    'EWS: Filter broadcast recipients by role',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
