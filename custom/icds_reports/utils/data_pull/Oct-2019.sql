@@ -186,7 +186,51 @@ GROUP BY state_name
 (18 rows)
 */
 
--- just use agg_awc instead of using the view, it however appears to be more costly
+-- include null values which really increases the cost of the query
+# of AWCs that reported available drinking water
+# of AWCs that reported unavailable drinking water
+# of AWCs that did not report about drinking water
+# of AWCs that reported available functional toilet
+# of AWCs that reported unavailable functional toilet
+# of AWCs that did not report about functional toilet
+*/
+SELECT state_name,
+count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
+count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
+count(*) FILTER (WHERE infra_clean_water IS NULL) AS "No report on drinking water",
+count(*) FILTER (WHERE infra_functional_toilet=1) AS "Available functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet=0) AS "Unavailable functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet IS NULL) AS "No report on functional toilet"
+FROM agg_awc_monthly
+WHERE aggregation_level=5 AND month='2019-10-01'
+GROUP BY state_name
+
+/*
+ HashAggregate  (cost=790757.11..790757.47 rows=36 width=58)
+   Group Key: awc_location.state_name
+   ->  Merge Left Join  (cost=1.00..677859.16 rows=4105380 width=18)
+         Merge Cond: (awc_location.doc_id = agg_awc.awc_id)
+         Join Filter: ((months.start_date = agg_awc.month) AND (awc_location.aggregation_level = agg_awc.aggregation_level) AND (awc_location.state_id = agg_awc.state_id) AND (awc_location.district_id = agg_awc.district_id) AND (awc_location.block_id = agg_awc.block_id) AND (awc_location.supervisor_id = agg_awc.supervisor_id))
+         ->  Nested Loop  (cost=0.42..153915.04 rows=4105380 width=178)
+               ->  Index Scan using awc_location_local_doc_id_idx on awc_location_local awc_location  (cost=0.42..102572.77 rows=684230 width=174)
+                     Filter: (aggregation_level = 5)
+               ->  Materialize  (cost=0.00..25.03 rows=6 width=4)
+                     ->  Seq Scan on icds_months_local months  (cost=0.00..25.00 rows=6 width=4)
+                           Filter: (start_date = '2019-10-01'::date)
+         ->  Materialize  (cost=0.57..373266.75 rows=684681 width=181)
+               ->  Merge Append  (cost=0.57..371555.04 rows=684681 width=181)
+                     Sort Key: agg_awc.awc_id
+                     ->  Sort  (cost=0.01..0.02 rows=1 width=176)
+                           Sort Key: agg_awc.awc_id
+                           ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=176)
+                                 Filter: ((month = '2019-10-01'::date) AND (aggregation_level = 5))
+                     ->  Index Scan using "agg_awc_2019-10-01_5_awc_id_idx" on "agg_awc_2019-10-01_5" agg_awc_1  (cost=0.55..364708.21 rows=684680 width=181)
+                           Filter: ((month = '2019-10-01'::date) AND (aggregation_level = 5))
+(20 rows)
+*/
+
+-- just use agg_awc instead of using the view and map state name later,
+-- it however appears to be more costly but finds null value with less addition to cost
 
 SELECT state_id,
 count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
@@ -214,6 +258,33 @@ GROUP BY state_id
 (13 rows)
 */
 
+SELECT state_id,
+count(*) FILTER (WHERE infra_clean_water=1) AS "Available drinking water",
+count(*) FILTER (WHERE infra_clean_water=0) AS "Unavailable drinking water",
+count(*) FILTER (WHERE infra_clean_water IS NULL) AS "No report on drinking water",
+count(*) FILTER (WHERE infra_functional_toilet=1) AS "Available functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet=0) AS "Unavailable functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet IS NULL) AS "No report on functional toilet"
+FROM agg_awc
+WHERE aggregation_level=5 AND month='2019-10-01'
+GROUP BY state_id
+
+/*
+ Finalize GroupAggregate  (cost=309456.28..309568.06 rows=200 width=81)
+   Group Key: "agg_awc_2019-10-01_5".state_id
+   ->  Gather Merge  (cost=309456.28..309552.06 rows=800 width=81)
+         Workers Planned: 4
+         ->  Sort  (cost=308456.22..308456.72 rows=200 width=81)
+               Sort Key: "agg_awc_2019-10-01_5".state_id
+               ->  Partial HashAggregate  (cost=308446.57..308448.57 rows=200 width=81)
+                     Group Key: "agg_awc_2019-10-01_5".state_id
+                     ->  Parallel Append  (cost=0.00..303739.40 rows=171170 width=41)
+                           ->  Parallel Seq Scan on "agg_awc_2019-10-01_5"  (cost=0.00..302883.55 rows=171170 width=41)
+                                 Filter: ((aggregation_level = 5) AND (month = '2019-10-01'::date))
+                           ->  Parallel Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=40)
+                                 Filter: ((aggregation_level = 5) AND (month = '2019-10-01'::date))
+(13 rows)
+*/
 /*
 # of AWCs that reported usable infantometer
 # of AWCs that reported unavailable usable infantometer
@@ -223,8 +294,10 @@ GROUP BY state_id
 SELECT state_name,
 count(*) FILTER (WHERE infantometer=1) AS "AWCs that reported usable infantometer",
 count(*) FILTER (WHERE infantometer=0) AS "AWCs that reported unavailable usable infantometer",
+count(*) FILTER (WHERE infantometer IS NULL) AS "AWCs that did not report about usable infantometer",
 count(*) FILTER (WHERE stadiometer=1) AS "AWCs that reported usable stadiometer",
-count(*) FILTER (WHERE stadiometer=0) AS "AWCs that reported unavailable usable stadiometer"
+count(*) FILTER (WHERE stadiometer=0) AS "AWCs that reported unavailable usable stadiometer",
+count(*) FILTER (WHERE stadiometer IS NULL) AS "AWCs that did not report about usable stadiometer"
 FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
@@ -238,25 +311,24 @@ WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-10-01'
 GROUP BY state_name
 
 /*
-GroupAggregate  (cost=269160.09..269160.30 rows=6 width=42)
+ GroupAggregate  (cost=267449.51..267449.75 rows=6 width=58)
    Group Key: awc_location.state_name
-   ->  Sort  (cost=269160.09..269160.10 rows=6 width=18)
+   ->  Sort  (cost=267449.51..267449.52 rows=6 width=18)
          Sort Key: awc_location.state_name
-         ->  Nested Loop  (cost=1000.00..269160.01 rows=6 width=18)
-               ->  Gather  (cost=1000.00..269134.95 rows=1 width=22)
+         ->  Nested Loop  (cost=1000.00..267449.43 rows=6 width=18)
+               ->  Gather  (cost=1000.00..267424.37 rows=1 width=22)
                      Workers Planned: 4
-                     ->  Nested Loop  (cost=0.00..268134.85 rows=1 width=22)
+                     ->  Nested Loop  (cost=0.00..266424.27 rows=1 width=22)
                            ->  Parallel Seq Scan on awc_location_local awc_location  (cost=0.00..66393.17 rows=171058 width=174)
                                  Filter: (aggregation_level = 5)
-                           ->  Append  (cost=0.00..1.16 rows=2 width=181)
+                           ->  Append  (cost=0.00..1.15 rows=2 width=181)
                                  ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=176)
-                                       Filter: ((awc_is_test <> 1) AND (supervisor_is_test <> 1) AND (block_is_test <> 1) AND (district_is_test <> 1) AND (month = '2019-10-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id) AND (awc_location.doc_id = awc_id))
-                                 ->  Index Scan using "agg_awc_2019-10-01_5_awc_id_idx" on "agg_awc_2019-10-01_5" agg_awc_1  (cost=0.55..1.15 rows=1 width=181)
+                                       Filter: ((month = '2019-10-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id) AND (awc_location.doc_id = awc_id))
+                                 ->  Index Scan using "agg_awc_2019-10-01_5_awc_id_idx" on "agg_awc_2019-10-01_5" agg_awc_1  (cost=0.55..1.14 rows=1 width=181)
                                        Index Cond: (awc_id = awc_location.doc_id)
-                                       Filter: ((awc_is_test <> 1) AND (supervisor_is_test <> 1) AND (block_is_test <> 1) AND (district_is_test <> 1) AND (month = '2019-10-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id))
+                                       Filter: ((month = '2019-10-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id))
                ->  Seq Scan on icds_months_local months  (cost=0.00..25.00 rows=6 width=4)
-                     Filter: (start_date = '2019-10-01'::date)
-*/
+                     Filter: (start_date = '2019-10-01'::date)*/
 
 
 /*
@@ -268,16 +340,19 @@ GroupAggregate  (cost=269160.09..269160.30 rows=6 width=42)
 # of AWCs that reported available mother and child weighing scale
 # of AWCs that reported unavailable mother and child weighing scale
 */
-SELECT state_name,
+SELECT state_id,
 count(*) FILTER (WHERE infra_medicine_kits=1) AS "Available medicine kit",
 count(*) FILTER (WHERE infra_medicine_kits=0) AS "Unavailable medicine kit",
+count(*) FILTER (WHERE infra_medicine_kits IS NULL) AS "Did not report medicine kit",
 count(*) FILTER (WHERE infra_infant_weighing_scale=1) AS "Available infant weighing scale",
 count(*) FILTER (WHERE infra_infant_weighing_scale=0) AS "Unavailable infant weighing scale",
+count(*) FILTER (WHERE infra_infant_weighing_scale IS NULL) AS "Did not report infant weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "Available mother and child weighing scale",
-count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "Unavailable mother and child weighing scale"
-FROM agg_awc_monthly
+count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "Unavailable mother and child weighing scale",
+count(*) FILTER (WHERE infra_adult_weighing_scale IS NULL) AS "Did not report mother and child weighing scale"
+FROM agg_awc
 WHERE aggregation_level=5 AND month='2019-10-01'
-GROUP BY state_name
+GROUP BY state_id
 
 /*
  GroupAggregate  (cost=269160.09..269160.36 rows=6 width=58)
@@ -305,11 +380,14 @@ GROUP BY state_name
 -- Query 5 --
 # of AWCs that reported available electricity line
 # of AWCs that reported unavailable electricity line
+# of AWCs that did not report about electricity line
 # AWCs conducted at least 2 CBE events
+# AWCs conducted at least 1 VHND
 */
 SELECT state_name,
 count(*) FILTER (WHERE electricity_awc=1) AS "Available electricity line",
 count(*) FILTER (WHERE electricity_awc=0) AS "Unavailable electricity line",
+count(*) FILTER (WHERE electricity_awc IS NULL) AS "Did not report about electricity line",
 sum(num_awcs_conducted_cbe) AS "AWCs conducted at least 2 CBE events",
 sum(num_awcs_conducted_vhnd) AS "AWCs conducted at least 1 VHNSD"
 FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "public"."agg_awc" "agg_awc" ON (
