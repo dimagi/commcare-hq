@@ -125,7 +125,7 @@
         },
         "is_primary_key": false,
         "is_nullable": true,
-        "column_id": "submitted_on",
+        "column_id": "timeend",
         "type": "expression"
       }
     ],
