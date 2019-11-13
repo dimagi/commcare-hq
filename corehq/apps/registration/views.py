@@ -2,6 +2,7 @@ import logging
 import re
 import sys
 from datetime import datetime
+from collections import namedtuple
 
 from django.conf import settings
 from django.contrib import messages
@@ -60,6 +61,8 @@ from corehq.util.soft_assert import soft_assert
 _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
 ], send_to_ops=False, fail_if_debug=False)
+
+FeatureMeta = namedtuple('FeatureMeta', 'desc url')
 
 
 def get_domain_context():
@@ -252,6 +255,26 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'professional_features': [
+                FeatureMeta(_("Custom mobile app builder"), None),
+                FeatureMeta(_("Fully-featured case management workflows"), None),
+                FeatureMeta(_("Referral workflows"), None),
+                FeatureMeta(_("2 way SMS workflows"), None),
+                FeatureMeta(_("Full suite of data tools"), None),
+                FeatureMeta(_("Powerful 3rd party integrations"),
+                            'https://confluence.dimagi.com/display/commcarepublic/'
+                            'The+CommCare+Ecosystem'),
+                FeatureMeta(_("Field staff performance reports"), None),
+                FeatureMeta(_("Guaranteed support SLAs"), None),
+                FeatureMeta(_("Access to our Customer Success team"), None),
+            ],
+            'community_features': [
+                FeatureMeta(_("Custom mobile app builder"), None),
+                FeatureMeta(_("Basic case management workflows"), None),
+                FeatureMeta(_("Field staff performance reports"), None),
+                FeatureMeta(_("5 mobile users"), None),\
+            ],
+            "pricing_url": "//dimagi.com/commcare/pricing",
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
@@ -461,9 +484,6 @@ def confirm_domain(request, guid=''):
         track_confirmed_account_on_hubspot.delay(requesting_user)
         request.session['CONFIRM'] = True
 
-        if settings.IS_SAAS_ENVIRONMENT:
-            # For AppCues v3, land new user in Web Apps
-            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 

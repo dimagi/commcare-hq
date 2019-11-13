@@ -5,6 +5,8 @@ from django.views.decorators.http import require_POST
 
 import csv
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.utils import send_repeater_payloads
 from corehq.apps.users.decorators import require_can_edit_web_users
 
