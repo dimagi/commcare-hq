@@ -351,7 +351,6 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.up_nrhm',
 
-    'custom.care_pathways',
     'custom.common',
 
     'custom.icds',
@@ -1798,8 +1797,6 @@ PILLOWTOPS = {
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -2004,11 +2001,6 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'pathways-india-mis': 'custom.care_pathways',
-    'pathways-tanzania': 'custom.care_pathways',
-    'care-macf-malawi': 'custom.care_pathways',
-    'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
