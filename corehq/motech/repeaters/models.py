@@ -6,6 +6,16 @@ Repeaters forward payloads to remote API endpoints over HTTP(S),
 typically in JSON- or XML-formatted requests.
 
 
+Custom Repeaters
+----------------
+
+Custom repeaters subclass ``Repeater``. They allow custom payloads to be
+created that can compile data from multiple sources and be sent as
+JSON or XML. Custom triggers for when to send this data can also be
+defined. These triggers are run whenever the model in question (case,
+form, or application) is changed.
+
+
 How Do They Work?
 -----------------
 

@@ -66,20 +66,13 @@ sent whenever a change is detected. The schema is
 [predefined](https://confluence.dimagi.com/pages/viewpage.action?pageId=12224128)
 and can be sent as either `XML` or `JSON`.
 
-**Custom repeaters** are defined in code, and subclass any of the
-`BaseRepeater` classes. They allow the developer to create custom
-payloads that can compile data from multiple sources and be sent as
-`JSON` or `XML`. Custom triggers for when to
-send this data are also defined in code. These trigger methods are run
-whenever the model in question (`case`, `form`, or `application`) is
-changed.
-
 All repeaters are hooked into the **MOTECH management dashboard**. This
 allows project managers to create and delete specific repeater
 instances, and contains tools to audit and debug sent, queued and
 cancelled messages.
 
-You can find more details in [the Repeaters README](./repeaters/README.md).
+For developer documentation, see the module docstring in
+[repeaters/models.py](./repeaters/models.py).
 
 
 DHIS2 Module
