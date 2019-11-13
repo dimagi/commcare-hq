@@ -1631,7 +1631,7 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return dict(cursor.fetchall())
+        return {row[0] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):
