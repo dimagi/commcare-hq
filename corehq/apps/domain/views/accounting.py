@@ -860,6 +860,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_superuser)
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
