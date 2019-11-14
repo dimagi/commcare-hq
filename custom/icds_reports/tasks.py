@@ -710,13 +710,24 @@ def _recalculate_stagnant_cases(config_id):
 
 
 def _find_stagnant_cases(adapter):
-    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    # get the least recently updated 1000 cases
     table = adapter.get_table()
-    query = adapter.get_query_object()
-    query = query.with_entities(table.columns.doc_id).filter(
-        table.columns.inserted_at <= stagnant_date
-    ).distinct()
-    return set(query.all())
+    query_object = adapter.get_query_object()
+    cases = (
+        query_object.with_entities(table.c.doc_id, table.c.inserted_at).distinct()
+        .order_by(table.c.inserted_at, table.c.doc_id)[:1000]
+    )
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    latest_date = date(1970, 1, 1)
+
+    while latest_date < stagnant_date:
+        for case_id, inserted_at in cases:
+            yield case_id
+            latest_date = inserted_at
+
+        cases = query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
+            table.c.inserted_at >= latest_date
+        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:1000]
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
