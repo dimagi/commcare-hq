@@ -37,7 +37,6 @@ from dimagi.ext.jsonobject import (
     ObjectProperty,
     StringProperty,
 )
-from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import AggregateColumn, DatabaseColumn
@@ -384,40 +383,39 @@ class SumWhenColumn(_CaseExpressionColumn):
 
 class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
+    whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
 
     @classmethod
     def restricted_to_static(cls, domain):
         return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
     def get_whens(self):
+        from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory
         whens = []
-        for item in self.whens:
-            when, *binds, then = item
-
-            try:
-                expression_class = to_function(when)
-            except ValueError:
-                raise BadSpecError('Badly formatted expression class: {}'.format(when))
-            if not expression_class:
-                raise BadSpecError('Could not find expression class: {}'.format(when))
-            if len(binds) != expression_class.bind_count():
-                raise BadSpecError('Expected {} binds, found {}'.format(len(binds),
-                                                                        expression_class.bind_count()))
-
-            whens.append([expression_class.expression] + binds + [then])
+        for spec in self.whens:
+            template = SumWhenTemplateFactory.make_template(spec)
+            whens.append([template.expression] + template.binds + [template.then])
         return whens
 
 
-class SumWhenTemplate(object):
-    expression = None
+class SumWhenTemplateSpec(JsonObject):
+    type = StringProperty(required=True)
+    expression = StringProperty(required=True)
+    binds = ListProperty()
+    then = IntegerProperty()
 
-    @classmethod
-    def bind_count(cls):
-        return len(re.sub(r'[^?]', '', cls.expression))
+    def bind_count(self):
+        return len(re.sub(r'[^?]', '', self.expression))
 
 
-class YearRangeTemplate(SumWhenTemplate):
+class YearRangeTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty('year_range')
     expression = "year >= ? and year < ?"
+
+
+class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
+    type = "under_x_months"
+    expression = "age_at_registration < ?"
 
 
 class PercentageColumn(ReportColumn):

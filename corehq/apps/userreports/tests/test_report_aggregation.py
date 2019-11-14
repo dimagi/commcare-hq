@@ -7,15 +7,11 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-from corehq.apps.userreports.reports.specs import SumWhenTemplate
+from corehq.apps.userreports.reports.specs import SumWhenTemplateSpec
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-
-
-class UnderXMonthsTemplate(SumWhenTemplate):
-    expression = "age_at_registration < ?"
 
 
 class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
@@ -1068,7 +1064,11 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'field': 'age_at_registration',
                     'column_id': 'under_x_month_olds_template',
                     'whens': [
-                        ["corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate", 6, 1],
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6],
+                            'then': 1,
+                        },
                     ],
                     'else_': 0
                 },
@@ -1115,8 +1115,11 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'field': 'age_at_registration',
                     'column_id': 'under_six_month_olds',
                     'whens': [
-                        # Too many binds
-                        ['corehq.apps.userreports.tests.test_report_aggregation.UnderXMonthsTemplate', 6, 7, 1],
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6, 7],            # Too many binds
+                            'then': 1,
+                        },
                     ],
                     'else_': 0
                 },

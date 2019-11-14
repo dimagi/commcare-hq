@@ -21,6 +21,8 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
+    UnderXMonthsTemplateSpec,
+    YearRangeTemplateSpec,
 )
 
 
@@ -73,7 +75,7 @@ class ChartFactory(object):
     @classmethod
     def from_spec(cls, spec):
         if spec.get('type') not in cls.spec_map:
-            raise BadSpecError(_('Illegal chart type: {0}, must be one of the following choice: ({1})').format(
+            raise BadSpecError(_('Illegal chart type: {0}, must be one of the following choices: ({1})').format(
                 spec.get('type', _('(missing from spec)')),
                 ', '.join(cls.spec_map)
             ))
@@ -91,3 +93,32 @@ class ReportOrderByFactory(object):
     @classmethod
     def from_spec(cls, spec):
         return OrderBySpec.wrap(spec)
+
+
+class SumWhenTemplateFactory(object):
+    spec_map = {
+        'under_x_months': UnderXMonthsTemplateSpec,
+        'year_range': YearRangeTemplateSpec,
+    }
+
+    @classmethod
+    def make_template(cls, spec):
+        if spec.get('type') not in cls.spec_map:
+            raise BadSpecError(_('Illegal sum_when_template type: "{0}", must be in: ({1})').format(
+                spec.get('type'),
+                ', '.join(cls.spec_map)
+            ))
+        try:
+            template = cls.spec_map[spec['type']].wrap(spec)
+        except BadValueError as e:
+            raise BadSpecError(_('Problem creating template: {}, message is: {}').format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
+
+        expected = template.bind_count()
+        actual = len(template.binds)
+        if expected != actual:
+            raise BadSpecError(_('Expected {} binds in sum_when_template, found {}').format(expected, actual))
+
+        return template
