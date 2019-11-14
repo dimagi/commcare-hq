@@ -1224,19 +1224,19 @@ class ProjectUsersTab(UITab):
     @property
     def _is_viewable(self):
         can_do_something = (
-            self.couch_user.can_edit_commcare_users() or
-            self.couch_user.can_view_commcare_users() or
-            self.couch_user.can_edit_groups() or
-            self.couch_user.can_view_groups() or
-            self.couch_user.can_edit_locations() or
-            self.couch_user.can_view_locations() or
-            self.couch_user.can_view_roles()
+            self.couch_user.can_edit_commcare_users()
+            or self.couch_user.can_view_commcare_users()
+            or self.couch_user.can_edit_groups()
+            or self.couch_user.can_view_groups()
+            or self.couch_user.can_edit_locations()
+            or self.couch_user.can_view_locations()
+            or self.couch_user.can_view_roles()
         ) and self.has_project_access
 
         return self.domain and (
-            can_do_something or
-            self.couch_user.can_edit_web_users() or
-            self.couch_user.can_view_web_users()
+            can_do_something
+            or self.couch_user.can_edit_web_users()
+            or self.couch_user.can_view_web_users()
         )
 
     @property

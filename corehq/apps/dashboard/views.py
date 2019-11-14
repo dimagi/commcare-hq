@@ -140,16 +140,16 @@ def _get_default_tiles(request):
 
     def can_view_users(request):
         can_do_something = (
-            request.couch_user.can_edit_commcare_users() or
-            request.couch_user.can_view_commcare_users() or
-            request.couch_user.can_edit_groups() or
-            request.couch_user.can_view_groups() or
-            request.couch_user.can_view_roles()
+            request.couch_user.can_edit_commcare_users()
+            or request.couch_user.can_view_commcare_users()
+            or request.couch_user.can_edit_groups()
+            or request.couch_user.can_view_groups()
+            or request.couch_user.can_view_roles()
         ) and has_privilege(request, privileges.PROJECT_ACCESS)
         return (
-            can_do_something or
-            request.couch_user.can_edit_web_users() or
-            request.couch_user.can_view_web_users()
+            can_do_something
+            or request.couch_user.can_edit_web_users()
+            or request.couch_user.can_view_web_users()
         )
 
     def can_view_reports(request):
