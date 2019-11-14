@@ -70,11 +70,15 @@
           <div class="form form-horizontal">
             <fieldset>
               <legend>{% trans 'Force Full Refresh on next Mobile Sync' %}</legend>
-              <div>
+              <form action="{% url "force_user_412" domain couch_user.user_id %}" method="post">
                 <p>
-                  <a class="btn btn-primary {% if not has_any_sync_logs %} disabled{% endif %}" href="#force_user_412_{{ couch_user.user_id }}" data-toggle="modal" {% if not has_any_sync_logs %}aria-disabled="true"{% endif %}>
+                  See <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Android+Troubleshooting#CommCareAndroidTroubleshooting-ForceFullRefresh">{% trans "Force Full Refresh" %}</a> for more information.
+                </p>
+                {% csrf_token %}
+                <p>
+                  <button type="submit" class="btn btn-primary disable-on-submit-no-spinner{% if not has_any_sync_logs %} disabled{% endif %}" {% if not has_any_sync_logs %}disabled{% endif %}>
                     <i class="fa fa-refresh"></i> {% trans "Force Full Refresh on next Mobile Sync" %}
-                  </a>
+                  </button>
                 </p>
                 {% if not has_any_sync_logs %}
                   <p class="help-block">
@@ -84,7 +88,7 @@
                     {% endblocktrans %}
                   </p>
                 {% endif %}
-              </div>
+              </form>
             </fieldset>
             <fieldset>
               <legend>{% trans 'Delete Mobile Worker' %}</legend>
@@ -226,37 +230,4 @@
       </div>
     </div>
   {% endif %}
-
-  <div id="force_user_412_{{ couch_user.user_id }}" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Force Full Refresh on next Mobile Sync for {{ friendly_name }}?{% endblocktrans %}
-          </h4>
-        </div>
-        <form class="form-horizontal"
-              action="{% url "force_user_412" domain couch_user.user_id %}"
-              method="post">
-          {% csrf_token %}
-          <div class="modal-body">
-            {% blocktrans %}
-              <p>Certain data cleaning tasks like archiving of all form submissions associated with a case may prevent the mobile user's app from completely syncing with CommCareHQ, even after the completion of the normal incremental sync process.</p>
-
-              <p>This feature will allow you to address such issues by forcing the mobile user's app to do a full refresh the next time it syncs with CommCareHQ.</p>
-
-              <p>During the full refresh, all Incomplete Forms are permanently deleted from the app, including in Web Apps. Additionally, a full refresh may take longer than the normal sync process.</p>
-            {% endblocktrans %}
-          </div>
-          <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-            <button type="submit" class="btn btn-primary disable-on-submit">
-              {% trans "Confirm Full Refresh" %}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
 {% endblock %}
