@@ -1050,6 +1050,14 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def page_context(self):
+        if self.current_subscription is not None and not self.current_subscription.is_trial:
+            current_price = self.current_subscription.plan_version.product_rate.monthly_fee
+            default_price = DefaultProductPlan.get_default_plan_version(
+                edition=self.current_subscription.plan_version.plan.edition
+            ).product_rate.monthly_fee
+        else:
+            current_price = 0
+            default_price = 0
         return {
             'editions': [
                 edition.lower()
@@ -1066,6 +1074,8 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'current_price': "${0:.0f}".format(current_price),
+            'is_price_discounted': current_price < default_price,
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
