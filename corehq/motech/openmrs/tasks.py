@@ -304,13 +304,24 @@ def import_patients():
 @task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
+        errors = []
         if repeater.atom_feed_enabled and not repeater.paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
             encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:
-                update_patient(repeater, patient_uuid)
+                try:
+                    update_patient(repeater, patient_uuid)
+                except ConfigurationError as err:
+                    errors.append(str(err))
             for encounter_uuid in encounter_uuids:
-                import_encounter(repeater, encounter_uuid)
+                try:
+                    import_encounter(repeater, encounter_uuid)
+                except ConfigurationError as err:
+                    errors.append(str(err))
+        if errors:
+            repeater.requests.notify_error(
+                'Errors importing from Atom feed:\n' + '\n'.join(errors)
+            )
 
 
 @periodic_task(
