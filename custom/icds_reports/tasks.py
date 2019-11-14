@@ -687,13 +687,18 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
 )
-def recalculate_stagnant_cases():
-    config_ids = [
-        'static-icds-cas-static-ccs_record_cases_monthly_v2',
-        'static-icds-cas-static-child_cases_monthly_v2',
-    ]
-    for config_id in config_ids:
-        _recalculate_stagnant_cases(config_id)
+def recalculate_stagnant_child_health_cases():
+    _recalculate_stagnant_cases('static-icds-cas-static-child_cases_monthly_v2')
+
+
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    queue='background_queue',
+    run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
+    acks_late=True
+)
+def recalculate_stagnant_ccs_record_cases():
+    _recalculate_stagnant_cases('static-icds-cas-static-ccs_record_cases_monthly_v2')
 
 
 def _recalculate_stagnant_cases(config_id):
