@@ -72,7 +72,7 @@
               <legend>{% trans 'Force Full Refresh on next Mobile Sync' %}</legend>
               <form action="{% url "force_user_412" domain couch_user.user_id %}" method="post">
                 <p>
-                  See <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Android+Troubleshooting#CommCareAndroidTroubleshooting-ForceFullRefresh">{% trans "Force Full Refresh" %}</a> for more information.
+                  See <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Android+Troubleshooting#CommCareAndroidTroubleshooting-ForceFullRefresh">{% trans "Force Full Refresh" %}</a> for more information.
                 </p>
                 {% csrf_token %}
                 <p>
