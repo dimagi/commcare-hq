@@ -1477,9 +1477,9 @@ Example using ``sum_when``:
        "column_id": "under_six_month_olds",
        "type": "sum_when",
        "field": "age_at_registration",
-       "whens": {
+       "whens": [
             ["age_at_registration < 6", 1],
-       },
+       ],
        "else_": 0
    }
 
@@ -1492,13 +1492,13 @@ Equivalent example using ``sum_when_template``:
        "column_id": "under_x_month_olds",
        "type": "sum_when_template",
        "field": "age_at_registration",
-       "whens": {
+       "whens": [
             {
                 "type": "under_x_months",
                 "binds": [6],
                 "then": 1
             }
-       },
+       ],
        "else_": 0
    }
 
