@@ -24,4 +24,5 @@ class MobileDashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.request.couch_user))
+        kwargs['is_mobile'] = True
         return super().get_context_data(**kwargs)
