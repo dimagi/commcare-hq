@@ -79,6 +79,7 @@ from corehq.apps.accounting.utils import (
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
+    get_paused_plan_context,
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -138,7 +139,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 
     @property
     def page_context(self):
-        return {
+        context = {
             'domain': self.domain,
             'feature_name': self.feature_name,
             'plan_name': self.required_plan_name,
@@ -146,6 +147,8 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
                                                args=[self.domain]),
             'is_domain_admin': self.is_domain_admin,
         }
+        context.update(get_paused_plan_context(self.request, self.domain))
+        return context
 
     @property
     def missing_privilege(self):
