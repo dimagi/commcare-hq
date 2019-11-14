@@ -243,9 +243,9 @@ hqDefine('accounting/js/pricing_table', [
 
         self.oPricingTypeText = ko.computed(function () {
             if (parent.oShowAnnualPricing()) {
-                return django.gettext("Billed Annually");
+                return gettext("Billed Annually");
             }
-            return django.gettext("Billed Monthly");
+            return gettext("Billed Monthly");
         });
 
         self.oPricingTypeCssClass = ko.computed(function () {
