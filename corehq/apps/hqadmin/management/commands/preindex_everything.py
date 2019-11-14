@@ -56,7 +56,11 @@ class Command(BaseCommand):
         head = git_snapshot['commits'][0]
 
         if options['check']:
-            exit(0 if get_preindex_complete(head) else 1)
+            if get_preindex_complete(head):
+                print("Preindex is complete")
+                exit(0)
+            print("Preindex is not yet complete")
+            exit(1)
 
         if get_preindex_complete(head) and email:
             mail_admins('Already preindexed', "Skipping this step")
