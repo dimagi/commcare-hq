@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.db import transaction
 from django.db.models import Sum
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -81,6 +82,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     quantize_accounting_decimal,
     get_paused_plan_context,
+    pause_current_subscription,
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -1684,3 +1686,73 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(Permissions.edit_billing)
+def pause_subscription(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        messages.error(
+            request, _(
+                "You do not have permission to pause the subscription for this customer-level account. "
+                "Please reach out to the %s enterprise admin for help."
+            ) % current_subscription.account.name
+        )
+        return HttpResponseRedirect(
+            reverse(DomainSubscriptionView.urlname, args=[domain])
+        )
+
+    try:
+        with transaction.atomic():
+            paused_subscription = pause_current_subscription(
+                domain, request.couch_user.username, current_subscription
+            )
+            pause_message = '\n'.join([
+                "{user} is pausing the subscription for {domain} from {old_plan}\n",
+                "{note}"
+            ]).format(
+                user=request.couch_user.username,
+                domain=domain,
+                old_plan=request.POST.get('old_plan', 'unknown'),
+                note=_get_downgrade_or_pause_note(request, True),
+            )
+
+            send_mail_async.delay(
+                "{}Subscription pausing for {}".format(
+                    '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                    domain,
+                ), pause_message, settings.DEFAULT_FROM_EMAIL,
+                [settings.GROWTH_EMAIL]
+            )
+
+            if current_subscription.is_below_minimum_subscription:
+                messages.success(
+                    request, _("Your project's subscription will be paused on {}. "
+                               "We hope to see you again!".format(
+                        paused_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    ))
+                )
+            else:
+                messages.success(
+                    request, _("Your project's subscription has now been paused. "
+                               "We hope to see you again!")
+                )
+    except Exception as e:
+        log_accounting_error(
+            "There was an error pausing the subscription for the domain '{}'. "
+            "Message: {}".format(domain, str(e)),
+            show_stack_trace=True
+        )
+        messages.error(
+            request, _("We were not able to pause your subscription at this time. "
+                       "Please contact {} if you continue to receive this error. "
+                       "We apologize for the inconvenience.").format(
+                settings.BILLING_EMAIL,
+            )
+        )
+
+    return HttpResponseRedirect(
+        reverse(DomainSubscriptionView.urlname, args=[domain])
+    )

@@ -23,7 +23,9 @@
       {% include 'accounting/partials/confirm_plan_summary.html' %}
     {% endif %}
 
-    <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
+    <form action="{% if is_paused %}{% url 'pause_subscription' domain %}{% else %}{% url 'confirm_billing_account_info' domain %}{% endif %}"
+          method="post"
+          class="form">
       {% csrf_token %}
       <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
       <input type="hidden" value="" name="downgrade_reason" id="downgrade-reason"/>
