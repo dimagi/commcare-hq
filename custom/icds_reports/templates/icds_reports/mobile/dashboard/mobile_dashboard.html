@@ -73,15 +73,15 @@
 <script>
   var appName = 'icdsApp';
   hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
-    angular.module(appName).value('cgBusyDefaults', {
-      message:'Loading data',
-      backdrop: true,
-      templateUrl: url('icds-ng-template', 'busy'),
-      delay: 300,
-      minDuration: 700,
-      wrapperClass: 'my-class my-class2'
-    });
-    angular.bootstrap(document.getElementById('app'), [appName]);
+  angular.module(appName).value('cgBusyDefaults', {
+    message:'Loading data',
+    backdrop: true,
+    templateUrl: url('icds-ng-template', 'busy'),
+    delay: 300,
+    minDuration: 700,
+    wrapperClass: 'my-class my-class2'
+  });
+  angular.bootstrap(document.getElementById('app'), [appName]);
 </script>
 </body>
 </html>
