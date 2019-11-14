@@ -1524,10 +1524,17 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             current_privs, return_plan=False,
         ).lower()
 
-        context['current_edition'] = (plan
-                                      if self.current_subscription is not None
-                                      and not self.current_subscription.is_trial
-                                      else "")
+        current_edition = (plan
+                           if self.current_subscription is not None
+                           and not self.current_subscription.is_trial
+                           else "")
+
+        # never allow renewal into community
+        if current_edition == SoftwarePlanEdition.COMMUNITY:
+            raise Http404
+
+        context['current_edition'] = current_edition
+
         return context
 
 
