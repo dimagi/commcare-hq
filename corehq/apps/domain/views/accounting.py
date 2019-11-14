@@ -23,6 +23,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -172,6 +173,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 
 class DomainAccountingSettings(BaseProjectSettingsView):
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
