@@ -167,8 +167,11 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return self.request.GET.get('payload_id', None)
 
     @property
+    def repeater_id(self):
+        return self.request.GET.get('repeater', None)
+
+    @property
     def rows(self):
-        self.repeater_id = self.request.GET.get('repeater', None)
         self.state = self.request.GET.get('record_state', None)
         if self.payload_id:
             end = self.pagination.start + self.pagination.count
@@ -197,8 +200,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _make_row(self, record):
         checkbox = mark_safe(
-            """<input type="checkbox" onclick="uncheckSelects()" class="xform-checkbox"
-            value="{}" name="xform_ids"/>""".format(record.get_id)
+            """<input type="checkbox" class="xform-checkbox"
+            data-id="{}" name="xform_ids"/>""".format(record.get_id)
         )
         row = [
             checkbox,
@@ -227,9 +230,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         columns = [
             DataTablesColumn(
                 mark_safe(
-                    """
-                    Select  <a onclick="selectItemsForAllButton()" class="select-visible btn btn-xs btn-default">all</a>
-                    <a onclick="unSelectItemsForNoneButton()" class="select-none btn btn-xs btn-default">none</a>
+                    f"""
+                    {_('Select')}<button id="all" class="select-visible btn btn-xs btn-default">{_('all')}</button>
+                    <button id="none" class="select-none btn btn-xs btn-default">{_('none')}</button>
                     """
                 ),
                 sortable=False, span=3
@@ -252,9 +255,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def report_context(self):
         context = super(DomainForwardingRepeatRecords, self).report_context
 
-        total = get_repeat_record_count(self.domain)
-        total_cancel = get_pending_repeat_record_count(self.domain, None)
-        total_requeue = get_cancelled_repeat_record_count(self.domain, None)
+        total = get_repeat_record_count(self.domain, self.repeater_id)
+        total_cancel = get_pending_repeat_record_count(self.domain, self.repeater_id)
+        total_requeue = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
 
         form_query_string = self.request.GET.urlencode()
         form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')

@@ -1,10 +1,10 @@
 /* globals ace */
 hqDefine('repeaters/js/repeat_record_report', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        select_all = document.getElementById('select_all'),
-        cancel_all = document.getElementById('cancel_all'),
-        requeue_all = document.getElementById('requeue_all'),
-        popUp = $('#areYouSure'), action = '', flag = '';
+        selectAll = document.getElementById('select-all'),
+        cancelAll = document.getElementById('cancel-all'),
+        requeueAll = document.getElementById('requeue-all'),
+        $popUp = $('#are-you-sure');
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -64,12 +64,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            post_resend($btn, recordId);
+            postResend($btn, recordId);
         });
 
-        $('#resendAll').on('click', function () {
-            action = 'resend';
-            perform_action();
+        $('#resend-all-button').on('click', function () {
+            setAction('resend');
+            performAction('resend');
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
@@ -77,12 +77,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            post_other($btn, recordId, 'cancel');
+            postOther($btn, recordId, 'cancel');
         });
 
-        $('#cancelAll').on('click', function () {
-            action = 'cancel';
-            perform_action();
+        $('#cancel-all-button').on('click', function () {
+            setAction('cancel');
+            performAction('cancel');
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
@@ -90,103 +90,101 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            post_other($btn, recordId, 'requeue');
+            postOther($btn, recordId, 'requeue');
         });
 
-        $('#requeueAll').on('click', function () {
-            action = 'requeue';
-            perform_action();
+        $('#requeue-all-button').on('click', function () {
+            setAction('requeue');
+            performAction('requeue');
         });
 
-        $('#sendConfirm').on('click', function () {
-            var itemsToSend = get_checkboxes(), $btn;
+        $('#confirm-button').on('click', function () {
+            var itemsToSend = getCheckboxes(), action = getAction(), $btn;
 
-            popUp.css('display', 'none');
+            $popUp.modal('hide');
             if (action == 'resend') {
-                $btn = $('#resendAll');
+                $btn = $('#resend-all-button');
                 $btn.disableButton();
-                post_resend($btn, itemsToSend);
+                postResend($btn, itemsToSend);
             } else if (action == 'cancel') {
-                $btn = $('#cancelAll');
+                $btn = $('#cancel-all-button');
                 $btn.disableButton();
-                post_other($btn, itemsToSend, action);
+                postOther($btn, itemsToSend, action);
             } else if (action == 'requeue') {
-                $btn = $('#requeueAll');
+                $btn = $('#requeue-all-button');
                 $btn.disableButton();
-                post_other($btn, itemsToSend, action);
+                postOther($btn, itemsToSend, action);
             }
         });
 
-        $('#sendCancel').on('click', function () {
-            popUp.css('display', 'none');
-        });
-
-        function perform_action() {
-            if (is_anything_checked()) {
-                if (is_action_possible_for_checked_items()) {
-                    $('#warning').css('display', 'none');
-                    $('#notAllowed').css('display', 'none');
-                    popUp.css('display', 'block');
+        function performAction(action) {
+            if (isAnythingChecked()) {
+                if (isActionPossibleForCheckedItems(action)) {
+                    $('#warning').addClass('hide');
+                    $('#not-allowed').addClass('hide');
+                    $popUp.modal('show');
                 } else {
-                    $('#warning').css('display', 'none');
-                    $('#notAllowed').css('display', 'block');
+                    $('#warning').addClass('hide');
+                    $('#not-allowed').removeClass('hide');
                 }
             } else {
-                $('#notAllowed').css('display', 'none');
-                $('#warning').css('display', 'block');
+                $('#warning').removeClass('hide');
+                $('#not-allowed').addClass('hide');
             }
         }
 
-        function is_anything_checked() {
+        function isAnythingChecked() {
             var items = document.getElementsByName('xform_ids');
 
-            if (select_all.checked) {
-                flag = 'select_all';
+            if (selectAll.checked) {
+                setFlag('select_all');
                 return true;
-            } else if (cancel_all.checked) {
-                flag = 'cancel_all';
+            } else if (cancelAll.checked) {
+                setFlag('cancel_all');
                 return true;
-            } else if (requeue_all.checked) {
-                flag = 'requeue_all';
+            } else if (requeueAll.checked) {
+                setFlag('requeue_all');
                 return true;
             }
 
             for (var i = 0; i < items.length; i++) {
-                if (items[i].checked)
+                if (items[i].checked) {
                     return true;
+                }
             }
 
             return false;
         }
 
-        function is_action_possible_for_checked_items() {
+        function isActionPossibleForCheckedItems(action) {
             var items = document.getElementsByName('xform_ids');
             for (var i = 0; i < items.length; i++) {
                 if (items[i].checked) {
-                    var id = items[i].value;
+                    var id = items[i].getAttribute('data-id');
                     var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
                     var button = document.querySelector(query);
-                    if (button == null)
+                    if (button == null) {
                         return false;
+                    }
                 }
             }
 
             return true;
         }
 
-        function get_checkboxes() {
-            if (select_all.checked) {
-                return select_all.value;
-            } else if (cancel_all.checked) {
-                return cancel_all.value;
-            } else if (requeue_all.checked) {
-                return requeue_all.value;
+        function getCheckboxes() {
+            if (selectAll.checked) {
+                return selectAll.getAttribute('data-id');
+            } else if (cancelAll.checked) {
+                return cancelAll.getAttribute('data-id');
+            } else if (requeueAll.checked) {
+                return requeueAll.getAttribute('data-id');
             } else {
                 var items = document.getElementsByName('xform_ids'),
                     itemsToSend = '';
                 for (var i = 0; i < items.length; i++) {
                     if (items[i].type == 'checkbox' && items[i].checked == true) {
-                        itemsToSend += items[i].value + ' '
+                        itemsToSend += items[i].getAttribute('data-id') + ' '
                     }
                 }
 
@@ -194,12 +192,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
             }
         }
 
-        function post_resend(btn, arg) {
+        function postResend(btn, arg) {
             $.post({
                 url: initialPageData.reverse("repeat_record"),
                 data: {
                     record_id: arg,
-                    flag: flag,
+                    flag: getFlag(),
                 },
                 success: function (data) {
                     btn.removeSpinnerFromButton();
@@ -221,12 +219,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
             });
         }
 
-        function post_other(btn, arg, action) {
+        function postOther(btn, arg, action) {
             $.post({
                 url: initialPageData.reverse(action + '_repeat_record'),
                 data: {
                     record_id: arg,
-                    flag: flag,
+                    flag: getFlag(),
                 },
                 success: function () {
                     btn.removeSpinnerFromButton();
@@ -239,6 +237,22 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                     btn.addClass('btn-danger');
                 },
             });
+        }
+
+        function setAction(action) {
+            window.action = action;
+        }
+
+        function getAction() {
+            return window.action;
+        }
+
+        function setFlag(flag) {
+            window.flag_ = flag;
+        }
+
+        function getFlag() {
+            return window.flag_;
         }
     });
 });

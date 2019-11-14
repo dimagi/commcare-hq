@@ -8,13 +8,12 @@ class TestTasks(TestCase):
 
     @patch('corehq.apps.data_interfaces.tasks.operate_on_payloads')
     def test_task_operate_on_payloads_no_action(self, mock_operate_on_payloads):
-        with patch('corehq.apps.data_interfaces.tasks._') as _:
-            response = task_operate_on_payloads(
-                payload_ids=['payload_id'],
-                domain='test_domain',
-                action=''
-            )
-            expected_response = {'messages': {'errors': [_('No action specified')]}}
+        response = task_operate_on_payloads(
+            payload_ids=['payload_id'],
+            domain='test_domain',
+            action=''
+        )
+        expected_response = {'messages': {'errors': ['No action specified']}}
 
         self.assertEqual(response, expected_response)
         self.assertEqual(mock_operate_on_payloads.call_count, 0)

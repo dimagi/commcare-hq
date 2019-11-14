@@ -18,46 +18,58 @@
 {% block filter_panel %} {{ block.super }}
   <div>
       {% if total > 0 %}
-        <div id ="form_options" class="well form-inline" style="margin: 1em">
+        <div id="form_options" class="well form-inline">
           <div>
-            <button id="resendAll" class="btn btn-default">Resend selected</button>
-            <button id="cancelAll" class="btn btn-default">Cancel selected</button>
-            <button id="requeueAll" class="btn btn-default">Requeue selected</button>
+            <button id="resend-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Resend selected{% endblocktrans %}
+            </button>
+            <button id="cancel-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Cancel selected{% endblocktrans %}
+            </button>
+            <button id="requeue-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Requeue selected{% endblocktrans %}
+            </button>
             <label class="checkbox" >
-              <input type="checkbox" id="select_all" value="{{ form_query_string|urlencode }}"
-                     onclick="selectAll()" style="margin-left: 1em;">
+              <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">
                 {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="cancel_all" value="{{ form_query_string_cancellable|urlencode }}"
-                     onclick="selectCallable()" style="margin-left: 1em;">
+              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_cancellable|urlencode }}">
                 {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="requeue_all" value="{{ form_query_string_requeue|urlencode }}"
-                     onclick="selectRequeue()" style="margin-left: 1em;">
+              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_requeue|urlencode }}">
                 {% blocktrans %}Select {{ total_requeue }} requeue payloads{% endblocktrans %}
             </label>
           </div>
         </div>
       {% endif %}
   </div>
-  <div id="warning" class="alert alert-warning" style="display: none;">
-    <p><strong>You need to select at least one payload!</strong></p>
+  <div id="warning" class="alert alert-warning hide">
+    You need to select at least one payload!
   </div>
-  <div id="notAllowed" class="alert alert-warning" style="display: none;">
-    <p><strong>This action is not allowed for some of selected payloads!</strong></p>
+  <div id="not-allowed" class="alert alert-warning hide">
+    This action is not allowed for some of selected payloads!
   </div>
-  <div id="areYouSure" style="position: fixed; width: 100%; height: 100%; z-index: 99; display: none;
-                              overflow: hidden; background: rgba(0, 0, 0, 0.5); filter: alpha(opacity=50);
-                              top: 0; left: 0;">
-    <div class="well" style="position: fixed; top: 50%; left: 50%; width: 400px;
-                             height: 200px; margin-left: -200px; margin-top: -100px;
-                             z-index: 100; text-align: center">
-      <h3><strong>Are you sure you want to do that?</strong></h3>
-      <div style="margin-top: 18%;">
-        <button id="sendConfirm" style="margin-right: 5em;" class="btn btn-default">Yes</button>
-        <button id="sendCancel" class="btn btn-default">No</button>
+  <div class="modal fade" id="are-you-sure">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Confirmation</h4>
+        </div>
+        <div class="modal-body">
+          Are you sure?
+        </div>
+        <div class="modal-footer">
+          <button type="button" data-dismiss="modal" class="btn btn-default">
+            No
+          </button>
+          <button type="button" id="confirm-button" class="btn btn-primary">
+            Yes
+          </button>
+        </div>
       </div>
     </div>
   </div>
