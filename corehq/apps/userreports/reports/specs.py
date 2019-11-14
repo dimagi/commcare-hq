@@ -53,6 +53,7 @@ from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from corehq.toggles import UCR_SUM_WHEN_TEMPLATES
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -76,7 +77,7 @@ class BaseReportColumn(JsonObject):
     visible = BooleanProperty(default=True)
 
     @classmethod
-    def restricted_to_static(cls):
+    def restricted_to_static(cls, domain):
         return False
 
     @classmethod
@@ -373,20 +374,20 @@ class SumWhenColumn(_CaseExpressionColumn):
     _agg_column_type = SumWhen
 
     @classmethod
-    def restricted_to_static(cls):
+    def restricted_to_static(cls, domain):
         # The conditional expressions used here don't have sufficient safety checks,
         # so this column type is only available for static reports.  To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
+        return False    # TODO True
 
 
 class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
 
     @classmethod
-    def restricted_to_static(cls):
-        return False
+    def restricted_to_static(cls, domain):
+        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
     def get_whens(self):
         whens = []

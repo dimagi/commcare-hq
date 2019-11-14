@@ -39,7 +39,7 @@ class ReportColumnFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec, is_static):
+    def from_spec(cls, spec, is_static, domain):
         column_type = spec.get('type') or 'field'
         if column_type not in cls.class_map:
             raise BadSpecError(
@@ -49,7 +49,7 @@ class ReportColumnFactory(object):
                 )
             )
         column_class = cls.class_map[column_type]
-        if column_class.restricted_to_static() and not (is_static or settings.UNIT_TESTING):
+        if column_class.restricted_to_static(domain) and not (is_static or settings.UNIT_TESTING):
             raise BadSpecError("{} columns are only available to static report configs"
                                .format(column_type))
         try:
