@@ -28,7 +28,7 @@ hqDefine('accounting/js/confirm_plan', [
         self.currentPlan = currentPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-        self.oUserAgreementSigned = ko.observable(!(isUpgrade || isSameEdition));
+        self.oUserAgreementSigned = ko.observable(!isUpgrade || isSameEdition);
 
         self.downgradeReasonList = [
             PROJECT_ENDED,
