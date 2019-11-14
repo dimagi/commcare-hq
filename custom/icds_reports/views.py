@@ -264,6 +264,13 @@ class IcdsDynamicTemplateView(TemplateView):
 
 
 @location_safe
+class IcdsDynamicMobileTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
+
+
+@location_safe
 class BaseReportView(View):
     def get_settings(self, request, *args, **kwargs):
         step = kwargs.get('step')
