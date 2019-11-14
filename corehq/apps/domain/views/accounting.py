@@ -1249,6 +1249,10 @@ class ConfirmSelectedPlanView(SelectPlanView):
             )
 
     @property
+    def is_same_edition(self):
+        return self.current_subscription.plan_version.plan.edition == self.edition
+
+    @property
     def is_downgrade_before_minimum(self):
         if self.is_upgrade:
             return False
@@ -1277,6 +1281,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return {
             'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
+            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
@@ -1292,7 +1297,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def main_context(self):
         context = super(ConfirmSelectedPlanView, self).main_context
         context.update({
-            'plan': self.selected_plan_version.user_facing_description,
+            'plan': (self.current_subscription.plan_version.user_facing_description if self.is_same_edition
+                     else self.selected_plan_version.user_facing_description),
         })
         return context
 
