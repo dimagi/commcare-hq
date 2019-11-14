@@ -414,7 +414,7 @@ class YearRangeTemplateSpec(SumWhenTemplateSpec):
 
 
 class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
-    type = "under_x_months"
+    type = TypeProperty("under_x_months")
     expression = "age_at_registration < ?"
 
 
