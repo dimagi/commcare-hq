@@ -59,7 +59,10 @@ class Command(BaseCommand):
             if get_preindex_complete(head):
                 print("Preindex is complete")
                 exit(0)
-            print("Preindex is not yet complete")
+            print("Preindex is not yet complete.")
+            print("")
+            print("  It could either still be running (most common),")
+            print("  or it could have died without completing (less common).")
             exit(1)
 
         if get_preindex_complete(head) and email:
