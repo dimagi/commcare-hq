@@ -97,7 +97,7 @@ def db_for_read_write(model, write=True):
     """
     app_label = model._meta.app_label
 
-    elif app_label == SYNCLOGS_APP:
+    if app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
         return connection_manager.get_django_db_alias(ICDS_UCR_CITUS_ENGINE_ID)
