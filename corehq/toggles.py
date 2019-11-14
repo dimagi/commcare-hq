@@ -619,7 +619,7 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
     ),
     always_enabled={'icds-cas'},
-    help_link='TODO write some docs',
+    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
 
 ASYNC_RESTORE = StaticToggle(
