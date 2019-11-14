@@ -43,6 +43,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
@@ -52,6 +53,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -782,6 +784,11 @@ class TestDeleteDomain(TestCase):
 
         self._assert_couchforms_counts(self.domain.name, 0)
         self._assert_couchforms_counts(self.domain2.name, 1)
+
+    def test_delete_commtrack_config(self):
+        CommtrackConfig(domain=self.domain.name).save()
+        self.domain.delete()
+        self.assertEqual(len(get_docs_in_domain_by_class(self.domain.name, CommtrackConfig)), 0)
 
     def tearDown(self):
         self.domain2.delete()
