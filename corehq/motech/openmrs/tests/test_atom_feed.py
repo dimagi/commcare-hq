@@ -312,7 +312,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.observation_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -347,7 +347,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.observation_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
