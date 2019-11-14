@@ -921,10 +921,10 @@ class ApplicationsTab(UITab):
     @property
     def _is_viewable(self):
         couch_user = self.couch_user
-        return (self.domain and couch_user and
-                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
-                has_privilege(self._request, privileges.PROJECT_ACCESS))
+        return (self.domain and couch_user
+                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
 class CloudcareTab(UITab):
