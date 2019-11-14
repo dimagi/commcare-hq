@@ -4,7 +4,6 @@ from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from custom.ewsghana.views import (
     configure_in_charge,
     inventory_management, stockouts_product,
-    non_administrative_locations_for_select2,
 )
 
 hq_api = CommCareHqApi(api_name='v0.3')
@@ -15,6 +14,4 @@ urlpatterns = [
     url(r'^inventory_managment/$', inventory_management, name='inventory_managment'),
     url(r'^stockouts_product/$', stockouts_product, name='stockouts_product'),
     url(r'^', include(hq_api.urls)),
-    url(r'^non_administrative_locations/$', non_administrative_locations_for_select2,
-        name='non_administrative_locations_for_select2'),
 ]
