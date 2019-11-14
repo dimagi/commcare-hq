@@ -8,7 +8,7 @@ from ws4redis.context_processors import default
 
 from corehq import privileges, toggles
 from corehq.apps.analytics import ab_tests
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
@@ -235,12 +235,19 @@ def banners(request):
         return {}
 
     context = {}
-    if request.subscription.is_trial:
-        delta = request.subscription.date_end - datetime.date.today()
+    if request.subscription.is_trial or request.subscription.service_type in [
+        SubscriptionType.TRIAL,
+        SubscriptionType.EXTENDED_TRIAL,
+    ]:
         context.update({
-            'num_trial_days_remaining': max(0, delta.days),
             'show_trial_banner': True,
+            'trial_edition': request.subscription.plan_version.plan.edition,
         })
+        if request.subscription.date_end:
+            delta = request.subscription.date_end - datetime.date.today()
+            context.update({
+                'num_trial_days_remaining': max(0, delta.days),
+            })
     elif request.subscription.is_community:
         context.update({
             'show_community_banner': True,
