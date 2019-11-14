@@ -1795,12 +1795,13 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.HTML(ugettext_noop(
+            crispy.HTML('<div class="alert alert-info">' + ugettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
-                'partner.'
-            )),
+                'partner.<br>Test projects belong to Dimagi and are not subject to '
+                'Dimagi\'s external terms of service.'
+            ) + '</div>'),
             *self.form_actions
         )
 

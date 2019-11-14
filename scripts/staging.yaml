@@ -55,7 +55,6 @@ branches:
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - nh/dhis2/te  # Norman Oct 2
   - MC/SL-229  # Norman Oct 9
-  - bmb/new-plans  # Biyeun Oct 9
   - sr-session-audit  # Sravan Oct 15
   - nh/blank_row  # Norman Oct 28
   - mk/compare-mm-size-1 # Nov 10

@@ -785,13 +785,6 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-LOCATION_TYPE_STOCK_RATES = StaticToggle(
-    'location_type_stock_rates',
-    "Specify stock rates per location type.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
-)
-
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
@@ -991,14 +984,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CUSTOM_MENU_BAR = StaticToggle(
-    'custom_menu_bar',
-    "Hide Dashboard and Applications from top menu bar "
-    "for non-admin users",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -1072,13 +1057,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
-    'use_sms_with_inactive_contacts',
-    'Use SMS with inactive contacts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
@@ -1116,13 +1094,6 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'}
-)
-
-EWS_BROADCAST_BY_ROLE = StaticToggle(
-    'ews_broadcast_by_role',
-    'EWS: Filter broadcast recipients by role',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
@@ -1336,13 +1307,6 @@ PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
-)
-
-LOGIN_AS_ALWAYS_OFF = StaticToggle(
-    'always_turn_login_as_off',
-    'Always turn login as off',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1767,6 +1731,14 @@ GROUP_API_USE_COUCH_BACKEND = StaticToggle(
 )
 
 
+USER_API_USE_ES_BACKEND = StaticToggle(
+    'user_api_use_es_backend',
+    'Use new ES backend for User API.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1793,6 +1765,13 @@ BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+mwcd_indicators = StaticToggle(
+    'mwcd_indicators',
+    'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )

@@ -24,7 +24,6 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -48,9 +47,6 @@ def default_dashboard_url(request, domain):
 
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
-
-    if couch_user and user_has_custom_top_menu(domain, couch_user):
-        return reverse('saved_reports', args=[domain])
 
     return reverse(DomainDashboardView.urlname, args=[domain])
 
