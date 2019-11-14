@@ -4,10 +4,12 @@ from collections import defaultdict, namedtuple
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from django_prbac.models import Grant, Role, UserRole
 
+from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
