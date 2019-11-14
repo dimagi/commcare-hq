@@ -32,6 +32,7 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.exceptions import (
     DuplicateCaseMatch,
+    OpenmrsException,
     OpenmrsFeedDoesNotExist,
 )
 from corehq.motech.openmrs.openmrs_config import get_property_map
@@ -277,13 +278,19 @@ def update_patient(repeater, patient_uuid):
 
     """
     if len(repeater.white_listed_case_types) != 1:
-        repeater.requests.notify_error(_(
-            f"{repeater}: Error in settings: Unable to update patients from "
-            "OpenMRS unless only one case type is specified."
+        raise ConfigurationError(_(
+            f'{repeater.domain}: {repeater}: Error in settings: Unable to update '
+            f'patients from OpenMRS unless only one case type is specified.'
         ))
-        return
     case_type = repeater.white_listed_case_types[0]
-    patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    try:
+        patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    except (RequestException, ValueError) as err:
+        raise OpenmrsException(_(
+            f'{repeater.domain}: {repeater}: Error fetching Patient '
+            f'"{patient_uuid}": {err}'
+        )) from err
+
     case, error = importer_util.lookup_case(
         EXTERNAL_ID,
         patient_uuid,
@@ -292,11 +299,7 @@ def update_patient(repeater, patient_uuid):
     )
     if error == LookupErrors.NotFound:
         default_owner: Optional[CommCareUser] = repeater.get_first_user()
-        try:
-            case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
-        except ConfigurationError as err:
-            repeater.requests.notify_error(str(err))
-            return
+        case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     elif error == LookupErrors.MultipleResults:
         # Multiple cases have been matched to the same patient.
         # Could be caused by:
@@ -306,11 +309,10 @@ def update_patient(repeater, patient_uuid):
         # * PatientFinder matched badly.
         # * Race condition where a patient was previously added to
         #   both CommCare and OpenMRS.
-        repeater.requests.notify_error(_(
-            f'{repeater}: More than one case found matching unique OpenMRS UUID. '
-            f'case external_id: "{patient_uuid}". '
+        raise DuplicateCaseMatch(_(
+            f'{repeater.domain}: {repeater}: More than one case found '
+            f'matching unique OpenMRS UUID. case external_id: "{patient_uuid}"'
         ))
-        return
     else:
         case_block = get_updatepatient_caseblock(case, patient, repeater)
 
@@ -327,11 +329,10 @@ def import_encounter(repeater, encounter_uuid):
     try:
         encounter = get_encounter(repeater, encounter_uuid)
     except (RequestException, ValueError) as err:
-        repeater.requests.notify_error(_(
+        raise OpenmrsException(_(
             f'{repeater.domain}: {repeater}: Error fetching Encounter '
             f'"{encounter_uuid}": {err}'
-        ))
-        return
+        )) from err
 
     case_block_kwargs = {"update": {}, "index": {}}
     case_blocks = []

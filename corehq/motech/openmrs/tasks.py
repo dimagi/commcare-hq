@@ -13,6 +13,7 @@ from jinja2 import Template
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.motech.openmrs.exceptions import OpenmrsException
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -311,12 +312,12 @@ def poll_openmrs_atom_feeds(domain_name):
             for patient_uuid in patient_uuids:
                 try:
                     update_patient(repeater, patient_uuid)
-                except ConfigurationError as err:
+                except (ConfigurationError, OpenmrsException) as err:
                     errors.append(str(err))
             for encounter_uuid in encounter_uuids:
                 try:
                     import_encounter(repeater, encounter_uuid)
-                except ConfigurationError as err:
+                except (ConfigurationError, OpenmrsException) as err:
                     errors.append(str(err))
         if errors:
             repeater.requests.notify_error(
