@@ -60,12 +60,5 @@ branches:
   - mk/compare-mm-size-1 # Nov 10
   - mk/compare-mm-size-2 # Nov 11
   - jls/kill-exchange # Jenny Nov 13
-  - bmb/saas-q4-registration # Biyeun Nov 13
-  - bmb/saas-q4-downgrade-text # Biyeun Nov 13
-  - bmb/saas-q4-modal-alert # Biyeun Nov 13
-  - bmb/saas-q4-models # Biyeun Nov 13
-  - bmb/saas-q4-self-service # Biyeun Nov 13
-  - bmb/saas-q4-community-banner # Biyeun Nov 13
-  - bmb/saas-q4-paused-experience # Biyeun Nov 13
-  - bmb/saas-q4-mobile-workers # Biyeun Nov 13
+  - bmb/saas-q4-qa # Biyeun Nov 13
 submodules: {}
