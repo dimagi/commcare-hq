@@ -1778,12 +1778,10 @@ def pause_subscription(request, domain):
             )
 
             if current_subscription.is_below_minimum_subscription:
-                messages.success(
-                    request, _("Your project's subscription will be paused on {}. "
-                               "We hope to see you again!".format(
-                                paused_subscription.date_start.strftime(USER_DATE_FORMAT)
-                                ))
-                )
+                messages.success(request, _(
+                    "Your project's subscription will be paused on {}. "
+                    "We hope to see you again!"
+                ).format(paused_subscription.date_start.strftime(USER_DATE_FORMAT)))
             else:
                 messages.success(
                     request, _("Your project's subscription has now been paused. "
