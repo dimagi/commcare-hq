@@ -133,7 +133,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
-                template: "<system-usage></system-usage>",
+                template: "<program-summary></program-summary>",
             }).when("/awc_opened", {
                 redirectTo: "/awc_opened/map",
             })
