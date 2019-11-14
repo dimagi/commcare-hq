@@ -697,7 +697,7 @@ def recalculate_stagnant_cases():
 
 
 def _recalculate_stagnant_cases(config_id):
-    config, is_static = get_datasource_config(config_id, DASHBOARD_USAGE_EXPORT)
+    config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
     adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
     stagnant_case_ids = _find_stagnant_cases(adapter)
     num_cases = len(stagnant_case_ids)
