@@ -33,13 +33,6 @@ from dimagi.utils.web import json_handler, json_response
 
 
 @location_safe
-class EWSGlobalStats(GlobalStats):
-    template_name = "ewsghana/global_stats.html"
-    show_supply_point_types = True
-    root_name = 'Country'
-
-
-@location_safe
 class InputStockView(BaseDomainView):
     section_name = 'Input stock data'
     section_url = ""
