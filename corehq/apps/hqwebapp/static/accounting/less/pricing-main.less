@@ -73,9 +73,10 @@ input:checked + .slider:before {
 .refund-text {
   transition: .4s opacity ease-in-out;
   color: @cc-brand-mid;
-}
-.hide-refund {
   opacity: 0;
+}
+.show-refund {
+  opacity: 1.0;
 }
 
 .tile {
@@ -187,16 +188,26 @@ input:checked + .slider:before {
   height: 350px;
   position: relative;
 
+  &:not(.tile-paused) {
+    @media (max-width: 1199px) {
+      width: 95%;
+    }
+
+    @media (max-width: 939px) {
+      height: 400px;
+    }
+  }
+
   h3 {
     color: @_color-tile !important;
   }
 
   .btn {
     color: @_color-tile !important;
-    width: 140px;
     position: absolute;
     bottom: 30px;
-    left: 50px;
+    width: 76%;
+    left: 12%;
   }
 
   .btn-current {
@@ -242,12 +253,19 @@ input:checked + .slider:before {
   margin-bottom: 20px;
   margin-top: 20px;
   text-align: center;
+  vertical-align: top;
 }
 
 .select-plan-col {
   display: inline-block;
   width: 240px;
   text-align: center;
+  vertical-align: top;
+
+  @media (max-width: 1199px) {
+    width: 24%;
+  }
+
 
   .tile {
     margin: 0 auto;
@@ -266,15 +284,13 @@ input:checked + .slider:before {
   height: auto;
   text-align: left;
   margin: 0 auto;
+  padding-bottom: 15px;
+  padding-top: 20px;
 
   h4 {
     margin-top: 0;
     text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-
-  h4,
-  .pause-icon {
+    margin-bottom: 10px;
     color: @cc-neutral-mid;
 
     &:hover {
@@ -293,16 +309,46 @@ input:checked + .slider:before {
   }
 }
 
-.pause-icon {
-  text-align: center;
-  font-size: 4em;
-  line-height: 60px;
-}
-
 .select-plan-header {
   text-align: center;
   padding-top: 10px;
   padding-bottom: 10px;
 }
+
+.confirm-plan-summary {
+  text-align: center;
+
+  .tile {
+    width: 320px;
+    height: auto;
+    margin: 0 auto;
+
+    .plan-included {
+      text-align: left;
+
+      dl {
+        margin-bottom: 0;
+      }
+    }
+
+    &:after {
+      border-color: transparent;
+    }
+  }
+}
+
+.alert-subscription {
   margin-top: 20px;
+  text-align: center;
+}
+
+.alert-downgrade {
+  width: 505px;
+  margin: 10px auto;
+}
+
+.text-community {
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
 }

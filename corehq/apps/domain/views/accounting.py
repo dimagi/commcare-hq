@@ -1191,16 +1191,25 @@ class SelectedAnnualPlanView(SelectPlanView):
 class ConfirmSelectedPlanView(SelectPlanView):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
-    step_title = ugettext_lazy("Confirm Plan")
+
+    @property
+    def step_title(self):
+        if self.is_paused:
+            return _("Confirm Pause")
+        return _("Confirm Subscription")
 
     @property
     def steps(self):
         last_steps = super(ConfirmSelectedPlanView, self).steps
         last_steps.append({
-            'title': _("2. Confirm Plan"),
+            'title': _("2. Confirm Pause") if self.is_paused else _("2. Confirm Subscription"),
             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
         })
         return last_steps
+
+    @property
+    def is_paused(self):
+        return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
     @memoized
@@ -1271,12 +1280,12 @@ class ConfirmSelectedPlanView(SelectPlanView):
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
-                                      and self.current_subscription is None),
             'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
-            'new_plan_edition': self.edition
+            'new_plan_edition': self.edition,
+            'is_paused': self.is_paused,
+            'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
     @property
