@@ -20,8 +20,6 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
-from custom.ewsghana.forms import InputStockForm
-from custom.ewsghana.handlers.web_submission_handler import WebSubmissionHandler
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
@@ -30,99 +28,6 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions, calcula
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
-
-
-@location_safe
-class InputStockView(BaseDomainView):
-    section_name = 'Input stock data'
-    section_url = ""
-    template_name = 'ewsghana/input_stock.html'
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        couch_user = self.request.couch_user
-        site_code = kwargs['site_code']
-        try:
-            sql_location = SQLLocation.objects.get(site_code=site_code, domain=self.domain)
-            if not has_input_stock_permissions(couch_user, sql_location, self.domain):
-                raise PermissionDenied()
-        except SQLLocation.DoesNotExist:
-            raise Http404()
-
-        return super(InputStockView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        InputStockFormSet = formset_factory(InputStockForm)
-        formset = InputStockFormSet(request.POST)
-        if formset.is_valid():
-            try:
-                sql_location = SQLLocation.objects.get(site_code=kwargs['site_code'], domain=self.domain)
-            except SQLLocation.DoesNotExist:
-                raise Http404()
-            text = ''
-            for form in formset:
-                product = SQLProduct.objects.get(product_id=form.cleaned_data['product_id'])
-                if form.cleaned_data['stock_on_hand'] is not None:
-                    text += '{} {}.{} '.format(
-                        product.code, form.cleaned_data['stock_on_hand'], form.cleaned_data['receipts'] or 0
-                    )
-
-                amount = form.cleaned_data['default_consumption']
-                if amount is not None:
-                    set_default_consumption_for_supply_point(
-                        self.domain, product.get_id, sql_location.supply_point_id, amount
-                    )
-            if text:
-                WebSubmissionHandler(self.request.couch_user, self.domain, Msg(text), sql_location).handle()
-            url = make_url(
-                StockStatus,
-                self.domain,
-                '?location_id=%s&filter_by_program=%s&startdate='
-                '&enddate=&report_type=&filter_by_product=%s',
-                (sql_location.location_id, ALL_OPTION, ALL_OPTION)
-            )
-            return HttpResponseRedirect(url)
-        context = self.get_context_data(**kwargs)
-        context['formset'] = formset
-        return self.render_to_response(context)
-
-    def get_context_data(self, **kwargs):
-        context = super(InputStockView, self).get_context_data(**kwargs)
-        try:
-            sql_location = SQLLocation.objects.get(domain=self.domain, site_code=kwargs.get('site_code'))
-        except SQLLocation.DoesNotExist:
-            raise Http404()
-        InputStockFormSet = formset_factory(InputStockForm, extra=0)
-        initial_data = []
-
-        for product in sql_location.products.order_by('name'):
-            try:
-                stock_state = StockState.objects.get(
-                    case_id=sql_location.supply_point_id,
-                    product_id=product.product_id
-                )
-                stock_on_hand = stock_state.stock_on_hand
-                monthly_consumption = stock_state.get_monthly_consumption()
-            except StockState.DoesNotExist:
-                stock_on_hand = 0
-                monthly_consumption = 0
-            initial_data.append(
-                {
-                    'product_id': product.product_id,
-                    'product': product.name,
-                    'stock_on_hand': int(stock_on_hand),
-                    'monthly_consumption': round(monthly_consumption) if monthly_consumption else 0,
-                    'default_consumption': get_default_monthly_consumption(
-                        self.domain,
-                        product.product_id,
-                        sql_location.location_type.name,
-                        sql_location.supply_point_id
-                    ),
-                    'units': product.units
-                }
-            )
-        context['formset'] = InputStockFormSet(initial=initial_data)
-        return context
 
 
 @require_GET
