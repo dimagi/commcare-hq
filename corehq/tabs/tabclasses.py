@@ -105,7 +105,8 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return user_can_view_reports(self.project, self.couch_user)
+        return (user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
     @property
     def view(self):
@@ -520,7 +521,7 @@ class ProjectDataTab(UITab):
             self.can_edit_commcare_data
             or self.can_export_data
             or can_download_data_files(self.domain, self.couch_user)
-        )
+        ) and has_privilege(self._request, privileges.PROJECT_ACCESS)
 
     @property
     def sidebar_items(self):
@@ -922,7 +923,8 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
+                has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
 class CloudcareTab(UITab):
