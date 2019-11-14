@@ -699,14 +699,14 @@ def recalculate_stagnant_cases():
 def _recalculate_stagnant_cases(config_id):
     config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
     adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
-    stagnant_case_ids = _find_stagnant_cases(adapter)
-    num_cases = len(stagnant_case_ids)
+    num_cases = 0
+    for case_id in _find_stagnant_cases(adapter):
+        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
+        num_cases += 1
     adapter.track_load(num_cases)
     celery_task_logger.info(
         "Found {} stagnant cases in config {}".format(num_cases, config_id)
     )
-    for case_id in stagnant_case_ids:
-        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
 
 
 def _find_stagnant_cases(adapter):
