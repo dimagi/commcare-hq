@@ -3,7 +3,7 @@
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
-describe('System Usage Directive', function () {
+describe('Program Summary Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -31,7 +31,7 @@ describe('System Usage Directive', function () {
 
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('systemUsage');
+        controller = compiled.controller('programSummary');
         controller.step = 'maternal_child';
     }));
 
