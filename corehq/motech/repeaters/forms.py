@@ -1,5 +1,6 @@
 import re
 
+from couchdbkit import BadValueError
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -17,6 +18,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.util import raw_username
+from corehq.motech.dhis2.repeaters import is_dhis2_version_or_blank
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 
@@ -222,6 +224,26 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class Dhis2RepeaterForm(GenericRepeaterForm):
+    dhis2_version = forms.CharField(
+        label=_("DHIS2 version"),
+        required=False,
+        help_text=_('e.g. "2.34.5" or "2.34"')
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super().get_ordered_crispy_form_fields()
+        return ['dhis2_version'] + fields
+
+    def clean_dhis2_version(self):
+        data = self.cleaned_data['dhis2_version']
+        try:
+            is_dhis2_version_or_blank(data)
+        except BadValueError as err:
+            raise forms.ValidationError(str(err))
+        return data
 
 
 class OpenmrsRepeaterForm(CaseRepeaterForm):
