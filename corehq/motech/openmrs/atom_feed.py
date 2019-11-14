@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from django.utils.translation import ugettext as _
 
@@ -13,6 +13,7 @@ from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
@@ -20,6 +21,7 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import (
@@ -231,7 +233,7 @@ def get_updatepatient_caseblock(case, patient, repeater):
     case_block_kwargs = get_case_block_kwargs(patient, repeater, case)
     return CaseBlock(
         create=False,
-        case_id=case.get_id,
+        case_id=case.case_id,
         **case_block_kwargs
     )
 
@@ -334,18 +336,16 @@ def import_encounter(repeater, encounter_uuid):
     case_block_kwargs = {"update": {}, "index": {}}
     case_blocks = []
 
-    try:
-        # NOTE: Atom Feed integration requires Patient UUID to be external_id
-        case_id, case_block = get_or_create_case(repeater, encounter['patientUuid'])
-    except (ConfigurationError, DuplicateCaseMatch) as err:
-        repeater.requests.notify_error(str(err))
-        return
-    if case_block:
-        default_owner_id = case_block.owner_id
-        case_blocks.append(case_block)
-    else:
-        case = CaseAccessors(repeater.domain).get_case(case_id)
+    # NOTE: Atom Feed integration requires Patient UUID to be external_id
+    case = get_case(repeater, encounter['patientUuid'])
+    if case:
+        case_id = case.case_id
         default_owner_id = case.owner_id
+    else:
+        case_block = create_case(repeater, encounter['patientUuid'])
+        case_blocks.append(case_block)
+        case_id = case_block.case_id
+        default_owner_id = case_block.owner_id
 
     case_type = repeater.white_listed_case_types[0]
     more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
@@ -389,7 +389,11 @@ def get_encounter(repeater, encounter_uuid):
     return response.json()
 
 
-def get_or_create_case(repeater, patient_uuid):
+def get_case(
+    repeater: OpenmrsRepeater,
+    patient_uuid: str,
+) -> Union[CommCareCase, CommCareCaseSQL, None]:
+
     case_type = repeater.white_listed_case_types[0]
     case, error = importer_util.lookup_case(
         EXTERNAL_ID,
@@ -397,22 +401,25 @@ def get_or_create_case(repeater, patient_uuid):
         repeater.domain,
         case_type=case_type,
     )
-    if case:
-        return case.get_id, None
+    if error == LookupErrors.MultipleResults:
+        raise DuplicateCaseMatch(_(
+            f'{repeater.domain}: {repeater}: More than one case found '
+            'matching unique OpenMRS UUID. case external_id: '
+            f'"{patient_uuid}". '
+        ))
+    return case
 
-    if error == LookupErrors.NotFound:
-        # The encounter is for a patient that has not yet been imported
-        patient = get_patient_by_uuid(repeater.requests, patient_uuid)
-        default_owner: Optional[CommCareUser] = repeater.get_first_user()
-        case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
-        return case_block.case_id, case_block
 
-    # error == LookupErrors.MultipleResults:
-    raise DuplicateCaseMatch(_(
-        f'{repeater.domain}: {repeater}: More than one case found '
-        'matching unique OpenMRS UUID. case external_id: '
-        f'"{patient_uuid}". '
-    ))
+def create_case(
+    repeater: OpenmrsRepeater,
+    patient_uuid: str,
+) -> CaseBlock:
+
+    case_type = repeater.white_listed_case_types[0]
+    patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    default_owner: Optional[CommCareUser] = repeater.get_first_user()
+    case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
+    return case_block
 
 
 def update_case(repeater, case_id, case_block_kwargs, case_blocks):

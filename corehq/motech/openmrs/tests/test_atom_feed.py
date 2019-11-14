@@ -4,6 +4,7 @@ import os
 import re
 from datetime import datetime
 
+import attr
 from django.test import SimpleTestCase
 
 from dateutil.tz import tzoffset, tzutc
@@ -23,11 +24,12 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.util.test_utils import TestFileMixin
 
 
-class CaseMock(dict):
-
-    @property
-    def get_id(self):
-        return self.get('_id')
+@attr.s
+class CaseMock:
+    case_id = attr.ib()
+    name = attr.ib()
+    type = attr.ib()
+    owner_id = attr.ib()
 
 
 class GetTimestampTests(SimpleTestCase):
@@ -132,9 +134,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.case = CaseMock(
+            case_id='abcdef',
             name='Randall',
             type='patient',
-            _id='abcdef',
+            owner_id='123456'
         )
 
     def setUpRepeater(self):
