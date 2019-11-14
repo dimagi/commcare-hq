@@ -31,7 +31,10 @@ from pillowtop.feed.interface import ChangeMeta
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.userreports.models import get_datasource_config
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
@@ -685,40 +688,25 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     acks_late=True
 )
 def recalculate_stagnant_cases():
-    domain = 'icds-cas'
     config_ids = [
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
     ]
-
-    track_case_load = case_load_counter("find_stagnant_cases", domain)
-    stagnant_cases = set()
     for config_id in config_ids:
-        config, is_static = get_datasource_config(config_id, domain)
-        adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
-        case_ids = _find_stagnant_cases(adapter)
-        num_cases = len(case_ids)
-        adapter.track_load(num_cases)
-        celery_task_logger.info(
-            "Found {} stagnant cases in config {}".format(num_cases, config_id)
-        )
-        stagnant_cases = stagnant_cases.union(set(case_ids))
-        celery_task_logger.info(
-            "Total number of stagant cases is now {}".format(len(stagnant_cases))
-        )
+        _recalculate_stagnant_cases(config_id)
 
-    case_accessor = CaseAccessors(domain)
-    num_stagnant_cases = len(stagnant_cases)
-    current_case_num = 0
-    for case_ids in chunked(stagnant_cases, 1000):
-        current_case_num += len(case_ids)
-        cases = case_accessor.get_cases(list(case_ids))
-        for case in cases:
-            track_case_load()
-            publish_case_saved(case, send_post_save_signal=False)
-        celery_task_logger.info(
-            "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
-        )
+
+def _recalculate_stagnant_cases(config_id):
+    config, is_static = get_datasource_config(config_id, DASHBOARD_USAGE_EXPORT)
+    adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
+    stagnant_case_ids = _find_stagnant_cases(adapter)
+    num_cases = len(stagnant_case_ids)
+    adapter.track_load(num_cases)
+    celery_task_logger.info(
+        "Found {} stagnant cases in config {}".format(num_cases, config_id)
+    )
+    for case_id in stagnant_case_ids:
+        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
 
 
 def _find_stagnant_cases(adapter):
@@ -728,7 +716,7 @@ def _find_stagnant_cases(adapter):
     query = query.with_entities(table.columns.doc_id).filter(
         table.columns.inserted_at <= stagnant_date
     ).distinct()
-    return query.all()
+    return set(query.all())
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
