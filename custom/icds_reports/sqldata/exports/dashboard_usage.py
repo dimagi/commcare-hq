@@ -212,7 +212,7 @@ class DashBoardUsage:
             for record in records:
                 user_counts[record['username']] += record['count']
                 # updating the counts as per the index which is the indicator number
-                user_indicators[record['username']][record['indicator'] - 1] = record['count']
+                user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
             # accumulating the indicator counts
             for user in users:
                 if not dashboard_uname_rx.match(user['username']):
