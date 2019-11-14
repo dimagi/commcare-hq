@@ -1499,6 +1499,8 @@ class SubscriptionMixin(object):
             raise Http404
         if subscription.is_renewed:
             raise Http404
+        if subscription.plan_version.is_paused:
+            raise Http404
         return subscription
 
 
