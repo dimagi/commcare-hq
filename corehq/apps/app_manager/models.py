@@ -1484,6 +1484,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             app.all_media.reset_cache(app)
             app.all_media_paths.reset_cache(app)
             if old_value not in app.all_media_paths():
+                # TODO: update SQL, and check calls of this, because they no loonger need to save the app
                 app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
@@ -4440,6 +4441,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
+        # TODO: delete multimedia (or don't, since this is a soft delete)
         domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
@@ -4531,7 +4533,7 @@ class SavedAppBuild(ApplicationBase):
         # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations',
-                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
+                    'description', 'short_description', 'multimedia_map', 'media_language_map'):    # TODO: delete eventually
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         menu_item_label = self.built_with.get_menu_item_label()
@@ -4610,6 +4612,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             for form in self.get_forms():
                 form.version = None
 
+        # TODO: ought to delete this eventually
         # weird edge case where multimedia_map gets set to null and causes issues
         if self.multimedia_map is None:
             self.multimedia_map = {}
@@ -4742,11 +4745,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         version from the last build.
         """
 
-        # access to .multimedia_map is slow
         previous_version = self._get_version_comparison_build()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        prev_multimedia_map = previous_version.transitional_multimedia_map if previous_version else {}
 
-        for path, map_item in self.multimedia_map.items():
+        for path, map_item in self.transitional_multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
@@ -5291,7 +5293,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):
-        return len(self.multimedia_map) > 0
+        return len(self.transitional_multimedia_map) > 0
 
     @memoized
     def get_xmlns_map(self):
@@ -5615,6 +5617,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     finally:
         source['_attachments'] = {}
     if source_properties is not None:
+        # TODO: copy multimedia, too
         for key, value in source_properties.items():
             source[key] = value
     cls = get_correct_app_class(source)

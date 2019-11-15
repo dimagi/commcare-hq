@@ -402,6 +402,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
 
+                # TODO: deal with this if the exchange isn't dead yet
                 if not new_domain.multimedia_included:
                     application.multimedia_map = {}
                 application.save()

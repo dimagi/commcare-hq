@@ -12,6 +12,7 @@ These documents are never deleted.
 
 ### The app's multimedia_map
 
+# TODO: update
 The biggest use case for multimedia in CommCare is displaying multimedia in applications. The application's `multimedia_map` property stores information about where it uses multimedia.
 
 `multimedia_map` is a dict where each key is a path and each value is a dict corresponding to an `HQMediaMapItem`. The map has one entry for every path, also called a **reference**, in the application. If an application uses the same image as an icon for two forms, it will have two entries in the map, *unless* a user has edited the app so that both forms use the same path.

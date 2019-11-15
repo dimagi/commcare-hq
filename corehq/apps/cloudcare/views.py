@@ -103,6 +103,7 @@ class FormplayerMain(View):
 
     def fetch_app(self, domain, app_id):
         username = self.request.couch_user.username
+        # TODO: add in multimedia_map, so that resourceMap in formplayer/app.js works properly
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
                 toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
             return get_latest_build_doc(domain, app_id)

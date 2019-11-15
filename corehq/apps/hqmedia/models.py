@@ -6,6 +6,7 @@ from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -439,13 +440,7 @@ class CommCareVideo(CommCareMultimedia):
         return "fa fa-video-camera"
 
 
-class HQMediaMapItem(DocumentSchema):
-
-    multimedia_id = StringProperty()
-    media_type = StringProperty()
-    version = IntegerProperty()
-    unique_id = StringProperty()
-
+class MediaMapItemMixin(object):
     @property
     def url(self):
         return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
@@ -453,6 +448,27 @@ class HQMediaMapItem(DocumentSchema):
     @classmethod
     def gen_unique_id(cls, m_id, path):
         return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
+
+
+# TODO: eventually delete
+class HQMediaMapItem(DocumentSchema, MediaMapItemMixin):
+    multimedia_id = StringProperty()
+    media_type = StringProperty()
+    version = IntegerProperty()
+    unique_id = StringProperty()
+
+
+class ApplicationMediaMapItem(models.Model, MediaMapItemMixin):
+    domain = models.CharField(max_length=100, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    path = models.CharField(max_length=255, null=False)
+    multimedia_id = models.CharField(max_length=255, null=False)
+    media_type = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=True)
+    unique_id = models.CharField(max_length=255, null=False)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id', 'path')
 
 
 class ApplicationMediaReference(object):
@@ -557,8 +573,8 @@ class MediaMixin(object):
 
     def get_relevant_multimedia_map(self, app):
         references = self.get_references()
-        return {r['path']: app.multimedia_map[r['path']]
-                for r in references if r['path'] in app.multimedia_map}
+        return {r['path']: app.transitional_multimedia_map[r['path']]
+                for r in references if r['path'] in app.transitional_multimedia_map}
 
     def rename_media(self, old_path, new_path):
         """
@@ -749,13 +765,28 @@ class FormMediaMixin(MediaMixin):
         return menu_count + xform_count
 
 
+# TODO: it'd be a victory to not inherit from Document, would need to migrate logo_refs and archived_media
 class ApplicationMediaMixin(Document, MediaMixin):
     """
         Manages multimedia for itself and sub-objects.
     """
 
+    # TODO: delete when migration is complete and then rename transitional_multimedia_map to multimedia_map
     # keys are the paths to each file in the final application media zip
     multimedia_map = SchemaDictProperty(HQMediaMapItem)
+
+    @property
+    @memoized
+    def transitional_multimedia_map(self):
+        sql_items = ApplicationMediaMapItem.objects.filter(domain=self.domain, app_id=self.get_id)
+        if not len(sql_items):
+            # Assume migration hasn't been done
+            return self.multimedia_map or {}
+
+        if len(sql_items) != len(self.multimedia_map):
+            raise Exception("Couch/SQL mismatch")   # TODO: raise some more specific exception
+
+        return {item.path: item}
 
     # paths to custom logos
     logo_refs = DictProperty()
@@ -782,20 +813,18 @@ class ApplicationMediaMixin(Document, MediaMixin):
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
-        if self.multimedia_map is None:
-            self.multimedia_map = {}
-
-        if self.multimedia_map and remove_unused:
+        if self.transitional_multimedia_map and remove_unused:
             self.remove_unused_mappings()
 
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
-            return self.multimedia_map
+            return self.transitional_multimedia_map
 
         requested_media = copy(self.logo_paths)   # logos aren't language-specific
         for lang in build_profile.langs:
             requested_media |= self.all_media_paths(lang=lang)
 
-        return {path: self.multimedia_map[path] for path in requested_media if path in self.multimedia_map}
+        return {path: self.transitional_multimedia_map[path]
+                for path in requested_media if path in self.transitional_multimedia_map}
 
     # The following functions (get_menu_media, get_case_list_form_media, get_case_list_menu_item_media,
     # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
@@ -889,8 +918,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
         map_changed = False
         if self.check_media_state()['has_form_errors']:
             return
-        paths = list(self.multimedia_map) if self.multimedia_map else []
+        paths = list(self.transitional_multimedia_map)
         permitted_paths = self.all_media_paths() | self.logo_paths
+        # TODO: also delete from SQL
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
@@ -909,6 +939,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         map_item.multimedia_id = multimedia._id
         map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
         map_item.media_type = multimedia.doc_type
+        # TODO: also save to SQL
         self.multimedia_map[form_path] = map_item
 
         if save:
@@ -965,7 +996,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         totals = []
         for mm in [CommCareMultimedia.get_doc_class(t) for t in CommCareMultimedia.get_doc_types()]:
             paths = self.get_all_paths_of_type(mm.__name__)
-            matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
+            matched_paths = [p for p in self.transitional_multimedia_map.keys() if p in paths]
             if len(paths) > 0:
                 totals.append({
                     'media_type': mm.get_nice_name(),
@@ -983,6 +1014,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         self.remove_unused_mappings()
         for path, media in self.get_media_objects(remove_unused=True):
             if not media or (not media.is_shared and self.domain not in media.owners):
+                # TODO: also delete from SQL, if the exchange isn't dead yet
                 del self.multimedia_map[path]
 
     def check_media_state(self):
@@ -990,7 +1022,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
         for media in self.all_media():
             try:
-                self.multimedia_map[media.path]
+                self.transitional_multimedia_map[media.path]
             except KeyError:
                 has_missing_refs = True
 
