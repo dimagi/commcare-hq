@@ -26,7 +26,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
@@ -69,7 +68,6 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
 )
 from corehq.feature_previews import (
-    BI_INTEGRATION_PREVIEW,
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
 )
@@ -251,13 +249,11 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            # domain hides Dashboard tab if user is non-admin
-            if not user_has_custom_top_menu(self.domain, self.couch_user):
-                if self.couch_user.is_commcare_user():
-                    # never show the dashboard for mobile workers
-                    return False
-                else:
-                    return domain_has_apps(self.domain)
+            if self.couch_user.is_commcare_user():
+                # never show the dashboard for mobile workers
+                return False
+            else:
+                return domain_has_apps(self.domain)
         return False
 
     @property
@@ -338,7 +334,6 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
-            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -404,11 +399,6 @@ class SetupTab(UITab):
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
             ]
-            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
-                commcare_supply_setup.append({
-                    'title': _(StockLevelsView.page_title),
-                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -507,6 +497,12 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views.utils import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
+
+    @property
+    @memoized
+    def can_view_odata_feed(self):
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
+        return user_can_view_odata_feed(self.domain, self.couch_user)
 
     @property
     @memoized
@@ -729,7 +725,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            if self.can_view_odata_feed:
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -849,7 +845,7 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
-        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+        if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
@@ -926,9 +922,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
-                # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class CloudcareTab(UITab):
@@ -2031,7 +2025,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
@@ -2044,13 +2037,6 @@ class AdminTab(UITab):
                 {'title': _('System Info'),
                  'url': reverse('system_info'),
                  'icon': 'fa fa-heartbeat'},
-                {'title': _('PillowTop Errors'),
-                 'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',)),
-                 'icon': 'fa fa-bed'},
-                {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname),
-                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
@@ -2063,6 +2049,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Manage deleted domains'),
+                 'url': reverse('tombstone_management'),
+                 'icon': 'fa fa-minus-circle'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),
@@ -2087,7 +2076,7 @@ class AdminTab(UITab):
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                 'url': UserListReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
@@ -2111,7 +2100,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UserListReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 

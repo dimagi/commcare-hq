@@ -1,19 +1,30 @@
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
-from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, \
-    iter_all_ids, CaseReindexAccessor, LedgerReindexAccessor
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    LedgerAccessorSQL,
+    LedgerReindexAccessor,
+    iter_all_ids,
+)
+from corehq.form_processor.exceptions import (
+    CaseNotFound,
+    LedgerValueNotFound,
+    XFormNotFound,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import ReadOnlyDocumentStore
+from pillowtop.dao.interface import DocumentStore
 
 
-class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
+class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
         self.domain = domain
@@ -23,23 +34,26 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
     def get_document(self, doc_id):
         try:
             form = self.form_accessors.get_form(doc_id)
-            if isinstance(form, XFormInstanceSQL):
-                return form.to_json(include_attachments=True)
-            else:
-                return form.to_json()
+            return self._to_json(form)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
-    def iter_document_ids(self, last_id=None):
-        # todo: support last_id
+    @staticmethod
+    def _to_json(form):
+        if isinstance(form, XFormInstanceSQL):
+            return form.to_json(include_attachments=True)
+        else:
+            return form.to_json()
+
+    def iter_document_ids(self):
         return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
-            yield wrapped_form.to_json()
+            yield self._to_json(wrapped_form)
 
 
-class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
+class CaseDocumentStore(DocumentStore):
 
     def __init__(self, domain, case_type=None):
         self.domain = domain
@@ -52,7 +66,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
         except CaseNotFound as e:
             raise DocumentNotFoundError(e)
 
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         if should_use_sql_backend(self.domain):
             accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
             return iter_all_ids(accessor)
@@ -64,7 +78,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             yield wrapped_case.to_json()
 
 
-class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
+class LedgerV2DocumentStore(DocumentStore):
 
     def __init__(self, domain):
         assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
@@ -85,7 +99,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         from corehq.apps.products.models import SQLProduct
         return list(SQLProduct.objects.filter(domain=self.domain).product_ids())
 
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         if should_use_sql_backend(self.domain):
             accessor = LedgerReindexAccessor(self.domain)
             return iter_all_ids(accessor)
@@ -119,12 +133,7 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         from corehq.apps.commtrack.models import StockState
         assert not should_use_sql_backend(domain), "Only non-SQL backend supported"
         self.domain = domain
-
-        def _doc_gen_fn(obj):
-            return obj.to_json()
-
-        super(LedgerV1DocumentStore, self).__init__(
-            StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+        super(LedgerV1DocumentStore, self).__init__(StockState, model_manager=StockState.include_archived)
 
 
 class DocStoreLoadTracker(object):

@@ -188,6 +188,32 @@ class RebuildTableTest(TestCase):
         self.assertEqual(1, len(logs))
         self.assertEqual(logs[0].migration_diffs, [{'type': 'add_column', 'item_name': 'new_date'}])
 
+        # make the column allow nulls and check that it gets applied (since is non-destructive)
+        self.config.configured_indicators[-1]['is_nullable'] = True
+        self.config.save()
+
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+        # make sure change made it
+        self.assertEqual(True, self.config.configured_indicators[-1]['is_nullable'])
+
+        # bootstrap to trigger rebuild
+        get_case_pillow(ucr_configs=[self.config])
+
+        # make sure we didn't add any more logs
+        self.assertEqual(
+            DataSourceActionLog.objects.filter(
+                indicator_config_id=self.config.data_source_id,
+                skip_destructive=True
+            ).count(),
+            1,
+        )
+        # confirm the column was added to the table
+        insp = reflection.Inspector.from_engine(self.engine)
+        self.assertEqual(
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
+        )
+
     def test_implicit_pk(self):
         self._setup_data_source('implicit_pk')
         insp = reflection.Inspector.from_engine(self.engine)

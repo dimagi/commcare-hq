@@ -174,11 +174,8 @@ def _get_form_designer_view(request, domain, app, module, form):
 
 @require_GET
 @require_can_edit_apps
-def get_form_data_schema(request, domain, form_unique_id):
+def get_form_data_schema(request, domain, app_id, form_unique_id):
     """Get data schema
-
-    One of `app_id` or `form_unique_id` is required. `app_id` is ignored
-    if `form_unique_id` is provided.
 
     :returns: A list of data source schema definitions. A data source schema
     definition is a dictionary. For details on the content of the dictionary,
@@ -186,13 +183,8 @@ def get_form_data_schema(request, domain, form_unique_id):
     """
     data = []
 
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceConflict:
-        raise Http404()
-
-    if app.domain != domain:
-        raise Http404()
+    app = get_app(domain, app_id)
+    form = app.get_form(form_unique_id)
 
     try:
         data.append(get_session_schema(form))
@@ -259,6 +251,7 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     core = {
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
+                                               'app_id': app.id,
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),

@@ -11,7 +11,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import wasting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
+    wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
     default_age_interval, wfh_recorded_in_month_column
 
 
@@ -321,13 +321,9 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         'total_measured': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         total_weighed = row['total_weighed'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severe = row['severe'] or 0
         moderate = row['moderate'] or 0
@@ -346,10 +342,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

@@ -1,8 +1,7 @@
-from django.conf import settings
 from sqlalchemy.exc import ProgrammingError
-from corehq.sql_db.config import partition_config
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.config import partition_config
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from corehq.util.decorators import ContextDecorator
 
 
@@ -12,7 +11,7 @@ class temporary_database(ContextDecorator):
     def __init__(self, database_name):
         self.database_name = database_name
         # use db1 engine to create db2 http://stackoverflow.com/a/8977109/8207
-        self.root_engine = connection_manager.get_engine('default')
+        self.root_engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     def __enter__(self):
         conn = self.root_engine.connect()
@@ -47,10 +46,9 @@ class DefaultShardingTestConfigMixIn(object):
         partitioning is working properly, so this test makes sure those assumptions
         are valid.
         """
-
-        self.assertEqual(len(settings.PARTITION_DATABASE_CONFIG['shards']), 2)
-        self.assertIn(self.db1, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertIn(self.db2, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db1], [0, 1])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db2], [2, 3])
-        self.assertEqual(set(partition_config.get_form_processing_dbs()), set([self.db1, self.db2]))
+        self.assertEqual(len(partition_config.shard_map), 2)
+        self.assertIn(self.db1, partition_config.shard_map)
+        self.assertIn(self.db2, partition_config.shard_map)
+        self.assertEqual(partition_config.shard_map[self.db1], [0, 1])
+        self.assertEqual(partition_config.shard_map[self.db2], [2, 3])
+        self.assertEqual(set(partition_config.form_processing_dbs), set([self.db1, self.db2]))

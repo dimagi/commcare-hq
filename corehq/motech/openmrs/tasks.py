@@ -6,24 +6,25 @@ its Atom Feed (daily or more) to track changes.
 import uuid
 from collections import namedtuple
 from datetime import datetime
-from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from jinja2 import Template
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.groups.models import Group
-from corehq.apps.users.cases import get_wrapped_owner
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
     import_encounter,
@@ -37,10 +38,8 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.models import POSIX_MILLISECONDS, OpenmrsImporter
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.serializers import openmrs_timestamp_to_isoformat
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 
@@ -70,6 +69,10 @@ def parse_params(params, location=None):
 def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
+
+    raises RequestException on request error
+    raises ValueError if response is not JSON
+    raises IndexError, KeyError, TypeError on unexpected JSON format
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
@@ -82,19 +85,33 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_case_properties(patient, importer):
-    as_isoformat = partial(openmrs_timestamp_to_isoformat,
-                           tz=importer.get_timezone())
-    cast = {
-        POSIX_MILLISECONDS: as_isoformat,
-    }
+    """
+    Returns case name and dictionary of case properties to update
+
+    Raises ConfigurationError if a value cannot be deserialized using
+    the data types given in a column mapping.
+    """
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
-    fields_to_update = {
-        mapping.property: (cast[mapping.data_type](patient[mapping.column])
-                           if mapping.data_type else
-                           patient[mapping.column])
-        for mapping in importer.column_map
-    }
+    errors = []
+    fields_to_update = {}
+    tz = importer.get_timezone()
+    for mapping in importer.column_map:
+        value = patient[mapping.column]
+        try:
+            fields_to_update[mapping.property] = mapping.deserialize(value, tz)
+        except (TypeError, ValueError) as err:
+            errors.append(
+                f'Unable to deserialize value {repr(value)} '
+                f'in column "{mapping.column}" for case property '
+                f'"{mapping.property}". OpenMRS data type is given as '
+                f'"{mapping.data_type}". CommCare data type is given as '
+                f'"{mapping.commcare_data_type}": {err}'
+            )
+    if errors:
+        raise ConfigurationError(
+            f'Errors importing from {importer}:\n' + '\n'.join(errors)
+        )
     return case_name, fields_to_update
 
 
@@ -129,7 +146,20 @@ def get_updatepatient_caseblock(case, patient, importer):
 
 
 def import_patients_of_owner(requests, importer, domain_name, owner_id, location=None):
-    openmrs_patients = get_openmrs_patients(requests, importer, location)
+    try:
+        openmrs_patients = get_openmrs_patients(requests, importer, location)
+    except RequestException as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Error calling API: {err}'
+        )
+        return
+    except (KeyError, IndexError, TypeError, ValueError) as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Unexpected response format: {err}'
+        )
+        return
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
         case, error = importer_util.lookup_case(
@@ -195,12 +225,13 @@ def import_patients_to_domain(domain_name, force=False):
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
-    requests = Requests(importer.domain, importer.server_url, importer.username, password)
+    requests = Requests(importer.domain, importer.server_url, importer.username, password,
+                        notify_addresses=importer.notify_addresses)
     if importer.location_type_name:
         try:
             location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
         except LocationType.DoesNotExist:
-            logger.error(
+            requests.notify_error(
                 f'No organization level named "{importer.location_type_name}" '
                 f'found in project space "{importer.domain}".'
             )
@@ -214,7 +245,7 @@ def import_patients_with_importer(importer_json):
             # Assign cases to the first user in the location, not to the location itself
             owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
             if not owner:
-                logger.error(
+                requests.notify_error(
                     f'Project space "{importer.domain}" at location '
                     f'"{location.name}" has no user to own cases imported '
                     f'from OpenMRS Importer "{importer}"'
@@ -225,18 +256,24 @@ def import_patients_with_importer(importer_json):
             # PARAMETERS. If not, OpenMRS will return THE SAME PATIENTS
             # multiple times and they will be assigned to a different
             # user each time.
-            import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
+            try:
+                import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
+            except ConfigurationError as err:
+                requests.notify_error(str(err))
     elif importer.owner_id:
         if not is_valid_owner(importer.owner_id):
-            logger.error(
+            requests.notify_error(
                 f'Error importing patients for project space "{importer.domain}" '
                 f'from OpenMRS Importer "{importer}": owner_id "{importer.owner_id}" '
                 'is invalid.'
             )
             return
-        import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
+        try:
+            import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
+        except ConfigurationError as err:
+            requests.notify_error(str(err))
     else:
-        logger.error(
+        requests.notify_error(
             f'Error importing patients for project space "{importer.domain}" from '
             f'OpenMRS Importer "{importer}": Unable to determine the owner of '
             'imported cases without either owner_id or location_type_name'

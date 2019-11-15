@@ -29,15 +29,10 @@ def setUpModule():
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
-    _call_center_domain_mock.start()
-
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
 
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds', STATIC_DATA_SOURCE_PROVIDERS=[]):
         setup_tables_and_fixtures(domain.name)
         aggregate_state_form_data()
         try:
@@ -48,8 +43,6 @@ def setUpModule():
             print(e)
             tearDownModule()
             raise
-        finally:
-            _call_center_domain_mock.stop()
 
 
 def tearDownModule():

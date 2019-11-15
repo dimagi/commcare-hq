@@ -13,6 +13,10 @@ class _AbstractDocumentStoreTestCase(SimpleTestCase):
     def dao(self):
         pass
 
+    @abstractmethod
+    def save(self, dao, doc_id, doc):
+        pass
+
     def test_get_missing(self):
         with self.assertRaises(DocumentNotFoundError):
             self.dao.get_document('missing-doc')
@@ -20,21 +24,9 @@ class _AbstractDocumentStoreTestCase(SimpleTestCase):
     def test_save_and_get(self):
         dao = self.dao
         id = 'test-id'
-        dao.save_document(id, {'hello': 'world'})
+        self.save(dao, id, {'hello': 'world'})
         document = dao.get_document(id)
         self.assertEqual('world', document['hello'])
-
-    def test_save_and_delete(self):
-        dao = self.dao
-        id = 'test-id-to-delete'
-        dao.save_document(id, {'foo': 'bar'})
-        dao.delete_document(id)
-        with self.assertRaises(DocumentNotFoundError):
-            self.dao.get_document(id)
-
-    def test_delete_missing(self):
-        with self.assertRaises(DocumentNotFoundError):
-            self.dao.delete_document('missing-id')
 
 
 class MockDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
@@ -43,9 +35,16 @@ class MockDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
     def dao(self):
         return MockDocumentStore()
 
+    def save(self, dao, doc_id, doc):
+        dao._data_store[doc_id] = doc
+
 
 class CouchDbDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
 
     @property
     def dao(self):
         return CouchDocumentStore(FakeCouchDb())
+
+    def save(self, dao, doc_id, doc):
+        doc['_id'] = doc_id
+        dao._couch_db.save_doc(doc)

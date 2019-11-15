@@ -2,9 +2,10 @@ import re
 
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
+from django.db import DEFAULT_DB_ALIAS
 
 
-def fast_distinct(model_cls, column, using='default'):
+def fast_distinct(model_cls, column, using=DEFAULT_DB_ALIAS):
     """
     Use a loose indexscan http://wiki.postgresql.org/wiki/Loose_indexscan
     to get all distinct values for a given column
@@ -29,7 +30,7 @@ def fast_distinct(model_cls, column, using='default'):
     return [value for value, in _execute(command, using=using)]
 
 
-def fast_distinct_in_domain(model_cls, column, domain, using='default'):
+def fast_distinct_in_domain(model_cls, column, domain, using=DEFAULT_DB_ALIAS):
     """
     Use a loose indexscan http://wiki.postgresql.org/wiki/Loose_indexscan
     to get all distinct values for a given column in a certain domain
@@ -73,7 +74,7 @@ def _assert_super_safe(word):
     return word
 
 
-def _execute(command, params=None, using='default'):
+def _execute(command, params=None, using=DEFAULT_DB_ALIAS):
     from django.db import connections
     connection = connections[using]
     with connection.cursor() as cursor:

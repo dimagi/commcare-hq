@@ -6,18 +6,22 @@ from django.test import SimpleTestCase
 from couchdbkit import BadValueError
 
 import corehq.motech.value_source
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 from corehq.motech.value_source import (
     CaseProperty,
     CaseTriggerInfo,
+    ConstantString,
+    ConstantValue,
+    FormQuestionMap,
+    JsonPathCaseProperty,
+    JsonPathConstantValue,
+    ValueSource,
     get_form_question_values,
 )
-
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.value_source)
-        self.assertEqual(results.failed, 0)
 
 
 class GetFormQuestionValuesTests(SimpleTestCase):
@@ -102,15 +106,178 @@ class CasePropertyValidationTests(SimpleTestCase):
         CaseProperty.wrap({"case_property": "foo"})
 
     def test_blank_case_property(self):
-        with self.assertRaisesRegexp(BadValueError, "Value cannot be blank."):
+        with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
             CaseProperty.wrap({"case_property": ""})
 
     def test_missing_case_property(self):
         case_property = CaseProperty.wrap({})
-        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
             case_property.validate()
 
     def test_null_case_property(self):
         case_property = CaseProperty.wrap({"case_property": None})
-        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
             case_property.validate()
+
+
+class ConstantStringTests(SimpleTestCase):
+
+    def test_get_value(self):
+        constant = ConstantString.wrap({"value": "foo"})
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertEqual(value, "foo")
+
+    def test_default_get_value(self):
+        constant = ConstantString.wrap({})
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertIsNone(value)
+
+    def test_casting_value(self):
+        constant = ConstantString.wrap({
+            "value": "1",
+            "external_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+        })
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertEqual(value, 1.0)
+
+    def test_deserialize(self):
+        constant = ConstantString.wrap({"value": "foo"})
+        external_value = "bar"
+        value = constant.deserialize(external_value)
+        self.assertIsNone(value)
+
+
+class ConstantValueTests(SimpleTestCase):
+
+    def test_serialize(self):
+        """
+        serialize() should convert from CommCare data type to external
+        data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
+            "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+        })
+        self.assertEqual(one.serialize("foo"), '1')
+
+    def test_deserialize(self):
+        """
+        deserialize() should convert from external data type to CommCare
+        data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
+            "external_data_type": COMMCARE_DATA_TYPE_INTEGER,
+        })
+        self.assertEqual(one.deserialize("foo"), '1')
+
+
+class WrapTests(SimpleTestCase):
+
+    def test_wrap_subclass(self):
+        doc = {
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/abnormal_temperature",
+            "value_map": {
+                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+            },
+        }
+        form_question_map = ValueSource.wrap(doc)
+        self.assertIsInstance(form_question_map, ValueSource)
+        self.assertIsInstance(form_question_map, FormQuestionMap)
+
+    def test_subclass_wrap(self):
+        doc = {
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/abnormal_temperature",
+            "value_map": {
+                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+            },
+        }
+        form_question_map = FormQuestionMap.wrap(doc)
+        self.assertIsInstance(form_question_map, ValueSource)
+        self.assertIsInstance(form_question_map, FormQuestionMap)
+
+    def test_wrap_class(self):
+        """
+        Wrapping a ValueSource instance should return None.
+
+        ValueSource must be subclassed because ValueSource.get_value
+        raises NotImplementedError.
+        """
+        doc = {
+            "doc_type": "ValueSource"
+        }
+        value_source = ValueSource.wrap(doc)
+        self.assertIsNone(value_source)
+
+    def test_wrap_something_else(self):
+        doc = {
+            "doc_type": "Foo",
+            "foo": "bar"
+        }
+        foo = ValueSource.wrap(doc)
+        self.assertIsNone(foo)
+
+
+class JsonPathCasePropertyTests(SimpleTestCase):
+
+    def test_blank_path(self):
+        with self.assertRaises(BadValueError):
+            JsonPathCaseProperty.wrap({
+                "case_property": "bar",
+                "jsonpath": "",
+            })
+
+    def test_no_values(self):
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = JsonPathCaseProperty.wrap({
+            "case_property": "bar",
+            "jsonpath": "foo.qux",
+        })
+        external_value = value_source.get_import_value(json_doc)
+        self.assertIsNone(external_value)
+
+    def test_one_value(self):
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = JsonPathCaseProperty.wrap({
+            "case_property": "bar",
+            "jsonpath": "foo.bar",
+        })
+        external_value = value_source.get_import_value(json_doc)
+        self.assertEqual(external_value, "baz")
+
+    def test_many_values(self):
+        json_doc = {"foo": [{"bar": "baz"}, {"bar": "qux"}]}
+        value_source = JsonPathCaseProperty.wrap({
+            "case_property": "bar",
+            "jsonpath": "foo[*].bar",
+        })
+        external_value = value_source.get_import_value(json_doc)
+        self.assertEqual(external_value, ["baz", "qux"])
+
+
+class JsonPathConstantValueTests(SimpleTestCase):
+
+    def test_one_value(self):
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = JsonPathConstantValue.wrap({
+            "value": "qux",
+            "jsonpath": "foo.bar",
+        })
+        external_value = value_source.get_import_value(json_doc)
+        self.assertEqual(external_value, "qux")
+
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.value_source)
+    assert results.failed == 0

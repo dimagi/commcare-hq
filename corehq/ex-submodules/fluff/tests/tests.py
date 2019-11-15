@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from pillowtop.feed.couch import change_from_couch_row
 
 import sqlalchemy
@@ -87,7 +87,7 @@ class FluffTest(TestCase):
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
         cls.previous_signal_receivers = indicator_document_updated.receivers
         indicator_document_updated.receivers = []
-        cls.engine = connection_manager.get_engine('default')
+        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     def setUp(self):
         self.fakedb = FakeCouchDb()

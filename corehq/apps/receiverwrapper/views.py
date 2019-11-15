@@ -207,7 +207,7 @@ def post(request, domain, app_id=None):
 
 def _noauth_post(request, domain, app_id=None):
     """
-    This is explictly called for a submission that has secure submissions enabled, but is manually
+    This is explicitly called for a submission that has secure submissions enabled, but is manually
     overriding the submit URL to not specify auth context. It appears to be used by demo mode.
 
     It mainly just checks that we are touching test data only in the right domain and submitting

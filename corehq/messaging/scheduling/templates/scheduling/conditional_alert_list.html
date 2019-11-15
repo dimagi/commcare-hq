@@ -16,7 +16,6 @@
   {% registerurl 'conditional_alert_list' domain %}
   {% registerurl 'edit_conditional_alert' domain '---' %}
   {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
-  {% initial_page_data 'allow_copy' allow_copy %}
 
   <p class="lead">{% trans 'Conditional Alerts' %}</p>
 
@@ -61,13 +60,10 @@
       <thead>
       <tr>
         <th class="col-md-1">{% trans 'Delete' %}</th>
-        <th class="{% if allow_copy %}col-md-2{% else %}col-md-5{% endif %}">{% trans 'Name' %}</th>
+        <th class="col-md-5">{% trans 'Name' %}</th>
         <th class="col-md-2">{% trans 'Case Type' %}</th>
         <th class="col-md-2">{% trans 'Status' %}</th>
         <th class="col-md-2">{% trans 'Action' %}</th>
-        {% if allow_copy %}
-          <th class="col-md-3">{% trans 'Copy To' %}</th>
-        {% endif %}
       </tr>
       </thead>
       <tbody data-bind="foreach: rules">
@@ -102,22 +98,6 @@
             </button>
           </div>
         </td>
-        {% if allow_copy %}
-          <td>
-            <div class="form-inline">
-              <input type="text"
-                     class="form-control"
-                     placeholder="{% trans_html_attr "Project" %}"
-                     data-bind="value: projectName, valueUpdate: 'afterkeydown'" />
-              <button class="btn btn-default"
-                      data-bind="disable: locked_for_editing() || !editable() || requestInProgress(),
-                                                  click: copy,">
-                <i class="fa fa-copy"></i>
-                {% trans "Copy" %}
-              </button>
-            </div>
-          </td>
-        {% endif %}
       </tr>
       </tbody>
     </table>

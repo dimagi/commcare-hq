@@ -1886,8 +1886,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == "POST":
             form = SettingsForm(
                 self.request.POST,
-                cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer,
+                domain=self.domain,
+                is_previewer=self.previewer,
             )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
@@ -1950,8 +1950,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             }
             form = SettingsForm(
                 initial=initial,
-                cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer,
+                domain=self.domain,
+                is_previewer=self.previewer,
             )
         return form
 

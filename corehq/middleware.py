@@ -3,15 +3,23 @@ import logging
 import mimetypes
 import os
 import datetime
+import re
+import traceback
+import uuid
 from django.conf import settings
+from django.contrib.sessions.backends.cache import SessionStore
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 from django.utils.deprecation import MiddlewareMixin
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -210,3 +218,79 @@ class SentryContextMiddleware(MiddlewareMixin):
 
             if getattr(request, 'domain', None):
                 scope.set_tag('domain', request.domain)
+
+
+session_logger = logging.getLogger('session_access_log')
+
+
+def log_call(func):
+    def with_logging(*args, **kwargs):
+        session_logger.info("\n\n\n")
+        session_logger.info(func.__name__ + " was called")
+        session_logger.info("\n\n\n")
+        for line in traceback.format_stack():
+            white_list = ['corehq/', 'custom/', func.__name__]
+            if any([c in line for c in white_list]):
+                session_logger.info(line.strip())
+        return func(*args, **kwargs)
+    return with_logging
+
+
+def decorate_all_methods(decorator):
+    def decorate(cls):
+        for attr in dir(cls):
+            if "__" not in attr and callable(getattr(cls, attr)):
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+    return decorate
+
+
+@decorate_all_methods(log_call)
+class LoggingSessionStore(SessionStore):
+    pass
+
+
+class LoggingSessionMiddleware(SessionMiddleware):
+
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        self.bypass_re = [
+            re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
+        ]
+
+    def _bypass_sessions(self, request):
+        return (
+            any(rx.match(request.path_info) for rx in self.bypass_re) and
+            toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER)
+        )
+
+    def process_response(self, request, response):
+        datadog_counter(
+            'commcare.bypass_sessions.requests_count',
+            tags=['bypass_sessions:{}'.format(request.__bypass_sessions),
+            'response_code:{}'.format(response.status_code)])
+        return super().process_response(request, response)
+
+    def process_request(self, request):
+        request.__bypass_sessions = self._bypass_sessions(request)
+        try:
+            match = re.search(r'/a/[0-9a-z-]+', request.path)
+            if match:
+                domain = match.group(0).split('/')[-1]
+                if request.__bypass_sessions:
+                    session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+                    request.session = self.SessionStore(session_key)
+                    request.session.save = lambda *x: None
+                    return
+                elif toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
+                    session_logger.info(
+                        "Logging session access for URL {}".format(request.path))
+                    self.SessionStore = LoggingSessionStore
+        except Exception as e:
+            session_logger.error(
+                "Exception {} in LoggingSessionMiddleware for url {}".format(
+                    str(e), request.path)
+            )
+            pass
+        super().process_request(request)

@@ -166,17 +166,19 @@ class AutomaticUpdateRule(models.Model):
         return False
 
     @classmethod
-    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+    def get_referenced_app_form_pairs_from_sms_surveys(cls, domain):
         """
         Examines all of the scheduling rules in the given domain and returns
-        all form_unique_ids that are referenced from SMS Surveys.
+        all app + form_unique_id pairs that are referenced from SMS Surveys.
+
+        Returns list of tuples, each (app_id, form_unique_id)
         """
         result = []
         for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             for event in schedule.memoized_events:
                 if isinstance(event.content, SMSSurveyContent):
-                    result.append(event.content.form_unique_id)
+                    result.append((event.content.app_id, event.content.form_unique_id))
 
         return list(set(result))
 
@@ -206,7 +208,7 @@ class AutomaticUpdateRule(models.Model):
             if not isinstance(definition, allowed_criteria_definitions):
                 return False
 
-        action_definition = self.get_messaging_rule_action_definition()
+        action_definition = self.get_action_definition()
 
         allowed_recipient_types = (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
@@ -262,8 +264,8 @@ class AutomaticUpdateRule(models.Model):
 
         :param to_domain: The name of the domain to attempt copying this alert to
 
-        :param convert_form_unique_id_function: A function which should take one argument, the form unique id
-        which pertains to the form unique id of a form in this alert's domain, and returns the form unique id
+        :param convert_form_unique_id_function: A function which should take two arguments, the app id and
+        form unique id which pertain a form in this alert's domain, and returns the app id and form unique id
         of the same copied form in to_domain. This is optional, and if omitted, alerts which use SMS Surveys
         will not be copied.
         """
@@ -305,7 +307,7 @@ class AutomaticUpdateRule(models.Model):
                         "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
                     )
 
-            action_definition = self.get_messaging_rule_action_definition()
+            action_definition = self.get_action_definition()
             schedule = action_definition.schedule
 
             new_schedule = self.copy_schedule(schedule, to_domain,
@@ -325,7 +327,9 @@ class AutomaticUpdateRule(models.Model):
         return new_rule
 
     def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
-        copied_content.form_unique_id = convert_form_unique_id_function(original_content.form_unique_id)
+        copied_content.app_id, copied_content.form_unique_id = convert_form_unique_id_function(
+            original_content.app_id, original_content.form_unique_id
+        )
 
     def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):
         """
@@ -543,7 +547,7 @@ class AutomaticUpdateRule(models.Model):
             self.deleted = True
             self.save()
             if self.workflow == self.WORKFLOW_SCHEDULING:
-                schedule = self.get_messaging_rule_schedule()
+                schedule = self.get_schedule()
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
@@ -690,7 +694,7 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
-    def get_messaging_rule_action_definition(self):
+    def get_action_definition(self):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             raise ValueError("Expected scheduling workflow")
 
@@ -704,8 +708,8 @@ class AutomaticUpdateRule(models.Model):
 
         return action_definition
 
-    def get_messaging_rule_schedule(self):
-        return self.get_messaging_rule_action_definition().schedule
+    def get_schedule(self):
+        return self.get_action_definition().schedule
 
 
 class CaseRuleCriteria(models.Model):
@@ -1161,7 +1165,7 @@ class VisitSchedulerIntegrationHelper(object):
         self.scheduler_module_info = scheduler_module_info
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60)
+    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60, memoize_timeout=60, session_function=None)
     def get_visit_scheduler_module_and_form(cls, domain, app_id, form_unique_id):
         app = get_latest_released_app(domain, app_id)
         if app is None:

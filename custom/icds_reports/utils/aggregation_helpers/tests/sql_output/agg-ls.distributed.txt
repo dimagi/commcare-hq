@@ -40,11 +40,11 @@
 {"start_date": "2019-01-01T00:00:00"}
 
         INSERT INTO "agg_ls_2019-01-01_4" (
-            state_id, district_id, block_id, supervisor_id, month, awc_visits, vhnd_observed, beneficiary_vists, aggregation_level
+            state_id, district_id, block_id, supervisor_id, month, awc_visits, vhnd_observed, beneficiary_vists, aggregation_level, num_supervisor_launched
         )
         (
         SELECT
-        location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4
+        location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4, CASE WHEN GREATEST(awc_table.form_count, vhnd_table.form_count, beneficiary_table.form_count)>0 THEN 1 ELSE 0 END
         from (
             select distinct state_id, district_id, block_id, supervisor_id
             from awc_location_local where (
@@ -67,14 +67,27 @@
             location.supervisor_id = beneficiary_table.supervisor_id AND
             beneficiary_table.month = %(start_date)s
         )
-        )
+        );
+
+        -- if launched in prev month make it launched in this month
+        UPDATE "agg_ls_2019-01-01_4" agg_ls SET
+            num_supervisor_launched = ut.num_supervisor_launched
+        FROM (
+            SELECT supervisor_id,num_supervisor_launched
+            FROM "agg_ls"
+                WHERE num_supervisor_launched=1 AND
+                      month=%(prev_month)s AND
+                      aggregation_level=4
+        ) ut
+        WHERE agg_ls.supervisor_id = ut.supervisor_id;
         
-{"start_date": "2019-01-01T00:00:00"}
+{"prev_month": "2018-12-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
             INSERT INTO "agg_ls_2019-01-01_3" (
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -86,6 +99,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 3,
                 state_id,district_id,block_id,'All',
                 month
@@ -99,6 +113,7 @@
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -110,6 +125,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 2,
                 state_id,district_id,'All','All',
                 month
@@ -123,6 +139,7 @@
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -134,6 +151,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 1,
                 state_id,'All','All','All',
                 month

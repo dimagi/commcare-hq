@@ -1,5 +1,5 @@
 import functools
-from elasticsearch import exceptions as elasticsearch_exceptions
+from corehq.util.es import elasticsearch as elasticsearch_exceptions
 from requests import exceptions as requests_exceptions
 
 

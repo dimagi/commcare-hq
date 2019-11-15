@@ -4,89 +4,108 @@
 {% load i18n %}
 
 {% block page_content %}
-  {% if read_only %}
-    <div class="alert alert-info">
-      {% trans "This datasource is read only, any changes made can not be saved." %}
-    </div>
-  {% endif %}
-  {% crispy form %}
   {% if data_source.get_id %}
-    <hr />
-    {% if not read_only %}
-      {% if not used_by_reports %}
-        <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
-          {% csrf_token %}
-          <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit pull-right">
-        </form>
-      {% else %}
-        <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
-          {% trans 'Delete Data Source'%}
-        </a>
-      {% endif %}
-    {% endif %}
-    <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
-      {% csrf_token %}
-      <div class="pull-right" style="margin-right: 15px;">
-        <button type="submit" class="btn btn-default disable-on-submit" {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
-          {% trans 'Rebuild Data Source'%}
+    <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
+          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+        </div>
+        <div class="btn-group">
+          <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
+            {% csrf_token %}
+            <div {% if data_source.disable_destructive_rebuild %}style="margin-right: 15px;"{% endif %}>
+              <button type="submit" class="btn btn-default disable-on-submit" {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
+                {% trans 'Rebuild Data Source'%}
+              </button>
+              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
+              {% if data_source.disable_destructive_rebuild %}
+                <span class="hq-help-template"
+                  data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+                  data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+                  data-placement="left"></span>
+              {% endif %}
+            </div>
+          </form>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {% trans "Advanced" %} <span class="caret"></span>
         </button>
-        {% if data_source.disable_destructive_rebuild %}
-          <span class="hq-help-template"
-            data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-            data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
-            data-placement="left"></span>
+        <ul class="dropdown-menu">
+          <li>
+            <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
+               class="track-usage-link"
+               data-category="UCR"
+               data-action="View Source"
+               data-label="Data Source">{% trans "Data Source JSON" %}</a>
+          </li>
+          {% if not data_source.is_deactivated %}
+            <li>
+              <a class="submit-dropdown-form"
+                 href=""
+                 data-action="{% url 'resume_build' domain data_source.get_id %}">
+                {% trans 'Resume Build' %}
+              </a>
+            </li>
+            <li>
+              <a class="submit-dropdown-form"
+                 href=""
+                 data-action="{% url 'build_in_place' domain data_source.get_id %}">
+                {% trans 'Rebuild Table in Place' %}
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+        <form method="post" class="hide" id="dropdown-form">
+          {% csrf_token %}
+        </form>
+      </div>
+      <div class="btn-group">
+        {% if not read_only %}
+          {% if not used_by_reports %}
+            <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
+              {% csrf_token %}
+              <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit">
+            </form>
+          {% else %}
+            <a href="#confirm_delete" class="btn btn-danger" data-toggle="modal">
+              {% trans 'Delete Data Source'%}
+            </a>
+          {% endif %}
         {% endif %}
       </div>
-    </form>
-    <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
-    <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
-    <div class="btn-group">
-      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        {% trans "Advanced" %} <span class="caret"></span>
-      </button>
-      <ul class="dropdown-menu">
-        <li>
-          <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
-             class="track-usage-link"
-             data-category="UCR"
-             data-action="View Source"
-             data-label="Data Source">{% trans "Data Source Source" %}</a>
-        </li>
-        {% if not data_source.is_deactivated %}
-          <li>
-            <a class="submit-dropdown-form"
-               href=""
-               data-action="{% url 'resume_build' domain data_source.get_id %}">
-              {% trans 'Resume Build' %}
-            </a>
-          </li>
-          <li>
-            <a class="submit-dropdown-form"
-               href=""
-               data-action="{% url 'build_in_place' domain data_source.get_id %}">
-              {% trans 'Rebuild Tables in Place' %}
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-      <form method="post" class="hide" id="dropdown-form">
-        {% csrf_token %}
-      </form>
     </div>
+    <div class="clearfix"></div>
   {% endif %}
 
-  {% if not used_by_reports  %}
-    <label class="label label-danger">Datasource currently unused</label>
-  {% else %}
-    <fieldset>
-      <legend>Reports dependent on this datasource</legend>
-      <ul>
-        {% for report in used_by_reports %}
-          <li><a href="{% url 'edit_configurable_report' domain report.get_id %}">{{report}}</a></li>
-        {% endfor %}
-      </ul>
-    </fieldset>
-  {% endif %}
+  <ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#tabs-configuration">Configuration</a></li>
+    <li><a data-toggle="tab" href="#tabs-usage">Usage</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="spacer"></div>
+    <div class="tab-pane fade in active" id="tabs-configuration">
+      {% if read_only %}
+        <div class="alert alert-info">
+          {% trans "This datasource is read only, any changes made can not be saved." %}
+        </div>
+      {% endif %}
+      {% crispy form %}
+    </div>
+    <div class="tab-pane fade" id="tabs-usage">
+      {% if not used_by_reports  %}
+        <div class="alert alert-info">{% trans "Datasource currently unused" %}</div>
+      {% else %}
+        <p>{% trans "Reports dependent on this datasource" %}</p>
+        <ul>
+          {% for report in used_by_reports %}
+            <li><a href="{% url 'edit_configurable_report' domain report.get_id %}">{{report}}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}

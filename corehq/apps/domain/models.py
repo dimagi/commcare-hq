@@ -53,7 +53,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.blobs import CODES as BLOB_CODES
@@ -388,6 +387,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
 
+    # Allowed number of max OData feeds that this domain can create.
+    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    odata_feed_limit = IntegerProperty()
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
@@ -649,14 +652,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
         from corehq.apps.domain.utils import get_domain_url_slug
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
-        if Domain.get_by_name(name):
+        if domain_or_deleted_domain_exists(name):
             prefix = name
             while len(prefix):
                 name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
-                if Domain.get_by_name(name):
+                if domain_or_deleted_domain_exists(name):
                     # should never happen
                     raise NameUnavailableException
                 if len(name) <= max_length:
@@ -690,14 +694,24 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
+        ).all()] + [d['key'] for d in Domain.view(
+            "domain/deleted_domains",
+            startkey=prefix,
+            endkey=prefix + "zzz",
+            reduce=False,
+            include_docs=False
         ).all()]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+
         self.last_modified = datetime.utcnow()
         if not self._rev:
+            if domain_or_deleted_domain_exists(self.name):
+                raise NameUnavailableException(self.name)
             # mark any new domain as timezone migration complete
             set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
@@ -793,13 +807,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
-            def convert_form_unique_id_function(form_unique_id):
-                from corehq.apps.app_manager.models import FormBase
-                form = FormBase.get_form(form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                return form_copy.unique_id
+            def convert_form_unique_id_function(app_id, form_unique_id):
+                app = get_app(self.name, app_id)
+                form = app.get_form(form_unique_id)
+                m_index, f_index = app.get_form_location(form.unique_id)
+                app_copy = new_app_components[app._id]
+                form_copy = new_app_components[app._id].get_module(m_index).get_form(f_index)
+                return app_copy.get_id, form_copy.unique_id
 
             if share_reminders:
                 for rule in AutomaticUpdateRule.by_domain(
@@ -939,27 +953,32 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def copies_of_parent(self):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
-    def delete(self):
+    def delete(self, leave_tombstone=False):
+        if not leave_tombstone and not settings.UNIT_TESTING:
+            raise ValueError(
+                'Cannot delete domain without leaving a tombstone except during testing')
         self._pre_delete()
-        super(Domain, self).delete()
+        if leave_tombstone:
+            domain = self.get(self._id)
+            if not domain.doc_type.endswith('-Deleted'):
+                domain.doc_type = '{}-Deleted'.format(domain.doc_type)
+                domain.save()
+        else:
+            super().delete()
+
+        # The save signals can undo effect of clearing the cache within the save
+        # because they query the stale view (but attaches the up to date doc).
+        # This is only a problem on delete/soft-delete,
+        # because these change the presence in the index, not just the doc content.
+        # Since this is rare, I'm opting to just re-clear the cache here
+        # rather than making the signals use a strict lookup or something like that.
+        self.clear_caches()
 
     def _pre_delete(self):
-        from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
 
-        dynamic_deletion_operations = []
-        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
-        for result in results:
-            response = result[1]
-            if isinstance(response, Exception):
-                message = "Error occurred during domain pre_delete {}".format(self.name)
-                raise DomainDeleteException(message, response)
-            elif response:
-                assert isinstance(response, list)
-                dynamic_deletion_operations.extend(response)
-
         # delete SQL models first because UCR tables are indexed by configs in couch
-        apply_deletion_operations(self.name, dynamic_deletion_operations)
+        apply_deletion_operations(self.name)
 
         # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):

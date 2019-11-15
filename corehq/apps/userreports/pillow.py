@@ -12,7 +12,7 @@ from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import ensure_document_exists, ensure_matched_revisions
+from pillowtop.utils import ensure_document_exists, ensure_matched_revisions, bulk_fetch_changes_docs
 
 from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
@@ -300,7 +300,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
         with self._datadog_timing('extract'):
-            retry_changes, docs = self.get_docs_for_changes(to_update, domain)
+            retry_changes, docs = bulk_fetch_changes_docs(to_update, domain)
         change_exceptions = []
 
         with self._datadog_timing('single_batch_transform'):
@@ -370,41 +370,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             'commcare.change_feed.processor.timing',
             tags=tags, timing_buckets=(.03, .1, .3, 1, 3, 10)
         )
-
-    @staticmethod
-    def get_docs_for_changes(changes, domain):
-        # break up by doctype
-        changes_by_doctype = defaultdict(list)
-        for change in changes:
-            assert change.metadata.domain == domain
-            changes_by_doctype[change.metadata.data_source_name].append(change)
-
-        # query
-        docs = []
-        for _, _changes in changes_by_doctype.items():
-            doc_store = _changes[0].document_store
-            doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
-            new_docs = list(doc_store.iter_documents(doc_ids_to_query))
-            docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
-            docs.extend(new_docs + docs_queried_prior)
-
-        # catch missing docs
-        retry_changes = set()
-        docs_by_id = {doc['_id']: doc for doc in docs}
-        for change in changes:
-            if change.id not in docs_by_id:
-                # we need to capture DocumentMissingError which is not possible in bulk
-                #   so let pillow fall back to serial mode to capture the error for missing docs
-                retry_changes.add(change)
-                continue
-            else:
-                # set this, so that subsequent doc lookups are avoided
-                change.set_document(docs_by_id[change.id])
-            try:
-                ensure_matched_revisions(change, docs_by_id.get(change.id))
-            except DocumentMismatchError:
-                retry_changes.add(change)
-        return retry_changes, docs
 
     def process_change(self, change):
         self.bootstrap_if_needed()

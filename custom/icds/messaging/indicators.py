@@ -236,8 +236,10 @@ def is_aggregate_inactive_aww_data_fresh(send_email=False):
     #   or if the last-submission is older than a day due to pillow lag.
     last_submission = AggregateInactiveAWW.objects.filter(
         last_submission__isnull=False
-    ).order_by('-last_submission')[0].last_submission
-    is_fresh = last_submission >= datetime.today() - timedelta(days=1)
+    ).aggregate(Max('last_submission'))['last_submission__max']
+    if not last_submission:
+        return False
+    is_fresh = last_submission >= (datetime.today() - timedelta(days=1)).date()
     SMS_TEAM = ['{}@{}'.format('icds-sms-rule', 'dimagi.com')]
     if not send_email:
         return is_fresh
@@ -261,11 +263,9 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
 
         result = AggregateInactiveAWW.objects.filter(
-            awc_site_code=user.raw_username,
-            last_submission__isnull=False
-        )
+            awc_id=user.location_id).values('last_submission').first()
         if result:
-            self.last_submission_date = result[0].last_submission
+            self.last_submission_date = result['last_submission']
 
     def get_messages(self, language_code=None):
         if not is_aggregate_inactive_aww_data_fresh(send_email=True):
