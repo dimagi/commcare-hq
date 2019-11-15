@@ -7,6 +7,13 @@
 
 {% block title %}{% trans "Login to ICDS CAS" %}{% endblock title %}
 {% block title_context %} {% endblock %}
+{% block stylesheets %}
+  <style>
+    img.logo {
+      width: 100%;
+    }
+  </style>
+{% endblock stylesheets %}
 
 <!-- get rid of navigation menu -->
 {% block navigation %}
@@ -18,7 +25,7 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-2">
-            <img style="width: 100%" src="{% static 'icds/img/poshan-logo.png' %}" alt="CommCare HQ Logo" />
+            <img class="logo" src="{% static 'icds/img/poshan-logo.png' %}" alt="Poshan Logo" />
         </div>
         <div class="col-sm-8">
             <br/>
@@ -28,9 +35,7 @@
             {% endblocktrans %}
         </div>
         <div class="col-sm-2">
-            <a href="{% url "homepage" %}" class="navbar-brand">
-            <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CommCare HQ Logo" />
-            </a>
+            <img class="logo" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CAS Logo" />
         </div>
     </div>
 
