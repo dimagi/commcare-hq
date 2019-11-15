@@ -56,6 +56,6 @@ window.angular.module('icdsApp', ['ngRoute', 'cgBusy'])
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
-                template: "<program-summary-mobile></program-summary-mobile>",
+                template: "<program-summary></program-summary>",
             });
     }]);
