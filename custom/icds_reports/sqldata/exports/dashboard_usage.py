@@ -210,9 +210,11 @@ class DashBoardUsage:
             user_counts = defaultdict(int)
             user_indicators = defaultdict(lambda: [0] * 10)
             for record in records:
-                user_counts[record['username']] += record['count']
-                # updating the counts as per the index which is the indicator number
-                user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
+                # ignoring the dashboard usage report
+                if int(record['indicator']) < 11:
+                    user_counts[record['username']] += record['count']
+                    # updating the counts as per the index which is the indicator number
+                    user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
             # accumulating the indicator counts
             for user in users:
                 if not dashboard_uname_rx.match(user['username']):
