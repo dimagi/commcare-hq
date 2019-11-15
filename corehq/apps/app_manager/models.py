@@ -1484,7 +1484,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             app.all_media.reset_cache(app)
             app.all_media_paths.reset_cache(app)
             if old_value not in app.all_media_paths():
-                # TODO: update SQL, and check calls of this, because they no loonger need to save the app
+                # TODO: update SQL too
                 app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
