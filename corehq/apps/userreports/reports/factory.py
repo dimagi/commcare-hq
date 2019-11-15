@@ -41,7 +41,7 @@ class ReportColumnFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec, is_static, domain):
+    def from_spec(cls, spec, is_static, domain=None):
         column_type = spec.get('type') or 'field'
         if column_type not in cls.class_map:
             raise BadSpecError(
