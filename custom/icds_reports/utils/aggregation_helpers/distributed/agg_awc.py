@@ -42,6 +42,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         for query in index_queries:
             cursor.execute(query)
 
+
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
 
@@ -720,7 +721,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def create_temporary_table(self):
         return """
-        DROP TABLE IF EXISTS \"{table}\";
         CREATE UNLOGGED TABLE \"{table}\" (LIKE agg_awc INCLUDING INDEXES);
         SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.temporary_tablename)
+
+    def drop_temporary_table(self):
+        return """
+        DROP TABLE IF EXISTS \"{table}\";
         """.format(table=self.temporary_tablename)

@@ -1,5 +1,4 @@
 
-        DROP TABLE IF EXISTS "tmp_agg_awc_2019-01-01_5";
         CREATE UNLOGGED TABLE "tmp_agg_awc_2019-01-01_5" (LIKE agg_awc INCLUDING INDEXES);
         SELECT create_distributed_table('tmp_agg_awc_2019-01-01_5', 'supervisor_id');
         
