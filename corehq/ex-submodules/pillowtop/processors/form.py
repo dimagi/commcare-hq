@@ -74,8 +74,12 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                     domain, user_id, app_id, build_id, version, metadata, received_on
                 )
             else:
+                user = CouchUser.get_by_user_id(user_id, domain)
+                if not user or user.is_deleted():
+                    return
+
                 mark_latest_submission(
-                    domain, user_id, app_id, build_id, version, metadata, received_on
+                    domain, user, app_id, build_id, version, metadata, received_on
                 )
 
 
@@ -116,12 +120,7 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
-    user = CouchUser.get_by_user_id(user_id, domain)
-
-    if not user or user.is_deleted():
-        return
-
+def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on):
     try:
         received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:

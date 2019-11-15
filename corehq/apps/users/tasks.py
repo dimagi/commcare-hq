@@ -303,7 +303,10 @@ def update_domain_date(user_id, domain):
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
-    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.apps.users.models import (
+        CouchUser,
+        UserReportingMetadataStaging,
+    )
     from corehq.pillows.synclog import mark_last_synclog
     from pillowtop.processors.form import mark_latest_submission
 
@@ -312,14 +315,18 @@ def process_reporting_metadata_staging():
     )[:100]
     with transaction.atomic():
         for record in records:
+            user = CouchUser.get_by_user_id(record.user_id, record.domain)
+            if not user or user.is_deleted():
+                continue
+
             if record.received_on:
                 mark_latest_submission(
-                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.domain, user, record.app_id, record.build_id,
                     record.xform_version, record.form_meta, record.received_on
                 )
             if record.device_id or record.sync_date:
                 mark_last_synclog(
-                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.domain, user, record.app_id, record.build_id,
                     record.sync_date, record.device_id
                 )
             record.delete()
