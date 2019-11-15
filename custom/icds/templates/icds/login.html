@@ -9,6 +9,10 @@
 {% block title_context %} {% endblock %}
 {% block stylesheets %}
   <style>
+    .vcenter {
+      display: flex;
+      align-items: center;
+    }
     img.logo {
       width: 100%;
     }
@@ -23,7 +27,7 @@
 {% block page_content %}
 {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
 <div class="container">
-    <div class="row">
+    <div class="row vcenter">
         <div class="col-sm-2">
             <img class="logo" src="{% static 'icds/img/poshan-logo.png' %}" alt="Poshan Logo" />
         </div>
