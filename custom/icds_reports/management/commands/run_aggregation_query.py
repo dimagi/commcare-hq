@@ -3,8 +3,6 @@ from django.core.management.base import BaseCommand
 import attr
 from gevent.pool import Pool
 
-from dimagi.utils.dates import force_to_date
-
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
     _agg_awc_table,
@@ -33,9 +31,6 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     setup_aggregation,
     update_child_health_monthly_table,
-)
-from custom.icds_reports.utils.aggregation_helpers import (
-    previous_month_aggregation_should_run,
 )
 
 STATE_TASKS = {
@@ -85,6 +80,37 @@ class AggregationQuery(object):
     func = attr.ib()
 
 
+function_map = {}
+
+
+def setup_tasks():
+    for name, func in STATE_TASKS.items():
+        function_map[name] = AggregationQuery(SINGLE_STATE, func)
+    for name, func in NORMAL_TASKS.items():
+        function_map[name] = AggregationQuery(NO_STATES, func)
+    for name, func in ALL_STATES_TASKS.items():
+        function_map[name] = AggregationQuery(ALL_STATES, func)
+
+
+def run_task(agg_record, query_name):
+    agg_date = agg_record.agg_date
+    state_ids = agg_record.state_ids
+    query = function_map[query_name]
+    if query.by_state == SINGLE_STATE:
+        greenlets = []
+        pool = Pool(10)
+        for state in state_ids:
+            greenlets.append(pool.spawn(query.func, state, agg_date))
+        pool.join(raise_error=True)
+        for g in greenlets:
+            g.get()
+    elif query.by_state == NO_STATES:
+        query.func(agg_date)
+    else:
+        state_ids
+        query.func(agg_date, state_ids)
+
+
 class Command(BaseCommand):
     help = "Run portion of dashboard aggregation. Used by airflow"
 
@@ -93,33 +119,9 @@ class Command(BaseCommand):
         parser.add_argument('agg_uuid')
 
     def handle(self, query_name, agg_uuid, **options):
-        self.function_map = {}
-        self.setup_tasks()
+        setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
-        agg_date = agg_record.agg_date
-        if (agg_record.interval != 0
-                and not previous_month_aggregation_should_run(force_to_date(agg_date))):
+        if not agg_record.run_aggregation_queries:
             return
-        state_ids = agg_record.state_ids
-        query = self.function_map[query_name]
-        if query.by_state == SINGLE_STATE:
-            greenlets = []
-            pool = Pool(10)
-            for state in state_ids:
-                greenlets.append(pool.spawn(query.func, state, agg_date))
-            pool.join(raise_error=True)
-            for g in greenlets:
-                g.get()
-        elif query.by_state == NO_STATES:
-            query.func(agg_date)
-        else:
-            state_ids
-            query.func(agg_date, state_ids)
 
-    def setup_tasks(self):
-        for name, func in STATE_TASKS.items():
-            self.function_map[name] = AggregationQuery(SINGLE_STATE, func)
-        for name, func in NORMAL_TASKS.items():
-            self.function_map[name] = AggregationQuery(NO_STATES, func)
-        for name, func in ALL_STATES_TASKS.items():
-            self.function_map[name] = AggregationQuery(ALL_STATES, func)
+        run_task(agg_record, query_name)

@@ -18,7 +18,7 @@ from corehq.motech.value_source import (
     ConstantValue,
     FormQuestionMap,
     JsonPathCaseProperty,
-    JsonPathConstantValue,
+    CasePropertyConstantValue,
     ValueSource,
     get_form_question_values,
 )
@@ -347,11 +347,11 @@ class JsonPathCasePropertyTests(SimpleTestCase):
         self.assertEqual(external_value, ["baz", "qux"])
 
 
-class JsonPathConstantValueTests(SimpleTestCase):
+class CasePropertyConstantValueTests(SimpleTestCase):
 
     def test_one_value(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = JsonPathConstantValue.wrap({
+        value_source = CasePropertyConstantValue.wrap({
             "value": "qux",
             "jsonpath": "foo.bar",
         })

@@ -14,6 +14,7 @@ from corehq.apps.users.models import (
     UserReportingMetadataStaging,
 )
 from corehq.apps.users.util import (
+    WEIRD_USER_IDS,
     filter_by_app,
     update_device_meta,
     update_latest_builds,
@@ -22,6 +23,8 @@ from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
 
 from .interface import PillowProcessor
+
+ONE_DAY = 24 * 60 * 60
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
@@ -48,12 +51,15 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
+        user_id = doc.get('form', {}).get('meta', {}).get('userID')
+        if user_id in WEIRD_USER_IDS:
+            return
+
         try:
             received_on = string_to_utc_datetime(doc.get('received_on'))
         except ValueError:
             return
 
-        user_id = doc.get('form', {}).get('meta', {}).get('userID')
         app_id = doc.get('app_id')
         version = doc.get('version')
 
@@ -73,7 +79,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                 )
 
 
-@quickcache(['domain', 'build_id'], timeout=60 * 60)
+@quickcache(['domain', 'build_id'], timeout=ONE_DAY, memoize_timeout=ONE_DAY)
 def mark_has_submission(domain, build_id):
     app = None
     try:
