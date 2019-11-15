@@ -288,7 +288,7 @@ def update_patient(repeater, patient_uuid):
     except (RequestException, ValueError) as err:
         raise OpenmrsException(_(
             f'{repeater.domain}: {repeater}: Error fetching Patient '
-            f'"{patient_uuid}": {err}'
+            f'{patient_uuid!r}: {err}'
         )) from err
 
     case, error = importer_util.lookup_case(
