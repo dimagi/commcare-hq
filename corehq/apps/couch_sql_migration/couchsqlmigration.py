@@ -49,6 +49,7 @@ from corehq.form_processor.interfaces.processor import (
     ProcessedForms,
 )
 from corehq.form_processor.models import (
+    Attachment,
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
@@ -83,6 +84,7 @@ from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
+from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
@@ -224,8 +226,6 @@ class CouchSqlDomainMigrator:
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
-        except MissingFormXml:
-            log.error("Missing form XML: %s", couch_form.form_id)
         except Exception:
             proc = "" if form_is_processed else " unprocessed"
             log.exception("Error migrating%s form %s", proc, couch_form.form_id)
@@ -539,14 +539,18 @@ def _migrate_form_attachments(sql_form, couch_form):
     ):
         _migrate_couch_attachments_to_blob_db(couch_form)
 
+    xml_meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, "form.xml")
+    attachments.append(_get_form_xml_metadata(couch_form, xml_meta))
+
     for name, blob in couch_form.blobs.items():
-        type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
-        meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
+        if name == "form.xml":
+            continue
+        meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_attachment, name)
 
         # there was a bug in a migration causing the type code for many form attachments to be set as form_xml
         # this checks the db for a meta resembling this and fixes it for postgres
         # https://github.com/dimagi/commcare-hq/blob/3788966119d1c63300279418a5bf2fc31ad37f6f/corehq/blobs/migrate.py#L371
-        if not meta and name != "form.xml":
+        if not meta:
             meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
             if meta:
                 meta.type_code = CODES.form_attachment
@@ -557,7 +561,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 domain=couch_form.domain,
                 name=name,
                 parent_id=sql_form.form_id,
-                type_code=type_code,
+                type_code=CODES.form_attachment,
                 content_type=blob.content_type,
                 content_length=blob.content_length,
                 key=blob.key,
@@ -566,6 +570,19 @@ def _migrate_form_attachments(sql_form, couch_form):
 
         attachments.append(meta)
     sql_form.attachments_list = attachments
+
+
+def _get_form_xml_metadata(couch_form, meta):
+    try:
+        couch_form.get_xml()
+        assert meta is not None, couch_form.form_id
+        return meta
+    except MissingFormXml:
+        pass
+    log.warn("Rebuilding missing form XML: %s", couch_form.form_id)
+    xml = convert_form_to_xml(couch_form.to_json()["form"])
+    att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
+    return att.write(get_blob_db(), couch_form)
 
 
 def _migrate_form_operations(sql_form, couch_form):

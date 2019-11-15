@@ -56,7 +56,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
@@ -1274,26 +1274,9 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name, case_diff="process")
-
-        # This may change in the future: it may be possible to rebuild the
-        # XML using parsed form JSON from couch.
-        with self.assertRaises(CaseNotFound):
-            self._get_case("test-case")
-        self._compare_diffs([
-            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
-        ], missing={'CommCareCase': 1})
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
 
     def test_unwrappable_form(self):
         def bad_wrap(doc):
@@ -1391,8 +1374,8 @@ class TestHelperFunctions(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def get_form_with_missing_xml(self):
-        return create_form_with_missing_xml(self.domain_name)
+    def get_form_with_missing_xml(self, **kw):
+        return create_form_with_missing_xml(self.domain_name, **kw)
 
     def test_sql_form_to_json_with_missing_xml(self):
         self.domain.use_sql_backend = True
@@ -1405,17 +1388,41 @@ class TestHelperFunctions(TestCase):
         form = self.get_form_with_missing_xml()
         self.assertEqual(get_case_ids(form), {"test-case"})
 
+    def test_migrate_form_attachments_missing_xml(self, couch_meta=True):
+        def delete_blob():
+            meta = sql_form.get_attachment_meta('form.xml')
+            get_blob_db().delete(meta.key)
+        couch_form = self.get_form_with_missing_xml(couch_meta=couch_meta)
+        sql_form = mod.XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            domain=couch_form.domain,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        self.addCleanup(delete_blob)
+        mod._migrate_form_attachments(sql_form, couch_form)
+        self.assertEqual(sql_form.form_data, couch_form.form_data)
+        xml = sql_form.get_xml()
+        self.assertEqual(convert_xform_to_json(xml), couch_form.form_data)
 
-def create_form_with_missing_xml(domain_name):
+    def test_migrate_form_attachments_missing_xml_meta(self):
+        self.test_migrate_form_attachments_missing_xml(couch_meta=False)
+
+
+def create_form_with_missing_xml(domain_name, couch_meta=False):
     form = submit_form_locally(TEST_FORM, domain_name).xform
     form = FormAccessors(domain_name).get_form(form.form_id)
     blobs = get_blob_db()
     with mock.patch.object(blobs.metadb, "delete"):
         if isinstance(form, XFormInstance):
             # couch
+            metaref = form.blobs["form.xml"]
             form.delete_attachment("form.xml")
+            if couch_meta:
+                form.blobs["form.xml"] = metaref
         else:
             # sql
+            assert not couch_meta, "couch_meta=True not valid with SQL form"
             blobs.delete(form.get_attachment_meta("form.xml").key)
         try:
             form.get_xml()
