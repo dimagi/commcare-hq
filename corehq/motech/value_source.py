@@ -374,7 +374,7 @@ class CasePropertyMap(CaseProperty):
     value_map = DictProperty(required=True)
 
     def __init__(self, *args, **kwargs):
-        DocumentSchema.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         warn("CasePropertyMap is deprecated; use CaseProperty", DeprecationWarning)
 
 
@@ -385,7 +385,7 @@ class FormQuestionMap(FormQuestion):
     value_map = DictProperty(required=True)
 
     def __init__(self, *args, **kwargs):
-        DocumentSchema.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         warn("FormQuestionMap is deprecated; use FormQuestion", DeprecationWarning)
 
 
@@ -421,14 +421,14 @@ class FormUserAncestorLocationField(ValueSource):
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
 
     def __init__(self, *args, **kwargs):
-        DocumentSchema.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         warn("JsonPathCaseProperty is deprecated; use CaseProperty", DeprecationWarning)
 
 
 class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
 
     def __init__(self, *args, **kwargs):
-        DocumentSchema.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         warn("JsonPathCasePropertyMap is deprecated; use CaseProperty", DeprecationWarning)
 
 
