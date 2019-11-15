@@ -52,7 +52,11 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
         }
     });
 
-    $('[name="xform-ids"]').on('click', uncheckSelects());
+    $('body').on('DOMNodeInserted', 'tbody', function () {
+      for (var i = 0; i < items.length; i++) {
+            $(items[i]).on('click', uncheckSelects);
+        }
+    });
 
     function selectItems() {
         for (var i = 0; i < items.length; i++) {
