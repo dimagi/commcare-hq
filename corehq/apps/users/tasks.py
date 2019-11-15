@@ -319,16 +319,20 @@ def process_reporting_metadata_staging():
             if not user or user.is_deleted():
                 continue
 
+            save = False
             if record.received_on:
-                mark_latest_submission(
+                save = mark_latest_submission(
                     record.domain, user, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on
+                    record.xform_version, record.form_meta, record.received_on, save=False
                 )
             if record.device_id or record.sync_date:
-                mark_last_synclog(
+                save = mark_last_synclog(
                     record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, record.device_id
+                    record.sync_date, record.device_id, save=False
                 )
+            if save:
+                user.save()
+
             record.delete()
 
     if UserReportingMetadataStaging.objects.exists():

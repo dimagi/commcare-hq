@@ -120,11 +120,11 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on):
+def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on, save=True):
     try:
         received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:
-        return
+        return False
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
@@ -174,4 +174,7 @@ def mark_latest_submission(domain, user, app_id, build_id, version, metadata, re
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        user.save()
+        if save:
+            user.save()
+        return True
+    return False
