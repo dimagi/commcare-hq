@@ -16,6 +16,10 @@
     img.logo {
       width: 100%;
     }
+    img.phone {
+      max-height: 300px;
+      width: 100%;
+    }
   </style>
 {% endblock stylesheets %}
 
@@ -42,18 +46,16 @@
             <img class="logo" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CAS Logo" />
         </div>
     </div>
-
     <div class="row">
         <div class="col-sm-2">
-            <img style="height:300px" src="{% static 'icds/img/phone_left.png' %}">
+            <img class="phone" src="{% static 'icds/img/phone_left.png' %}">
         </div>
-
         <div class="col-sm-8" style="padding-top: 40px">
             <h2 class="text-center">Welcome to ICDS-CAS!</h2>
             {% include "login_and_password/two_factor/core/login.html" %}
         </div>
-        <div class="col-lg-2">
-            <img style="height:300px" src="{% static 'icds/img/phone_right.png' %}">
+        <div class="col-sm-2">
+            <img class="phone" src="{% static 'icds/img/phone_right.png' %}">
         </div>
     </div>
 
