@@ -23,11 +23,11 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     }
     vm.filtersData = $location.search();
 
-    vm.getDataForStep = function(step) {
-        var get_url = url('program_summary', step);
+    vm.getDataForStep = function (step) {
+        var getUrl = url('program_summary', step);
         vm.myPromise = $http({
             method: "GET",
-            url: get_url,
+            url: getUrl,
             params: $location.search(),
         }).then(
             function (response) {
@@ -51,7 +51,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive('programSummaryMobile', function() {
+window.angular.module('icdsApp').directive('programSummaryMobile', function () {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template-mobile', 'program-summary.directive'),

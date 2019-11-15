@@ -1,4 +1,3 @@
-/* global d3, moment */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
@@ -12,7 +11,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
 
-    $scope.checkAccessToLocation = function() {
+    $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
         if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
             $http.get(url('have_access_to_location'), {
@@ -29,7 +28,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
         }
     };
 
-    $scope.$on('$routeChangeStart', function() {
+    $scope.$on('$routeChangeStart', function () {
         $scope.checkAccessToLocation();
         var path = window.location.pathname + $location.path().substr(1);
         $window.ga('set', 'page', path);
@@ -50,7 +49,7 @@ MainMobileController.$inject = [
 
 window.angular.module('icdsApp', ['ngRoute', 'cgBusy'])
     .controller('MainMobileController', MainMobileController)
-    .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+    .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
         $routeProvider
