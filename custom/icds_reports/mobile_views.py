@@ -4,7 +4,6 @@ from django.views.generic import TemplateView
 from corehq.apps.hqwebapp import views as hqwebapp_views
 from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
-from custom.icds_reports.filters import location_hierarchy_config
 from custom.icds_reports.views import DASHBOARD_CHECKS
 
 
