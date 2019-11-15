@@ -1,27 +1,27 @@
 DROP VIEW IF EXISTS agg_child_health_monthly CASCADE;
 CREATE VIEW agg_child_health_monthly AS
     SELECT
-        "awc_location_months"."awc_id" AS "awc_id",
-        "awc_location_months"."awc_name" AS "awc_name",
-        "awc_location_months"."awc_site_code" AS "awc_site_code",
-        "awc_location_months"."supervisor_id" AS "supervisor_id",
-        "awc_location_months"."supervisor_name" AS "supervisor_name",
-        "awc_location_months"."supervisor_site_code" AS "supervisor_site_code",
-        "awc_location_months"."block_id" AS "block_id",
-        "awc_location_months"."block_name" AS "block_name",
-        "awc_location_months"."block_site_code" AS "block_site_code",
-        "awc_location_months"."district_id" AS "district_id",
-        "awc_location_months"."district_name" AS "district_name",
-        "awc_location_months"."district_site_code" AS "district_site_code",
-        "awc_location_months"."state_id" AS "state_id",
-        "awc_location_months"."state_name" AS "state_name",
-        "awc_location_months"."state_site_code" AS "state_site_code",
-        "awc_location_months"."block_map_location_name" AS "block_map_location_name",
-        "awc_location_months"."district_map_location_name" AS "district_map_location_name",
-        "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-        "awc_location_months"."aggregation_level" AS "aggregation_level",
-        "awc_location_months"."month" AS "month",
-        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
+        "awc_location_local"."doc_id" AS "awc_id",
+        "awc_location_local"."awc_name" AS "awc_name",
+        "awc_location_local"."awc_site_code" AS "awc_site_code",
+        "awc_location_local"."supervisor_id" AS "supervisor_id",
+        "awc_location_local"."supervisor_name" AS "supervisor_name",
+        "awc_location_local"."supervisor_site_code" AS "supervisor_site_code",
+        "awc_location_local"."block_id" AS "block_id",
+        "awc_location_local"."block_name" AS "block_name",
+        "awc_location_local"."block_site_code" AS "block_site_code",
+        "awc_location_local"."district_id" AS "district_id",
+        "awc_location_local"."district_name" AS "district_name",
+        "awc_location_local"."district_site_code" AS "district_site_code",
+        "awc_location_local"."state_id" AS "state_id",
+        "awc_location_local"."state_name" AS "state_name",
+        "awc_location_local"."state_site_code" AS "state_site_code",
+        "awc_location_local"."block_map_location_name" AS "block_map_location_name",
+        "awc_location_local"."district_map_location_name" AS "district_map_location_name",
+        "awc_location_local"."state_map_location_name" AS "state_map_location_name",
+        "awc_location_local"."aggregation_level" AS "aggregation_level",
+        "agg_child_health"."month" AS "month",
+        "awc_location_local"."contact_phone_number" AS "contact_phone_number",
         "agg_child_health"."gender" AS "gender",
         "agg_child_health"."age_tranche" AS "age_tranche",
         "agg_child_health"."caste" AS "caste",
@@ -83,13 +83,12 @@ CREATE VIEW agg_child_health_monthly AS
         "agg_child_health"."days_ration_given_child" AS "days_ration_given_child",
         COALESCE("agg_child_health"."zscore_grading_hfa_recorded_in_month", 0) AS "zscore_grading_hfa_recorded_in_month",
         COALESCE("agg_child_health"."zscore_grading_wfh_recorded_in_month", 0) AS "zscore_grading_wfh_recorded_in_month"
-    FROM "public"."awc_location_months_local" "awc_location_months"
+    FROM "public"."awc_location_local" "awc_location_local"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
-        ("awc_location_months"."month" = "agg_child_health"."month") AND
-        ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND
-        ("awc_location_months"."state_id" = "agg_child_health"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_child_health"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_child_health"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_child_health"."awc_id")
+        ("awc_location_local"."aggregation_level" = "agg_child_health"."aggregation_level") AND
+        ("awc_location_local"."state_id" = "agg_child_health"."state_id") AND
+        ("awc_location_local"."district_id" = "agg_child_health"."district_id") AND
+        ("awc_location_local"."block_id" = "agg_child_health"."block_id") AND
+        ("awc_location_local"."supervisor_id" = "agg_child_health"."supervisor_id") AND
+        ("awc_location_local"."doc_id" = "agg_child_health"."awc_id")
     );
