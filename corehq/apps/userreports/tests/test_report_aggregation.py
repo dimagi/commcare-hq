@@ -1052,9 +1052,23 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'display': 'under_six_month_olds',
                     'field': 'age_at_registration',
                     'column_id': 'under_six_month_olds',
-                    'whens': {
-                        "age_at_registration < 6": 1,
-                    },
+                    'whens': [
+                        ["age_at_registration < 6", 1],
+                    ],
+                    'else_': 0
+                },
+                {
+                    'type': 'sum_when_template',
+                    'display': 'under_x_month_olds_template',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_x_month_olds_template',
+                    'whens': [
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6],
+                            'then': 1,
+                        },
+                    ],
                     'else_': 0
                 },
                 {
@@ -1071,11 +1085,56 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         table = view.export_table[0][1]
         self.assertEqual(len(table), 3)
         for table_row in [
-            ['state', 'under_six_month_olds', 'report_column_display_number'],
-            ['MA', 2, 9],
-            ['TN', 0, 1],
+            [
+                'state',
+                'under_six_month_olds',
+                'under_x_month_olds_template',
+                'report_column_display_number',
+            ],
+            ['MA', 2, 2, 9],
+            ['TN', 0, 0, 1],
         ]:
             self.assertIn(table_row, table)
+
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'sum_when_template',
+                    'display': 'under_six_month_olds',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_six_month_olds',
+                    'whens': [
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6, 7],            # Too many binds
+                            'then': 1,
+                        },
+                    ],
+                    'else_': 0
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
 
     def test_doc_id_aggregation(self):
         # this uses a cheat to get all rows in the table

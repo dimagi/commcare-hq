@@ -113,9 +113,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1", 1]
+        ]
       },
       {
         "display": "pregnant_migrant_count",
@@ -123,9 +123,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1", 1]
+        ]
       }
     ],
     "sort_expression": [],
