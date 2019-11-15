@@ -225,6 +225,11 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                                 "yes": "PRIMARY",
                                 "no": "SECONDARY"
                             }
+                        },
+                        {
+                            "doc_type": "CasePropertyConstantValue",
+                            "case_property": "code",
+                            "value": "T68 (ICD 10 - WHO)"
                         }
                     ]
                 }
@@ -369,6 +374,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
+                <code>T68 (ICD 10 - WHO)</code>
                 <is_primary>yes</is_primary>
               </update>
               <index>
