@@ -147,6 +147,7 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
+            # TODO: delete
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
