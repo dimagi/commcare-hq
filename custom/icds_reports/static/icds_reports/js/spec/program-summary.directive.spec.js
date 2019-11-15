@@ -3,7 +3,7 @@
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
-describe('System Usage Directive', function () {
+describe('Program Summary Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -26,12 +26,12 @@ describe('System Usage Directive', function () {
         $httpBackend.expectGET('program_summary').respond(200, {
             report_data: ['report_test_data'],
         });
-        var element = window.angular.element("<system-usage data='test'></system-usage>");
+        var element = window.angular.element("<program-summary data='test'></program-summary>");
         var compiled = $compile(element)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('systemUsage');
+        controller = compiled.controller('programSummary');
         controller.step = 'maternal_child';
     }));
 
