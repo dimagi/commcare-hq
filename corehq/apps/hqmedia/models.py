@@ -785,6 +785,13 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
         return {item.path: item for item in sql_items}
 
+    # Returns true if item was deleted *from couch*
+    def remove_from_multimedia_map(self, path):
+        item = ApplicationMediaMapItem.objects.filter(domain=self.domain, app_id=self.get_id, path=path).first()
+        if item:
+            item.delete()
+        return bool(self.multimedia_map.pop(path, None))
+
     # paths to custom logos
     logo_refs = DictProperty()
 
@@ -912,19 +919,17 @@ class ApplicationMediaMixin(Document, MediaMixin):
             This checks to see if the paths specified in the multimedia map still exist in the Application.
             If not, then that item is removed from the multimedia map.
         """
-        map_changed = False
+        should_save = False
         if self.check_media_state()['has_form_errors']:
             return
         paths = list(self.transitional_multimedia_map)
         permitted_paths = self.all_media_paths() | self.logo_paths
-        # TODO: also delete from SQL
         for path in paths:
             if path not in permitted_paths:
-                map_item = self.multimedia_map[path]
-                map_changed = True
-                del self.multimedia_map[path]
+                removed_from_couch = self.remove_from_multimedia_map(path)
+                should_save = should_save or removed_from_couch
 
-        if map_changed:
+        if should_save:
             self.save()
 
     def create_mapping(self, multimedia, form_path, save=True):
@@ -1011,8 +1016,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         self.remove_unused_mappings()
         for path, media in self.get_media_objects(remove_unused=True):
             if not media or (not media.is_shared and self.domain not in media.owners):
-                # TODO: also delete from SQL, if the exchange isn't dead yet
-                del self.multimedia_map[path]
+                self.remove_from_multimedia_map(path)
 
     def check_media_state(self):
         has_missing_refs = False
