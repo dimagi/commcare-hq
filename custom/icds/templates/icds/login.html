@@ -20,6 +20,9 @@
       max-height: 300px;
       width: 100%;
     }
+    #login-footer {
+      margin-top: 60px;
+    }
   </style>
 {% endblock stylesheets %}
 
@@ -58,13 +61,9 @@
             <img class="phone" src="{% static 'icds/img/phone_right.png' %}">
         </div>
     </div>
-
-    <div class="row" style="margin-top:60px">
-        <div class="col-sm-1"></div>
-        <div class="col-sm-11">
-            <h6 style="text-align: center;">Content Managed by Ministry of Women and Child Development, GOI</h6>
-            <hr style="background-color: black; height: 3px; border: 0;"/>
-        </div>
+    <div class="row" id="login-footer">
+      <h6 style="text-align: center;">Content Managed by Ministry of Women and Child Development, GOI</h6>
+      <hr style="background-color: black; height: 3px; border: 0;"/>
     </div>
 </div>
 {% endblock page_content %}
