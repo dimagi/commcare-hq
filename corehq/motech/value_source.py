@@ -1,6 +1,7 @@
 from warnings import warn
 
 import attr
+from jsonobject import JsonObject
 from couchdbkit import BadValueError
 from jsonpath_rw import parse as parse_jsonpath
 
@@ -145,7 +146,7 @@ class ValueSource(DocumentSchema):
         return not self.direction or direction == self.direction
 
 
-class MapMixin(DocumentSchema):
+class MapMixin(JsonObject):
     """
     Maps CommCare values to OpenMRS values or concept UUIDs
 
