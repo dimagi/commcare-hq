@@ -812,7 +812,6 @@ class AggChildHealthMonthly(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    month_display = models.TextField(blank=True, null=True)
     gender = models.TextField(blank=True, null=True, help_text="person.sex")
     age_tranche = models.TextField(
         blank=True, null=True,
