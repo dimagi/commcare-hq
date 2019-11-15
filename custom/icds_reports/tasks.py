@@ -24,7 +24,7 @@ from gevent.pool import Pool
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
 
@@ -687,8 +687,11 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
 )
-def recalculate_stagnant_child_health_cases():
-    _recalculate_stagnant_cases('static-icds-cas-static-child_cases_monthly_v2')
+def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
+    _recalculate_stagnant_cases(
+        'static-icds-cas-static-child_cases_monthly_v2',
+        force_to_datetime(latest_datetime)
+    )
 
 
 @periodic_task_on_envs(
@@ -697,15 +700,18 @@ def recalculate_stagnant_child_health_cases():
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
 )
-def recalculate_stagnant_ccs_record_cases():
-    _recalculate_stagnant_cases('static-icds-cas-static-ccs_record_cases_monthly_v2')
+def recalculate_stagnant_ccs_record_cases(latest_datetime='1970-01-01'):
+    _recalculate_stagnant_cases(
+        'static-icds-cas-static-ccs_record_cases_monthly_v2',
+        force_to_datetime(latest_datetime)
+    )
 
 
-def _recalculate_stagnant_cases(config_id):
+def _recalculate_stagnant_cases(config_id, latest_datetime):
     config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
     adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
     num_cases = 0
-    for case_id in _find_stagnant_cases(adapter):
+    for case_id in _find_stagnant_cases(adapter, latest_datetime):
         AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
         num_cases += 1
     adapter.track_load(num_cases)
@@ -714,24 +720,24 @@ def _recalculate_stagnant_cases(config_id):
     )
 
 
-def _find_stagnant_cases(adapter):
+def _find_stagnant_cases(adapter, latest_datetime):
     # get the least recently updated 1000 cases
     table = adapter.get_table()
     query_object = adapter.get_query_object()
     cases = (
-        query_object.with_entities(table.c.doc_id, table.c.inserted_at).distinct()
-        .order_by(table.c.inserted_at, table.c.doc_id)[:1000]
+        query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
+            table.c.inserted_at >= latest_datetime
+        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:1000]
     )
     stagnant_date = datetime.utcnow() - timedelta(days=26)
-    latest_date = date(1970, 1, 1)
 
-    while latest_date < stagnant_date:
+    while latest_datetime < stagnant_date:
         for case_id, inserted_at in cases:
             yield case_id
-            latest_date = inserted_at
+            latest_datetime = inserted_at
 
         cases = query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
-            table.c.inserted_at >= latest_date
+            table.c.inserted_at >= latest_datetime
         ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:1000]
 
 
