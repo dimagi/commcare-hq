@@ -1,4 +1,4 @@
-window.angular.module('icdsApp').factory('templateProviderService', ['isMobile', function(isMobile) {
+window.angular.module('icdsApp').factory('templateProviderService', ['isMobile', function (isMobile) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         getTemplate: function (templateName) {
