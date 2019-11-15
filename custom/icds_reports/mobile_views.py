@@ -13,8 +13,7 @@ def login(request, domain):
         request, domain,
         custom_template_name='icds_reports/mobile_login.html',
         extra_context={
-            'domain': domain,
-            'next': reverse('cas_mobile_dashboard', args=[domain])
+            'redirectUrl': reverse('cas_mobile_dashboard', args=[domain])
         }
     )
 

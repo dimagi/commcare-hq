@@ -1,3 +1,12 @@
 {% extends "icds/login.html" %}
 {% load i18n %}
 {% block title %}{% trans "Login to ICDS CAS Mobile Dashboard" %}{% endblock title %}
+{% block page_content %}
+{{ block.super }}
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    var redirectUrl = "{{ redirectUrl }}";
+    window.history.replaceState(null, "", "?next=" + redirectUrl);
+  });
+</script>
+{% endblock %}
