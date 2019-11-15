@@ -146,6 +146,9 @@ class ValueSource(DocumentSchema):
         return not self.direction or direction == self.direction
 
 
+# Classes that extend MapMixin should list it before ValueSource so that
+# MapMixin.serialize() is executed before ValueSource.serialize(), and
+# likewise for deserialize(). e.g. FormQuestion(MapMixin, ValueSource)
 class MapMixin(JsonObject):
     """
     Maps CommCare values to OpenMRS values or concept UUIDs
