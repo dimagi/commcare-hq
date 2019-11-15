@@ -688,10 +688,19 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     acks_late=True
 )
 def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
-    _recalculate_stagnant_cases(
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
         'static-icds-cas-static-child_cases_monthly_v2',
         force_to_datetime(latest_datetime)
     )
+
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
 
 
 @periodic_task_on_envs(
@@ -701,44 +710,46 @@ def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
     acks_late=True
 )
 def recalculate_stagnant_ccs_record_cases(latest_datetime='1970-01-01'):
-    _recalculate_stagnant_cases(
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         force_to_datetime(latest_datetime)
     )
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
 
 
 def _recalculate_stagnant_cases(config_id, latest_datetime):
     config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
     adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
     num_cases = 0
-    for case_id in _find_stagnant_cases(adapter, latest_datetime):
+    last_processed_datetime = latest_datetime
+    for case_id, inserted_at in _find_stagnant_cases(adapter, latest_datetime):
         AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
         num_cases += 1
+        last_processed_datetime = max(last_processed_datetime, inserted_at)
     adapter.track_load(num_cases)
     celery_task_logger.info(
-        "Found {} stagnant cases in config {}".format(num_cases, config_id)
+        f"Found {num_cases} stagnant cases in config {config_id}"
+        "between {latest_datetime} and {last_processed_datetime}"
     )
+    return last_processed_datetime
 
 
 def _find_stagnant_cases(adapter, latest_datetime):
-    # get the least recently updated 1000 cases
+    BATCH_SIZE = 10000
     table = adapter.get_table()
     query_object = adapter.get_query_object()
-    cases = (
+    return (
         query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
             table.c.inserted_at >= latest_datetime
-        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:1000]
+        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:BATCH_SIZE]
     )
-    stagnant_date = datetime.utcnow() - timedelta(days=26)
-
-    while latest_datetime < stagnant_date:
-        for case_id, inserted_at in cases:
-            yield case_id
-            latest_datetime = inserted_at
-
-        cases = query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
-            table.c.inserted_at >= latest_datetime
-        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:1000]
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
