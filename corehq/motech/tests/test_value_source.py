@@ -311,11 +311,13 @@ class MapTests(SimpleTestCase):
 class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_blank_path(self):
-        with self.assertRaises(BadValueError):
-            JsonPathCaseProperty.wrap({
-                "case_property": "bar",
-                "jsonpath": "",
-            })
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = JsonPathCaseProperty.wrap({
+            "case_property": "bar",
+            "jsonpath": "",
+        })
+        external_value = value_source.get_import_value(json_doc)
+        self.assertIsNone(external_value)
 
     def test_no_values(self):
         json_doc = {"foo": {"bar": "baz"}}
