@@ -171,6 +171,7 @@ def overwrite_app(app, master_build, report_map=None):
 
     old_form_ids_by_xmlns = _get_historical_form_ids_by_xmlns(app)  # before updating anything
 
+    # TODO: copy multimedia, too
     for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
@@ -192,6 +193,7 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
+    # TODO: handle this
     for path in wrapped_app.multimedia_map.keys():
         wrapped_app.multimedia_map[path].version = None
     wrapped_app.set_media_versions()
@@ -378,7 +380,8 @@ def update_linked_app(app, master_app_id_or_build, user_id):
 
     previous = app.get_latest_build_from_upstream(master_app_id)
     if previous is None or master_build.version > previous.upstream_version:
-        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
+        old_multimedia_ids = set([media_info.multimedia_id
+                                 for path, media_info in app.transitional_multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
 
         try:

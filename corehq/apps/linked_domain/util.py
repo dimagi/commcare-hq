@@ -77,7 +77,7 @@ def pull_missing_multimedia_for_app(app, old_multimedia_ids=None):
 
 def _get_missing_multimedia(app, old_multimedia_ids=None):
     missing = []
-    for path, media_info in app.multimedia_map.items():
+    for path, media_info in app.transitional_multimedia_map.items():
         if old_multimedia_ids and media_info['multimedia_id'] in old_multimedia_ids:
             continue
         try:

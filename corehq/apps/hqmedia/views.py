@@ -201,9 +201,9 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
                                                            media_class=media_class,
                                                            only_missing=only_missing,
                                                            include_total=include_total)
-            multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
+            multimedia_map = {r['path']: self.app.transitional_multimedia_map[r['path']]
                               for r in references
-                              if r['path'] in self.app.multimedia_map}
+                              if r['path'] in self.app.transitional_multimedia_map}
             object_map = self.app.get_object_map(multimedia_map=multimedia_map)
 
             data = {
@@ -236,7 +236,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             if query:
                 media = [m for m in media if query in m['path'].lower()]
             if only_missing:
-                media = [m for m in media if m['path'] not in self.app.multimedia_map]
+                media = [m for m in media if m['path'] not in self.app.transitional_multimedia_map]
             for m in media:
                 if reference_index >= start and reference_index < end:
                     references.append(m)
@@ -426,8 +426,8 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
             build = get_app(self.app.domain, build_id) if build_id else self.app
             default_paths = build.all_media_paths(lang=build.default_language)
             default_paths = {p for p in default_paths
-                             if p in build.multimedia_map
-                             and build.multimedia_map[p].media_type in media_types}
+                             if p in build.transitional_multimedia_map
+                             and build.transitional_multimedia_map[p].media_type in media_types}
             for lang in langs:
                 fallbacks = default_paths.intersection(build.all_media_paths(lang=lang))
                 if fallbacks:
@@ -844,7 +844,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         return 'commcare_v{}.zip'.format(self.app.version)
 
     def check_before_zipping(self):
-        if not self.app.multimedia_map and self.include_multimedia_files:
+        if not self.app.transitional_multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
 
     def get(self, request, *args, **kwargs):

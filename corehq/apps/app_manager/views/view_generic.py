@@ -225,7 +225,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             ),
         }
 
-        multimedia_map = app.multimedia_map
+        multimedia_map = app.transitional_multimedia_map
         if form or module:
             multimedia_map = (form or module).get_relevant_multimedia_map(app)
         context.update({

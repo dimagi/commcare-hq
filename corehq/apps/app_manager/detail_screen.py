@@ -442,7 +442,7 @@ class EnumImage(Enum):
         if self.app.enable_case_list_icon_dynamic_width:
             for i, item in enumerate(self.column.enum):
                 for path in item.value.values():
-                    map_item = self.app.multimedia_map[path]
+                    map_item = self.app.transitional_multimedia_map[path]
                     if map_item is not None:
                         image = CommCareMultimedia.get(map_item.multimedia_id)
                         if image is not None:

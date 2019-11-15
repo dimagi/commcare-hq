@@ -1077,6 +1077,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./menu",
         )
 
+        # TODO: set this up in SQL too?
         app.multimedia_map = {
             "jr://file/commcare/image/module0_en.png": HQMediaMapItem(
                 multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
