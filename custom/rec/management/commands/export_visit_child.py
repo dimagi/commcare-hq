@@ -51,34 +51,28 @@ def main():
             couch_forms = get_forms_by_id(form_ids_chunk)
             for couch_form in couch_forms:
                 row = (
-                    get_form_id(couch_form),
+                    couch_form.form_id,
                     xmlns,
-                    get_imci_visit_id(couch_form, xmlns),
-                    get_rec_child_id_from_form(couch_form, xmlns),
-                    get_created_at(couch_form),
+                    get_imci_visit_id(couch_form.form, xmlns),
+                    get_rec_child_id_from_form(couch_form.form, xmlns),
+                    couch_form.received_on.isoformat(),
                 )
                 print(",".join(row))
 
 
-def get_form_id(couch_form):
-    return couch_form["meta"]["instanceID"]
-
-
-def get_imci_visit_id(couch_form, xmlns):
+def get_imci_visit_id(form_json, xmlns):
     if xmlns in CLASSIFICATION_FORMS:
-        assert "subcase_0" in couch_form, "Form missing visit subcase"
-        if couch_form["subcase_0"]["case"].get("create"):
-            case_type = couch_form["subcase_0"]["case"]["create"]["case_type"]
+        assert "subcase_0" in form_json, "Form missing visit subcase"
+        if form_json["subcase_0"]["case"].get("create"):
+            case_type = form_json["subcase_0"]["case"]["create"]["case_type"]
             assert case_type == "imci_visit", "Bad visit case type"
-        return couch_form["subcase_0"]["case"]["@case_id"]
-    raise NotImplementedError
+        return form_json["subcase_0"]["case"]["@case_id"]
+    else:
+        raise NotImplementedError
 
 
-def get_rec_child_id_from_form(couch_form, xmlns):
+def get_rec_child_id_from_form(form_json, xmlns):
     if xmlns in CLASSIFICATION_FORMS:
-        return couch_form["case"]["@case_id"]
-    raise NotImplementedError
-
-
-def get_created_at(couch_form):
-    return couch_form["meta"]["timeEnd"]  # couch_form does not have submission time
+        return form_json["case"]["@case_id"]
+    else:
+        raise NotImplementedError
