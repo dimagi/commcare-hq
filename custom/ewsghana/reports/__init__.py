@@ -398,9 +398,6 @@ class ProductSelectionPane(EWSData):
             products = location.products
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []
-        if 'report_type' in self.config:
-            from custom.ewsghana.reports.specific_reports.stock_status_report import MonthOfStockProduct
-            headers = [h.html for h in MonthOfStockProduct(self.config).headers]
 
         result = {}
         for idx, product in enumerate(products, start=1):

@@ -177,40 +177,6 @@
                 format: 'YYYY-MM-DD'
             }
         });
-        $('#stockouts_filter_btn').on('click', function(e) {
-            e.preventDefault();
-            $('.hq-loading').fadeIn();
-
-            $(this).prop('disabled', true);
-            $.ajax({
-                type: 'GET',
-                datatype: 'json',
-                url: '{% url 'stockouts_product' domain %}',
-                data: {
-                    startdate: $stockout_filter.data('daterangepicker').startDate.format('YYYY-MM-DD'),
-                    enddate: $stockout_filter.data('daterangepicker').endDate.format('YYYY-MM-DD'),
-                    location_id: '{{ location_id }}'
-                },
-                success: function(response) {
-
-                    $(line_chart_id + ' svg').empty();
-                    $.each(response, function( index, value ) {
-                        $.each(value.values, function( id, v ) {
-                            v.x = Date.parse(v.x);
-                        });
-                    });
-
-                    line_chart_data = response;
-                    $('#stockouts_filter_btn').prop('disabled', false);
-                    $('.hq-loading').fadeOut();
-
-                    addGraph();
-
-                },
-                error: function() {
-                }
-            });
-        });
     {% endif %}
     addGraph();
 

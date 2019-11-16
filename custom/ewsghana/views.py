@@ -21,7 +21,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
-from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct,
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
@@ -43,24 +42,6 @@ def inventory_management(request, domain):
     )
     return HttpResponse(
         json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
-        content_type='application/json'
-    )
-
-
-@require_GET
-@location_safe
-def stockouts_product(request, domain):
-
-    stockout_graph = StockoutsProduct(
-        config=dict(
-            program=None, products=None, domain=domain,
-            startdate=force_to_datetime(request.GET.get('startdate')),
-            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id'),
-            custom_date=True
-        )
-    )
-    return HttpResponse(
-        json.dumps(stockout_graph.charts[0].data, default=json_handler),
         content_type='application/json'
     )
 
