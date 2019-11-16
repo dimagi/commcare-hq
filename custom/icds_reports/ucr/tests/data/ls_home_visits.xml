@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<data name="Beneficiary Feedback Form" uiVersion="1" version="2101" xmlns="http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+	<meeting_type>home_visit</meeting_type>
+	<info_ben_to_visit/>
+	<beneficiary_type_for_visit>due_for_delivery</beneficiary_type_for_visit>
+	<due_for_delivery>
+		<womans_name>v</womans_name>
+		<aww_recent_visit_check>yes</aww_recent_visit_check>
+		<pregnancy_preparedness_counseling_checklist/>
+		<count_delivery_prep_counselling>0</count_delivery_prep_counselling>
+		<hospital_selected>1</hospital_selected>
+		<sufficient_cloth_available>1</sufficient_cloth_available>
+		<emergency_plan_ready>1</emergency_plan_ready>
+		<clean_clothes_ready>1</clean_clothes_ready>
+		<mcp_card_available>1</mcp_card_available>
+		<pregnancy_care_counseling_checklist/>
+		<count_pregnancy_care_counseling>0</count_pregnancy_care_counseling>
+		<eating_more>1</eating_more>
+		<more_rest>1</more_rest>
+		<recieve_tt>1</recieve_tt>
+		<consuming_ifa>1</consuming_ifa>
+		<ifa_tablets_in_last_week/>
+		<ifa_consumption_sufficient>0</ifa_consumption_sufficient>
+		<newborn_care_counseling_checklist/>
+		<count_newborn_care_counseling>0</count_newborn_care_counseling>
+		<played_birth_prep_video>yes</played_birth_prep_video>
+		<mother_describes_bp_video>2</mother_describes_bp_video>
+		<cord_care_prep>1</cord_care_prep>
+		<ready_breastfeeding>1</ready_breastfeeding>
+		<played_family_planning_video>yes</played_family_planning_video>
+		<mother_describes_fp_video>2</mother_describes_fp_video>
+		<counselled_on_family_planning>1</counselled_on_family_planning>
+		<will_use_family_planning>1</will_use_family_planning>
+		<reminded_to_collect_THR>yes</reminded_to_collect_THR>
+		<thr_received_check>yes</thr_received_check>
+		<info_thr_described>OK</info_thr_described>
+		<thr_quantity_sufficient_check>yes</thr_quantity_sufficient_check>
+		<family_rating_of_aww>good</family_rating_of_aww>
+		<comments_score_card>⬆️</comments_score_card>
+		<visit_happened>⬆️</visit_happened>
+		<visit_happened_for_calc>2</visit_happened_for_calc>
+		<total_counselling_messages>1</total_counselling_messages>
+		<counselling_score>7</counselling_score>
+		<counselling_score_for_calc>0</counselling_score_for_calc>
+		<counselling_score_status>⬇️</counselling_score_status>
+		<total_ben_positive_behaviors>12</total_ben_positive_behaviors>
+		<positive_behaviors_score>92</positive_behaviors_score>
+		<positive_behaviors_score_for_calc>2</positive_behaviors_score_for_calc>
+		<positive_behaviours_status>⬆️</positive_behaviours_status>
+		<showed_video_on_birth_prep>⬆️</showed_video_on_birth_prep>
+		<showed_video_on_family_planning>⬆️</showed_video_on_family_planning>
+		<video_score_for_calc>2</video_score_for_calc>
+		<thr_status_for_report_card>⬆️</thr_status_for_report_card>
+		<thr_status_for_calc>2</thr_status_for_calc>
+		<family_rating_for_report_card>⬆️</family_rating_for_report_card>
+		<family_rating_for_calc>2</family_rating_for_calc>
+		<total_score>75</total_score>
+		<info_home_visit_quality_high>OK</info_home_visit_quality_high>
+	</due_for_delivery>
+	<success>OK</success>
+	<score_card_indicators>
+		<color_last_three_visits>yellow</color_last_three_visits>
+		<vhnd_type_text>child received measles vaccine</vhnd_type_text>
+		<prev_vhnd_type/>
+		<prev_vhnd_type_text>child received measles vaccine</prev_vhnd_type_text>
+		<next_vhnd_visit_type_text>pregnant woman</next_vhnd_visit_type_text>
+		<vhnd_counselling_num/>
+		<vhnd_counselling_denom/>
+		<vhnd_counselling_status/>
+		<vhnd_visit_happened>NA</vhnd_visit_happened>
+		<vhnd_ben_rating/>
+		<vhnd_ben_status/>
+		<vhnd_score/>
+		<hv_type_text>woman due for delivery in 30 days</hv_type_text>
+		<prev_hv_type>due_for_delivery</prev_hv_type>
+		<next_hv_type_for_guidance>child delivered in the last 30 days</next_hv_type_for_guidance>
+		<visit_happened>⬆️</visit_happened>
+		<counselling_num>1</counselling_num>
+		<counselling_denom>14</counselling_denom>
+		<counselling_status>⬇️</counselling_status>
+		<bens_behaviour_num>12</bens_behaviour_num>
+		<bens_behaviour_denom>13</bens_behaviour_denom>
+		<bens_behaviour_status>⬆️</bens_behaviour_status>
+		<film_played_or_not>⬆️</film_played_or_not>
+		<thr_status>⬆️</thr_status>
+		<family_rating>⬆️</family_rating>
+		<comments_score_card>⬆️</comments_score_card>
+		<visit_date>2019-03-27</visit_date>
+		<prev_visit_date>2019-03-26</prev_visit_date>
+		<prev_prev_visit_date/>
+		<home_visit_score>75</home_visit_score>
+		<visit_score>75</visit_score>
+		<visit_color>green</visit_color>
+		<prev_visit_score>25</prev_visit_score>
+		<prev_prev_visit_score/>
+		<num_last_three_visits>100</num_last_three_visits>
+		<denom_last_three_visits>2</denom_last_three_visits>
+		<score_last_three_visits>50</score_last_three_visits>
+	</score_card_indicators>
+	<localizations>
+		<vhnd_type_pregnant_woman>pregnant woman</vhnd_type_pregnant_woman>
+		<vhnd_type_dpt1>child received DPT 1</vhnd_type_dpt1>
+		<vhnd_type_dpt3>child received DPT 3</vhnd_type_dpt3>
+		<vhnd_type_measles>child received measles vaccine</vhnd_type_measles>
+		<hv_type_due_for_delivery>woman due for delivery in 30 days</hv_type_due_for_delivery>
+		<hv_type_just_delivered>child delivered in the last 30 days</hv_type_just_delivered>
+		<hv_type_child>child between 6 and 8 months</hv_type_child>
+		<hv_type_severely_underweight>Severely Underweight Child</hv_type_severely_underweight>
+		<hv_type_beneficiary_death>Beneficiary Death</hv_type_beneficiary_death>
+		<hv_type_pregnant_woman_registered>Recently Registered Pregnant Woman (last 30 days)</hv_type_pregnant_woman_registered>
+	</localizations>
+	<awc_selected_name>awc_dash1</awc_selected_name>
+	<awc_selected_owner_id/>
+	<awc_selected_location_id/>
+	<awc_selected_location_name/>
+	<vhnd_bens_interviewed_date/>
+	<vhnd_observed_date/>
+	<most_recent_awc_visit_date/>
+	<today_minus_60>2019-01-26</today_minus_60>
+	<n0:case case_id="df073ffbb8e34facb98598d9e04659d0" date_modified="2019-03-27T12:45:37.183+05:30" user_id="58466b5664234247801f55399675d6b3" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+		<n0:update>
+			<n0:bens_behaviour_denom>13</n0:bens_behaviour_denom>
+			<n0:bens_behaviour_num>12</n0:bens_behaviour_num>
+			<n0:bens_behaviour_status>⬆️</n0:bens_behaviour_status>
+			<n0:color_last_three_visits>yellow</n0:color_last_three_visits>
+			<n0:counselling_denom>14</n0:counselling_denom>
+			<n0:counselling_num>1</n0:counselling_num>
+			<n0:counselling_status>⬇️</n0:counselling_status>
+			<n0:family_rating>⬆️</n0:family_rating>
+			<n0:film_played_or_not>⬆️</n0:film_played_or_not>
+			<n0:hv_type>due_for_delivery</n0:hv_type>
+			<n0:hv_type_text>woman due for delivery in 30 days</n0:hv_type_text>
+			<n0:prev_prev_visit_date>2019-03-26</n0:prev_prev_visit_date>
+			<n0:prev_prev_visit_score>25</n0:prev_prev_visit_score>
+			<n0:score_last_three_visits>50</n0:score_last_three_visits>
+			<n0:thr_status>⬆️</n0:thr_status>
+			<n0:vhnd_ben_rating/>
+			<n0:vhnd_ben_status/>
+			<n0:vhnd_counselling_denom/>
+			<n0:vhnd_counselling_num/>
+			<n0:vhnd_counselling_status/>
+			<n0:vhnd_or_home_visit>home_visit</n0:vhnd_or_home_visit>
+			<n0:vhnd_type_text>child received measles vaccine</n0:vhnd_type_text>
+			<n0:vhnd_visit_happened>NA</n0:vhnd_visit_happened>
+			<n0:visit_color>green</n0:visit_color>
+			<n0:visit_date>2019-03-27</n0:visit_date>
+			<n0:visit_happened>⬆️</n0:visit_happened>
+			<n0:visit_score>75</n0:visit_score>
+		</n0:update>
+	</n0:case>
+	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+		<n1:deviceID>353621072495118</n1:deviceID>
+		<n1:timeStart>2019-03-27T12:44:44.023+05:30</n1:timeStart>
+		<n1:timeEnd>2019-03-27T12:45:37.183+05:30</n1:timeEnd>
+		<n1:username>ls_dash</n1:username>
+		<n1:userID>58466b5664234247801f55399675d6b3</n1:userID>
+		<n1:instanceID>c9a62264-cb0f-47d3-abd9-c0f2b87a0fab</n1:instanceID>
+		<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare Android, version &quot;2.45&quot;(454946). App v2101. CommCare Version 2.45. Build 454946, built on: 2019-02-13</n2:appVersion>
+		<n1:drift>0</n1:drift>
+	</n1:meta>
+</data>

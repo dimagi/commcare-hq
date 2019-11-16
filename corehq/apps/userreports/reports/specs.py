@@ -1,4 +1,5 @@
 import json
+import re
 from collections import namedtuple
 from datetime import date
 
@@ -30,6 +31,7 @@ from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
     IntegerProperty,
+    JsonArray,
     JsonObject,
     ListProperty,
     ObjectProperty,
@@ -50,6 +52,7 @@ from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from corehq.toggles import UCR_SUM_WHEN_TEMPLATES
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -73,7 +76,7 @@ class BaseReportColumn(JsonObject):
     visible = BooleanProperty(default=True)
 
     @classmethod
-    def restricted_to_static(cls):
+    def restricted_to_static(cls, domain):
         return False
 
     @classmethod
@@ -301,7 +304,7 @@ class _CaseExpressionColumn(ReportColumn):
     http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
     """
     type = None
-    whens = DictProperty()
+    whens = ListProperty(ListProperty)      # List of (expression, bind1, bind2, ... value) tuples
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
@@ -341,7 +344,7 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
     ranges = DictProperty()
 
     def get_whens(self):
-        whens = {}
+        whens = []
         for value, bounds in self.ranges.items():
             if len(bounds) != 2:
                 raise BadSpecError('Range must contain 2 items, contains {}'.format(len(bounds)))
@@ -349,7 +352,7 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
                 bounds = [int(b) for b in bounds]
             except ValueError:
                 raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
-            whens.update({self._base_expression(bounds): bindparam(None, value)})
+            whens.append([self._base_expression(bounds), bindparam(None, value)])
         return whens
 
     def _base_expression(self, bounds):
@@ -370,13 +373,49 @@ class SumWhenColumn(_CaseExpressionColumn):
     _agg_column_type = SumWhen
 
     @classmethod
-    def restricted_to_static(cls):
+    def restricted_to_static(cls, domain):
         # The conditional expressions used here don't have sufficient safety checks,
         # so this column type is only available for static reports.  To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
         return True
 
+
+class SumWhenTemplateColumn(SumWhenColumn):
+    type = TypeProperty("sum_when_template")
+    whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
+
+    @classmethod
+    def restricted_to_static(cls, domain):
+        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
+
+    def get_whens(self):
+        from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory
+        whens = []
+        for spec in self.whens:
+            template = SumWhenTemplateFactory.make_template(spec)
+            whens.append([template.expression] + template.binds + [template.then])
+        return whens
+
+
+class SumWhenTemplateSpec(JsonObject):
+    type = StringProperty(required=True)
+    expression = StringProperty(required=True)
+    binds = ListProperty()
+    then = IntegerProperty()
+
+    def bind_count(self):
+        return len(re.sub(r'[^?]', '', self.expression))
+
+
+class YearRangeTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty('year_range')
+    expression = "year >= ? and year < ?"
+
+
+class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty("under_x_months")
+    expression = "age_at_registration < ?"
 
 
 class PercentageColumn(ReportColumn):

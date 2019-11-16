@@ -6,19 +6,10 @@ from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.reminders.util import get_combined_id
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
-
-
-def get_combined_id(app_id, form_unique_id):
-    if '|' in app_id:
-        raise ValueError("Unexpected token '|' in app_id '%s'" % app_id)
-
-    if '|' in form_unique_id:
-        raise ValueError("Unexpected token '|' in form_unique_id '%s'" % form_unique_id)
-
-    return '%s|%s' % (app_id, form_unique_id)
 
 
 @quickcache(['domain', 'timestamp'], timeout=10 * 60)

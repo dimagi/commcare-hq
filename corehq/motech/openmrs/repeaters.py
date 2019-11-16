@@ -2,7 +2,6 @@ import json
 from collections import defaultdict
 from itertools import chain
 
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,13 +19,13 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
 from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
@@ -43,7 +42,7 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
 )
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -105,6 +104,9 @@ class OpenmrsRepeater(CaseRepeater):
             self.get_id == other.get_id
         )
 
+    def __str__(self):
+        return Repeater.__str__(self)
+
     @classmethod
     def wrap(cls, data):
         if 'atom_feed_last_polled_at' in data:
@@ -132,7 +134,10 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
-                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                if (
+                    obs_mapping.value.check_direction(DIRECTION_IMPORT)
+                    and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
+                ):
                     # It's possible that an OpenMRS concept appears more
                     # than once in form_configs. We are using a
                     # defaultdict(list) so that earlier definitions
@@ -145,9 +150,15 @@ class OpenmrsRepeater(CaseRepeater):
         diag_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for diag_mapping in form_config.bahmni_diagnoses:
-                if diag_mapping.value.check_direction(DIRECTION_IMPORT) and diag_mapping.case_property:
+                if (
+                    diag_mapping.value.check_direction(DIRECTION_IMPORT)
+                    and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
+                ):
                     diag_mappings[diag_mapping.concept].append(diag_mapping)
         return diag_mappings
+
+    def get_first_user(self):
+        return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -288,7 +299,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         )
 
     if errors:
-        logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        requests.notify_error(f'Errors encountered sending OpenMRS data: {errors}')
         # If the form included multiple patients, some workflows may
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
@@ -296,7 +307,6 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        logger.warning("Warnings encountered sending OpenMRS data: %s", warnings)
         return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
     return OpenmrsResponse(200, "OK")
