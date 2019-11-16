@@ -402,6 +402,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
 
+                # TODO: copy over multimedia in sql if new_domain.multimedia_included
                 if not new_domain.multimedia_included:
                     application.multimedia_map = {}
                 application.save()
