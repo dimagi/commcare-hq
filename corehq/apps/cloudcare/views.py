@@ -63,6 +63,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest_ex,
 )
 from corehq.apps.groups.models import Group
+from corehq.apps.hqmedia.models import ApplicationMediaMapItem
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
@@ -103,12 +104,17 @@ class FormplayerMain(View):
 
     def fetch_app(self, domain, app_id):
         username = self.request.couch_user.username
-        # TODO: add in multimedia_map, so that resourceMap in formplayer/app.js works properly
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
                 toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
+            doc = get_latest_build_doc(domain, app_id)
         else:
-            return get_latest_released_app_doc(domain, app_id)
+            doc = get_latest_released_app_doc(domain, app_id)
+        if 'multimedia_map' not in doc:
+            doc['multimedia_map'] = {
+                item.path: vars(item)
+                for item in ApplicationMediaMapItem.objects.filter(domain=self.domain, app_id=self.get_id)
+            }
+        return doc
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = ApplicationAccess.get_by_domain(domain)
