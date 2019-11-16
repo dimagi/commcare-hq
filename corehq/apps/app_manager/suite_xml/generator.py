@@ -147,10 +147,6 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
-            if not getattr(m, 'unique_id', None):
-                # lazy migration for adding unique_id to map_item
-                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
-
             descriptor = None
             if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
                 type_mapping = {"CommCareImage": "Image",

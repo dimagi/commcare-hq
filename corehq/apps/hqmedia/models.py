@@ -769,13 +769,19 @@ class ApplicationMediaMixin(Document, MediaMixin):
         Manages multimedia for itself and sub-objects.
     """
 
-    # keys are the paths to each file in the final application media zip
-    multimedia_map = SchemaDictProperty(HQMediaMapItem)
-
     # paths to custom logos
     logo_refs = DictProperty()
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
+
+    @property
+    @memoized
+    # TODO: rename this to make errors more obvious?
+    def multimedia_map(self):
+        return {
+            mapping.path: mapping
+            for mapping in ApplicationMediaMapping.objects.filter(domain=self.domain, app_id=self.get_id)
+        }
 
     def set_mapping(self, path, multimedia_id=None, media_type=None, version=None, unique_id=None):
         if not unique_id:
@@ -832,9 +838,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
-        if self.multimedia_map is None:
-            self.multimedia_map = {}
-
         if self.multimedia_map and remove_unused:
             self.remove_unused_mappings()
 

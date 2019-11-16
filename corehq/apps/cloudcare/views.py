@@ -105,9 +105,14 @@ class FormplayerMain(View):
         username = self.request.couch_user.username
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
                 toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
+            doc = get_latest_build_doc(domain, app_id)
         else:
-            return get_latest_released_app_doc(domain, app_id)
+            doc = get_latest_released_app_doc(domain, app_id)
+        doc['multimedia_map'] = {
+            item.path: vars(item)
+            for item in ApplicationMediaMapItem.objects.filter(domain=self.domain, app_id=self.get_id)
+        }
+        return doc
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = ApplicationAccess.get_by_domain(domain)
