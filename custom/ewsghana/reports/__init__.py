@@ -112,52 +112,6 @@ class EWSData(object):
             return get_products_for_locations(locations)
 
 
-class ReportingRatesData(EWSData):
-
-    default_rows = 50
-
-    @memoized
-    def get_supply_points(self, location_id=None):
-        location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
-
-        location_types = self.reporting_types()
-        if location.location_type.name == 'district':
-            locations = SQLLocation.objects.filter(parent=location)
-        elif location.location_type.name == 'region':
-            loc_types = location_types.exclude(name='Central Medical Store')
-            locations = SQLLocation.objects.filter(
-                Q(parent__parent=location, location_type__in=loc_types) |
-                Q(parent=location, location_type__in=loc_types)
-            )
-        elif location.location_type in location_types:
-            locations = SQLLocation.objects.filter(id=location.id)
-        else:
-            types = ['Central Medical Store', 'Regional Medical Store', 'Teaching Hospital']
-            loc_types = location_types.filter(name__in=types)
-            locations = SQLLocation.objects.filter(
-                domain=self.domain,
-                location_type__in=loc_types
-            )
-        return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
-
-    def supply_points_list(self, location_id=None):
-        return self.get_supply_points(location_id).values_list('supply_point_id')
-
-    def reporting_supply_points(self, supply_points=None):
-        if not supply_points:
-            supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
-        return StockTransaction.objects.filter(
-            case_id__in=supply_points,
-            report__date__range=[self.config['startdate'], self.config['enddate']]
-        ).distinct('case_id').values_list('case_id', flat=True)
-
-    def datetext(self):
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        return "last %d days" % (today - self.config['startdate']).days if today == self.config['enddate'] else\
-            "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
-                          self.config['enddate'].strftime("%Y-%m-%d"))
-
-
 class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
@@ -478,12 +432,10 @@ class ProductSelectionPane(EWSData):
 from custom.ewsghana.reports.email_reports import CMSRMSReport, StockSummaryReport
 from custom.ewsghana.reports.maps import EWSMapReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
-from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRatesReport
 
 CUSTOM_REPORTS = (
     ('Custom reports', (
         StockStatus,
-        ReportingRatesReport,
         EWSMapReport,
         CMSRMSReport,
         StockSummaryReport,

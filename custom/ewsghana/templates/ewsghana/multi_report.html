@@ -68,25 +68,6 @@
                 margin-top: -20px;
             }
         {% endif %}
-        {% if report.slug == "reporting_page" and rendered_as != 'print' %}
-            .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
-                display: inline-table !important;
-                width: 48% !important;
-            }
-            .row, table {
-                width: 100%;
-            }
-            .report:first-of-type tbody {
-                max-height: 300px;
-                overflow-y: auto;
-                overflow-x: hidden;
-                display: inline-block;
-                width: 100%;
-            }
-            .report:first-of-type tr {
-                width: 100%;
-                display: inline-table;
-            }
         {% elif report.slug == "stock_status" and rendered_as != 'print'%}
             .product-selection-pane {
                 float: right !important;
