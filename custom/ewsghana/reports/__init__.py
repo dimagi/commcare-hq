@@ -427,11 +427,9 @@ class ProductSelectionPane(EWSData):
         })
 
 from custom.ewsghana.reports.email_reports import CMSRMSReport, StockSummaryReport
-from custom.ewsghana.reports.maps import EWSMapReport
 
 CUSTOM_REPORTS = (
     ('Custom reports', (
-        EWSMapReport,
         CMSRMSReport,
         StockSummaryReport,
     )),
