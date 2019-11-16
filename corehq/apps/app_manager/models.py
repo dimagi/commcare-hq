@@ -4532,7 +4532,7 @@ class SavedAppBuild(ApplicationBase):
         # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations',
-                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
+                    'description', 'short_description', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         menu_item_label = self.built_with.get_menu_item_label()
@@ -4740,7 +4740,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         version from the last build.
         """
 
-        # access to .multimedia_map is slow
         previous_version = self._get_version_comparison_build()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 

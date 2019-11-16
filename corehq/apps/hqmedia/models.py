@@ -440,24 +440,7 @@ class CommCareVideo(CommCareMultimedia):
         return "fa fa-video-camera"
 
 
-class MediaMappingMixin(object):
-    @property
-    def url(self):
-        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
-
-    @classmethod
-    def gen_unique_id(cls, m_id, path):
-        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
-
-
-class HQMediaMapItem(DocumentSchema, MediaMappingMixin):
-    multimedia_id = StringProperty()
-    media_type = StringProperty()
-    version = IntegerProperty()
-    unique_id = StringProperty()
-
-
-class ApplicationMediaMapping(models.Model, MediaMappingMixin):
+class ApplicationMediaMapping(models.Model):
     domain = models.CharField(max_length=100, null=False)
     app_id = models.CharField(max_length=255, null=False)
     path = models.CharField(max_length=255, null=False)
@@ -468,6 +451,14 @@ class ApplicationMediaMapping(models.Model, MediaMappingMixin):
 
     class Meta(object):
         unique_together = ('domain', 'app_id', 'path')
+
+    @property
+    def url(self):
+        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
+
+    @classmethod
+    def gen_unique_id(cls, m_id, path):
+        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -787,17 +778,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if not unique_id:
             unique_id = ApplicationMediaMapping.gen_unique_id(multimedia_id, path)
 
-        # Update couch
-        self.multimedia_map.update({
-            path: HQMediaMapItem(
-                multimedia_id=multimedia_id,
-                media_type=media_type,
-                version=version,
-                unique_id=unique_id,
-            )
-        })
-
-        # Update SQL
         item = ApplicationMediaMapping.get_or_create(
             domain=self.domain,
             app_id=self.get_id,
@@ -816,7 +796,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         item = ApplicationMediaMapping.objects.filter(domain=self.domain, app_id=self.get_id, path=path).first()
         if item:
             item.delete()
-        return bool(self.multimedia_map.pop(path, None))
 
     @memoized
     def all_media(self, lang=None):
@@ -939,37 +918,24 @@ class ApplicationMediaMixin(Document, MediaMixin):
             This checks to see if the paths specified in the multimedia map still exist in the Application.
             If not, then that item is removed from the multimedia map.
         """
-        map_changed = False
         if self.check_media_state()['has_form_errors']:
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
-                removed = self.remove_from_multimedia_map(path)
-                map_changed = map_changed or removed
+                self.remove_from_multimedia_map(path)
 
-        if map_changed:
-            self.save()
-
+    # TODO: combine this with set_mapping
     def create_mapping(self, multimedia, form_path, save=True):
         """
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
-        form_path = form_path.strip()
         self.set_mapping(
-            form_path,
+            form_path.strip(),
             multimedia_id=multimedia._id,
             media_type=multimedia.doc_type,
         )
-
-        if save:
-            try:
-                self.save()
-            except ResourceConflict:
-                # Attempt to fetch the document again.
-                updated_doc = self.get(self._id)
-                updated_doc.create_mapping(multimedia, form_path)
 
     def get_media_objects(self, build_profile_id=None, remove_unused=False, multimedia_map=None):
         """
