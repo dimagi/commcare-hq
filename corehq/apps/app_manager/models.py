@@ -4363,6 +4363,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if copies:
             copy = copies[0]
         else:
+            # TODO: add in multimedia
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
                         'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
@@ -4643,7 +4644,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
-        app = deepcopy(copy.to_json())
+        app = deepcopy(copy.to_json())      # TODO: add in multimedia
         app['_rev'] = self._rev
         app['_id'] = self._id
         app['version'] = self.version
