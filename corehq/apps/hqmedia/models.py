@@ -440,13 +440,7 @@ class CommCareVideo(CommCareMultimedia):
         return "fa fa-video-camera"
 
 
-class HQMediaMapItem(DocumentSchema):
-
-    multimedia_id = StringProperty()
-    media_type = StringProperty()
-    version = IntegerProperty()
-    unique_id = StringProperty()
-
+class MediaMappingMixin(object):
     @property
     def url(self):
         return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
@@ -456,7 +450,14 @@ class HQMediaMapItem(DocumentSchema):
         return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
-class ApplicationMediaMapping(models.Model):
+class HQMediaMapItem(DocumentSchema, MediaMappingMixin):
+    multimedia_id = StringProperty()
+    media_type = StringProperty()
+    version = IntegerProperty()
+    unique_id = StringProperty()
+
+
+class ApplicationMediaMapping(models.Model, MediaMappingMixin):
     domain = models.CharField(max_length=100, null=False)
     app_id = models.CharField(max_length=255, null=False)
     path = models.CharField(max_length=255, null=False)
