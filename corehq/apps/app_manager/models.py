@@ -4611,10 +4611,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             for form in self.get_forms():
                 form.version = None
 
-        # weird edge case where multimedia_map gets set to null and causes issues
-        if self.multimedia_map is None:
-            self.multimedia_map = {}
-
         return self
 
     def save(self, *args, **kwargs):
