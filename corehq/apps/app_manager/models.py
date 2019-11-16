@@ -4363,6 +4363,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if copies:
             copy = copies[0]
         else:
+            # TODO: add in multimedia...except this function doesn't save the app, and there's no id yet
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
                         'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
@@ -4643,6 +4644,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
+        # TODO: add in multimedia...after moving the save into here
         app = deepcopy(copy.to_json())
         app['_rev'] = self._rev
         app['_id'] = self._id
@@ -4746,6 +4748,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         previous_version = self._get_version_comparison_build()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
+        # TODO: add in multimedia...but app isn't saved, and it's unclear if it should be
         for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
@@ -5615,6 +5618,9 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     finally:
         source['_attachments'] = {}
     if source_properties is not None:
+        # TODO: copy multimedia, too
+        # ...but if passed source, there won't be multimedia in it
+        # ...and regardless, this function doesn't save the app
         for key, value in source_properties.items():
             source[key] = value
     cls = get_correct_app_class(source)
