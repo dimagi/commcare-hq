@@ -777,6 +777,13 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
+    # Returns true if item was deleted *from couch*
+    def remove_from_multimedia_map(self, path):
+        item = ApplicationMediaMapping.objects.filter(domain=self.domain, app_id=self.get_id, path=path).first()
+        if item:
+            item.delete()
+        return bool(self.multimedia_map.pop(path, None))
+
     @memoized
     def all_media(self, lang=None):
         """
@@ -908,9 +915,8 @@ class ApplicationMediaMixin(Document, MediaMixin):
         permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
-                map_item = self.multimedia_map[path]
-                map_changed = True
-                del self.multimedia_map[path]
+                removed = self.remove_from_multimedia_map(path)
+                map_changed = map_changed or removed
 
         if map_changed:
             self.save()
@@ -998,7 +1004,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         self.remove_unused_mappings()
         for path, media in self.get_media_objects(remove_unused=True):
             if not media or (not media.is_shared and self.domain not in media.owners):
-                del self.multimedia_map[path]
+                self.remove_from_multimedia_map(path)
 
     def check_media_state(self):
         has_missing_refs = False
