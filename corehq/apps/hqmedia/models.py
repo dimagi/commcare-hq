@@ -6,6 +6,7 @@ from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -453,6 +454,19 @@ class HQMediaMapItem(DocumentSchema):
     @classmethod
     def gen_unique_id(cls, m_id, path):
         return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
+
+
+class ApplicationMediaMapping(models.Model):
+    domain = models.CharField(max_length=100, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    path = models.CharField(max_length=255, null=False)
+    multimedia_id = models.CharField(max_length=255, null=False)
+    media_type = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=True)
+    unique_id = models.CharField(max_length=255, null=False)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id', 'path')
 
 
 class ApplicationMediaReference(object):
