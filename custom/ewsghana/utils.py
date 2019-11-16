@@ -352,15 +352,11 @@ def first_item(items, f):
             return item
 
 REPORT_MAPPING = {
-    'cms_rms_summary_report': 'custom.ewsghana.reports.email_reports.CMSRMSReport',
-    'stock_summary_report': 'custom.ewsghana.reports.email_reports.StockSummaryReport'
 }
 
 
 def filter_slugs_by_role(couch_user, domain):
     slugs = [
-        ['stock_summary_report', 'Stock Summary'],
-        ['cms_rms_summary_report', 'CMS and RMS Summary']
     ]
     if couch_user.is_domain_admin(domain) or couch_user.is_superuser:
         return slugs

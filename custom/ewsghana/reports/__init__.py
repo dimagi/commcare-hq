@@ -426,11 +426,7 @@ class ProductSelectionPane(EWSData):
             'hide_columns': self.hide_columns
         })
 
-from custom.ewsghana.reports.email_reports import CMSRMSReport, StockSummaryReport
-
 CUSTOM_REPORTS = (
     ('Custom reports', (
-        CMSRMSReport,
-        StockSummaryReport,
     )),
 )
