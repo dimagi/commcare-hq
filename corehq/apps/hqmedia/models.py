@@ -785,6 +785,30 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
         return {item.path: item for item in sql_items}
 
+    def set_multimedia_map_item(self, path, multimedia_id=None, media_type=None, version=None, unique_id=None):
+        if not unique_id:
+            unique_id = ApplicationMediaMapItem.gen_unique_id(multimedia_id, path)
+        self.multimedia_map.update({
+            path: HQMediaMapItem(
+                multimedia_id=multimedia_id,
+                media_type=media_type,
+                version=version,
+                unique_id=unique_id,
+            )
+        })
+        item = ApplicationMediaMapItem.get_or_create(
+            domain=self.domain,
+            app_id=self.get_id,
+            path=path,
+            defaults={
+                "multimedia_id": multimedia_id,
+                "media_type": media_type,
+                "version": version,
+                "unique_id": unique_id,
+            }
+        )
+        item.save()
+
     # Returns true if item was deleted *from couch*
     def remove_from_multimedia_map(self, path):
         item = ApplicationMediaMapItem.objects.filter(domain=self.domain, app_id=self.get_id, path=path).first()
@@ -937,12 +961,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
         form_path = form_path.strip()
-        map_item = HQMediaMapItem()
-        map_item.multimedia_id = multimedia._id
-        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
-        map_item.media_type = multimedia.doc_type
-        # TODO: also save to SQL
-        self.multimedia_map[form_path] = map_item
+        self.set_multimedia_map_item(
+            form_path,
+            multimedia_id=multimedia._id,
+            media_type=multimedia.doc_type,
+        )
 
         if save:
             try:

@@ -1,7 +1,7 @@
 import hashlib
 import re
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import mock
 from lxml.etree import tostring
@@ -46,7 +46,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
 
-class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteTest(TestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
     @staticmethod
@@ -1077,14 +1077,12 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./menu",
         )
 
-        # TODO: set this up in SQL too?
-        app.multimedia_map = {
-            "jr://file/commcare/image/module0_en.png": HQMediaMapItem(
-                multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
-                media_type='CommCareImage',
-                unique_id='fe06454697634053cdb75fd9705ac7e6',
-            ),
-        }
+        app.set_multimedia_map_item(
+            "jr://file/commcare/image/module0_en.png",
+            multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
+            media_type='CommCareImage',
+            unique_id='fe06454697634053cdb75fd9705ac7e6',
+        )
         report_module.media_image = {
             'en': 'jr://file/commcare/image/module0_en.png',
         }

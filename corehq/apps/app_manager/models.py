@@ -4746,6 +4746,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         prev_multimedia_map = previous_version.transitional_multimedia_map if previous_version else {}
 
         for path, map_item in self.transitional_multimedia_map.items():
+            # TODO: do in SQL, too
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
