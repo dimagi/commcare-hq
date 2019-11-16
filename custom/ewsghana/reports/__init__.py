@@ -276,10 +276,6 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             if location_id:
                 try:
                     location = SQLLocation.active_objects.get(location_id=location_id)
-                    if cls.__name__ == "DashboardReport":
-                        if not location.location_type.administrative:
-                            location = location.parent
-                            location_id = location.location_id
                 except SQLLocation.DoesNotExist:
                     location_id = None
 
@@ -481,13 +477,11 @@ class ProductSelectionPane(EWSData):
 
 from custom.ewsghana.reports.email_reports import CMSRMSReport, StockSummaryReport
 from custom.ewsghana.reports.maps import EWSMapReport
-from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRatesReport
 
 CUSTOM_REPORTS = (
     ('Custom reports', (
-        DashboardReport,
         StockStatus,
         ReportingRatesReport,
         EWSMapReport,

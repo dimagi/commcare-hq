@@ -21,7 +21,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
-from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg

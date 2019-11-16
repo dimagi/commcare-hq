@@ -352,7 +352,6 @@ def first_item(items, f):
             return item
 
 REPORT_MAPPING = {
-    'dashboard_report': 'custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport',
     'stock_status': 'custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus',
     'reporting_page': 'custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport',
     'ews_mapreport': 'custom.ewsghana.reports.maps.EWSMapReport',
@@ -363,7 +362,6 @@ REPORT_MAPPING = {
 
 def filter_slugs_by_role(couch_user, domain):
     slugs = [
-        ['dashboard_report', 'Dashboard'],
         ['stock_status', 'Stock Status'],
         ['reporting_page', 'Reporting'],
         ['ews_mapreport', 'Maps'],
