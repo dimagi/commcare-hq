@@ -46,7 +46,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
 
-class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteTest(TestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
     @staticmethod
@@ -1077,12 +1077,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./menu",
         )
 
-        app.multimedia_map = {
-            "jr://file/commcare/image/module0_en.png": HQMediaMapItem(
-                multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
-                media_type='CommCareImage',
-                unique_id='fe06454697634053cdb75fd9705ac7e6',
-            ),
+        app.set_mapping(
+            "jr://file/commcare/image/module0_en.png",
+            multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
+            media_type='CommCareImage',
+            unique_id='fe06454697634053cdb75fd9705ac7e6',
         }
         report_module.media_image = {
             'en': 'jr://file/commcare/image/module0_en.png',

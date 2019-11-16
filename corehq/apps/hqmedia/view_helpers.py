@@ -86,6 +86,13 @@ def update_multimedia_paths(app, paths):
     # Update app's master map of multimedia
     for old_path, new_path in paths.items():
         if old_path in app.multimedia_map:  # path will not be present if file is missing from app
+            app.set_mapping(
+                new_path,
+                multimedia_id=old_item.multimedia_id,
+                media_type=old_item.media_type,
+                version=old_item.version,
+                unique_id=old_item.unique_id,
+            )
             app.multimedia_map.update({
                 new_path: app.multimedia_map[old_path],
             })

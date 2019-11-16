@@ -777,6 +777,34 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
+    def set_mapping(self, path, multimedia_id=None, media_type=None, version=None, unique_id=None):
+        if not unique_id:
+            unique_id = ApplicationMediaMapping.gen_unique_id(multimedia_id, path)
+
+        # Update couch
+        self.multimedia_map.update({
+            path: HQMediaMapItem(
+                multimedia_id=multimedia_id,
+                media_type=media_type,
+                version=version,
+                unique_id=unique_id,
+            )
+        })
+
+        # Update SQL
+        item = ApplicationMediaMapping.get_or_create(
+            domain=self.domain,
+            app_id=self.get_id,
+            path=path,
+            defaults={
+                "multimedia_id": multimedia_id,
+                "media_type": media_type,
+                "version": version,
+                "unique_id": unique_id,
+            }
+        )
+        item.save()
+
     # Returns true if item was deleted *from couch*
     def remove_from_multimedia_map(self, path):
         item = ApplicationMediaMapping.objects.filter(domain=self.domain, app_id=self.get_id, path=path).first()
@@ -926,11 +954,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
         form_path = form_path.strip()
-        map_item = HQMediaMapItem()
-        map_item.multimedia_id = multimedia._id
-        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
-        map_item.media_type = multimedia.doc_type
-        self.multimedia_map[form_path] = map_item
+        self.set_mapping(
+            form_path,
+            multimedia_id=multimedia._id,
+            media_type=multimedia.doc_type,
+        )
 
         if save:
             try:
