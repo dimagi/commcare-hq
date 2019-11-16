@@ -21,29 +21,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
-from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
-
-
-@require_GET
-@location_safe
-def inventory_management(request, domain):
-
-    inventory_management_ds = InventoryManagementData(
-        config=dict(
-            program=None, products=None, domain=domain,
-            startdate=force_to_datetime(request.GET.get('startdate')),
-            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id'),
-            custom_date=True
-        )
-    )
-    return HttpResponse(
-        json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
-        content_type='application/json'
-    )
 
 
 @require_POST

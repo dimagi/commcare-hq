@@ -110,16 +110,6 @@
                 </div>
                 <div class="inventory_chart">
                     <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-                    {% if thisreport.report_table.slug == 'inventory_management' %}
-                        <div class="row" style="margin: 0 !important">
-                            <form>
-                                <div style="display: inline-block">
-                                    <input type="text" id="inventory_filter" class="date-range-picker" />
-                                    <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
-                                </div>
-                            </form>
-                        </div>
-                    {% endif %}
                     {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                     <br/>
                 </div>
