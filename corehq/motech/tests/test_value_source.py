@@ -13,14 +13,19 @@ from corehq.motech.const import (
 )
 from corehq.motech.value_source import (
     CaseProperty,
+    CasePropertyConstantValue,
     CaseTriggerInfo,
     ConstantString,
     ConstantValue,
     FormQuestionMap,
     JsonPathCaseProperty,
-    CasePropertyConstantValue,
     ValueSource,
+    deserialize,
+    get_commcare_value,
+    get_import_value,
     get_form_question_values,
+    get_value,
+    serialize,
 )
 
 
@@ -125,13 +130,13 @@ class ConstantStringTests(SimpleTestCase):
     def test_get_value(self):
         constant = ConstantString.wrap({"value": "foo"})
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertEqual(value, "foo")
 
     def test_default_get_value(self):
         constant = ConstantString.wrap({})
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertIsNone(value)
 
     def test_casting_value(self):
@@ -140,17 +145,30 @@ class ConstantStringTests(SimpleTestCase):
             "external_data_type": COMMCARE_DATA_TYPE_DECIMAL,
         })
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertEqual(value, 1.0)
 
     def test_deserialize(self):
         constant = ConstantString.wrap({"value": "foo"})
         external_value = "bar"
-        value = constant.deserialize(external_value)
+        value = deserialize(constant, external_value)
         self.assertIsNone(value)
 
 
 class ConstantValueTests(SimpleTestCase):
+
+    def test_get_commcare_value(self):
+        """
+        get_commcare_value() should convert from value data type to
+        CommCare data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
+            "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+        })
+        self.assertEqual(get_commcare_value(one, 'foo'), 1)
 
     def test_serialize(self):
         """
@@ -163,7 +181,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
             "external_data_type": COMMCARE_DATA_TYPE_TEXT,
         })
-        self.assertEqual(one.serialize("foo"), '1')
+        self.assertEqual(serialize(one, 1), '1')
 
     def test_deserialize(self):
         """
@@ -176,7 +194,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
             "external_data_type": COMMCARE_DATA_TYPE_INTEGER,
         })
-        self.assertEqual(one.deserialize("foo"), '1')
+        self.assertEqual(deserialize(one, "foo"), '1')
 
 
 class WrapTests(SimpleTestCase):
@@ -244,7 +262,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo.qux",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertIsNone(external_value)
 
     def test_one_value(self):
@@ -253,7 +271,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo.bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, "baz")
 
     def test_many_values(self):
@@ -262,7 +280,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo[*].bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, ["baz", "qux"])
 
 
@@ -274,7 +292,7 @@ class CasePropertyConstantValueTests(SimpleTestCase):
             "value": "qux",
             "jsonpath": "foo.bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, "qux")
 
 

@@ -95,37 +95,6 @@ class ValueSource(DocumentSchema):
         else:
             return super(ValueSource, cls).wrap(data)
 
-    def serialize(self, value):
-        """
-        Converts the value's CommCare data type or format to its data
-        type or format for the external system, if necessary, otherwise
-        returns the value unchanged.
-        """
-        serializer = (serializers.get((self.commcare_data_type, self.external_data_type)) or
-                      serializers.get((None, self.external_data_type)))
-        return serializer(value) if serializer else value
-
-    def deserialize(self, external_value):
-        """
-        Converts the value's external data type or format to its data
-        type or format for CommCare, if necessary, otherwise returns the
-        value unchanged.
-        """
-        serializer = (serializers.get((self.external_data_type, self.commcare_data_type)) or
-                      serializers.get((None, self.commcare_data_type)))
-        return serializer(external_value) if serializer else external_value
-
-    def _get_commcare_value(self, case_trigger_info):
-        raise NotImplementedError()
-
-    def get_value(self, case_trigger_info):
-        """
-        Returns the value referred to by the ValueSource, serialized for
-        the external system.
-        """
-        value = self._get_commcare_value(case_trigger_info)
-        return self.serialize(value)
-
     def check_direction(self, direction):
         """
         Checks whether the ValueSource direction allows the value to be
@@ -158,41 +127,12 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty(required=True, validators=not_blank)
 
-    def _get_commcare_value(self, case_trigger_info):
-        """
-        Return the case property value from case updates, otherwise
-        return it from extra_fields.
-
-        extra_fields are current values of the case properties that have
-        been included in an integration.
-
-        >>> info = CaseTriggerInfo(
-        ...     domain='test-domain',
-        ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
-        ...     updates={'foo': 1},
-        ...     extra_fields={'foo': 0, 'bar': 2},
-        ... )
-        >>> CaseProperty(case_property="foo")._get_commcare_value(info)
-        1
-        >>> CaseProperty(case_property="bar")._get_commcare_value(info)
-        2
-        >>> CaseProperty(case_property="baz")._get_commcare_value(info) is None
-        True
-
-        """
-        if self.case_property in case_trigger_info.updates:
-            return case_trigger_info.updates[self.case_property]
-        return case_trigger_info.extra_fields.get(self.case_property)
-
 
 class FormQuestion(ValueSource):
     """
     A reference to a form question
     """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
-
-    def _get_commcare_value(self, case_trigger_info):
-        return case_trigger_info.form_question_values.get(self.form_question)
 
 
 class ConstantString(ValueSource):
@@ -219,13 +159,6 @@ class ConstantString(ValueSource):
             self.value == other.value
         )
 
-    def deserialize(self, external_value):
-        # ConstantString doesn't have a corresponding case or form value
-        return None
-
-    def _get_commcare_value(self, case_trigger_info):
-        return self.value
-
 
 class ConstantValue(ConstantString):
     """
@@ -233,7 +166,7 @@ class ConstantValue(ConstantString):
 
     ``value`` must be cast as ``value_data_type``.
 
-    ``ConstantValue.deserialize()`` returns the value for import. Use
+    ``deserialize()`` returns the value for import. Use
     ``commcare_data_type`` to cast the import value.
 
     ``ConstantValue.get_value(case_trigger_info)`` returns the value for
@@ -246,16 +179,16 @@ class ConstantValue(ConstantString):
     ...     "external_data_type": COMMCARE_DATA_TYPE_TEXT,
     ... })
     >>> info = CaseTriggerInfo("test-domain", None)
-    >>> one.deserialize("foo")
+    >>> deserialize(one, "foo")
     1.0
-    >>> one.get_value(info)  # Returns '1.0', not '1'. See note below.
+    >>> get_value(one, info)  # Returns '1.0', not '1'. See note below.
     '1.0'
 
     .. NOTE::
        ``one.get_value(info)`` returns  ``'1.0'``, not ``'1'``, because
-       ``ConstantValue.serialize`` casts ``value`` as
-       ``commcare_data_type`` first. ``ValueSource.serialize()`` casts
-       it from ``commcare_data_type`` to ``external_data_type``.
+       ``get_commcare_value()`` casts ``value`` as
+       ``commcare_data_type`` first. ``serialize()`` casts it from
+       ``commcare_data_type`` to ``external_data_type``.
 
        This may seem counter-intuitive, but we do it to preserve the
        behaviour of ``serialize()`` because it is public and is used
@@ -270,31 +203,6 @@ class ConstantValue(ConstantString):
             super().__eq__(other)
             and self.value_data_type == other.value_data_type
         )
-
-    def serialize(self, value):
-        """
-        Convert self.value from CommCare data type to external data type
-        """
-        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
-                      or serializers.get((None, self.commcare_data_type)))
-        commcare_value = serializer(self.value) if serializer else self.value
-        return ValueSource.serialize(self, commcare_value)
-
-    def deserialize(self, external_value):
-        """
-        Convert self.value from external data type to CommCare data type
-        """
-        serializer = (serializers.get((self.value_data_type, self.external_data_type))
-                      or serializers.get((None, self.external_data_type)))
-        external_value = serializer(self.value) if serializer else self.value
-        return ValueSource.deserialize(self, external_value)
-
-    def _get_commcare_value(self, case_trigger_info):
-        # get_value() calls this and serialize(), so this shouldn't call
-        # serialize(), and serialize() shouldn't call this. Just do
-        # nothing, and let `serialize()` cast `self.value` as
-        # `self.commcare_data_type`.
-        pass
 
 
 class CasePropertyMap(CaseProperty):
@@ -316,32 +224,12 @@ class CasePropertyMap(CaseProperty):
     #
     value_map = DictProperty()
 
-    def serialize(self, value):
-        # Don't bother serializing. self.value_map does that already.
-        #
-        # Using `.get()` because it's OK if some CommCare answers are
-        # not mapped to OpenMRS concepts, e.g. when only the "yes" value
-        # of a yes-no question in CommCare is mapped to a concept in
-        # OpenMRS.
-        return self.value_map.get(value)
-
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
-
 
 class FormQuestionMap(FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
     value_map = DictProperty()
-
-    def serialize(self, value):
-        return self.value_map.get(value)
-
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
@@ -352,11 +240,6 @@ class CaseOwnerAncestorLocationField(ValueSource):
     """
     location_field = StringProperty()
 
-    def _get_commcare_value(self, case_trigger_info):
-        location = get_case_location(case_trigger_info)
-        if location:
-            return get_ancestor_location_metadata_value(location, self.location_field)
-
 
 class FormUserAncestorLocationField(ValueSource):
     """
@@ -366,33 +249,12 @@ class FormUserAncestorLocationField(ValueSource):
     """
     location_field = StringProperty()
 
-    def _get_commcare_value(self, case_trigger_info):
-        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
-        location = get_owner_location(case_trigger_info.domain, user_id)
-        if location:
-            return get_ancestor_location_metadata_value(location, self.location_field)
-
 
 class JsonPathMixin(DocumentSchema):
     """
     Used for importing a value from a JSON document.
     """
     jsonpath = StringProperty(required=True, validators=not_blank)
-
-    def _get_external_value(self, external_data):
-        jsonpath = parse_jsonpath(self.jsonpath)
-        matches = jsonpath.find(external_data)
-        values = [m.value for m in matches]
-        if not values:
-            return None
-        elif len(values) == 1:
-            return values[0]
-        else:
-            return values
-
-    def get_import_value(self, external_data):
-        external_value = self._get_external_value(external_data)
-        return self.deserialize(external_value)
 
 
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
@@ -404,9 +266,126 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
 
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
+    pass
 
-    def get_import_value(self, external_data):
-        return self.deserialize(None)
+
+def get_value(value_source, case_trigger_info):
+    """
+    Returns the value referred to by the ValueSource, serialized for
+    the external system.
+    """
+    value = get_commcare_value(value_source, case_trigger_info)
+    return serialize(value_source, value)
+
+
+def get_import_value(value_source, external_data):
+    external_value = get_external_value(value_source, external_data)
+    return deserialize(value_source, external_value)
+
+
+def get_commcare_value(value_source, case_trigger_info):
+
+    if hasattr(value_source, "value"):
+        if hasattr(value_source, "value_data_type"):
+            # ConstantValue
+            serializer = (
+                serializers.get((value_source.value_data_type, value_source.commcare_data_type))
+                or serializers.get((None, value_source.commcare_data_type))
+            )
+            return serializer(value_source.value) if serializer else value_source.value
+        else:
+            # ConstantString
+            return value_source.value
+
+    if hasattr(value_source, "form_question"):
+        # FormQuestion or FormQuestionMap
+        return case_trigger_info.form_question_values.get(
+            value_source.form_question
+        )
+
+    if hasattr(value_source, "case_property"):
+        # CaseProperty or CasePropertyMap
+        if value_source.case_property in case_trigger_info.updates:
+            return case_trigger_info.updates[value_source.case_property]
+        return case_trigger_info.extra_fields.get(value_source.case_property)
+
+    if hasattr(value_source, "location_field"):
+        # CaseOwnerAncestorLocationField or FormUserAncestorLocationField
+        if value_source.doc_type == "CaseOwnerAncestorLocationField":
+            location = get_case_location(case_trigger_info)
+        elif value_source.doc_type == "FormUserAncestorLocationField":
+            user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+            location = get_owner_location(case_trigger_info.domain, user_id)
+        else:
+            raise TypeError(f"Unrecognised value source {value_source!r}")
+        if location:
+            return get_ancestor_location_metadata_value(
+                location, value_source.location_field
+            )
+
+
+def get_external_value(value_source, external_data):
+    if (
+        hasattr(value_source, "value")
+        and hasattr(value_source, "value_data_type")
+    ):
+        serializer = (
+            serializers.get((value_source.value_data_type, value_source.external_data_type))
+            or serializers.get((None, value_source.external_data_type))
+        )
+        return serializer(value_source.value) if serializer else value_source.value
+    if hasattr(value_source, "jsonpath"):
+        jsonpath = parse_jsonpath(value_source.jsonpath)
+        matches = jsonpath.find(external_data)
+        values = [m.value for m in matches]
+        if not values:
+            return None
+        elif len(values) == 1:
+            return values[0]
+        else:
+            return values
+
+
+def serialize(value_source, value):
+    """
+    Converts the value's CommCare data type or format to its data
+    type or format for the external system, if necessary, otherwise
+    returns the value unchanged.
+    """
+    if hasattr(value_source, "value_map"):
+        return value_source.value_map.get(value)
+    serializer = (
+        serializers.get((value_source.commcare_data_type, value_source.external_data_type))
+        or serializers.get((None, value_source.external_data_type))
+    )
+    return serializer(value) if serializer else value
+
+
+def deserialize(value_source, external_value):
+    """
+    Converts the value's external data type or format to its data
+    type or format for CommCare, if necessary, otherwise returns the
+    value unchanged.
+    """
+    if hasattr(value_source, "value"):
+        if hasattr(value_source, "value_data_type"):
+            # ConstantValue
+            serializer = (
+                serializers.get((value_source.value_data_type, value_source.external_data_type))
+                or serializers.get((None, value_source.external_data_type))
+            )
+            external_value = serializer(value_source.value) if serializer else value_source.value
+        else:
+            # ConstantString
+            return None
+    if hasattr(value_source, "value_map"):
+        reverse_map = {v: k for k, v in value_source.value_map.items()}
+        return reverse_map.get(external_value)
+    serializer = (
+        serializers.get((value_source.external_data_type, value_source.commcare_data_type))
+        or serializers.get((None, value_source.commcare_data_type))
+    )
+    return serializer(external_value) if serializer else external_value
 
 
 def get_form_question_values(form_json):
