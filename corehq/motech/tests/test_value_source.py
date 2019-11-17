@@ -152,6 +152,19 @@ class ConstantStringTests(SimpleTestCase):
 
 class ConstantValueTests(SimpleTestCase):
 
+    def test_get_commcare_value(self):
+        """
+        _get_commcare_value() should convert from value data type to
+        CommCare data type
+        """
+        one = ConstantValue.wrap({
+            "value": 1.0,
+            "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+            "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
+            "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+        })
+        self.assertEqual(one._get_commcare_value('foo'), 1)
+
     def test_serialize(self):
         """
         serialize() should convert from CommCare data type to external
@@ -163,7 +176,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
             "external_data_type": COMMCARE_DATA_TYPE_TEXT,
         })
-        self.assertEqual(one.serialize("foo"), '1')
+        self.assertEqual(one.serialize(1), '1')
 
     def test_deserialize(self):
         """

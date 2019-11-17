@@ -271,15 +271,6 @@ class ConstantValue(ConstantString):
             and self.value_data_type == other.value_data_type
         )
 
-    def serialize(self, value):
-        """
-        Convert self.value from CommCare data type to external data type
-        """
-        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
-                      or serializers.get((None, self.commcare_data_type)))
-        commcare_value = serializer(self.value) if serializer else self.value
-        return ValueSource.serialize(self, commcare_value)
-
     def deserialize(self, external_value):
         """
         Convert self.value from external data type to CommCare data type
@@ -290,11 +281,9 @@ class ConstantValue(ConstantString):
         return ValueSource.deserialize(self, external_value)
 
     def _get_commcare_value(self, case_trigger_info):
-        # get_value() calls this and serialize(), so this shouldn't call
-        # serialize(), and serialize() shouldn't call this. Just do
-        # nothing, and let `serialize()` cast `self.value` as
-        # `self.commcare_data_type`.
-        pass
+        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
+                      or serializers.get((None, self.commcare_data_type)))
+        return serializer(self.value) if serializer else self.value
 
     def get_import_value(self, external_data):
         external_value = self._get_external_value(external_data)
