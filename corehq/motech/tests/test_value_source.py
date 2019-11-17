@@ -304,23 +304,29 @@ class DirectionTests(SimpleTestCase):
     def test_direction_in_true(self):
         value_source = ValueSource(direction=DIRECTION_IMPORT)
         self.assertTrue(value_source.check_direction(DIRECTION_IMPORT))
+        self.assertTrue(value_source.can_import)
 
     def test_direction_in_false(self):
         value_source = ValueSource(direction=DIRECTION_IMPORT)
         self.assertFalse(value_source.check_direction(DIRECTION_EXPORT))
+        self.assertFalse(value_source.can_export)
 
     def test_direction_out_true(self):
         value_source = ValueSource(direction=DIRECTION_EXPORT)
         self.assertTrue(value_source.check_direction(DIRECTION_EXPORT))
+        self.assertTrue(value_source.can_export)
 
     def test_direction_out_false(self):
         value_source = ValueSource(direction=DIRECTION_EXPORT)
         self.assertFalse(value_source.check_direction(DIRECTION_IMPORT))
+        self.assertFalse(value_source.can_import)
 
     def test_direction_both_true(self):
         value_source = ValueSource(direction=DIRECTION_BOTH)
         self.assertTrue(value_source.check_direction(DIRECTION_IMPORT))
         self.assertTrue(value_source.check_direction(DIRECTION_EXPORT))
+        self.assertTrue(value_source.can_import)
+        self.assertTrue(value_source.can_export)
 
 
 def test_doctests():

@@ -111,6 +111,14 @@ class ValueSource(DocumentSchema):
         """
         return not self.direction or direction == self.direction
 
+    @property
+    def can_import(self):
+        return not self.direction or self.direction == DIRECTION_IMPORT
+
+    @property
+    def can_export(self):
+        return not self.direction or self.direction == DIRECTION_EXPORT
+
 
 class CaseProperty(ValueSource):
     """
