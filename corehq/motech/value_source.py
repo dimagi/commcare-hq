@@ -88,6 +88,9 @@ class ValueSource(DocumentSchema):
     #     }
     value_map = DictProperty(required=False, default=None, exclude_if_none=True)
 
+    # Used for importing a value from a JSON document.
+    jsonpath = StringProperty(required=False, default=None, exclude_if_none=True)
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
@@ -97,6 +100,7 @@ class ValueSource(DocumentSchema):
             and self.commcare_data_type == other.commcare_data_type
             and self.direction == other.direction
             and self.value_map == other.value_map
+            and self.jsonpath == other.jsonpath
         )
 
     @classmethod
@@ -259,19 +263,18 @@ class FormUserAncestorLocationField(ValueSource):
         return super().wrap(data)
 
 
-class JsonPathMixin(DocumentSchema):
-    """
-    Used for importing a value from a JSON document.
-    """
-    jsonpath = StringProperty(required=True, validators=not_blank)
+class JsonPathCaseProperty(CaseProperty):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warn("Use CaseProperty", DeprecationWarning)
 
 
-class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
-    pass
+class JsonPathCasePropertyMap(CaseProperty):
 
-
-class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warn("Use CaseProperty", DeprecationWarning)
 
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
@@ -344,7 +347,7 @@ def get_external_value(value_source, external_data):
             or serializers.get((None, value_source.external_data_type))
         )
         return serializer(value_source.value) if serializer else value_source.value
-    if hasattr(value_source, "jsonpath"):
+    if value_source.jsonpath:
         jsonpath = parse_jsonpath(value_source.jsonpath)
         matches = jsonpath.find(external_data)
         values = [m.value for m in matches]

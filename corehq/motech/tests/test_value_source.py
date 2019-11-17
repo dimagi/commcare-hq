@@ -253,11 +253,13 @@ class WrapTests(SimpleTestCase):
 class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_blank_path(self):
-        with self.assertRaises(BadValueError):
-            JsonPathCaseProperty.wrap({
-                "case_property": "bar",
-                "jsonpath": "",
-            })
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = JsonPathCaseProperty.wrap({
+            "case_property": "bar",
+            "jsonpath": "",
+        })
+        external_value = get_import_value(value_source, json_doc)
+        self.assertIsNone(external_value)
 
     def test_no_values(self):
         json_doc = {"foo": {"bar": "baz"}}
