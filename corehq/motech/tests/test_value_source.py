@@ -20,6 +20,7 @@ from corehq.motech.value_source import (
     FormQuestionMap,
     JsonPathCaseProperty,
     ValueSource,
+    deserialize,
     get_commcare_value,
     get_form_question_values,
     serialize,
@@ -148,7 +149,7 @@ class ConstantStringTests(SimpleTestCase):
     def test_deserialize(self):
         constant = ConstantString.wrap({"value": "foo"})
         external_value = "bar"
-        value = constant.deserialize(external_value)
+        value = deserialize(constant, external_value)
         self.assertIsNone(value)
 
 
@@ -191,7 +192,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
             "external_data_type": COMMCARE_DATA_TYPE_INTEGER,
         })
-        self.assertEqual(one.deserialize("foo"), '1')
+        self.assertEqual(deserialize(one, "foo"), '1')
 
 
 class WrapTests(SimpleTestCase):

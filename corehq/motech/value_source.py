@@ -95,16 +95,6 @@ class ValueSource(DocumentSchema):
         else:
             return super(ValueSource, cls).wrap(data)
 
-    def deserialize(self, external_value):
-        """
-        Converts the value's external data type or format to its data
-        type or format for CommCare, if necessary, otherwise returns the
-        value unchanged.
-        """
-        serializer = (serializers.get((self.external_data_type, self.commcare_data_type)) or
-                      serializers.get((None, self.commcare_data_type)))
-        return serializer(external_value) if serializer else external_value
-
     def get_value(self, case_trigger_info):
         """
         Returns the value referred to by the ValueSource, serialized for
@@ -177,10 +167,6 @@ class ConstantString(ValueSource):
             self.value == other.value
         )
 
-    def deserialize(self, external_value):
-        # ConstantString doesn't have a corresponding case or form value
-        return None
-
 
 class ConstantValue(ConstantString):
     """
@@ -188,7 +174,7 @@ class ConstantValue(ConstantString):
 
     ``value`` must be cast as ``value_data_type``.
 
-    ``ConstantValue.deserialize()`` returns the value for import. Use
+    ``deserialize()`` returns the value for import. Use
     ``commcare_data_type`` to cast the import value.
 
     ``ConstantValue.get_value(case_trigger_info)`` returns the value for
@@ -201,16 +187,16 @@ class ConstantValue(ConstantString):
     ...     "external_data_type": COMMCARE_DATA_TYPE_TEXT,
     ... })
     >>> info = CaseTriggerInfo("test-domain", None)
-    >>> one.deserialize("foo")
+    >>> deserialize(one, "foo")
     1.0
     >>> one.get_value(info)  # Returns '1.0', not '1'. See note below.
     '1.0'
 
     .. NOTE::
        ``one.get_value(info)`` returns  ``'1.0'``, not ``'1'``, because
-       ``ConstantValue.serialize`` casts ``value`` as
-       ``commcare_data_type`` first. ``ValueSource.serialize()`` casts
-       it from ``commcare_data_type`` to ``external_data_type``.
+       ``get_commcare_value()`` casts ``value`` as
+       ``commcare_data_type`` first. ``serialize()`` casts it from
+       ``commcare_data_type`` to ``external_data_type``.
 
        This may seem counter-intuitive, but we do it to preserve the
        behaviour of ``serialize()`` because it is public and is used
@@ -225,15 +211,6 @@ class ConstantValue(ConstantString):
             super().__eq__(other)
             and self.value_data_type == other.value_data_type
         )
-
-    def deserialize(self, external_value):
-        """
-        Convert self.value from external data type to CommCare data type
-        """
-        serializer = (serializers.get((self.value_data_type, self.external_data_type))
-                      or serializers.get((None, self.external_data_type)))
-        external_value = serializer(self.value) if serializer else self.value
-        return ValueSource.deserialize(self, external_value)
 
 
 class CasePropertyMap(CaseProperty):
@@ -255,20 +232,12 @@ class CasePropertyMap(CaseProperty):
     #
     value_map = DictProperty()
 
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
-
 
 class FormQuestionMap(FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
     value_map = DictProperty()
-
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
@@ -308,7 +277,7 @@ class JsonPathMixin(DocumentSchema):
 
     def get_import_value(self, external_data):
         external_value = self._get_external_value(external_data)
-        return self.deserialize(external_value)
+        return deserialize(self, external_value)
 
 
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
@@ -322,7 +291,7 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
 
     def get_import_value(self, external_data):
-        return self.deserialize(None)
+        return deserialize(self, None)
 
 
 def get_commcare_value(value_source, case_trigger_info):
@@ -379,6 +348,33 @@ def serialize(value_source, value):
         or serializers.get((None, value_source.external_data_type))
     )
     return serializer(value) if serializer else value
+
+
+def deserialize(value_source, external_value):
+    """
+    Converts the value's external data type or format to its data
+    type or format for CommCare, if necessary, otherwise returns the
+    value unchanged.
+    """
+    if hasattr(value_source, "value"):
+        if hasattr(value_source, "value_data_type"):
+            # ConstantValue
+            serializer = (
+                serializers.get((value_source.value_data_type, value_source.external_data_type))
+                or serializers.get((None, value_source.external_data_type))
+            )
+            external_value = serializer(value_source.value) if serializer else value_source.value
+        else:
+            # ConstantString
+            return None
+    if hasattr(value_source, "value_map"):
+        reverse_map = {v: k for k, v in value_source.value_map.items()}
+        return reverse_map.get(external_value)
+    serializer = (
+        serializers.get((value_source.external_data_type, value_source.commcare_data_type))
+        or serializers.get((None, value_source.commcare_data_type))
+    )
+    return serializer(external_value) if serializer else external_value
 
 
 def get_form_question_values(form_json):

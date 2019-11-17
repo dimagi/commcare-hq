@@ -27,6 +27,7 @@ from corehq.motech.openmrs.finders_utils import (
 from corehq.motech.value_source import (
     ConstantString,
     ValueSource,
+    deserialize,
     recurse_subclasses,
 )
 
@@ -180,7 +181,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                     match_type = property_weight['match_type']
                     match_params = property_weight['match_params']
                     match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
-                    is_equivalent = match_function(value_source.deserialize(patient_value), case_value)
+                    is_equivalent = match_function(deserialize(value_source, patient_value), case_value)
                     yield weight if is_equivalent else 0
 
         return sum(weights())

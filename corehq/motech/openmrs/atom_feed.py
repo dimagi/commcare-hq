@@ -37,6 +37,7 @@ from corehq.motech.openmrs.exceptions import (
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
+from corehq.motech.value_source import deserialize
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -250,7 +251,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
-            new_value = value_source.deserialize(patient_value)
+            new_value = deserialize(value_source, patient_value)
             if case:
                 if prop in CASE_BLOCK_ARGS:
                     case_value = case.name if prop == "case_name" else getattr(case, prop)
@@ -500,7 +501,7 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
 
 def get_case_block_kwargs_for_case_property(mapping, external_value):
     case_block_kwargs = {"update": {}}
-    value = mapping.value.deserialize(external_value)
+    value = deserialize(mapping.value, external_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
     else:
