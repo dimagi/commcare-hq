@@ -17,7 +17,6 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     ConstantString,
     ConstantValue,
-    FormQuestion,
     FormQuestionMap,
     JsonPathCaseProperty,
     ValueSource,
@@ -156,7 +155,7 @@ class ConstantValueTests(SimpleTestCase):
 
     def test_get_commcare_value(self):
         """
-        _get_commcare_value() should convert from value data type to
+        get_commcare_value() should convert from value data type to
         CommCare data type
         """
         one = ConstantValue.wrap({
@@ -165,7 +164,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
             "external_data_type": COMMCARE_DATA_TYPE_TEXT,
         })
-        self.assertEqual(one._get_commcare_value('foo'), 1)
+        self.assertEqual(get_commcare_value(one, 'foo'), 1)
 
     def test_serialize(self):
         """
@@ -291,29 +290,6 @@ class CasePropertyConstantValueTests(SimpleTestCase):
         })
         external_value = value_source.get_import_value(json_doc)
         self.assertEqual(external_value, "qux")
-
-
-def test_get_commcare_value():
-    for value_source in [
-        CaseProperty(case_property="foo"),
-        FormQuestion(form_question="/data/foo/bar"),
-        ConstantString(value="foo"),
-        ConstantValue(value="foo", value_data_type="cc_text"),
-    ]:
-        yield check_get_commcare_value_equal, value_source
-
-
-def check_get_commcare_value_equal(value_source):
-    info = CaseTriggerInfo(
-        domain="test-domain",
-        case_id="c0ffee",
-        type="case",
-        name="Testy McTestface",
-        updates={'foo': 1},
-        extra_fields={'foo': 0, 'bar': 2},
-        form_question_values={"/data/foo/bar": "baz"},
-    )
-    assert get_commcare_value(value_source, info) == value_source._get_commcare_value(info)
 
 
 def test_doctests():

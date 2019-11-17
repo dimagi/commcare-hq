@@ -115,15 +115,12 @@ class ValueSource(DocumentSchema):
                       serializers.get((None, self.commcare_data_type)))
         return serializer(external_value) if serializer else external_value
 
-    def _get_commcare_value(self, case_trigger_info):
-        raise NotImplementedError()
-
     def get_value(self, case_trigger_info):
         """
         Returns the value referred to by the ValueSource, serialized for
         the external system.
         """
-        value = self._get_commcare_value(case_trigger_info)
+        value = get_commcare_value(self, case_trigger_info)
         return self.serialize(value)
 
     def check_direction(self, direction):
@@ -158,41 +155,12 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty(required=True, validators=not_blank)
 
-    def _get_commcare_value(self, case_trigger_info):
-        """
-        Return the case property value from case updates, otherwise
-        return it from extra_fields.
-
-        extra_fields are current values of the case properties that have
-        been included in an integration.
-
-        >>> info = CaseTriggerInfo(
-        ...     domain='test-domain',
-        ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
-        ...     updates={'foo': 1},
-        ...     extra_fields={'foo': 0, 'bar': 2},
-        ... )
-        >>> CaseProperty(case_property="foo")._get_commcare_value(info)
-        1
-        >>> CaseProperty(case_property="bar")._get_commcare_value(info)
-        2
-        >>> CaseProperty(case_property="baz")._get_commcare_value(info) is None
-        True
-
-        """
-        if self.case_property in case_trigger_info.updates:
-            return case_trigger_info.updates[self.case_property]
-        return case_trigger_info.extra_fields.get(self.case_property)
-
 
 class FormQuestion(ValueSource):
     """
     A reference to a form question
     """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
-
-    def _get_commcare_value(self, case_trigger_info):
-        return case_trigger_info.form_question_values.get(self.form_question)
 
 
 class ConstantString(ValueSource):
@@ -222,9 +190,6 @@ class ConstantString(ValueSource):
     def deserialize(self, external_value):
         # ConstantString doesn't have a corresponding case or form value
         return None
-
-    def _get_commcare_value(self, case_trigger_info):
-        return self.value
 
 
 class ConstantValue(ConstantString):
@@ -279,11 +244,6 @@ class ConstantValue(ConstantString):
                       or serializers.get((None, self.external_data_type)))
         external_value = serializer(self.value) if serializer else self.value
         return ValueSource.deserialize(self, external_value)
-
-    def _get_commcare_value(self, case_trigger_info):
-        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
-                      or serializers.get((None, self.commcare_data_type)))
-        return serializer(self.value) if serializer else self.value
 
     def get_import_value(self, external_data):
         external_value = self._get_external_value(external_data)
@@ -345,11 +305,6 @@ class CaseOwnerAncestorLocationField(ValueSource):
     """
     location_field = StringProperty()
 
-    def _get_commcare_value(self, case_trigger_info):
-        location = get_case_location(case_trigger_info)
-        if location:
-            return get_ancestor_location_metadata_value(location, self.location_field)
-
 
 class FormUserAncestorLocationField(ValueSource):
     """
@@ -358,12 +313,6 @@ class FormUserAncestorLocationField(ValueSource):
     where the metadata value is set.
     """
     location_field = StringProperty()
-
-    def _get_commcare_value(self, case_trigger_info):
-        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
-        location = get_owner_location(case_trigger_info.domain, user_id)
-        if location:
-            return get_ancestor_location_metadata_value(location, self.location_field)
 
 
 class JsonPathMixin(DocumentSchema):

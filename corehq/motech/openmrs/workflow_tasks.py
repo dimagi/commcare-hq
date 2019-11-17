@@ -17,6 +17,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
+from corehq.motech.value_source import get_commcare_value
 
 
 class SyncPersonAttributesTask(WorkflowTask):
@@ -134,7 +135,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime for the Visit
         """
         if form_config.openmrs_start_datetime:
-            cc_start_datetime_str = form_config.openmrs_start_datetime._get_commcare_value(self.info)
+            cc_start_datetime_str = get_commcare_value(form_config.openmrs_start_datetime, self.info)
             if cc_start_datetime_str is None:
                 raise ConfigurationError(
                     'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
