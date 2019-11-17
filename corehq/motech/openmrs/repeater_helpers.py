@@ -35,6 +35,7 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_ancestor_location_metadata_value,
     get_case_location,
+    get_value,
 )
 from corehq.util.quickcache import quickcache
 
@@ -195,34 +196,34 @@ def create_patient(requests, info, case_config):
 
     def get_name():
         return {
-            property_: value_source.get_value(info)
+            property_: get_value(value_source, info)
             for property_, value_source in case_config.person_preferred_name.items()
             if (
                 property_ in NAME_PROPERTIES and
                 value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
+                get_value(value_source, info)
             )
         }
 
     def get_address():
         return {
-            property_: value_source.get_value(info)
+            property_: get_value(value_source, info)
             for property_, value_source in case_config.person_preferred_address.items()
             if (
                 property_ in ADDRESS_PROPERTIES and
                 value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
+                get_value(value_source, info)
             )
         }
 
     def get_properties():
         return {
-            property_: value_source.get_value(info)
+            property_: get_value(value_source, info)
             for property_, value_source in case_config.person_properties.items()
             if (
                 property_ in PERSON_PROPERTIES and
                 value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
+                get_value(value_source, info)
             )
         }
 
@@ -233,7 +234,7 @@ def create_patient(requests, info, case_config):
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and
                 value_source.check_direction(DIRECTION_EXPORT)
             ):
-                identifier = value_source.get_value(info) or generate_identifier(requests, patient_identifier_type)
+                identifier = get_value(value_source, info) or generate_identifier(requests, patient_identifier_type)
                 if identifier:
                     identifiers.append({
                         'identifierType': patient_identifier_type,
@@ -378,7 +379,7 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients
-    elif not patients and patient_finder.create_missing.get_value(info):
+    elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
     else:
         # If PatientFinder can't narrow down the number of candidate

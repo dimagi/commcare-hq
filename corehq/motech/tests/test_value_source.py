@@ -24,6 +24,7 @@ from corehq.motech.value_source import (
     get_commcare_value,
     get_import_value,
     get_form_question_values,
+    get_value,
     serialize,
 )
 
@@ -129,13 +130,13 @@ class ConstantStringTests(SimpleTestCase):
     def test_get_value(self):
         constant = ConstantString.wrap({"value": "foo"})
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertEqual(value, "foo")
 
     def test_default_get_value(self):
         constant = ConstantString.wrap({})
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertIsNone(value)
 
     def test_casting_value(self):
@@ -144,7 +145,7 @@ class ConstantStringTests(SimpleTestCase):
             "external_data_type": COMMCARE_DATA_TYPE_DECIMAL,
         })
         info = CaseTriggerInfo("test-domain", None)
-        value = constant.get_value(info)
+        value = get_value(constant, info)
         self.assertEqual(value, 1.0)
 
     def test_deserialize(self):

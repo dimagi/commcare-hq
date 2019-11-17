@@ -15,7 +15,7 @@ from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     get_property_map,
 )
-from corehq.motech.value_source import ConstantString
+from corehq.motech.value_source import ConstantString, get_value
 
 PATIENT = {
     'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
@@ -131,7 +131,7 @@ class PatientFinderTests(SimpleTestCase):
 
 def test_constant_false():
     info = {}
-    assert_false(constant_false.get_value(info))
+    assert_false(get_value(constant_false, info))
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):

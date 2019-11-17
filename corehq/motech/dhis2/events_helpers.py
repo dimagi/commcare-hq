@@ -2,6 +2,7 @@ from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
+    get_value,
 )
 
 
@@ -37,14 +38,14 @@ def _get_program(config, case_trigger_info):
 def _get_org_unit(config, case_trigger_info):
     org_unit_id = None
     if config.org_unit_id:
-        org_unit_id = config.org_unit_id.get_value(case_trigger_info)
+        org_unit_id = get_value(config.org_unit_id, case_trigger_info)
     if org_unit_id:
         return {'orgUnit': org_unit_id}
     return {}
 
 
 def _get_event_date(config, case_trigger_info):
-    event_date = config.event_date.get_value(case_trigger_info)
+    event_date = get_value(config.event_date, case_trigger_info)
     return {'eventDate': event_date}
 
 
@@ -55,7 +56,7 @@ def _get_event_status(config, case_trigger_info):
 def _get_completed_date(config, case_trigger_info):
     completed_date = None
     if config.completed_date:
-        completed_date = config.completed_date.get_value(case_trigger_info)
+        completed_date = get_value(config.completed_date, case_trigger_info)
     if completed_date:
         return {'completedDate': completed_date}
     return {}
@@ -66,6 +67,6 @@ def _get_datavalues(config, case_trigger_info):
     for data_value in config.datavalue_maps:
         values.append({
             'dataElement': data_value.data_element_id,
-            'value': data_value.value.get_value(case_trigger_info)
+            'value': get_value(data_value.value, case_trigger_info)
         })
     return {'dataValues': values}

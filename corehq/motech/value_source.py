@@ -95,14 +95,6 @@ class ValueSource(DocumentSchema):
         else:
             return super(ValueSource, cls).wrap(data)
 
-    def get_value(self, case_trigger_info):
-        """
-        Returns the value referred to by the ValueSource, serialized for
-        the external system.
-        """
-        value = get_commcare_value(self, case_trigger_info)
-        return serialize(self, value)
-
     def check_direction(self, direction):
         """
         Checks whether the ValueSource direction allows the value to be
@@ -189,7 +181,7 @@ class ConstantValue(ConstantString):
     >>> info = CaseTriggerInfo("test-domain", None)
     >>> deserialize(one, "foo")
     1.0
-    >>> one.get_value(info)  # Returns '1.0', not '1'. See note below.
+    >>> get_value(one, info)  # Returns '1.0', not '1'. See note below.
     '1.0'
 
     .. NOTE::
@@ -275,6 +267,15 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
+
+
+def get_value(value_source, case_trigger_info):
+    """
+    Returns the value referred to by the ValueSource, serialized for
+    the external system.
+    """
+    value = get_commcare_value(value_source, case_trigger_info)
+    return serialize(value_source, value)
 
 
 def get_import_value(value_source, external_data):
