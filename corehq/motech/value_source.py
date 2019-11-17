@@ -264,21 +264,6 @@ class JsonPathMixin(DocumentSchema):
     """
     jsonpath = StringProperty(required=True, validators=not_blank)
 
-    def _get_external_value(self, external_data):
-        jsonpath = parse_jsonpath(self.jsonpath)
-        matches = jsonpath.find(external_data)
-        values = [m.value for m in matches]
-        if not values:
-            return None
-        elif len(values) == 1:
-            return values[0]
-        else:
-            return values
-
-    def get_import_value(self, external_data):
-        external_value = self._get_external_value(external_data)
-        return deserialize(self, external_value)
-
 
 class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
     pass
@@ -289,9 +274,12 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
 
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
+    pass
 
-    def get_import_value(self, external_data):
-        return deserialize(self, None)
+
+def get_import_value(value_source, external_data):
+    external_value = get_external_value(value_source, external_data)
+    return deserialize(value_source, external_value)
 
 
 def get_commcare_value(value_source, case_trigger_info):
@@ -333,6 +321,28 @@ def get_commcare_value(value_source, case_trigger_info):
             return get_ancestor_location_metadata_value(
                 location, value_source.location_field
             )
+
+
+def get_external_value(value_source, external_data):
+    if (
+        hasattr(value_source, "value")
+        and hasattr(value_source, "value_data_type")
+    ):
+        serializer = (
+            serializers.get((value_source.value_data_type, value_source.external_data_type))
+            or serializers.get((None, value_source.external_data_type))
+        )
+        return serializer(value_source.value) if serializer else value_source.value
+    if hasattr(value_source, "jsonpath"):
+        jsonpath = parse_jsonpath(value_source.jsonpath)
+        matches = jsonpath.find(external_data)
+        values = [m.value for m in matches]
+        if not values:
+            return None
+        elif len(values) == 1:
+            return values[0]
+        else:
+            return values
 
 
 def serialize(value_source, value):

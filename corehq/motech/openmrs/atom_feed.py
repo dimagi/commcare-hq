@@ -37,7 +37,7 @@ from corehq.motech.openmrs.exceptions import (
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
-from corehq.motech.value_source import deserialize
+from corehq.motech.value_source import deserialize, get_import_value
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -524,7 +524,7 @@ def get_case_block_for_indexed_case(
         "update": {}
     }
     for value_source in mapping.indexed_case_mapping.case_properties:
-        value = value_source.get_import_value(external_data)
+        value = get_import_value(value_source, external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
             case_block_kwargs[value_source.case_property] = value
         else:

@@ -22,6 +22,7 @@ from corehq.motech.value_source import (
     ValueSource,
     deserialize,
     get_commcare_value,
+    get_import_value,
     get_form_question_values,
     serialize,
 )
@@ -260,7 +261,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo.qux",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertIsNone(external_value)
 
     def test_one_value(self):
@@ -269,7 +270,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo.bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, "baz")
 
     def test_many_values(self):
@@ -278,7 +279,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "foo[*].bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, ["baz", "qux"])
 
 
@@ -290,7 +291,7 @@ class CasePropertyConstantValueTests(SimpleTestCase):
             "value": "qux",
             "jsonpath": "foo.bar",
         })
-        external_value = value_source.get_import_value(json_doc)
+        external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, "qux")
 
 
