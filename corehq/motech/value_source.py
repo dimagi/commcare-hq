@@ -402,6 +402,47 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
         return self.deserialize(None)
 
 
+def get_commcare_value(value_source, case_trigger_info):
+
+    if hasattr(value_source, "value"):
+        if hasattr(value_source, "value_data_type"):
+            # ConstantValue
+            serializer = (
+                serializers.get((value_source.value_data_type, value_source.commcare_data_type))
+                or serializers.get((None, value_source.commcare_data_type))
+            )
+            return serializer(value_source.value) if serializer else value_source.value
+        else:
+            # ConstantString
+            return value_source.value
+
+    if hasattr(value_source, "form_question"):
+        # FormQuestion or FormQuestionMap
+        return case_trigger_info.form_question_values.get(
+            value_source.form_question
+        )
+
+    if hasattr(value_source, "case_property"):
+        # CaseProperty or CasePropertyMap
+        if value_source.case_property in case_trigger_info.updates:
+            return case_trigger_info.updates[value_source.case_property]
+        return case_trigger_info.extra_fields.get(value_source.case_property)
+
+    if hasattr(value_source, "location_field"):
+        # CaseOwnerAncestorLocationField or FormUserAncestorLocationField
+        if value_source.doc_type == "CaseOwnerAncestorLocationField":
+            location = get_case_location(case_trigger_info)
+        elif value_source.doc_type == "FormUserAncestorLocationField":
+            user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+            location = get_owner_location(case_trigger_info.domain, user_id)
+        else:
+            raise TypeError(f"Unrecognised value source {value_source!r}")
+        if location:
+            return get_ancestor_location_metadata_value(
+                location, value_source.location_field
+            )
+
+
 def get_form_question_values(form_json):
     """
     Given form JSON, returns question-value pairs, where questions are

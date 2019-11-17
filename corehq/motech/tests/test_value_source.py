@@ -13,13 +13,15 @@ from corehq.motech.const import (
 )
 from corehq.motech.value_source import (
     CaseProperty,
+    CasePropertyConstantValue,
     CaseTriggerInfo,
     ConstantString,
     ConstantValue,
+    FormQuestion,
     FormQuestionMap,
     JsonPathCaseProperty,
-    CasePropertyConstantValue,
     ValueSource,
+    get_commcare_value,
     get_form_question_values,
 )
 
@@ -289,6 +291,29 @@ class CasePropertyConstantValueTests(SimpleTestCase):
         })
         external_value = value_source.get_import_value(json_doc)
         self.assertEqual(external_value, "qux")
+
+
+def test_get_commcare_value():
+    for value_source in [
+        CaseProperty(case_property="foo"),
+        FormQuestion(form_question="/data/foo/bar"),
+        ConstantString(value="foo"),
+        ConstantValue(value="foo", value_data_type="cc_text"),
+    ]:
+        yield check_get_commcare_value_equal, value_source
+
+
+def check_get_commcare_value_equal(value_source):
+    info = CaseTriggerInfo(
+        domain="test-domain",
+        case_id="c0ffee",
+        type="case",
+        name="Testy McTestface",
+        updates={'foo': 1},
+        extra_fields={'foo': 0, 'bar': 2},
+        form_question_values={"/data/foo/bar": "baz"},
+    )
+    assert get_commcare_value(value_source, info) == value_source._get_commcare_value(info)
 
 
 def test_doctests():
