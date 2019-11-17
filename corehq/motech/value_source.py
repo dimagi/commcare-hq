@@ -107,6 +107,8 @@ class ValueSource(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ValueSource:
+            if 'doc_type' not in data or data['doc_type'] == 'ValueSource':
+                return super(ValueSource, cls).wrap(data)
             subclass = {
                 sub._doc_type: sub for sub in recurse_subclasses(cls)
             }.get(data['doc_type'])
@@ -131,7 +133,6 @@ class CaseProperty(ValueSource):
     #
     #     {
     #       "birthdate": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "dob"
     #       }
     #     }
@@ -157,7 +158,6 @@ class ConstantString(ValueSource):
     #
     #     {
     #       "birthdate": {
-    #         "doc_type": "ConstantString",
     #         "value": "Sep 7, 3761 BC"
     #       }
     #     }
@@ -298,6 +298,19 @@ def get_import_value(value_source, external_data):
 
 @singledispatch
 def get_commcare_value(value_source, case_trigger_info):
+    if hasattr(value_source, "value"):
+        if hasattr(value_source, "value_data_type"):
+            return get_constant_value(value_source, case_trigger_info)
+        else:
+            return get_constant_string(value_source, case_trigger_info)
+    if hasattr(value_source, "form_question"):
+        return get_form_question_value(value_source, case_trigger_info)
+    if hasattr(value_source, "case_property"):
+        return get_case_property_value(value_source, case_trigger_info)
+    if hasattr(value_source, "case_owner_ancestor_location_field"):
+        return get_case_owner_ancestor_location_field(value_source, case_trigger_info)
+    if hasattr(value_source, "form_user_ancestor_location_field"):
+        get_form_user_ancestor_location_field(value_source, case_trigger_info)
     raise TypeError(
         f'Unrecognised value source type: {value_source.__class__.__name__}'
     )
