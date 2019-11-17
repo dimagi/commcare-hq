@@ -230,7 +230,13 @@ class CaseOwnerAncestorLocationField(ValueSource):
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
     """
-    location_field = StringProperty()
+    case_owner_ancestor_location_field = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if "location_field" in data:
+            data["case_owner_ancestor_location_field"] = data.pop("location_field")
+        return super().wrap(data)
 
 
 class FormUserAncestorLocationField(ValueSource):
@@ -239,7 +245,13 @@ class FormUserAncestorLocationField(ValueSource):
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
-    location_field = StringProperty()
+    form_user_ancestor_location_field = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if "location_field" in data:
+            data["form_user_ancestor_location_field"] = data.pop("location_field")
+        return super().wrap(data)
 
 
 class JsonPathMixin(DocumentSchema):
@@ -301,18 +313,19 @@ def get_commcare_value(value_source, case_trigger_info):
             return case_trigger_info.updates[value_source.case_property]
         return case_trigger_info.extra_fields.get(value_source.case_property)
 
-    if hasattr(value_source, "location_field"):
-        # CaseOwnerAncestorLocationField or FormUserAncestorLocationField
-        if value_source.doc_type == "CaseOwnerAncestorLocationField":
-            location = get_case_location(case_trigger_info)
-        elif value_source.doc_type == "FormUserAncestorLocationField":
-            user_id = case_trigger_info.form_question_values.get('/metadata/userID')
-            location = get_owner_location(case_trigger_info.domain, user_id)
-        else:
-            raise TypeError(f"Unrecognised value source {value_source!r}")
+    if hasattr(value_source, "case_owner_ancestor_location_field"):
+        location = get_case_location(case_trigger_info)
         if location:
             return get_ancestor_location_metadata_value(
-                location, value_source.location_field
+                location, value_source.case_owner_ancestor_location_field
+            )
+
+    if hasattr(value_source, "form_user_ancestor_location_field"):
+        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+        location = get_owner_location(case_trigger_info.domain, user_id)
+        if location:
+            return get_ancestor_location_metadata_value(
+                location, value_source.form_user_ancestor_location_field
             )
 
 
