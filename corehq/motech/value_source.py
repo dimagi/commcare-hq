@@ -1,3 +1,4 @@
+from functools import singledispatch
 from warnings import warn
 
 import attr
@@ -295,46 +296,58 @@ def get_import_value(value_source, external_data):
     return deserialize(value_source, external_value)
 
 
+@singledispatch
 def get_commcare_value(value_source, case_trigger_info):
+    raise TypeError(
+        f'Unrecognised value source type: {value_source.__class__.__name__}'
+    )
 
-    if hasattr(value_source, "value"):
-        if hasattr(value_source, "value_data_type"):
-            # ConstantValue
-            serializer = (
-                serializers.get((value_source.value_data_type, value_source.commcare_data_type))
-                or serializers.get((None, value_source.commcare_data_type))
-            )
-            return serializer(value_source.value) if serializer else value_source.value
-        else:
-            # ConstantString
-            return value_source.value
 
-    if hasattr(value_source, "form_question"):
-        # FormQuestion or FormQuestionMap
-        return case_trigger_info.form_question_values.get(
-            value_source.form_question
+@get_commcare_value.register(ConstantValue)
+def get_constant_value(value_source, case_trigger_info):
+    serializer = (
+        serializers.get((value_source.value_data_type, value_source.commcare_data_type))
+        or serializers.get((None, value_source.commcare_data_type))
+    )
+    return serializer(value_source.value) if serializer else value_source.value
+
+
+@get_commcare_value.register(ConstantString)
+def get_constant_string(value_source, case_trigger_info):
+    return value_source.value
+
+
+@get_commcare_value.register(FormQuestion)
+def get_form_question_value(value_source, case_trigger_info):
+    return case_trigger_info.form_question_values.get(
+        value_source.form_question
+    )
+
+
+@get_commcare_value.register(CaseProperty)
+def get_case_property_value(value_source, case_trigger_info):
+    if value_source.case_property in case_trigger_info.updates:
+        return case_trigger_info.updates[value_source.case_property]
+    return case_trigger_info.extra_fields.get(value_source.case_property)
+
+
+@get_commcare_value.register(CaseOwnerAncestorLocationField)
+def get_case_owner_ancestor_location_field(value_source, case_trigger_info):
+    location = get_case_location(case_trigger_info)
+    if location:
+        return get_ancestor_location_metadata_value(
+            location, value_source.case_owner_ancestor_location_field
         )
 
-    if hasattr(value_source, "case_property"):
-        # CaseProperty or CasePropertyMap
-        if value_source.case_property in case_trigger_info.updates:
-            return case_trigger_info.updates[value_source.case_property]
-        return case_trigger_info.extra_fields.get(value_source.case_property)
 
-    if hasattr(value_source, "case_owner_ancestor_location_field"):
-        location = get_case_location(case_trigger_info)
-        if location:
-            return get_ancestor_location_metadata_value(
-                location, value_source.case_owner_ancestor_location_field
-            )
-
-    if hasattr(value_source, "form_user_ancestor_location_field"):
-        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
-        location = get_owner_location(case_trigger_info.domain, user_id)
-        if location:
-            return get_ancestor_location_metadata_value(
-                location, value_source.form_user_ancestor_location_field
-            )
+@get_commcare_value.register(FormUserAncestorLocationField)
+def get_form_user_ancestor_location_field(value_source, case_trigger_info):
+    user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+    location = get_owner_location(case_trigger_info.domain, user_id)
+    if location:
+        return get_ancestor_location_metadata_value(
+            location, value_source.form_user_ancestor_location_field
+        )
 
 
 def get_external_value(value_source, external_data):
