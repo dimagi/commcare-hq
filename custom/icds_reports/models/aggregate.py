@@ -501,6 +501,7 @@ class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
+
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
