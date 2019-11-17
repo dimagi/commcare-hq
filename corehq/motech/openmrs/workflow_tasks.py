@@ -176,9 +176,9 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
         location_uuid = (
-            get_ancestor_location_openmrs_uuid(self.info) or
-            get_unknown_location_uuid(self.requests)  # If we don't set
-            # a location, OpenMRS sets it to NULL. That's OK for
+            get_ancestor_location_openmrs_uuid(self.info)
+            or get_unknown_location_uuid(self.requests)  # If we don't
+            # set a location, OpenMRS sets it to NULL. That's OK for
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
             # Location". Use that, if it exists.
         )
@@ -496,9 +496,9 @@ class UpdatePersonNameTask(WorkflowTask):
             property_: get_value(value_source, self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
             if (
-                property_ in NAME_PROPERTIES and
-                value_source.can_export and
-                get_value(value_source, self.info)
+                property_ in NAME_PROPERTIES
+                and value_source.can_export
+                and get_value(value_source, self.info)
             )
         }
         if properties:
@@ -548,9 +548,9 @@ class CreatePersonAddressTask(WorkflowTask):
             property_: get_value(value_source, self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
             if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.can_export and
-                get_value(value_source, self.info)
+                property_ in ADDRESS_PROPERTIES
+                and value_source.can_export
+                and get_value(value_source, self.info)
             )
         }
         if properties:
@@ -587,9 +587,9 @@ class UpdatePersonAddressTask(WorkflowTask):
             property_: get_value(value_source, self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
             if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.can_export and
-                get_value(value_source, self.info)
+                property_ in ADDRESS_PROPERTIES
+                and value_source.can_export
+                and get_value(value_source, self.info)
             )
         }
         if properties:
@@ -632,9 +632,9 @@ class UpdatePersonPropertiesTask(WorkflowTask):
             property_: get_value(value_source, self.info)
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
             if (
-                property_ in PERSON_PROPERTIES and
-                value_source.can_export and
-                get_value(value_source, self.info)
+                property_ in PERSON_PROPERTIES
+                and value_source.can_export
+                and get_value(value_source, self.info)
             )
         }
         if properties:

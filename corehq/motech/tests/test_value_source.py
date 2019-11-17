@@ -228,7 +228,7 @@ class WrapTests(SimpleTestCase):
         self.assertIsInstance(form_question_map, ValueSource)
         self.assertIsInstance(form_question_map, FormQuestionMap)
 
-    def test_wrap_class(self):
+    def test_wrap_no_doc_type(self):
         """
         Wrapping a ValueSource instance should return None.
 
@@ -236,10 +236,14 @@ class WrapTests(SimpleTestCase):
         raises NotImplementedError.
         """
         doc = {
-            "doc_type": "ValueSource"
+            "form_question": "/data/abnormal_temperature",
+            "value_map": {
+                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+            },
         }
         value_source = ValueSource.wrap(doc)
-        self.assertIsNone(value_source)
+        self.assertIsInstance(value_source, ValueSource)
 
     def test_wrap_something_else(self):
         doc = {
