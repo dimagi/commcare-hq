@@ -39,7 +39,7 @@ class SyncPersonAttributesTask(WorkflowTask):
             for attribute in self.attributes
         }
         for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
-            if not value_source.check_direction(DIRECTION_EXPORT):
+            if not value_source.can_export:
                 continue
             value = get_value(value_source, self.info)
             if person_attribute_type in existing_person_attributes:
@@ -84,7 +84,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
-            if not value_source.check_direction(DIRECTION_EXPORT):
+            if not value_source.can_export:
                 continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
                 # Don't try to sync the OpenMRS person UUID; It's not a
@@ -166,7 +166,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         return {
             obs.concept: [get_value(obs.value, self.info)]
             for obs in form_config.openmrs_observations
-            if obs.value.check_direction(DIRECTION_EXPORT) and not is_blank(get_value(obs.value, self.info))
+            if obs.value.can_export and not is_blank(get_value(obs.value, self.info))
         }
 
     def run(self):
@@ -497,7 +497,7 @@ class UpdatePersonNameTask(WorkflowTask):
             for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
             if (
                 property_ in NAME_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, self.info)
             )
         }
@@ -549,7 +549,7 @@ class CreatePersonAddressTask(WorkflowTask):
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
             if (
                 property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, self.info)
             )
         }
@@ -588,7 +588,7 @@ class UpdatePersonAddressTask(WorkflowTask):
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
             if (
                 property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, self.info)
             )
         }
@@ -633,7 +633,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
             if (
                 property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, self.info)
             )
         }

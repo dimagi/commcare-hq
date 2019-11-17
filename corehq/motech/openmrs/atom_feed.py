@@ -246,7 +246,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
         "update": {}
     }
     for prop, (jsonpath, value_source) in property_map.items():
-        if not value_source.check_direction(DIRECTION_IMPORT):
+        if not value_source.can_import:
             continue
         matches = jsonpath.find(patient)
         if matches:

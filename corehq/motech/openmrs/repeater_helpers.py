@@ -200,7 +200,7 @@ def create_patient(requests, info, case_config):
             for property_, value_source in case_config.person_preferred_name.items()
             if (
                 property_ in NAME_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, info)
             )
         }
@@ -211,7 +211,7 @@ def create_patient(requests, info, case_config):
             for property_, value_source in case_config.person_preferred_address.items()
             if (
                 property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, info)
             )
         }
@@ -222,7 +222,7 @@ def create_patient(requests, info, case_config):
             for property_, value_source in case_config.person_properties.items()
             if (
                 property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.can_export and
                 get_value(value_source, info)
             )
         }
@@ -232,7 +232,7 @@ def create_patient(requests, info, case_config):
         for patient_identifier_type, value_source in case_config.patient_identifiers.items():
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and
-                value_source.check_direction(DIRECTION_EXPORT)
+                value_source.can_export
             ):
                 identifier = get_value(value_source, info) or generate_identifier(requests, patient_identifier_type)
                 if identifier:

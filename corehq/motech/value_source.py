@@ -95,22 +95,6 @@ class ValueSource(DocumentSchema):
         else:
             return super(ValueSource, cls).wrap(data)
 
-    def check_direction(self, direction):
-        """
-        Checks whether the ValueSource direction allows the value to be
-        imported or exported.
-
-        >>> value_source = ValueSource(direction=DIRECTION_BOTH)
-        >>> value_source.check_direction(DIRECTION_EXPORT)
-        True
-
-        >>> value_source = ValueSource(direction=DIRECTION_IMPORT)
-        >>> value_source.check_direction(DIRECTION_EXPORT)
-        False
-
-        """
-        return not self.direction or direction == self.direction
-
     @property
     def can_import(self):
         return not self.direction or self.direction == DIRECTION_IMPORT

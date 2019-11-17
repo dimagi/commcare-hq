@@ -135,7 +135,7 @@ class OpenmrsRepeater(CaseRepeater):
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
                 if (
-                    obs_mapping.value.check_direction(DIRECTION_IMPORT)
+                    obs_mapping.value.can_import
                     and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
                 ):
                     # It's possible that an OpenMRS concept appears more
