@@ -95,16 +95,6 @@ class ValueSource(DocumentSchema):
         else:
             return super(ValueSource, cls).wrap(data)
 
-    def serialize(self, value):
-        """
-        Converts the value's CommCare data type or format to its data
-        type or format for the external system, if necessary, otherwise
-        returns the value unchanged.
-        """
-        serializer = (serializers.get((self.commcare_data_type, self.external_data_type)) or
-                      serializers.get((None, self.external_data_type)))
-        return serializer(value) if serializer else value
-
     def deserialize(self, external_value):
         """
         Converts the value's external data type or format to its data
@@ -121,7 +111,7 @@ class ValueSource(DocumentSchema):
         the external system.
         """
         value = get_commcare_value(self, case_trigger_info)
-        return self.serialize(value)
+        return serialize(self, value)
 
     def check_direction(self, direction):
         """
@@ -269,15 +259,6 @@ class CasePropertyMap(CaseProperty):
     #
     value_map = DictProperty()
 
-    def serialize(self, value):
-        # Don't bother serializing. self.value_map does that already.
-        #
-        # Using `.get()` because it's OK if some CommCare answers are
-        # not mapped to OpenMRS concepts, e.g. when only the "yes" value
-        # of a yes-no question in CommCare is mapped to a concept in
-        # OpenMRS.
-        return self.value_map.get(value)
-
     def deserialize(self, external_value):
         reverse_map = {v: k for k, v in self.value_map.items()}
         return reverse_map.get(external_value)
@@ -288,9 +269,6 @@ class FormQuestionMap(FormQuestion):
     Maps form question values to OpenMRS values or concept UUIDs
     """
     value_map = DictProperty()
-
-    def serialize(self, value):
-        return self.value_map.get(value)
 
     def deserialize(self, external_value):
         reverse_map = {v: k for k, v in self.value_map.items()}
@@ -390,6 +368,21 @@ def get_commcare_value(value_source, case_trigger_info):
             return get_ancestor_location_metadata_value(
                 location, value_source.location_field
             )
+
+
+def serialize(value_source, value):
+    """
+    Converts the value's CommCare data type or format to its data
+    type or format for the external system, if necessary, otherwise
+    returns the value unchanged.
+    """
+    if hasattr(value_source, "value_map"):
+        return value_source.value_map.get(value)
+    serializer = (
+        serializers.get((value_source.commcare_data_type, value_source.external_data_type))
+        or serializers.get((None, value_source.external_data_type))
+    )
+    return serializer(value) if serializer else value
 
 
 def get_form_question_values(form_json):

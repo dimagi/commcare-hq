@@ -17,7 +17,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
-from corehq.motech.value_source import get_commcare_value
+from corehq.motech.value_source import get_commcare_value, serialize
 
 
 class SyncPersonAttributesTask(WorkflowTask):
@@ -149,12 +149,12 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                     'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
                 )
             cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
-            # We need to use openmrs_start_datetime.serialize()
-            # for both values because they could be either
+            # We need to serialize both values with the data type of
+            # openmrs_start_datetime because they could be either
             # OpenMRS datetimes or OpenMRS dates, and their data
             # types must match.
-            start_datetime = form_config.openmrs_start_datetime.serialize(cc_start_datetime)
-            stop_datetime = form_config.openmrs_start_datetime.serialize(cc_stop_datetime)
+            start_datetime = serialize(form_config.openmrs_start_datetime, cc_start_datetime)
+            stop_datetime = serialize(form_config.openmrs_start_datetime, cc_stop_datetime)
         else:
             cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
             cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)

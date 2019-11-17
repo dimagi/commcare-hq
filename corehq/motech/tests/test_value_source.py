@@ -22,6 +22,7 @@ from corehq.motech.value_source import (
     ValueSource,
     get_commcare_value,
     get_form_question_values,
+    serialize,
 )
 
 
@@ -177,7 +178,7 @@ class ConstantValueTests(SimpleTestCase):
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
             "external_data_type": COMMCARE_DATA_TYPE_TEXT,
         })
-        self.assertEqual(one.serialize(1), '1')
+        self.assertEqual(serialize(one, 1), '1')
 
     def test_deserialize(self):
         """
