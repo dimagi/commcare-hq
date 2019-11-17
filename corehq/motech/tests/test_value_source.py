@@ -10,6 +10,9 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
+    DIRECTION_BOTH,
+    DIRECTION_EXPORT,
+    DIRECTION_IMPORT,
 )
 from corehq.motech.value_source import (
     CaseProperty,
@@ -22,8 +25,8 @@ from corehq.motech.value_source import (
     ValueSource,
     deserialize,
     get_commcare_value,
-    get_import_value,
     get_form_question_values,
+    get_import_value,
     get_value,
     serialize,
 )
@@ -294,6 +297,30 @@ class CasePropertyConstantValueTests(SimpleTestCase):
         })
         external_value = get_import_value(value_source, json_doc)
         self.assertEqual(external_value, "qux")
+
+
+class DirectionTests(SimpleTestCase):
+
+    def test_direction_in_true(self):
+        value_source = ValueSource(direction=DIRECTION_IMPORT)
+        self.assertTrue(value_source.can_import)
+
+    def test_direction_in_false(self):
+        value_source = ValueSource(direction=DIRECTION_IMPORT)
+        self.assertFalse(value_source.can_export)
+
+    def test_direction_out_true(self):
+        value_source = ValueSource(direction=DIRECTION_EXPORT)
+        self.assertTrue(value_source.can_export)
+
+    def test_direction_out_false(self):
+        value_source = ValueSource(direction=DIRECTION_EXPORT)
+        self.assertFalse(value_source.can_import)
+
+    def test_direction_both_true(self):
+        value_source = ValueSource(direction=DIRECTION_BOTH)
+        self.assertTrue(value_source.can_import)
+        self.assertTrue(value_source.can_export)
 
 
 def test_doctests():
