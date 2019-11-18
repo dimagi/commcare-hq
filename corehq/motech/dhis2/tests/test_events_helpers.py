@@ -40,6 +40,7 @@ class TestDhisHandler(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.user.delete()
         cls.location.delete()
         cls.domain.delete()
         super(TestDhisHandler, cls).tearDownClass()
