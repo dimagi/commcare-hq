@@ -35,8 +35,9 @@ class Command(BaseCommand):
             if model.app_id:
                 if not dry_run:
                     model.save()
-                logger.info("{}: Updated {} to use app id {}".format(log_prefix, model.__class__.__name__,
-                                                                                 model.app_id))
+                logger.info("{}: Updated {} to use app id {}".format(log_prefix,
+                                                                     model.__class__.__name__,
+                                                                     model.app_id))
             else:
                 logger.info("{}: Could not find app".format(log_prefix))
 
