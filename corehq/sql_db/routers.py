@@ -21,7 +21,6 @@ BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
-WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
 AAA_APP = 'aaa'
 
@@ -45,8 +44,8 @@ class MultiDBRouter(object):
             return obj1.db == obj2.db
         elif not obj1_partitioned and not obj2_partitioned:
             app1, app2 = obj1._meta.app_label, obj2._meta.app_label
-            if app1 in (SYNCLOGS_APP, WAREHOUSE_APP):
-                # these apps live in their own databases
+            if app1 == SYNCLOGS_APP:
+                # this app lives in its own database
                 return app1 == app2
             return True
         return False
@@ -69,8 +68,6 @@ def allow_migrate(db, app_label, model_name=None):
         return bool(db_alias and db_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
-    elif app_label == WAREHOUSE_APP:
-        return db == settings.WAREHOUSE_DATABASE_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP and db in (DEFAULT_DB_ALIAS, None)
@@ -100,9 +97,7 @@ def db_for_read_write(model, write=True):
     """
     app_label = model._meta.app_label
 
-    if app_label == WAREHOUSE_APP:
-        return settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == SYNCLOGS_APP:
+    if app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
         return connection_manager.get_django_db_alias(ICDS_UCR_CITUS_ENGINE_ID)

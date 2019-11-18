@@ -331,7 +331,6 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
-    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
@@ -823,7 +822,6 @@ DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
-WAREHOUSE_DATABASE_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines
@@ -1241,11 +1239,6 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': False,
-        },
-        'warehouse': {
-            'handlers': ['console'],
-            'level': 'INFO',
             'propagate': False,
         },
         'session_access_log': {
