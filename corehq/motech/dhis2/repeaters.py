@@ -1,10 +1,10 @@
 import json
-import re
 
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit import BadValueError
 from memoized import memoized
+from packaging.version import InvalidVersion, Version
 from requests import RequestException
 from urllib3.exceptions import HTTPError
 
@@ -23,27 +23,22 @@ from corehq.motech.requests import Requests
 from corehq.toggles import DHIS2_INTEGRATION
 
 
-api_version_re = re.compile(r'^2\.(\d+)(?:\.\d)?$')
-
-
 def is_dhis2_version(value):
     try:
-        if api_version_re.match(value):
+        major, minor, *the_rest = Version(value).release
+        if major == 2:
             return True
-    except TypeError:
+    except (InvalidVersion, TypeError, ValueError):
         pass
-    raise BadValueError(_('Value must be a DHIS2 version in the format "2.xy" '
-                          'or "2.xy.z".'))
+    raise BadValueError(_(
+        'DHIS2 version must be in the format "2.xy" or "2.xy.z".'
+    ))
 
 
 def is_dhis2_version_or_blank(value):
     if value is None or value == "":
         return True
-    try:
-        return is_dhis2_version(value)
-    except BadValueError:
-        raise BadValueError(_('Value must be a DHIS2 version in the format '
-                              '"2.xy" or "2.xy.z", or blank.'))
+    return is_dhis2_version(value)
 
 
 class Dhis2Repeater(FormRepeater):
@@ -91,7 +86,7 @@ class Dhis2Repeater(FormRepeater):
         return json.loads(payload)
 
     @property
-    def api_version(self):
+    def api_version(self) -> int:
         """
         Check API version to determine what calls/schema are supported
         by the remote system.
@@ -99,7 +94,8 @@ class Dhis2Repeater(FormRepeater):
         e.g. Not all CRUD operations are supported before version 15.
         """
         if self.dhis2_version:
-            return api_version_re.match(self.dhis2_version).group(1)
+            major, minor, *the_rest = Version(self.dhis2_version).release
+            return minor
 
     def send_request(self, repeat_record, payload):
         """

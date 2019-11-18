@@ -11,10 +11,10 @@ from corehq.motech.dhis2.repeaters import (
 
 class IsDhis2VersionTests(SimpleTestCase):
 
-    def test_major_version(self):
+    def test_minor_version(self):
         self.assertTrue(is_dhis2_version('2.34'))
 
-    def test_minor_version(self):
+    def test_point_version(self):
         self.assertTrue(is_dhis2_version('2.34.5'))
 
     def test_2(self):
@@ -51,11 +51,11 @@ class ApiVersionTests(SimpleTestCase):
 
     def test_2_xy_z(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34.5"})
-        self.assertEqual(repeater.api_version, "34")
+        self.assertEqual(repeater.api_version, 34)
 
     def test_2_xy(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34"})
-        self.assertEqual(repeater.api_version, "34")
+        self.assertEqual(repeater.api_version, 34)
 
     def test_none(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": None})
