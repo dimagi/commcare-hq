@@ -1,9 +1,11 @@
 import logging
+import numbers
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.translation import ugettext
 
 from lxml.builder import E
 
@@ -407,7 +409,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_column_ids = data_source.get_total_column_ids()
+        total_column_ids = data_source.total_column_ids
         total_cols = {col_id: 0 for col_id in total_column_ids}
 
         def _update_total_row(row):
@@ -424,15 +426,15 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         if data_source.has_total_row:
             total_row = [
                 str(total_cols.get(col_id, ''))
-                for col_id in data_source.get_final_column_ids()
+                for col_id in data_source.final_column_ids
             ]
-            if total_row and total_row[0] is '':
+            if total_row and total_row[0] == '':
                 total_row[0] = ugettext('Total')
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        list(data_source.get_final_column_ids()),
-                        total_row
+                        list(data_source.final_column_ids),
+                        list(map(str, total_row))
                     )
                 ),
                 row_index + 1,
