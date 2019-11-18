@@ -10,10 +10,12 @@ from celery.schedules import crontab
 from celery.task.base import periodic_task
 from dateutil.relativedelta import relativedelta
 
+from couchexport.models import Format
 from dimagi.utils import web
 from soil.util import expose_cached_download
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.util.files import file_extention_from_filename
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0))
@@ -27,9 +29,13 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
             end_date = start_date.replace(day=last_day)
             filename = call_command('get_icds_sms_usage', 'icds-cas', str(start_date), str(end_date))
             with open(filename, 'rb') as f:
-                cached_download = expose_cached_download(f.read(), expiry=24 * 60 * 60, file_extension='xlsx')
-            link = "%s%s" % (web.get_url_base(), reverse('retrieve_download',
-                                                         kwargs={'download_id': cached_download.download_id}))
+                cached_download = expose_cached_download(
+                    f.read(), expiry=24 * 60 * 60, file_extension=file_extention_from_filename(filename),
+                    mimetype=Format.from_format(Format.XLS_2007).mimetype,
+                    content_disposition='attachment; filename="%s"' % filename)
+            link = "%s%s?%s" % (web.get_url_base(),
+                                reverse('retrieve_download', kwargs={'download_id': cached_download.download_id}),
+                                "get_file")
             message = _("""
             Hi,
             Please download the sms report for last month at {link}.
