@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.files import file_extention_from_filename
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0))
+    @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0), queue='sms_queue')
     def send_monthly_sms_report():
         subject = _('Monthy SMS report')
         recipients = ['jschweers@dimagi.com', 'mkangia@dimagi.com', 'ayogi@dimagi.com',
