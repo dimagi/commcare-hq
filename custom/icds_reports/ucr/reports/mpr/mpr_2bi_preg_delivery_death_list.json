@@ -110,9 +110,9 @@
         "column_id": "dead_preg_count",
         "type": "sum_when",
         "aggregation": "sum",
-        "whens": {
-          "female_death_type IS NOT NULL AND age_at_death_yrs >= 11": 1
-        },
+        "whens": [
+          ["female_death_type IS NOT NULL AND age_at_death_yrs >= 11", 1]
+        ],
         "else_": 0,
         "visible": false
       },

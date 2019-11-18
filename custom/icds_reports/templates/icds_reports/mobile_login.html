@@ -3,9 +3,9 @@
 {% block title %}{% trans "Login to ICDS CAS Mobile Dashboard" %}{% endblock title %}
 {% block page_content %}
 {{ block.super }}
-<script type="text/javascript">
+<script>
   document.addEventListener("DOMContentLoaded", function () {
-    var redirectUrl = "{{ redirectUrl }}";
+    var redirectUrl = "{% url 'cas_mobile_dashboard' domain %}";
     window.history.replaceState(null, "", "?next=" + redirectUrl);
   });
 </script>

@@ -407,10 +407,10 @@ class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
     pass
 
 
-class JsonPathConstantValue(ConstantValue, JsonPathMixin):
+class CasePropertyConstantValue(ConstantValue, CaseProperty):
 
-    def _get_external_value(self, external_data):
-        pass  # ConstantValue doesn't use external value
+    def get_import_value(self, external_data):
+        return self.deserialize(None)
 
 
 def get_form_question_values(form_json):
