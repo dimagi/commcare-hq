@@ -52,7 +52,6 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.landing_pages import get_cloudcare_urlname
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
@@ -446,12 +445,6 @@ def confirm_domain(request, guid=''):
         requested_domain = Domain.get_by_name(req.domain)
         view_name = "dashboard_default"
         view_args = [requested_domain.name]
-        if not domain_has_apps(req.domain):
-            if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
-                view_name = "app_from_template"
-                view_args.append("appcues")
-            else:
-                view_name = "default_new_app"
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
