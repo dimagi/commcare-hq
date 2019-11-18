@@ -297,7 +297,7 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
-        default_owner: Optional[CommCareUser] = repeater.get_first_user()
+        default_owner: Optional[CommCareUser] = repeater.first_user
         case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     elif error == LookupErrors.MultipleResults:
         # Multiple cases have been matched to the same patient.
@@ -417,7 +417,7 @@ def create_case(
 
     case_type = repeater.white_listed_case_types[0]
     patient = get_patient_by_uuid(repeater.requests, patient_uuid)
-    default_owner: Optional[CommCareUser] = repeater.get_first_user()
+    default_owner: Optional[CommCareUser] = repeater.first_user
     case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     return case_block
 

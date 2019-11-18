@@ -146,7 +146,7 @@ class OpenmrsRepeater(CaseRepeater):
         return obs_mappings
 
     @cached_property
-    def get_first_user(self):
+    def first_user(self):
         return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
