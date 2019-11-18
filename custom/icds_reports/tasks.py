@@ -24,7 +24,7 @@ from gevent.pool import Pool
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
 
@@ -687,36 +687,69 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
 )
-def recalculate_stagnant_cases():
-    config_ids = [
-        'static-icds-cas-static-ccs_record_cases_monthly_v2',
+def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
         'static-icds-cas-static-child_cases_monthly_v2',
-    ]
-    for config_id in config_ids:
-        _recalculate_stagnant_cases(config_id)
+        force_to_datetime(latest_datetime)
+    )
+
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
 
 
-def _recalculate_stagnant_cases(config_id):
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    queue='background_queue',
+    run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
+    acks_late=True
+)
+def recalculate_stagnant_ccs_record_cases(latest_datetime='1970-01-01'):
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
+        'static-icds-cas-static-ccs_record_cases_monthly_v2',
+        force_to_datetime(latest_datetime)
+    )
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
+
+
+def _recalculate_stagnant_cases(config_id, latest_datetime):
     config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
     adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
-    stagnant_case_ids = _find_stagnant_cases(adapter)
-    num_cases = len(stagnant_case_ids)
+    num_cases = 0
+    last_processed_datetime = latest_datetime
+    for case_id, inserted_at in _find_stagnant_cases(adapter, latest_datetime):
+        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
+        num_cases += 1
+        last_processed_datetime = max(last_processed_datetime, inserted_at)
     adapter.track_load(num_cases)
     celery_task_logger.info(
-        "Found {} stagnant cases in config {}".format(num_cases, config_id)
+        f"Found {num_cases} stagnant cases in config {config_id}"
+        "between {latest_datetime} and {last_processed_datetime}"
     )
-    for case_id in stagnant_case_ids:
-        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
+    return last_processed_datetime
 
 
-def _find_stagnant_cases(adapter):
-    stagnant_date = datetime.utcnow() - timedelta(days=26)
+def _find_stagnant_cases(adapter, latest_datetime):
+    BATCH_SIZE = 10000
     table = adapter.get_table()
-    query = adapter.get_query_object()
-    query = query.with_entities(table.columns.doc_id).filter(
-        table.columns.inserted_at <= stagnant_date
-    ).distinct()
-    return set(query.all())
+    query_object = adapter.get_query_object()
+    return (
+        query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
+            table.c.inserted_at >= latest_datetime
+        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:BATCH_SIZE]
+    )
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
