@@ -20,40 +20,36 @@ class TestDhisHandler(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestDhisHandler, cls).setUpClass()
-
+        super().setUpClass()
         cls.domain = create_domain(DOMAIN)
         location_type = LocationType.objects.create(
-            domain=cls.domain.name,
+            domain=DOMAIN,
             name='test_location_type',
         )
         cls.location = SQLLocation.objects.create(
-            domain=cls.domain.name,
+            domain=DOMAIN,
             name='test location',
             location_id='test_location',
             location_type=location_type,
             metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
-
-        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
-        cls.user.set_location(cls.domain.name, cls.location)
+        cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest')
+        cls.user.set_location(DOMAIN, cls.location)
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.location.delete()
         cls.domain.delete()
-        super(TestDhisHandler, cls).tearDownClass()
+        super().tearDownClass()
 
     def setUp(self):
-        super().setUp()
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
         Dhis2Repeater.set_db(self.fakedb)
 
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
-        super().tearDown()
 
     def test_form_processing(self):
         form = {
@@ -102,7 +98,7 @@ class TestDhisHandler(TestCase):
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
         repeater.save()
         event = get_event(DOMAIN, repeater.dhis2_config.form_configs[0], form)
         self.assertDictEqual(
