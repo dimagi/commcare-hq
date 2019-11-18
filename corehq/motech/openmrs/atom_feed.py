@@ -214,7 +214,7 @@ def get_addpatient_caseblock(
     case_block_kwargs = get_case_block_kwargs(patient, repeater)
     if default_owner:
         case_block_kwargs.setdefault("owner_id", default_owner.user_id)
-    if not case_block_kwargs["owner_id"]:
+    if not case_block_kwargs.get("owner_id"):
         raise ConfigurationError(_(
             f'No users found at location "{repeater.location_id}" to own '
             'patients added from OpenMRS Atom feed.'
