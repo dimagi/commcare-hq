@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.db import migrations, models
 
 from corehq.util.django_migrations import skip_on_fresh_install
