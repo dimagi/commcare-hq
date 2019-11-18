@@ -296,10 +296,6 @@ class ConstantValue(ConstantString):
         # `self.commcare_data_type`.
         pass
 
-    def get_import_value(self, external_data):
-        external_value = self._get_external_value(external_data)
-        return self.deserialize(external_value)
-
 
 class CasePropertyMap(CaseProperty):
     """
