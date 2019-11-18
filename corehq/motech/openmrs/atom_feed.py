@@ -52,7 +52,7 @@ def get_feed_xml(requests, feed_name, page):
     resp = requests.get(feed_url)
     if (
         resp.status_code == 500
-        and 'AtomFeedRuntimeException: feed does not exist' in resp.content
+        and 'AtomFeedRuntimeException: feed does not exist' in resp.text
     ):
         exception = OpenmrsFeedDoesNotExist(
             f'Domain "{requests.domain_name}": Page does not exist in atom '
