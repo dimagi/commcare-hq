@@ -2,23 +2,30 @@ import datetime
 import json
 import logging
 from contextlib import contextmanager
+from unittest import skip
 
 from django.conf import settings
+from django.test import TestCase
 
 import pytz
 from mock import patch
 from nose.tools import assert_raises_regexp
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
     import_patients_with_importer,
+    poll_openmrs_atom_feeds,
 )
+from corehq.motech.repeaters.models import BASIC_AUTH
 
 TEST_DOMAIN = 'test-domain'
 
@@ -350,3 +357,51 @@ class OwnerTests(LocationHierarchyTestCase):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
+
+
+@skip("Skip tests that use live third-party APIs")
+class OpenmrsAtomFeedsTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(TEST_DOMAIN)
+        cls.location_type = LocationType.objects.create(
+            domain=TEST_DOMAIN,
+            name='test_location_type',
+        )
+        cls.location = SQLLocation.objects.create(
+            domain=TEST_DOMAIN,
+            name='test location',
+            location_id='test_location',
+            location_type=cls.location_type,
+        )
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', location=cls.location)
+        cls.repeater = OpenmrsRepeater.wrap({
+            "domain": TEST_DOMAIN,
+            "url": "https://demo.mybahmni.org/openmrs/",
+            "auth_type": BASIC_AUTH,
+            "username": "superman",
+            "password": "Admin123",
+            "white_listed_case_types": ["case"],
+            "location_id": cls.location.location_id,
+            "atom_feed_enabled": True,
+            "openmrs_config": {
+                "openmrs_provider": "",
+                "case_config": {},
+                "form_configs": []
+            }
+        })
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.repeater.delete()
+        cls.user.delete()
+        cls.location.delete()
+        cls.location_type.delete()
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def atom_feed_sanity_test(self):
+        poll_openmrs_atom_feeds(TEST_DOMAIN)
