@@ -5,6 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit import BadValueError
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
@@ -124,6 +126,9 @@ class Dhis2Repeater(FormRepeater):
 
     _has_config = True
 
+    def __str__(self):
+        return Repeater.__str__(self)
+
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__) and
@@ -177,14 +182,19 @@ class Dhis2Repeater(FormRepeater):
             self.username,
             self.plaintext_password,
             verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
-                return send_dhis2_event(
-                    requests,
-                    form_config,
-                    payload,
-                )
+                try:
+                    return send_dhis2_event(
+                        requests,
+                        form_config,
+                        payload,
+                    )
+                except (RequestException, HTTPError) as err:
+                    requests.notify_error(f"Error sending Events to {self}: {err}")
+                    raise
         return True
 
 

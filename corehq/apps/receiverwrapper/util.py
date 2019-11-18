@@ -1,14 +1,12 @@
+import json
 import re
 from collections import namedtuple
 
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 
-from couchdbkit import ResourceNotFound
-
 import couchforms
-from couchforms.models import DefaultAuthContext
-
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -17,6 +15,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
+from couchforms.models import DefaultAuthContext
 
 
 def get_submit_url(domain, app_id=None):
@@ -228,7 +227,7 @@ def _notify_ignored_form_submission(request, user_id):
         URL: {}
         GET Params: {}
         User ID: {}
-    """.format(request.method, request.get_raw_uri(), request.GET, user_id)
+    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), user_id)
     send_mail_async.delay(
         "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
         message,
@@ -254,7 +253,9 @@ def should_ignore_submission(request):
             return False
         else:
             if _submitted_by_demo_user(form_json, request.domain):
-                _notify_ignored_form_submission(request, form_json['meta']['userID'])
+                if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+                    # notify the case where the form would have gotten processed
+                    _notify_ignored_form_submission(request, form_json['meta']['userID'])
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:

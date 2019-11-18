@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -21,7 +22,6 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.change_publishers import publish_ledger_v1_saved
@@ -149,7 +149,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         self.for_domain.clear(self.__class__, self.domain)
 
     @classmethod
-    @quickcache(vary_on=['domain'])
+    @quickcache(vary_on=['domain'], skip_arg=lambda *args: settings.UNIT_TESTING)
     def for_domain(cls, domain):
         result = get_docs_in_domain_by_class(domain, cls)
         try:
@@ -199,13 +199,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
-
-
-@receiver(commcare_domain_pre_delete)
-def clear_commtrack_config_cache(domain, **kwargs):
-    config = CommtrackConfig.for_domain(domain.name)
-    if config:
-        config.delete()
 
 
 def force_int(value):

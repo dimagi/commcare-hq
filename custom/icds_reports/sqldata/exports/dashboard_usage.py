@@ -106,11 +106,11 @@ class DashBoardUsage:
 
     def check_if_date_in_last_week(self, date):
         if date is None:
-            return False
-        d = dateutil.parser.parse(date).strftime("%Y-%m-%d")
-        d = datetime.datetime.strptime(d, "%Y-%m-%d")
+            return 'N/A', False
+        date_formatted = dateutil.parser.parse(date).strftime("%d/%m/%Y, %I:%M %p")
+        d = datetime.datetime.strptime(date_formatted.split(',')[0], "%d/%m/%Y")
         now = datetime.datetime.now()
-        return (now - d).days < 7
+        return date_formatted, (now - d).days < 7
 
     def prepare_is_launched_agg_list(self, location_type=None, location_id=None):
         """
@@ -150,6 +150,10 @@ class DashBoardUsage:
     def get_excel_data(self):
         excel_rows = []
         filters = [['Generated at', india_now()]]
+
+        end_date = datetime.datetime.utcnow()
+        start_date = end_date - datetime.timedelta(days=7)
+
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
                    'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
                    'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
@@ -191,7 +195,9 @@ class DashBoardUsage:
 
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/{}/icds_export_indicator'
                                                                .format(self.domain),
-                                                               username__in=usernames)
+                                                               username__in=usernames,
+                                                               time_of_use__gte=start_date,
+                                                               time_of_use__lt=end_date)
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
                                                                                                   'username')
                            .annotate(count=Count('indicator')).order_by('username', 'indicator'))
@@ -202,10 +208,13 @@ class DashBoardUsage:
                 self.prepare_is_launched_agg_list(user_location.location_type_name, user_location.get_id)
 
             user_counts = defaultdict(int)
-            user_indicators = defaultdict(list)
+            user_indicators = defaultdict(lambda: [0] * 10)
             for record in records:
-                user_counts[record['username']] += record['count']
-                user_indicators[record['username']].append(record['count'])
+                # ignoring the dashboard usage report
+                if int(record['indicator']) < 11:
+                    user_counts[record['username']] += record['count']
+                    # updating the counts as per the index which is the indicator number
+                    user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
             # accumulating the indicator counts
             for user in users:
                 if not dashboard_uname_rx.match(user['username']):
@@ -231,19 +240,20 @@ class DashBoardUsage:
 
                     if user_location_row is not None:
                         if user_location_type == 'state':
-                            user_location_row[3] = 'All'
-                            user_location_row[5] = 'All'
+                            user_location_row[3] = ''
+                            user_location_row[5] = ''
                         if user_location_type == 'district':
-                            user_location_row[5] = 'All'
-                        serial_count += 1
+                            user_location_row[5] = ''
+
+                        last_login, logged_in_last_week = self.check_if_date_in_last_week(user['last_login'])
 
                         excel = [serial_count, user_location_row[1], user_location_row[3],
                                  user_location_row[5], user['username'].split('@')[0], user_location_type,
                                  self.get_role_from_username(user['username']),
                                  self.convert_boolean_to_string(self.agg_list[user_sql_location]),
-                                 user['last_login'],
-                                 self.convert_boolean_to_string(self.check_if_date_in_last_week(
-                                     user['last_login'])), user_counts[user['username']]]
+                                 last_login,
+                                 self.convert_boolean_to_string(logged_in_last_week),
+                                 user_counts[user['username']]]
                         excel.extend(indicator_count)
                         excel_rows.append(excel)
             loop_counter += 1
