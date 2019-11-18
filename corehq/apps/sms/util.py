@@ -1,20 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 import re
 import uuid
-import datetime
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
+
 from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import json_format_datetime
+
+from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
-from django.conf import settings
-from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
-from django.core.exceptions import ValidationError
-from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.modules import to_function
-from django.utils.translation import ugettext as _
-import six
 
 
 class DateFormat(object):
@@ -33,14 +34,14 @@ class DateFormat(object):
 # A project can specify the expected format of answers to date questions
 # in SMS Surveys. These are the available choices.
 ALLOWED_SURVEY_DATE_FORMATS = (
-    DateFormat('YYYYMMDD', '%Y%m%d', '^\d{8}$'),
-    DateFormat('MMDDYYYY', '%m%d%Y', '^\d{8}$'),
-    DateFormat('DDMMYYYY', '%d%m%Y', '^\d{8}$'),
+    DateFormat('YYYYMMDD', '%Y%m%d', r'^\d{8}$'),
+    DateFormat('MMDDYYYY', '%m%d%Y', r'^\d{8}$'),
+    DateFormat('DDMMYYYY', '%d%m%Y', r'^\d{8}$'),
 )
 
 SURVEY_DATE_FORMAT_LOOKUP = {df.human_readable_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
 
-phone_number_plus_re = re.compile("^\+{0,1}\d+$")
+phone_number_plus_re = re.compile(r"^\+{0,1}\d+$")
 
 
 class ContactNotFoundException(Exception):
@@ -52,7 +53,7 @@ def get_date_format(human_readable_format):
 
 
 def strip_plus(phone_number):
-    if (isinstance(phone_number, six.string_types) and len(phone_number) > 0
+    if (isinstance(phone_number, str) and len(phone_number) > 0
             and phone_number[0] == "+"):
         return phone_number[1:]
     else:
@@ -71,8 +72,8 @@ def clean_phone_number(text):
 
 def validate_phone_number(phone_number, error_message=None):
     if (
-        not isinstance(phone_number, six.string_types) or
-        not phone_number_plus_re.match(phone_number)
+        not isinstance(phone_number, str)
+        or not phone_number_plus_re.match(phone_number)
     ):
         error_message = error_message or _("Invalid phone number format.")
         raise ValidationError(error_message)
@@ -315,3 +316,10 @@ def get_or_create_translation_doc(domain):
             tdoc.save()
 
         return tdoc
+
+
+def get_language_list(domain):
+    tdoc = get_or_create_translation_doc(domain)
+    result = set(tdoc.langs)
+    result.discard('*')
+    return list(result)

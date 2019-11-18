@@ -1,21 +1,21 @@
 {% load i18n %}
 
 {% if detail.type == 'case' %}
-<div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
+  <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
     {% if module.module_type == 'shadow' %}
-        {% blocktrans %}
+      {% blocktrans %}
         This menu either doesn't have a source menu or has a source menu that doesn't require a case list.
         Changes made here will have no effect.
-        {% endblocktrans %}
+      {% endblocktrans %}
     {% else %}
-        {% blocktrans %}
+      {% blocktrans %}
         None of the forms in this menu require a case list.
         Changes made here will have no effect until you either:
         <ol>
-            <li>use forms that require a case list, such as forms that update or close a case, or</li>
-            <li>select the <strong>Case List Menu Item</strong> setting.</li>
+          <li>use forms that require a case list, such as forms that update or close a case, or</li>
+          <li>select the <strong>Case List Menu Item</strong> setting.</li>
         </ol>
-        {% endblocktrans %}
+      {% endblocktrans %}
     {% endif %}
-</div>
+  </div>
 {% endif %}

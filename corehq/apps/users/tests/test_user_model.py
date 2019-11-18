@@ -1,12 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
-from django.test import TestCase, SimpleTestCase
+
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta
-from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    run_with_all_backends,
+)
+from corehq.form_processor.utils import (
+    TestFormMetadata,
+    get_simple_wrapped_form,
+)
 from corehq.util.test_utils import softer_assert
 
 

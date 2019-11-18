@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from corehq.apps.locations.dbaccessors import get_users_assigned_to_locations
@@ -52,16 +50,6 @@ def construct_summary(location, status_type, values, cutoff):
     ret["total"] = len(locations)
     ret["not_responding"] = len(locations) - len(statuses)
     return ret
-
-
-def construct_randr_summary(location):
-    now = datetime.utcnow()
-    return construct_summary(
-        location,
-        SupplyPointStatusTypes.R_AND_R_FACILITY,
-        [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
-        get_business_day_of_month_before(now.year, now.month, 5)
-    )
 
 
 def construct_soh_summary(location):

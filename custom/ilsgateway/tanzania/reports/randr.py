@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import partial
 from dateutil import rrule
 from corehq.apps.locations.dbaccessors import get_one_user_at_location

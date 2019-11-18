@@ -1,19 +1,20 @@
-from __future__ import unicode_literals, absolute_import, print_function
 import calendar
-from decimal import Decimal
-import random
 import datetime
+import random
 import uuid
-import mock
+from decimal import Decimal
 
 from django.apps import apps
 from django.conf import settings
 
+import mock
 from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
-from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
+from corehq.apps.accounting.bootstrap.config.testing import (
+    BOOTSTRAP_CONFIG_TESTING,
+)
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -28,8 +29,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
-import six
-from six.moves import range
 
 
 @unit_testing_only
@@ -133,18 +132,15 @@ def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
     commcare_user = CommCareUser.create(domain, username, 'test123')
     commcare_user.is_active = is_active
-    commcare_user.save()
     return commcare_user
 
 
 @unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
-    count = 0
-    for _ in range(0, num_users):
-        count += 1
-        commcare_user = None
-        while commcare_user is None:
-            commcare_user = arbitrary_commcare_user(domain, is_active=is_active)
+    CommCareUser.bulk_save([
+        arbitrary_commcare_user(domain, is_active=is_active)
+        for _ in range(0, num_users)
+    ])
     return num_users
 
 
@@ -171,7 +167,7 @@ class FakeStripeCard(mock.MagicMock):
     @metadata.setter
     def metadata(self, value):
         """Stripe returns everything as JSON. This will do for testing"""
-        self._metadata = {k: str(v) for k, v in six.iteritems(value)}
+        self._metadata = {k: str(v) for k, v in value.items()}
 
     def save(self):
         pass

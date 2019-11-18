@@ -3,27 +3,27 @@
 {% load i18n %}
 
 {% block form_content %}
-    {% if selected_enterprise_plan %}
+  {% if selected_enterprise_plan %}
     <p class="lead">
-        {% blocktrans with edition as e %}
+      {% blocktrans with edition as e %}
         Dimagi handles Enterprise plans on a case-by-case basis. Please submit the following form if you would like
         to sign up for or have questions regarding an Enterprise plan. Our sales team will be in touch shortly.
-        {% endblocktrans %}
+      {% endblocktrans %}
     </p>
-    {% elif on_annual_plan %}
+  {% elif on_annual_plan %}
     <p class="lead">
-        {% blocktrans with edition as e %}
+      {% blocktrans with edition as e %}
         Please submit the following form if you would like to sign up for or have questions regarding your
         annual {{ e }} Plan. Our sales team will be in touch shortly.
-        {% endblocktrans %}
+      {% endblocktrans %}
     </p>
-    {% else %}
+  {% else %}
     <p class="lead">
-        {% blocktrans with edition as e %}
+      {% blocktrans with edition as e %}
         Please submit the following form to request your project space be set up for an annual {{ e }} Plan.
         Our sales team will reach out shortly.
-        {% endblocktrans %}
+      {% endblocktrans %}
     </p>
-    {% endif %}
-    {% crispy annual_plan_contact_form %}
+  {% endif %}
+  {% crispy annual_plan_contact_form %}
 {% endblock %}

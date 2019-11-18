@@ -1,17 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from django.test import SimpleTestCase
 import os
+
+from django.test import SimpleTestCase
 
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 class BuildErrorsTest(SimpleTestCase):
 
     @staticmethod
@@ -22,7 +22,7 @@ class BuildErrorsTest(SimpleTestCase):
             if 'module' in error and 'unique_id' in error['module']:
                 del error['module']['unique_id']
 
-    def test_subcase_errors(self, mock):
+    def test_subcase_errors(self, *args):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json'), encoding='utf-8') as f:
             source = json.load(f)
 
@@ -52,7 +52,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
-    def test_empty_module_errors(self, mock):
+    def test_empty_module_errors(self, *args):
         factory = AppFactory(build_version='2.24.0')
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
@@ -77,7 +77,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(standard_module_error, errors)
         self.assertIn(advanced_module_error, errors)
 
-    def test_parent_cycle_in_app(self, mock):
+    def test_parent_cycle_in_app(self, *args):
         cycle_error = {
             'type': 'parent cycle',
         }
@@ -90,7 +90,7 @@ class BuildErrorsTest(SimpleTestCase):
             self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self, mock):
+    def test_case_tile_configuration_errors(self, *args):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {'en': 'View'}},
@@ -105,7 +105,7 @@ class BuildErrorsTest(SimpleTestCase):
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
 
-    def test_case_list_form_advanced_module_different_case_config(self, mock):
+    def test_case_list_form_advanced_module_different_case_config(self, *args):
         case_tile_error = {
             'type': "all forms in case list module must load the same cases",
             'module': {'id': 1, 'name': {'en': 'update module'}},
@@ -127,7 +127,8 @@ class BuildErrorsTest(SimpleTestCase):
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
 
-    def test_training_module_as_parent(self, mock):
+    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    def test_training_module_as_parent(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
 
@@ -141,7 +142,8 @@ class BuildErrorsTest(SimpleTestCase):
             'module': {'id': 1, 'unique_id': 'child_module', 'name': {'en': 'child module'}}
         }, app.validate_app())
 
-    def test_training_module_as_child(self, mock):
+    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    def test_training_module_as_child(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
 

@@ -1,36 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from itertools import chain
 from operator import eq
 
-from jsonpath_rw import (
-    Child,
-    Fields,
-    Slice,
-    Union,
-    Where,
-    parse as parse_jsonpath,
+from jsonpath_rw import Child, Fields, Slice, Union, Where
+from jsonpath_rw import parse as parse_jsonpath
+
+from casexml.apps.case.models import (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
+)
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringProperty,
 )
 
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 from corehq.motech.value_source import ValueSource
-from dimagi.ext.couchdbkit import (
-    DocumentSchema,
-    ListProperty,
-    SchemaDictProperty,
-    SchemaProperty,
-    StringProperty,
+
+INDEX_RELATIONSHIPS = (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
 )
-
-
-class IdMatcher(DocumentSchema):
-    case_property = StringProperty()
-    identifier_type_id = StringProperty()
-
 
 class OpenmrsCaseConfig(DocumentSchema):
 
@@ -144,7 +140,7 @@ class OpenmrsCaseConfig(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if 'id_matchers' in data:
-            # Convert id_matchers to patient_identifiers. e.g.
+            # Convert legacy id_matchers to patient_identifiers. e.g.
             #     [{'doc_type': 'IdMatcher'
             #       'identifier_type_id': 'e2b966d0-1d5f-11e0-b929-000c29ad1d07',
             #       'case_property': 'nid'}]
@@ -161,22 +157,58 @@ class OpenmrsCaseConfig(DocumentSchema):
             data.pop('id_matchers')
         # Set default data types for known properties
         for property_, value_source in chain(
-            six.iteritems(data.get('person_properties', {})),
-            six.iteritems(data.get('person_preferred_name', {})),
-            six.iteritems(data.get('person_preferred_address', {})),
+            data.get('person_properties', {}).items(),
+            data.get('person_preferred_name', {}).items(),
+            data.get('person_preferred_address', {}).items(),
         ):
             data_type = OPENMRS_PROPERTIES[property_]
             value_source.setdefault('external_data_type', data_type)
         return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
+class IndexedCaseMapping(DocumentSchema):
+    identifier = StringProperty(required=True, default=DEFAULT_PARENT_IDENTIFIER)
+    case_type = StringProperty(required=True)
+    relationship = StringProperty(required=True, choices=INDEX_RELATIONSHIPS,
+                                  default=INDEX_RELATIONSHIP_EXTENSION)
+
+    # Sets case property values of a new extension case or child case.
+    case_properties = SchemaListProperty(ValueSource, required=True)
+
+
 class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
 
+    # Import Observations as case updates from Atom feed. (Case type is
+    # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
+    # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
+    case_property = StringProperty(required=False)
+
+    # Use indexed_case_mapping to create an extension case or a child
+    # case instead of setting a case property. Used for referrals.
+    indexed_case_mapping = SchemaProperty(
+        IndexedCaseMapping, required=False, default=None, exclude_if_none=True
+    )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and other.concept == self.concept
+            and other.value == self.value
+            and other.case_property == self.case_property
+        )
+
 
 class OpenmrsFormConfig(DocumentSchema):
     xmlns = StringProperty()
+
+    # Used to determine the start of a visit and an encounter. The end
+    # of a visit is set to one day (specifically 23:59:59) later. If not
+    # given, the value defaults to when the form was completed according
+    # to the device, /meta/timeEnd.
+    openmrs_start_datetime = SchemaProperty(ValueSource, required=False)
+
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
     openmrs_form = StringProperty()

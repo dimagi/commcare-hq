@@ -1,0 +1,1 @@
+Khlem pynlong VHND ha kine ki AWC ha ki 30 sngi ba lah leit: {{ location_names }}

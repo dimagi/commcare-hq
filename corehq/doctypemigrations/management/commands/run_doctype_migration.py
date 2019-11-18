@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from django.core.management import BaseCommand, CommandError
 from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \
     get_migrator_slugs
-from six.moves import input
 
 USAGE = """You may run either of the following commands
 

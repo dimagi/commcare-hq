@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from celery.task import task
 from django.conf import settings
-from django.core.mail import send_mail, mail_admins
-from corehq.util.log import send_HTML_email
+from django.core.mail import mail_admins, send_mail
+
+from celery.schedules import crontab
+from celery.task import task
+
 from dimagi.utils.logging import notify_exception
-import six
+
+from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.log import send_HTML_email
 
 
 @task(serializer='pickle', queue="email_queue",
@@ -48,12 +50,13 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         )
         self.retry(exc=e)
 
+
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None):
+                          file_attachments=None, bcc=None, smtp_exception_skip_list=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -62,9 +65,10 @@ def send_html_email_async(self, subject, recipient, html_content,
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc)
+                        file_attachments=file_attachments, bcc=bcc,
+                        smtp_exception_skip_list=smtp_exception_skip_list)
     except Exception as e:
-        recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
+        recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
         notify_exception(
             None,
             message="Encountered error while sending email",
@@ -93,3 +97,12 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
             }
         )
         self.retry(exc=e)
+
+
+def get_maintenance_alert_active():
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    return 1 if MaintenanceAlert.get_latest_alert() else 0
+
+
+datadog_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
+                   run_every=crontab(minute=1))

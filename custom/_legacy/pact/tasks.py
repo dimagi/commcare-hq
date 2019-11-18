@@ -1,22 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import traceback
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
-from celery.schedules import crontab
 
-from celery.task import task, periodic_task
+from celery.task import task
 import json
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
-from pact.models import PactPatientCase
 from pact.utils import get_case_id
-import six
 
 
 DOT_RECOMPUTE = True
@@ -60,7 +54,7 @@ def eval_dots_block(xform_json, callback=None):
             #update is a dict
             if 'dots' in xform_json['form']['case']['update']:
                 dots_json = xform_json['form']['case']['update']['dots']
-                if isinstance(dots_json, str) or isinstance(dots_json, six.text_type):
+                if isinstance(dots_json, str) or isinstance(dots_json, str):
                     json_data = json.loads(dots_json)
                     xform_json[PACT_DOTS_DATA_PROPERTY]['dots'] = json_data
                 do_continue=True
@@ -74,19 +68,6 @@ def eval_dots_block(xform_json, callback=None):
         #if this gets triggered, that's ok because web entry don't got them
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
-
-
-@periodic_task(serializer='pickle', run_every=crontab(hour="12", minute="0", day_of_week="*"))
-def update_schedule_case_properties():
-    """
-    Iterate through all pact patient cases in the domain and set schedule case properties if necessary.
-    """
-    case_ids = get_case_ids_in_domain('pact', 'cc_path_client')
-    # this is intentionally not user iter_docs since pact cases are *huge* and we want to use
-    # get_lite and only load one at a time.
-    for case_id in case_ids:
-        case = PactPatientCase.get_lite(case_id)
-        set_schedule_case_properties(case)
 
 
 def set_schedule_case_properties(pact_case):

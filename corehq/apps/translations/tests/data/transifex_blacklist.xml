@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Survey 2</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/5E654925-C1FA-4D1A-A172-E21BA89F01AC" uiVersion="1" version="1" name="Survey 2">
+					<information />
+					<sample_text_question vellum:comment="[SKIP TRANSIFEX]" />
+					<validation_message />
+					<sample_choice_question vellum:comment="[SKIP TRANSIFEX]" />
+					<test_choice_with_same_label_itext />
+					<sample_number_question />
+				</data>
+			</instance>
+			<bind vellum:nodeset="#form/information" nodeset="/data/information" />
+			<bind vellum:nodeset="#form/sample_text_question" nodeset="/data/sample_text_question" type="xsd:string" constraint="false()" jr:constraintMsg="jr:itext('sample_text_question-constraintMsg')" />
+			<bind vellum:nodeset="#form/validation_message" nodeset="/data/validation_message" type="xsd:string" constraint="true()" jr:constraintMsg="jr:itext('validation_message-constraintMsg')" />
+			<bind vellum:nodeset="#form/sample_choice_question" nodeset="/data/sample_choice_question" />
+			<bind vellum:nodeset="#form/test_choice_with_same_label_itext" nodeset="/data/test_choice_with_same_label_itext" />
+			<bind vellum:nodeset="#form/sample_number_question" nodeset="/data/sample_number_question" type="xsd:int" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="information-label">
+						<value>Sample text</value>
+					</text>
+					<text id="information-hint">
+						<value>hint text</value>
+					</text>
+					<text id="information-help">
+						<value>help text</value>
+					</text>
+					<text id="sample_text_question-label">
+						<value>no validation message</value>
+					</text>
+					<text id="sample_text_question-constraintMsg">
+						<value>test validation message doesn't show up</value>
+					</text>
+					<text id="validation_message-label">
+						<value>validation message</value>
+					</text>
+					<text id="validation_message-constraintMsg">
+						<value>this should show up</value>
+					</text>
+					<text id="sample_choice_question-label">
+						<value>Sample Choice Question</value>
+					</text>
+					<text id="sample_choice_question-hint">
+						<value>removed hint text</value>
+					</text>
+					<text id="sample_choice_question-help">
+						<value>removed help text</value>
+					</text>
+					<text id="sample_choice_question-choice1-label">
+						<value>Choice 1</value>
+					</text>
+					<text id="sample_choice_question-choice2-label">
+						<value>Choice 2</value>
+					</text>
+					<text id="sample_choice_question-choice3-label">
+						<value>Choice 3</value>
+					</text>
+					<text id="test_choice_with_same_label_itext-label">
+						<value>test choice with same label itext</value>
+					</text>
+					<text id="sample_number_question-label">
+						<value>Sample Number Question</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<trigger vellum:ref="#form/information" ref="/data/information" appearance="minimal">
+			<label ref="jr:itext('information-label')" />
+			<hint ref="jr:itext('information-hint')" />
+			<help ref="jr:itext('information-help')" />
+		</trigger>
+		<input vellum:ref="#form/sample_text_question" ref="/data/sample_text_question">
+			<label ref="jr:itext('sample_text_question-label')" />
+			<alert ref="jr:itext('sample_text_question-constraintMsg')" />
+		</input>
+		<input vellum:ref="#form/validation_message" ref="/data/validation_message">
+			<label ref="jr:itext('validation_message-label')" />
+			<alert ref="jr:itext('validation_message-constraintMsg')" />
+		</input>
+		<select1 vellum:ref="#form/sample_choice_question" ref="/data/sample_choice_question">
+			<label ref="jr:itext('sample_choice_question-label')" />
+			<hint ref="jr:itext('sample_choice_question-hint')" />
+			<help ref="jr:itext('sample_choice_question-help')" />
+			<item>
+				<label ref="jr:itext('sample_choice_question-choice1-label')" />
+				<value>choice1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('sample_choice_question-choice2-label')" />
+				<value>choice2</value>
+			</item>
+			<item>
+				<label ref="jr:itext('sample_choice_question-choice3-label')" />
+				<value>choice3</value>
+			</item>
+		</select1>
+		<select1 vellum:ref="#form/test_choice_with_same_label_itext" ref="/data/test_choice_with_same_label_itext">
+			<label ref="jr:itext('test_choice_with_same_label_itext-label')" />
+			<item>
+				<label ref="jr:itext('sample_choice_question-choice3-label')" />
+				<value>choice3</value>
+			</item>
+		</select1>
+		<input vellum:ref="#form/sample_number_question" ref="/data/sample_number_question">
+			<label ref="jr:itext('sample_number_question-label')" />
+		</input>
+	</h:body>
+</h:html>

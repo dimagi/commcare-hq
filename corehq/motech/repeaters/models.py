@@ -1,40 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
+import re
 import warnings
 from datetime import datetime, timedelta
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-import six
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
+
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import Timeout, ConnectionError
+from requests.exceptions import ConnectionError, Timeout
 
-from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.motech.const import ALGO_AES
-from corehq.motech.repeaters.repeater_generators import (
-    FormRepeaterXMLPayloadGenerator,
-    FormRepeaterJsonPayloadGenerator,
-    CaseRepeaterXMLPayloadGenerator,
-    CaseRepeaterJsonPayloadGenerator,
-    ShortFormRepeaterJsonPayloadGenerator,
-    AppStructureGenerator,
-    UserPayloadGenerator,
-    LocationPayloadGenerator,
-)
-from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
-from corehq.util.quickcache import quickcache
+from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -46,23 +22,50 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post, perform_SOAP_operation
+from dimagi.utils.post import simple_post
+
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.motech.const import ALGO_AES
+from corehq.motech.repeaters.repeater_generators import (
+    AppStructureGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    LocationPayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    UserPayloadGenerator,
+)
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.metrics import (
+    REPEATER_ERROR_COUNT,
+    REPEATER_SUCCESS_COUNT,
+)
+from corehq.util.quickcache import quickcache
+
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
+    RECORD_CANCELLED_STATE,
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
-    get_pending_repeat_record_count,
+    get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
+    get_pending_repeat_record_count,
     get_success_repeat_record_count,
-    get_cancelled_repeat_record_count
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
@@ -94,7 +97,7 @@ DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 
 
-class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
@@ -109,14 +112,18 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     username = StringProperty()
     password = StringProperty()
     skip_cert_verify = BooleanProperty(default=False)
+    notify_addresses_str = StringProperty(default="")
+
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        return None
+    _has_config = False
+
+    def __str__(self):
+        url = "@".join((self.username, self.url)) if self.username else self.url
+        return f"<{self.__class__.__name__} {self._id} {url}>"
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -174,6 +181,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             payload_id=payload.get_id
         )
         repeat_record.save()
+        if next_check is None:
+            repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -250,6 +259,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.paused = False
         self.save()
 
     def pause(self):
@@ -291,6 +301,10 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def verify(self):
         return not self.skip_cert_verify
 
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
     def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
@@ -318,7 +332,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
-        elif 200 <= result.status_code < 300:
+        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
@@ -372,14 +386,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(six.moves.urllib.parse.urlparse(url))
-            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
+            url_parts = list(urlparse(url))
+            query = parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return six.moves.urllib.parse.urlunparse(url_parts)
+            url_parts[4] = urlencode(query)
+            return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
@@ -388,7 +402,7 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding forms to: %s" % self.url
 
 
@@ -436,7 +450,7 @@ class CaseRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding cases to: %s" % self.url
 
 
@@ -461,13 +475,6 @@ class UpdateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
-
-
-class SOAPRepeaterMixin(Repeater):
-    operation = StringProperty()
-
-    def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
 
 
 class ShortFormRepeater(Repeater):
@@ -495,7 +502,7 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding short form to: %s" % self.url
 
 
@@ -517,7 +524,7 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding users to: %s" % self.url
 
 
@@ -530,7 +537,7 @@ class LocationRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding locations to: %s" % self.url
 
 
@@ -560,7 +567,7 @@ class RepeatRecord(Document):
     payload_id = StringProperty()
 
     overall_tries = IntegerProperty(default=0)
-    max_possible_tries = IntegerProperty(default=3)
+    max_possible_tries = IntegerProperty(default=5)
 
     attempts = ListProperty(RepeatRecordAttempt)
 
@@ -661,16 +668,17 @@ class RepeatRecord(Document):
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
+        now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:
-            window = self.next_check - self.last_checked
-            window += (window // 2)  # window *= 1.5
+            window = now - self.last_checked
+            window *= 3
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
+        # Retries will typically be after 1h, 3h, 9h, 27h, 81h -- 5d 3h total
 
-        now = datetime.utcnow()
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
@@ -696,7 +704,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=six.text_type(exception),
+            failure_reason=str(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -721,23 +729,35 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
+        if not _is_response(response):
+            return None
+        response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, getattr(response, 'content', None))
+            response.status_code, response.reason, response_body)
 
     def handle_success(self, response):
-        """Do something with the response if the repeater succeeds
+        """
+        Log success in Datadog and return a success RepeatRecordAttempt.
+
+        ``response`` can be a Requests response instance, or True if the
+        payload did not result in an API call.
         """
         now = datetime.utcnow()
-        log_repeater_success_in_datadog(
-            self.domain,
-            response.status_code if response else None,
-            self.repeater_type
-        )
+        if _is_response(response):
+            # ^^^ Don't bother logging success in Datadog if the payload
+            # did not need to be sent. (This can happen with DHIS2 if
+            # the form that triggered the forwarder doesn't contain data
+            # for a DHIS2 Event.)
+            log_repeater_success_in_datadog(
+                self.domain,
+                response.status_code,
+                self.repeater_type
+            )
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response) if response else None,
+            success_response=self._format_response(response),
             next_check=None,
             succeeded=True,
             info=self.get_attempt_info(),
@@ -751,7 +771,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(six.text_type(exception), None)
+        return self._make_failure_attempt(str(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,
@@ -775,6 +795,33 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
+    def attempt_forward_now(self):
+        from corehq.motech.repeaters.tasks import process_repeat_record
+
+        def is_ready():
+            return self.next_check < datetime.utcnow()
+
+        def already_processed():
+            return self.succeeded or self.cancelled or self.next_check is None
+
+        if already_processed() or not is_ready():
+            return
+
+        # Set the next check to happen an arbitrarily long time from now so
+        # if something goes horribly wrong with the delayed task it will not
+        # be lost forever. A check at this time is expected to occur rarely,
+        # if ever, because `process_repeat_record` will usually succeed or
+        # reset the next check to sometime sooner.
+        self.next_check = datetime.utcnow() + timedelta(hours=48)
+        try:
+            self.save()
+        except ResourceConflict:
+            # Another process beat us to the punch. This takes advantage
+            # of Couch DB's optimistic locking, which prevents a process
+            # with stale data from overwriting the work of another.
+            return
+        process_repeat_record.delay(self)
+
     def requeue(self):
         self.cancelled = False
         self.succeeded = False
@@ -783,6 +830,14 @@ class RepeatRecord(Document):
         self.next_check = datetime.utcnow()
 
 
+def _is_response(duck):
+    """
+    Returns True if ``duck`` has the attributes of a Requests response
+    instance that this module uses, otherwise False.
+    """
+    return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals
+from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

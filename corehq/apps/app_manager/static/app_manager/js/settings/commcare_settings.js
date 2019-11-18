@@ -172,6 +172,13 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
 
                 }
             });
+            setting.inheritanceMessage = ko.computed(function () {
+                if (setting.is_inherited) {
+                    return gettext("This value is currently inherited from the master app. " +
+                        "Once this page is saved, it will no longer be inherited.");
+                }
+                return '';
+            });
             setting.computeDefault = ko.computed(function () {
                 var i, condition, _case;
                 for (i = 0; i < setting.contingent_default.length; i += 1) {
@@ -210,6 +217,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         (setting.permission && !self.permissions[setting.permission])
                 );
             });
+
+            setting.showUpgradeText = ko.computed(function () {
+                return setting.permission && !self.permissions[setting.permission] && setting.upgrade_plan;
+            });
+
             setting.disabledButHasValue = ko.computed(function () {
                 return setting.disabled && setting.visibleValue() !== setting['default'];
             });
@@ -394,6 +406,12 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     value ? self.values[0] : self.values[1]
                 );
             },
+        });
+        self.showDisabledCheckbox = ko.computed(function () {
+            return self.showUpgradeText() && !self.boolValue();
+        });
+        self.showUncheckWarning = ko.computed(function () {
+            return self.showUpgradeText() && self.boolValue();
         });
     };
 

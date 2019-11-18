@@ -1,0 +1,71 @@
+{
+  "domains": [
+    "ccqa",
+    "ccqa-downstream"
+  ],
+  "server_environment": [
+    "localdev",
+    "production",
+    "staging",
+    "india"
+  ],
+  "report_id": "patients",
+  "data_source_table": "patients",
+  "config": {
+    "title": "Patients",
+    "description": "Example static UCR for testing, operates on 'patient' cases",
+    "visible": true,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
+        "datatype": "date"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Name",
+        "column_id": "name",
+        "type": "field",
+        "field": "name",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Date of Birth",
+        "column_id": "dob",
+        "type": "field",
+        "field": "dob",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Favorite Color",
+        "column_id": "favorite_color",
+        "type": "field",
+        "field": "favorite_color",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Date Opened",
+        "column_id": "opened_on",
+        "type": "field",
+        "field": "opened_on",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Date Closed",
+        "column_id": "closed_on",
+        "type": "field",
+        "field": "closed_on",
+        "aggregation": "simple"
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  },
+  "doc_type": "ReportConfiguration"
+}

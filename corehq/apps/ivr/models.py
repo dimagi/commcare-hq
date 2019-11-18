@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.apps.sms.mixin import UnrecognizedBackendException
-from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
 from django.db import models
+
+from corehq.apps.sms.mixin import UnrecognizedBackendException
+from corehq.apps.sms.models import OUTGOING, Log, SQLMobileBackend
+from corehq.util.mixin import UUIDGeneratorMixin
 
 
 class SQLIVRBackend(SQLMobileBackend):
@@ -74,6 +73,7 @@ class Call(UUIDGeneratorMixin, Log):
     case_for_case_submission = models.NullBooleanField(default=False)
 
     # The form unique id of the form that plays the survey for the call
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
 
     class Meta(object):

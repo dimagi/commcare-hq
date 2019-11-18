@@ -1,15 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
-from sqlalchemy import func, distinct
-from sqlalchemy.sql import operators, and_, or_, label, select
+from sqlalchemy import distinct, func
+from sqlalchemy.sql import and_, label, operators, or_, select
 
 from corehq.apps.callcenter.const import *
 
 
-class BaseQuery(six.with_metaclass(ABCMeta)):
+class BaseQuery(metaclass=ABCMeta):
     @abstractproperty
     def sql_adapter(self):
         raise NotImplementedError
@@ -20,7 +17,9 @@ class BaseQuery(six.with_metaclass(ABCMeta)):
 
     def _run_query(self, query):
         with self.sql_adapter.session_helper.session_context() as session:
-            return list(session.execute(query))
+            data = list(session.execute(query))
+            self.sql_adapter.track_load(len(data))
+            return data
 
 
 class CaseQuery(BaseQuery):

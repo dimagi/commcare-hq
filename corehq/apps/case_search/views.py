@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import re
 
 from django.http import Http404
 from django.views.generic import TemplateView
+
+from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import (
     CaseSearchQueryAddition,
@@ -16,7 +15,6 @@ from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.util.view_utils import BadRequest, json_error
-from dimagi.utils.web import json_response
 
 
 class CaseSearchView(DomainViewMixin, TemplateView):

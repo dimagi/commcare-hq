@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import uuid
 
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -12,7 +9,7 @@ from corehq.util import reverse
 
 
 def _get_auth_header(username, password):
-    return 'Basic ' + base64.b64encode('{}:{}'.format(username, password))
+    return 'Basic ' + base64.b64encode('{}:{}'.format(username, password).encode('utf-8')).decode('utf-8')
 
 
 class UserCheckSyncTests(TestCase):

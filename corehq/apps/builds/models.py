@@ -1,18 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+from distutils.version import StrictVersion
+from itertools import groupby
 from zipfile import ZipFile
-from couchdbkit.exceptions import ResourceNotFound, BadValueError
-from corehq.apps.app_manager.const import APP_V2
+
+from couchdbkit.exceptions import BadValueError, ResourceNotFound
+
 from dimagi.ext.couchdbkit import *
+
+from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
-from itertools import groupby
-from distutils.version import StrictVersion
 
 
 class SemanticVersionProperty(StringProperty):
@@ -63,7 +64,11 @@ class CommCareBuild(BlobMixin, Document):
     def fetch_file(self, path, filename=None):
         if filename:
             path = '/'.join([path, filename])
-        return self.fetch_attachment(path)
+        attachment = self.fetch_attachment(path)
+        try:
+            return attachment.decode('utf-8')
+        except UnicodeDecodeError:
+            return attachment
 
     def get_jadjar(self, path, use_j2me_endpoint):
         """
@@ -73,7 +78,7 @@ class CommCareBuild(BlobMixin, Document):
             jad = self.fetch_file(path, "CommCare.jad")
         except ResourceNotFound:
             jad = None
-            
+
         return JadJar(
             jad=jad,
             jar=self.fetch_file(path, "CommCare.jar"),
@@ -282,7 +287,6 @@ class CommCareBuildConfig(Document):
 
     @classmethod
     @quickcache([], timeout=5 * 60)
-    #This seems to be not working.
     def j2me_enabled_configs(cls):
         return [build for build in cls.fetch().menu if build.j2me_enabled]
 
@@ -293,6 +297,7 @@ class CommCareBuildConfig(Document):
     @classmethod
     def latest_j2me_enabled_config(cls):
         return cls.j2me_enabled_configs()[-1]
+
 
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)

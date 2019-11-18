@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from datetime import datetime, timedelta, tzinfo
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -67,9 +63,9 @@ def parse_full_timestamp(pattern, p, frac, tz):
 
 
 DATE_REGEXP = [
-    (re.compile('(?P<p>\d{4}-\d{2}-\d{2})$'), parse_iso_date),
-    (re.compile('(?P<p>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?P<frac>\.\d+)?(?P<tz>Z|[+-]\d{2,4})?$'), parse_iso_timestamp),
-    (re.compile('\w{3} (?P<p>\w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2}) (GMT|UTC)?(?P<tz>[+-]\d{4})'), parse_js_timestamp),
+    (re.compile(r'(?P<p>\d{4}-\d{2}-\d{2})$'), parse_iso_date),
+    (re.compile(r'(?P<p>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?P<frac>\.\d+)?(?P<tz>Z|[+-]\d{2,4})?$'), parse_iso_timestamp),
+    (re.compile(r'\w{3} (?P<p>\w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2}) (GMT|UTC)?(?P<tz>[+-]\d{4})'), parse_js_timestamp),
 ]
 
 

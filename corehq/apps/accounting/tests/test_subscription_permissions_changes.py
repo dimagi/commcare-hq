@@ -1,21 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 
-from django_prbac.models import Role, Grant
+from django_prbac.models import Grant, Role
 
 from corehq import privileges
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
-    SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
-    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    ProBonoStatus,
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwarePlanVisibility,
+    Subscription,
+    SubscriptionType,
+)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.models import DataSourceConfiguration, \
-    ReportConfiguration, ReportMeta, get_datasource_config
-from io import open
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+    ReportMeta,
+    get_datasource_config,
+)
 
 
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):

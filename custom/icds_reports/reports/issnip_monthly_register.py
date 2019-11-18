@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly, ChildHealthMonthly, AggCcsRecordMonthly
@@ -12,9 +8,8 @@ from django.utils.functional import cached_property
 from custom.icds_reports.sqldata.awc_infrastructure import AWCInfrastructureUCR
 from custom.icds_reports.sqldata.vhnd_form import VHNDFormUCR
 from custom.icds_reports.utils import stunting_moderate_column, stunting_severe_column, wasting_moderate_column, \
-    wasting_severe_column
+    wasting_severe_column, DATA_NOT_ENTERED
 
-DATA_NOT_ENTERED = "Data Not Entered"
 AWC_LOCATION_LEVEL = 5
 
 

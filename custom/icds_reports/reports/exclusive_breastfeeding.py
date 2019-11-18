@@ -1,24 +1,20 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import exclusive_breastfeeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number, get_child_locations
+    indian_formatted_number
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -83,7 +79,7 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -129,11 +125,16 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
         data_for_month['all'] += eligible
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': value
+        }
+        for key, value in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -144,7 +145,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
@@ -152,14 +153,14 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -185,13 +186,9 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -200,7 +197,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
             'all': valid or 0
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         in_month = row['in_month']
@@ -209,10 +206,6 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
@@ -10,7 +7,11 @@ from django.views.generic import FormView
 
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
-from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
+from casexml.apps.phone.xml import (
+    get_case_element,
+    get_registration_element_for_case,
+)
+
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -51,9 +52,9 @@ class MigrationView(BaseMigrationView, FormView):
 
 
 def get_case_hierarchy_for_restore(case):
-    from corehq.apps.reports.view_helpers import get_children
+    from corehq.apps.reports.view_helpers import get_case_hierarchy
     return [
-        c for c in get_children(case)['case_list']
+        c for c in get_case_hierarchy(case, {})['case_list']
         if not c.closed
     ]
 

@@ -1,44 +1,43 @@
 {% load i18n %}
 
 <div style="margin-bottom: 10px">
-    <a href="{% url 'new_subscription' account.id %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
-        <i class="fa fa-plus"></i>
-        Add New Subscription
-    </a>
+  <a href="{% url 'new_subscription' account.id %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+    <i class="fa fa-plus"></i>
+    Add New Subscription
+  </a>
 </div>
 
 <div>
-    <table class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>{% trans "Project Space" %}</th>
-                <th>{% trans "Software Plan" %}</th>
-                <th>{% trans "Start Date" %}</th>
-                <th>{% trans "End Date" %}</th>
-                <th>{% trans "Currently Active" %}</th>
-                <th>{% trans "Salesforce Contract ID" %}</th>
-                <th>{% trans "Last Invoice Due Date" %}</th>
-                <th>{% trans "Delay Invoicing Until" %}</th>
-                <th>{% trans "Do Not Invoice" %}</th>
-                <th>{% trans '"Do Not Invoice" Reason' %}</th>
-                <th>{% trans "Edit" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for subscription, last_due_date in subscription_list %}
-                <tr>
-                    <td>{{ subscription.subscriber.domain }}</td>
-                    <td>{{ subscription.plan_version.plan.name }}</td>
-                    <td>{{ subscription.date_start }}</td>
-                    <td>{{ subscription.date_end }}</td>
-                    <td>{{ subscription.is_active }}</td>
-                    <td>{{ subscription.salesforce_contract_id }}</td>
-                    <td>{{ last_due_date }}</td>
-                    <td>{{ subscription.do_not_invoice }}</td>
-                    <td>{{ subscription.no_invoice_reason }}</td>
-                    <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn btn-default">Edit</a></td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <table class="table table-striped table-bordered">
+    <thead>
+    <tr>
+      <th>{% trans "Project Space" %}</th>
+      <th>{% trans "Software Plan" %}</th>
+      <th>{% trans "Start Date" %}</th>
+      <th>{% trans "End Date" %}</th>
+      <th>{% trans "Currently Active" %}</th>
+      <th>{% trans "Salesforce Contract ID" %}</th>
+      <th>{% trans "Last Invoice Due Date" %}</th>
+      <th>{% trans "Do Not Invoice" %}</th>
+      <th>{% trans '"Do Not Invoice" Reason' %}</th>
+      <th>{% trans "Edit" %}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for subscription, last_due_date in subscription_list %}
+      <tr>
+        <td>{{ subscription.subscriber.domain }}</td>
+        <td>{{ subscription.plan_version.plan.name }}</td>
+        <td>{{ subscription.date_start }}</td>
+        <td>{{ subscription.date_end }}</td>
+        <td>{{ subscription.is_active }}</td>
+        <td>{{ subscription.salesforce_contract_id }}</td>
+        <td>{{ last_due_date }}</td>
+        <td>{{ subscription.do_not_invoice }}</td>
+        <td>{{ subscription.no_invoice_reason }}</td>
+        <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn btn-default">Edit</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 </div>

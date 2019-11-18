@@ -1,11 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from memoized import Memoized
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+
 import mock
+from memoized import Memoized
+
 from corehq.apps.export.views.utils import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions, WebUser, UserRole, DomainMembership
+from corehq.apps.users.models import (
+    DomainMembership,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION
 
 
@@ -14,6 +19,8 @@ class PermissionsTest(TestCase):
     def test_OR(self):
         p1 = Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1'],
         )
@@ -22,12 +29,14 @@ class PermissionsTest(TestCase):
             view_reports=True,
             view_report_list=['report2'],
         )
-        self.assertEqual(dict(p1 | p2), dict(Permissions(
+        self.assertEqual(p1 | p2, Permissions(
             edit_apps=True,
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1', 'report2'],
-        )))
+        ))
 
 
 @mock.patch('corehq.apps.export.views.utils.domain_has_privilege',

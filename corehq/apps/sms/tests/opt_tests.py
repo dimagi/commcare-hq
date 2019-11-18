@@ -1,15 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import TestCase
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming, send_sms_to_verified_number
 from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
-from corehq.apps.sms.models import PhoneBlacklist, SMS, PhoneNumber
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
-from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
-from django.test import TestCase
+from corehq.apps.sms.models import SMS, PhoneBlacklist, PhoneNumber
+from corehq.apps.sms.tests.util import (
+    delete_domain_phone_numbers,
+    setup_default_sms_test_backend,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    run_with_all_backends,
+)
 
 
 class OptTestCase(DomainSubscriptionMixin, TestCase):
@@ -32,6 +38,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         FormProcessorTestUtils.delete_all_cases(cls.domain)
         cls.teardown_subscription()
         cls.domain_obj.delete()
+        clear_plan_version_cache()
         super(OptTestCase, cls).tearDownClass()
 
     def tearDown(self):

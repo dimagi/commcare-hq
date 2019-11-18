@@ -1,10 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.analytics import update_analytics_indexes, get_count_of_active_commcare_users_in_domain, \
-    get_count_of_inactive_commcare_users_in_domain, get_active_commcare_users_in_domain, \
-    get_inactive_commcare_users_in_domain
+from corehq.apps.users.analytics import (
+    get_active_commcare_users_in_domain,
+    get_count_of_active_commcare_users_in_domain,
+    get_count_of_inactive_commcare_users_in_domain,
+    get_inactive_commcare_users_in_domain,
+    update_analytics_indexes,
+)
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 

@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
-import six
 from django.core.cache import cache
 
 
@@ -13,7 +10,7 @@ class ExponentialCache(object):
 
     @classmethod
     def _get_cache_key(cls, key):
-        if isinstance(key, six.text_type):
+        if isinstance(key, str):
             key = key.encode('utf-8')
         key_hash = hashlib.md5(key).hexdigest() if key else ''
         return 'django-exp-backoff.{}'.format(key_hash)

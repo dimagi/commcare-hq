@@ -62,6 +62,7 @@
     - properties.cc-fuzzy-search-enabled
     - properties.logo_android_home
     - properties.logo_android_login
+    - properties.logo_android_demo
     - hq.auto_gps_capture
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled

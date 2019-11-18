@@ -1,13 +1,10 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
     'knockout',
-    'DOMPurify/dist/purify.min',
     'jquery-ui/ui/sortable',
-    'select2/dist/js/select2.full.min',
 ], function (
     $,
-    ko,
-    DOMPurify
+    ko
 ) {
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
@@ -43,29 +40,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         },
     };
 
-    ko.bindingHandlers.staticChecked = {
-        init: function (element) {
-            $('<span class="icon"></span>').appendTo(element);
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor());
-            var span = $('span', element);
-            var allBindings = allBindingsAccessor();
-            var DEFAULT_ICON = 'fa fa-check';
-            var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || DEFAULT_ICON,
-                iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
-
-            if (value) {
-                span.removeClass(iconFalse).addClass(iconTrue);
-            } else {
-                span.removeClass(iconTrue).addClass(iconFalse);
-            }
-        },
-    };
-
     ko.bindingHandlers.langcode = {
         init: function (element, valueAccessor, allBindings) {
-            ko.bindingHandlers.value.init(element, valueAccessor, (function () {
+            var originalValue = ko.utils.unwrapObservable(valueAccessor());
+            ko.bindingHandlers.value.init(element, valueAccessor, function () {
                 var valueUpdate = allBindings.get('valueUpdate') || [];
                 if (typeof valueUpdate === 'string') {
                     valueUpdate = [valueUpdate];
@@ -88,8 +66,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                         }
                     },
                 };
-            }()));
-            $(element).langcodes();
+            }());
+            $(element).langcodes(originalValue);
         },
         update: ko.bindingHandlers.value.update,
     };
@@ -362,7 +340,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).addClass('modal fade').modal({
                 show: false,
-                backdrop: false,
             });
             //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
@@ -503,117 +480,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             return ko.bindingHandlers.value.update(element, valueAccessor);
         },
     };
-
-    /**
-     * Converts the bound element to a select2 widget. The value of the binding is
-     * a list of strings, or a list of objects with the keys 'id' and 'text' used
-     * for the select2's options.
-     */
-    ko.bindingHandlers.select2 = new function () {
-        var that = this;
-
-        this.SOURCE_KEY = "select2-source";
-
-        this.updateSelect2Source = function (element, valueAccessor) {
-            var source = $(element).data(that.SOURCE_KEY);
-            // We clear the array and repopulate it, instead of simply replacing
-            // it, because the select2 options are tied to this specific instance.
-            while (source.length > 0) {
-                source.pop();
-            }
-            var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
-            for (var i = 0; i < newItems.length; i++) {
-                var text = newItems[i].text || newItems[i];
-                var id = newItems[i].id || newItems[i];
-                source.push({
-                    id: id,
-                    text: text,
-                });
-            }
-            return source;
-        };
-
-        this.init = function (element, valueAccessor) {
-            var $el = $(element);
-
-            // The select2 jquery element uses the array stored at
-            // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
-            // can only be changed by modifying this object, overwriting it will
-            // not change the select options.
-            $el.data(that.SOURCE_KEY, []);
-
-            $el.select2({
-                multiple: false,
-                width: "element",
-                data: $el.data(that.SOURCE_KEY),
-            });
-        };
-
-        this.update = function (element, valueAccessor, allBindings) {
-            that.updateSelect2Source(element, valueAccessor);
-
-            // Update the selected item
-            $(element).val(ko.unwrap(allBindings().value)).trigger("change");
-        };
-    }();
-
-    /**
-     * Autocomplete widget based on a select2. Allows free text entry.
-     */
-    ko.bindingHandlers.autocompleteSelect2 = new function () {
-        var that = this;
-
-        this.SOURCE_KEY = "select2-source";
-
-        this.select2Options = function (element) {
-            var $el = $(element);
-            $el.data(that.SOURCE_KEY, []);
-            return {
-                multiple: false,
-                width: "off",
-                data: $el.data(that.SOURCE_KEY),
-                escapeMarkup: function (text) {
-                    return DOMPurify.sanitize(text);
-                },
-                createSearchChoice: function (term, data) {
-                    if (term !== "" && !_.find(data, function (d) { return d.text === term; })) {
-                        return {
-                            id: term,
-                            text: term,
-                        };
-                    }
-                },
-            };
-        };
-
-        this.init = function (element, valueAccessor) {
-            that._init(element, that.select2Options(element));
-        };
-
-        this._init = function (element, select2Options) {
-            $(element).select2(select2Options).on('change', function () {
-                $(element).trigger('textchange');
-            });
-        };
-
-        this.update = function (element, valueAccessor, allBindings) {
-            var $el = $(element),
-                newValue = ko.unwrap(allBindings().value) || $el.val(),
-                source = ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
-
-            // Add free text item to source
-            if (newValue && !_.find(source, function (item) { return item.id === newValue; })) {
-                source.unshift({
-                    id: newValue,
-                    text: newValue,
-                });
-            }
-
-            // Update the selected item
-            $el.val(newValue);
-            $el.select2("val", newValue);
-        };
-    }();
 
     ko.bindingHandlers.multiTypeahead = {
         init: function (element, valueAccessor) {
@@ -778,9 +644,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.sortableList = {
-        init: function (element, valueAccessor) {
-            var list = valueAccessor();
+        // Defines a knockout binding for the jquery UI sortable interaction which allows
+        // reordering elements with a drag and drop interface
+        // The element to be used to drag and drop must have a grip class defined
+        // Optionally sortableListSelector can be defined as a selector that describes what items are sortable
+        init: function (element, valueAccessor, allBindings) {
+            var list = valueAccessor(),
+                itemSelector = allBindings().sortableListSelector;
+
             $(element).sortable({
+                handle: '.grip',
+                cursor: 'move',
                 update: function (event, ui) {
                     //retrieve our actual data item
                     var item = ko.dataFor(ui.item.get(0));
@@ -794,6 +668,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     ui.item.remove();
                 },
             });
+            if (itemSelector) {
+                $(element).sortable("option", "items", itemSelector);
+            }
         },
     };
 

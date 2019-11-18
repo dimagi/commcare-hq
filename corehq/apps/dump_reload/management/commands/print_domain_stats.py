@@ -1,24 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import Counter
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_pipeline_audit.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
-    get_es_counts_by_doc_type
+from corehq.apps.data_pipeline_audit.dbacessors import (
+    get_es_counts_by_doc_type,
+    get_primary_db_case_counts,
+    get_primary_db_form_counts,
+)
 from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
-from corehq.apps.dump_reload.sql.dump import get_model_iterator_builders_to_dump
+from corehq.apps.dump_reload.sql.dump import (
+    get_model_iterator_builders_to_dump,
+)
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_mobile_user_count,
+    get_web_user_count,
+)
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.util.couch import get_document_class_by_doc_type
-from corehq.util.markup import CSVRowFormatter, TableRowFormatter, SimpleTableWriter
+from corehq.util.markup import (
+    CSVRowFormatter,
+    SimpleTableWriter,
+    TableRowFormatter,
+)
 
 
 class Command(BaseCommand):

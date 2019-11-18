@@ -1,13 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.decorators import method_decorator
-from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, datespan_default
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+
 from django_prbac.utils import has_privilege
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.reports.dispatcher import (
+    ProjectReportDispatcher,
+    ReportDispatcher,
+    datespan_default,
+)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 

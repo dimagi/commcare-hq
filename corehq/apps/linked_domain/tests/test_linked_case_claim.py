@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 
 from mock import patch
@@ -110,5 +108,7 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
                          .get(domain=self.domain_link.linked_domain))
 
         self.assertTrue(new_search_config.enabled)
-        self.assertItemsEqual(new_search_config.fuzzy_properties.all()[0].properties,
-                              self.search_config.fuzzy_properties.all()[0].properties)
+        self.assertEqual(
+            set(new_search_config.fuzzy_properties.all()[0].properties),
+            set(self.search_config.fuzzy_properties.all()[0].properties)
+        )

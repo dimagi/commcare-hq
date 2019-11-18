@@ -18,9 +18,6 @@ The export works as follows:
   * Add successful pages to final ZIP archive
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import gzip
 import json
 import logging
@@ -29,19 +26,24 @@ import os
 import tempfile
 import time
 import zipfile
-from six.moves.queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.export import (
-    get_export_writer, save_export_payload, get_export_size, get_export_documents)
-from corehq.apps.export.export import write_export_instance
-from corehq.elastic import ScanResult
-from corehq.util.files import safe_filename
+from six.moves.queue import Empty
+
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
-from io import open
+
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.export import (
+    get_export_documents,
+    get_export_size,
+    get_export_writer,
+    save_export_payload,
+    write_export_instance,
+)
+from corehq.elastic import ScanResult
+from corehq.util.files import safe_filename
 
 TEMP_FILE_PREFIX = 'cchq_export_dump_'
 

@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from pillowtop.feed.couch import change_from_couch_row
 
 import sqlalchemy
@@ -89,7 +87,7 @@ class FluffTest(TestCase):
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
         cls.previous_signal_receivers = indicator_document_updated.receivers
         indicator_document_updated.receivers = []
-        cls.engine = connection_manager.get_engine('default')
+        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     def setUp(self):
         self.fakedb = FakeCouchDb()
@@ -156,8 +154,8 @@ class FluffTest(TestCase):
         ]))
 
     def test_indicator_classes(self):
-        self.assertEquals(list(Indicators1._calculators), ['base0'])
-        self.assertEquals(list(Indicators2._calculators), ['base1', 'base2'])
+        self.assertEqual(list(Indicators1._calculators), ['base0'])
+        self.assertEqual(list(Indicators2._calculators), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
@@ -198,19 +196,19 @@ class FluffTest(TestCase):
         calc.fluff = MockIndicators
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
-        self.assertEquals(len(list(values)), 8)
-        self.assertEquals(values['null_value'], [dict(date=None, value=2, group_by=None)])
-        self.assertEquals(values['date_value'], [
+        self.assertEqual(len(list(values)), 8)
+        self.assertEqual(values['null_value'], [dict(date=None, value=2, group_by=None)])
+        self.assertEqual(values['date_value'], [
             dict(date=date(2012, 9, 23), value=2, group_by=None),
             dict(date=date(2012, 9, 24), value=3, group_by=None)])
-        self.assertEquals(values['date'], [
+        self.assertEqual(values['date'], [
             dict(date=date(2012, 9, 23), value=1, group_by=None),
             dict(date=date(2012, 9, 24), value=1, group_by=None)])
-        self.assertEquals(values['null'], [dict(date=None, value=1, group_by=None)])
-        self.assertEquals(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
-        self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=2)])
-        self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=1)])
-        self.assertEquals(values['group_null'], [dict(date=None, group_by=['abc', 'xyz'], value=1)])
+        self.assertEqual(values['null'], [dict(date=None, value=1, group_by=None)])
+        self.assertEqual(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
+        self.assertEqual(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=2)])
+        self.assertEqual(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=1)])
+        self.assertEqual(values['group_null'], [dict(date=None, group_by=['abc', 'xyz'], value=1)])
 
     def test_calculator_get_result(self):
         key = ['a', 'b']
@@ -281,6 +279,8 @@ class FluffTest(TestCase):
                                      values=[dict(date=None, value=3, group_by=None)])
                             ],
                             all_indicators=self.all_indicators())
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_same(self):
@@ -365,6 +365,8 @@ class FluffTest(TestCase):
                                      values=[dict(date=None, value=2, group_by=None)])
                             ],
                             all_indicators=self.all_indicators())
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_dict(self):
@@ -430,14 +432,16 @@ class FluffTest(TestCase):
                                      emitter_type='null',
                                      reduce_type='max'),
                             ])
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_flat_field_types(self):
         str_field = fluff.FlatField(lambda case: "hello")
-        self.assertEquals(str_field.calculate('bar'), "hello")
+        self.assertEqual(str_field.calculate('bar'), "hello")
 
         unicode_field = fluff.FlatField(lambda case: "unicode!!")
-        self.assertEquals(unicode_field.calculate('bar'), "unicode!!")
+        self.assertEqual(unicode_field.calculate('bar'), "unicode!!")
 
         num_field = fluff.FlatField(lambda case: 432123141)
         self.assertRaises(AssertionError, num_field.calculate, 'bar')
@@ -454,19 +458,17 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
-            ('123', date(2013, 1, 1), 'abc', '123', None, None, 2, None, 1, None, None, None),
-            ('123', date(2012, 9, 24), 'mock', 'test_owner', 3, None, None, None, None, None, 1, None),
-            ('123', date(2012, 9, 23), 'mock', 'test_owner', 2, None, None, None, None, None, 1, None),
-            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, 1, None, None, None, None),
-            ('123', date(2013, 1, 1), 'abc', 'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, None, 1, 2),
+            ('123', date(2013, 1, 1), 'abc', '123', None, None, None, 1, None, 2, None, None),
+            ('123', date(2012, 9, 24), 'mock', 'test_owner', 1, 3, None, None, None, None, None, None),
+            ('123', date(2012, 9, 23), 'mock', 'test_owner', 1, 2, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, None, 1, None, None, None),
+            ('123', date(2013, 1, 1), 'abc', 'xyz', None, None, 3, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
             rows = connection.execute(sqlalchemy.select([current._table]))
-            self.assertEqual(rows.rowcount, len(expected))
-            for row in rows:
-                self.assertIn(row, expected)
+            self.assertItemsEqual(rows, expected)
 
     def test_save_to_sql_update(self):
         self.test_save_to_sql()
@@ -482,18 +484,16 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
-            ('123', date(2013, 1, 1), 'abc', '123', None, None, 2, None, 1, None, None, None),
-            ('123', date(2012, 9, 23), 'mock', 'test_owner', 5, None, None, None, None, None, 1, None),
-            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, 1, None, None, None, None),
-            ('123', date(2013, 1, 1), 'abc', 'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, None, 1, 2),
+            ('123', date(2013, 1, 1), 'abc', '123', None, None, None, 1, None, 2, None, None),
+            ('123', date(2012, 9, 23), 'mock', 'test_owner', 1, 5, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, None, 1, None, None, None),
+            ('123', date(2013, 1, 1), 'abc', 'xyz', None, None, 3, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
             rows = connection.execute(sqlalchemy.select([current._table]))
-            self.assertEqual(rows.rowcount, len(expected))
-            for row in rows:
-                self.assertIn(row, expected)
+            self.assertItemsEqual(rows, expected)
 
     def test_save_to_sql_flat_fields(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
@@ -509,19 +509,17 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            ('123', date(2012, 9, 24), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 3, None, None, None, None, None, 1, None),
-            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', '123', None, None, 2, None, 1, None, None, None),
-            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, None, None, 1, None, None, None, None),
-            ('123', date(2012, 9, 23), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 2, None, None, None, None, None, 1, None),
-            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
-            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(2012, 9, 24), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 1, 3, None, None, None, None, None, None),
+            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', '123', None, None, None, 1, None, 2, None, None),
+            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, None, None, None, 1, None, None, None),
+            ('123', date(2012, 9, 23), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 1, 2, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'mock', 'test_owner', None, None, None, None, None, None, 1, 2),
+            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, None, 3, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
             rows = connection.execute(sqlalchemy.select([current._table]))
-            self.assertEqual(rows.rowcount, len(expected))
-            for row in rows:
-                self.assertIn(row, expected)
+            self.assertItemsEqual(rows, expected)
 
     def test_deleting_on_doc_type_change(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]

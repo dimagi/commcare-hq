@@ -37,13 +37,9 @@ hqDefine('reports/v2/js/context', [
 
         self.endpoint = {};
 
-        self.init = function () {
-
-            _.each(initialPageData.get('report.endpoints'), function (data) {
-                self.endpoint[data.slug] = endpoint(data);
-            });
-
-        };
+        _.each(initialPageData.get('report.endpoints'), function (data) {
+            self.endpoint[data.slug] = endpoint(data);
+        });
 
         return self;
     };
@@ -51,6 +47,26 @@ hqDefine('reports/v2/js/context', [
     return {
         getReportConfig: function () {
             return reportConfig();
+        },
+        getColumns: function () {
+            return initialPageData.get('report.columns');
+        },
+        getUnsortableColumnNames: function () {
+            return initialPageData.get('report.unsortableColumnNames');
+        },
+        getColumnFilters: function () {
+            return initialPageData.get('report.columnFilters');
+        },
+        getReportFilters: function () {
+            var filterData = initialPageData.get('report.reportFilters'),
+                initialData = initialPageData.get('report.initialReportFilters'),
+                config = reportConfig();
+            filterData = _.map(filterData, function (data) {
+                data.value = initialData[data.name];
+                data.endpoint = config.endpoint[data.endpointSlug];
+                return data;
+            });
+            return filterData;
         },
     };
 });

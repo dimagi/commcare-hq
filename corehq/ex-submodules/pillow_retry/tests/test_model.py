@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import sys
 from datetime import datetime
 
@@ -45,7 +42,7 @@ class GetDocProcessor(PillowProcessor):
     Processor that does absolutely nothing.
     """
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         doc = change.get_document()
         if not change.deleted and not doc:
             raise Exception('missing doc')
@@ -236,7 +233,7 @@ class PillowRetryTestCase(TestCase):
         process_pillow_retry(error)
 
         error = PillowError.objects.get(pk=error.id)
-        self.assertEquals(error.total_attempts, 1)
+        self.assertEqual(error.total_attempts, 1)
 
 
 class ExceptionA(Exception):

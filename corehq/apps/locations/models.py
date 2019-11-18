@@ -1,26 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import partial
-import uuid
 
-from bulk_update.helper import bulk_update as bulk_update_helper
-
-import jsonfield
 from django.db import models, transaction
 from django.db.models import Q
+
+import jsonfield
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django_cte import CTEQuerySet
 from memoized import memoized
-import six
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
+from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
-from corehq.toggles import LOCATION_TYPE_STOCK_RATES
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 class LocationTypeManager(models.Manager):
@@ -77,11 +72,7 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 def stock_level_config_for_domain(domain, commtrack_enabled):
     from corehq.apps.commtrack.models import CommtrackConfig
     ct_config = CommtrackConfig.for_domain(domain)
-    if (
-        (ct_config is None) or
-        (not commtrack_enabled) or
-        LOCATION_TYPE_STOCK_RATES.enabled(domain)
-    ):
+    if ct_config is None or not commtrack_enabled:
         return None
     else:
         return ct_config.stock_levels_config
@@ -134,7 +125,6 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
-        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -167,8 +157,6 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import update_location_users
-
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -184,8 +172,6 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
-            if self._has_user_old != self.has_user:
-                update_location_users.delay(self)
 
         return saved
 
@@ -195,7 +181,7 @@ class LocationType(models.Model):
             sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
             self._administrative_old = self.administrative
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def __repr__(self):
@@ -203,7 +189,7 @@ class LocationType(models.Model):
             self.domain,
             self.name,
             self.administrative,
-        ).encode('utf-8')
+        )
 
     @property
     @memoized
@@ -395,7 +381,7 @@ class SQLLocation(AdjListModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
-    # For locations where location_type.has_user == True
+    # No longer used. Should be removed once all references have been tracked down and removed
     user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
@@ -450,9 +436,25 @@ class SQLLocation(AdjListModel):
             [loc.supply_point_id for loc in to_delete if loc.supply_point_id],
             list(self.get_ancestors().location_ids()),
         )
-        publish_location_saved(self.domain, self.location_id, is_deletion=True)
+        for loc in to_delete:
+            publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
 
     full_delete = delete
+
+    def get_descendants(self, include_self=False, **kwargs):
+        if include_self:
+            where = Q(domain=self.domain, id=self.id)
+        else:
+            where = Q(domain=self.domain, parent_id=self.id)
+        return SQLLocation.objects.get_descendants(
+            where, **kwargs
+        )
+
+    def get_ancestors(self, include_self=False, **kwargs):
+        where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)
+        return SQLLocation.objects.get_ancestors(
+            where, **kwargs
+        )
 
     @classmethod
     def bulk_delete(cls, locations, ancestor_location_ids):
@@ -471,6 +473,8 @@ class SQLLocation(AdjListModel):
         for the given `locations`.
         """
         from .tasks import update_users_at_locations
+        from .document_store import publish_location_saved
+
         if not locations:
             return
         if len(set(loc.domain for loc in locations)) != 1:
@@ -485,6 +489,8 @@ class SQLLocation(AdjListModel):
             [loc.supply_point_id for loc in locations if loc.supply_point_id],
             ancestor_location_ids,
         )
+        for loc in locations:
+            publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
 
     def to_json(self, include_lineage=True):
         json_dict = {
@@ -588,7 +594,7 @@ class SQLLocation(AdjListModel):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
-    def __unicode__(self):
+    def __str__(self):
         return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):
@@ -596,7 +602,7 @@ class SQLLocation(AdjListModel):
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
-        ).encode('utf-8')
+        )
 
     @property
     def display_name(self):
@@ -623,13 +629,6 @@ class SQLLocation(AdjListModel):
     def get_path_display(self):
         return '/'.join(self.get_ancestors(include_self=True)
                             .values_list('name', flat=True))
-
-    def get_case_sharing_groups(self, for_user_id=None):
-        if self.location_type.shares_cases:
-            yield self.case_sharing_group_object(for_user_id)
-        if self.location_type.view_descendants:
-            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True, is_archived=False):
-                yield sql_loc.case_sharing_group_object(for_user_id)
 
     def case_sharing_group_object(self, user_id=None):
         """
@@ -804,6 +803,24 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(location_id, fall_back_to_next=True)
 
 
+def get_case_sharing_groups_for_locations(locations, for_user_id=None):
+    # safety check to make sure all locations belong to same domain
+    assert len(set([l.domain for l in locations])) < 2
+
+    for location in locations:
+        if location.location_type.shares_cases:
+            yield location.case_sharing_group_object(for_user_id)
+
+    location_ids = [l.pk for l in locations if l.location_type.view_descendants]
+    descendants = []
+    if location_ids:
+        where = Q(domain=locations[0].domain, parent_id__in=location_ids)
+        descendants = SQLLocation.objects.get_queryset_descendants(where).filter(
+            location_type__shares_cases=True, is_archived=False)
+    for loc in descendants:
+        yield loc.case_sharing_group_object(for_user_id)
+
+
 class LocationRelation(models.Model):
     """Implements a many-to-many mapping between locations.
 
@@ -823,6 +840,7 @@ class LocationRelation(models.Model):
     location_b = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
     distance = models.PositiveSmallIntegerField(null=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
     def from_locations(cls, locations):
@@ -853,7 +871,7 @@ class LocationRelation(models.Model):
         """
         relations = cls.objects.filter(
             Q(location_a__in=locations) | Q(location_b__in=locations)
-        ).prefetch_related('location_a', 'location_b')
+        )
         location_ids = {loc.location_id for loc in locations}
 
         distance_dictionary = defaultdict(dict)
@@ -883,7 +901,7 @@ class LocationRelation(models.Model):
         location_dict: {loc_id: distance}
         """
 
-        for loc_id, distance in six.iteritems(location_dict):
+        for loc_id, distance in location_dict.items():
             relation = cls.objects.filter(
                 (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
                 (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))

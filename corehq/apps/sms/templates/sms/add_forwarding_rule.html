@@ -7,8 +7,8 @@
 
 {% requirejs_main 'sms/js/add_forwarding_rule' %}
 {% block page_content %}
-    <form action="" class="form-horizontal" method="post">
-        {% csrf_token %}
-        {% crispy form %}
-    </form>
+  <form action="" class="form-horizontal" method="post">
+    {% csrf_token %}
+    {% crispy form %}
+  </form>
 {% endblock %}

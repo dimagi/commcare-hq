@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
-import six
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -74,11 +71,12 @@ class Change(object):
         }
 
     def set_document(self, document):
+        # this is a public attribute, be careful when renaming
         self.document = document
 
     @handle_connection_failure(get_db_aliases=get_all_db_aliases)
     def get_document(self):
-        if not self.document and self.document_store and not self._document_checked:
+        if self.should_fetch_document():
             try:
                 self.document = self.document_store.get_document(self.id)
             except DocumentNotFoundError as e:
@@ -86,6 +84,9 @@ class Change(object):
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
                 self.error_raised = e
         return self.document
+
+    def should_fetch_document(self):
+        return not self.document and self.document_store and not self._document_checked
 
     def increment_attempt_count(self):
         if self.metadata:
@@ -129,7 +130,7 @@ class Change(object):
         return self._dict
 
 
-class ChangeFeed(six.with_metaclass(ABCMeta, object)):
+class ChangeFeed(metaclass=ABCMeta):
     """
     Basic change feed API.
     """

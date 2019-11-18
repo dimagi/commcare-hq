@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import six.moves.urllib.parse
 from collections import namedtuple
 

@@ -1,42 +1,52 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
-from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
-from corehq.apps.users.models import UserRole
-from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.apps.es.sms import SMSES
-from corehq.apps.es.forms import FormES
-from corehq.apps.hqadmin.reporting.reports import (
-    get_mobile_users,
-)
-from couchforms.analytics import get_number_of_forms_in_domain, \
-    domain_has_submission_in_last_30_days, get_first_form_submission_received, \
-    get_last_form_submission_received
+from dateutil.relativedelta import relativedelta
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from couchforms.analytics import (
+    domain_has_submission_in_last_30_days,
+    get_first_form_submission_received,
+    get_last_form_submission_received,
+    get_number_of_forms_in_domain,
+)
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.userreports.util import number_of_report_builder_reports, number_of_ucr_reports
-from corehq.apps.sms.models import SQLMobileBackend
+
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.data_analytics.esaccessors import get_mobile_users
+from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.sms import SMSES
+from corehq.apps.export.dbaccessors import (
+    get_case_exports_by_domain,
+    get_export_count_by_domain,
+    get_form_exports_by_domain,
+)
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
-from corehq.apps.groups.models import Group
-from corehq.motech.repeaters.models import Repeater
-from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain, \
-    get_export_count_by_domain
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
+from corehq.apps.userreports.util import (
+    number_of_report_builder_reports,
+    number_of_ucr_reports,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_mobile_user_count,
+    get_web_user_count,
+)
+from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.elastic import es_query
 from corehq.messaging.scheduling.util import domain_has_reminders
+from corehq.motech.repeaters.models import Repeater
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.quickcache import quickcache
+
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -154,13 +164,16 @@ def j2me_forms_in_last_bool(domain, days):
 
 
 def _sms_helper(domain, direction=None, days=None):
+    assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
-    if direction:
-        query = query.direction(direction)
+    if direction == INCOMING:
+        query = query.incoming_messages()
+    elif direction == OUTGOING:
+        query = query.outgoing_messages()
 
     if days:
-        query = query.received(date.today() - relativedelta(days=30))
+        query = query.received(date.today() - relativedelta(days=days))
 
     return query.run().total
 
@@ -178,11 +191,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction="I", days=days)
+    return _sms_helper(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction="O", days=days)
+    return _sms_helper(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):
@@ -330,12 +343,13 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
+@quickcache([], timeout=60 * 60)
 def all_domain_stats():
-    webuser_counts = defaultdict(lambda: 0)
-    commcare_counts = defaultdict(lambda: 0)
+    webuser_counts = defaultdict(int)
+    commcare_counts = defaultdict(int)
 
     for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
-                             endkey=["active", {}], group_level=3).all():
+                                       endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {
@@ -349,7 +363,8 @@ def all_domain_stats():
     }
 
 
-def calced_props(dom, id, all_stats):
+def calced_props(domain_obj, id, all_stats):
+    dom = domain_obj.name
     return {
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
@@ -372,8 +387,8 @@ def calced_props(dom, id, all_stats):
         "cp_is_active": CALC_FNS["active"](dom),
         "cp_has_app": CALC_FNS["has_app"](dom),
         "cp_last_updated": json_format_datetime(datetime.utcnow()),
-        "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
-        "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+        "cp_n_in_sms": int(CALC_FNS["sms"](dom, INCOMING)),
+        "cp_n_out_sms": int(CALC_FNS["sms"](dom, OUTGOING)),
         "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
         "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
         "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
@@ -393,7 +408,7 @@ def calced_props(dom, id, all_stats):
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
-        "cp_use_domain_security": use_domain_security_settings(dom),
+        "cp_use_domain_security": use_domain_security_settings(domain_obj),
         "cp_n_custom_roles": num_custom_roles(dom),
         "cp_using_locations": users_have_locations(dom),
         "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
@@ -406,7 +421,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_ucr_reports": number_of_ucr_reports(dom),
         "cp_n_lookup_tables": num_lookup_tables(dom),
-        "cp_has_project_icon": has_domain_icon(dom),
+        "cp_has_project_icon": has_domain_icon(domain_obj),
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
         "cp_n_apps": len(_get_domain_apps(dom)),
         "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
@@ -433,9 +448,11 @@ def num_telerivet_backends(domain):
     return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
 
 
-def use_domain_security_settings(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords
+def use_domain_security_settings(domain_obj):
+    return any([
+        getattr(domain_obj, attr, False)
+        for attr in ['two_factor_auth', 'secure_sessions', 'strong_mobile_passwords']
+    ])
 
 
 def num_custom_roles(domain):
@@ -464,7 +481,7 @@ def num_repeaters(domain):
 
 
 def _get_domain_exports(domain):
-    return get_form_exports_by_domain(domain, True) + get_case_exports_by_domain(domain, True)
+    return get_form_exports_by_domain(domain) + get_case_exports_by_domain(domain)
 
 
 def num_deid_exports(domain):
@@ -484,14 +501,13 @@ def num_lookup_tables(domain):
     return len(FixtureDataType.by_domain(domain))
 
 
-def has_domain_icon(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.has_custom_logo
+def has_domain_icon(domain_obj):
+    return domain_obj.has_custom_logo
 
 
 def num_apps_with_icon(domain):
     apps = _get_domain_apps(domain)
-    return len([a for a in apps if isinstance(a, HQMediaMixin) and a.logo_refs])
+    return len([a for a in apps if isinstance(a, ApplicationMediaMixin) and a.logo_refs])
 
 
 def num_apps_with_profile(domain):

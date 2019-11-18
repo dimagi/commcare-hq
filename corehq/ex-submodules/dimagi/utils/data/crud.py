@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
 import json
 from memoized import memoized
+
 
 class TabularCRUDManager(object):
     """

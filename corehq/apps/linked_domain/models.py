@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime
 
-import jsonobject
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
+from django.utils.translation import ugettext as _
+
+import jsonobject
 
 from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -34,7 +32,9 @@ class DomainLink(models.Model):
     deleted = models.BooleanField(default=False)
 
     # used for linking across remote instances of HQ
-    remote_base_url = models.CharField(max_length=255, null=True, blank=True)
+    remote_base_url = models.CharField(max_length=255, null=True, blank=True,
+                                       help_text=_("should be the full link with the trailing /. "
+                                                   "Example: https://www.commcarehq.org/"))
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
 
@@ -70,34 +70,53 @@ class DomainLink(models.Model):
 
     def save(self, *args, **kwargs):
         super(DomainLink, self).save(*args, **kwargs)
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
+        from corehq.apps.linked_domain.dbaccessors import (
+            get_domain_master_link, get_linked_domains, is_linked_domain, is_master_linked_domain
+        )
         get_domain_master_link.clear(self.linked_domain)
+        is_linked_domain.clear(self.linked_domain)
+
         get_linked_domains.clear(self.master_domain)
+        is_master_linked_domain.clear(self.master_domain)
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
-        try:
-            link = cls.all_objects.get(linked_domain=linked_domain)
-        except cls.DoesNotExist:
-            link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
+        existing_links = cls.all_objects.filter(linked_domain=linked_domain)
+        active_links_with_other_domains = [l for l in existing_links
+                                           if not l.deleted and l.master_domain != master_domain]
+        if active_links_with_other_domains:
+            raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
+                linked_domain, active_links_with_other_domains[0].master_domain
+            ))
+
+        deleted_existing_links = [l for l in existing_links
+                                  if l.deleted and l.master_domain == master_domain]
+        active_links_with_this_domain = [l for l in existing_links
+                                         if not l.deleted and l.master_domain == master_domain]
+
+        if deleted_existing_links:
+            # if there was a deleted link, just undelete it
+            link = deleted_existing_links[0]
+            link.deleted = False
+        elif active_links_with_this_domain:
+            # if there is already an active link, just update it with the new information
+            link = active_links_with_this_domain[0]
         else:
-            if link.master_domain != master_domain:
-                if link.deleted:
-                    # create a new link to the new master domain
-                    link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
-                else:
-                    raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
-                        linked_domain, link.master_domain
-                    ))
+            # make a new link
+            link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
 
         if remote_details:
             link.remote_base_url = remote_details.url_base
             link.remote_username = remote_details.username
             link.remote_api_key = remote_details.api_key
 
-        link.deleted = False
         link.save()
         return link
+
+
+class VisibleDomainLinkHistoryManager(models.Manager):
+    def get_queryset(self):
+        return super(VisibleDomainLinkHistoryManager, self).get_queryset().filter(hidden=False)
 
 
 class DomainLinkHistory(models.Model):
@@ -106,6 +125,10 @@ class DomainLinkHistory(models.Model):
     model = models.CharField(max_length=128, choices=LINKED_MODELS, null=False)
     model_detail = JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
+    hidden = models.BooleanField(default=False)
+
+    objects = VisibleDomainLinkHistoryManager()
+    all_objects = models.Manager()
 
     @property
     def wrapped_detail(self):

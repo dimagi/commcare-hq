@@ -1,4 +1,4 @@
-FROM dimagi/commcarehq_py3:latest
+FROM dimagi/commcarehq_py3_new:latest
 # Based on docker/Dockerfile
 
 VOLUME /mnt/commcare-hq-ro /mnt/lib

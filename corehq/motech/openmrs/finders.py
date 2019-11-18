@@ -5,30 +5,30 @@ OpenmrsCaseConfig.match_on_ids have successfully matched a patient.
 
 See `README.md`__ for more context.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
+import logging
 from collections import namedtuple
 from functools import partial
 from operator import eq
 from pprint import pformat
 
-import six
+from dimagi.ext.couchdbkit import (
+    DecimalProperty,
+    DocumentSchema,
+    ListProperty,
+    SchemaProperty,
+    StringProperty,
+)
 
+from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.openmrs.finders_utils import (
     le_days_diff,
     le_levenshtein_percent,
 )
-from corehq.motech.value_source import recurse_subclasses
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DecimalProperty,
-    DocumentSchema,
-    ListProperty,
-    StringProperty,
+from corehq.motech.value_source import (
+    ConstantString,
+    ValueSource,
+    recurse_subclasses,
 )
-
 
 MATCH_TYPE_EXACT = 'exact'
 MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets
@@ -40,6 +40,21 @@ MATCH_FUNCTIONS = {
 }
 MATCH_TYPES = tuple(MATCH_FUNCTIONS)
 MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
+
+logger = logging.getLogger(__name__)
+
+
+constant_false = ConstantString(
+    doc_type='ConstantString',
+    value='False',
+    # We are fetching from a case property or a form question value, and
+    # we want `get_value()` to return False (bool). `get_value()`
+    # serialises case properties and form question values as external
+    # data types. OPENMRS_DATA_TYPE_BOOLEAN is useful because it is a
+    # bool, not a string, so `constant_false.get_value()` will return
+    # False (not 'False')
+    external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
+)
 
 
 class PatientFinder(DocumentSchema):
@@ -54,15 +69,22 @@ class PatientFinder(DocumentSchema):
     """
 
     # Whether to create a new patient if no patients are found
-    create_missing = BooleanProperty(default=False)
+    create_missing = SchemaProperty(ValueSource, default=constant_false)
 
     @classmethod
     def wrap(cls, data):
+        if 'create_missing' in data and isinstance(data['create_missing'], bool):
+            data['create_missing'] = {
+                'doc_type': 'ConstantString',
+                'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
+                'value': str(data['create_missing'])
+            }
 
         if cls is PatientFinder:
-            return {
+            subclass = {
                 sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
+            }.get(data['doc_type'])
+            return subclass.wrap(data) if subclass else None
         else:
             return super(PatientFinder, cls).wrap(data)
 
@@ -168,7 +190,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
         Matches cases to patients. Returns a list of patients, each
         with a confidence score >= self.threshold
         """
-        from corehq.motech.openmrs.logger import logger
         from corehq.motech.openmrs.openmrs_config import get_property_map
         from corehq.motech.openmrs.repeater_helpers import search_patients
 
@@ -196,7 +217,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
-        patients_scores = sorted(six.itervalues(candidates), key=lambda candidate: candidate.score, reverse=True)
+        patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked

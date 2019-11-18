@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
-import six
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata, FormProcessorInterface
@@ -14,7 +12,7 @@ def _get_id_for_case(case):
     return case.case_id
 
 
-class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
+class AbstractCaseDbCache(metaclass=ABCMeta):
     """
     A temp object we use to keep a cache of in-memory cases around
     so we can get the latest updates even if they haven't been saved
@@ -39,13 +37,14 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     def case_update_strategy(self):
         return None
 
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xforms=None):
+    def __init__(self, domain=None, deleted_ok=False,
+                 lock=False, wrap=True, initial=None, xforms=None,
+                 load_src="unknown"):
 
+        self._track_load = case_load_counter(load_src, domain)
         self._populate_from_initial(initial)
         self.domain = domain
         self.cached_xforms = xforms if xforms is not None else []
-        self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
         self.wrap = wrap
@@ -61,6 +60,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     def _populate_from_initial(self, initial_cases):
         if initial_cases:
             self.cache = {_get_id_for_case(case): case for case in initial_cases}
+            self._track_load(len(initial_cases))
         else:
             self.cache = {}
 
@@ -92,17 +92,20 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case_id in self.cache:
             return self.cache[case_id]
 
-        case, lock = self.processor_interface.get_case_with_lock(case_id, self.lock, self.strip_history, self.wrap)
+        case, lock = self.processor_interface.get_case_with_lock(case_id, self.lock, self.wrap)
         if lock:
             self.locks.append(lock)
 
         if case:
             self._validate_case(case)
             self.cache[case_id] = case
+            self._track_load()
         return case
 
     def set(self, case_id, case):
         assert isinstance(case, self.case_model_classes)
+        if case_id not in self.cache:
+            self._track_load()
         self.cache[case_id] = case
 
     def in_cache(self, case_id):

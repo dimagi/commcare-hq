@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.preindex import ExtraPreindexPlugin
 from django.apps import AppConfig
 from django.conf import settings
+
+from corehq.preindex import ExtraPreindexPlugin
 
 from .signals import connect_user_signals
 

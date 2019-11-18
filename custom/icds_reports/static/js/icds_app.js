@@ -2,38 +2,34 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId, isAlertActive) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
+    $scope.dateChanged = false;
 
-    var locationParams = $location.search();
-    var newKey;
-    for (var key in locationParams) {
-        newKey = key;
-        if (newKey.startsWith('amp;')) {
-            newKey = newKey.slice(4);
-            $location.search(newKey, locationParams[key]).search(key, null);
+    angular.element(document).ready(function () {
+        $scope.adjustUIComponentsIfAlertIsActive();
+    });
+
+    function fixEscapedURLAmpersands() {
+        // if the URL has replaced any "&" characters with "&amp;" then this will fix the
+        // associated parameter keys.
+        var locationParams = $location.search();
+        var newKey;
+        for (var key in locationParams) {
+            newKey = key;
+            if (newKey.startsWith('amp;')) {
+                newKey = newKey.slice(4);
+                $location.search(newKey, locationParams[key]).search(key, null);
+            }
         }
+
     }
-
-    $scope.showInfoMessage = function() {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
-            selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
-            $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-            $scope.currentMonth = moment().format("MMMM");
-            return true;
-        }
-        return false;
-    };
+    fixEscapedURLAmpersands();
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
@@ -45,6 +41,16 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             ariaDescribedBy: 'modal-body',
             templateUrl: 'reportIssueModal.html',
         });
+    };
+
+    $scope.adjustUIComponentsIfAlertIsActive = function () {
+        // 'fixes-filters'
+        if (isAlertActive) {
+            var elementsToUpdate = ['left-menu', 'fixed-title', 'main-container'];
+            _.each(elementsToUpdate, function (element) {
+                window.angular.element('.' + element).addClass(element + '-with-alert');
+            });
+        }
     };
 
     $scope.checkAccessToLocation = function() {
@@ -114,6 +120,7 @@ MainController.$inject = [
     'reportAnIssueUrl',
     'isWebUser',
     'userLocationId',
+    'isAlertActive',
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
@@ -126,7 +133,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
-                template: "<system-usage></system-usage>",
+                template: "<program-summary></program-summary>",
             }).when("/awc_opened", {
                 redirectTo: "/awc_opened/map",
             })
@@ -298,8 +305,17 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_reports", {
                 redirectTo: "/awc_reports/pse",
             })
+            .when("/service_delivery_dashboard", {
+                redirectTo: "/service_delivery_dashboard/pw_lw_children",
+            })
+            .when("/service_delivery_dashboard/:step", {
+                template: "<service-delivery-dashboard></service-delivery-dashboard>",
+            })
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
+            })
+            .when("/lady_supervisor", {
+                template: "<lady-supervisor></lady-supervisor>",
             })
             .when("/download", {
                 template: "<download></download>",
@@ -309,6 +325,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/fact_sheets/:report", {
                 template: "<progress-report></progress-report>",
+            })
+            .when("/cas_export", {
+                template: "<cas-export></cas-export>",
             })
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",

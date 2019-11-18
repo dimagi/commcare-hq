@@ -4,81 +4,81 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
+  <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block reportcontent %}
-{% block pretable %}
+  {% block pretable %}
     {% if not report.needs_filters %}
-        {% if rendered_as == 'print' %}
+      {% if rendered_as == 'print' %}
         <div class="row">
-            <div class="col-sm-10">{% now "d M Y" %}</div>
+          <div class="col-sm-10">{% now "d M Y" %}</div>
         </div>
         <div class="row">
-            <div class="col-sm-10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
-            </div>
+          <div class="col-sm-10">
+            <h3 class="media-heading">{{ title }}<br/></h3>
+          </div>
         </div>
-        {% else %}
+      {% else %}
         <div class="media">
           <div class="media-body" style="height: 64px">
             <h3 class="media-heading">{{ title }}<br/></h3>
           </div>
         </div>
-        {% endif %}
+      {% endif %}
     {% endif %}    {{ block.super }}
-{% endblock %}
+  {% endblock %}
 
-{% block reporttable %}
-{% if report.needs_filters %}
-    {% include 'reports/partials/description.html' %}
-{% else %}
-    <table>
+  {% block reporttable %}
+    {% if report.needs_filters %}
+      {% include 'reports/partials/description.html' %}
+    {% else %}
+      <table>
         <tr style="background-color: #008000">
-            <td>A - Green</td><td>76-100%</td>
+          <td>A - Green</td><td>76-100%</td>
         </tr>
         <tr style="background-color: orange">
-            <td>B - Orange</td><td>51-75%</td>
+          <td>B - Orange</td><td>51-75%</td>
         </tr>
         <tr style="background-color: #ffff00">
-            <td>C -Yellow</td><td>26-50%</td>
+          <td>C -Yellow</td><td>26-50%</td>
         </tr>
         <tr style="background-color: red">
-            <td>D - Red</td> <td>0-25%</td>
+          <td>D - Red</td> <td>0-25%</td>
         </tr>
-    </table>
+      </table>
 
-    {% for thisreport in reports %}
+      {% for thisreport in reports %}
         <br/>
         <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
         {% include 'care_pathways/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
         <br/>
-    {% endfor %}
-{% endif %}
-{% endblock %}
-{% block posttable %}{% endblock %}
+      {% endfor %}
+    {% endif %}
+  {% endblock %}
+  {% block posttable %}{% endblock %}
 {% endblock %}
 
 {% block js-inline %}
-    {% for thisreport in reports %}
-        {% for chart in thisreport.charts %}
-            {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
-                {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
-            {% endwith %}
-        {% endfor %}
+  {% for thisreport in reports %}
+    {% for chart in thisreport.charts %}
+      {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+        {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
+      {% endwith %}
     {% endfor %}
-    <script>
-        $(function() {
-            var filter_section = $('<section id="filters"></section>');
-            var group_section = $('<section id="groups"></section>');
-            var legend = $('fieldset legend');
-            legend.after(group_section);
-            legend.after(filter_section);
-            $( "<legend><span>Grouping</span></legend>").appendTo(group_section);
-            $( "<legend><span>Filtering</span></legend>").appendTo(filter_section);
+  {% endfor %}
+  <script>
+    $(function() {
+      var filter_section = $('<section id="filters"></section>');
+      var group_section = $('<section id="groups"></section>');
+      var legend = $('fieldset legend');
+      legend.after(group_section);
+      legend.after(filter_section);
+      $( "<legend><span>Grouping</span></legend>").appendTo(group_section);
+      $( "<legend><span>Filtering</span></legend>").appendTo(filter_section);
 
-            $('fieldset fieldset').slice(0, -1).appendTo(filter_section);
-            $('fieldset fieldset').slice(-1).appendTo(group_section);
-        });
-    </script>
+      $('fieldset fieldset').slice(0, -1).appendTo(filter_section);
+      $('fieldset fieldset').slice(-1).appendTo(group_section);
+    });
+  </script>
 {% endblock %}

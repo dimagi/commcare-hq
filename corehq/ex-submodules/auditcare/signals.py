@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.db.models.query import QuerySet
@@ -59,6 +57,7 @@ def django_audit_save(sender, instance, created, raw=False, **kwargs):
             usr = None
     from auditcare.models import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
+
 
 def couch_audit_save(instance, *args, **kwargs):
     instance.__orig_save(*args, **kwargs)

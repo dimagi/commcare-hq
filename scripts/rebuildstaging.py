@@ -23,22 +23,19 @@ Where staging.yaml looks as follows:
 
 When not specified, a submodule's trunk and name inherit from the parent
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from gevent import monkey
-import six
 monkey.patch_all()
 
-import contextlib
 import os
 import re
-import sh
 import sys
+from contextlib2 import ExitStack
 
-from fabric.colors import red
 import gevent
+import jsonobject
+import sh
+
 from gitutils import (
     OriginalBranch,
     get_git,
@@ -46,16 +43,15 @@ from gitutils import (
     has_merge_conflict,
     print_merge_details,
 )
-import jsonobject
 from sh_verbose import ShVerbose
 
 
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
     name = jsonobject.StringProperty()
-    branches = jsonobject.ListProperty(six.text_type)
+    branches = jsonobject.ListProperty(str)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
-    pull_requests = jsonobject.ListProperty(six.text_type)
+    pull_requests = jsonobject.ListProperty(str)
 
     def normalize(self):
         for submodule, subconfig in self.submodules.items():
@@ -71,7 +67,7 @@ class BranchConfig(jsonobject.JsonObject):
 
     def check_trunk_is_recent(self):
         # if it doesn't match our tag format
-        if re.match('[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
+        if re.match(r'[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
             return True
 
         return self.trunk in git_recent_tags()
@@ -187,9 +183,9 @@ def rebuild_staging(config, print_details=True, push=True):
     merge_conflicts = []
     not_found = []
     all_configs = list(config.span_configs())
-    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
-                                          for path, _ in all_configs])
-    with context_manager:
+    with ExitStack() as stack:
+        for path, _ in all_configs:
+            stack.enter_context(OriginalBranch(get_git(path)))
         for path, config in all_configs:
             git = get_git(path)
             try:
@@ -306,7 +302,7 @@ def force_push(git, branch):
         # oops we're using a read-only URL, so change to the suggested url
         try:
             line = sh.grep(git.remote("-v"),
-                           '-E', '^origin.(https|git)://github\.com/.*\(push\)$')
+                           '-E', r'^origin.(https|git)://github\.com/.*\(push\)$')
         except sh.ErrorReturnCode_1:
             raise e
         old_url = line.strip().split()[1]
@@ -347,10 +343,24 @@ class DisableGitHooks(object):
             sh.mv(self.hidden_path, self.path)
 
 
+def _wrap_with(code):
+
+    def inner(text, bold=False):
+        c = code
+
+        if bold:
+            c = "1;%s" % c
+        return "\033[%sm%s\033[0m" % (c, text)
+    return inner
+
+
+red = _wrap_with('31')
+
+
 def main():
     from sys import stdin
     import yaml
-    config = yaml.load(stdin)
+    config = yaml.safe_load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():

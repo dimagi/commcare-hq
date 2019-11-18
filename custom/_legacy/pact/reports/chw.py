@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import NoReverseMatch, reverse
 from django.http import Http404
 from corehq.apps.api.es import ReportCaseES, ReportXFormES

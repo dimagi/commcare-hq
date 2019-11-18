@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
 import json
 
@@ -20,12 +18,10 @@ from corehq.apps.userreports.reports.util import ReportExport
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.soft_assert import soft_assert
-from six.moves import range
 from custom.utils.utils import clean_IN_filter_value
 
 # Copied from custom/abt/reports/data_sources/supervisory.json
 MAX_LOCATION_COLUMNS = 350
-_soft_assert_location_columns = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
 
 
 def _invert_table(table):
@@ -42,7 +38,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         data = super(FormattedSupervisoryReport, self).export_table
 
         # remove zeroes
-        table = data[0][1]
+        table = list(data[0][1])
         for row in range(1, len(table) - 1):
             for column in range(2, len(table[row])):
                 if table[row][column] == 0:
@@ -63,13 +59,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         data[0][1] = _invert_table(
             inverted_incident_and_total_columns + sorted_inverted_location_columns
         )
-
-        _soft_assert_location_columns(
-            len(sorted_inverted_location_columns) < MAX_LOCATION_COLUMNS,
-            'Must increase number of allowed location columns in '
-            'custom/abt/reports/data_sources/supervisory.json'
-        )
-
+        data[0][1] = table
         return data
 
     @property
@@ -135,8 +125,9 @@ class UniqueSOPSumDataSource(SqlData):
             'domain': domain,
         }
         for (key, value) in filter_values.items():
-            if key == 'date_of_data_collection':
-                continue
+            if key == 'date_of_data_collection' and value:
+                config['start_date'] = value.startdate
+                config['end_date'] = value.enddate
             elif key and value:
                 self.__setattr__(key, [x.value for x in value])
                 config[key] = self.__getattribute__(key)
@@ -150,6 +141,8 @@ class UniqueSOPSumDataSource(SqlData):
     @property
     def filters(self):
         filters = []
+        if 'start_date' in self.config and 'end_date' in self.config:
+            filters.append(BETWEEN("date_of_data_collection", "start_date", "end_date"))
         if 'country' in self.config:
             filters.append(IN('country', get_INFilter_bindparams('country', self.__getattribute__("country"))))
         if 'level_1' in self.config:

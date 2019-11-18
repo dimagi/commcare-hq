@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -12,6 +10,7 @@ from custom.intrahealth.sqldata import *
 class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersMixin, DatespanMixin):
 
     title = ''
+    base_template_path = "intrahealth/base_multi_report.html"
     report_template_path = "intrahealth/multi_report.html"
     flush_layout = True
     export_format_override = 'csv'

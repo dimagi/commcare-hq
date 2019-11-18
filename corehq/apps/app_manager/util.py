@@ -1,48 +1,48 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
-import os
-import uuid
-import re
 import logging
+import os
+import re
+import uuid
+from collections import OrderedDict, namedtuple
+from copy import deepcopy
+
+from django.core.cache import cache
+from django.db.models import Max
+from django.http import Http404
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+
 import yaml
-import six
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from io import open
-
-
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
 from memoized import memoized
 
-from django.urls import reverse
-from django.core.cache import cache
-from django.http import Http404
-from django.utils.translation import ugettext as _
+from dimagi.utils.couch import CriticalSection
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain, get_app
-)
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
-from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
-from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.app_manager.tasks import create_user_cases
-from corehq.util.soft_assert import soft_assert
-from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
-    USERCASE_TYPE,
     USERCASE_ID,
-    USERCASE_PREFIX)
-from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+)
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    PracticeUserException,
+    SuiteError,
+    SuiteValidationError,
+    XFormException,
+)
+from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.xform import XForm, parse_xml
+from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.make_uuid import random_hex
-
+from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +72,27 @@ def app_doc_types():
     }
 
 
+def is_linked_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('LinkedApplication', 'LinkedApplication-Deleted')
+
+
+def is_remote_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('RemoteApp', 'RemoteApp-Deleted')
+
+
+def _get_doc_type(app_or_doc):
+    if hasattr(app_or_doc, 'doc_type'):
+        doc_type = app_or_doc.doc_type
+    elif 'doc_type' in app_or_doc:
+        doc_type = app_or_doc['doc_type']
+    assert doc_type
+    return doc_type
+
+
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
-    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    prepared_xpath = re.compile(r'\s').sub('', prepared_xpath)
     return prepared_xpath
 
 
@@ -125,10 +142,14 @@ def first_elem(elem_list):
     return elem_list[0] if elem_list else None
 
 
+def generate_xmlns():
+    return str(uuid.uuid4()).upper()
+
+
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
-        data = xform.data_node.render()
+        data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
@@ -140,10 +161,7 @@ def save_xform(app, form, xml):
         pass
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        # we assume form.get_unique_id() is unique across all of HQ and
-        # therefore is suitable to create an XMLNS that will not confict
-        # with any other form
-        uid = form.get_unique_id()
+        uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
         new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
@@ -159,7 +177,7 @@ def save_xform(app, form, xml):
                 # or form is being updated with source copied from other form
                 xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
-    form.source = xml
+    form.source = xml.decode('utf-8')
 
     if form.is_registration_form():
         # For registration forms, assume that the first question is the
@@ -214,8 +232,8 @@ def module_case_hierarchy_has_circular_reference(module):
 
 
 def is_usercase_in_use(domain_name):
-    domain = Domain.get_by_name(domain_name) if domain_name else None
-    return domain and domain.usercase_enabled
+    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
+    return domain_obj and domain_obj.usercase_enabled
 
 
 def get_settings_values(app):
@@ -236,7 +254,7 @@ def get_settings_values(app):
     # convert int to string
     hq_settings['mobile_ucr_restore_version'] = str(hq_settings.get('mobile_ucr_restore_version', '1.0'))
 
-    domain = Domain.get_by_name(app.domain)
+    domain_obj = Domain.get_by_name(app.domain)
     return {
         'properties': profile.get('properties', {}),
         'features': profile.get('features', {}),
@@ -245,7 +263,7 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
-            'commtrack_enabled': domain.commtrack_enabled,
+            'commtrack_enabled': domain_obj.commtrack_enabled,
         }
     }
 
@@ -281,19 +299,6 @@ def get_correct_app_class(doc):
         return app_doc_types()[doc['doc_type']]
     except KeyError:
         raise DocTypeError(doc['doc_type'])
-
-
-def all_apps_by_domain(domain):
-    from corehq.apps.app_manager.models import ApplicationBase
-    rows = ApplicationBase.get_db().view(
-        'app_manager/applications',
-        startkey=[domain, None],
-        endkey=[domain, None, {}],
-        include_docs=True,
-    ).all()
-    for row in rows:
-        doc = row['doc']
-        yield get_correct_app_class(doc).wrap(doc)
 
 
 def languages_mapping():
@@ -359,16 +364,13 @@ def advanced_actions_use_usercase(actions):
 
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain = Domain.get_by_name(domain_name, strict=True)
-        if not domain:  # copying domains passes in an id before name is saved
-            domain = Domain.get(domain_name)
-        if not domain.usercase_enabled:
-            domain.usercase_enabled = True
-            domain.save()
+        domain_obj = Domain.get_by_name(domain_name, strict=True)
+        if not domain_obj:  # copying domains passes in an id before name is saved
+            domain_obj = Domain.get(domain_name)
+        if not domain_obj.usercase_enabled:
+            domain_obj.usercase_enabled = True
+            domain_obj.save()
             create_user_cases.delay(domain_name)
-
-
-
 
 
 def prefix_usercase_properties(properties):
@@ -405,46 +407,55 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_form_unique_ids(app_source, id_map=None):
+def update_form_unique_ids(app_source, ids_map):
+    """
+    Accepts an ids_map translating IDs in app_source to the desired replacement
+    ID. Form IDs not present in ids_map will be given new random UUIDs.
+    """
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
+    attachments = app_source['_attachments']
 
-    def change_form_unique_id(form, map):
-        unique_id = form['unique_id']
-        new_unique_id = map.get(form['xmlns'], random_hex())
-        form['unique_id'] = new_unique_id
-        if ("%s.xml" % unique_id) in app_source['_attachments']:
-            app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
-        return new_unique_id
+    def change_form_unique_id(form, old_id, new_id):
+        form['unique_id'] = new_id
+        if f"{old_id}.xml" in attachments:
+            attachments[f"{new_id}.xml"] = attachments.pop(f"{old_id}.xml")
 
     # once Application.wrap includes deleting user_registration
     # we can remove this
     if 'user_registration' in app_source:
         del app_source['user_registration']
 
-    id_changes = {}
-    if id_map is None:
-        id_map = {}
+    new_ids_by_old = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
-            id_changes[old_id] = new_id
+            new_id = ids_map.get(old_id, uuid.uuid4().hex)
+            new_ids_by_old[old_id] = new_id
+            change_form_unique_id(form, old_id, new_id)
 
     for reference_path in form_id_references:
         for reference in reference_path.find(app_source):
-            if reference.value in id_changes:
-                jsonpath_update(reference, id_changes[reference.value])
+            if reference.value in new_ids_by_old:
+                jsonpath_update(reference, new_ids_by_old[reference.value])
 
     return app_source
 
 
 def update_report_module_ids(app_source):
+    """Make new report UUIDs so they stay unique
+
+    Otherwise there would be multiple reports in the restore with the same UUID
+    Set the report slug to the old UUID so any xpath expressions referencing
+    the report by ID continue to work, if only in mobile UCR v2
+    """
     app_source = deepcopy(app_source)
     for module in app_source['modules']:
         if module['module_type'] == 'report':
             for config in module['report_configs']:
+                if not config.get('report_slug'):
+                    config['report_slug'] = config['uuid']
                 config['uuid'] = uuid.uuid4().hex
     return app_source
 
@@ -461,7 +472,7 @@ def _app_callout_templates():
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
     else:
         logger.info("not found: %s", path)
         data = []
@@ -516,58 +527,6 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
         for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
-
-
-def get_form_data(domain, app, include_shadow_forms=True):
-    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-    from corehq.apps.app_manager.models import ShadowForm
-
-    modules = []
-    errors = []
-    for module in app.get_modules():
-        forms = []
-        module_meta = {
-            'id': module.unique_id,
-            'name': module.name,
-            'short_comment': module.short_comment,
-            'module_type': module.module_type,
-            'is_surveys': module.is_surveys,
-        }
-
-        form_list = module.get_forms()
-        if not include_shadow_forms:
-            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
-        for form in form_list:
-            form_meta = {
-                'id': form.unique_id,
-                'name': form.name,
-                'short_comment': form.short_comment,
-                'action_type': form.get_action_type(),
-            }
-            try:
-                questions = form.get_questions(
-                    app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-                form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
-            except XFormException as e:
-                form_meta['error'] = {
-                    'details': six.text_type(e),
-                    'edit_url': reverse(
-                        'form_source',
-                        args=[domain, app._id, form.unique_id]
-                    ),
-                }
-                form_meta['module'] = copy(module_meta)
-                errors.append(form_meta)
-            else:
-                forms.append(form_meta)
-
-        module_meta['forms'] = forms
-        modules.append(module_meta)
-    return modules, errors
 
 
 def get_and_assert_practice_user_in_domain(practice_user_id, domain):
@@ -626,7 +585,9 @@ class LatestAppInfo(object):
 
     def clear_caches(self):
         self.get_latest_app_version.clear(self)
+        self.get_latest_apk_version.clear(self)
 
+    @quickcache(vary_on=['self.app_id'])
     def get_latest_apk_version(self):
         from corehq.apps.app_manager.models import LATEST_APK_VALUE
         from corehq.apps.builds.models import BuildSpec
@@ -680,7 +641,7 @@ def get_form_source_download_url(xform):
 
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
-    except KeyError:
+    except IndexError:
         return None
 
     return reverse("app_download_file", args=[
@@ -688,3 +649,88 @@ def get_form_source_download_url(xform):
         xform.build_id,
         app.get_form_filename(module=form.get_module(), form=form),
     ])
+
+
+@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_build_for_profile(domain, profile_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
+                            filter(build_profile_id=profile_id, active=True)
+                            .order_by('-version')
+                            .first())
+    if latest_enabled_build:
+        return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
+def get_latest_app_release_by_location(domain, location_id, app_id):
+    """
+    for a location search for enabled app releases for all parent locations.
+    Child location's setting takes precedence over parent
+    """
+    from corehq.apps.app_manager.models import AppReleaseByLocation
+    location = SQLLocation.active_objects.get(location_id=location_id)
+    location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
+        'location_id', flat=True).reverse()
+    # get all active enabled releases and order by version desc to get one with the highest version in the end
+    # for a location. Do not use the first object itself in order to respect the location hierarchy and use
+    # the closest location to determine the valid active release
+    latest_enabled_releases = {
+        release.location_id: release.build_id
+        for release in
+        AppReleaseByLocation.objects.filter(
+            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
+            'version')
+    }
+    for loc_id in location_and_ancestor_ids:
+        build_id = latest_enabled_releases.get(loc_id)
+        if build_id:
+            return get_app(domain, build_id)
+
+
+def expire_get_latest_app_release_by_location_cache(app_release_by_location):
+    """
+    expire cache for the location and its descendants for the app corresponding to this enabled app release
+    why? : Latest enabled release for a location is dependent on restrictions added for
+    itself and its ancestors. Hence we expire the cache for location and its descendants for which the
+    latest enabled release would depend on this location
+    """
+    location = SQLLocation.active_objects.get(location_id=app_release_by_location.location_id)
+    location_and_descendants = location.get_descendants(include_self=True)
+    for loc in location_and_descendants:
+        get_latest_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
+                                          app_release_by_location.app_id)
+
+
+@quickcache(['app_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_versions_per_profile(app_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    # a dict with each profile id mapped to its latest enabled version number, if present
+    return {
+        build_profile['build_profile_id']: build_profile['version__max']
+        for build_profile in
+        LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
+            Max('version'))
+    }
+
+
+def get_app_id_from_form_unique_id(domain, form_unique_id):
+    """
+    Do not use. This is here to support migrations and temporary cose for *removing*
+    the constraint that form ids be lgobally unique. It will stop working as more
+    duplicated form unique ids appear.
+    """
+    return _get_app_ids_by_form_unique_id(domain).get(form_unique_id)
+
+
+@quickcache(['domain'], timeout=1 * 60 * 60)
+def _get_app_ids_by_form_unique_id(domain):
+    apps = get_apps_in_domain(domain, include_remote=False)
+    app_ids = {}
+    for app in apps:
+        for module in app.modules:
+            for form in module.get_forms():
+                if form.unique_id in app_ids:
+                    raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
+                app_ids[form.unique_id] = app.get_id
+    return app_ids

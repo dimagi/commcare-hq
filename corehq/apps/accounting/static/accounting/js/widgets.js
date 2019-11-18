@@ -2,7 +2,7 @@ hqDefine('accounting/js/widgets', [
     'jquery',
     'knockout',
     'underscore',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -15,40 +15,44 @@ hqDefine('accounting/js/widgets', [
         self.fieldName = field;
         self.multiple = !! multiple;
 
-        self.init = function () {
+        self.init = function (initial) {
             var $field = $('form [name="' + self.fieldName + '"]');
             if ($field.attr('type') !== 'hidden') {
+                if (initial) {
+                    if (!_.isArray(initial)) {
+                        initial = [{id: initial, text: initial}];
+                    }
+
+                    // Add a DOM option for each value, which select2 will pick up on change
+                    _.each(initial, function (result) {
+                        $field.append(new Option(result.text, result.id));
+                    });
+
+                    // Set the actual value; using an array works for both single and multiple selects
+                    $field.val(_.pluck(initial, 'id'));
+                }
                 $field.select2({
                     minimumInputLength: 0,
+                    placeholder: '',    // required for allowClear to work
                     allowClear: true,
                     ajax: {
-                        quietMillis: 150,
+                        delay: 150,
                         url: '',
                         dataType: 'json',
                         type: 'post',
-                        data: function (term) {
+                        data: function (params) {
                             return {
                                 handler: 'select2_billing',
                                 action: self.fieldName,
-                                searchString: term,
-                                existing: $('form [name="' + self.fieldName + '"]').val().split(','),
+                                searchString: params.term,
+                                existing: $('form [name="' + self.fieldName + '"]').val(),
                                 additionalData: self.getAdditionalData(),
                             };
                         },
-                        results: function (data) {
-                            return data;
-                        },
                     },
                     multiple: self.multiple,
-                    initSelection: self.initSelection,
                 });
             }
-        };
-
-        self.initSelection = function (element, callback) {
-            var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
-                billingInfoUtils.getSingleResultFromElement(element);
-            callback(data);
         };
 
         self.getAdditionalData = function () {
@@ -65,26 +69,42 @@ hqDefine('accounting/js/widgets', [
         self.fieldName = field;
         self.validEmailText = gettext("Please enter a valid email.");
 
-        self.init = function () {
-            $('form [name="' + self.fieldName + '"]').select2({
-                createSearchChoice: function (term, data) {
+        self.init = function (initial) {
+            var $field = $('form [name="' + self.fieldName + '"]');
+            if (initial) {
+                if (!_.isArray(initial)) {
+                    initial = [{id: initial, text: initial}];
+                }
+
+                // Add a DOM option for each value, which select2 will pick up on change
+                _.each(initial, function (result) {
+                    $field.append(new Option(result.text, result.id));
+                });
+
+                // Set the actual value; using an array works for both single and multiple selects
+                $field.val(_.pluck(initial, 'id'));
+            }
+            $field.select2({
+                tags: true,
+                createTag: function (params) {
+                    var term = params.term,
+                        data = this.$element.select2("data");
+
+                    // Prevent duplicates
                     var matchedData = $(data).filter(function () {
                         return this.text.localeCompare(term) === 0;
                     });
 
-                    var isEmailValid = self.utils.validateEmail(term);
-
-                    if (matchedData.length === 0 && isEmailValid) {
+                    if (matchedData.length === 0 && self.utils.validateEmail(term)) {
                         return { id: term, text: term };
                     }
                 },
                 multiple: true,
                 data: [],
-                formatNoMatches: function () {
-                    return self.validEmailText;
-                },
-                initSelection: function (element, callback) {
-                    callback(billingInfoUtils.getMultiResultsFromElement(element));
+                language: {
+                    noResults: function () {
+                        return self.validEmailText;
+                    },
                 },
             });
         };
@@ -100,19 +120,6 @@ hqDefine('accounting/js/widgets', [
         return self;
     };
 
-    var billingInfoUtils = {
-        getMultiResultsFromElement: function (element) {
-            var data = $(element).val();
-            return _.map(data.split(','), function (email) {
-                return {id: email, text: email };
-            });
-        },
-        getSingleResultFromElement: function (element) {
-            var value = $(element).val();
-            return {id: value, text: value};
-        },
-    };
-
     var adjustBalanceFormModel = function () {
         var self = {};
         self.adjustmentType = ko.observable("current");
@@ -126,7 +133,12 @@ hqDefine('accounting/js/widgets', [
     $(function () {
         _.each($(".accounting-email-select2"), function (input) {
             var handler = emailSelect2Handler($(input).attr("name"));
-            handler.init();
+            handler.init(_.map($(input).data("initial"), function (e) {
+                return {
+                    id: e,
+                    text: e,
+                };
+            }));
         });
         $(".accounting-email-select2").removeAttr('required');
 
@@ -135,16 +147,17 @@ hqDefine('accounting/js/widgets', [
             handler.init();
         });
 
-        _.each($(".accounting-country-select2"), function () {
-            var country = asyncSelect2Handler('country');
-            country.initSelection = function (element, callback) {
-                var data = {
-                    text: element.data('countryname'),
-                    id: element.val(),
-                };
-                callback(data);
-            };
-            country.init();
+        _.each($(".accounting-country-select2"), function (el) {
+            var country = asyncSelect2Handler('country'),
+                data = $(el).data(),
+                initial = [];
+            if (data.countryCode) {
+                initial = [{
+                    id: data.countryCode,
+                    text: data.countryName,
+                }];
+            }
+            country.init(initial);
         });
 
         _.each($('.ko-adjust-balance-form'), function (form) {

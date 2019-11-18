@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dateutil.parser import parse
 from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json
-import six
 
 
 def parse_date_string(datestring, precise=False):
@@ -41,7 +38,7 @@ class TimeStampProperty(DateTimeProperty):
         super(TimeStampProperty, self).__init__(**kwargs)
 
     def to_python(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             try:
                 return parse_date_string(value, self.precise_reads)
             except ValueError as e:

@@ -20,21 +20,19 @@
   <td></td>
   <td>
     <!-- ko ifnot: $root.optionsContainQuestions -->
-    <input type="text"
-           class="form-control input-sm"
-           data-placeholder="Select a case property"
-           data-bind="
-            select2: selectablePropertyOptions,
-            value: newProperty
-    "/>
+    <select class="form-control input-sm"
+            data-placeholder="Select a case property"
+            data-bind="
+                select2: selectablePropertyOptions,
+                value: newProperty
+    "></select>
     <!-- /ko -->
     <!-- ko if: $root.optionsContainQuestions -->
-    <input class="form-control input-sm"
-           type="hidden"
-           data-bind="
-            questionsSelect: selectablePropertyOptions,
-            value: newProperty
-    "/>
+    <select class="form-control"
+            data-bind="
+                questionsSelect: selectablePropertyOptions,
+                value: newProperty
+    "></select>
     <!-- /ko -->
   </td>
   <td></td>

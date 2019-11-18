@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from mock import MagicMock
 from datetime import date, datetime
 from casexml.apps.case.xml.generator import date_to_xml_string
@@ -39,11 +37,11 @@ def dummy_user_xml(user=None):
         <uuid>{}</uuid>
         <date>{}</date>
         <user_data>
-            <data key="commcare_project">{}</data>
+            <data key="commcare_first_name"/>
             <data key="commcare_last_name"/>
             <data key="commcare_phone_number"/>
+            <data key="commcare_project">{}</data>
             <data key="something">arbitrary</data>
-            <data key="commcare_first_name"/>
         </user_data>
     </Registration>""".format(
         username,

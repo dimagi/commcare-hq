@@ -1,21 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from django.db.models import Q
+
+from django.conf import settings
+from django.db.models import F, Q
 
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
     Feature,
+    Invoice,
     SoftwarePlan,
     SoftwarePlanVersion,
     SoftwareProductRate,
     Subscriber,
     Subscription,
 )
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import (
+    fmt_feature_rate_dict,
+    fmt_product_rate_dict,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.hqwebapp.async_handler import (
+    AsyncHandlerError,
+    BaseAsyncHandler,
+)
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 
 
@@ -118,12 +125,12 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id',
+        'select2_feature_id',
         'product_rate_id',
     ]
 
     @property
-    def feature_id_response(self):
+    def select2_feature_id_response(self):
         features = Feature.objects
         if self.existing:
             features = features.exclude(name__in=self.existing)
@@ -210,7 +217,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, str(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):
@@ -230,7 +237,7 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
             search_string = self.search_string.lower()
-            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
+            domain_names = [x for x in domain_names if search_string in x.lower()]
         return [(d, d) for d in domain_names]
 
 
@@ -243,6 +250,9 @@ class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
     @property
     def customer_account_response(self):
         accounts = BillingAccount.objects.filter(is_customer_billing_account=True).values_list('name', flat=True)
+        if self.search_string:
+            search_string = self.search_string.lower()
+            accounts = [x for x in accounts if search_string in x.lower()]
         return [(n, n) for n in accounts]
 
 
@@ -428,6 +438,50 @@ class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     def name_response(self):
         return [self._fmt_select2_data(p.name, p.name)
                 for p in self.paginated_data]
+
+
+class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_number_filter'
+    allowed_actions = [
+        'invoice_number',
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.annotate(
+            number_on_invoice=F('id') + settings.INVOICE_STARTING_NUMBER
+        ).order_by('number_on_invoice')
+        if self.search_string:
+            query = query.filter(number_on_invoice__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_number_response(self):
+        return [
+            self._fmt_select2_data(str(p.id), str(p.number_on_invoice))
+            for p in self.paginated_data
+        ]
+
+
+class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_balance_filter'
+    allowed_actions = [
+        'invoice_balance'
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.order_by('balance')
+        if self.search_string:
+            query = query.filter(balance__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_balance_response(self):
+        return [
+            self._fmt_select2_data(str(p.balance), str(p.balance))
+            for p in self.paginated_data
+        ]
 
 
 class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):

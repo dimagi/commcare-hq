@@ -1,30 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
 import json
-from time import time
+import os
 from collections import defaultdict
 from datetime import datetime
-import six
-
-from celery.schedules import crontab
-from celery.task import periodic_task
+from time import time
 
 from django.conf import settings
 from django.core.management import call_command
 from django.db import connections
 
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.models import Domain
-from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, LedgerES, UserES
-from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
-    parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
-    CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
-from corehq.sql_db.connections import ConnectionManager, UCR_ENGINE_ID
-from io import open
+from celery.schedules import crontab
+from celery.task import periodic_task
 
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import (
+    CANT_MATCH,
+    ERROR_SAVING,
+    FORM_HAS_UNDEFINED_XMLNS,
+    MULTI_MATCH,
+    SET_XMLNS,
+    parse_log_message,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
+from corehq.apps.hqwebapp.tasks import mail_admins_async
+from corehq.apps.users.models import WebUser
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    FormReindexAccessor,
+)
+from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
@@ -36,7 +40,7 @@ def json_handler(obj):
         return json.JSONEncoder().default(obj)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=[1, 4], hour=0, minute=0))  # every Monday and Thursday
+@periodic_task(run_every=crontab(day_of_week=[1, 4], hour=0, minute=0))  # every Monday and Thursday
 def fix_xforms_with_missing_xmlns():
     log_file_name = 'undefined_xmlns.{}-timestamp.log'.format(int(time()))
     log_file_path = os.path.join(UNDEFINED_XMLNS_LOG_DIR, log_file_name)
@@ -146,7 +150,7 @@ def pprint_stats(stats, outstream):
             outstream.write("        {}\n".format(user))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def clear_expired_sessions():
     call_command('clearsessions')
 
@@ -159,17 +163,24 @@ def _is_monday():
     return datetime.utcnow().isoweekday() == 1
 
 
+def _has_docs(accessor, db_name):
+    return bool(list(accessor.get_doc_ids(db_name, limit=1)))
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
     missing_domains_with_cases = set()
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
-        if CaseAccessorSQL.get_case_ids_in_domain(domain):
-            missing_domains_with_cases |= {domain}
+        accessor = CaseReindexAccessor(domain=domain, include_deleted=True)
+        for db_name in accessor.sql_db_aliases:
+            if _has_docs(accessor, db_name):
+                missing_domains_with_cases |= {domain}
+                break
 
     if missing_domains_with_cases:
         mail_admins_async.delay(
             'There exist SQL cases belonging to a missing domain',
-            six.text_type(missing_domains_with_cases)
+            str(missing_domains_with_cases)
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -181,14 +192,16 @@ def check_for_sql_cases_without_existing_domain():
 def check_for_sql_forms_without_existing_domain():
     missing_domains_with_forms = set()
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
-        for doc_type in doc_type_to_state:
-            if FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type):
+        accessor = FormReindexAccessor(domain=domain, include_deleted=True)
+        for db_name in accessor.sql_db_aliases:
+            if _has_docs(accessor, db_name):
                 missing_domains_with_forms |= {domain}
+                break
 
     if missing_domains_with_forms:
         mail_admins_async.delay(
             'There exist SQL forms belonging to a missing domain',
-            six.text_type(missing_domains_with_forms)
+            str(missing_domains_with_forms)
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -201,7 +214,7 @@ def check_for_elasticsearch_data_without_existing_domain():
     issue_found = False
     deleted_domain_names = set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names())
     for domain_name in deleted_domain_names:
-        for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, LedgerES, UserES]:
+        for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             query = hqESQuery().domain(domain_name)
             count = query.count()
             if query.count() != 0:
@@ -236,7 +249,19 @@ def check_for_ucr_tables_without_existing_domain():
         for missing_domain in missing_domains_to_tables:
             mail_admins_async.delay(
                 'Missing domain "%s" has remaining UCR tables' % missing_domain,
-                six.text_type(missing_domains_to_tables[missing_domain])
+                str(missing_domains_to_tables[missing_domain])
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
+
+
+@periodic_task(run_every=crontab(minute=0, hour=16), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def delete_web_user():
+    if settings.SERVER_ENVIRONMENT == 'production':
+        for username in [
+            'create_growth' + '@' + 'outlook.com',
+            'growth_analytics' + '@' + 'outlook.com',
+        ]:
+            web_user = WebUser.get_by_username(username)
+            if web_user:
+                web_user.delete()

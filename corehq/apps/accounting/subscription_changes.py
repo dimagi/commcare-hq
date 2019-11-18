@@ -1,39 +1,58 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import json
+import time
 
-from couchdbkit import ResourceConflict
+from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _, ungettext
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ungettext
+
+from couchdbkit import ResourceConflict
 
 from corehq import privileges
-from corehq.apps.accounting.utils import (
-    log_accounting_error,
-    get_privileges,
-)
+from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.userreports.exceptions import (
+    DataSourceConfigurationNotFoundError,
+)
 from corehq.apps.users.models import CommCareUser, UserRole
-from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
-    AlertSchedule,
     TimedSchedule,
 )
-from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
-from django.db import transaction
+from corehq.messaging.scheduling.tasks import (
+    refresh_alert_schedule_instances,
+    refresh_timed_schedule_instances,
+)
 
 
 class BaseModifySubscriptionHandler(object):
 
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
-        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
+
+        def get_domain(domain):
+            obj = Domain.get_by_name(domain)
+            if obj:
+                return obj
+            else:
+                # This could happen in when there is an issue with couch cluster
+                #   that makes the obj not available
+                time.sleep(5)
+                return Domain.get_by_name(domain)
+
+        self.domain = domain if isinstance(domain, Domain) else get_domain(domain)
+        if self.domain is None:
+            # This fails down the line anyway
+            # and failing now gives a much better traceback
+            raise DomainDoesNotExist()
         self.date_start = date_start or datetime.date.today()
         self.new_plan_version = new_plan_version
 
@@ -93,7 +112,7 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 
     result = []
     for rule in rules:
-        schedule = rule.get_messaging_rule_schedule()
+        schedule = rule.get_schedule()
         if schedule.active and (not survey_only or schedule.memoized_uses_sms_survey):
             result.append(rule)
 
@@ -148,7 +167,7 @@ def _deactivate_schedules(domain, survey_only=False):
         for more information.
         """
         with transaction.atomic():
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             if isinstance(schedule, AlertSchedule):
                 AlertSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
             elif isinstance(schedule, TimedSchedule):
@@ -156,7 +175,7 @@ def _deactivate_schedules(domain, survey_only=False):
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
-            initiate_messaging_rule_run(domain.name, rule.pk)
+            initiate_messaging_rule_run(rule)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
@@ -384,7 +403,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
-                    rebuild_indicators.delay(report.config._id)
+                    rebuild_indicators.delay(report.config._id, source='subscription_change')
             except DataSourceConfigurationNotFoundError:
                 pass
         return True

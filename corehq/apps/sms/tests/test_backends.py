@@ -1,51 +1,73 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
+from datetime import datetime
+
+from django.test import TestCase
+from django.test.client import Client
+from django.test.utils import override_settings
+
+from mock import patch
+from six.moves.urllib.parse import urlencode
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.api.models import PERMISSION_POST_SMS, ApiUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
-from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
-    send_sms_with_backend, send_sms_with_backend_name)
+from corehq.apps.sms.api import (
+    send_sms,
+    send_sms_to_verified_number,
+    send_sms_with_backend,
+    send_sms_with_backend_name,
+)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, QueuedSMS,
-    SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
-    PhoneLoadBalancingMixin, BackendMap)
-from corehq.apps.sms.tasks import handle_outgoing, get_connection_slot_from_phone_number, get_connection_slot_lock
+from corehq.apps.sms.models import (
+    SMS,
+    BackendMap,
+    MobileBackendInvitation,
+    PhoneLoadBalancingMixin,
+    QueuedSMS,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.sms.tasks import (
+    get_connection_slot_from_phone_number,
+    get_connection_slot_lock,
+    handle_outgoing,
+)
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
-from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
+from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
+    IvoryCoastMTNBackend,
+)
 from corehq.messaging.smsbackends.karix.models import KarixBackend
-from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
-from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
+from corehq.messaging.smsbackends.start_enterprise.models import (
+    StartEnterpriseBackend,
+)
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
+from corehq.messaging.smsbackends.unicel.models import (
+    InboundParams,
+    SQLUnicelBackend,
+)
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.util.test_utils import create_test_case
-from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from django.test import TestCase
-from django.test.client import Client
-from django.test.utils import override_settings
-from mock import patch
-from six.moves.urllib.parse import urlencode
-from six.moves import range
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
@@ -74,13 +96,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=SQLMachBackend.get_api_id()
         )
         cls.mach_backend.save()
-
-        cls.tropo_backend = SQLTropoBackend(
-            name='TROPO',
-            is_global=True,
-            hq_api_id=SQLTropoBackend.get_api_id()
-        )
-        cls.tropo_backend.save()
 
         cls.http_backend = SQLHttpBackend(
             name='HTTP',
@@ -209,7 +224,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
-        cls.tropo_backend.delete()
         cls.http_backend.delete()
         cls.telerivet_backend.delete()
         cls.test_backend.delete()
@@ -227,6 +241,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -302,7 +317,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
     @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
-    @patch('corehq.messaging.smsbackends.tropo.models.SQLTropoBackend.send')
     @patch('corehq.messaging.smsbackends.http.models.SQLHttpBackend.send')
     @patch('corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend.send')
     @patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
@@ -339,12 +353,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             test_send,
             telerivet_send,
             http_send,
-            tropo_send,
             mach_send,
             unicel_send):
         self._test_outbound_backend(self.unicel_backend, 'unicel test', unicel_send)
         self._test_outbound_backend(self.mach_backend, 'mach test', mach_send)
-        self._test_outbound_backend(self.tropo_backend, 'tropo test', tropo_send)
         self._test_outbound_backend(self.http_backend, 'http test', http_send)
         self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
         self._test_outbound_backend(self.test_backend, 'test test', test_send)
@@ -373,14 +385,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
-
-    @run_with_all_backends
-    def test_tropo_inbound_sms(self):
-        tropo_data = {'session': {'from': {'id': self.test_phone_number}, 'initialText': 'tropo test'}}
-        self._simulate_inbound_request_with_payload('/tropo/sms/%s/' % self.tropo_backend.inbound_api_key,
-            content_type='text/json', payload=json.dumps(tropo_data))
-
-        self._verify_inbound_request(self.tropo_backend.get_api_id(), 'tropo test')
 
     @run_with_all_backends
     def test_telerivet_inbound_sms(self):
@@ -644,6 +648,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.teardown_subscription()
 
         cls.domain_obj.delete()
+        clear_plan_version_cache()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 
     def test_multiple_country_prefixes(self):
@@ -1062,12 +1067,12 @@ class SQLMobileBackendTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id(),
         )
 
-        self.assertEquals(
+        self.assertEqual(
             SQLMobileBackend.get_backend_api_id(backend.pk),
             SQLTestSMSBackend.get_api_id()
         )
 
-        self.assertEquals(
+        self.assertEqual(
             SQLMobileBackend.get_backend_api_id(backend.couch_id, is_couch_id=True),
             SQLTestSMSBackend.get_api_id()
         )

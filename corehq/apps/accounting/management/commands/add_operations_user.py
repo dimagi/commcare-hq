@@ -1,10 +1,11 @@
 # Use modern Python
-from __future__ import unicode_literals, absolute_import, print_function
 
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
+
+from django_prbac.models import Grant, Role, UserRole
+
 from corehq import privileges
-from django_prbac.models import UserRole, Role, Grant
 
 
 class Command(BaseCommand):

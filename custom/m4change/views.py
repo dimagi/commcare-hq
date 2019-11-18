@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.views.decorators.http import require_POST
 from django.http.response import HttpResponse
 

@@ -4,7 +4,8 @@ CommCare HQ docker
 Initial setup
 -------------
 * Linux
-   * Install [Docker](https://docs.docker.com/engine/installation/)
+   * Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-using-the-repository)
+   * You probably also want to [manage Docker as non-root user](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
    * Install [Docker Compose](https://docs.docker.com/compose/install/) (Note you can also install in a virtualenv with `$ pip install docker-compose`)
 * OS X
    * Preferred: install [Docker for Mac](https://docs.docker.com/docker-for-mac/install/).
@@ -14,42 +15,44 @@ Initial setup
      * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
-* Bootstrap the setup. Skip this step and go to [Configure your localsettings](#configure-your-localsettings) below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#setup-localsettings).
-
-    ```
-      $ ./scripts/docker runserver --bootstrap
-    ```
-    
-    This will do the following:
-    
-    * build all the images (if not already built)
-    * run all the service containers
-    * migrate the DB and sync the Couch views
-    * bootstrap a superuser and domain:
-      * username: admin@example.com
-      * password: password
-      * domain: demo
-    * run the Django dev server
-
-    If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
-    the login details above.
-    
-    You can create another user and domain with `$ ./manage.py make_superuser <email>`
-    
-    On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
-
-### Configure your localsettings
 
 There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine. If you are planning on doing local development, it is recommended to run HQ on your local machine, and use docker only for supporting services
 
-  * Running docker services only (do this if you came here from the CommCare HQ README)
-    * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
-    * Run `./scripts/docker up -d` to start docker services in the background. Sometimes this gets stuck waiting for Riak to start. If that happens break (CTRL+C) and try again.
-    * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ README and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#set-up-your-django-environment).
+### Run only services in docker
 
-  * Running HQ inside a docker container
+This is the recommended setup for local development.  If you want to run the server process in docker, see below.
 
-    Do nothing; `docker/localsettings.py` will be used inside the container.
+* If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
+* Run `./scripts/docker up -d postgres couch redis elasticsearch kafka minio` to build and start those docker services in the background.
+* Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ DEV_SETUP and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#set-up-your-django-environment).
+
+### Run services and HQ in docker
+
+This setup is not recommended for local development, since you'll typically want more direct access to the django process.
+
+Bootstrap the setup.
+
+```
+$ ./scripts/docker runserver --bootstrap
+```
+
+This will do the following:
+
+* build all the images (if not already built)
+* run all the service containers
+* migrate the DB and sync the Couch views
+* bootstrap a superuser and domain:
+  * username: admin@example.com
+  * password: password
+  * domain: demo
+* run the Django dev server
+
+If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
+the login details above.
+
+You can create another user and domain with `$ ./manage.py make_superuser <email>`
+
+On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 
 
 General usage
@@ -61,7 +64,7 @@ General usage
 
 **The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
-  $ ./scripts/docker up -d  # start docker services in background
+  $ ./scripts/docker start
   $ ./scripts/docker stop
   $ ./scripts/docker logs postgres
 ```
@@ -81,11 +84,6 @@ directly.
 ```
   $ ./scripts/docker runserver
 ```
-
-Notes
------
-**copying old data**
-If you don't want to start fresh, Farid wrote up some notes on copying data from an old dev environment [here](https://gist.github.com/proteusvacuum/a3884ce8b65681ebaf95).
 
 Caveats
 -------

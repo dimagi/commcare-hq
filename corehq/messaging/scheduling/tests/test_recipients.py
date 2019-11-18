@@ -1,12 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import contextlib
 import uuid
+from datetime import time
+
 from django.test import TestCase
+
+from mock import patch
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.utils import update_case
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
@@ -14,7 +18,13 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
+from corehq.messaging.pillow import get_case_messaging_sync_pillow
+from corehq.messaging.scheduling.models import (
+    Content,
+    SMSContent,
+    TimedEvent,
+    TimedSchedule,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
@@ -22,8 +32,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 )
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import create_test_case, set_parent_case
-from datetime import time
-from mock import patch
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class SchedulingRecipientTest(TestCase):
@@ -80,6 +89,9 @@ class SchedulingRecipientTest(TestCase):
 
         cls.case_group = CommCareCaseGroup(domain=cls.domain)
         cls.case_group.save()
+
+        cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
 
     @classmethod
     def tearDownClass(cls):
@@ -636,8 +648,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertTwoWayEntry(PhoneNumber.objects.get(owner_id=case.case_id), '12345')
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
-    @run_with_all_backends
-    def test_two_way_numbers(self):
+    def _test_two_way_numbers(self, change_context_manager):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
@@ -648,15 +659,17 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with self.create_user_case(user2) as case:
-            self.assertIsNotNone(user2.memoized_usercase)
-            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
-            self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+        with change_context_manager:
+            with self.create_user_case(user2) as case:
+                self.assertIsNotNone(user2.memoized_usercase)
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
         with self.create_user_case(user3) as case:
             # If the user has no number, the user case's number is used
-            update_case(self.domain, case.case_id,
-                case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
+            with change_context_manager:
+                update_case(self.domain, case.case_id,
+                    case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
@@ -673,6 +686,16 @@ class SchedulingRecipientTest(TestCase):
 
             # Referencing the case directly uses the case's phone number
             self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
+
+    @run_with_all_backends
+    def test_two_way_numbers_with_signal_task(self):
+        nullcontext = contextlib.suppress()
+        self._test_two_way_numbers(nullcontext)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.signals.sync_case_for_messaging')
+    def test_two_way_numbers_with_pillow(self, _):
+        self._test_two_way_numbers(self.process_pillow_changes)
 
     @run_with_all_backends
     def test_not_using_phone_entries(self):

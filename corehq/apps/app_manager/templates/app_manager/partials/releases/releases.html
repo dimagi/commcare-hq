@@ -9,75 +9,75 @@
 
 {% if intro_only %}
   <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
-  {% blocktrans %}
-    <p class="lead">
-      Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
-    </p>
-  {% endblocktrans %}
+    {% blocktrans %}
+      <p class="lead">
+        Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
+      </p>
+    {% endblocktrans %}
   </div>
   <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 300px;">
-  {% blocktrans %}
-    <p class="lead">
-      As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
-    </p>
-  {% endblocktrans %}
+    {% blocktrans %}
+      <p class="lead">
+        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
+      </p>
+    {% endblocktrans %}
   </div>
 {% else %}
 
-{% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
-<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
-     data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
-     role="alert">
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-  <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
-  <p class="alert alert-info">
-    <i class="fa fa-info-circle"></i>
-    {% blocktrans %}
-      Instead of starring versions of your app, you can now mark them
-      as "Released" or "In Test." "Released" has the same effect as
-      starring a version.  Any version you do not mark as "Released"
-      will default to "In Test."
-    {% endblocktrans %}
-  </p>
- </div>
- {% endif %}
+  {% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
+    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
+         data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
+      <p class="alert alert-info">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          Instead of starring versions of your app, you can now mark them
+          as "Released" or "In Test." "Released" has the same effect as
+          starring a version.  Any version you do not mark as "Released"
+          will default to "In Test."
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
 
-{% if not build_profile_access and not enable_update_prompts %}
+  {% if not build_profile_access and not enable_update_prompts %}
     {% include 'app_manager/partials/releases/releases_table.html' %}
-{% else%}
+  {% else%}
     <div class="tabbable">
-        <ul class="nav nav-tabs sticky-tabs">
-            <li><a href="#versions-tab" data-toggle="tab">
-                {% trans "Versions" %}</a>
-            </li>
-            {% if enable_update_prompts %}
-                <li><a href="#prompt-settings-tab" data-toggle="tab">{% trans "Manage Update Settings" %}</a></li>
-            {% endif %}
-            {% if build_profile_access %}
-                <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
-            {% endif %}
-        </ul>
-        <div class="spacer"></div>
-        <div class="tab-content">
-            <div id="versions-tab" class="tab-pane">
-                {% include 'app_manager/partials/releases/releases_table.html' %}
-            </div>
-            {% if enable_update_prompts %}
-                <div id="prompt-settings-tab" class="tab-pane">
-                    {% crispy prompt_settings_form %}
-                <div data-bind="saveButton: saveButton"></div>
-                </div>
-            {% endif %}
-            {% if build_profile_access %}
-                <div id="profiles-tab" class="tab-pane">
-                    {% include 'app_manager/partials/releases/build_profiles.html' %}
-                </div>
-            {% endif %}
+      <ul class="nav nav-tabs sticky-tabs">
+        <li><a href="#versions-tab" data-toggle="tab">
+          {% trans "Versions" %}</a>
+        </li>
+        {% if enable_update_prompts %}
+          <li><a href="#prompt-settings-tab" data-toggle="tab">{% trans "Manage Update Settings" %}</a></li>
+        {% endif %}
+        {% if build_profile_access %}
+          <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
+        {% endif %}
+      </ul>
+      <div class="spacer"></div>
+      <div class="tab-content">
+        <div id="versions-tab" class="tab-pane">
+          {% include 'app_manager/partials/releases/releases_table.html' %}
         </div>
+        {% if enable_update_prompts %}
+          <div id="prompt-settings-tab" class="tab-pane">
+            {% crispy prompt_settings_form %}
+            <div data-bind="saveButton: saveButton"></div>
+          </div>
+        {% endif %}
+        {% if build_profile_access %}
+          <div id="profiles-tab" class="tab-pane">
+            {% include 'app_manager/partials/releases/build_profiles.html' %}
+          </div>
+        {% endif %}
+      </div>
     </div><!-- .tabbable -->
-{% endif%}
+  {% endif%}
 
 {% endif %}<!-- intro_only condition -->
 

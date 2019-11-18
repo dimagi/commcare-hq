@@ -5,103 +5,106 @@
 {% requirejs_main "fixtures/js/view-table" %}
 
 {% block page_title %}
-    {% if not table_not_selected %}
+  {% if not table_not_selected %}
     {% blocktrans %}
-        Viewing Table
+      Viewing Table
     {% endblocktrans %}
     <strong>'{{ selected_table }}'</strong>
-    {% else %}
+  {% else %}
     {% blocktrans %}
-        View Tables
+      View Tables
     {% endblocktrans %}
-    {% endif%}
+  {% endif%}
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'renderReportTables' 1 %}
-    {% initial_page_data 'dataTablesOptions' data_tables_options %}
+  {% initial_page_data 'renderReportTables' 1 %}
+  {% initial_page_data 'dataTablesOptions' data_tables_options %}
+  {% if not table_not_selected %}
+    <h4>{{ table_description }}</h4>
+  {% endif %}
 
-{% block reportcontent %}
-{% block reporttable %}
+  {% block reportcontent %}
+    {% block reporttable %}
 
- <div class="panel panel-default">
-    <div id="reportFilters" class="panel-body">
-        <div class="accordion-inner">
+      <div class="panel panel-default">
+        <div id="reportFilters" class="panel-body">
+          <div class="accordion-inner">
             <form method="get" id="paramSelectorForm" class="form-horizontal">
-                <fieldset>
-                    <legend><span data-bind="text: filterHeadingName">{% trans "Select Table to View" %}</span></legend>
-                    {% for field in report_filters %}
-                        <fieldset id="fieldset_{{ field.slug }}">
-                            <div class="form-group" id="group_{{ field.slug }}">
-                                {{ field.field|safe }}
-                            </div>
-                        </fieldset>
-                    {% endfor %}
-                </fieldset>
-                <div class="form-actions">
-                    {% block report_filter_actions %}
-                        <div class="{{ report_filter_form_action_css_class }}">
-                            <button type="submit" class="btn btn-primary"
-                                    id="apply-btn">
-                                {% trans "View Table" %}
-                            </button>
-                        </div>
-                    {% endblock %}
-                </div>
+              <fieldset>
+                <legend><span data-bind="text: filterHeadingName">{% trans "Select Table to View" %}</span></legend>
+                {% for field in report_filters %}
+                  <fieldset id="fieldset_{{ field.slug }}">
+                    <div class="form-group" id="group_{{ field.slug }}">
+                      {{ field.field|safe }}
+                    </div>
+                  </fieldset>
+                {% endfor %}
+              </fieldset>
+              <div class="form-actions">
+                {% block report_filter_actions %}
+                  <div class="{{ report_filter_form_action_css_class }}">
+                    <button type="submit" class="btn btn-primary"
+                            id="apply-btn">
+                      {% trans "View Table" %}
+                    </button>
+                  </div>
+                {% endblock %}
+              </div>
             </form>
+          </div>
         </div>
-    </div>
-</div>
-    {% if not table_not_selected %}
-    <div class="panel panel-default">
-        <div class="panel-heading">
+      </div>
+      {% if not table_not_selected %}
+        <div class="panel panel-default">
+          <div class="panel-heading">
             <h2 class="panel-title">
-                {% blocktrans %}Table {% endblocktrans %}'{{ selected_table }}'
+              {% blocktrans %}Table {% endblocktrans %}'{{ selected_table }}'
             </h2>
-        </div>
-        <div class="panel-body-datatable">
+          </div>
+          <div class="panel-body-datatable">
             <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
-                <thead>
-                {%  if report_table.headers.complex %}
-                    {{ report_table.headers.render_html|safe }}
-                {% else %}
-                    {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
-                    <tr>
-                        {% for header in report_table.headers %}
-                            <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                                <i class="dt-sort-icon"></i>
-                                {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                                {% if header.help_text %}
-                                    <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
-                                {% endif %}
-                            </th>
-                        {% endfor %}
-                    </tr>
-                {% endif %}
-                </thead>
-                <tbody>
-                {% block tabular-body %}
+              <thead>
+              {%  if report_table.headers.complex %}
+                {{ report_table.headers.render_html|safe }}
+              {% else %}
+                {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
+                <tr>
+                  {% for header in report_table.headers %}
+                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                      <i class="dt-sort-icon"></i>
+                      {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                      {% if header.help_text %}
+                        <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+                      {% endif %}
+                    </th>
+                  {% endfor %}
+                </tr>
+              {% endif %}
+              </thead>
+              <tbody>
+              {% block tabular-body %}
                 {% if report_table.pagination.is_on %}
-                    <tr>
-                        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                            {% trans "Fetching additional data, please wait..." %}
-                        </td>
-                    </tr>
+                  <tr>
+                    <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                      {% trans "Fetching additional data, please wait..." %}
+                    </td>
+                  </tr>
                 {% endif %}
                 {% for row in report_table.rows %}
-                    <tr>
-                        {% for col in row %}
-                            {% include 'reports/async/partials/tabular_cell.html' %}
-                        {% endfor %}
-                    </tr>
+                  <tr>
+                    {% for col in row %}
+                      {% include 'reports/async/partials/tabular_cell.html' %}
+                    {% endfor %}
+                  </tr>
                 {% endfor %}
-                {% endblock %}
-                </tbody>
+              {% endblock %}
+              </tbody>
             </table>
+          </div>
         </div>
-    </div>
-    {% endif %}
-{% endblock %}
-{% block posttable %}{% endblock %}
-{% endblock %}
+      {% endif %}
+    {% endblock %}
+    {% block posttable %}{% endblock %}
+  {% endblock %}
 {% endblock %}

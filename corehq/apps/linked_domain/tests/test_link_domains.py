@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -43,3 +41,17 @@ class LinkedDomainTests(TestCase):
 
         link1 = DomainLink.link_domains('linked', 'master1')
         self.assertNotEqual(link.pk, link1.pk)
+
+    def test_link_deleted_then_create_existing_link(self):
+        # create a link and delete it
+        link = DomainLink.link_domains('linked', 'master')
+        link.deleted = True
+        link.save()
+
+        # create a new link
+        link1 = DomainLink.link_domains('linked', 'master1')
+
+        # create the same link again
+        link2 = DomainLink.link_domains('linked', 'master1')
+        self.assertEqual(link1.pk, link2.pk)
+        self.assertNotEqual(link.pk, link2.pk)

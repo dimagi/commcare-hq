@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from django.conf import settings
 from django.core import cache
@@ -29,8 +27,10 @@ CACHED_VIEW_PREFIX = '#cached_view_'
 CACHED_DOC_PREFIX = '#cached_doc_'
 CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 
+
 class RedisClientError(Exception):
     pass
+
 
 def rcache():
     return MOCK_REDIS_CACHE or get_redis_default_cache()

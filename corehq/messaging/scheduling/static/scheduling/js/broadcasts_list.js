@@ -1,158 +1,114 @@
 hqDefine("scheduling/js/broadcasts_list", [
     'jquery',
+    'knockout',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'datatables',
-    'datatables.fixedColumns',
-    'datatables.bootstrap',
+    "hqwebapp/js/components.ko",     // pagination
 ], function (
     $,
+    ko,
+    assertProperties,
     initialPageData
 ) {
-    var scheduledTable = null;
+    var broadcast = function (options) {
+        var self = ko.mapping.fromJS(options);
+
+        self.editUrl = initialPageData.reverse('edit_schedule', self.type(), self.id());
+        self.actionInProgress = ko.observable(false);
+
+        self.activateBroadcast = function (model) {
+            self.broadcastAction('activate_scheduled_broadcast', model);
+        };
+
+        self.deactivateBroadcast = function (model) {
+            self.broadcastAction('deactivate_scheduled_broadcast', model);
+        };
+
+        self.deleteBroadcast = function (model) {
+            if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+                self.broadcastAction('delete_scheduled_broadcast', model);
+            }
+        };
+
+        self.broadcastAction = function (action, model) {
+            self.actionInProgress(true);
+            $.ajax({
+                url: '',
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    action: action,
+                    broadcast_id: model.id(),
+                },
+                success: function (data) {
+                    ko.mapping.fromJS(data.broadcast, self);
+                },
+            }).always(function () {
+                self.actionInProgress(false);
+            });
+        };
+
+        return self;
+    };
+
+    var broadcastList = function (options) {
+        assertProperties.assert(options, ['listAction', 'type'], []);
+
+        var self = {};
+        self.broadcasts = ko.observableArray();
+
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.observable();
+        self.showPaginationSpinner = ko.observable(false);
+
+        self.emptyTable = ko.computed(function () {
+            return self.totalItems() === 0;
+        });
+        self.currentPage = ko.observable(1);
+        self.goToPage = function (page) {
+            self.showPaginationSpinner(true);
+            self.currentPage(page);
+            $.ajax({
+                url: initialPageData.reverse("new_list_broadcasts"),
+                data: {
+                    action: options.listAction,
+                    page: page,
+                    limit: self.itemsPerPage(),
+                },
+                success: function (data) {
+                    self.showPaginationSpinner(false);
+                    self.broadcasts(_.map(data.broadcasts, function (b) {
+                        return broadcast(_.extend(b, {
+                            type: options.type,
+                        }));
+                    }));
+                    self.totalItems(data.total);
+                },
+            });
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(self.currentPage());
+        };
+
+        return self;
+    };
 
     $(function () {
-        var listBroadcastsUrl = initialPageData.reverse("new_list_broadcasts");
+        var $scheduledList = $("#scheduled-broadcasts");
+        if ($scheduledList.length) {
+            $scheduledList.koApplyBindings(broadcastList({
+                listAction: 'list_scheduled',
+                type: 'scheduled',
+            }));
+        }
 
-        scheduledTable = $("#scheduled-table").dataTable({
-            "lengthChange": false,
-            "filter": false,
-            "sort": false,
-            "displayLength": 10,
-            "processing": false,
-            "serverSide": true,
-            "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function (aoData) {
-                aoData.push({"name": "action", "value": "list_scheduled"});
-            },
-            "sDom": "rtp",
-            "language": {
-                "emptyTable": gettext('There are no messages to display.'),
-                "infoEmpty": gettext('There are no messages to display.'),
-                "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
-                "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
-            },
-            "columns": [
-                {"data": ""},
-                {"data": "name"},
-                {"data": "last_sent"},
-                {"data": "active"},
-                {"data": ""},
-            ],
-            "columnDefs": [
-                {
-                    "targets": [0],
-                    "className": "text-center",
-                    "render": function (data, type, row) {
-                        return '<button data-id="' + row.id + '" class="btn btn-danger broadcast-delete">'
-                                + '<i class="fa fa-remove"></i></button>';
-                    },
-                },
-                {
-                    "targets": [1],
-                    "render": function (data, type, row) {
-                        var url = initialPageData.reverse('edit_schedule', 'scheduled', row.id);
-                        return "<a href='" + url + "'>" + row.name + "</a>";
-                    },
-                },
-                {
-                    "targets": [3],
-                    "render": function (data, type, row) {
-                        if (row.active) {
-                            return '<span class="label label-success">' + gettext("Active") + '</span>';
-                        } else {
-                            return '<span class="label label-danger">' + gettext("Inactive") + '</span>';
-                        }
-                    },
-                },
-                {
-                    "targets": [4],
-                    "render": function (data, type, row) {
-                        var disabled = row.editable ? '' : ' disabled ';
-                        if (row.active) {
-                            return '<button data-id="' + row.id + '"' + disabled + 'data-action="deactivate_scheduled_broadcast" class="btn btn-default broadcast-activate">'
-                                   + gettext("Deactivate") + '</button>';
-                        } else {
-                            return '<button data-id="' + row.id + '"' + disabled + 'data-action="activate_scheduled_broadcast" class="btn btn-default broadcast-activate">'
-                                   + gettext("Activate") + '</button>';
-                        }
-                    },
-                },
-            ],
-        });
-
-        $("#immediate-table").dataTable({
-            "lengthChange": false,
-            "filter": false,
-            "sort": false,
-            "displayLength": 10,
-            "processing": false,
-            "serverSide": true,
-            "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function (aoData) {
-                aoData.push({"name": "action", "value": "list_immediate"});
-            },
-            "dom": "rtp",
-            "language": {
-                "emptyTable": gettext('There are no messages to display.'),
-                "infoEmpty": gettext('There are no messages to display.'),
-                "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "info": gettext('Showing _START_ to _END_ of _TOTAL_ messages'),
-                "infoFiltered": gettext('(filtered from _MAX_ total messages)'),
-            },
-            "columns": [
-                {"data": "name"},
-                {"data": "last_sent"},
-            ],
-            "columnDefs": [
-                {
-                    "targets": [0],
-                    "render": function (data, type, row) {
-                        var url = initialPageData.reverse('edit_schedule', 'immediate', row.id);
-                        return "<a href='" + url + "'>" + row.name + "</a>";
-                    },
-                },
-            ],
-        });
-
-        $(document).on('click', '.broadcast-activate', activateScheduledBroadcast);
-        $(document).on('click', '.broadcast-delete', deleteScheduledBroadcast);
+        var $immediateList = $("#immediate-broadcasts");
+        if ($immediateList.length) {
+            $immediateList.koApplyBindings(broadcastList({
+                listAction: 'list_immediate',
+                type: 'immediate',
+            }));
+        }
     });
-
-    function broadcastAction(action, button) {
-        var broadcastId = $(button).data("id"),
-            $row = $(button).closest("tr"),
-            $activateButton = $row.find(".broadcast-activate"),
-            $deleteButton = $row.find(".broadcast-delete");
-        if (action === 'delete_scheduled_broadcast') {
-            $deleteButton.disableButton();
-            $activateButton.prop('disabled', true);
-        } else {
-            $activateButton.disableButton();
-            $deleteButton.prop('disabled', true);
-        }
-
-        $.ajax({
-            url: '',
-            type: 'post',
-            dataType: 'json',
-            data: {
-                action: action,
-                broadcast_id: broadcastId,
-            },
-        })
-            .always(function () {
-                scheduledTable.fnDraw(false);
-            });
-    }
-
-    function activateScheduledBroadcast() {
-        broadcastAction($(this).data("action"), this);
-    }
-
-    function deleteScheduledBroadcast() {
-        if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
-            broadcastAction('delete_scheduled_broadcast', this);
-        }
-    }
 });

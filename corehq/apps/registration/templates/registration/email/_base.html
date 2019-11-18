@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <!doctype html>
-<html bgcolor="#f1f1f1"
-      style="background-color: #f1f1f1;
+<html bgcolor="#f2f2f1"
+      style="background-color: #f2f2f1;
              margin: 0; padding: 0;
              font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
   <head>
@@ -14,17 +14,17 @@
         color: #004ebc;
         -webkit-text-size-adjust: none;
         text-decoration: underline;
-        font-weight: normal
+        font-weight: normal;
       }
 
       .content a {
-        text-decoration: none;
+        text-decoration: underline;
         color: #004ebc;
         transition: color .25s ease-in-out;
       }
 
       .content a:hover {
-        color: #002c5f;
+        color: #004ebc;
       }
 
       /* Hide preview text on rendering */
@@ -35,18 +35,13 @@
       .btn {
         transition: box-shadow .25s ease-in-out;
       }
-      .btn-white {
-        transition: background-color .25s ease-in-out;
-      }
+
       /* NOTE Hover not supported by all mail clients */
       .btn:hover {
-        background-color: #004ebc;
+        background-color: #5c6ac5;
         -webkit-box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
         -moz-box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
         box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
-      }
-      .btn-white:hover {
-        background-color: #002c5f;
       }
     </style>
     <!-- http://www.emailon@cid.com/blog/details/C13/ensure_that_your_entire_email_is_rendered_by_default_in_the_iphone_ipad -->
@@ -64,9 +59,9 @@
     <!--                                                                                                                     -->
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
   </head>
-  <body bgcolor="#f1f1f1" marginheight="0" marginwidth="0" topmargin="0" style="background-color: #f1f1f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
+  <body bgcolor="#f2f2f1" marginheight="0" marginwidth="0" topmargin="0" style="background-color: #f2f2f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
 
-{#  Preview Text is the text that appears right after the subject #}
+    {#  Preview Text is the text that appears right after the subject #}
     <div class="preview-text" style="display: none !important;">
       {% block preview_text %}{% endblock %}
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -75,7 +70,7 @@
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     </div>{# /preview-text #}
 
-    <div class="container" style="background-image: url('https://s3.amazonaws.com/dimagidotcom-staging-staticfiles/test/hero-bg.jpg'); line-height: 1.5em; font-size: 15px; font-weight: 400; color: #181715; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden; ">
+    <div class="container" style="background-image: url('https://s3.amazonaws.com/dimagidotcom-staging-staticfiles/test/hero-bg.jpg'); line-height: 1.5em; font-size: 15px; font-weight: 400; color: #1c2126; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden; ">
       <div class="hero" style="background-image: url('{{ url_prefix }}{% static 'registration/images/hero-bg.jpg' %}'); background-color: #333333; height: 330px; width: 100%; background-position: center; background-repeat: no-repeat; background-size: cover;" class="hero">
 
         {# START Dimagi Logo #}
@@ -103,7 +98,7 @@
           <div style="text-align: center; margin-top: 0px;">
             <a class="btn"
                href="{% block cta_url %}#{% endblock %}"
-               style="color: #ffffff; text-decoration: none; padding: 15px 20px; background-color: #004ebc; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+               style="color: #ffffff; text-decoration: none; padding: 15px 20px; background-color: #5c6ac5; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
               {% block cta_text %}
                 CTA Text -- Replace!
               {% endblock %}
@@ -115,18 +110,18 @@
 
       </div>{# /hero #}
 
-      <div class="content" style="padding: 20px 45px 35px; line-height: 1.2em; background-color: #004ebc; color: #ffffff;">
+      <div class="content" style="padding: 20px 45px 35px; line-height: 1.2em; background-color: #f4f5fa; color: #1c2126;">
 
         <div style="text-align: center; font-size: 1.6em; line-height: 1.2em; margin: 15px 0;">
           {% block lead_text %}Lead Text -- Replace!{% endblock %}
         </div>
 
         {% block content %}
-        <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
-          {% block secondary_text %}
-            Secondary Text -- Replace!
-          {% endblock %}
-        </div>
+          <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
+            {% block secondary_text %}
+              Secondary Text -- Replace!
+            {% endblock %}
+          </div>
         {% endblock %}
 
       </div>{# /content #}
@@ -140,8 +135,8 @@
         <p>
           {% block reason_for_email %}{% endblock %}
           {% blocktrans %}
-          on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
-          with your email address.
+            on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
+            with your email address.
           {% endblocktrans %}
         </p>
 

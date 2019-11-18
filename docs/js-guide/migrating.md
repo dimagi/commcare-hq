@@ -83,9 +83,8 @@ To declare dependencies:
 - Check the template's parent template:
    - If the parent has a `requirejs_main` module, the template you're migrating should include a dependency on that module.
    - If the parent still has `<script>` tags, the template you're migrating should include those as dependencies. It's usually convenient to migrate the parent and any "sibling" templates at the same time so you can remove the `<script>` tags altogether. If that isn't possible, make the parent check before including script tags: `{% if requirejs_main %}<script ...></script>{% endif %}`
-   - Also check the parent's parent template, etc. Stop once you get to `hqwebapp/base.html`, `hqwebapp/two_column.html`, or `hqwebapp/base_section.html`.
+   - Also check the parent's parent template, etc. Stop once you get to `hqwebapp/base.html`, `hqwebapp/two_column.html`, or `hqwebapp/base_section.html`, which already support requirejs.
 
-for `<script>` tags or `requirejs_main` modules. Any dependencies of the ancestors also need to be included in the template you're migrating
 - Check the view for any [hqwebapp decorators](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py) like `use_jquery_ui` which are used to include many common yet not global third-party libraries. Note that you typically should **not** remove the decorator, because these decorators often control both css and js, but you **do** need to add any js scripts controlled by the decorator to your js module.
 - If the module uses any globals from third parties, add the script as a dependency and also add the global to `thirdPartyGlobals` in [hqModules.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/hqModules.js) which prevents errors on pages that use your module but are not yet migrated to requirejs.
 

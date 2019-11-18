@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 from functools import partial
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
+from corehq.util.datadog.utils import case_load_counter
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
@@ -16,8 +15,6 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
 from memoized import memoized
-import six
-from six.moves import range
 
 
 PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])
@@ -42,6 +39,7 @@ class CleanOwnerSyncPayload(object):
         self.potential_elements_to_sync = {}
 
         self.timing_context = timing_context
+        self._track_load = case_load_counter("cleanowner_restore", restore_state.domain)
 
     def extend_response(self, response):
         with self.timing_context('process_case_batches'):
@@ -65,6 +63,7 @@ class CleanOwnerSyncPayload(object):
 
     def _get_next_case_batch(self):
         ids = pop_ids(self.case_ids_to_sync, chunk_size)
+        self._track_load(len(ids))
         return [
             case for case in self.case_accessor.get_cases(ids)
             if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
@@ -168,7 +167,7 @@ class CleanOwnerSyncPayload(object):
     def compile_response(self, irrelevant_cases, response):
         relevant_sync_elements = [
             potential_sync_element
-            for syncable_case_id, potential_sync_element in six.iteritems(self.potential_elements_to_sync)
+            for syncable_case_id, potential_sync_element in self.potential_elements_to_sync.items()
             if syncable_case_id not in irrelevant_cases
         ]
 

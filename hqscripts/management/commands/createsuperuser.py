@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import textwrap
 from django.contrib.auth.management.commands.createsuperuser import Command as CreatesuperuserCommand
 import time

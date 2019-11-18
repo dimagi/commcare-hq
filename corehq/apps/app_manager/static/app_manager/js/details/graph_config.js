@@ -222,7 +222,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         self.configPairs = ko.observableArray(_.map(original.configPairs || [], function (pair) {
             return configPropertyValuePair(pair);
         }));
-        self.configPropertyOptions = [];
+        self.configPropertyOptions = [''];
         self.configPropertyHints = {};
 
         self.removeConfigPair = function (configPair) {
@@ -335,6 +335,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         ));
 
         self.configPropertyOptions = [
+            '',
             // Axis min and max:
             'x-min',
             'x-max',
@@ -600,6 +601,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         self.xLabel = "X";
         self.yLabel = "Y";
         self.configPropertyOptions = [
+            '',
             'fill-below',
             'line-color',
             'name',

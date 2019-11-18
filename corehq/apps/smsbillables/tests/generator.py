@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import calendar
-import random
 import datetime
+import random
 import string
 import uuid
 from collections import namedtuple
@@ -13,11 +11,13 @@ from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.sms.util import get_sms_backend_classes
-from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsUsageFee,
+)
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.test_utils import unit_testing_only
-from six.moves import range
-
 
 # arbitrarily generated once from http://www.generatedata.com/
 

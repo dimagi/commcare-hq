@@ -1,23 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import io
+import json
 import logging
 import re
 import sys
 import uuid
-from six.moves.urllib.parse import urlparse, parse_qs
 
-from captcha.fields import CaptchaField
-
-from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.users.models import CouchUser
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.helper import FormHelper
-from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -26,22 +14,41 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
-from django.forms.fields import (ChoiceField, CharField, BooleanField,
-                                 ImageField, IntegerField, Field)
-from django.forms.widgets import  Select
+from django.forms.fields import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    Field,
+    ImageField,
+    IntegerField,
+    SelectMultiple,
+)
+from django.forms.widgets import Select
 from django.template.loader import render_to_string
-from django.utils.encoding import smart_str, force_bytes
+from django.urls import reverse
+from django.utils.encoding import force_bytes, smart_str
+from django.utils.functional import cached_property
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from captcha.fields import CaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Submit
+from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
+from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
+from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -50,52 +57,67 @@ from corehq.apps.accounting.models import (
     CreditLine,
     Currency,
     DefaultProductPlan,
+    EntryPoint,
     FeatureType,
+    FundingSource,
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
-    SubscriptionAdjustmentReason,
     SubscriptionType,
-    EntryPoint,
-    FundingSource
 )
-from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
     cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
-    get_privileges,
+    is_downgrade,
     log_accounting_error,
-    is_downgrade
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
-from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
-from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
-from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
-from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_apps_in_domain,
+    get_brief_apps_in_domain,
+    get_version_build_id,
+)
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.models import (
+    Application,
+    AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
+    RemoteApp,
+)
+from corehq.apps.callcenter.views import (
+    CallCenterOptionsController,
+    CallCenterOwnerOptionsView,
+)
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.models import (
+    AREA_CHOICES,
+    BUSINESS_UNITS,
+    DATA_DICT,
+    LICENSES,
+    LOGO_ATTACHMENT,
+    SUB_AREA_CHOICES,
+    TransferDomainRequest,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
-from corehq.apps.users.models import WebUser, CouchUser
-from corehq.privileges import (
-    REPORT_BUILDER_5,
-    REPORT_BUILDER_ADD_ON_PRIVS,
-    REPORT_BUILDER_TRIAL,
-)
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.fields import MultiCharField
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from memoized import memoized
-import six
-from six.moves import range
-from six import unichr
-from io import open
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -129,11 +151,8 @@ class ProjectSettingsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(ProjectSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'my-project-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.all().wrap_together(crispy.Fieldset, _('My Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -200,10 +219,8 @@ class SnapshotApplicationForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             twbscrispy.PrependedText('publish', ''),
             crispy.Div(
@@ -224,7 +241,7 @@ class SnapshotFixtureForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             twbscrispy.PrependedText('publish', ''),
@@ -269,9 +286,7 @@ class SnapshotSettingsForm(forms.Form):
         self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -385,10 +400,10 @@ class SnapshotSettingsForm(forms.Form):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
-        app_ids = self._get_apps_to_publish()
+        item_ids = self._get_items_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=app_ids):
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=app_ids)]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=item_ids):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=item_ids)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
@@ -396,31 +411,38 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                self.dom.name)
-            if referenced_forms:
-                apps = [Application.get(app_id) for app_id in app_ids]
-                app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
-                nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
-                if nonexistent_forms:
-                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+            referenced_pairs = AutomaticUpdateRule.get_referenced_app_form_pairs_from_sms_surveys(self.dom.name)
+            if referenced_pairs:
+                all_apps_by_id = {app.get_id: app for app in get_apps_in_domain(self.dom.name)}
+                referenced_apps = [all_apps_by_id[item_id] for item_id in item_ids if item_id in all_apps_by_id]
+                referenced_forms = [f.unique_id
+                                    for forms in [app.get_forms() for app in referenced_apps] for f in forms]
+                nonexistent_pairs = [pair for pair in referenced_pairs if pair[1] not in referenced_forms]
+                if nonexistent_pairs:
+                    form_names = [
+                        all_apps_by_id[pair[0]].get_form(pair[1]) if pair[0] in all_apps_by_id else _("Unknown")
+                        for pair in nonexistent_pairs
+                    ]
                     msg = _("Your reminders reference forms that are not being published. Make sure the following "
-                            "forms are being published: %s") % forms_str
+                            "forms are being published: %s") % ", ".join([form.default_name()
+                                                                          for form in form_names])
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
 
-    def _get_apps_to_publish(self):
-        app_ids = []
-        for d, val in six.iteritems(self.data):
+    def _get_items_to_publish(self):
+        """
+        Returns a mix of app and lookup table ids.
+        """
+        item_ids = []
+        for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
             if d[1] == 'publish' and val == 'on':
-                app_ids.append(d[0])
+                item_ids.append(d[0])
 
-        return app_ids
+        return item_ids
 
 ########################################################################################################
 
@@ -444,7 +466,7 @@ class TransferDomainForm(forms.ModelForm):
         self.fields['domain'].label = _('Type the name of the project to confirm')
         self.fields['to_username'].label = _('New owner\'s CommCare username')
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             'domain',
             'to_username',
@@ -506,13 +528,13 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV3):
+class CallCenterOwnerWidget(Select2Ajax):
 
     def set_domain(self, domain):
         self.domain = domain
 
     def render(self, name, value, attrs=None):
-        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        value_to_render = CallCenterOptionsController.convert_owner_id_to_select_choice(value, self.domain)
         return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
 
 
@@ -603,10 +625,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
@@ -777,9 +796,20 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
-                                "this box may restrict your ability to receive this support in the event you "
-                                "report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy(
+            "CommCare support staff sometimes require access "
+            "to your project space to provide rapid, in-depth support. "
+            "Checking this box will restrict the degree of support they "
+            "will be able to provide in the event that you report an issue. "
+            "You may also miss out on important communications and updates. "
+            "Regardless of whether this option is checked, "
+            "Commcare support staff will have access "
+            "to your billing information and project metadata; "
+            "and CommCare system administrators will also have direct access "
+            "to data infrastructure strictly for the purposes of system administration "
+            "as outlined in our "
+            '<a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>.'
+        )
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -820,10 +850,7 @@ class PrivacySecurityForm(forms.Form):
         user_name = kwargs.pop('user_name')
         domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
@@ -1085,6 +1112,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1000,
     )
+    use_custom_odata_feed_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
+            settings.DEFAULT_ODATA_FEED_LIMIT),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    odata_feed_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed OData Feeds"),
+        required=False,
+        min_value=1,
+    )
     granted_messaging_access = forms.BooleanField(
         label="Enable Messaging",
         required=False,
@@ -1111,10 +1152,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -1160,6 +1198,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('auto_case_update_limit'),
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
+                crispy.Field(
+                    'use_custom_odata_feed_limit',
+                    data_bind="value: use_custom_odata_feed_limit",
+                ),
+                crispy.Div(
+                    crispy.Field('odata_feed_limit'),
+                    data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
+                ),
                 'granted_messaging_access',
             ),
             crispy.Fieldset(
@@ -1180,6 +1226,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     def current_values(self):
         return {
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
 
     def _get_user_or_fail(self, field):
@@ -1202,6 +1249,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         value = self.cleaned_data.get('auto_case_update_limit')
         if not value:
             raise forms.ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_odata_feed_limit(self):
+        if self.cleaned_data.get('use_custom_odata_feed_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('odata_feed_limit')
+        if not value:
+            raise forms.ValidationError(_("Please specify a limit for OData feeds."))
 
         return value
 
@@ -1236,6 +1293,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
@@ -1300,7 +1358,7 @@ def _get_uppercase_unicode_regexp():
     # http://stackoverflow.com/a/17065040/10840
     uppers = ['[']
     for i in range(sys.maxunicode):
-        c = unichr(i)
+        c = chr(i)
         if c.isupper():
             uppers.append(c)
     uppers.append(']')
@@ -1461,12 +1519,14 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     email_list = forms.CharField(
         label=BillingContactInfo._meta.get_field('email_list').verbose_name,
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+        widget=forms.SelectMultiple(choices=[]),
     )
 
     class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
@@ -1483,7 +1543,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             kwargs['instance'] = self.account.billingcontactinfo
             kwargs['initial'] = {
-                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+                'email_list': self.account.billingcontactinfo.email_list,
             }
 
         except BillingContactInfo.DoesNotExist:
@@ -1491,15 +1551,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                         data_initial=json.dumps(self.initial.get('email_list'))),
             'phone_number'
         ]
 
@@ -1509,7 +1567,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                     css_class='col-sm-3 col-md-2'
                 ),
                 crispy.Div(
-                    crispy.HTML(self.initial['email_list']),
+                    crispy.HTML(", ".join(self.initial.get('email_list'))),
                     css_class='col-sm-9 col-md-8 col-lg-6'
                 ),
                 css_id='emails-text',
@@ -1547,7 +1605,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1572,7 +1631,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
@@ -1611,7 +1670,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1622,7 +1682,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(_("Cancel"),
@@ -1632,7 +1693,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
                              id='btn-subscribe-to-plan',
-                             css_class='btn btn-success disable-on-submit-no-spinner '
+                             css_class='btn btn-primary disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
             crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
@@ -1689,7 +1750,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, e.message),
+                % (self.domain, self.plan_version.plan.name, str(e)),
                 show_stack_trace=True,
             )
             return False
@@ -1730,7 +1791,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1741,7 +1803,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1752,7 +1815,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 StrictButton(
                     _("Renew Plan"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-primary',
                 ),
             ),
         )
@@ -1785,7 +1848,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
+    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
@@ -1807,10 +1870,7 @@ class ProBonoForm(forms.Form):
         super(ProBonoForm, self).__init__(*args, **kwargs)
         if not use_domain_field:
             self.fields['domain'].required = False
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             _('Pro-Bono Application'),
@@ -1834,6 +1894,13 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
+
+    def clean_contact_email(self):
+        if 'contact_email' in self.cleaned_data:
+            copy = self.data.copy()
+            self.data = copy
+            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
+            return self.data.get('contact_email')
 
     def process_submission(self, domain=None):
         try:
@@ -1972,17 +2039,15 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.HTML(ugettext_noop(
+            crispy.HTML('<div class="alert alert-info">' + ugettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
-                'partner.'
-            )),
+                'partner.<br>Test projects belong to Dimagi and are not subject to '
+                'Dimagi\'s external terms of service.'
+            ) + '</div>'),
             *self.form_actions
         )
 
@@ -2043,10 +2108,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
@@ -2161,10 +2223,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(ContractedPartnerForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
@@ -2374,10 +2433,7 @@ class SelectSubscriptionTypeForm(forms.Form):
         defaults = defaults or {}
         super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         if defaults and disable_input:
             self.helper.layout = crispy.Layout(
                 hqcrispy.B3TextField(
@@ -2395,3 +2451,233 @@ class SelectSubscriptionTypeForm(forms.Form):
                     css_class="disabled"
                 )
             )
+
+
+class ManageReleasesByLocationForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
+    location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False,
+                               help_text=ugettext_lazy("Applicable for search only"))
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        super(ManageReleasesByLocationForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = self.app_id_choices()
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('app_id', id='app-id-search-select', css_class="hqwebapp-select2"),
+            crispy.Field('location_id', id='location_search_select'),
+            crispy.Field('version', id='version-input'),
+            crispy.Field('status', id='status-input'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
+                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                    Submit('submit', ugettext_lazy("Add New Restriction"))
+                )
+            )
+        )
+
+    def app_id_choices(self):
+        choices = [(None, _('Select Application'))]
+        for app in get_brief_apps_in_domain(self.domain):
+            choices.append((app.id, app.name))
+        return choices
+
+    @cached_property
+    def version_build_id(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        return get_version_build_id(self.domain, app_id, version)
+
+    def clean_app_id(self):
+        if not self.cleaned_data.get('app_id'):
+            self.add_error('app_id', _("Please select application"))
+        return self.cleaned_data.get('app_id')
+
+    @staticmethod
+    def extract_location_id(location_id_slug):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
+        return selected_ids[0] if selected_ids else None
+
+    def clean_location_id(self):
+        if not self.cleaned_data.get('location_id'):
+            self.add_error('location_id', _("Please select location"))
+        return self.cleaned_data.get('location_id')
+
+    def clean_version(self):
+        if not self.cleaned_data.get('version'):
+            self.add_error('version', _("Please select version"))
+        return self.cleaned_data.get('version')
+
+    def clean(self):
+        app_id = self.cleaned_data.get('app_id')
+        version = self.cleaned_data.get('version')
+        if app_id and version:
+            try:
+                self.version_build_id
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+
+    def save(self):
+        location_id = self.extract_location_id(self.cleaned_data['location_id'])
+        version = self.cleaned_data['version']
+        app_id = self.cleaned_data['app_id']
+        try:
+            AppReleaseByLocation.update_status(self.domain, app_id, self.version_build_id, location_id,
+                                               version, active=True)
+        except ValidationError as e:
+            return False, ','.join(e.messages)
+        return True, None
+
+
+class BaseManageReleasesByAppProfileForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.request = request
+        self.domain = domain
+        super(BaseManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = self.app_id_choices()
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                *self.form_fields()
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    *self._buttons()
+                )
+            )
+        )
+
+    def app_id_choices(self):
+        choices = [(None, _('Select Application'))]
+        for app in get_brief_apps_in_domain(self.domain):
+            choices.append((app.id, app.name))
+        return choices
+
+    def form_fields(self):
+        return [
+            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
+            crispy.Field('version', css_class='version-input'),
+        ]
+
+    @staticmethod
+    def _buttons():
+        raise NotImplementedError
+
+
+class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    app_build_profile_id = forms.ChoiceField(label=ugettext_lazy("Build Profile"), choices=(),
+                                             required=False)
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False)
+
+    def __init__(self, request, domain, *args, **kwargs):
+        super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
+
+    def form_fields(self):
+        form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
+            crispy.Field('status', id='status-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [
+            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search",
+                          css_class='btn-primary'),
+            crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+        ]
+
+
+class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    build_profile_id = forms.CharField(label=ugettext_lazy('Build Profile'),
+                                       required=True, widget=SelectMultiple(choices=[]),)
+
+    def save(self):
+        success_messages = []
+        error_messages = []
+        for build_profile_id in self.cleaned_data['build_profile_id']:
+            try:
+                LatestEnabledBuildProfiles.update_status(self.build, build_profile_id,
+                                                         active=True)
+                success_messages.append(_('Restriction for profile {profile} set successfully.').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                ))
+            except ValidationError as e:
+                error_messages.append(_('Restriction for profile {profile} failed: {message}').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                    message=', '.join(e.messages)
+                ))
+        return error_messages, success_messages
+
+    @cached_property
+    def build(self):
+        return get_app(self.domain, self.version_build_id)
+
+    @cached_property
+    def version_build_id(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        return get_version_build_id(self.domain, app_id, version)
+
+    def form_fields(self):
+        form_fields = super(CreateManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('build_profile_id', id='build-profile-id-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [Submit('submit', ugettext_lazy("Add New Restriction"), css_class='btn-primary')]
+
+    def clean(self):
+        if self.cleaned_data.get('version'):
+            try:
+                self.version_build_id
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+        app_id = self.cleaned_data.get('app_id')
+        if app_id:
+            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
+                self.add_error('app_id',
+                               _("You don't have permission to set restriction for this application"))
+
+    def clean_build_profile_id(self):
+        return self.data.getlist('build_profile_id')
+
+    def clean_version(self):
+        # ensure value is present for a post request
+        if not self.cleaned_data.get('version'):
+            self.add_error('version', _("Please select version"))
+        return self.cleaned_data.get('version')

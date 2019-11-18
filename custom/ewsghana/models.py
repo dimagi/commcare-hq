@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
@@ -122,12 +119,3 @@ class SQLNotification(models.Model):
 
     class Meta(object):
         app_label = 'ewsghana'
-
-
-@receiver(commcare_domain_pre_delete)
-def domain_pre_delete_receiver(domain, **kwargs):
-    from corehq.apps.domain.deletion import ModelDeletion
-    return [
-        ModelDeletion('ewsghana', 'FacilityInCharge', 'location__domain'),
-        ModelDeletion('ewsghana', 'EWSExtension', 'domain')
-    ]

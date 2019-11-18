@@ -13,6 +13,7 @@ describe('Map Or Sector View Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($controller, _$location_, storageService, locationsService) {
@@ -38,7 +39,7 @@ describe('Map Or Sector View Directive', function () {
         assert.equal(controller.chartOptions.chart.type, 'multiBarHorizontalChart');
         assert.deepEqual(controller.chartOptions.chart.margin, {
             bottom: 40,
-            left: 100,
+            left: 150,
         });
         assert.equal(controller.chartOptions.chart.showControls, false);
         assert.equal(controller.chartOptions.chart.showLegend, false);

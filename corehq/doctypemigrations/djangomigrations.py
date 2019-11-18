@@ -1,8 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
-from django.conf import settings
-
+from corehq.util.django_migrations import skip_on_fresh_install
 
 MIGRATION_MESSAGE = """
 Before you can merge you must run the {slug} doc_type migration.
@@ -38,6 +34,9 @@ following command (this command assumes a linux environment - for other platform
 you just need to run python manage.py migrate with a temporary environment
 variable CCHQ_IS_FRESH_INSTALL set to 1):
     env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate
+
+Or for mutiple database support:
+    env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate_multi
 """
 
 
@@ -46,8 +45,8 @@ class MigrationNotComplete(Exception):
 
 
 def assert_initial_complete(migrator):
+    @skip_on_fresh_install
     def forwards(apps, schema_editor):
-        is_fresh_install = os.environ.get('CCHQ_IS_FRESH_INSTALL') == '1'
-        if not migrator.last_seq and not settings.UNIT_TESTING and not is_fresh_install:
+        if not migrator.last_seq:
             raise MigrationNotComplete(MIGRATION_MESSAGE.format(slug=migrator.slug))
     return forwards

@@ -1,36 +1,38 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import calendar
 import datetime
-from dateutil.relativedelta import relativedelta
 
 from django.urls import reverse
 from django.utils.translation import ugettext_noop as _
 
+from dateutil.relativedelta import relativedelta
+
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.async_handlers import (
+    AccountFilterAsyncHandler,
+    BillingContactInfoAsyncHandler,
+    DomainFilterAsyncHandler,
+    InvoiceBalanceAsyncHandler,
+    InvoiceNumberAsyncHandler,
+    SoftwarePlanAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
-    AccountFilterAsyncHandler,
-    DomainFilterAsyncHandler,
-    BillingContactInfoAsyncHandler,
-    SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
     ProBonoStatus,
-    SubscriptionAdjustmentMethod,
-    SubscriptionType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
+    SubscriptionAdjustmentMethod,
+    SubscriptionType,
 )
 from corehq.apps.reports.filters.base import (
-    BaseReportFilter, BaseSingleOptionFilter,
-    BaseSimpleFilter)
+    BaseReportFilter,
+    BaseSimpleFilter,
+    BaseSingleOptionFilter,
+)
 from corehq.util.dates import iso_string_to_date
-from six.moves import range
 
 
 class BaseAccountingSingleOptionFilter(BaseSingleOptionFilter):
@@ -403,6 +405,22 @@ class SoftwarePlanVisibilityFilter(BaseSingleOptionFilter):
     label = _("Visibility")
     default_text = _("All")
     options = SoftwarePlanVisibility.CHOICES
+
+
+class InvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'invoice_number'
+    label = 'Invoice Number'
+    default_text = 'All'
+    async_handler = InvoiceNumberAsyncHandler
+    async_action = 'invoice_number'
+
+
+class InvoiceBalanceFilter(BaseAccountingSingleOptionFilter):
+    slug = 'invoice_balance'
+    label = 'Invoice Balance'
+    default_text = 'All'
+    async_handler = InvoiceBalanceAsyncHandler
+    async_action = 'invoice_balance'
 
 
 class PaymentStatusFilter(BaseSingleOptionFilter):

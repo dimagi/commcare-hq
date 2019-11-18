@@ -1,8 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain, \
-    get_number_of_fixture_data_types_in_domain
+
+from corehq.apps.fixtures.dbaccessors import (
+    get_fixture_data_types_in_domain,
+    get_number_of_fixture_data_types_in_domain,
+)
 from corehq.apps.fixtures.models import FixtureDataType
 
 

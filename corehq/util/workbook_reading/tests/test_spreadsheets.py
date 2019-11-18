@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, date, time
 from django.test import SimpleTestCase
 from corehq.util.workbook_reading import (
@@ -9,7 +7,7 @@ from corehq.util.workbook_reading import (
 )
 from corehq.util.workbook_reading.tests.utils import get_file, run_on_all_adapters
 from corehq.util.test_utils import make_make_path
-from six.moves import zip_longest
+from itertools import zip_longest
 
 
 _make_path = make_make_path(__file__)
@@ -49,7 +47,7 @@ def test_xlsx_types(self, open_workbook, ext):
                         ['Date', date(1988, 7, 7)],
                         ['Date Time', datetime(2016, 1, 1, 12, 0)],
                         ['Time', time(12, 0)],
-                        ['Midnight', time(0, 0)],
+                        ['Midnight', date(1899, 12, 30) if ext == 'xlsx' else time(0, 0)],
                         ['Int', 28],
                         ['Int.0', 5],
                         ['Float', 5.1],

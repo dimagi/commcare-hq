@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import hashlib
 import json
@@ -19,8 +17,6 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
-import six
-from io import open
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +30,7 @@ except:
     user_logged_out = None
 
 from auditcare.signals import user_login_failed
+
 
 def make_uuid():
     return uuid.uuid4().hex
@@ -71,10 +68,8 @@ class AuditEvent(Document):
     class Meta(object):
         app_label = 'auditcare'
 
-
-    def __unicode__(self):
+    def __str__(self):
         return "[%s] %s" % (self.doc_type, self.description)
-
 
     @classmethod
     def create_audit(cls, model_class, user):
@@ -155,7 +150,7 @@ class ModelActionAudit(AuditEvent):
             #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string.encode('utf-8') if six.PY3 else json_string).hexdigest()
+        return hashlib.sha1(json_string.encode('utf-8')).hexdigest()
 
     def compute_changes(self, save=False):
         """
@@ -281,7 +276,7 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        instance_id = six.text_type(instance.id)
+        instance_id = str(instance.id)
         revision_id = None
         cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 
@@ -369,6 +364,7 @@ ACCESS_CHOICES = (
     (ACCESS_IP_LOCKOUT, "IP Lockout"),
     (ACCESS_PASSWORD, "Password Change"),
     )
+
 
 class AccessAudit(AuditEvent):
     access_type = StringProperty(choices=ACCESS_CHOICES)
@@ -501,13 +497,30 @@ def audit_login(sender, **kwargs):
 if user_logged_in:
     user_logged_in.connect(audit_login)
 
+
 def audit_logout(sender, **kwargs):
     AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
 
 if user_logged_out:
     user_logged_out.connect(audit_logout)
 
+
 def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
 
+
 user_login_failed.connect(audit_login_failed)
+
+
+def wrap_audit_event(event):
+    doc_type = event['doc_type']
+    cls = {
+        'NavigationEventAudit': NavigationEventAudit,
+        'AccessAudit': AccessAudit,
+        'ModelActionAudit': ModelActionAudit,
+        'AuditCommand': AuditCommand,
+    }.get(doc_type, None)
+    if not cls:
+        raise ValueError(f"Unknow doc type for audit event: {doc_type}")
+
+    return cls.wrap(event)

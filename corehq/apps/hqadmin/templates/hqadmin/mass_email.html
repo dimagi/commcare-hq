@@ -3,108 +3,108 @@
 {% load i18n %}
 {% block title %}Mass Email Users{% endblock %}
 {% block js-inline %} {{ block.super }}
-    <script>
-        $(function () {
-                $('#real_email').click(function(e) {
-                    if($(this).prop('checked')) {
-                        $('#warning_modal').modal();
-                        e.preventDefault();
-                    }
-                });
+  <script>
+    $(function () {
+      $('#real_email').click(function(e) {
+        if($(this).prop('checked')) {
+          $('#warning_modal').modal();
+          e.preventDefault();
+        }
+      });
 
-                $('#accept_mass_email').click(function() {
-                    $('#real_email').prop('checked', 'checked');
-                });
-        });
-    </script>
+      $('#accept_mass_email').click(function() {
+        $('#real_email').prop('checked', 'checked');
+      });
+    });
+  </script>
 {% endblock %}
 {% block reportcontent %}
-    <br><br>
-    {% if form.errors %}
-        <div class="alert alert-danger">{{ form.errors }}</div>
-    {% endif %}
-    <div class="alert alert-warning">
-        <p>
-            This is the email mailing list tool. Please exercise caution
-            when using it.
-        </p>
-        </p>
-            Leave the <strong>email all users</strong> checkbox unchecked to send a test
-            email only to yourself. This is useful for verifying that
-            your formatting is correct before sending a real message.
-        </p>
-    </div>
-    <form name="form" method="post" action="">
-        {% csrf_token %}
-        <fieldset>
-            <legend>Email</legend>
-            <div class="help-block">
-                You can use the text <code>{% verbatim %}{{ first_name }}{% endverbatim %}</code> to substitute the user's first name.
-            </div>
-            <div class="form-group">
-                <label for="email_subject">
-                    Subject
-                </label>
-                <input
-                    name="email_subject"
-                    type="text"
-                    class="form-control"
-                    placeholder="Enter subject...">
-                </input>
-            </div>
+  <br><br>
+  {% if form.errors %}
+    <div class="alert alert-danger">{{ form.errors }}</div>
+  {% endif %}
+  <div class="alert alert-warning">
+    <p>
+      This is the email mailing list tool. Please exercise caution
+      when using it.
+    </p>
+    </p>
+    Leave the <strong>email all users</strong> checkbox unchecked to send a test
+    email only to yourself. This is useful for verifying that
+    your formatting is correct before sending a real message.
+    </p>
+  </div>
+  <form name="form" method="post" action="">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Email</legend>
+      <div class="help-block">
+        You can use the text <code>{% verbatim %}{{ first_name }}{% endverbatim %}</code> to substitute the user's first name.
+      </div>
+      <div class="form-group">
+        <label for="email_subject">
+          Subject
+        </label>
+        <input
+          name="email_subject"
+          type="text"
+          class="form-control"
+          placeholder="Enter subject...">
+        </input>
+      </div>
 
-            <div class="form-group">
-                <label for="email_body_html">
-                    Body (HTML)
-                </label>
-                <textarea name="email_body_html" class="form-control vertical-resize" rows="5" placeholder="Enter HTML..."></textarea>
-            </div>
+      <div class="form-group">
+        <label for="email_body_html">
+          Body (HTML)
+        </label>
+        <textarea name="email_body_html" class="form-control vertical-resize" rows="5" placeholder="Enter HTML..."></textarea>
+      </div>
 
-            <div class="form-group">
-                <label for="email_body_text">
-                    Body (Text Only)
-                </label>
-                <textarea name="email_body_text" class="form-control vertical-resize" rows="5" placeholder="Enter plain text..."></textarea>
-            </div>
+      <div class="form-group">
+        <label for="email_body_text">
+          Body (Text Only)
+        </label>
+        <textarea name="email_body_text" class="form-control vertical-resize" rows="5" placeholder="Enter plain text..."></textarea>
+      </div>
 
-            <div class="checkbox">
-                <label>
-                    <input id="real_email" type="checkbox" name="real_email" />
-                    Email ALL web users.
-                </label>
-            </div>
-            <input type="submit" class="btn btn-default" value="Send"/>
-        </fieldset>
-    </form>
+      <div class="checkbox">
+        <label>
+          <input id="real_email" type="checkbox" name="real_email" />
+          Email ALL web users.
+        </label>
+      </div>
+      <input type="submit" class="btn btn-primary" value="Send"/>
+    </fieldset>
+  </form>
 
-    <div id="warning_modal" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <h4 class="modal-title">Do you really want to email ALL of the users?</h4>
-                </div>
-                <div class="modal-body">
-                    <p>
-                        By checking this box you are saying you want to email all
-                        web users. This means EVERY CommCare web user who has at
-                        least one active domain.
-                    </p>
-                    <p>
-                        Leaving this box unchecked will send an email to ONLY you.
-                        It is highly recommended you send a test message like that
-                        first to make sure the formatting of your email is as you
-                        intended.
-                    </p>
-
-                    <div class="modal-footer">
-                        <a id="cancel_email" href="#" data-dismiss="modal" class="btn btn-default">I changed my mind, uncheck the box!</a>
-                        <a id="accept_mass_email" data-dismiss="modal" class="btn btn-danger">I really want to email everyone</a>
-                    </div>
-                </div>
-            </div>
+  <div id="warning_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">Do you really want to email ALL of the users?</h4>
         </div>
+        <div class="modal-body">
+          <p>
+            By checking this box you are saying you want to email all
+            web users. This means EVERY CommCare web user who has at
+            least one active domain.
+          </p>
+          <p>
+            Leaving this box unchecked will send an email to ONLY you.
+            It is highly recommended you send a test message like that
+            first to make sure the formatting of your email is as you
+            intended.
+          </p>
+
+          <div class="modal-footer">
+            <a id="cancel_email" href="#" data-dismiss="modal" class="btn btn-default">I changed my mind, uncheck the box!</a>
+            <a id="accept_mass_email" data-dismiss="modal" class="btn btn-danger">I really want to email everyone</a>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 {% endblock %}

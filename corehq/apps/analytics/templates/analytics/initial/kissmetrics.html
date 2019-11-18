@@ -1,9 +1,9 @@
 {% load hq_shared_tags %}
 {% initial_analytics_data 'kissmetrics.apiId' ANALYTICS_IDS.KISSMETRICS_KEY  %}
 {% if request.couch_user %}
-    {% initial_analytics_data 'kissmetrics.username' request.couch_user.username %}
-    {% initial_analytics_data 'kissmetrics.isDimagi' request.couch_user.is_dimagi|BOOL  %}
+  {% initial_analytics_data 'kissmetrics.username' request.couch_user.username %}
+  {% initial_analytics_data 'kissmetrics.isDimagi' request.couch_user.is_dimagi|BOOL  %}
 {% endif %}
 {% if ANALYTICS_CONFIG.HQ_INSTANCE %}
-    {% initial_analytics_data 'kissmetrics.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
+  {% initial_analytics_data 'kissmetrics.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
 {% endif %}

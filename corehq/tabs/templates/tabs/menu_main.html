@@ -2,47 +2,47 @@
 {% load cache %}
 {% get_current_language as LANGUAGE_CODE %}
 <ul class="nav navbar-nav mainmenu-tabs collapse" id="hq-main-tabs" role="menu">
-    {% for tab in tabs %}
+  {% for tab in tabs %}
     {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id LANGUAGE_CODE %}
-    {% with tab.filtered_dropdown_items as items %}
+      {% with tab.filtered_dropdown_items as items %}
         <li class="mainmenu-tab {% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}"
             id="{{ tab.class_name }}"
-            {% if ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID and tab.ga_tracker %}
-                data-category="{{ tab.ga_tracker.category }}"
-                data-action="{{ tab.ga_tracker.action }}"
-                {% if tab.ga_tracker.label %}
-                    data-label="{{ tab.ga_tracker.label }}"
-                {% endif %}
+          {% if ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID and tab.ga_tracker %}
+            data-category="{{ tab.ga_tracker.category }}"
+            data-action="{{ tab.ga_tracker.action }}"
+            {% if tab.ga_tracker.label %}
+            data-label="{{ tab.ga_tracker.label }}"
             {% endif %}
+          {% endif %}
         >
-            <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
-               href="{% if items %}#{% else %}{{ tab.url }}{% endif %}">
-                {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
-            </a>
-            {% if items %}
-                <ul class="dropdown-menu">
-                    {% for sub in items %}
-                        {% if sub.is_second_level %}
-                            <li class="dropdown-submenu">
-                                <a href="{{ sub.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ sub.title }}</a>
-                                <ul class="dropdown-menu">
-                                {% for second_sub in sub.submenu %}
-                                    {% with second_sub as submenu %}
-                                        {% include 'tabs/menu_submenu.html' %}
-                                    {% endwith %}
-                                {% endfor %}
-                                </ul>
-                            </li>
-                        {% else %}
-                            {% with sub as submenu %}
-                            {% include 'tabs/menu_submenu.html' %}
-                            {% endwith %}
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            {% endif %}
+          <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
+             href="{% if items %}#{% else %}{{ tab.url }}{% endif %}">
+            {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
+          </a>
+          {% if items %}
+            <ul class="dropdown-menu">
+              {% for sub in items %}
+                {% if sub.is_second_level %}
+                  <li class="dropdown-submenu">
+                    <a href="{{ sub.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ sub.title }}</a>
+                    <ul class="dropdown-menu">
+                      {% for second_sub in sub.submenu %}
+                        {% with second_sub as submenu %}
+                          {% include 'tabs/menu_submenu.html' %}
+                        {% endwith %}
+                      {% endfor %}
+                    </ul>
+                  </li>
+                {% else %}
+                  {% with sub as submenu %}
+                    {% include 'tabs/menu_submenu.html' %}
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% endif %}
         </li>
-    {% endwith %}
+      {% endwith %}
     {% endcache %}
-    {% endfor %}
+  {% endfor %}
 </ul>

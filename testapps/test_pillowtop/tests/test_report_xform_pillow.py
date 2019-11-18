@@ -1,7 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import TestCase, override_settings
-from elasticsearch.exceptions import ConnectionError
+from django.test import override_settings, TestCase
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
 from corehq.elastic import get_es_new
@@ -14,7 +12,6 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
-from six.moves import range
 
 DOMAIN = 'report-xform-pillowtest-domain'
 
@@ -57,7 +54,7 @@ class ReportXformPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self, domain):
-        with process_pillow_changes('ReportXFormToElasticsearchPillow'):
+        with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=domain)
                 form = get_form_ready_to_save(metadata)

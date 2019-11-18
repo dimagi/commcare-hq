@@ -1,13 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 import fluff
-import six
 
 
 def flat_field(fn):
     def getter(item):
-        return six.text_type(fn(item) or "")
+        return str(fn(item) or "")
     return fluff.FlatField(getter)
 
 

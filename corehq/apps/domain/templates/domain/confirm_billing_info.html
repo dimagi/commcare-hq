@@ -4,33 +4,33 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
-    <script src="https://js.stripe.com/v2/"></script>
-    <script src="{% static 'accounting/js/stripe_card_manager.js' %}"></script>
-    <script src="{% static 'domain/js/confirm_billing_info.js' %}"></script>
+  <script src="{% static 'accounting/js/widgets.js' %}"></script>
+  <script src="https://js.stripe.com/v2/"></script>
+  <script src="{% static 'accounting/js/stripe_card_manager.js' %}"></script>
+  <script src="{% static 'domain/js/confirm_billing_info.js' %}"></script>
 {% endblock %}
 
 {% block form_content %}
-    {% initial_page_data "plan" plan %}
-    {% initial_page_data "cards" cards %}
-    {% initial_page_data "stripe_public_key" stripe_public_key %}
-    {% initial_page_data "downgrade_email_note" downgrade_email_note %}
-    {% registerurl "cards_view" domain %}
-    <p class="lead">
-        {% blocktrans with plan.name as p%}
-        You are about to subscribe to the {{ p }} Software Plan.
-        {% endblocktrans %}
-    </p>
-    <p>
-        {% blocktrans %}
-        Please update your billing information below before continuing.
-        {% endblocktrans %}
-    </p>
-    <hr />
-    <div id="billing-info">
-        {% crispy billing_account_info_form %}
-    </div>
-    <div id="card-manager">
-        {% include 'domain/stripe_cards.html' %}
-    </div>
+  {% initial_page_data "plan" plan %}
+  {% initial_page_data "cards" cards %}
+  {% initial_page_data "stripe_public_key" stripe_public_key %}
+  {% initial_page_data "downgrade_email_note" downgrade_email_note %}
+  {% registerurl "cards_view" domain %}
+  <p class="lead">
+    {% blocktrans with plan.name as p%}
+      You are about to subscribe to the {{ p }} Software Plan.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Please update your billing information below before continuing.
+    {% endblocktrans %}
+  </p>
+  <hr />
+  <div id="billing-info">
+    {% crispy billing_account_info_form %}
+  </div>
+  <div id="card-manager">
+    {% include 'domain/stripe_cards.html' %}
+  </div>
 {% endblock %}

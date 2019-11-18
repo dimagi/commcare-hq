@@ -1,10 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
 import logging
 from abc import ABCMeta, abstractmethod
-
-import six as six
 
 from casexml.apps.phone.exceptions import MissingSyncLog
 
@@ -80,7 +76,7 @@ class AbstractXFormInstance(object):
     def get_attachment(self, attachment_name):
         raise NotImplementedError()
 
-    def archive(self, user_id=None):
+    def archive(self, user_id=None, trigger_signals=True):
         raise NotImplementedError()
 
     def unarchive(self, user_id=None):
@@ -326,7 +322,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
             return None
 
 
-class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
+class AbstractSupplyInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod

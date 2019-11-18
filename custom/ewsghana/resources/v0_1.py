@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from corehq.apps.api.resources.auth import LoginAndDomainAuthentication

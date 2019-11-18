@@ -1,11 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
+
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
@@ -54,6 +55,6 @@ class OtaRestoreBugTest(TestCase):
             restore_user=user.to_ota_restore_user(),
             params=RestoreParams(version=V2),
         )
-        payload = restore_config.get_payload().as_string()
+        payload = restore_config.get_payload().as_string().decode('utf-8')
         self.assertTrue(good_case._id in payload)
         self.assertFalse(bad_case._id in payload)

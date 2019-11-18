@@ -1,10 +1,4 @@
 {
-DisplayStrings = (
-/dashboard_blankform,
-/appbuilder_createform,
-/appbuilder_updateform,
-/appbuilder_completeform
-);
 copyright = "2013 Dimagi, Inc.";
 customParameters = (
 {
@@ -58,7 +52,8 @@ value = (
     "project_globe",
     "appbuilder_createform",
     "appbuilder_updateform",
-    "appbuilder_completeform"
+    "appbuilder_completeform",
+    "appbuilder_biometrics"
 );
 }
 );
@@ -8044,6 +8039,7 @@ unicode = F036;
 },
 {
 glyphname = appbuilder_completeform;
+lastChange = "2019-02-25 23:04:29 +0000";
 layers = (
 {
 layerId = "04DF3276-53F3-45FA-B502-39A9AACD583E";
@@ -8150,6 +8146,106 @@ width = 1536;
 }
 );
 unicode = F037;
+},
+{
+glyphname = appbuilder_biometrics;
+layers = (
+{
+layerId = "04DF3276-53F3-45FA-B502-39A9AACD583E";
+name = Regular;
+paths = (
+{
+closed = 1;
+nodes = (
+"975 1725 LINE SMOOTH",
+"962 1725 OFFCURVE",
+"952 1715 OFFCURVE",
+"952 1702 CURVE SMOOTH",
+"952 1647 LINE SMOOTH",
+"952 1634 OFFCURVE",
+"941 1624 OFFCURVE",
+"929 1624 CURVE SMOOTH",
+"607 1624 LINE SMOOTH",
+"595 1624 OFFCURVE",
+"584 1634 OFFCURVE",
+"584 1647 CURVE",
+"584 1702 LINE",
+"584 1715 OFFCURVE",
+"574 1725 OFFCURVE",
+"561 1725 CURVE SMOOTH",
+"96 1725 LINE SMOOTH",
+"43 1725 OFFCURVE",
+"0 1682 OFFCURVE",
+"0 1629 CURVE SMOOTH",
+"0 29 LINE SMOOTH",
+"0 -24 OFFCURVE",
+"43 -67 OFFCURVE",
+"96 -67 CURVE SMOOTH",
+"1440 -67 LINE SMOOTH",
+"1493 -67 OFFCURVE",
+"1536 -24 OFFCURVE",
+"1536 29 CURVE SMOOTH",
+"1536 1629 LINE SMOOTH",
+"1536 1682 OFFCURVE",
+"1493 1725 OFFCURVE",
+"1440 1725 CURVE SMOOTH"
+);
+},
+{
+closed = 1;
+nodes = (
+"128 61 LINE",
+"128 1461 LINE",
+"1408 1461 LINE",
+"1408 61 LINE"
+);
+},
+{
+closed = 1;
+nodes = (
+"965 739 OFFCURVE",
+"872 694 OFFCURVE",
+"768 694 CURVE SMOOTH",
+"664 694 OFFCURVE",
+"571 739 OFFCURVE",
+"507 811 CURVE",
+"348 784 OFFCURVE",
+"308 582 OFFCURVE",
+"308 405 CURVE SMOOTH",
+"308 300 OFFCURVE",
+"377 215 OFFCURVE",
+"461 215 CURVE SMOOTH",
+"1075 215 LINE SMOOTH",
+"1159 215 OFFCURVE",
+"1228 300 OFFCURVE",
+"1228 405 CURVE SMOOTH",
+"1228 582 OFFCURVE",
+"1188 784 OFFCURVE",
+"1029 811 CURVE"
+);
+},
+{
+closed = 1;
+nodes = (
+"1044 1196 OFFCURVE",
+"921 1320 OFFCURVE",
+"768 1320 CURVE SMOOTH",
+"615 1320 OFFCURVE",
+"492 1196 OFFCURVE",
+"492 1044 CURVE SMOOTH",
+"492 891 OFFCURVE",
+"615 767 OFFCURVE",
+"768 767 CURVE SMOOTH",
+"921 767 OFFCURVE",
+"1044 891 OFFCURVE",
+"1044 1044 CURVE SMOOTH"
+);
+}
+);
+width = 1536;
+}
+);
+unicode = F038;
 }
 );
 disablesNiceNames = 1;

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import calendar
 import datetime
 import time
@@ -17,10 +14,6 @@ def unix_time(dt):
 
 def get_timestamp(date):
     return time.mktime(date.timetuple())
-
-
-def get_timestamp_millis(date):
-    return 1000 * get_timestamp(date)
 
 
 def iso_string_to_datetime(iso_string, strict=False):

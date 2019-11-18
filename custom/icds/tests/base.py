@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.shortcuts import create_domain
@@ -50,7 +48,7 @@ class BaseICDSTest(TestCase):
             update=update,
             **kwargs
         )
-        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
+        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()).decode('utf-8'), cls.domain)[1][0]
         cls.created_case_ids.append(case.case_id)
         return case
 

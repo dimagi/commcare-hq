@@ -10,7 +10,3 @@ ALTER TABLE agg_ccs_record ALTER COLUMN disabled DROP NOT NULL;
 ALTER TABLE agg_ccs_record ALTER COLUMN resident DROP NOT NULL;
 ALTER TABLE agg_ccs_record ALTER COLUMN caste DROP NOT NULL;
 ALTER TABLE agg_ccs_record ALTER COLUMN minority DROP NOT NULL;
-ALTER TABLE agg_thr_data ALTER COLUMN disabled DROP NOT NULL;	
-ALTER TABLE agg_thr_data ALTER COLUMN resident DROP NOT NULL;
-ALTER TABLE agg_thr_data ALTER COLUMN caste DROP NOT NULL;
-ALTER TABLE agg_thr_data ALTER COLUMN minority DROP NOT NULL;

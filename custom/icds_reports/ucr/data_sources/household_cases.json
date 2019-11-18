@@ -1,7 +1,19 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,8 +22,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -30,6 +41,24 @@
       },
       "property_value": "household"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": null,
@@ -40,6 +69,26 @@
         "column_id": "owner_id",
         "type": "raw",
         "property_name": "owner_id"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "opened_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "closed_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "closed_on"
       },
       {
         "display_name": null,
@@ -63,19 +112,21 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "type": "root_doc",
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
-            }
+            },
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "create_index": false,
         "type": "expression"
@@ -84,18 +135,17 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              }
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
         "is_nullable": true,
@@ -107,21 +157,17 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "type": "root_doc",
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
         "is_nullable": true,
@@ -133,24 +179,17 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "type": "root_doc",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  }
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
         "is_nullable": true,
@@ -181,15 +220,13 @@
         "property_value": false
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

@@ -1,12 +1,9 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
 import re
 
-import six
 from django.utils.translation import ugettext as _
+
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, serialize
-from six import integer_types, string_types
+from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
 
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
@@ -49,6 +46,9 @@ def print_ast(node):
             indent -= 1
 
     visit(node, 0)
+
+
+MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
 
 
 OPERATOR_MAPPING = {
@@ -117,7 +117,13 @@ def build_filter_from_ast(domain, node):
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
         new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
-        return CaseSearchES().domain(domain).xpath_query(domain, new_query).scroll_ids()
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        if es_query.count() > MAX_RELATED_CASES:
+            raise CaseFilterError(
+                _("The related case lookup you are trying to perform would return too many cases"),
+                new_query
+            )
+        return es_query.scroll_ids()
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
@@ -142,6 +148,8 @@ def build_filter_from_ast(domain, node):
     def _unwrap_function(node):
         """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
         """
+        if isinstance(node, UnaryExpression) and node.op == '-':
+            return -1 * node.right
         if not isinstance(node, FunctionCall):
             return node
         try:
@@ -155,14 +163,15 @@ def build_filter_from_ast(domain, node):
                 serialize(node)
             )
         except XPathFunctionException as e:
-            raise CaseFilterError(six.text_type(e), serialize(node))
+            raise CaseFilterError(str(e), serialize(node))
 
     def _equality(node):
         """Returns the filter for an equality operation (=, !=)
 
         """
+        acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
         if isinstance(node.left, Step) and (
-                isinstance(node.right, integer_types + (string_types, float, FunctionCall))):
+                isinstance(node.right, acceptable_rhs_types)):
             # This is a leaf node
             case_property_name = serialize(node.left)
             value = _unwrap_function(node.right)
@@ -242,7 +251,7 @@ def build_filter_from_xpath(domain, xpath):
     try:
         return build_filter_from_ast(domain, parse_xpath(xpath))
     except TypeError as e:
-        text_error = re.search(r"Unknown text '(.+)'", six.text_type(e))
+        text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:
             # This often happens if there is a bad operator (e.g. a ~ b)
             bad_part = text_error.groups()[0]
@@ -250,7 +259,7 @@ def build_filter_from_xpath(domain, xpath):
         raise CaseFilterError(_("Malformed search query"), None)
     except RuntimeError as e:
         # eulxml passes us string errors from YACC
-        lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", six.text_type(e))
+        lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", str(e))
         if lex_token_error:
             bad_part = lex_token_error.groups()[1]
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)

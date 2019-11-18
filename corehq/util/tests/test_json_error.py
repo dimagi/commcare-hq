@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import generate_cases
@@ -11,7 +9,8 @@ class JsonErrorTests(SimpleTestCase):
 
 
 @generate_cases([
-    (b'ascii string',),
+    (b'ascii bytes', 'ascii bytes'),
+    ('ascii unicode',),
     (b'utf8 string \xef\xbd\xa1', 'utf8 string \uff61'),
     ('unicode string \uff61',),
 ], JsonErrorTests)

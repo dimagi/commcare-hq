@@ -2,46 +2,46 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="instance-viewer-ko-template">
-    <div id="instance-xml-home" class="debugger" data-bind="
+  <div id="instance-xml-home" class="debugger" data-bind="
         css: {
             'debugger-minimized': isMinimized,
             'debugger-maximized': !isMinimized(),
             'debugger-updating': updating
         }
         ">
-        <!-- Tab title -->
-        <div class="debugger-tab-title" data-bind="click: toggleState">
-            <i class="fa fa-close pull-right"></i>
-            <i class="fa fa-table"></i>
-            <span class="debugger-title">{% trans "Data Preview" %}</span>
-        </div>
+    <!-- Tab title -->
+    <div class="debugger-tab-title" data-bind="click: toggleState">
+      <i class="fa fa-close pull-right"></i>
+      <i class="fa fa-table"></i>
+      <span class="debugger-title">{% trans "Data Preview" %}</span>
+    </div>
 
-        <!-- Debugger content -->
-        <div class="debugger-container">
-            <!-- navigation tabs -->
+    <!-- Debugger content -->
+    <div class="debugger-container">
+      <!-- navigation tabs -->
 
-            <nav class="navbar navbar-default debugger-navbar">
-              <div class="container-fluid">
+      <nav class="navbar navbar-default debugger-navbar">
+        <div class="container-fluid">
 
-                <div class="navbar-header">
-                  <button
-                        type="button"
-                        class="navbar-toggle collapsed"
-                        data-toggle="collapse"
-                        data-target="#debugger-navbar-collapse" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <i class="fa fa-bars"></i> Menu
-                  </button>
-                </div>
+          <div class="navbar-header">
+            <button
+              type="button"
+              class="navbar-toggle collapsed"
+              data-toggle="collapse"
+              data-target="#debugger-navbar-collapse" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <i class="fa fa-bars"></i> Menu
+            </button>
+          </div>
 
-                <!-- Tab links -->
-                <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
-                  <ul class="nav navbar-nav" data-bind="foreach: registeredTabIds">
-                    <li role="presentation" data-bind="css: { active: $index() === 0 }">
-                        <a
-                            role="tab"
-                            data-toggle="tab"
-                            data-bind="
+          <!-- Tab links -->
+          <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
+            <ul class="nav navbar-nav" data-bind="foreach: registeredTabIds">
+              <li role="presentation" data-bind="css: { active: $index() === 0 }">
+                <a
+                  role="tab"
+                  data-toggle="tab"
+                  data-bind="
                                 attr: {
                                     id: $parent.tabs[$data].id,
                                     href: '#' + $parent.tabs[$data].tab,
@@ -49,124 +49,124 @@
                                 text: $parent.tabs[$data].label,
                                 click: $parent.collapseNavbar,
                             ">
-                        </a>
-                    </li>
-                  </ul>
-                </div><!-- /.navbar-collapse -->
-              </div><!-- /.container-fluid -->
-            </nav>
+                </a>
+              </li>
+            </ul>
+          </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+      </nav>
 
-            <!-- tab content -->
-            <div class="tab-content debugger-content" data-bind="foreach: registeredTabIds">
-                <div role="tabpanel" class="tab-pane" id="debugger-form-data"
-                    data-bind="
+      <!-- tab content -->
+      <div class="tab-content debugger-content" data-bind="foreach: registeredTabIds">
+        <div role="tabpanel" class="tab-pane" id="debugger-form-data"
+             data-bind="
                         attr: {
                             id: $parent.tabs[$data].tab
                         },
                         css: { active: $index() === 0 }
                     ">
-                    <div data-bind="template: {
+          <div data-bind="template: {
                         name: $parent.tabs[$data].tabTemplate,
                         data: $parent
                     }"></div>
-                </div>
-            </div>
         </div>
+      </div>
     </div>
+  </div>
 </script>
 
 <script type="text/html" id="debugger-form-data-template">
-    <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
+  <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
 </script>
 
 <script type="text/html" id="debugger-xml-instance-template">
-    <div id="xml-viewer-pretty"></div>
+  <div id="xml-viewer-pretty"></div>
 </script>
 
 <script type="text/html" id="debugger-evaluate-result-template">
-    <!--ko if: xPathQuery.successResult() === ''-->
-    <div><em>{% trans "Empty String" %}</em></div>
-    <!--/ko-->
-    <!--ko if: xPathQuery.errorResult()-->
-    <div data-bind="text: xPathQuery.errorResult(), css: 'text-danger'"></div>
-    <!--/ko-->
-    <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
-    <div>
-        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
-        <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullSuccessResult()">
-            {% trans "Copy Full Evaluation to Clipboard" %}
-        </a>
-    </div>
-    <!--/ko-->
-    <!--ko if: options.showInFull && xPathQuery.successResult()-->
-    <textarea type="text" data-bind="
+  <!--ko if: xPathQuery.successResult() === ''-->
+  <div><em>{% trans "Empty String" %}</em></div>
+  <!--/ko-->
+  <!--ko if: xPathQuery.errorResult()-->
+  <div data-bind="text: xPathQuery.errorResult(), css: 'text-danger'"></div>
+  <!--/ko-->
+  <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
+  <div>
+    <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
+    <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullSuccessResult()">
+      {% trans "Copy Full Evaluation to Clipboard" %}
+    </a>
+  </div>
+  <!--/ko-->
+  <!--ko if: options.showInFull && xPathQuery.successResult()-->
+  <textarea type="text" data-bind="
         aceEditor: xPathQuery.successResult()
     "></textarea>
-    <!--/ko-->
-    <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
-    <div>
-        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
-        <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullTraceResult()">
-            {% trans "Copy Full Trace to Clipboard" %}
-        </a>
-    </div>
-    <!--/ko-->
-    <!--ko if: options.showInFull && xPathQuery.hasTrace()-->
-    <textarea type="text" data-bind="
+  <!--/ko-->
+  <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
+  <div>
+    <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
+    <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullTraceResult()">
+      {% trans "Copy Full Trace to Clipboard" %}
+    </a>
+  </div>
+  <!--/ko-->
+  <!--ko if: options.showInFull && xPathQuery.hasTrace()-->
+  <textarea type="text" data-bind="
         aceEditor: xPathQuery.traceResult()
     "></textarea>
-    <!--/ko-->
-    <!--ko if: !options.showInFull && xPathQuery.successResult()-->
-        <pre data-bind="text: xPathQuery.getTruncatedSuccess()"></pre>
-    <!--/ko-->
+  <!--/ko-->
+  <!--ko if: !options.showInFull && xPathQuery.successResult()-->
+  <pre data-bind="text: xPathQuery.getTruncatedSuccess()"></pre>
+  <!--/ko-->
 </script>
 
 <script type="text/html" id="debugger-evaluate-template">
-<!--ko with: evalXPath-->
-    <form class="form-horizontal" data-bind="submit: onSubmitXPath">
-        <div class="col-sm-12">
-            <div class="form-group">
+  <!--ko with: evalXPath-->
+  <form class="form-horizontal" data-bind="submit: onSubmitXPath">
+    <div class="col-sm-12">
+      <div class="form-group">
                 <textarea
-                    id="xpath"
-                    class="form-control debugger-code at-who-input"
-                    name="xpath"
-                    placeholder="XPath Expression"
-                    autocomplete="off"
-                    spellcheck=false
-                    data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
-            </div>
+                  id="xpath"
+                  class="form-control debugger-code at-who-input"
+                  name="xpath"
+                  placeholder="XPath Expression"
+                  autocomplete="off"
+                  spellcheck=false
+                  data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
+      </div>
+    </div>
+    <div class="col-sm-12">
+      <div class="form-group">
+        <input class="btn btn-primary" id="evaluate-button" value="Evaluate" type="submit"/>
+        <input
+          class="btn btn-default"
+          value="Evaluate Selection"
+          type="button"
+          data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
+        <div class="col-sm-3 pull-right">
+          <select class="form-control" data-bind="value: selectedDebugOption, options: debugTraceOptions, optionsText: 'label'"></select>
         </div>
-        <div class="col-sm-12">
-            <div class="form-group">
-                <input class="btn btn-success" id="evaluate-button" value="Evaluate" type="submit"/>
-                <input
-                    class="btn btn-default"
-                    value="Evaluate Selection"
-                    type="button"
-                    data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
-                <div class="col-sm-3 pull-right">
-                    <select class="form-control" data-bind="value: selectedDebugOption, options: debugTraceOptions, optionsText: 'label'"></select>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12" data-bind="template: {
+      </div>
+    </div>
+    <div class="col-sm-12" data-bind="template: {
             name: 'debugger-evaluate-result-template',
             data: {xPathQuery: xPathQuery(), options: {showInFull: true}},
             if: xPathQuery()
         }">
-        </div>
-    </form>
-    <div class="row">
-        <div class="col-sm-12">
-            <h4>{% trans "Recent Queries" %}</h4>
-        </div>
     </div>
-    <!-- ko if: recentXPathQueries().length -->
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <tbody data-bind="foreach: recentXPathQueries">
-                <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
-                    <td class="col-sm-1 query-status">
+  </form>
+  <div class="row">
+    <div class="col-sm-12">
+      <h4>{% trans "Recent Queries" %}</h4>
+    </div>
+  </div>
+  <!-- ko if: recentXPathQueries().length -->
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <tbody data-bind="foreach: recentXPathQueries">
+      <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+        <td class="col-sm-1 query-status">
                         <span><i class="fa" data-bind="
                             css: {
                                 'fa-check': success(),
@@ -175,25 +175,25 @@
                                 'text-danger': !success()
                             }
                         "></i></span>
-                    </td>
-                    <td class="col-sm-8 debugger-code">
-                        <span data-bind="text: xpath"></span>
-                    </td>
-                    <td class="col-sm-3" data-bind="template: {
+        </td>
+        <td class="col-sm-8 debugger-code">
+          <span data-bind="text: xpath"></span>
+        </td>
+        <td class="col-sm-3" data-bind="template: {
                         name: 'debugger-evaluate-result-template',
                         data: {xPathQuery: $data, options: {showInFull: false}}
                     }"></td>
-                </tr>
-            </tbody>
-        </table>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- /ko -->
+  <!-- ko ifnot: recentXPathQueries().length -->
+  <div class="row">
+    <div class="col-sm-12">
+      <i>{% trans "No recent queries" %}</i>
     </div>
-    <!-- /ko -->
-    <!-- ko ifnot: recentXPathQueries().length -->
-    <div class="row">
-        <div class="col-sm-12">
-            <i>{% trans "No recent queries" %}</i>
-        </div>
-    </div>
-    <!-- /ko -->
-<!--/ko-->
+  </div>
+  <!-- /ko -->
+  <!--/ko-->
 </script>

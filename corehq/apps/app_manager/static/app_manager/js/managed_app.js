@@ -26,9 +26,7 @@ hqDefine("app_manager/js/managed_app", function () {
             }
         });
 
-        if (app.doc_type === 'Application') {
-            $('[data-toggle="tooltip"]').tooltip();
-        }
+        $('[data-toggle="tooltip"]').tooltip();
 
         // https://github.com/twitter/bootstrap/issues/6122
         // this is necessary to get popovers to be able to extend

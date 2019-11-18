@@ -1,15 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
-    UserCaseXPathValidationError)
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
-from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
-    xpath_references_user_case)
-from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
-    QualifiedScheduleFormXPath)
 from memoized import memoized
+
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.exceptions import (
+    CaseXPathValidationError,
+    ScheduleError,
+    UserCaseXPathValidationError,
+)
+from corehq.apps.app_manager.suite_xml.contributors import (
+    SuiteContributorByModule,
+)
+from corehq.apps.app_manager.suite_xml.utils import (
+    get_module_enum_text,
+    get_module_locale_id,
+)
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Command,
+    LocalizedMenu,
+    Menu,
+)
+from corehq.apps.app_manager.util import (
+    is_usercase_in_use,
+    xpath_references_case,
+    xpath_references_user_case,
+)
+from corehq.apps.app_manager.xpath import (
+    CaseIDXPath,
+    QualifiedScheduleFormXPath,
+    XPath,
+    interpolate_xpath,
+    session_var,
+)
 
 
 class MenuContributor(SuiteContributorByModule):
@@ -71,28 +91,25 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
-        supports_module_filter = self.app.enable_module_filtering and getattr(module, 'module_filter', None)
-
         menus = []
         if hasattr(module, 'get_menus'):
-            for menu in module.get_menus(supports_module_filter=supports_module_filter):
+            for menu in module.get_menus(build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
             from corehq.apps.app_manager.models import ShadowModule
-            id_modules = [module]
-            root_modules = []
+            id_modules = [module]       # the current module and all of its shadows
+            root_modules = []           # the current module's parent and all of that parent's shadows
 
             shadow_modules = [m for m in self.app.get_modules()
                               if isinstance(m, ShadowModule) and m.source_module_id]
-            put_in_root = getattr(module, 'put_in_root', False)
-            if not put_in_root and getattr(module, 'root_module', False):
+            if not module.put_in_root and module.root_module:
                 root_modules.append(module.root_module)
                 for shadow in shadow_modules:
                     if module.root_module.unique_id == shadow.source_module_id:
                         root_modules.append(shadow)
             else:
                 root_modules.append(None)
-                if put_in_root and getattr(module, 'root_module', False):
+                if module.put_in_root and module.root_module:
                     for shadow in shadow_modules:
                         if module.root_module.unique_id == shadow.source_module_id:
                             id_modules.append(shadow)
@@ -108,15 +125,27 @@ class MenuContributor(SuiteContributorByModule):
                         suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
                     menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
-                    if supports_module_filter:
-                        menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
+                    # Determine relevancy
+                    if self.app.enable_module_filtering:
+                        relevancy = id_module.module_filter
+                        # If module has a parent, incorporate the parent's relevancy.
+                        # This is only necessary when the child uses display only forms.
+                        if id_module.put_in_root and id_module.root_module and id_module.root_module.module_filter:
+                            if relevancy:
+                                relevancy = str(XPath.and_(XPath(relevancy).paren(force=True),
+                                    XPath(id_module.root_module.module_filter).paren(force=True)))
+                            else:
+                                relevancy = id_module.root_module.module_filter
+                        if relevancy:
+                            menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
-                            'menu_locale_id': id_strings.module_locale(module),
-                            'media_image': bool(len(module.all_image_paths())),
-                            'media_audio': bool(len(module.all_audio_paths())),
+                            'menu_locale_id': get_module_locale_id(module),
+                            'menu_enum_text': get_module_enum_text(module),
+                            'media_image': module.uses_image(build_profile_id=self.build_profile_id),
+                            'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
                             'custom_icon_locale_id': (
@@ -129,9 +158,10 @@ class MenuContributor(SuiteContributorByModule):
                         menu = LocalizedMenu(**menu_kwargs)
                     else:
                         menu_kwargs.update({
-                            'locale_id': id_strings.module_locale(module),
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
+                            'locale_id': get_module_locale_id(module),
+                            'enum_text': get_module_enum_text(module),
                         })
                         menu = Menu(**menu_kwargs)
 

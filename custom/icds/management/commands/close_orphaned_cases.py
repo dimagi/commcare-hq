@@ -1,7 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from dimagi.utils.chunked import chunked
@@ -12,8 +8,6 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
-import six
-from io import open
 
 
 class Command(BaseCommand):
@@ -43,11 +37,11 @@ class Command(BaseCommand):
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print('submission error')
-                    print(six.text_type(e))
+                    print(str(e))
                     failed_updates.extend(related_cases)
                 except Exception as e:
                     print('unexpected error')
-                    print(six.text_type(e))
+                    print(str(e))
                     failed_updates.extend(related_cases)
             fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:

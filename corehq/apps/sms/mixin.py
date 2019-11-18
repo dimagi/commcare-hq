@@ -1,14 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from dimagi.ext.couchdbkit import *
 import re
-from decimal import Decimal
-from dimagi.utils.couch import CriticalSection
 from collections import namedtuple
-import six
+from decimal import Decimal
 
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    StringProperty,
+)
+from dimagi.utils.couch import CriticalSection
 
-phone_number_re = re.compile("^\d+$")
+phone_number_re = re.compile(r"^\d+$")
 
 
 class PhoneNumberException(Exception):
@@ -62,10 +64,10 @@ def apply_leniency(contact_phone_number):
     Returns None if an unsupported data type is passed in.
     """
     from corehq.apps.sms.util import strip_plus
-    # Decimal preserves trailing zeroes, so it's ok 
-    if isinstance(contact_phone_number, six.integer_types + (Decimal,)):
+    # Decimal preserves trailing zeroes, so it's ok
+    if isinstance(contact_phone_number, (int, Decimal)):
         contact_phone_number = str(contact_phone_number)
-    if isinstance(contact_phone_number, six.string_types):
+    if isinstance(contact_phone_number, str):
         chars = re.compile(r"[()\s\-.]+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)

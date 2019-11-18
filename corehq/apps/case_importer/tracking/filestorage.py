@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import os
-from tempfile import mkstemp
 import uuid
-from django.core.cache import caches
+from collections import namedtuple
+from tempfile import mkstemp
+
+from django.core.cache import caches, DEFAULT_CACHE_ALIAS
+
+from memoized import memoized
+
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
-from memoized import memoized
 
 BUCKET = 'case_importer'
 
@@ -28,12 +29,11 @@ class PersistentFileStore(object):
         :meta_model is a django model used to store meta info
             must contain columns identifier, filename, length
         """
-        self._db = get_blob_db()
         self._meta_model = meta_model
 
     def write_file(self, f, filename, domain):
         identifier = random_url_id(16)
-        meta = self._db.put(
+        meta = get_blob_db().put(
             f,
             domain=domain,
             parent_id=domain,
@@ -50,7 +50,7 @@ class PersistentFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        content = self._db.get(key=identifier).read()
+        content = get_blob_db().get(key=identifier).read()
         return make_temp_file(content, suffix)
 
     @memoized
@@ -68,7 +68,7 @@ class TransientFileStore(object):
     """
     def __init__(self, bucket, timeout):
         self._bucket = bucket
-        self._cache = caches['default']
+        self._cache = caches[DEFAULT_CACHE_ALIAS]
         self._timeout = timeout
 
     def _get_key(self, identifier):
@@ -87,6 +87,8 @@ class TransientFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
+            if isinstance(content, str):
+                content = content.encode('utf-8')
         except (TypeError, ValueError):
             return None
         suffix = file_extention_from_filename(filename)

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 import uuid
 from django.test import TestCase, override_settings

@@ -1,46 +1,60 @@
 # Standard Library imports
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from functools import wraps
 import logging
+from functools import wraps
 
 # Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.urls import reverse
 from django.http import (
-    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+    JsonResponse,
 )
 from django.template.response import TemplateResponse
-from django.utils.decorators import method_decorator, available_attrs
+from django.urls import reverse
+from django.utils.decorators import available_attrs, method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
+from django.views import View
+
+from django_otp import match_token
+from tastypie.authentication import ApiKeyAuthentication
+from tastypie.http import HttpUnauthorized
 
 # External imports
 from dimagi.utils.django.request import mutable_querydict
-from django_digest.decorators import httpdigest
-from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth,
-    BASIC, DIGEST, API_KEY,
-    get_username_and_password_from_request, FORMPLAYER,
-    formplayer_auth, formplayer_as_user_auth)
-
-from tastypie.authentication import ApiKeyAuthentication
-from tastypie.http import HttpUnauthorized
 from dimagi.utils.web import json_response
 
-from django_otp import match_token
-
+from corehq.apps.domain.auth import (
+    API_KEY,
+    BASIC,
+    DIGEST,
+    FORMPLAYER,
+    basic_or_api_key,
+    basicauth,
+    determine_authtype_from_request,
+    formplayer_as_user_auth,
+    formplayer_auth,
+    get_username_and_password_from_request,
+)
 # CCHQ imports
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
-
+from corehq.apps.users.models import CouchUser
 ########################################################################################################
-from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
-
+from corehq.toggles import (
+    DATA_MIGRATION,
+    IS_CONTRACTOR,
+    PUBLISH_CUSTOM_REPORTS,
+    TWO_FACTOR_SUPERUSER_ROLLOUT,
+)
+from corehq.util.soft_assert import soft_assert
+from django_digest.decorators import httpdigest
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +65,9 @@ OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' U
 
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
-    domain = Domain.get_by_name(domain_name)
-    req.project = domain
-    return domain_name, domain
+    domain_obj = Domain.get_by_name(domain_name)
+    req.project = domain_obj
+    return domain_name, domain_obj
 
 ########################################################################################################
 
@@ -124,7 +138,7 @@ def login_and_domain_required(view_func):
         ):
             return view_func(req, domain_name, *args, **kwargs)
         else:
-            login_url = reverse('domain_login', kwargs={'domain': domain})
+            login_url = reverse('domain_login', kwargs={'domain': domain_name})
             return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner
@@ -198,6 +212,10 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
 
 def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
@@ -287,14 +305,21 @@ digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
+basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
+
 
 def two_factor_check(view_func, api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            dom = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
+            if (
+                not api_key and
+                not getattr(request, 'skip_two_factor_check', False) and
+                domain_obj and
+                _two_factor_required(view_func, domain_obj, couch_user)
+            ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
                     with mutable_querydict(request.GET):
@@ -474,3 +499,46 @@ def check_domain_migration(view_func):
 
     wrapped_view.domain_migration_handled = True
     return wraps(view_func)(wrapped_view)
+
+
+def track_domain_request(calculated_prop):
+    """
+    Use this decorator to audit requests by domain.
+    """
+    norman = ''.join(reversed('moc.igamid@repoohn'))
+    _soft_assert = soft_assert(to=norman)
+
+    def _dec(view_func):
+
+        @wraps(view_func)
+        def _wrapped(*args, **kwargs):
+            if 'domain' in kwargs:
+                domain = kwargs['domain']
+            elif (
+                len(args) > 2
+                and isinstance(args[0], View)
+                and isinstance(args[1], HttpRequest)
+                and isinstance(args[2], str)
+            ):
+                # class-based view; args == (self, request, domain, ...)
+                domain = args[2]
+            elif (
+                len(args) > 1
+                and isinstance(args[0], HttpRequest)
+                and isinstance(args[1], str)
+            ):
+                # view function; args == (request, domain, ...)
+                domain = args[1]
+            else:
+                domain = None
+            if _soft_assert(
+                    domain,
+                    'Unable to track_domain_request("{prop}") on view "{view}". Unable to determine domain from '
+                    'args {args}.'.format(prop=calculated_prop, view=view_func.__name__, args=args)
+            ):
+                DomainAuditRecordEntry.update_calculations(domain, calculated_prop)
+            return view_func(*args, **kwargs)
+
+        return _wrapped
+
+    return _dec

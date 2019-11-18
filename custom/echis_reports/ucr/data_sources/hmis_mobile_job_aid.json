@@ -3033,7 +3033,7 @@
                 },
                 "type": "boolean_expression",
                 "comment": null,
-                "property_value": "injectables"
+                "property_value": "injections"
               },
               {
                 "operator": "eq",
@@ -3447,7 +3447,7 @@
                 },
                 "type": "boolean_expression",
                 "comment": null,
-                "property_value": "injectables"
+                "property_value": "injections"
               },
               {
                 "operator": "not_eq",
@@ -3663,7 +3663,7 @@
                 },
                 "type": "boolean_expression",
                 "comment": null,
-                "property_value": "injectables"
+                "property_value": "injections"
               },
               {
                 "operator": "eq",
@@ -4077,7 +4077,7 @@
                 },
                 "type": "boolean_expression",
                 "comment": null,
-                "property_value": "injectables"
+                "property_value": "injections"
               },
               {
                 "operator": "not_eq",

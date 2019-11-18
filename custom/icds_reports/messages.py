@@ -1,4 +1,3 @@
-from __future__ import unicode_literals, absolute_import
 from django.utils.translation import ugettext as _
 
 
@@ -93,7 +92,7 @@ def awcs_launched_help_text():
 
 def percent_aadhaar_seeded_beneficiaries_help_text():
     return _(
-        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar '
+        'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar '
         'identification has been captured. '
     )
 
@@ -158,4 +157,22 @@ def awcs_reported_medicine_kit_help_text():
     return _(
         'Of the AWCs that have submitted an Infrastructure Details form, '
         'the percentage of AWCs that reported having a Medicine Kit'
+    )
+
+
+def lady_supervisor_number_of_awcs_visited_help_text():
+    return _(
+        'Number of AWCs visited: Number of AWC visit forms submitted by LS in current month'
+    )
+
+
+def lady_supervisor_number_of_beneficiaries_visited_help_text():
+    return _(
+        'Number of Beneficiaries visited: Number of beneficiaries visited by LS in the current month'
+    )
+
+
+def lady_supervisor_number_of_vhnds_observed_help_text():
+    return _(
+        'Number of VHSND observed: Number of VHSND observed by LS in the current month'
     )

@@ -1,50 +1,61 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import os
 
-import six
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
 from couchdbkit import ResourceNotFound
-from django.http import (
-    HttpResponseBadRequest,
-    HttpResponseForbidden,
-)
+
+import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
+from couchforms import openrosa_response
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.getters import MultimediaBug
+from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.logging import notify_exception
+
+from corehq import toggles
+from corehq.apps.domain.auth import (
+    BASIC,
+    DIGEST,
+    NOAUTH,
+    determine_authtype_from_request,
+)
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex,
+    check_domain_migration,
+    login_or_basic_ex,
+    login_or_digest_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
     domain_requires_auth,
 )
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
 from corehq.apps.receiverwrapper.util import (
-    get_app_and_build_ids,
-    from_demo_user,
-    should_ignore_submission,
     DEMO_SUBMIT_MODE,
+    from_demo_user,
+    get_app_and_build_ids,
+    should_ignore_submission,
 )
+from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.form_processor.utils import (
+    convert_xform_to_json,
+    should_use_sql_backend,
+)
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.metrics import (
+    MULTIMEDIA_SUBMISSION_ERROR_COUNT,
+    XFORM_LOCKED_COUNT,
+)
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
-import couchforms
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-
-from couchforms.const import MAGIC_PROPERTY
-from couchforms import openrosa_response
-from couchforms.getters import MultimediaBug
-from dimagi.utils.decorators.profile import profile_prod
-from dimagi.utils.logging import notify_exception
-from corehq.apps.ota.utils import handle_401_response
-from corehq import toggles
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
@@ -54,6 +65,9 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+
+    rate_limit_submission_by_delaying(domain, max_wait=15)
+
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
@@ -80,18 +94,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             except:
                 meta = {}
 
-            details = [
-                "domain:{}".format(domain),
-                "app_id:{}".format(app_id),
-                "user_id:{}".format(user_id),
-                "authenticated:{}".format(authenticated),
-                "form_meta:{}".format(meta),
-            ]
-            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
-            notify_exception(request, "Received a submission with POST.keys()", details)
-            response = HttpResponseBadRequest(six.text_type(e))
-            _record_metrics(metric_tags, 'unknown', response)
-            return response
+            return _submission_error(
+                request, "Received a submission with POST.keys()",
+                MULTIMEDIA_SUBMISSION_ERROR_COUNT, metric_tags,
+                domain, app_id, user_id, authenticated, meta,
+            )
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
@@ -112,34 +119,64 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
+            force_logs=bool(request.GET.get('force_logs', False)),
         )
 
-        result = submission_post.run()
+        try:
+            result = submission_post.run()
+        except XFormLockError as err:
+            return _submission_error(
+                request, "XFormLockError: %s" % err, XFORM_LOCKED_COUNT,
+                metric_tags, domain, app_id, user_id, authenticated, status=423,
+                notify=False,
+            )
 
     response = result.response
-
-    if response.status_code == 400:
-        logging.error(
-            'Status code 400 for a form submission. '
-            'Response is: \n{0}\n'
-        )
-
-    _record_metrics(metric_tags, result.submission_type, response, result, timer)
+    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
 
 
-def _record_metrics(tags, submission_type, response, result=None, timer=None):
+def _submission_error(request, message, count_metric, metric_tags,
+        domain, app_id, user_id, authenticated, meta=None, status=400,
+        notify=True):
+    """Notify exception, datadog count, record metrics, construct response
+
+    :param status: HTTP status code (default: 400).
+    :returns: HTTP response object
+    """
+    details = [
+        "domain:{}".format(domain),
+        "app_id:{}".format(app_id),
+        "user_id:{}".format(user_id),
+        "authenticated:{}".format(authenticated),
+        "form_meta:{}".format(meta or {}),
+    ]
+    datadog_counter(count_metric, tags=details)
+    if notify:
+        notify_exception(request, message, details)
+    response = HttpResponseBadRequest(
+        message, status=status, content_type="text/plain")
+    _record_metrics(metric_tags, 'error', response)
+    return response
+
+
+def _record_metrics(tags, submission_type, response, timer=None, xform=None):
+    if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
+        lag = xform.received_on - xform.metadata.timeEnd
+        lag_days = lag.total_seconds() / 86400
+        tags += [
+            'lag:%s' % bucket_value(lag_days, (1, 2, 4, 7, 14, 31, 90), 'd')
+        ]
+
     tags += [
         'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
     ]
 
-    if response.status_code == 201 and timer and result:
+    if timer:
         tags += [
-            'duration:%s' % bucket_value(timer.duration, (5, 10, 20), 's'),
-            'case_count:%s' % bucket_value(len(result.cases), (2, 5, 10)),
-            'ledger_count:%s' % bucket_value(len(result.ledgers), (2, 5, 10)),
+            'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
         ]
 
     datadog_counter('commcare.xform_submissions.count', tags=tags)
@@ -170,7 +207,7 @@ def post(request, domain, app_id=None):
 
 def _noauth_post(request, domain, app_id=None):
     """
-    This is explictly called for a submission that has secure submissions enabled, but is manually
+    This is explicitly called for a submission that has secure submissions enabled, but is manually
     overriding the submit URL to not specify auth context. It appears to be used by demo mode.
 
     It mainly just checks that we are touching test data only in the right domain and submitting
@@ -266,9 +303,9 @@ def _secure_post_basic(request, domain, app_id=None):
 @check_domain_migration
 def secure_post(request, domain, app_id=None):
     authtype_map = {
-        'digest': _secure_post_digest,
-        'basic': _secure_post_basic,
-        'noauth': _noauth_post,
+        DIGEST: _secure_post_digest,
+        BASIC: _secure_post_basic,
+        NOAUTH: _noauth_post,
     }
 
     if request.GET.get('authtype'):

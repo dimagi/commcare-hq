@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ewsghana.handlers import DEACTIVATE_REMINDERS, REACTIVATE_REMINDERS, START_MESSAGE, STOP_MESSAGE
 from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.utils import user_needs_reminders

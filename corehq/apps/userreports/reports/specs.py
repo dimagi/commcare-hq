@@ -1,32 +1,21 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from collections import namedtuple
 import json
-
+import re
+from collections import namedtuple
 from datetime import date
-from django.utils.translation import ugettext as _
-from jsonobject.exceptions import BadValueError
-from sqlalchemy import bindparam
-from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.userreports import const
-from corehq.apps.userreports.exceptions import InvalidQueryColumn, BadSpecError
-from corehq.apps.userreports.expressions import ExpressionFactory
 
-from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
-from couchforms.jsonobject_extensions import GeoPointProperty
-from dimagi.ext.jsonobject import (
-    BooleanProperty,
-    DictProperty,
-    IntegerProperty,
-    JsonObject,
-    ListProperty,
-    ObjectProperty,
-    StringProperty,
-)
+from django.utils.translation import ugettext as _
+
 from jsonobject.base import DefaultProperty
-from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
+from jsonobject.exceptions import BadValueError
+from memoized import memoized
+from sqlagg import (
+    CountColumn,
+    CountUniqueColumn,
+    MaxColumn,
+    MeanColumn,
+    MinColumn,
+    SumColumn,
+)
 from sqlagg.columns import (
     ConditionalAggregation,
     MonthColumn,
@@ -35,15 +24,35 @@ from sqlagg.columns import (
     SumWhen,
     YearColumn,
 )
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
-from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
+from sqlalchemy import bindparam
+
+from couchforms.jsonobject_extensions import GeoPointProperty
+from dimagi.ext.jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    IntegerProperty,
+    JsonArray,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    StringProperty,
+)
+
+from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import AggregateColumn, DatabaseColumn
+from corehq.apps.userreports import const
+from corehq.apps.userreports.columns import (
+    ColumnConfig,
+    get_expanded_column_config,
+)
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.exceptions import BadSpecError, InvalidQueryColumn
+from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
-from corehq.apps.es import aggregations
-from memoized import memoized
-import six
-
+from corehq.toggles import UCR_SUM_WHEN_TEMPLATES
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -58,20 +67,6 @@ SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
 }
 
-ES_AGG_MAP = {
-    'avg': aggregations.AvgAggregation,
-    'count': aggregations.ValueCountAggregation,
-    'count_unique': aggregations.CardinalityAggregation,
-    'min': aggregations.MinAggregation,
-    'max': aggregations.MaxAggregation,
-    'sum': aggregations.SumAggregation,
-    'simple': lambda x, y: None,  # this is not an aggregation
-    # these can be implemented, but will need some python level interpretation
-    # should use date aggregation with a format and merge equal key_as_string
-    # 'month': MonthColumn,
-    # 'year': YearColumn,
-}
-
 
 class BaseReportColumn(JsonObject):
     type = StringProperty(required=True)
@@ -81,7 +76,7 @@ class BaseReportColumn(JsonObject):
     visible = BooleanProperty(default=True)
 
     @classmethod
-    def restricted_to_static(cls):
+    def restricted_to_static(cls, domain):
         return False
 
     @classmethod
@@ -101,18 +96,6 @@ class BaseReportColumn(JsonObject):
         return [self.column_id]
 
     def get_column_config(self, data_source_config, lang):
-        raise NotImplementedError('subclasses must override this')
-
-    def aggregations(self, data_source_config, lang):
-        """
-        Returns a list of aggregations to be used in an ES query
-        """
-        raise NotImplementedError('subclasses must override this')
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        """
-        Returns a dictionary of the data of this column from an ES query
-        """
         raise NotImplementedError('subclasses must override this')
 
     def get_fields(self, data_source_config=None, lang=None):
@@ -221,32 +204,6 @@ class FieldColumn(ReportColumn):
             self._column_data_type(data_source_config) not in ['integer', 'decimal']
         )
 
-    def aggregations(self, data_source_config, lang):
-        # SQL supports max and min on strings so hack it into ES
-        if self._use_terms_aggregation_for_max_min(data_source_config):
-            aggregation = aggregations.TermsAggregation(self.column_id, self.field, size=1)
-            order = "desc" if self.aggregation == 'max' else 'asc'
-            aggregation = aggregation.order('_term', order=order)
-        else:
-            aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
-        return [aggregation] if aggregation else []
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        if not from_aggregation:
-            value = row[self.field]
-        elif self.aggregation == 'simple':
-            value = row['past_bucket_values'][self.field]
-        elif self._use_terms_aggregation_for_max_min(data_source_config):
-            buckets = row[self.column_id].get('buckets', [])
-            if buckets:
-                value = buckets[0]['key']
-            else:
-                value = ''
-        else:
-            value = int(row[self.column_id]['value'])
-
-        return {self.column_id: value}
-
     def get_query_column_ids(self):
         return [self.column_id]
 
@@ -299,25 +256,6 @@ class ExpandedColumn(ReportColumn):
             c.aggregation.name for c in self.get_column_config(data_source_config, lang).columns
         ]
 
-    def aggregations(self, data_source_config, lang):
-        return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        sub_columns = self.get_column_config(data_source_config, lang).columns
-        ret = {}
-
-        if not from_aggregation:
-            for counter, sub_col in enumerate(sub_columns):
-                ui_col = self.column_id + "-" + str(counter)
-                if row[self.column_id] == sub_col.expand_value:
-                    ret[ui_col] = 1
-                else:
-                    ret[ui_col] = 0
-        else:
-            for sub_col in sub_columns:
-                ret[sub_col.ui_alias] = sub_col.get_es_data(row)
-        return ret
-
 
 class AggregateDateColumn(ReportColumn):
     """
@@ -366,17 +304,9 @@ class _CaseExpressionColumn(ReportColumn):
     http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
     """
     type = None
-    whens = DictProperty()
+    whens = ListProperty(ListProperty)      # List of (expression, bind1, bind2, ... value) tuples
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
-
-    @classmethod
-    def restricted_to_static(cls):
-        # The conditional expressions used here don't have sufficient safety checks,
-        # so this column type is only available for static reports.  To release this,
-        # we should require that conditions be expressed using a PreFilterValue type
-        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
 
     _agg_column_type = None
 
@@ -406,19 +336,86 @@ class _CaseExpressionColumn(ReportColumn):
         return [self.column_id]
 
 
-class ConditionalAggregationColumn(_CaseExpressionColumn):
+class IntegerBucketsColumn(_CaseExpressionColumn):
     """Used for grouping by SQL conditionals"""
-    type = TypeProperty('conditional_aggregation')
+    type = TypeProperty('integer_buckets')
     _agg_column_type = ConditionalAggregation
+    field = StringProperty(required=True)
+    ranges = DictProperty()
 
     def get_whens(self):
-        return {k: bindparam(None, v) for k, v in self.whens.items()}
+        whens = []
+        for value, bounds in self.ranges.items():
+            if len(bounds) != 2:
+                raise BadSpecError('Range must contain 2 items, contains {}'.format(len(bounds)))
+            try:
+                bounds = [int(b) for b in bounds]
+            except ValueError:
+                raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
+            whens.append([self._base_expression(bounds), bindparam(None, value)])
+        return whens
+
+    def _base_expression(self, bounds):
+        return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
+
+
+class AgeInMonthsBucketsColumn(IntegerBucketsColumn):
+    type = TypeProperty('age_in_months_buckets')
+
+    def _base_expression(self, bounds):
+        return "extract(year from age({}))*12 + extract(month from age({})) BETWEEN {} and {}".format(
+            self.field, self.field, bounds[0], bounds[1])
 
 
 class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
     else_ = IntegerProperty(default=0)
     _agg_column_type = SumWhen
+
+    @classmethod
+    def restricted_to_static(cls, domain):
+        # The conditional expressions used here don't have sufficient safety checks,
+        # so this column type is only available for static reports.  To release this,
+        # we should require that conditions be expressed using a PreFilterValue type
+        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
+        return True
+
+
+class SumWhenTemplateColumn(SumWhenColumn):
+    type = TypeProperty("sum_when_template")
+    whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
+
+    @classmethod
+    def restricted_to_static(cls, domain):
+        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
+
+    def get_whens(self):
+        from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory
+        whens = []
+        for spec in self.whens:
+            template = SumWhenTemplateFactory.make_template(spec)
+            whens.append([template.expression] + template.binds + [template.then])
+        return whens
+
+
+class SumWhenTemplateSpec(JsonObject):
+    type = StringProperty(required=True)
+    expression = StringProperty(required=True)
+    binds = ListProperty()
+    then = IntegerProperty()
+
+    def bind_count(self):
+        return len(re.sub(r'[^?]', '', self.expression))
+
+
+class YearRangeTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty('year_range')
+    expression = "year >= ? and year < ?"
+
+
+class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty("under_x_months")
+    expression = "age_at_registration < ?"
 
 
 class PercentageColumn(ReportColumn):
@@ -507,21 +504,6 @@ class PercentageColumn(ReportColumn):
     def get_fields(self, data_source_config=None, lang=None):
         return self.numerator.get_fields() + self.denominator.get_fields()
 
-    def aggregations(self, data_source_config, lang):
-        num_aggs = self.numerator.aggregations(data_source_config, lang)
-        denom_aggs = self.denominator.aggregations(data_source_config, lang)
-        return num_aggs + denom_aggs
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        num = self.numerator
-        denom = self.denominator
-        num_data = num.get_es_data(row, data_source_config, lang, from_aggregation)
-        denom_data = denom.get_es_data(row, data_source_config, lang, from_aggregation)
-        return {
-            num.column_id: num_data[num.column_id],
-            denom.column_id: denom_data[denom.column_id]
-        }
-
 
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:
@@ -604,7 +586,7 @@ class MultibarChartSpec(ChartSpec):
     def wrap(cls, obj):
         def _convert_columns_to_properly_dicts(cols):
             for column in cols:
-                if isinstance(column, six.string_types):
+                if isinstance(column, str):
                     yield {'column_id': column, 'display': column}
                 else:
                     yield column

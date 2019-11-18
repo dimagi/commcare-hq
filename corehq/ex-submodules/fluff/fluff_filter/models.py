@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from dimagi.ext.couchdbkit import Document
 
 

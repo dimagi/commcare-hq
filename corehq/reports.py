@@ -1,29 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-import six
 from django.urls import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
-    AdminDomainStatsReport,
-    AdminDomainMapReport,
-    AdminDomainMapInternal,
-    AdminAppReport,
     AdminPhoneNumberReport,
-    AdminUserReport,
-    RealProjectSpacesReport,
-    CommConnectProjectSpacesReport,
-    CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-    CommCareVersionReport,
-    UserAuditReport)
-from corehq.apps.hqpillow_retry.views import PillowErrorsReport
+    UserAuditReport,
+    UserListReport,
+)
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect,
-    deployments, sms, ivr
+    deployments, sms
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
@@ -47,7 +36,6 @@ from dimagi.utils.modules import to_function
 import logging
 from . import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
-from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
 from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.accounting.interface import (
@@ -145,8 +133,6 @@ def REPORTS(project):
         sms.SurveyDetailReport,
         sms.MessageLogReport,
         sms.SMSOptOutReport,
-        ivr.CallReport,
-        ivr.ExpectedCallbackReport,
         sms.PhoneNumberReport,
         sms.ScheduleInstanceReport,
     ])
@@ -166,6 +152,7 @@ def _filter_reports(report_set, reports):
         return [r for r in reports if r.slug in report_set]
     else:
         return reports
+
 
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
@@ -213,7 +200,7 @@ def _safely_get_report_configs(project_name):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
-                logging.error("%s with report config %s" % (e.message, config_id))
+                logging.error("%s with report config %s" % (str(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))
@@ -247,8 +234,9 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
             )
         return show_item
 
-    bytes_config_id = config._id.encode('utf-8') if isinstance(config._id, six.text_type) else config._id
-    return type(str(b'DynamicReport{}'.format(bytes_config_id)), (GenericReportView,), {
+    config_id = config._id.decode('utf-8') if isinstance(config._id, bytes) else config._id
+    type_name = 'DynamicReport{}'.format(config_id)
+    return type(type_name, (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,
         'get_url': get_url,
@@ -319,28 +307,6 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-
-INDICATOR_ADMIN_INTERFACES = (
-    (_("Form Based Indicators"), (
-        document_indicators.FormLabelIndicatorDefinitionAdminInterface,
-        document_indicators.FormAliasIndicatorDefinitionAdminInterface,
-        document_indicators.CaseDataInFormAdminInterface,
-    )),
-    (_("Case Based Indicators"), (
-        document_indicators.FormDataInCaseAdminInterface,
-    )),
-    (_("Dynamic Indicators"), (
-        dynamic_indicators.CombinedIndicatorAdminInterface,
-    )),
-    (_("Couch Based Indicators"), (
-        couch_indicators.CouchIndicatorAdminInterface,
-        couch_indicators.CountUniqueCouchIndicatorAdminInterface,
-        couch_indicators.MedianCouchIndicatorAdminInterface,
-        couch_indicators.SumLastEmittedCouchIndicatorAdminInterface,
-    )),
-)
-
-
 ACCOUNTING_ADMIN_INTERFACES = (
     (_("Accounting Admin"), (
         AccountingInterface,
@@ -364,23 +330,10 @@ SMS_ADMIN_INTERFACES = (
 )
 
 
-BASIC_REPORTS = (
-    (_('Project Stats'), ()),
-)
-
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
-        AdminDomainStatsReport,
-        AdminDomainMapReport,
-        AdminDomainMapInternal,
-        AdminUserReport,
-        AdminAppReport,
-        PillowErrorsReport,
-        RealProjectSpacesReport,
-        CommConnectProjectSpacesReport,
-        CommTrackProjectSpacesReport,
+        UserListReport,
         DeviceLogSoftAssertReport,
-        CommCareVersionReport,
         AdminPhoneNumberReport,
         UserAuditReport,
     )),

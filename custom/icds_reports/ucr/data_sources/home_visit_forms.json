@@ -1,7 +1,19 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,8 +22,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -36,6 +47,24 @@
         "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
       ]
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",
@@ -55,8 +84,8 @@
         "datatype": "string",
         "type": "expression",
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "expression": {
           "location_id_expression": {
@@ -157,7 +186,14 @@
       }
     },
     "named_filters": {},
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    },
     "sql_column_indexes": [
       {"column_ids": ["supervisor_id", "submitted_on"]}
     ],

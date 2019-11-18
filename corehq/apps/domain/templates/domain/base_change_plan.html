@@ -2,16 +2,16 @@
 {% load i18n %}
 
 {% block page_content %}
-<ol class="breadcrumb">
+  <ol class="breadcrumb">
     {% for step in steps %}
-    <li>
+      <li>
         <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
-    </li>
+      </li>
     {% endfor %}
-</ol>
-<div class="page-header">
-  <h2>{{ step_title }}</h2>
-</div>
-{% block form_content %}
-{% endblock %}
+  </ol>
+  <div class="page-header">
+    <h2>{{ step_title }}</h2>
+  </div>
+  {% block form_content %}
+  {% endblock %}
 {% endblock %}

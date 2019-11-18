@@ -1,19 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import random
 import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
-from mock import patch
 
-from dateutil.relativedelta import relativedelta
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
+from dateutil.relativedelta import relativedelta
+from mock import patch
+
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
-from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
+from casexml.apps.stock.models import (
+    DocDomainMapping,
+    StockReport,
+    StockTransaction,
+)
+from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -26,19 +30,22 @@ from corehq.apps.accounting.models import (
 from corehq.apps.aggregate_ucrs.models import (
     AggregateTableDefinition,
     PrimaryColumn,
-    SecondaryTableDefinition,
     SecondaryColumn,
+    SecondaryTableDefinition,
 )
-from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
-from corehq.apps.case_importer.tracking.models import CaseUploadFormRecord, CaseUploadRecord
+from corehq.apps.case_importer.tracking.models import (
+    CaseUploadFormRecord,
+    CaseUploadRecord,
+)
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
@@ -46,15 +53,22 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
+from corehq.apps.locations.models import (
+    LocationFixtureConfiguration,
+    LocationType,
+    SQLLocation,
+    make_location,
+)
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
+    SMS,
     DailyOutboundSMSLimitReached,
     ExpectedCallback,
     Keyword,
@@ -65,7 +79,6 @@ from corehq.apps.sms.models import (
     PhoneNumber,
     QueuedSMS,
     SelfRegistrationInvitation,
-    SMS,
     SQLLastReadMessage,
     SQLMobileBackend,
     SQLMobileBackendMapping,
@@ -75,15 +88,19 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.blobs import get_blob_db, NotFound
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.blobs import NotFound, get_blob_db
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    doc_type_to_state,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
-from couchforms.models import UnfinishedSubmissionStub
-from dimagi.utils.make_uuid import random_hex
-from six.moves import range
 
 
 class TestDeleteDomain(TestCase):
@@ -251,12 +268,14 @@ class TestDeleteDomain(TestCase):
 
         self.domain.delete()
 
+        # Check that get_credits_by_subscription_and_features does not return the old deactivated credit line
         subscription_credits = CreditLine.get_credits_by_subscription_and_features(
             self.current_subscription,
             feature_type=FeatureType.SMS,
         )
-        self.assertEqual(len(subscription_credits), 1)
-        self.assertEqual(subscription_credits[0].balance, Decimal('0.0000'))
+        self.assertEqual(len(subscription_credits), 0)
+
+        # Check that old credit line has been tranferred to accoun
         account_credits = CreditLine.get_credits_for_account(
             self.current_subscription.account,
             feature_type=FeatureType.SMS,
@@ -332,7 +351,7 @@ class TestDeleteDomain(TestCase):
             aggregate_table_definition = AggregateTableDefinition.objects.create(
                 domain=domain_name,
                 primary_data_source_id=uuid.uuid4(),
-                table_id=random_hex(),
+                table_id=uuid.uuid4().hex,
             )
             secondary_table_definition = SecondaryTableDefinition.objects.create(
                 table_definition=aggregate_table_definition,
@@ -360,21 +379,6 @@ class TestDeleteDomain(TestCase):
             1
         )
 
-    def _assert_calendar_fixture_count(self, domain_name, count):
-        self._assert_queryset_count([
-            CalendarFixtureSettings.objects.filter(domain=domain_name)
-        ], count)
-
-    def test_calendar_fixture_counts(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            CalendarFixtureSettings.objects.create(domain=domain_name, days_before=3, days_after=4)
-            self._assert_calendar_fixture_count(domain_name, 1)
-
-        self.domain.delete()
-
-        self._assert_calendar_fixture_count(self.domain.name, 0)
-        self._assert_calendar_fixture_count(self.domain2.name, 1)
-
     def _assert_case_importer_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseUploadFormRecord.objects.filter(case_upload_record__domain=domain_name),
@@ -390,7 +394,7 @@ class TestDeleteDomain(TestCase):
             )
             CaseUploadFormRecord.objects.create(
                 case_upload_record=case_upload_record,
-                form_id=random_hex(),
+                form_id=uuid.uuid4().hex,
             )
             self._assert_case_importer_counts(domain_name, 1)
 
@@ -499,7 +503,7 @@ class TestDeleteDomain(TestCase):
             CaseRuleSubmission.objects.create(
                 created_on=datetime.utcnow(),
                 domain=domain_name,
-                form_id=random_hex(),
+                form_id=uuid.uuid4().hex,
                 rule=automatic_update_rule,
             )
             DomainCaseRuleRun.objects.create(domain=domain_name, started_on=datetime.utcnow())
@@ -700,7 +704,7 @@ class TestDeleteDomain(TestCase):
         for domain_name in [self.domain.name, self.domain2.name]:
             AsyncIndicator.objects.create(
                 domain=domain_name,
-                doc_id=random_hex(),
+                doc_id=uuid.uuid4().hex,
                 doc_type='doc_type',
                 indicator_config_ids=[],
             )
@@ -780,6 +784,11 @@ class TestDeleteDomain(TestCase):
 
         self._assert_couchforms_counts(self.domain.name, 0)
         self._assert_couchforms_counts(self.domain2.name, 1)
+
+    def test_delete_commtrack_config(self):
+        CommtrackConfig(domain=self.domain.name).save()
+        self.domain.delete()
+        self.assertEqual(len(get_docs_in_domain_by_class(self.domain.name, CommtrackConfig)), 0)
 
     def tearDown(self):
         self.domain2.delete()

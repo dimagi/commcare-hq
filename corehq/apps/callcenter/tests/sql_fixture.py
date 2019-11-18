@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from collections import namedtuple
+from datetime import datetime, timedelta
 
 import sqlalchemy
 from sqlalchemy import *
-from datetime import timedelta, datetime
 
 metadata = sqlalchemy.MetaData()
 

@@ -1,0 +1,317 @@
+{
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-kebele_population_profile_report",
+   "data_source_table":"static-kebele_population_profile_data_source",
+   "config":{
+   "description":"", 
+   "title":"Kebele Population Profile Report",
+   "filters":[
+      {
+         "comment":null,
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"gote_name",
+         "field":"gote_name",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+
+         },
+         "display":"Gote Name"
+      },
+      {
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"health_post",
+         "field":"health_post_id",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+            "include_descendants":true,
+            "type":"location",
+            "show_full_path":false
+         },
+         "display":"Location"
+      }
+   ],
+   "data_source_type":"standard",
+   "visible":true,
+   "configured_charts":[
+
+   ],
+   "aggregation_columns":[
+      "health_post_id",
+      "health_post_name"
+   ],
+ 
+   "sort_expression":[
+
+   ],
+   "columns":[
+      {
+         "comment":null,
+         "field":"health_post_name",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"simple",
+         "column_id":"health_post_name",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Name"
+      },
+      {
+         "comment":null,
+         "field":"health_post_id",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":false,
+         "aggregation":"simple",
+         "column_id":"health_post_id",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Id"
+      },
+      {
+         "comment":null,
+         "field":"household_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"household_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Num of Households"
+      },
+      {
+         "comment":null,
+         "field":"population_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"population_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Population"
+      },
+      {
+         "comment":null,
+         "field":"total_live_birth",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"total_live_birth",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Total Live Birth"
+      },
+      {
+         "comment":null,
+         "field":"no_of_surviving_children",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"no_of_surviving_children",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of Surviving Children"
+      },
+      {
+         "comment":null,
+         "field":"no_of_delivery",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"no_of_delivery",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of Delivery"
+      },
+      {
+         "comment":null,
+         "field":"pergnant_women_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"pergnant_women_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of Pregnant women"
+      },
+      {
+         "comment":null,
+         "field":"non_pregnant_women_10_to_49",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"non_pregnant_women_10_to_49",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Non-preganant women in (10-49 years)"
+      },
+      {
+         "comment":null,
+         "field":"childeren_under_5years",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"childeren_under_5years",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Num of children under 5 years "
+      },
+      {
+         "comment":null,
+         "field":"childeren_under_2years",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"childeren_under_2years",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Num of children under 2 years "
+      },
+      {
+         "comment":null,
+         "field":"wda_1_30_leader_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"wda_1_30_leader_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of WDA leaders(1-30)"
+      },
+      {
+         "comment":null,
+         "field":"wda_1_5_leader_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"sum",
+         "column_id":"wda_1_5_leader_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of WDA leaders(1-5)"
+      },
+      {
+         "comment":null,
+         "field":"hh_in_the_wda_networks_count",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"count_unique",
+         "column_id":"hh_in_the_wda_networks_count",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"No of HH in the WDA Networks"
+      }
+   ]
+}
+}

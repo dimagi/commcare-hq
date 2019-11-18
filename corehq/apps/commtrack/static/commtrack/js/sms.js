@@ -1,5 +1,12 @@
-/*globals hqDefine, ko, $ */
-hqDefine('commtrack/js/sms', function () {
+hqDefine('commtrack/js/sms', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    initialPageData
+) {
     'use strict';
     function commtrackSettingsViewModel(otherSmsCodes) {
         var self = {};
@@ -153,9 +160,8 @@ hqDefine('commtrack/js/sms', function () {
     }
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
-        var settings = initial_page_data('settings');
-        var otherSmsCodes = initial_page_data('other_sms_codes');
+        var settings = initialPageData.get('settings');
+        var otherSmsCodes = initialPageData.get('other_sms_codes');
         initCommtrackSettingsView($('#settings'), settings, otherSmsCodes);
     });
 });

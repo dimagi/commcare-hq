@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -37,7 +35,7 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
 
     @property
     def export_table(self):
-        table = super(FicheConsommationReport, self).export_table
+        table = list(super(FicheConsommationReport, self).export_table)
         #  remove first row from table headers
         replace = ''
         for k, v in enumerate(table[0][1][0]):
@@ -45,4 +43,5 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
                 replace = v
             else:
                 table[0][1][0][k] = replace
+
         return table

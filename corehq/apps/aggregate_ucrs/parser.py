@@ -7,8 +7,6 @@ the django models.
 
 They may be able to be replaced with django rest framework serializers.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from dimagi.ext import jsonobject
 

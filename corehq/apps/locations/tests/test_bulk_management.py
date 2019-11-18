@@ -1,14 +1,15 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
-from mock import patch, Mock
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+from mock import Mock, patch
+
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.workbook_json.excel import IteratorJSONReader
@@ -26,11 +27,12 @@ from ..bulk_management import (
 from ..const import ROOT_LOCATION_TYPE
 from ..models import SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
-from ..util import get_location_data_model, LocationExporter
-from .util import LocationHierarchyPerTest, restrict_user_by_location, MockExportWriter
-
-import six
-from six.moves import range
+from ..util import LocationExporter, get_location_data_model
+from .util import (
+    LocationHierarchyPerTest,
+    MockExportWriter,
+    restrict_user_by_location,
+)
 
 # These example types and trees mirror the information available in the upload files
 
@@ -257,7 +259,7 @@ class UploadTestUtils(object):
             descendants[child] = get_descendants(child)
 
         # for each location assert that calculated and expected get_descendants are equal
-        for (l, desc) in six.iteritems(descendants):
+        for (l, desc) in descendants.items():
             q = SQLLocation.objects.filter(site_code=l)
             loc = q[0] if q else None
 
@@ -294,9 +296,9 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestTreeValidator, self).tearDown()
         self.user.delete()
         self.domain_obj.delete()
+        super(TestTreeValidator, self).tearDown()
 
     def get_validator(self, location_types, locations):
         old_collection = LocationCollection(self.domain_obj)
@@ -449,9 +451,9 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestBulkManagementNoInitialLocs, self).tearDown()
         self.user.delete()
         self.domain_obj.delete()
+        super(TestBulkManagementNoInitialLocs, self).tearDown()
 
     def test_location_creation(self):
         result = self.bulk_update_locations(
@@ -726,8 +728,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestBulkManagementWithInitialLocs, self).tearDown()
         self.user.delete()
+        super(TestBulkManagementWithInitialLocs, self).tearDown()
 
     @property
     def basic_update(self):
@@ -1113,8 +1115,8 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
         restrict_user_by_location(self.domain, self.user)
 
     def tearDown(self):
-        super(TestRestrictedUserUpload, self).tearDown()
         self.user.delete()
+        super(TestRestrictedUserUpload, self).tearDown()
 
     def test_only_additions(self):
         upload = [

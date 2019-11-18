@@ -1,25 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from django.middleware.csrf import get_token
 from django.http import QueryDict
+from django.middleware.csrf import get_token
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
+
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.helper import FormHelper
+from memoized import memoized
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
-
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton, InlineField
-from crispy_forms.helper import FormHelper
-
-from memoized import memoized
-from six.moves import map
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -84,8 +80,7 @@ class BulkUploadForm(forms.Form):
                 *self.crispy_form_fields(context)
             ),
             StrictButton(
-                ('<i class="fa fa-cloud-upload"></i> Upload %s'
-                 % plural_noun.title()),
+                ('<i class="fa fa-cloud-upload"></i> Upload %s' % plural_noun),
                 css_class='btn-primary',
                 data_bind='disable: !file()',
                 onclick='this.disabled=true;this.form.submit();',
@@ -106,14 +101,19 @@ class BulkUploadForm(forms.Form):
 
 
 class AppTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
     validate = forms.BooleanField(label="Just validate and not update translations", required=False,
                                   initial=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_select_language'):
+            crispy_form_fields.extend([
+                InlineField('language', data_bind="value: lang")
+            ])
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate')
+                crispy.Div(InlineField('validate'))
             ])
         return crispy_form_fields
 
@@ -197,7 +197,7 @@ class FormListForm(object):
                 rows = json.loads(self.data.get('child_form_data', ""))
             except ValueError as e:
                 raise ValidationError("POST request poorly formatted. {}"
-                                      .format(e.message))
+                                      .format(str(e)))
         else:
             rows = self.data
         return [

@@ -16,7 +16,6 @@ module.exports = function(grunt) {
      */
     var apps = [
         'app_manager',
-        'app_manager#fields',
         'export#ko',
         'notifications',
         'reports_core#choiceListUtils',
@@ -31,6 +30,7 @@ module.exports = function(grunt) {
     var customApps = [
         'icds_reports',
         'champ',
+        'aaa'
     ];
 
     var mochaConfig = {},

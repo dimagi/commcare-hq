@@ -2,46 +2,46 @@
 this template generates an underscore.js template used by the maps report
 {% endcomment %}
 <style>
-.stock-status-detail td,
-.stock-status-detail th {
+  .stock-status-detail td,
+  .stock-status-detail th {
     padding: 0.25em 0.5em;
-}
-.stock-status-detail .loctype {
+  }
+  .stock-status-detail .loctype {
     color: #666;
     font-size: 75%;
     text-transform: uppercase;
-}
-.stock-status-detail .data {
+  }
+  .stock-status-detail .data {
     font-weight: bold;
     max-width: 6em;
     vertical-align: top;
-}
-.stock-status-detail th {
+  }
+  .stock-status-detail th {
     font-weight: normal;
     vertical-align: bottom;
-}
-.stock-status-detail th.header {
+  }
+  .stock-status-detail th.header {
     max-width: 6em;
-}
+  }
 </style>
 
 <div class="stock-status-detail">
-<h3><%= name %> <span class="loctype">(<%= props.type %>)</span></h3>
-<hr />
-<table>
-  <tr><th></th>
-    {% for c in columns %}
-    <th class="header">{{ c.title }}</th>
+  <h3><%= name %> <span class="loctype">(<%= props.type %>)</span></h3>
+  <hr />
+  <table>
+    <tr><th></th>
+      {% for c in columns %}
+        <th class="header">{{ c.title }}</th>
+      {% endfor %}
+    </tr>
+    {% for p in products %}
+      <tr><td>{{ p.name }}</td>
+        {% for c in columns %}
+          <td class="data data-{{ p.get_id }}-{{ c.id }}">
+            <%= props['{{ p.get_id }}-{{ c.id }}'] %>
+          </td>
+        {% endfor %}
+      </tr>
     {% endfor %}
-  </tr>
-  {% for p in products %}
-  <tr><td>{{ p.name }}</td>
-    {% for c in columns %}
-    <td class="data data-{{ p.get_id }}-{{ c.id }}">
-      <%= props['{{ p.get_id }}-{{ c.id }}'] %>
-    </td>
-    {% endfor %}
-  </tr>
-  {% endfor %}
-</table>
+  </table>
 </div>

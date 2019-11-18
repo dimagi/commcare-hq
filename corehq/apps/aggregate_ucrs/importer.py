@@ -2,11 +2,15 @@
 Utility functions for importing AggregateTableDefinitions and associated models
 from their config specifications.
 """
-from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 
-from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition, PrimaryColumn, SecondaryTableDefinition, \
-    SecondaryColumn, TimeAggregationDefinition
+from corehq.apps.aggregate_ucrs.models import (
+    AggregateTableDefinition,
+    PrimaryColumn,
+    SecondaryColumn,
+    SecondaryTableDefinition,
+    TimeAggregationDefinition,
+)
 
 
 def import_aggregation_models_from_spec(spec):

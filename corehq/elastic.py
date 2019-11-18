@@ -1,35 +1,59 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import copy
+import json
 import logging
 import time
-from io import open
-from six.moves.urllib.parse import unquote
+from collections import namedtuple
+from urllib.parse import unquote
 
-from dimagi.utils.chunked import chunked
 from django.conf import settings
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ElasticsearchException
+
+from memoized import memoized
+
+from corehq.util.es.interface import ElasticsearchInterface
+from dimagi.utils.chunked import chunked
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.files import TransientTempfile
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from memoized import memoized
-from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
-import six
-from six.moves import range
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.es.elasticsearch import (
+    Elasticsearch,
+    ElasticsearchException,
+    SerializationError,
+)
+from corehq.util.files import TransientTempfile
+from corehq.util.json import CommCareJSONEncoder
+
+
+class ESJSONSerializer(object):
+    """Modfied version of ``elasticsearch.serializer.JSONSerializer``
+    that uses the CommCareJSONEncoder for serializing to JSON.
+    """
+    mimetype = 'application/json'
+
+    def loads(self, s):
+        try:
+            return json.loads(s)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(s, e)
+
+    def dumps(self, data):
+        # don't serialize strings
+        if isinstance(data, str):
+            return data
+        try:
+            return json.dumps(data, cls=CommCareJSONEncoder)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(data, e)
 
 
 def _es_hosts():
@@ -54,7 +78,7 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts)
+    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer())
 
 
 @memoized
@@ -69,8 +93,10 @@ def get_es_export():
         retry_on_timeout=True,
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
-        timeout=30,
+        timeout=300,
+        serializer=ESJSONSerializer(),
     )
+
 
 ES_DEFAULT_INSTANCE = 'default'
 ES_EXPORT_INSTANCE = 'export'
@@ -90,7 +116,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
     """
-    if isinstance(doc_id_or_dict, six.string_types):
+    if isinstance(doc_id_or_dict, str):
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)
@@ -105,6 +131,8 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     """
     from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
+    if isinstance(doc_id, bytes):
+        doc_id = doc_id.decode('utf-8')
     es_meta = ES_META[index_name]
     index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
     doc_exists = doc_exists_in_es(index_info, doc_id)
@@ -116,7 +144,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
-        except_on_failure=True,
+        propagate_failure=True,
         update=doc_exists,
         delete=delete,
         es_merge_update=es_merge_update,
@@ -144,45 +172,6 @@ ES_META = {
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
     "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
-    "ledgers": EsMeta(LEDGER_INDEX_INFO.index, LEDGER_INDEX_INFO.type),
-}
-
-ADD_TO_ES_FILTER = {
-    "forms": [
-        {"term": {"doc_type": "xforminstance"}},
-        {"not": {"missing": {"field": "xmlns"}}},
-        {"not": {"missing": {"field": "form.meta.userID"}}},
-    ],
-    "archived_forms": [
-        {"term": {"doc_type": "xformarchived"}},
-        {"not": {"missing": {"field": "xmlns"}}},
-        {"not": {"missing": {"field": "form.meta.userID"}}},
-    ],
-    "users": [
-        {"term": {"doc_type": "CommCareUser"}},
-        {"term": {"base_doc": "couchuser"}},
-        {"term": {"is_active": True}},
-    ],
-    "web_users": [
-        {"term": {"doc_type": "WebUser"}},
-        {"term": {"base_doc": "couchuser"}},
-        {"term": {"is_active": True}},
-    ],
-    "users_all": [
-        {"term": {"base_doc": "couchuser"}},
-    ],
-    "active_cases": [
-        {"term": {"closed": False}},
-    ],
-}
-
-DATE_FIELDS = {
-    "forms": "received_on",
-    "cases": "opened_on",
-    "active_cases": "modified_on",
-    "users": "created_on",
-    "users_all": "created_on",
-    "sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -190,6 +179,10 @@ ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set
 
 
 class ESError(Exception):
+    pass
+
+
+class ESShardFailure(ESError):
     pass
 
 
@@ -205,6 +198,8 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
     else:
         es_instance = get_es_instance(es_instance_alias)
 
+    es_interface = ElasticsearchInterface(es_instance)
+
     try:
         es_meta = ES_META[index_name]
     except KeyError:
@@ -214,23 +209,21 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        results = es_instance.search(es_meta.index, es_meta.type, body=q)
-        report_shard_failures(results)
+        results = es_interface.search(es_meta.index, es_meta.type, body=q)
+        report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
 
 
-def mget_query(index_name, ids, source):
+def mget_query(index_name, ids):
     if not ids:
         return []
 
-    es_instance = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_instance.mget(
-            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=source
-        )['docs']
+        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -238,9 +231,7 @@ def mget_query(index_name, ids, source):
 def iter_es_docs(index_name, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
-        for result in mget_query(index_name, ids_chunk, source=True):
-            if result['found']:
-                yield result['_source']
+        yield from mget_query(index_name, ids_chunk)
 
 
 def iter_es_docs_from_query(query):
@@ -314,7 +305,8 @@ def scan(client, query=None, scroll='5m', **kwargs):
     """
     kwargs['search_type'] = 'scan'
     # initial search
-    initial_resp = client.search(body=query, scroll=scroll, **kwargs)
+    es_interface = ElasticsearchInterface(client)
+    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
 
     def fetch_all(initial_response):
 
@@ -327,7 +319,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
         while True:
 
             start = int(time.time() * 1000)
-            resp = client.scroll(scroll_id, scroll=scroll)
+            resp = es_interface.scroll(scroll_id, scroll=scroll)
             for hit in resp['hits']['hits']:
                 yield hit
 
@@ -347,29 +339,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
     count = initial_resp.get("hits", {}).get("total", None)
     return ScanResult(count, fetch_all(initial_resp))
-
-
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, interval="day", filters=[]):
-    from corehq.apps.es.es_query import HQESQuery
-    date_field = DATE_FIELDS[histo_type]
-
-    query = (
-        HQESQuery(index=histo_type)
-        .range_filter(date_field, gte=startdate, lte=enddate)
-    )
-
-    for filter_ in ADD_TO_ES_FILTER.get(histo_type, []):
-        query = query.filter(filter_)
-
-    if domains is not None:
-        query = query.domain(domains)
-    if filters:
-        query = query.filter(filters)
-
-    query = query.date_histogram('histo', date_field, interval)
-
-    ret_data = query.run().aggregations.histo.as_facet_result()
-    return ret_data
 
 
 SIZE_LIMIT = 1000000
@@ -437,12 +406,12 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         return q
 
     es_index = es_index or 'domains'
-    es = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     meta = ES_META[es_index]
 
     try:
-        result = es.search(meta.index, meta.type, body=q)
-        report_shard_failures(result)
+        result = es_interface.search(meta.index, meta.type, body=q)
+        report_and_fail_on_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -475,7 +444,7 @@ def parse_args_for_es(request, prefix=None):
         return str[:-2] if str.endswith('[]') else str
 
     params, facets = {}, []
-    for attr in request.GET.iterlists():
+    for attr in request.GET.lists():
         param, vals = attr[0], attr[1]
         if param == 'facets':
             facets = vals[0].split()
@@ -497,7 +466,8 @@ def generate_sortables_from_facets(results, params=None):
     """
 
     def generate_facet_dict(f_name, ft):
-        if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
+        # hack to get around unicode encoding issues. However it breaks this specific facet
+        if isinstance(ft['term'], str):
             ft['term'] = ft['term'].encode('ascii', 'replace')
 
         return {'name': ft["term"],
@@ -524,11 +494,18 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
     return facet_mapping
 
 
-def report_shard_failures(search_result):
-    """Report es shard failures to datadog
+def report_and_fail_on_shard_failures(search_result):
+    """
+    Raise an ESShardFailure if there are shard failures in an ES search result (JSON)
+
+    and report to datadog.
+    The commcare.es.partial_results metric counts 1 per ES request with any shard failure.
     """
     if not isinstance(search_result, dict):
         return
 
     if search_result.get('_shards', {}).get('failed'):
         datadog_counter('commcare.es.partial_results', value=1)
+        # Example message:
+        #   "_shards: {'successful': 4, 'failed': 1, 'total': 5}"
+        raise ESShardFailure('_shards: {!r}'.format(search_result.get('_shards')))

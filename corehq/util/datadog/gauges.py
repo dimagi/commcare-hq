@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import time
+from contextlib import ContextDecorator
 from functools import wraps
+
 from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
-from corehq.util.decorators import ContextDecorator
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
@@ -137,15 +137,24 @@ class datadog_track_errors(ContextDecorator):
             pass
     """
 
-    def __init__(self, name):
+    def __init__(self, name, duration_buckets=None):
         self.succeeded_name = "commcare.{}.succeeded".format(name)
         self.failed_name = "commcare.{}.failed".format(name)
+        self.duration_buckets = duration_buckets
+        self.timer_start = None
 
     def __enter__(self):
-        pass
+        if self.duration_buckets:
+            self.timer_start = time.time()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not exc_type:
-            datadog_counter(self.succeeded_name)
+        if self.duration_buckets:
+            duration = time.time() - self.timer_start
+            duration_value = bucket_value(duration, self.duration_buckets, unit='s')
+            tags = ['duration:{}'.format(duration_value)]
         else:
-            datadog_counter(self.failed_name)
+            tags = None
+        if not exc_type:
+            datadog_counter(self.succeeded_name, tags=tags)
+        else:
+            datadog_counter(self.failed_name, tags=tags)

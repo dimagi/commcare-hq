@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import uuid
 import functools
 import json
@@ -70,7 +67,7 @@ class trap_extra_setup(ContextDecorator):
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
 
 
-def softer_assert():
+def softer_assert(comment=None):
     """A shortcut function to get the patch for disabling hardened soft_assert for tests"""
     return mock.patch("corehq.util.soft_assert.core.is_hard_mode", new=lambda: False)
 
@@ -113,7 +110,7 @@ class TestFileMixin(object):
         return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
-def flag_enabled(toggle_class_string):
+class flag_enabled(object):
     """
     Decorate test methods with this to mock the lookup
 
@@ -121,10 +118,32 @@ def flag_enabled(toggle_class_string):
         def test_something_fancy(self):
             something.which_depends(on.SELF_DESTRUCT_ON_SUBMIT)
     """
-    return mock.patch(
-        '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
-        new=lambda *args, **kwargs: True,
-    )
+    enabled = True
+
+    def __init__(self, toggle_name, is_preview=False):
+        location = 'corehq.feature_previews' if is_preview else 'corehq.toggles'
+        self.patches = [
+            mock.patch('.'.join([location, toggle_name, method_name]),
+                       new=lambda *args, **kwargs: self.enabled)
+            for method_name in ['enabled', 'enabled_for_request']
+        ]
+
+    def __call__(self, fn):
+        for patch in self.patches:
+            fn = patch(fn)
+        return fn
+
+    def __enter__(self):
+        for patch in self.patches:
+            patch.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for patch in self.patches:
+            patch.stop()
+
+
+class flag_disabled(flag_enabled):
+    enabled = False
 
 
 class DocTestMixin(object):
@@ -398,7 +417,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_string()], domain=domain
+        [CaseBlock(**kwargs).as_text()], domain=domain
     )
 
 
@@ -552,7 +571,7 @@ class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
     Usage:
-    class BaseTest(six.with_metaclass(PatchMeta, TestCase)):
+    class BaseTest(TestCase, metaclass=PatchMeta):
         patch = mock.patch('something.do.patch', .....)
     """
 

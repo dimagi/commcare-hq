@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from functools import partial
 from django.test import SimpleTestCase
 from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx, ago

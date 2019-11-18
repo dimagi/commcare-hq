@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import time
-from mock import patch
+
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
+from mock import patch
+
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+)
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
@@ -242,12 +246,28 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
             ["ticket"]
         )
 
+    def test_invalid_expression(self):
+        self._test_helper(
+            self._form_config({
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": 1,
+                "property_value": 2
+            }),
+            [None]
+        )
+
 
 class DataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(DataSourceConfigurationDbTest, cls).setUpClass()
+
+        # TODO - handle cleanup appropriately so this isn't needed
+        for data_source_config in DataSourceConfiguration.all():
+            data_source_config.delete()
+
         DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='XFormInstance').save()
         DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='XFormInstance').save()
         DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='XFormInstance').save()
@@ -453,6 +473,18 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
             "type": "named",
             "name": "broken",
         }
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_no_pk_attribute(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.sql_settings.primary_key = ['doc_id', 'laugh_sound']
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_missing_pk_column(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.sql_settings.primary_key = ['doc_id', 'no_exist']
         with self.assertRaises(BadSpecError):
             bad_config.validate()
 

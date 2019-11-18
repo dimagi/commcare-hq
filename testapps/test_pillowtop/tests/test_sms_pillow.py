@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
@@ -9,12 +7,11 @@ from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.sms import get_sql_sms_pillow
-from corehq.util.elastic import ensure_index_deleted
+from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from mock import patch
-import six
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
@@ -25,7 +22,7 @@ class SqlSMSPillowTest(TestCase):
     def setUp(self):
         super(SqlSMSPillowTest, self).setUp()
         self.elasticsearch = get_es_new()
-        ensure_index_deleted(SMS_INDEX_INFO.index)
+        reset_es_index(SMS_INDEX_INFO)
 
     def tearDown(self):
         ensure_index_deleted(SMS_INDEX_INFO.index)
@@ -41,6 +38,7 @@ class SqlSMSPillowTest(TestCase):
             source=MessagingEvent.SOURCE_OTHER,
             source_id=None,
             content_type=MessagingEvent.CONTENT_SMS,
+            app_id=None,
             form_unique_id=None,
             form_name=None,
             status=MessagingEvent.STATUS_COMPLETED,
@@ -55,6 +53,7 @@ class SqlSMSPillowTest(TestCase):
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             recipient_id=None,
             content_type=MessagingEvent.CONTENT_SMS,
+            app_id=None,
             form_unique_id=None,
             form_name=None,
             xforms_session=None,
@@ -108,7 +107,7 @@ class SqlSMSPillowTest(TestCase):
 
     def _to_json(self, sms_dict, sms):
         result = {'_id': sms.couch_id, 'id': sms.pk}
-        for k, v in six.iteritems(sms_dict):
+        for k, v in sms_dict.items():
             value = json_format_datetime(v) if isinstance(v, datetime) else v
             result[k] = value
 

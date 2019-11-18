@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.http import Http404
 from django.views.generic import View
 
@@ -50,5 +48,5 @@ class DomainAPI(View):
         req = args[0]
         if not self.allowed_domain(req.domain):
             raise Http404
-        ret =  super(DomainAPI, self).dispatch(*args, **kwargs)
+        ret = super(DomainAPI, self).dispatch(*args, **kwargs)
         return ret

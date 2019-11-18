@@ -1,10 +1,11 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.test import SimpleTestCase, TestCase
-from elasticsearch.exceptions import ConnectionError
+
+from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
     build_filter_from_ast,
@@ -17,7 +18,6 @@ from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases, trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestFilterDsl(SimpleTestCase):
@@ -102,32 +102,87 @@ class TestFilterDsl(SimpleTestCase):
         }
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
 
+    def test_numeric_comparison_negative(self):
+        parsed = parse_xpath("number <= -100.32")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key.exact": "number"
+                            }
+                        },
+                        "query": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": -100.32,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
+
+    def test_numeric_equality_negative(self):
+        parsed = parse_xpath("number = -100.32")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "query": {
+                            "match_all": {}
+                        },
+                        "filter": {
+                            "and": (
+                                {
+                                    "term": {
+                                        "case_properties.key.exact": "number"
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "case_properties.value.exact": -100.32,
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast("domain", parsed)
+        self.assertEqual(expected_filter, built_filter)
+
     def test_case_property_existence(self):
         parsed = parse_xpath("property != ''")
         expected_filter = {
-            "not": {
-                "or": (
-                    {
-                        "not": {
-                            "nested": {
-                                "path": "case_properties",
+            "and": (
+                {
+
+                    "nested": {
+                        "path": "case_properties",
+                        "query": {
+                            "filtered": {
                                 "query": {
-                                    "filtered": {
-                                        "query": {
-                                            "match_all": {
-                                            }
-                                        },
-                                        "filter": {
-                                            "term": {
-                                                "case_properties.key.exact": "property"
-                                            }
-                                        }
+                                    "match_all": {
+                                    }
+                                },
+                                "filter": {
+                                    "term": {
+                                        "case_properties.key.exact": "property"
                                     }
                                 }
                             }
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    "not": {
                         "nested": {
                             "path": "case_properties",
                             "query": {
@@ -154,12 +209,11 @@ class TestFilterDsl(SimpleTestCase):
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
 
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
-
 
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")

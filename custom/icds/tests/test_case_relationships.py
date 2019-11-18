@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.icds.case_relationships import (
     child_health_case_from_tasks_case,
     ccs_record_case_from_tasks_case,

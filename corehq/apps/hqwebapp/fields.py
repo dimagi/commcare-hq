@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
-from django.forms import fields
 from django.core.validators import validate_email
+from django.forms import fields
 
 
 class CSVListField(fields.CharField):
@@ -26,7 +24,7 @@ class MultiCharField(forms.Field):
     A text field that expects a comma-separated list of inputs, and by default
     uses select2 widget that allows for multiple selections and accepts free text.
     """
-    widget = forms.SelectMultiple(attrs={'class': 'hqwebapp-autocomplete form-control'})
+    widget = forms.SelectMultiple(attrs={'class': 'hqwebapp-autocomplete-email form-control'})
 
     def __init__(self, initial=None, choices=(), *args, **kwargs):
         """

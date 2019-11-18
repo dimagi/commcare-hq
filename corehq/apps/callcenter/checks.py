@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import namedtuple
 
 from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
-from corehq.apps.reports.analytics.esaccessors import get_form_counts_for_domains
-from corehq.apps.reports.analytics.esaccessors import get_case_and_action_counts_for_domains
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_and_action_counts_for_domains,
+    get_form_counts_for_domains,
+)
 
 DataSourceStats = namedtuple(
     'DataSourceStats',

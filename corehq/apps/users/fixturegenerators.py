@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -59,5 +57,6 @@ class UserGroupsFixtureProvider(FixtureProvider):
                 xGroup.append(get_data_element('group_data', group.metadata))
 
         return xFixture
+
 
 user_groups = UserGroupsFixtureProvider()

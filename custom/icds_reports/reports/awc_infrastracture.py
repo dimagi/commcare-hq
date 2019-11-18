@@ -1,19 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text, \
     awcs_reported_functional_toilet_help_text, awcs_reported_weighing_scale_infants_help_text, \
     awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
+from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, get_color_with_green_positive
 
 
-@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_awc_infrastructure_data(domain, config, show_test=False):
     def get_data_for(month, filters):
         queryset = AggAwcMonthly.objects.filter(
@@ -53,17 +49,17 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'clean_water',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'clean_water'
+                    'redirect': 'awc_infrastructure/clean_water'
                 },
                 {
                     'label': _("AWCs Reported Functional Toilet"),
@@ -74,17 +70,17 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'functional_toilet',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'functional_toilet'
+                    'redirect': 'awc_infrastructure/functional_toilet'
                 }
             ],
             [
@@ -106,17 +102,17 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'infant_scale',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'infant_scale'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'infants_weight_scale'
+                    'redirect': 'awc_infrastructure/infants_weight_scale'
                 },
                 {
                     'label': _('AWCs Reported Weighing Scale: Mother and Child'),
@@ -127,17 +123,17 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'adult_scale',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'adult_weight_scale'
+                    'redirect': 'awc_infrastructure/adult_weight_scale'
                 }
             ],
             [
@@ -150,17 +146,17 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'medicine_kits',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'medicine_kit'
+                    'redirect': 'awc_infrastructure/medicine_kit'
                 }
             ],
             # [

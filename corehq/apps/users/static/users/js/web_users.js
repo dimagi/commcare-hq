@@ -3,11 +3,10 @@ hqDefine("users/js/web_users",[
     'knockout',
     'underscore',
     "hqwebapp/js/initial_page_data",
-    'users/js/roles',
     'bootstrap', // for bootstrap modal
     'hqwebapp/js/components.ko',    // pagination widget
-    'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
-], function ($, ko, _, initialPageData, userRoles) {
+    'hqwebapp/js/knockout_bindings.ko', // for modals
+], function ($, ko, _, initialPageData) {
 
     var webUsersList = function () {
         var self = {};
@@ -19,14 +18,24 @@ hqDefine("users/js/web_users",[
         self.totalItems = ko.observable();
 
         self.error = ko.observable();
-        self.showSpinner = ko.observable(true);
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
         self.showUsers = ko.computed(function () {
-            return !self.showSpinner() && !self.error();
+            return !self.showLoadingSpinner() && !self.error() && self.users().length > 0;
+        });
+
+        self.noUsersMessage = ko.computed(function () {
+            if (!self.showLoadingSpinner() && !self.error() && self.users().length === 0) {
+                if (self.query()) {
+                    return gettext("No users matched your search.");
+                }
+                return gettext("This project has no web users. Please invite a web user above.");
+            }
+            return "";
         });
 
         self.goToPage = function (page) {
-            self.users.removeAll();
-            self.showSpinner(true);
+            self.showPaginationSpinner(true);
             self.error('');
             $.ajax({
                 method: 'GET',
@@ -37,18 +46,24 @@ hqDefine("users/js/web_users",[
                     limit: self.itemsPerPage(),
                 },
                 success: function (data) {
-                    self.showSpinner(false);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.totalItems(data.total);
-                    self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
+                    self.users.removeAll();
                     _.each(data.users, function (user) {
                         self.users.push(user);
                     });
                 },
                 error: function () {
-                    self.showSpinner(false);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.error(gettext("Could not load users. Please try again later or report an issue if this problem persists."));
                 },
             });
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
         };
 
         return self;
@@ -85,28 +100,6 @@ hqDefine("users/js/web_users",[
 
     $(function () {
         var url = initialPageData.reverse;
-        $('#restrict_users').on('change', function () {
-            var $saveButton = $('#save_restrict_option');
-            $saveButton
-                .prop('disabled', false)
-                .removeClass('disabled btn-default')
-                .addClass('btn-success')
-                .text(gettext("Save"));
-        });
-        $('#save_restrict_option').click(function (e) {
-            $(this).text(gettext('Saving ...'));
-            $.post(url("location_restriction_for_users"), {
-                restrict_users: $('#restrict_users')[0].checked,
-            },
-            function () {
-                $('#save_restrict_option')
-                    .text(gettext("Saved"))
-                    .removeClass('btn-success')
-                    .prop('disabled', true)
-                    .addClass('disabled btn-default');
-            });
-            e.preventDefault();
-        });
 
         $('.resend-invite').click(function (e) {
             $(this).addClass('disabled').prop('disabled', true);
@@ -121,21 +114,6 @@ hqDefine("users/js/web_users",[
             });
             e.preventDefault();
         });
-
-        var $userRolesTable = $('#user-roles-table');
-
-        userRoles.initUserRoles($userRolesTable, {
-            userRoles: initialPageData.get("user_roles"),
-            defaultRole: initialPageData.get("default_role"),
-            saveUrl: url("post_user_role"),
-            deleteUrl: url("delete_user_role"),
-            reportOptions: initialPageData.get("report_list"),
-            webAppsList: initialPageData.get("web_apps_list"),
-            allowEdit: initialPageData.get("can_edit_roles"),
-            canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
-            landingPageChoices: initialPageData.get("landing_page_choices"),
-        });
-        $userRolesTable.show();
 
         function handleDeletion($el, title, body, postUrl) {
             var id = $el.data('id');

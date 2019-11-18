@@ -1,0 +1,212 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-person_cases",
+    "display_name": "Cases - Person (REACH Dashboard Backend)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "person"
+    },
+    "validations": [
+      {
+        "name": "directly_owned",
+        "error_message": "This case has an owner_id and does not default to ownership by extension",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "property_value": "-"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "household_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "name": "parent_id",
+          "type": "named"
+        }
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
+      },
+      {
+        "column_id": "name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "name"
+      },
+      {
+        "column_id": "sex",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "sex"
+      },
+      {
+        "column_id": "dob",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "dob"
+      },
+      {
+        "column_id": "marital_status",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "marital_status"
+      },
+      {
+        "column_id": "age_marriage",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "age_marriage"
+      },
+      {
+        "column_id": "aadhar_number",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "aadhar_number"
+      },
+      {
+        "column_id": "husband_name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "husband_name"
+      },
+      {
+        "column_id": "contact_phone_number",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "contact_phone_number"
+      },
+      {
+        "column_id": "num_male_children_died",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "num_male_children_died"
+      },
+      {
+        "column_id": "num_female_children_died",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "num_female_children_died"
+      },
+      {
+        "column_id": "blood_group",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "blood_group"
+      },
+      {
+        "column_id": "female_death_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "female_death_type"
+      },
+      {
+        "column_id": "date_death",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "date_death"
+      },
+      {
+        "column_id": "site_death",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "site_death"
+      },
+      {
+        "column_id": "death_informed_authorities",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "death_informed_authorities"
+      },
+      {
+        "column_id": "is_pregnant",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "is_pregnant"
+      },
+      {
+        "column_id": "migration_status",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "migration_status"
+      }
+    ],
+    "named_expressions": {
+      "parent_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "array_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "identifier"
+              },
+              "type": "boolean_expression",
+              "property_value": "parent"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              },
+              "type": "root_doc"
+            }
+          },
+          "type": "array_index",
+          "index_expression": {
+            "constant": 0,
+            "type": "constant"
+          }
+        }
+      }
+    },
+    "engine_id": "aaa-data"
+  }
+}

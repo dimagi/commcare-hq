@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from collections import namedtuple
 
@@ -18,7 +16,6 @@ from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
-from six.moves import zip
 
 from corehq.util.test_utils import softer_assert
 
@@ -166,7 +163,7 @@ class LedgerTests(TestCase):
     def test_ledger_update_with_case_update(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         submit_case_blocks([
-            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
+            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_text(),
             get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
             DOMAIN
         )
@@ -234,7 +231,7 @@ class LedgerTestsSQL(LedgerTests):
         self.assertTrue(transactions[1].is_ledger_transaction)
 
         submit_case_blocks([
-            CaseBlock(case_id=self.case.case_id).as_string()],
+            CaseBlock(case_id=self.case.case_id).as_text()],
             DOMAIN,
             form_id=form_id
         )
@@ -280,12 +277,12 @@ class TestLedgerDocumentStore(TestCase):
 
         from corehq.apps.commtrack.models import StockState
         stock_states = StockState.include_archived.all()
-        self.assertEquals(1, len(stock_states))
+        self.assertEqual(1, len(stock_states))
         state = stock_states[0]
         store = LedgerV1DocumentStore(DOMAIN)
         doc = store.get_document(state.id)
-        self.assertEquals(int(doc['_id']), state.id)
-        self.assertEquals(doc['case_id'], state.case_id)
+        self.assertEqual(int(doc['_id']), state.id)
+        self.assertEqual(doc['case_id'], state.case_id)
 
     def test_get_document_archived(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -296,7 +293,7 @@ class TestLedgerDocumentStore(TestCase):
         submit_case_blocks(block, DOMAIN)
 
         stock_states = StockState.include_archived.all()
-        self.assertEquals(1, len(stock_states))
+        self.assertEqual(1, len(stock_states))
 
         def toggle_product_archive():
             sql_product = SQLProduct.objects.get(code=self.product_a.code)
@@ -311,6 +308,6 @@ class TestLedgerDocumentStore(TestCase):
         state = stock_states[0]
         store = LedgerV1DocumentStore(DOMAIN)
         doc = store.get_document(state.id)
-        self.assertEquals(int(doc['_id']), state.id)
-        self.assertEquals(doc['case_id'], state.case_id)
+        self.assertEqual(int(doc['_id']), state.id)
+        self.assertEqual(doc['case_id'], state.case_id)
 

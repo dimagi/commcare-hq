@@ -1,17 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
-from corehq.apps.domain.auth import BASIC
-from corehq.util.datadog.utils import count_by_response_code
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from corehq.apps.domain.decorators import api_auth, domain_admin_required, mobile_auth
-from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
-from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
-from corehq.apps.users.util import update_device_meta
-from corehq.apps.users.models import CommCareUser
+
 from dimagi.utils.parsing import string_to_datetime
+
+from corehq.apps.domain.auth import BASIC
+from corehq.apps.domain.decorators import (
+    api_auth,
+    domain_admin_required,
+    mobile_auth,
+)
+from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
+from corehq.apps.mobile_auth.utils import (
+    bump_expiry,
+    get_mobile_auth_payload,
+    new_key_record,
+)
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import update_device_meta
+from corehq.util.datadog.utils import count_by_response_code
 
 
 class FetchKeyRecords(object):

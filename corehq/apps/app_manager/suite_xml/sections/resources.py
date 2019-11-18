@@ -1,22 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from distutils.version import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, \
-    PracticeUserRestoreResource, ReleaseInfoXFormResource
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    LocaleResource,
+    PracticeUserRestoreResource,
+    ReleaseInfoXFormResource,
+    XFormResource,
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
 
 
 class FormResourceContributor(SectionContributor):
     section_name = 'xform_resources'
-
-    def __init__(self, suite, app, modules, build_profile_id=None):
-        super(FormResourceContributor, self).__init__(suite, app, modules)
-        self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
         from corehq.apps.app_manager.models import ShadowForm
@@ -56,10 +53,6 @@ class FormResourceContributor(SectionContributor):
 class LocaleResourceContributor(SectionContributor):
     section_name = 'locale_resources'
 
-    def __init__(self, suite, app, modules, build_profile_id=None):
-        super(LocaleResourceContributor, self).__init__(suite, app, modules)
-        self.build_profile_id = build_profile_id
-
     def get_section_elements(self):
         langs = self.app.get_build_langs(self.build_profile_id)
         for lang in ["default"] + langs:
@@ -83,10 +76,6 @@ class LocaleResourceContributor(SectionContributor):
 
 class PracticeUserRestoreContributor(SectionContributor):
     section_name = 'practice_user_restore_resources'
-
-    def __init__(self, suite, app, modules, build_profile_id=None):
-        super(PracticeUserRestoreContributor, self).__init__(suite, app, modules)
-        self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
         user = self.app.get_practice_user(self.build_profile_id)

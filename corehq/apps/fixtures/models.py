@@ -1,27 +1,44 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+
 from django.db import models
+
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import CouchTransaction
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
-    get_owner_ids_by_type,
     get_fixture_data_types_in_domain,
-    get_fixture_items_for_data_types
+    get_fixture_items_for_data_type,
+    get_owner_ids_by_type,
 )
-from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
-from corehq.apps.fixtures.utils import clean_fixture_field_name, \
-    get_fields_without_attributes
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.fixtures.exceptions import FixtureVersionError
-from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
+from corehq.apps.fixtures.exceptions import (
+    FixtureException,
+    FixtureTypeCheckError,
+    FixtureVersionError,
+)
+from corehq.apps.fixtures.utils import (
+    clean_fixture_field_name,
+    get_fields_without_attributes,
+    remove_deleted_ownerships,
+)
 from corehq.apps.groups.models import Group
-from corehq.util.xml_utils import serialize
-from dimagi.utils.couch.bulk import CouchTransaction
-from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
-import six
+from corehq.apps.users.models import CommCareUser
+from corehq.util.xml_utils import serialize
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -46,7 +63,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         if not obj["doc_type"] == "FixtureDataType":
             raise ResourceNotFound
         # Migrate fixtures without attributes on item-fields to fields with attributes
-        if obj["fields"] and isinstance(obj['fields'][0], six.string_types):
+        if obj["fields"] and isinstance(obj['fields'][0], str):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
 
         # Migrate fixtures without attributes on items to items with attributes
@@ -93,7 +110,8 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
             transaction.delete(item)
             item_ids.append(item.get_id)
-        transaction.delete_all(FixtureOwnership.for_all_item_ids(item_ids, self.domain))
+        for item_id_chunk in chunked(item_ids, 1000):
+            transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
 
     @classmethod
@@ -176,7 +194,7 @@ class FixtureDataItem(Document):
         fields_dict = {}
 
         def _is_new_type(field_val):
-            old_types = (six.string_types, int, float)
+            old_types = (str, int, float)
             return field_val is not None and not isinstance(field_val, old_types)
 
         for field in obj['fields']:
@@ -187,7 +205,7 @@ class FixtureDataItem(Document):
                 break
             fields_dict[field] = {
                 "field_list": [{
-                    'field_value': str(field_val) if not isinstance(field_val, six.string_types) else field_val,
+                    'field_value': str(field_val) if not isinstance(field_val, str) else field_val,
                     'properties': {}
                 }]
             }
@@ -359,7 +377,7 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_user(cls, user, wrap=True):
-        group_ids = Group.by_user(user, wrap=False)
+        group_ids = Group.by_user_id(user.user_id, wrap=False)
         loc_ids = user.sql_location.path if user.sql_location else []
 
         def make_keys(owner_type, ids):
@@ -392,13 +410,10 @@ class FixtureDataItem(Document):
                 else:
                     assert result['value']['deleted'] is True
                     deleted_fixture_ids.add(result['id'])
-
-            # fetch and delete ownership documents pointing
-            # to deleted or non-existent fixture documents
-            # this cleanup is necessary since we used to not do this
-            bad_ownerships = FixtureOwnership.for_all_item_ids(deleted_fixture_ids, user.domain)
-            FixtureOwnership.get_db().bulk_delete(bad_ownerships)
-
+            if deleted_fixture_ids:
+                # delete ownership documents pointing deleted/non-existent fixture documents
+                # this cleanup is necessary since we used to not do this
+                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
             return docs
         else:
             return fixture_ids
@@ -416,12 +431,7 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):
-        return cls.by_data_types(domain, [data_type], bypass_cache)
-
-    @classmethod
-    def by_data_types(cls, domain, data_types, bypass_cache=False):
-        data_type_ids = set(_id_from_doc(d) for d in data_types)
-        return get_fixture_items_for_data_types(domain, data_type_ids, bypass_cache)
+        return get_fixture_items_for_data_type(domain, _id_from_doc(data_type), bypass_cache)
 
     @classmethod
     def by_domain(cls, domain):
@@ -467,7 +477,7 @@ class FixtureDataItem(Document):
 
 
 def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, six.string_types):
+    if isinstance(doc_or_doc_id, str):
         doc_id = doc_or_doc_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import tempfile
 
@@ -24,7 +22,6 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.util.files import safe_filename_header
 
 from zipfile import ZipFile
-from io import open
 
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
@@ -84,7 +81,11 @@ def get_download_context(download_id, message=None, require_result=False):
     task_status = get_task_status(
         task, is_multiple_download_task=isinstance(download_data, MultipleTaskDownload))
     if task_status.failed():
-        raise TaskFailedError(task_status.error)
+        # Celery replaces exceptions with a wrapped one that we can't directly import
+        # so I think our best choice is to match off the name, even though that's hacky
+        exception_name = (task.result.__class__.__name__
+                          if isinstance(task.result, Exception) else None)
+        raise TaskFailedError(task_status.error, exception_name=exception_name)
     if require_result:
         is_ready = task_status.success() and task_status.result is not None
     else:
@@ -134,11 +135,12 @@ def get_download_file_path(use_transfer, filename):
 
 
 def expose_download(use_transfer, file_path, filename, download_id, file_type):
-    common_kwargs = dict(
-        mimetype=Format.from_format(file_type).mimetype,
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id, expiry=(1 * 60 * 60),
-    )
+    common_kwargs = {
+        'mimetype': Format.from_format(file_type).mimetype,
+        'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
+        'download_id': download_id,
+        'expiry': (1 * 60 * 60),
+    }
     if use_transfer:
         expose_file_download(
             file_path,

@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 from django.db import migrations
+
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
-from corehq.sql_db.operations import HqRunPython
 
 
 def update_http_backend_criteria(apps, schema_editor):
@@ -34,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        HqRunPython(update_http_backend_criteria),
+        migrations.RunPython(update_http_backend_criteria),
     }

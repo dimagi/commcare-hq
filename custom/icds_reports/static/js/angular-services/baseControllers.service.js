@@ -1,8 +1,8 @@
-/* global d3 */
+/* global d3, moment */
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
-        BaseController: function($scope, $routeParams, $location, locationsService, userLocationId,
+        BaseController: function ($scope, $routeParams, $location, locationsService, userLocationId,
             storageService, haveAccessToAllLocations, haveAccessToFeatures) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
@@ -10,6 +10,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             } else {
                 storageService.setKey('search', $location.search());
             }
+
             vm.userLocationId = userLocationId;
             vm.filtersData = $location.search();
             vm.step = $routeParams.step;

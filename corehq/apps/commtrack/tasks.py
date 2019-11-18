@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from celery.task import task
+
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 
 

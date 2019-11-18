@@ -2,10 +2,11 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdultWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Weighing Scale: Mother and Child";
     vm.steps = {
         'map': {route: '/awc_infrastructure/adult_weight_scale/map', label: 'Map View'},
@@ -69,7 +70,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     };
 }
 
-AdultWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AdultWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('adultWeightScale', function() {
     return {

@@ -11,6 +11,29 @@ in [CommCare HQ](http://github.com/dimagi/commcare-hq).
 Image courtesy of the [ReMIND
 project](https://www.commcarehq.org/exchange/325775003aa58cfcefbc75cfdf132e4d/info/).
 
+Vocabulary
+----------
+
+Some of the names used in the source code are less than intuitive. Hopefully
+this list will help to reduce the confusion. The list is ordered with the least
+intuitive items first.
+
+- **Vellum**: also known as the _Form Builder_.
+- **Mug**: an object representing a question. Each mug has a type: _Text_,
+  _Date_, _Audio_, etc. While some mug type names match the corresponding label
+  used in the UI, some do not. For example, a _Trigger_ is called a _Label_ in
+  the UI.
+- **JavaRosa**: the language/translation module. A core part of the JavaRosa
+  module is the **IText** system, which provides an API for translated strings
+  and multimedia used to adorn questions.
+- **Widget**: a control or group of controls displayed on the right side of the
+  screen and used to interact with mug properties.
+- **Plugins**: features that are not part of the core are implemented as plugins.
+  The plugin architecture is loosely based on the
+  [JSTree](https://www.jstree.com/plugins/) plugin system. Many very important
+  components are implemented as plugins, so just because something is a plugin
+  does not mean it is a second-rate feature.
+
 Usage
 -----
 

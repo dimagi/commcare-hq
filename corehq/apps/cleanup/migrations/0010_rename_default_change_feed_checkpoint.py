@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 from django.db import migrations
-from corehq.sql_db.operations import HqRunPython
 
 
 def copy_checkpoint(apps, schema_editor):
@@ -35,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(copy_checkpoint, delete_checkpoint)
+        migrations.RunPython(copy_checkpoint, delete_checkpoint)
     ]

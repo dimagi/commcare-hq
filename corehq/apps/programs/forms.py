@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from django import forms
-from corehq.apps.programs.models import Program
 from django.utils.translation import ugettext as _
+
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+
+from corehq.apps.programs.models import Program
 
 
 class ProgramForm(forms.Form):

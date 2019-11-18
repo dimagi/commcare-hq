@@ -2,26 +2,26 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Audited Model Changes" %}
+  {% trans "Audited Model Changes" %}
 {% endblock %}
 
 {% block content %}
-    <div class="module">
-        <div class="span-24 last">
-        <h2>Models {{ model }}.{{ model_uuid }} Changes</h2>
-        </div>
-        <div class="span-24 last">
-            <dl>
-            {% for rc in change_history.change_narratives %}
-                <dt>
-                    by: {{ rc.revision.user }} on {{ rc.revision.event_date}}
-                </dt>
-                    <dd>
-                    {% for c in rc.changes %}
-                        {{ c }}<br>
-                    {% endfor %}
-                    </dd>
+  <div class="module">
+    <div class="span-24 last">
+      <h2>Models {{ model }}.{{ model_uuid }} Changes</h2>
+    </div>
+    <div class="span-24 last">
+      <dl>
+        {% for rc in change_history.change_narratives %}
+          <dt>
+            by: {{ rc.revision.user }} on {{ rc.revision.event_date}}
+          </dt>
+          <dd>
+            {% for c in rc.changes %}
+              {{ c }}<br>
             {% endfor %}
+          </dd>
+        {% endfor %}
 
 
 {#            {% for d in changes %}#}
@@ -34,8 +34,8 @@
 {#                        Prev: {{ d.1.prev_id }}<br>#}
 {#                    </dd>#}
 {#            {% endfor %}#}
-            </dl>
+      </dl>
 
-        </div>
     </div>
+  </div>
 {% endblock %}

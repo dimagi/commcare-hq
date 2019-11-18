@@ -1,51 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
-from mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.export.models.new import MAIN_TABLE, \
-    PathNode, _question_path_to_path_nodes
-from corehq.apps.export.tests.util import assertContainsExportItems
+from mock import patch
 
-from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import (
-    XForm,
-    Application,
-    OpenSubCaseAction,
     AdvancedModule,
-    Module,
     AdvancedOpenCaseAction,
-    CaseReferences, CaseIndex, Form)
-from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
-from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    ExportDataSchema,
-    InferredExportGroupSchema,
-    CaseInferredSchema,
-    ExportGroupSchema,
-    ExportItem,
-    GeopointItem,
-    ScalarItem,
-    LabelItem,
-    PARENT_CASE_TABLE,
+    Application,
+    CaseIndex,
+    CaseReferences,
+    Form,
+    Module,
+    OpenSubCaseAction,
+    XForm,
 )
+from corehq.apps.app_manager.signals import app_post_save
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.export.const import (
-    KNOWN_CASE_PROPERTIES,
-    PROPERTY_TAG_UPDATE,
-    FORM_DATA_SCHEMA_VERSION,
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
+    FORM_DATA_SCHEMA_VERSION,
+    KNOWN_CASE_PROPERTIES,
+    PROPERTY_TAG_UPDATE,
 )
-from six.moves import map
-from six.moves import zip
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
+from corehq.apps.export.models import (
+    PARENT_CASE_TABLE,
+    CaseExportDataSchema,
+    CaseInferredSchema,
+    ExportDataSchema,
+    ExportGroupSchema,
+    ExportItem,
+    FormExportDataSchema,
+    GeopointItem,
+    InferredExportGroupSchema,
+    LabelItem,
+    ScalarItem,
+)
+from corehq.apps.export.models.new import (
+    MAIN_TABLE,
+    PathNode,
+    _question_path_to_path_nodes,
+)
+from corehq.apps.export.tasks import add_inferred_export_properties
+from corehq.apps.export.tests.util import assertContainsExportItems
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import softer_assert
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -415,10 +417,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
-        multichoice = filter(
-            lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
-            group_schema.items
-        )[0]
+        multichoice = [
+            item for item in group_schema.items
+            if item.path == [PathNode(name='form'), PathNode(name='question2')]
+        ][0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
@@ -559,7 +561,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 
         factory = AppFactory(build_version='2.36.0')
         m0, f0 = factory.new_advanced_module('mod0', 'advanced')
-        f0.source = cls.get_xml('repeat_group_form')
+        f0.source = cls.get_xml('repeat_group_form').decode('utf-8')
         f0.xmlns = 'repeat-xmlns'
 
         factory.form_requires_case(f0, 'case0')
@@ -731,7 +733,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         super(TestAppCasePropertyReferences, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
         m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
-        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
@@ -828,7 +830,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.current_app._id = '1234'
         cls.current_app.version = 10
         module = cls.current_app.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form'))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.build = Application.new_app(cls.domain, "Untitled Application")
@@ -837,7 +839,8 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.build.version = 5
         cls.build.has_submissions = True
         module = cls.build.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2'))
+        form = module.new_form("Untitled Form", 'en',
+                               attachment=cls.get_xml('basic_form_version2').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.apps = [
@@ -1013,7 +1016,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
         self.assertEqual(len(schema.group_schemas[0].items), 2)
-        self.assertEqual(len(schema.group_schemas[1].items), 8)
+        self.assertEqual(len(schema.group_schemas[1].items), len(KNOWN_CASE_PROPERTIES) + 2)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_case_application'))
@@ -1037,7 +1040,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
         self.assertEqual(len(schema.group_schemas[0].items), 2)
-        self.assertEqual(len(schema.group_schemas[1].items), 8)
+        self.assertEqual(len(schema.group_schemas[1].items), len(KNOWN_CASE_PROPERTIES) + 2)
 
     def test_build_with_inferred_schema(self):
         app = self.current_app
@@ -1173,7 +1176,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history, one for parent case
         self.assertEqual(len(schema.group_schemas), 3)
-        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        main_table = next(filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas))
         self.assertEqual(
             len([item for item in main_table.items if item.doc_type == 'CaseIndexItem']),
             1

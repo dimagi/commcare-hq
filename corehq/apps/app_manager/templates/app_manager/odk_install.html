@@ -1,37 +1,37 @@
 {% load i18n %}
 <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title">
-                {% trans "Install to Android by taking a picture of the image below on your phone." %}
-            </h4>
-        </div>
-        <div class="modal-body">
-            <p style="text-align:center;">
-                <img src="{{ qr_code }}" width=250 alt="{% trans "Download" %}" >
-            </p>
-            <p>
-                {% blocktrans %}
-                You can also click
-                <strong>
-                    <a class="track-usage-link" href="{{ profile_url }}"
-                       data-category="App Manager" data-action="Initiate Install"
-                       data-label="Mobile Browser Link">here</a>
-                </strong> in your mobile browser.
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% trans "For help installing CommCare, visit " %}
-                <a href="https://help.commcarehq.org/display/commcarepublic/Install+CommCare+for+Android+Smartphones" target="_blank">
-                    {% trans "Install CommCare" %}
-                </a>
-            </p>
-        </div>
-        <div class="modal-footer">
-            <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h4 class="modal-title">
+        {% trans "Install to Android by taking a picture of the image below on your phone." %}
+      </h4>
     </div>
+    <div class="modal-body">
+      <p style="text-align:center;">
+        <img src="{{ qr_code }}" width=250 alt="{% trans "Download" %}" >
+      </p>
+      <p>
+        {% blocktrans %}
+          You can also click
+          <strong>
+            <a class="track-usage-link" href="{{ profile_url }}"
+               data-category="App Manager" data-action="Initiate Install"
+               data-label="Mobile Browser Link">here</a>
+          </strong> in your mobile browser.
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% trans "For help installing CommCare, visit " %}
+        <a href="https://help.commcarehq.org/display/commcarepublic/Install+CommCare+for+Android+Smartphones" target="_blank">
+          {% trans "Install CommCare" %}
+        </a>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
+    </div>
+  </div>
 </div>

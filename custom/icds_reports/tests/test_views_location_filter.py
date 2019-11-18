@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
@@ -148,7 +145,6 @@ class TestLocationView(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.user.delete()
         cls.awc_3.delete()
         cls.awc_2.delete()
@@ -166,6 +162,7 @@ class TestLocationView(TestCase):
         cls.state_3.delete()
         cls.state_2.delete()
         cls.state.delete()
+        cls.domain.delete()
         super(TestLocationView, cls).tearDownClass()
 
     def test_request_without_location_id(self):
@@ -445,18 +442,6 @@ class TestLocationAncestorsView(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        cls.user.delete()
-        cls.awc.delete()
-        cls.supervisor.delete()
-        cls.block.delete()
-        cls.district.delete()
-        cls.awc_2.delete()
-        cls.supervisor_2.delete()
-        cls.block_2.delete()
-        cls.district_2.delete()
-        cls.state_3.delete()
-        cls.state_2.delete()
-        cls.state.delete()
         super(TestLocationAncestorsView, cls).tearDownClass()
 
     def test_without_location_restriction_state(self):

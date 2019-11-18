@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import datetime
+
 from django.test import TestCase
 
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import (make_loc, TEST_DOMAIN,
-    bootstrap_domain)
-from datetime import datetime
+from corehq.apps.commtrack.tests.util import (
+    TEST_DOMAIN,
+    bootstrap_domain,
+    make_loc,
+)
 
 
 class SupplyPointTest(TestCase):

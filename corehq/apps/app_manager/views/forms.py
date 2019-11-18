@@ -1,93 +1,119 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import logging
 import hashlib
-import re
-import json
-from xml.dom.minidom import parseString
-from couchdbkit import ResourceNotFound
-from django.shortcuts import render
 import itertools
+import json
+import logging
+import re
+from xml.dom.minidom import parseString
 
-from lxml import etree
-from diff_match_patch import diff_match_patch
-from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+
+from couchdbkit import ResourceNotFound
+from diff_match_patch import diff_match_patch
+from lxml import etree
 from unidecode import unidecode
 
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
-    get_usercase_properties
-from corehq.apps.app_manager.views.media_utils import handle_media_edits
-from corehq.apps.app_manager.views.notifications import notify_form_changed
-from corehq.apps.app_manager.views.schedules import get_schedule_context
-
-from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache
-
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from corehq import toggles, privileges
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
-from corehq.apps.programs.models import Program
-from corehq.apps.app_manager.util import (
-    save_xform,
-    is_usercase_in_use,
-    enable_usercase,
-    actions_use_usercase,
-    advanced_actions_use_usercase,
-    CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_SUBSTRING_MATCHES,
-)
-from corehq.apps.app_manager.xform import (
-    CaseError,
-    XFormException,
-    XFormValidationError)
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse, \
-    questions_in_hierarchy
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
-from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from corehq.apps.domain.decorators import (
-    login_or_digest, api_domain_view
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_usercase_properties,
 )
-from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
+from corehq.apps.app_manager.const import (
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+    WORKFLOW_FORM,
+)
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    XFormValidationFailed,
+)
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
+    CaseReferences,
+    CustomAssertion,
+    CustomIcon,
+    CustomInstance,
     DeleteFormRecord,
     Form,
-    FormActions,
     FormActionCondition,
+    FormActions,
     FormDatum,
     FormLink,
-    OpenCaseAction,
     IncompatibleFormTypeException,
+    MappingItem,
     ModuleNotFoundException,
+    OpenCaseAction,
     UpdateCaseAction,
-    load_case_reserved_words,
-    WORKFLOW_FORM,
-    CustomAssertion,
-    CustomInstance,
-    CaseReferences,
-    CustomIcon,
 )
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
-import six
-from six.moves import zip
+from corehq.apps.app_manager.templatetags.xforms_extras import (
+    clean_trans,
+    trans,
+)
+from corehq.apps.app_manager.util import (
+    CASE_XPATH_SUBSTRING_MATCHES,
+    USER_CASE_XPATH_SUBSTRING_MATCHES,
+    actions_use_usercase,
+    advanced_actions_use_usercase,
+    enable_usercase,
+    is_usercase_in_use,
+    save_xform,
+)
+from corehq.apps.app_manager.views.media_utils import handle_media_edits
+from corehq.apps.app_manager.views.notifications import notify_form_changed
+from corehq.apps.app_manager.views.schedules import get_schedule_context
+from corehq.apps.app_manager.views.utils import (
+    CASE_TYPE_CONFLICT_MSG,
+    back_to_main,
+    clear_xmlns_app_id_cache,
+    form_has_submissions,
+    get_langs,
+    handle_custom_icon_edits,
+)
+from corehq.apps.app_manager.xform import (
+    CaseError,
+    XFormException,
+    XFormValidationError,
+)
+from corehq.apps.data_dictionary.util import (
+    add_properties_to_data_dictionary,
+    get_case_property_description_dict,
+)
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    api_domain_view,
+    login_or_digest,
+    track_domain_request,
+)
+from corehq.apps.programs.models import Program
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.util.view_utils import set_file_download
 
 
 @no_conflict_require_POST
@@ -108,7 +134,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
-        messages.error(request, e.message)
+        messages.error(request, str(e))
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)
@@ -197,7 +223,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         form.actions.load_from_form = old_load_from_form
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
-        if isinstance(condition.answer, six.string_types):
+        if isinstance(condition.answer, str):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):
@@ -239,7 +265,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form = app.get_form(form_unique_id)
     except FormNotFoundException as e:
         if ajax:
-            return HttpResponseBadRequest(six.text_type(e))
+            return HttpResponseBadRequest(str(e))
         else:
             messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
@@ -262,8 +288,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 xform.set_name(name)
                 save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
+
     if should_edit('comment'):
         form.comment = request.POST['comment']
+
+    if should_edit("name_enum"):
+        name_enum = json.loads(request.POST.get("name_enum"))
+        form.name_enum = [MappingItem(i) for i in name_enum]
+
     if should_edit("xform") or "xform" in request.FILES:
         try:
             # support FILES for upload and POST for ajax post from Vellum
@@ -273,7 +305,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 xform = request.POST.get('xform')
             else:
                 try:
-                    xform = six.text_type(xform, encoding="utf-8")
+                    xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
             if request.POST.get('cleanup', False):
@@ -281,20 +313,23 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     # First, we strip all newlines and reformat the DOM.
                     px = parseString(xform.replace('\r\n', '')).toprettyxml()
                     # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub('>\g<1></', px)
+                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+                    prettyXml = text_re.sub(r'>\g<1></', px)
                     xform = prettyXml
                 except Exception:
                     pass
             if xform:
+                if isinstance(xform, str):
+                    xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
+            notify_exception(request, str(e))
             if ajax:
-                return HttpResponseBadRequest(six.text_type(e))
+                return HttpResponseBadRequest(str(e))
             else:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
     if should_edit("references") or should_edit("case_references"):
         form.case_references = _get_case_references(request.POST)
     if should_edit("show_count"):
@@ -356,7 +391,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 )
         except etree.XMLSyntaxError as error:
             return json_response(
-                {'message': _("There was an issue with your custom instances: {}").format(error.message)},
+                {'message': _("There was an issue with your custom instances: {}").format(error)},
                 status_code=400
             )
 
@@ -378,7 +413,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 )
         except etree.XMLSyntaxError as error:
             return json_response(
-                {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
+                {'message': _("There was an issue with your custom assertions: {}").format(error)},
                 status_code=400
             )
 
@@ -474,6 +509,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
@@ -489,13 +525,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    xml = save_xform(app, form, xml)
+    xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
@@ -522,11 +558,12 @@ def get_xform_source(request, domain, app_id, form_unique_id):
     source = form.source
     response = HttpResponse(source)
     response['Content-Type'] = "application/xml"
+    filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
-            filename = "%s.xml" % unidecode(form.name[lc])
+            filename = form.name[lc]
             break
-    set_file_download(response, filename)
+    set_file_download(response, "%s.xml" % unidecode(filename))
     return response
 
 
@@ -595,6 +632,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         logging.exception(e)
         form_errors.append("Unexpected error in form: %s" % e)
 
+    has_case_error = False
     if xform and xform.exists():
         if xform.already_has_meta():
             messages.warning(
@@ -613,7 +651,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         except XFormValidationError:
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
-            pass
         except XFormValidationFailed:
             xform_validation_missing = True
             messages.warning(request, _("Unable to validate form due to server error."))
@@ -639,13 +676,14 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
                 if not form_action_errors:
                     form.add_stuff_to_xform(xform)
             except CaseError as e:
+                has_case_error = True
                 messages.error(request, "Error in Case Management: %s" % e)
             except XFormException as e:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
             except Exception as e:
                 if settings.DEBUG:
                     raise
-                logging.exception(six.text_type(e))
+                logging.exception(str(e))
                 messages.error(request, "Unexpected Error: %s" % e)
 
     try:
@@ -679,14 +717,24 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
     form_has_schedule = isinstance(form, AdvancedForm) and module.has_schedule
+
+    try:
+        case_properties_map = get_all_case_properties(app)
+        usercase_properties_map = get_usercase_properties(app)
+    except CaseError as e:
+        case_properties_map = {}
+        usercase_properties_map = {}
+        if not has_case_error:
+            messages.error(request, "Error in Case Management: %s" % e)
+
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
-        'propertiesMap': get_all_case_properties(app),
+        'propertiesMap': case_properties_map,
         'propertyDescriptions': get_case_property_description_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
-        'usercasePropertiesMap': get_usercase_properties(app),
+        'usercasePropertiesMap': usercase_properties_map,
     }
     context = {
         'nav_form': form,
@@ -696,7 +744,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -728,7 +775,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
             module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)
@@ -851,17 +898,6 @@ def view_form(request, domain, app_id, form_unique_id):
     )
 
 
-@require_can_edit_apps
-def form_casexml(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    return HttpResponse(form.create_casexml())
-
-
 def _get_case_references(data):
     if "references" in data:
         # old/deprecated format
@@ -878,3 +914,19 @@ def _get_case_references(data):
         return references
     except Exception:
         raise ValueError("bad case references data: {!r}".format(refs))
+
+
+class FormHasSubmissionsView(LoginAndDomainMixin, View):
+    urlname = 'form_has_submissions'
+
+    def get(self, request, domain, app_id, form_unique_id):
+        app = get_app(domain, app_id)
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            has_submissions = False
+        else:
+            has_submissions = form_has_submissions(domain, app_id, form.xmlns)
+        return JsonResponse({
+            'form_has_submissions': has_submissions,
+        })

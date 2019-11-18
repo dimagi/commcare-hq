@@ -1,6 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
+from corehq.apps.users.util import (
+    cached_owner_id_to_display,
+    cached_user_id_to_username,
+)
 
 # these are just aliased here to make it clear what is supported
 get_user_display = cached_user_id_to_username

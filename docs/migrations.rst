@@ -47,13 +47,18 @@ Removing columns, fields, SQL functions, or views should always be done in multi
 2. Wait until this code has been deployed to all relevant environments.
 3. Remove the column/field/function/view from the database.
 
+Step #2 isn't reasonable to expect of external parties locally hosting HQ. For more on making
+migrations manageable for all users of HQ, see the "Auto-Managed Migration Pattern" link below.
+
 
 It's generally not enough to remove these at the same time because any old processes could
 still reference the to be deleted entity.
 
 Couch
 '''''
-A separate prune_couch_views will need to be run to remove the view from couch
+When removing a view, procedure depends on whether or not you're removing an entire design doc
+(an entire `_design` directory). If the removed view is the last one in the design doc, run
+`prune_couch_views` to remove it. If other views are left in the design doc, a reindex is required.
 
 ElasticSearch
 '''''''''''''
@@ -69,12 +74,21 @@ Creating an index can lock the table and cause it to not respond to queries. If 
 large, an index is going to take a long time. In that case:
 
 1. Create the migration normally using django.
-2. On all large environments, create the index concurrently
-3. Once finished, fake the migration.
-4. Merge your PR
+2. On all large environments, create the index concurrently. One way to do this
+   is to use `./manage.py run_sql ... <https://github.com/dimagi/commcare-hq/blob/master/corehq/form_processor/management/commands/run_sql.py>`_
+   to apply the SQL to the database.
+3. Once finished, fake the migration. Avoid this by using
+   `CREATE INDEX IF NOT EXISTS ...` in the migration if possible.
+4. Merge your PR.
 
 Couch
 '''''
 Changing views can block our deploys due to the way we sync our couch views. If you're changing
 a view, please sync with someone else who understands this process and coordinate with the team
 to ensure we can rebuild the view without issue.
+
+
+Migration Patterns and Best Practices
+-------------------------------------
+
+- :ref:`auto-managed-migration-pattern`

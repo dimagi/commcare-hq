@@ -5,13 +5,10 @@ devs should have set.
 Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 
 LOCAL_APPS = (
     'django_extensions',
-    'kombu.transport.django',
 )
 
 # TEST_RUNNER is overridden in testsettings, which is the default settings
@@ -30,37 +27,41 @@ SMS_QUEUE_ENABLED = False
 
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
-TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
+TEST_NON_SERIALIZED_APPS = ['corehq.form_processor', 'corehq.blobs']
 
-####### Django Extensions #######
+# Django Extensions
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (
     # Models
     ('datetime'),
-    ('corehq.apps.app_manager.models', b'Application'),
-    ('corehq.apps.domain.models', b'Domain'),
-    ('corehq.apps.groups.models', b'Group'),
-    ('corehq.apps.users.models', (b'CouchUser', b'WebUser', b'CommCareUser')),
-    ('casexml.apps.case.models', b'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', (b'CaseAccessors', b'FormAccessors')),
-    ('couchforms.models', b'XFormInstance'),
+    ('corehq.apps.app_manager.models', 'Application'),
+    ('corehq.apps.domain.models', 'Domain'),
+    ('corehq.apps.groups.models', 'Group'),
+    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
+    ('casexml.apps.case.models', 'CommCareCase'),
+    ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
+    ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils
-    ('dimagi.utils.couch.database', b'get_db'),
-    ('corehq.apps', b'es'),
+    ('dimagi.utils.couch.database', 'get_db'),
+    ('corehq.apps', 'es'),
 )
 
 INTERNAL_IPS = ['127.0.0.1']
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
-LOCAL_LOGGING_LOGGERS = {
-    'auditcare': {
-        'handlers': ['null'],
-        'level': 'WARNING',
-    },
-    'raven': {
-        'handlers': ['null'],
-        'level': 'WARNING',
+LOCAL_LOGGING_CONFIG = {
+    'loggers': {
+        'auditcare': {
+            'handlers': ['null'],
+            'level': 'WARNING',
+        },
+        # The following configuration will print out all queries that are run through sqlalchemy on the command line
+        # Useful for UCR debugging
+        # 'sqlalchemy.engine': {
+        #     'handlers': ['console'],
+        #     'level': 'INFO',
+        # },
     }
 }
 
@@ -93,7 +94,7 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
 #  make celery synchronous
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # Fail hard in tasks so you get a traceback
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
@@ -113,9 +114,13 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 # These ES hosts are to be used strictly for DEBUG mode read operations
 ELASTICSEARCH_DEBUG_HOSTS = {
-    'prod': 'hqes5.internal-va.commcarehq.org',
-    'staging': 'hqes0-staging.internal-va.commcarehq.org',
+    'prod': '10.202.40.116',
+    'staging': '10.201.40.161',
     'india': '10.162.36.221',
+    'icds': '100.71.184.7',
 }
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
+
+# use console email by default
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

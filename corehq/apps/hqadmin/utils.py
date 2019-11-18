@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from importlib import import_module
 from itertools import groupby
 
 from django.conf import settings
-from django.contrib.auth import get_user_model, SESSION_KEY
+from django.contrib.auth import SESSION_KEY, get_user_model
 from django.utils.safestring import mark_safe
+
 import requests
 
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import force_seq_int
-from six.moves import filter
+
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 
 EPSILON = 10000000
 
@@ -120,8 +118,7 @@ def parse_celery_workers(celery_workers):
     return expect_running, expect_stopped
 
 
-def get_django_user_from_session_key(session_key):
-    session = _get_session(session_key)
+def get_django_user_from_session(session):
     if not session:
         return None
 
@@ -137,7 +134,7 @@ def get_django_user_from_session_key(session_key):
             return None
 
 
-def _get_session(session_key):
+def get_session(session_key):
     engine = import_module(settings.SESSION_ENGINE)
     session = engine.SessionStore(session_key)
     try:

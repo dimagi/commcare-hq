@@ -12,7 +12,7 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
                 sessionid: initial_page_data('sessionid'),
             }));
         printTemplateUploader.init();
-        printRef = hqImport('hqmedia/js/hqmedia.reference_controller').BaseMediaReference(initial_page_data('print_ref'));
+        printRef = hqImport('hqmedia/js/media_reference_models').BaseMediaReference(initial_page_data('print_ref'));
         printRef.upload_controller = printTemplateUploader;
         printRef.setObjReference(initial_page_data('print_media_info'));
         printTemplateUploader.currentReference = printRef;

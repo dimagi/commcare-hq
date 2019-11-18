@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
-from mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
+from mock import MagicMock, patch
+
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.apps.users.models import CommCareUser
-
-from corehq.apps.cloudcare.esaccessors import login_as_user_query
+from corehq.util.elastic import ensure_index_deleted
 
 
 class TestCloudcareESAccessors(SimpleTestCase):
@@ -49,7 +47,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
             is_active=True,
         )
 
-        with patch('corehq.pillows.user.Group.by_user', return_value=[]):
+        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
             send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)
         return user

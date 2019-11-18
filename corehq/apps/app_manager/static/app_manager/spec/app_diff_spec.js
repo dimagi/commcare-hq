@@ -59,7 +59,7 @@ describe('AppDiff', function () {
     });
 
     describe('ModuleDatum', function () {
-        var ModuleDatum = AppDiff.ModuleDatum;
+        var ModuleDatum = AppDiff.moduleDatum;
         var datum = {
             name: { 'en': 'Module' },
             shortComment: 'Hello',

@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from io import StringIO
+from io import BytesIO
 from mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -10,7 +8,7 @@ from corehq.blobs import CODES
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.tasks import delete_expired_blobs
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.blobs.models import BlobExpiration, BlobMeta
+from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import capture_log_output
 
@@ -47,7 +45,7 @@ class BlobExpireTest(TestCase):
 
         with capture_log_output(mod.__name__) as logs:
             with patch('corehq.blobs.metadata._utcnow', return_value=now):
-                self.db.put(StringIO('content'), timeout=60, **self.args)
+                self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
             self.assertIsNotNone(self.db.get(key=self.key))
             with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
@@ -59,7 +57,7 @@ class BlobExpireTest(TestCase):
                 self.db.get(key=self.key)
 
             self.assertEqual(manager.all().count(), pre_expire_count)
-            self.assertRegexpMatches(
+            self.assertRegex(
                 logs.get_output(),
                 r"deleted expired blobs: .+'blob-identifier'",
             )
@@ -71,7 +69,7 @@ class BlobExpireTest(TestCase):
         pre_expire_count = manager.all().count()
 
         with patch('corehq.blobs.metadata._utcnow', return_value=now):
-            self.db.put(StringIO('content'), timeout=60, **self.args)
+            self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
         self.assertIsNotNone(self.db.get(key=self.key))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=30)):
@@ -79,40 +77,3 @@ class BlobExpireTest(TestCase):
 
         self.assertIsNotNone(self.db.get(key=self.key))
         self.assertEqual(manager.all().count(), pre_expire_count + 1)
-
-    def test_legacy_blob_expires(self):
-        # this test can be removed when BlobExpiration is removed
-        now = datetime(2017, 1, 1)
-        pre_expire_count = BlobExpiration.objects.all().count()
-
-        with capture_log_output(mod.__name__) as logs:
-            args = self.args.copy()
-            args["key"] = blob_key = "bucket/" + self.key
-            meta = self.db.put(StringIO('content'), **args)
-            self.assertFalse(meta.expires_on, meta.expires_on)
-            self.addCleanup(lambda: self.db.delete(key=blob_key))
-
-            # create legacy BlobExpiration object
-            expire = BlobExpiration(
-                bucket="bucket",
-                identifier=self.key,
-                expires_on=now + timedelta(minutes=60),
-                length=7,
-            )
-            expire.save()
-            self.addCleanup(BlobExpiration.objects.filter(id=expire.id).delete)
-
-            self.assertIsNotNone(self.db.get(key=blob_key))
-            with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
-                bytes_deleted = delete_expired_blobs()
-
-            self.assertEqual(bytes_deleted, len('content'))
-
-            with self.assertRaises(NotFound):
-                self.db.get(key=blob_key)
-
-            self.assertEqual(BlobExpiration.objects.all().count(), pre_expire_count)
-            self.assertRegexpMatches(
-                logs.get_output(),
-                r"deleted expired blobs: .+'bucket/blob-identifier'",
-            )

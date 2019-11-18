@@ -1,29 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
+
 from django.test import TestCase
 
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    FormExportInstance,
-    CaseExportInstance,
-    CaseInferredSchema,
-    FormInferredSchema,
-)
 from corehq.apps.export.dbaccessors import (
+    get_brief_deid_exports,
+    get_brief_exports,
+    get_case_exports_by_domain,
+    get_case_inferred_schema,
+    get_daily_saved_export_ids_for_auto_rebuild,
+    get_deid_export_count,
+    get_export_count_by_domain,
+    get_form_exports_by_domain,
+    get_form_inferred_schema,
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_form_export_instances,
-    get_case_export_instances,
-    get_export_count_by_domain,
-    get_deid_export_count,
-    get_all_daily_saved_export_instance_ids,
     get_properly_wrapped_export_instance,
-    get_case_inferred_schema,
-    get_form_inferred_schema,
-    get_form_exports_by_domain,
-    get_case_exports_by_domain
+)
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    CaseExportInstance,
+    CaseInferredSchema,
+    FormExportDataSchema,
+    FormExportInstance,
+    FormInferredSchema,
 )
 
 
@@ -130,6 +129,8 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.form_instance_daily_saved = FormExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True,
+            last_accessed=datetime.utcnow()
         )
         cls.case_instance_deid = CaseExportInstance(
             domain=cls.domain,
@@ -144,6 +145,8 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.case_instance_daily_saved = CaseExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True,
+            last_accessed=(datetime.utcnow() - timedelta(days=4))
         )
 
         cls.instances = [
@@ -164,12 +167,12 @@ class TestExportInstanceDBAccessors(TestCase):
             instance.delete()
         super(TestExportInstanceDBAccessors, cls).tearDownClass()
 
-    def test_get_form_export_instances(self):
-        instances = get_form_export_instances(self.domain)
+    def test_get_form_exports_by_domain(self):
+        instances = get_form_exports_by_domain(self.domain)
         self.assertEqual(len(instances), 2)
 
-    def test_get_case_export_instances(self):
-        instances = get_case_export_instances(self.domain)
+    def test_get_case_exports_by_domain(self):
+        instances = get_case_exports_by_domain(self.domain)
         self.assertEqual(len(instances), 2)
 
     def test_get_count_export_instances(self):
@@ -185,14 +188,15 @@ class TestExportInstanceDBAccessors(TestCase):
         )
 
     def test_get_case_export_instances_wrong_domain(self):
-        instances = get_case_export_instances('wrong')
+        instances = get_case_exports_by_domain('wrong')
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instance_ids = get_all_daily_saved_export_instance_ids()
+        recently_accessed_instance_ids = get_daily_saved_export_ids_for_auto_rebuild(
+            datetime.utcnow() - timedelta(days=2))
         self.assertEqual(
-            set(instance_ids),
-            {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}
+            set(recently_accessed_instance_ids),
+            {self.form_instance_daily_saved._id}
         )
 
     def test_get_properly_wrapped_export_instance(self):
@@ -202,19 +206,25 @@ class TestExportInstanceDBAccessors(TestCase):
         instance = get_properly_wrapped_export_instance(self.case_instance._id)
         self.assertEqual(type(instance), type(self.case_instance))
 
-    def test_deid_form_exports_permissions(self):
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=True)
-        self.assertEqual(len(instances), 2)
+    def test_get_brief_exports(self):
+        stubs = get_brief_exports(self.domain, form_or_case='form')
+        self.assertEqual(len(stubs), 2)
 
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=False)
-        self.assertEqual(len(instances), 1)
+        stubs = get_brief_exports(self.domain, form_or_case='case')
+        self.assertEqual(len(stubs), 2)
 
-    def test_deid_case_exports_permissions(self):
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=True)
-        self.assertEqual(len(instances), 2)
+        stubs = get_brief_exports(self.domain, form_or_case=None)
+        self.assertEqual(len(stubs), 4)
 
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=False)
-        self.assertEqual(len(instances), 1)
+    def test_get_brief_deid_exports(self):
+        stubs = get_brief_deid_exports(self.domain, form_or_case='form')
+        self.assertEqual(len(stubs), 1)
+
+        stubs = get_brief_deid_exports(self.domain, form_or_case='case')
+        self.assertEqual(len(stubs), 1)
+
+        stubs = get_brief_deid_exports(self.domain, form_or_case=None)
+        self.assertEqual(len(stubs), 2)
 
 
 class TestInferredSchemasDBAccessors(TestCase):

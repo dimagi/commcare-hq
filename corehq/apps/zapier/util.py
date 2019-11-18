@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
 
 

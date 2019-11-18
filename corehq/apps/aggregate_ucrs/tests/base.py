@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
+
 import yaml
 
 from corehq.apps.aggregate_ucrs.parser import AggregationSpec
@@ -14,7 +13,7 @@ class AggregationBaseTestMixin(TestFileMixin):
     @classmethod
     def get_monthly_config_json(cls):
         config_yml = cls.get_file('monthly_aggregate_definition', 'yml')
-        return yaml.load(config_yml)
+        return yaml.safe_load(config_yml)
 
     @classmethod
     def get_monthly_config_spec(cls):
@@ -23,7 +22,7 @@ class AggregationBaseTestMixin(TestFileMixin):
     @classmethod
     def get_basic_config_json(cls):
         config_yml = cls.get_file('basic_aggregate_definition', 'yml')
-        return yaml.load(config_yml)
+        return yaml.safe_load(config_yml)
 
     @classmethod
     def get_basic_config_spec(cls):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
@@ -19,8 +17,6 @@ from pact.enums import (
     REGIMEN_CHOICES,
 )
 from pact.regimen import regimen_string_from_doc
-import six
-from six.moves import range
 
 
 def make_uuid():
@@ -458,7 +454,7 @@ class CObservation(OldDocument):
         ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
         for prop_name in ints:
             val = obj.get(prop_name)
-            if val and isinstance(val, six.string_types):
+            if val and isinstance(val, str):
                 obj[prop_name] = int(val)
         return super(CObservation, cls).wrap(obj)
 
@@ -480,9 +476,6 @@ class CObservation(OldDocument):
 
     class Meta(object):
         app_label = 'pact'
-
-    def __unicode__(self):
-        return "Obs %s [%s] %d/%d" % (json_format_date(self.observed_date), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
 
     def __str__(self):
         return "Obs %s [%s] %d/%d" % (json_format_date(self.observed_date), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)

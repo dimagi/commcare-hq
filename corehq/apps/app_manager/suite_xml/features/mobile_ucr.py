@@ -1,18 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager import models
-from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
+
+from corehq.apps.app_manager import id_strings, models
+from corehq.apps.app_manager.const import (
+    MOBILE_UCR_MIGRATING_TO_2,
+    MOBILE_UCR_VERSION_2,
+)
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
-from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
-    SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
+from corehq.apps.app_manager.models import MobileSelectFilter, ReportModule
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Command,
+    Detail,
+    Entry,
+    Field,
+    GraphTemplate,
+    Header,
+    Locale,
+    SessionDatum,
+    Template,
+    Text,
+    Xpath,
+    XpathVariable,
+)
+from corehq.apps.reports_core.filters import (
+    ChoiceListFilter,
+    DynamicChoiceListFilter,
+)
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
-import six
-
 
 COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
 COLUMN_XPATH_TEMPLATE_V2 = "{}"
@@ -33,8 +47,11 @@ def _load_reports(report_module):
     if not report_module._loaded:
         # load reports in bulk to avoid hitting the database for each one
         try:
-            for i, report in enumerate(report_module.reports):
-                report_module.report_configs[i]._report = report
+            all_report_configs = report_module.reports
+            # generate id mapping to not rely on reports to be returned in the same order
+            id_mappings = {report_config._id: report_config for report_config in all_report_configs}
+            for report_config in report_module.report_configs:
+                report_config._report = id_mappings[report_config.report_id]
             report_module._loaded = True
         except ReportConfigurationNotFoundError:
             pass
@@ -78,9 +95,9 @@ class ReportModuleSuiteHelper(object):
 
 def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        datum_string = "instance('commcare-reports:{}')/rows"
+        nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
     else:
-        datum_string = "instance('reports')/reports/report[@id='{}']"
+        nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
     return Entry(
         command=Command(
@@ -102,7 +119,7 @@ def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
                 detail_confirm=_get_summary_detail_id(config),
                 detail_select=_get_select_detail_id(config),
                 id='report_id_{}'.format(config.uuid),
-                nodeset=datum_string.format(config.instance_id),
+                nodeset=nodeset,
                 value='./@id',
                 autoselect="true"
             ),
@@ -143,12 +160,12 @@ def _get_select_details(config):
 
 def get_data_path(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        data_path_string = "instance('commcare-reports:{}')/rows/row[@is_total_row='False']{}"
+        report_path = "instance('commcare-reports:{}')".format(config.instance_id)
     else:
-        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+        report_path = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-    return data_path_string.format(
-        config.instance_id,
+    return "{}/rows/row[@is_total_row='False']{}".format(
+        report_path,
         MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore)
     )
 
@@ -328,7 +345,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
-                    if isinstance(translations, six.string_types):
+                    if isinstance(translations, str):
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)
                     else:
@@ -382,7 +399,10 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report(domain).report_columns if c.type != 'expanded']
+        fields=[
+            _column_to_field(c) for c in config.report(domain).report_columns
+            if c.type != 'expanded' and c.visible
+        ]
     )
 
 
@@ -391,12 +411,12 @@ class MobileSelectFilterHelpers(object):
     @staticmethod
     def get_options_nodeset(config, filter_slug, new_mobile_ucr_restore=False):
         if new_mobile_ucr_restore:
-            instance = "instance('commcare-reports-filters:{report_id}')"
+            instance = "instance('commcare-reports-filters:{}')".format(config.instance_id)
         else:
-            instance = "instance('reports')/reports/report[@id='{report_id}']"
+            instance = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
         nodeset = instance + "/filters/filter[@field='{filter_slug}']/option"
-        return nodeset.format(report_id=config.instance_id, filter_slug=filter_slug)
+        return nodeset.format(filter_slug=filter_slug)
 
     @staticmethod
     def get_filters(config, domain):
@@ -450,20 +470,17 @@ def is_valid_mobile_select_filter_type(ui_filter):
     return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)
 
 
-@quickcache(['domain'])
-def get_uuids_by_instance_id(domain):
+def get_uuids_by_instance_id(app):
     """
     map ReportAppConfig.uuids list to user-defined ReportAppConfig.instance_ids
 
     This is per-domain, since registering instances (like
     commcare_reports_fixture_instances) is per-domain
     """
-    apps = get_apps_in_domain(domain)
     config_ids = defaultdict(list)
-    for app in apps:
-        if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
-            for module in app.modules:
-                if module.module_type == 'report':
-                    for report_config in module.report_configs:
-                        config_ids[report_config.instance_id].append(report_config.uuid)
+    if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
+        for module in app.modules:
+            if module.module_type == 'report':
+                for report_config in module.report_configs:
+                    config_ids[report_config.instance_id].append(report_config.uuid)
     return config_ids

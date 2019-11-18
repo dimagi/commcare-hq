@@ -1,14 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import argparse
 from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 
 FakeChange = namedtuple('FakeChange', ['id', 'document'])
 CASE_DOC_TYPE = 'CommCareCase'
@@ -27,6 +27,8 @@ class Command(BaseCommand):
                             help='bulk create. Only use if you know the implications')
         parser.add_argument('--database', action='store', dest='database',
                             help='Only retrieve from one database')
+        parser.add_argument('--initiated-by', action='store', required=True, dest='initiated',
+                            help='Who initiated the rebuild')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -40,10 +42,8 @@ class Command(BaseCommand):
             configs.append(config)
 
         for config in configs:
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.build_table()
-            # normally called after rebuilding finishes
-            adapter.after_table_build()
+            adapter = get_indicator_adapter(config)
+            adapter.build_table(initiated_by=options['initiated'], source='async_rebuild_table')
 
         self.domain = domain
         self.case_type_or_xmlns = case_type_or_xmlns

@@ -576,6 +576,8 @@ Formplayer.Const = {
     // Appearance attributes
     NUMERIC: 'numeric',
     MINIMAL: 'minimal',
+    LABEL: 'label',
+    LIST_NOLABEL: 'list-nolabel',
     COMBOBOX: 'combobox',
     COMBOBOX_MULTIWORD: 'multiword',
     COMBOBOX_FUZZY: 'fuzzy',
@@ -624,6 +626,12 @@ Formplayer.Const = {
     //knockout timeouts
     KO_ENTRY_TIMEOUT: 500,
 
+    INT_LENGTH_LIMIT: 10,
+    INT_VALUE_LIMIT: Math.pow(2, 31) - 1,
+    LONGINT_LENGTH_LIMIT: 15,
+    LONGINT_VALUE_LIMIT: Math.pow(2, 63) - 1,
+    FLOAT_LENGTH_LIMIT: 15,
+    FLOAT_VALUE_LIMIT: +("9".repeat(14)),
 };
 
 Formplayer.Errors = {
@@ -635,6 +643,9 @@ Formplayer.Errors = {
         "Internet in order to submit your form.",
     LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
         'Please try again later.'),
+    NO_INTERNET_ERROR: gettext("We have detected an issue with your network. " +
+        "Please check your Internet connection and retry when connectivity " +
+        "improves."),
 };
 
 Formplayer.Utils.touchformsError = function (message) {

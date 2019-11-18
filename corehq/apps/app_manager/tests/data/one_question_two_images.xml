@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Multimedia</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A9DA1F89-7DB3-430C-9DE8-91319F9EB469" uiVersion="1" version="1" name="Multimedia">
+					<question1 />
+				</data>
+			</instance>
+			<bind vellum:nodeset="#form/question1" nodeset="/data/question1" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>question1</value>
+						<value form="image">jr://file/commcare/image/data/question1-fn3fu1.jpg</value>
+					</text>
+				</translation>
+				<translation lang="fra">
+					<text id="question1-label">
+						<value>question1</value>
+						<value form="image">jr://file/commcare/image/data/question1-1ppout.jpg</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input vellum:ref="#form/question1" ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
+		</input>
+	</h:body>
+</h:html>

@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from django.http import HttpResponse, HttpRequest
+
+from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 
 
@@ -67,7 +66,7 @@ class BaseAsyncHandler(object):
     def _fmt_error(self, error):
         return json.dumps({
             'success': False,
-            'error': error.message,
+            'error': str(error),
         })
 
     def _fmt_success(self, data):

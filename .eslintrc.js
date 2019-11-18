@@ -38,8 +38,10 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
+        "brace-style": ["error", "1tbs"],
         "camelcase": ["error", {"properties": "never"}],
         "comma-dangle": ["warn", "always-multiline"],
+        "curly": ["error"],
         "eqeqeq": ["error"],
         "func-call-spacing": ["error"],
         "indent": ["warn", 4, {"SwitchCase":1}],
@@ -53,12 +55,13 @@ module.exports = {
         "no-throw-literal": ["error"],
         "no-unneeded-ternary": ["error"],
         "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
+        "one-var-declaration-per-line": ["error"],
         "semi": ["error", "always"],
         "space-before-function-paren": ["error", {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
 
-        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "Option", "RegExp", "Clipboard"]],
+        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "FormData", "Option", "RegExp", "Clipboard", "MutationObserver"]],
     }
 };

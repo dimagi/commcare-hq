@@ -1,24 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db.models.aggregates import Count
+
+from couchexport.models import Format
+from dimagi.utils.dates import DateSpan
+
 from corehq.apps.accounting.filters import DateCreatedFilter
-from corehq.apps.reports.datatables import (
-    DataTablesColumn,
-    DataTablesHeader,
-)
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.sms.models import (
-    INCOMING,
-    OUTGOING,
-)
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.smsbillables.filters import (
     CountryCodeFilter,
     DateSentFilter,
     DirectionFilter,
     DomainFilter,
-    HasGatewayFeeFilter,
     GatewayTypeFilter,
+    HasGatewayFeeFilter,
     ShowBillablesFilter,
     SpecificGateway,
 )
@@ -27,7 +23,6 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
-from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -153,15 +148,18 @@ class SMSBillablesInterface(GenericTabularReport):
 
     @property
     def sms_billables(self):
+        datespan = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
         selected_billables = SmsBillable.objects.filter(
-            date_sent__gte=DateSentFilter.get_start_date(self.request),
-            date_sent__lte=DateSentFilter.get_end_date(self.request),
+            date_sent__gte=datespan.startdate,
+            date_sent__lt=datespan.enddate_adjusted,
         )
         if DateCreatedFilter.use_filter(self.request):
+            date_span = DateSpan(
+                DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
+            )
             selected_billables = selected_billables.filter(
-                date_created__gte=DateCreatedFilter.get_start_date(
-                    self.request),
-                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+                date_created__gte=date_span.startdate,
+                date_created__lt=date_span.enddate_adjusted,
             )
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)

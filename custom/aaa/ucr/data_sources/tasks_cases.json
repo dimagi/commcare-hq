@@ -1,0 +1,152 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-tasks_cases",
+    "display_name": "Cases - Tasks (REACH Dashboard Backend)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "tasks"
+    },
+    "validations": [
+      {
+        "name": "directly_owned",
+        "error_message": "This case has an owner_id and does not default to ownership by extension",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "property_value": "-"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "parent_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "parent_id"
+        }
+      },
+      {
+        "column_id": "tasks_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "tasks_type"
+      },
+      {
+        "column_id": "due_list_date",
+        "type": "due_list_date",
+        "case_id_expression": {
+          "type": "property_name",
+          "property_name": "_id"
+        },
+        "ledger_section": "immuns",
+        "product_codes": [
+          "1g_bcg",
+          "1g_dpt_1",
+          "2g_dpt_2",
+          "3g_dpt_3",
+          "5g_dpt_booster",
+          "5g_dpt_booster1",
+          "7gdpt_booster_2",
+          "0g_hep_b_0",
+          "1g_hep_b_1",
+          "2g_hep_b_2",
+          "3g_hep_b_3",
+          "3g_ipv",
+          "4g_je_1",
+          "5g_je_2",
+          "5g_measles_booster",
+          "4g_measles",
+          "0g_opv_0",
+          "1g_opv_1",
+          "2g_opv_2",
+          "3g_opv_3",
+          "5g_opv_booster",
+          "1g_penta_1",
+          "2g_penta_2",
+          "3g_penta_3",
+          "1g_rv_1",
+          "2g_rv_2",
+          "3g_rv_3",
+          "4g_vit_a_1",
+          "5g_vit_a_2",
+          "6g_vit_a_3",
+          "6g_vit_a_4",
+          "6g_vit_a_5",
+          "6g_vit_a_6",
+          "6g_vit_a_7",
+          "6g_vit_a_8",
+          "7g_vit_a_9",
+          "anc_1",
+          "anc_2",
+          "anc_3",
+          "anc_4",
+          "tt_1",
+          "tt_2",
+          "tt_booster"
+        ]
+      }
+    ],
+    "named_expressions": {
+      "parent_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "identifier"
+              },
+              "property_value": "parent"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              }
+            }
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      }
+    },
+    "engine_id": "aaa-data"
+  }
+}

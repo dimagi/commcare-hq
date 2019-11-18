@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 import six
@@ -22,7 +20,7 @@ class CaseBlockTest(SimpleTestCase):
             case_id=self.CASE_ID,
             date_opened=self.NOW,
             date_modified=self.NOW,
-        ).as_xml())
+        ).as_xml()).decode('utf-8')
         expected = (
             '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
             'xmlns="http://commcarehq.org/case/transaction/v2">'
@@ -50,7 +48,7 @@ class CaseBlockTest(SimpleTestCase):
             update={
                 'date_opened': self.FIVE_DAYS_FROM_NOW,
             },
-        ).as_xml())
+        ).as_xml()).decode('utf-8')
         actual = (
             '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
             'xmlns="http://commcarehq.org/case/transaction/v2">'

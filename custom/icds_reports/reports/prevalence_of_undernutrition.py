@@ -1,24 +1,20 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
+    format_decimal
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -55,7 +51,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     all_total = 0
     weighed_total = 0
 
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
         weighed = row['weighed'] or 0
         total = row['total'] or 0
@@ -65,8 +61,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         moderately_underweight = row['moderately_underweight'] or 0
         normal = row['normal'] or 0
 
-        numerator = moderately_underweight + severely_underweight
-        values_to_calculate_average.append(numerator * 100 / (weighed or 1))
+        values_to_calculate_average['numerator'] += moderately_underweight if moderately_underweight else 0
+        values_to_calculate_average['numerator'] += severely_underweight if severely_underweight else 0
+        values_to_calculate_average['denominator'] += weighed if weighed else 0
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight
@@ -81,7 +78,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         data_for_map[on_map_name]['weighed'] += weighed
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
         value = numerator * 100 / (data_for_location['weighed'] or 1)
         if value < 20:
@@ -97,7 +94,10 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'35%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    average = ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1))
+    average = (
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
+    )
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 5 years')
 
@@ -109,7 +109,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         ),
         "fills": fills,
         "rightLegend": {
-            "average": average,
+            "average": format_decimal(average),
             "info": underweight_children_help_text(age_label=age_label, html=True),
             "extended_info": [
                 {
@@ -138,7 +138,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -204,10 +204,15 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         data['red'][date_in_miliseconds]['unweighed'] += (total - weighed)
         data['red'][date_in_miliseconds]['weighed'] += weighed
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': value
+        }
+        for key, value in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
 
     return {
         "chart_data": [
@@ -218,7 +223,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% Normal",
                 "strokeWidth": 2,
@@ -232,7 +237,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
@@ -246,7 +251,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,
@@ -254,14 +259,14 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "color": ChartColors.RED
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -296,14 +301,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         'total': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         weighed = row['weighed']
         total = row['total']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
@@ -320,11 +321,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
             ((moderately_underweight or 0) + (severely_underweight or 0)) / float(weighed or 1)
         ])
 
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
-
-    chart_data['blue'] = sorted(chart_data['blue'])
+    chart_data['blue'] = sorted(
+        chart_data['blue'],
+        key=lambda loc_and_value: (loc_and_value[0] is not None, loc_and_value)
+    )
 
     return {
         "tooltips_data": dict(tooltips_data),

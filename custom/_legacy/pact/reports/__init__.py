@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
@@ -11,7 +9,7 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
     prefix = 'pactpatient'
 
     def dispatch(self, request, *args, **kwargs):
-        ret =  super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
+        ret = super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
         return ret
 
     def get_reports(self, domain):

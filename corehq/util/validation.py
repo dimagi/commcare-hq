@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 
 
 BANNED_HOST_REGEX = (
-    'commcarehq\.org',
-    '10\..*\..*\..*',
-    '172.1[6-9]\..*\..*',
-    '172.2[0-9]\..*\..*',
-    '172.3[0-1]\..*\..*',
-    '192.168\..*\..*',
-    '127.0.0.1',
-    'localhost',
+    r'commcarehq\.org',
+    r'10\..*\..*\..*',
+    r'172.1[6-9]\..*\..*',
+    r'172.2[0-9]\..*\..*',
+    r'172.3[0-1]\..*\..*',
+    r'192.168\..*\..*',
+    r'127.0.0.1',
+    r'localhost',
 )
 
 

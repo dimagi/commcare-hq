@@ -1,25 +1,21 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import wasting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
+    wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
     default_age_interval, wfh_recorded_in_month_column
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
 
     def get_data_for(filters):
@@ -60,7 +56,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     measured_for_all_locations = 0
     height_eligible_for_all_locations = 0
 
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
         total_weighed = row['total_weighed'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
@@ -71,8 +67,9 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
 
-        numerator = moderate + severe
-        values_to_calculate_average.append(numerator * 100 / (total_weighed or 1))
+        values_to_calculate_average['numerator'] += moderate if moderate else 0
+        values_to_calculate_average['numerator'] += severe if severe else 0
+        values_to_calculate_average['denominator'] += total_measured if total_measured else 0
 
         severe_for_all_locations += severe
         moderate_for_all_locations += moderate
@@ -89,7 +86,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['total_height_eligible'] += total_height_eligible
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 5:
@@ -110,6 +107,11 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         default_interval=default_age_interval(icds_feature_flag)
     )
 
+    average = (
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
+    )
+
     return {
         "slug": "severe",
         "label": "Percent of Children{gender} Wasted ({age})".format(
@@ -118,8 +120,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) /
-                                 float(len(values_to_calculate_average) or 1)),
+            "average": "%.2f" % average,
             "info": wasting_help_text(age_label),
             "extended_info": [
                 {
@@ -127,7 +128,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     'value': indian_formatted_number(weighed_for_all_locations)
                 },
                 {
-                    'indicator': 'Total Children{} with height measured in given month:'
+                    'indicator': 'Total Children{} with weight and height measured in given month:'
                     .format(chosen_filters),
                     'value': indian_formatted_number(measured_for_all_locations)
                 },
@@ -153,7 +154,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -224,7 +225,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         data['red'][date_in_miliseconds]['total_height_eligible'] += total_height_eligible
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.items()],
         key=lambda x: (x['percent'], x['loc_name'])
     )
 
@@ -238,7 +239,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible']
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
@@ -253,7 +254,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible']
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
@@ -268,7 +269,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible']
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
@@ -283,7 +284,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False,
                                          icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
@@ -320,13 +321,9 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         'total_measured': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         total_weighed = row['total_weighed'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severe = row['severe'] or 0
         moderate = row['moderate'] or 0
@@ -345,10 +342,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

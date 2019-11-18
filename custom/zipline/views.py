@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.api.decorators import api_user_basic_auth
@@ -15,7 +13,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils.decorators import method_decorator
-import six
 
 
 ZIPLINE_PERMISSION = 'ZIPLINE'
@@ -45,7 +42,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except (TypeError, ValueError):
             return get_error_response('Could not parse JSON')
 
@@ -105,17 +102,17 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a string".format(field_name)
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             raise OrderStatusValidationError(error_msg)
 
     def validate_and_clean_time(self, data, field_name):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a 24-hour time string HH:MM".format(field_name)
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             raise OrderStatusValidationError(error_msg)
 
-        if not re.match('^\d\d?:\d\d$', value):
+        if not re.match(r'^\d\d?:\d\d$', value):
             raise OrderStatusValidationError(error_msg)
 
         try:
@@ -129,7 +126,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a numeric string".format(field_name)
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             raise OrderStatusValidationError(error_msg)
 
         try:
@@ -248,7 +245,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
                 'package_id': dispatched_status.package_id,
                 'vehicle_id': dispatched_status.vehicle_id,
                 'products': [ProductQuantity(code, data.get('quantity'))
-                             for code, data in six.iteritems(dispatched_status.products)],
+                             for code, data in dispatched_status.products.items()],
             }
         else:
             return {}
@@ -264,7 +261,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
     def post(self, request, *args, **kwargs):
         # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
 
         try:
             self.validate_and_clean_int(data, 'orderId')

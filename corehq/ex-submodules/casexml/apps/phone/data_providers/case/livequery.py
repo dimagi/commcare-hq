@@ -21,8 +21,6 @@ Example case graphs with outcomes:
 
    a(closed) <--ext-- b <--chi-- c(owned) >> []
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 from itertools import chain, islice
@@ -36,6 +34,7 @@ from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.datadog.utils import case_load_counter
 
 
 def do_livequery(timing_context, restore_state, response, async_task=None):
@@ -266,6 +265,7 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
 class PrefetchIndexCaseAccessor(object):
 
     def __init__(self, accessor, indices):
+        self.domain = accessor.domain
         self.accessor = accessor
         self.indices = indices
 
@@ -282,11 +282,13 @@ def batch_cases(accessor, case_ids):
         # https://docs.python.org/2/library/itertools.html#recipes
         return list(islice(iterable, n))
 
+    track_load = case_load_counter("livequery_restore", accessor.domain)
     ids = iter(case_ids)
     while True:
         next_ids = take(1000, ids)
         if not next_ids:
             break
+        track_load(len(next_ids))
         yield accessor.get_cases(next_ids)
 
 

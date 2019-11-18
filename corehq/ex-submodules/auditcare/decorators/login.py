@@ -1,13 +1,11 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import django
 from django.contrib.auth.forms import AuthenticationForm
 
 from datetime import datetime, timedelta
 from django.conf import settings
-from django.contrib.auth import  logout
+from django.contrib.auth import logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -33,6 +31,7 @@ LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
+
 def query2str(items):
     """Turns a dictionary into an easy-to-read list of key-value pairs.
 
@@ -50,6 +49,7 @@ log = logging.getLogger(__name__)
 if VERBOSE:
     log.info('AXES: BEGIN LOG')
     #log.info('Using django-axes ' + axes.get_version())
+
 
 def get_user_attempt(request):
     """
@@ -93,6 +93,7 @@ def get_user_attempt(request):
         log.info("Last login failure is outside the cooloff time, creating new access attempt.")
         return None
     return attempt
+
 
 def watch_logout(func):
     def decorated_logout (request, *args, **kwargs):
@@ -177,6 +178,7 @@ def watch_login(func):
 
     return decorated_login
 
+
 def lockout_response(request):
     if LOCKOUT_TEMPLATE:
         context = RequestContext(request, {
@@ -194,6 +196,7 @@ def lockout_response(request):
     else:
         return HttpResponse("Account locked: too many login attempts.  "
                             "Contact an admin to unlock your account.")
+
 
 def log_request(request, login_unsuccessful):
     failures = 0

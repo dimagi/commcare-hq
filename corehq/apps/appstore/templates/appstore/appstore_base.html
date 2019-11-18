@@ -7,302 +7,302 @@
 {% block title %}{% trans "CommCare Exchange" %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <style type="text/css">
-        .rating_static > span {
-            display: inline-block;
-            position: relative;
-            width: 1.1em;
-        }
+  <style type="text/css">
+    .rating_static > span {
+      display: inline-block;
+      position: relative;
+      width: 1.1em;
+    }
 
-            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
-     follow these rules. Every browser that supports :checked also supports :not(), so
-     it doesn’t make the test unnecessarily selective */
-        .rating_static:not(:checked) > input {
-            position:absolute;
-            top:-9999px;
-            clip:rect(0,0,0,0);
-        }
+    /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+follow these rules. Every browser that supports :checked also supports :not(), so
+it doesn’t make the test unnecessarily selective */
+    .rating_static:not(:checked) > input {
+      position:absolute;
+      top:-9999px;
+      clip:rect(0,0,0,0);
+    }
 
-        .rating_static:not(:checked) > label {
-            float:left;
-            padding:0 .1em;
-            overflow:hidden;
-            white-space:nowrap;
-            cursor:default;
-            font-size:200%;
-            line-height:1.1;
-            color:#ddd;
-            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating_static:not(:checked) > label {
+      float:left;
+      padding:0 .1em;
+      overflow:hidden;
+      white-space:nowrap;
+      cursor:default;
+      font-size:200%;
+      line-height:1.1;
+      color:#ddd;
+      text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating_static:not(:checked) > label:before {
-            content: '★ ';
-        }
+    .rating_static:not(:checked) > label:before {
+      content: '★ ';
+    }
 
-        .rating_static > input.filled + label {
-            color: #f70;
-            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating_static > input.filled + label {
+      color: #f70;
+      text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating_static > label:active {
-            position:relative;
-            top:2px;
-            left:2px;
-        }
+    .rating_static > label:active {
+      position:relative;
+      top:2px;
+      left:2px;
+    }
 
 
 
-        .rating > span {
-            display: inline-block;
-            position: relative;
-            width: 1.1em;
-        }
+    .rating > span {
+      display: inline-block;
+      position: relative;
+      width: 1.1em;
+    }
 
-        .rating {
-            float:left;
-        }
+    .rating {
+      float:left;
+    }
 
-            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
-     follow these rules. Every browser that supports :checked also supports :not(), so
-     it doesn’t make the test unnecessarily selective */
-        .rating:not(:checked) > input {
-            position:absolute;
-            top:-9999px;
-            clip:rect(0,0,0,0);
-        }
+    /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+follow these rules. Every browser that supports :checked also supports :not(), so
+it doesn’t make the test unnecessarily selective */
+    .rating:not(:checked) > input {
+      position:absolute;
+      top:-9999px;
+      clip:rect(0,0,0,0);
+    }
 
-        .rating:not(:checked) > label {
-            float:right;
-            width:1em;
-            padding:0 .1em;
-            overflow:hidden;
-            white-space:nowrap;
-            cursor:pointer;
-            font-size:200%;
-            line-height:1.2;
-            color:#ddd;
-            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating:not(:checked) > label {
+      float:right;
+      width:1em;
+      padding:0 .1em;
+      overflow:hidden;
+      white-space:nowrap;
+      cursor:pointer;
+      font-size:200%;
+      line-height:1.2;
+      color:#ddd;
+      text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating:not(:checked) > label:before {
-            content: '★ ';
-        }
+    .rating:not(:checked) > label:before {
+      content: '★ ';
+    }
 
-        .rating > input:checked ~ label {
-            color: #f70;
-            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating > input:checked ~ label {
+      color: #f70;
+      text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating:not(:checked) > label:hover,
-        .rating:not(:checked) > label:hover ~ label {
-            color: gold;
-            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating:not(:checked) > label:hover,
+    .rating:not(:checked) > label:hover ~ label {
+      color: gold;
+      text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating > input:checked + label:hover,
-        .rating > input:checked + label:hover ~ label,
-        .rating > input:checked ~ label:hover,
-        .rating > input:checked ~ label:hover ~ label,
-        .rating > label:hover ~ input:checked ~ label {
-            color: #ea0;
-            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-        }
+    .rating > input:checked + label:hover,
+    .rating > input:checked + label:hover ~ label,
+    .rating > input:checked ~ label:hover,
+    .rating > input:checked ~ label:hover ~ label,
+    .rating > label:hover ~ input:checked ~ label {
+      color: #ea0;
+      text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+    }
 
-        .rating > label:active {
-            position:relative;
-            top:2px;
-            left:2px;
-        }
+    .rating > label:active {
+      position:relative;
+      top:2px;
+      left:2px;
+    }
 
-        .label-for-star {
-            cursor: default;
-        }
+    .label-for-star {
+      cursor: default;
+    }
 
-        .scrollable {
-            overflow-x: scroll;
-            overflow-y:hidden;
-            white-space:nowrap;
-            /*max-height: 300px;*/
-        }
+    .scrollable {
+      overflow-x: scroll;
+      overflow-y:hidden;
+      white-space:nowrap;
+      /*max-height: 300px;*/
+    }
 
-        .pager {
-            margin-top: 25px;
-        }
+    .pager {
+      margin-top: 25px;
+    }
 
-        .app-pic {
-            width: 12.5em;
-            margin-right: .5em;
-        }
+    .app-pic {
+      width: 12.5em;
+      margin-right: .5em;
+    }
 
-        .opacity65 {
-            filter:alpha(opacity=65);
-            -moz-opacity:0.65;
-            -khtml-opacity: 0.65;
-            opacity: 0.65;
-        }
+    .opacity65 {
+      filter:alpha(opacity=65);
+      -moz-opacity:0.65;
+      -khtml-opacity: 0.65;
+      opacity: 0.65;
+    }
 
-        .pi-stars {
-            display: inline-block;
-            padding-right: 1.8em;
-            font-size: 70%;
-        }
+    .pi-stars {
+      display: inline-block;
+      padding-right: 1.8em;
+      font-size: 70%;
+    }
 
-        #results {
-            display: table;
-        }
+    #results {
+      display: table;
+    }
 
-        #results div.span3 {
-            display: "table-cell";
-        }
+    #results div.span3 {
+      display: "table-cell";
+    }
 
-        #license-info-label {
-            float: right;
-            position: relative;
-            margin-top: -24px;
-        }
+    #license-info-label {
+      float: right;
+      position: relative;
+      margin-top: -24px;
+    }
 
-        #license-info-label:hover {
-            background: inherit;
-        }
-    </style>
+    #license-info-label:hover {
+      background: inherit;
+    }
+  </style>
 {% endblock %}
 
 {% requirejs_main 'appstore/js/appstore_base' %}
 
 {% block page_navigation %}
-    {% url "appstore" as search_url %}
-    {% include 'appstore/partials/sidebar.html' with display_ua='true' search_name="search" search_for="apps..." %}
+  {% url "appstore" as search_url %}
+  {% include 'appstore/partials/sidebar.html' with display_ua='true' search_name="search" search_for="apps..." %}
 {% endblock %}
 
 {% block page_breadcrumbs %}
-<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
     <li>
-        <strong><a href="{% url "appstore" %}">CommCare Exchange</a></strong>
-        {% if search_query or filter_by or domain or project or sort_by %}
-        {% endif %}
+      <strong><a href="{% url "appstore" %}">CommCare Exchange</a></strong>
+      {% if search_query or filter_by or domain or project or sort_by %}
+      {% endif %}
     </li>
     {% block breadcrumb %}
     {% endblock %}
     {% if search_query %}
-        <li>
-            {% trans "Searching for" %} "{{ search_query }}"
-            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
-        </li>
+      <li>
+        {% trans "Searching for" %} "{{ search_query }}"
+        <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
+      </li>
     {% endif %}
     {% if filter_by and filter %}
-        <li>
-            With {{ filter_by }} {{ filter }}
-        </li>
+      <li>
+        With {{ filter_by }} {{ filter }}
+      </li>
     {% endif %}
     {% if sort_by == 'newest' %}
-        <li>{% trans "Newest" %}</li>
+      <li>{% trans "Newest" %}</li>
     {% endif %}
-</ol>
+  </ol>
 {% endblock %}
 
 {% block page_content %}
 
-<h1>
+  <h1>
     {% block store-header %}
     {% endblock %}
-</h1>
+  </h1>
 
-<div class="row">
+  <div class="row">
     {% block view-tabs %}
 
-    <div class="tabbable col-sm-12" style="margin-bottom: 20px;">
+      <div class="tabbable col-sm-12" style="margin-bottom: 20px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by and not show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" without 'is_starter_app' %}">{% trans "Most Downloaded" %}</a></li>
-            <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" without 'is_starter_app' %}">{% trans "Newest" %}</a></li>
-            <li {% if show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with 'is_starter_app' as 'T' without 'sort_by' %}">{% trans "Starter Apps" %}</a></li>
+          <li{% if not sort_by and not show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" without 'is_starter_app' %}">{% trans "Most Downloaded" %}</a></li>
+          <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" without 'is_starter_app' %}">{% trans "Newest" %}</a></li>
+          <li {% if show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with 'is_starter_app' as 'T' without 'sort_by' %}">{% trans "Starter Apps" %}</a></li>
         </ul>
-    </div>
+      </div>
     {% endblock %}
-</div>
+  </div>
 
 
-<div class="row results">
-{% block results-display %}
-{% for app in apps %}
-    {% if forloop.counter0|divisibleby:"2" and forloop.counter0 != 0 %}
-        </div><div class="row results">
-    {% endif %}
-    <div class="col-sm-6">
-        <div class="well">
+  <div class="row results">
+    {% block results-display %}
+      {% for app in apps %}
+        {% if forloop.counter0|divisibleby:"2" and forloop.counter0 != 0 %}
+          </div><div class="row results">
+        {% endif %}
+        <div class="col-sm-6">
+          <div class="well">
             <div class="row">
-                <div class="col-sm-5">
-                    <a href="{% url "project_info" app.get_id %}">
-                        {% if app.image_path %}
-                            <div style="text-align: center;">
-                                <img class="app-pic" src="{% url "appstore_project_image" app.get_id %}" />
-                            </div>
-                        {% else %}
-                            <div style="text-align: center;">
-                                <img class="app-pic opacity65" src="{% static 'hqstyle/images/commcarehq-icon-large.png' %}" />
-                            </div>
-                        {% endif %}
-                    </a>
-                    <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
-                    <a class="btn btn-default track-usage-link"
-                       href="{% url "project_info" app.get_id %}"
-                       data-category="Exchange"
-                       data-action="View button"
-                       data-label="{{ app.get_id }}"
-                    >
-                        {% trans "View" %} &raquo;
-                    </a>
-                    {% if user.is_superuser %}
-                        {% if app.is_approved %}
-                            <a class="btn btn-danger" href="{% url "approve_appstore_app" app.get_id %}?approve=false">{% trans "Unapprove" %}</a>
-                        {% else %}
-                            <a class="btn btn-success" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
-                        {% endif %}
-                    {% endif %}
-                </div>
-                <div class="col-sm-7">
-                    <h3>
-                        <a href="{% url "project_info" app.get_id %}">
-                            {{ app.title }}
-                        </a>
-                        <small style="display: block;">{% trans "By" %}
-                            {{ app.author|default:app.name_of_publisher }}
-                        </small>
-                    </h3>
-                    {% if app.project_type %}
-                        <h6>{{ app.project_type }}</h6>
-                    {% endif %}
-                    <h6>{{ app.download_count }} download{{ app.download_count|pluralize }}</h6>
-                    {% if app.short_description %}
-                        <p>{{ app.short_description }}</p>
-                    {% endif %}
-                    {% if app.is_starter_app %}<span class="label label-success">{% trans "Starter App" %}</span>{% endif %}
-                </div>
+              <div class="col-sm-5">
+                <a href="{% url "project_info" app.get_id %}">
+                  {% if app.image_path %}
+                    <div style="text-align: center;">
+                      <img class="app-pic" src="{% url "appstore_project_image" app.get_id %}" />
+                    </div>
+                  {% else %}
+                    <div style="text-align: center;">
+                      <img class="app-pic opacity65" src="{% static 'hqstyle/images/commcarehq-icon-large.png' %}" />
+                    </div>
+                  {% endif %}
+                </a>
+                <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
+                <a class="btn btn-default track-usage-link"
+                   href="{% url "project_info" app.get_id %}"
+                   data-category="Exchange"
+                   data-action="View button"
+                   data-label="{{ app.get_id }}"
+                >
+                  {% trans "View" %} &raquo;
+                </a>
+                {% if user.is_superuser %}
+                  {% if app.is_approved %}
+                    <a class="btn btn-danger" href="{% url "approve_appstore_app" app.get_id %}?approve=false">{% trans "Unapprove" %}</a>
+                  {% else %}
+                    <a class="btn btn-primary" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <div class="col-sm-7">
+                <h3>
+                  <a href="{% url "project_info" app.get_id %}">
+                    {{ app.title }}
+                  </a>
+                  <small style="display: block;">{% trans "By" %}
+                    {{ app.author|default:app.name_of_publisher }}
+                  </small>
+                </h3>
+                {% if app.project_type %}
+                  <h6>{{ app.project_type }}</h6>
+                {% endif %}
+                <h6>{{ app.download_count }} download{{ app.download_count|pluralize }}</h6>
+                {% if app.short_description %}
+                  <p>{{ app.short_description }}</p>
+                {% endif %}
+                {% if app.is_starter_app %}<span class="label label-success">{% trans "Starter App" %}</span>{% endif %}
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-{% empty %}
-    <div class="col-sm-12">
-        <div class="alert alert-info">
+      {% empty %}
+        <div class="col-sm-12">
+          <div class="alert alert-info">
             {% trans "No results were found for your query" %}.
+          </div>
         </div>
+      {% endfor %}
+    {% endblock %}
     </div>
-{% endfor %}
-{% endblock %}
-</div>
 
-<div class="row">
+  <div class="row">
     <ul class="pager col-sm-10 col-sm-offset-1">
-        {% if page > 1 %}
+      {% if page > 1 %}
         <li class="previous">
-            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>
+          <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>
         </li>
-        {% endif %}
-        {% if more_pages %}
+      {% endif %}
+      {% if more_pages %}
         <li class="next">
-            <a href="{% urlencode request.path request.GET with "page" as next_page %}">{% trans "Next" %} &rarr;</a>
+          <a href="{% urlencode request.path request.GET with "page" as next_page %}">{% trans "Next" %} &rarr;</a>
         </li>
-        {% endif %}
+      {% endif %}
     </ul>
-</div>
+  </div>
 
 {% endblock %}

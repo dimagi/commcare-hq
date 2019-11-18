@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+import functools
 import json
 import logging
 import os
@@ -9,9 +7,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
-from six.moves.urllib.parse import urlparse
 
-import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -20,72 +16,102 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404, \
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
-    HttpResponseForbidden, HttpResponsePermanentRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+    HttpResponseServerError,
+)
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import resolve
+from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
-
-
+from django.utils.translation import LANGUAGE_SESSION_KEY
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
-from two_factor.views import LoginView
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
-from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
-from corehq.apps.users.models import CouchUser
+from memoized import memoized
+from urllib.parse import urlparse
 
-from corehq.form_processor.utils.general import should_use_sql_backend
+from sentry_sdk import last_event_id
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from two_factor.views import LoginView
+
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
-from memoized import memoized
-
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from no_exceptions.exceptions import Http403
+from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
 
-from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
+from corehq.apps.analytics import ab_tests
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+    track_domain_request,
+    two_factor_exempt,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.domain.utils import get_domain_from_url, normalize_domain_name
 from corehq.apps.dropbox.decorators import require_dropbox_session
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
+from corehq.apps.dropbox.exceptions import (
+    DropboxInvalidToken,
+    DropboxUploadAlreadyInProgress,
+)
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
-from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
+    DEPLOY_IN_PROGRESS_FLAG,
+)
+from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.hqwebapp.forms import (
+    CloudCareAuthenticationForm,
+    EmailAuthenticationForm,
+)
+from corehq.apps.hqwebapp.utils import (
+    get_environment_friendly_name,
+    update_session_language,
+)
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.landing_pages import (
+    get_cloudcare_urlname,
+    get_redirect_url,
+)
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.middleware import always_allow_browser_caching
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.view_utils import reverse
-import six
-from six.moves import range
+from no_exceptions.exceptions import Http403
 
 
 def is_deploy_in_progress():
@@ -101,19 +127,8 @@ def format_traceback_the_way_python_does(type, exc, tb):
       File "<stdin>", line 2, in <module>
     NameError: name 'name' is not defined
     """
-
-    if six.PY3:
-        exc_message = six.text_type(exc)
-    else:
-        exc_message = exc.message
-        if isinstance(exc_message, bytes):
-            exc_message = exc_message.decode('utf-8')
-
-    return 'Traceback (most recent call last):\n{}{}: {}'.format(
-        ''.join(traceback.format_tb(tb)),
-        type.__name__,
-        exc_message
-    )
+    tb = ''.join(traceback.format_tb(tb))
+    return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
 def server_error(request, template_name='500.html'):
@@ -139,12 +154,19 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
+    if settings.UNIT_TESTING:
+        # Explicitly don't render the 500 page during unit tests to prevent
+        # obfuscating errors in templatetags / context processor. More context here:
+        # https://github.com/dimagi/commcare-hq/pull/25835#discussion_r343997006
+        return HttpResponse(status=500)
+
     return HttpResponseServerError(t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
             'domain': domain,
             '500traceback': traceback_key,
+            'sentry_event_id': last_event_id(),
         },
         request=request,
     ))
@@ -186,6 +208,8 @@ def redirect_to_default(req, domain=None):
             domains = Domain.active_for_user(req.user)
 
         if 0 == len(domains) and not req.user.is_superuser:
+            from corehq.apps.registration.views import track_domainless_new_user
+            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
             from corehq.apps.dashboard.views import dashboard_default
@@ -220,10 +244,10 @@ def redirect_to_default(req, domain=None):
 
 def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
-    domain = Domain.get_by_name(domain_name)
-    if domain:
+    domain_obj = Domain.get_by_name(domain_name)
+    if domain_obj:
         return (
-            domain.two_factor_auth
+            domain_obj.two_factor_auth
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
@@ -288,7 +312,7 @@ def server_up(req):
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
-            '{}: {}'.format(check, status.msg)
+            html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
         create_datadog_event(
@@ -296,7 +320,7 @@ def server_up(req):
             alert_type='error', aggregation_key='serverup',
         )
         status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
-        return HttpResponse('<br>'.join(status_messages), status=500)
+        return HttpResponse(''.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
@@ -336,8 +360,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, template_name):
-
+def _login(req, domain_name, custom_login_page, extra_context=None):
+    extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -361,28 +385,39 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
-    if custom_landing_page:
-        template_name = custom_landing_page
-    elif domain_name:
-        domain = Domain.get_by_name(domain_name)
+    context.update(extra_context)
+    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    if not custom_login_page and domain_name:
+        domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
-            'hr_name': domain.display_name() if domain else domain_name,
-            'next': req_params.get('next', '/a/%s/' % domain),
-            'allow_domain_requests': domain.allow_domain_requests,
-            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+            'hr_name': domain_obj.display_name(),
+            'next': req_params.get('next', '/a/%s/' % domain_name),
+            'allow_domain_requests': domain_obj.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
         })
     else:
+        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
-    return auth_view.as_view(template_name=template_name, extra_context=context)(req)
+
+    demo_workflow_ab_v2 = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, req)
+
+    if settings.IS_SAAS_ENVIRONMENT:
+        context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
+
+    response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
+
+    if settings.IS_SAAS_ENVIRONMENT:
+        demo_workflow_ab_v2.update_response(response)
+
+    return response
 
 
 @two_factor_exempt
@@ -396,11 +431,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain, "login_and_password/login.html")
+    return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
 @location_safe
-def domain_login(req, domain, template_name="login_and_password/login.html"):
+def domain_login(req, domain, custom_template_name=None, extra_context=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -409,8 +444,9 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # FYI, the domain context_processor will pick this up and apply the
     # necessary domain contexts:
     req.project = project
-
-    return _login(req, domain, template_name)
+    if custom_template_name is None:
+        custom_template_name = get_custom_login_page(req.get_host())
+    return _login(req, domain, custom_template_name, extra_context)
 
 
 class HQLoginView(LoginView):
@@ -452,6 +488,7 @@ def logout(req):
 
 
 @login_and_domain_required
+@track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
@@ -601,7 +638,7 @@ class BugReportView(View):
             'scale_backend': '<unknown>',
             'has_handoff_info': '<unknown>',
             'project_description': '<unknown>',
-            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
@@ -650,7 +687,7 @@ class BugReportView(View):
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
             ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback'])
+            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
@@ -670,7 +707,7 @@ class BugReportView(View):
 
         # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
+        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
@@ -1066,7 +1103,7 @@ def quick_find(request):
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
         elif redirect and request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
+            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
         else:
             return json_response(doc_info)
 
@@ -1130,11 +1167,12 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-                'created': six.text_type(alert.created),
+                'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,
-            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
+                'domains': ", ".join(alert.domains) if alert.domains else "All domains",
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
         }
 
     @property
@@ -1147,7 +1185,8 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    MaintenanceAlert(active=False, text=alert_text).save()
+    domains = request.POST.get('domains').split() or None
+    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
@@ -1171,61 +1210,11 @@ def deactivate_alert(request):
     return HttpResponseRedirect(reverse('alerts'))
 
 
-class DataTablesAJAXPaginationMixin(object):
-
-    @property
-    def echo(self):
-        return self.request.GET.get('sEcho')
-
-    @property
-    def display_start(self):
-        return int(self.request.GET.get('iDisplayStart'))
-
-    @property
-    def display_length(self):
-        return int(self.request.GET.get('iDisplayLength'))
-
-    @property
-    def search_phrase(self):
-        return self.request.GET.get('sSearch', '').strip()
-
-    def datatables_ajax_response(self, data, total_records, filtered_records=None):
-        return HttpResponse(json.dumps({
-            'sEcho': self.echo,
-            'aaData': data,
-            'iTotalRecords': total_records,
-            'iTotalDisplayRecords': filtered_records or total_records,
-        }))
-
-
-@always_allow_browser_caching
-@login_and_domain_required
-@location_safe
-def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
-    return render(request, template, {
-        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
-        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
-    })
-
-
-# Use instead of djangular's base JSONResponseMixin
-# Adds djng_current_rmi to view context
-class HQJSONResponseMixin(JSONResponseMixin):
-    # Add the output of djng_current_rmi to view context, which requires having
-    # the rest of the context, specifically context['view'], available.
-    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
-    def get_context_data(self, **kwargs):
-        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
-        from djangular.templatetags.djangular_tags import djng_current_rmi
-        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
-        return context
-
-
 def redirect_to_dimagi(endpoint):
     def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
-            'softlayer',
+            'india',
             'staging',
             'changeme',
             'localdev',

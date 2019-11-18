@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
-from django.db import models, migrations
 from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
 
-    replaces = [(b'notifications', '0001_initial'), (b'notifications', '0002_auto_20160504_1904'), (b'notifications', '0003_auto_20160504_2049')]
+    replaces = [('notifications', '0001_initial'), ('notifications', '0002_auto_20160504_1904'), ('notifications', '0003_auto_20160504_2049')]
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

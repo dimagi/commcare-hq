@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from mock.mock import MagicMock
 
 from custom.intrahealth.tests.utils import YeksiTestCase
@@ -52,7 +49,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,
@@ -108,7 +105,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,
@@ -143,65 +140,76 @@ class TestDashboard2(YeksiTestCase):
             ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
              'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
-        self.assertEqual(
-            rows,
-            sorted([
-                [{'html': 'District Sud'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+        self.assertListEqual(
+            rows[0:1],
+            [
+                [{'html': 'DISTRICT PNA'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '100.00%'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'District Khombole'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+            ]
+        )
+        # Current implementation does not guarantee order of rows with the same district name
+        self.assertCountEqual(
+            rows[1:3],
+            [
+                [{'html': 'Dakar'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+            ]
+        )
+        self.assertListEqual(
+            rows[3:],
+            [
+                [{'html': 'District Centre'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'District Gu\xe9diawaye'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
                 [{'html': 'District Joal Fadiouth'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'District Test 2'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                [{'html': 'District Khombole'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
-                [{'html': 'Thies'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}],
+                 {'html': '100.00%'}, {'html': '100.00%'}],
                 [{'html': 'District Mbao'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'District Tivaoune'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'District Pikine'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'District Gu\xe9diawaye'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
                 [{'html': 'District M\xe9kh\xe9'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'DISTRICT PNA'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '100.00%'},
-                 {'html': '100.00%'}, {'html': '100.00%'}],
-                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                [{'html': 'District Pikine'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '0.00%'}, {'html': '0.00%'}],
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Sud'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Test'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}],
+                [{'html': 'District Test 2'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
                 [{'html': 'District Thiadiaye'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Tivaoune'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}],
                 [{'html': 'New York'}, {'html': '19.15%'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': '19.15%'}],
-                [{'html': 'Dakar'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                [{'html': 'Thies'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
-                [{'html': 'District Centre'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '0.00%'}, {'html': '0.00%'}],
-                [{'html': 'District Test'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}]
-            ], key=lambda x: x[0])
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}],
+            ]
         )
         self.assertEqual(
             total_row,
@@ -253,7 +261,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 

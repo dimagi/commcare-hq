@@ -1,26 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django.http import HttpResponse
-from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
+from django.http.response import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
 from django.views.generic import View
 
 from casexml.apps.case.mock import CaseFactory
+from dimagi.utils.web import json_response
 
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.util.view_utils import get_case_or_404
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
-from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
-from corehq import privileges
-from dimagi.utils.web import json_response
+from corehq.util.view_utils import get_case_or_404
 
 from .models import ZapierSubscription
 
@@ -39,7 +36,7 @@ class SubscribeView(View):
         return super(SubscribeView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, *args, **kwargs):
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
 
         subscription = get_subscription_by_url(domain, data['target_url'])
         if subscription:
@@ -86,7 +83,7 @@ class UnsubscribeView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except ValueError:
             return HttpResponseBadRequest()
         url = data.get('target_url')
@@ -112,7 +109,7 @@ class ZapierCreateCase(View):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
         owner_id = request.GET.get('owner_id')
-        properties = json.loads(request.body)
+        properties = json.loads(request.body.decode('utf-8'))
         case_name = properties.pop('case_name')
         user_name = request.GET.get('user')
 
@@ -150,7 +147,7 @@ class ZapierUpdateCase(View):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
         user_name = request.GET.get('user')
-        properties = json.loads(request.body)
+        properties = json.loads(request.body.decode('utf-8'))
         case_id = properties['case_id']
 
         properties.pop('case_id')

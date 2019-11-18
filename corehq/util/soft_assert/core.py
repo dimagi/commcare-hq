@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 import hashlib
 import traceback
@@ -17,18 +15,17 @@ def is_hard_mode():
 
 SoftAssertInfo = namedtuple('SoftAssertInfo',
                             ['traceback', 'count', 'msg', 'key', 'line',
-                             'short_traceback', 'obj', 'breadcrumbs'])
+                             'short_traceback', 'obj'])
 
 
 class SoftAssert(object):
 
     def __init__(self, debug=False, send=None, use_exponential_backoff=True,
-                 include_breadcrumbs=False, skip_frames=0, key_limit=2):
+                 skip_frames=0, key_limit=2):
         assert send
         self.debug = debug
         self.send = send
         self.use_exponential_backoff = use_exponential_backoff
-        self.include_breadcrumbs = include_breadcrumbs
         self.tb_skip = skip_frames + 3
         self.key_limit = key_limit
 
@@ -56,12 +53,11 @@ class SoftAssert(object):
             if not self.use_exponential_backoff or not ExponentialBackoff.should_backoff(tb_id):
                 if msg:
                     msg = msg.replace('\n', '\\n')
-                breadcrumbs = get_breadcrumbs() if self.include_breadcrumbs else None
                 self.send(SoftAssertInfo(traceback=full_tb,
                                          short_traceback=short_tb,
                                          count=count,
                                          msg=msg,
-                                         key=tb_id, line=line, obj=obj, breadcrumbs=breadcrumbs))
+                                         key=tb_id, line=line, obj=obj))
         return assertion
 
 
@@ -76,20 +72,3 @@ def get_traceback(skip=0, limit=None):
     if limit:
         stack = stack[-limit:]
     return ''.join(traceback.format_list(stack))
-
-
-def get_breadcrumbs():
-    breadcrumbs = []
-    try:
-        from raven.contrib.django.raven_compat.models import client
-    except ImportError:
-        pass
-    else:
-        if client.enable_breadcrumbs:
-            crumbs = client.context.breadcrumbs.get_buffer()
-            for crumb in crumbs:
-                breadcrumbs.append(
-                    '{level} {category} {message}'.format(**crumb)
-                )
-
-    return '\n'.join(breadcrumbs)

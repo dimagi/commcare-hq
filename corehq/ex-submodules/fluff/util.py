@@ -1,6 +1,4 @@
 # -*- coding: UTF-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import datetime
 import sqlalchemy
@@ -56,7 +54,7 @@ def get_indicator_model(name, indicator_doc):
 
     calculators = indicator_doc._calculators
     for calc_name in sorted(calculators.keys()):
-        for emitter_name in calculators[calc_name]._fluff_emitters:
+        for emitter_name in sorted(calculators[calc_name]._fluff_emitters):
             col_name = '{0}_{1}'.format(calc_name, emitter_name)
             columns.append(sqlalchemy.Column(
                 col_name,

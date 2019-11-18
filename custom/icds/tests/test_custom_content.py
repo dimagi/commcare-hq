@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
@@ -22,8 +20,6 @@ from custom.icds.const import (
 )
 from custom.icds.messaging.custom_content import (
     GROWTH_MONITORING_XMLNS,
-    get_state_code,
-    get_language_code_for_state,
     render_message,
     person_case_is_migrated_or_opted_out,
     run_indicator_for_usercase,
@@ -260,16 +256,6 @@ class CustomContentTest(BaseICDSTest):
             c.get_list_of_messages(self.user1),
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
         )
-
-    def test_get_state_code(self):
-        self.assertEqual(get_state_code(self.user1.location), 'state1')
-        self.assertIsNone(get_state_code(self.user2.location))
-        self.assertEqual(get_state_code(self.user3.location), 'state1')
-
-    def test_get_language_code_for_state(self):
-        self.assertEqual(get_language_code_for_state(ANDHRA_PRADESH_SITE_CODE), TELUGU)
-        self.assertEqual(get_language_code_for_state(MAHARASHTRA_SITE_CODE), MARATHI)
-        self.assertEqual(get_language_code_for_state(None), HINDI)
 
     def test_render_message(self):
         context = {

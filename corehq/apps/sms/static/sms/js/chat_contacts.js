@@ -1,10 +1,20 @@
-hqDefine('sms/js/chat_contacts', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('sms/js/chat_contacts', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'datatables.bootstrap',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var contactListTable = null;
 
-    function FilterViewModel() {
+    function filterViewModel() {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.filterText = ko.observable();
 
@@ -16,6 +26,7 @@ hqDefine('sms/js/chat_contacts', function () {
             self.filterText("");
             self.performFilter();
         };
+        return self;
     }
 
     $(function () {
@@ -44,16 +55,13 @@ hqDefine('sms/js/chat_contacts', function () {
             "bFilter": true,
             "oLanguage": {
                 "sLengthMenu": gettext("Show ") + "_MENU_" + gettext(" contacts per page"),
-                "sProcessing": '<img src="' + initialPageData.get("ajax_loader") +
-                    '" alt="loading indicator" />' +
-                    gettext("Loading Contacts..."),
+                "sProcessing": "<i class='fa fa-spin fa-spinner'></i>" + gettext("Loading Contacts..."),
                 "sInfo": gettext("Showing _START_ to _END_ of _TOTAL_ contacts"),
                 "sInfoFiltered": gettext("(filtered from _MAX_ total contacts)"),
             },
             "sAjaxSource": initialPageData.reverse("chat_contact_list"),
             "sDom": "lrtip",
         });
-        var filterViewModel = new FilterViewModel();
-        $('#id_filter').koApplyBindings(filterViewModel);
+        $('#id_filter').koApplyBindings(filterViewModel());
     });
 });

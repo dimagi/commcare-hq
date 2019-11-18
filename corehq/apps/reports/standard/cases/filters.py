@@ -1,9 +1,6 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 from collections import Counter
 
-import six
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 
@@ -60,7 +57,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = ['@case_type', 'case_name']
+    DEFAULT_COLUMNS = ['@case_type', 'case_name', 'last_modified']
 
     @property
     def filter_context(self):
@@ -98,7 +95,7 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
     all_properties = [
         {'name': value, 'case_type': case_type, 'count': property_counts[value]}
-        for case_type, values in six.iteritems(all_properties_by_type)
+        for case_type, values in all_properties_by_type.items()
         for value in values
     ]
     return all_properties

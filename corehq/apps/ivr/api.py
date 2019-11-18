@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-from corehq.apps.ivr.models import Call
-from corehq.apps.sms.util import strip_plus
-from corehq.apps.sms.models import INCOMING, PhoneNumber
 from datetime import datetime
+
+from corehq.apps.ivr.models import Call
+from corehq.apps.sms.models import INCOMING, PhoneNumber
+from corehq.apps.sms.util import strip_plus
 
 
 def log_call(phone_number, gateway_session_id, backend=None):

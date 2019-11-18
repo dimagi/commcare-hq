@@ -1,35 +1,46 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import re
 import json
-from couchdbkit.exceptions import ResourceNotFound
-from crispy_forms.bootstrap import InlineField, StrictButton
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Div
+import re
+
 from django import forms
-from django.urls import reverse
-from django.forms.forms import Form
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.forms.fields import *
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
+from django.forms.forms import Form
+from django.urls import reverse
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp import crispy as hqcrispy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from couchdbkit.exceptions import ResourceNotFound
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.layout import Div
+
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.fields import TrimmedCharField
+
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
-from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
-from django.core.exceptions import ValidationError
-from corehq.apps.reminders.forms import validate_time
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (validate_phone_number, strip_plus,
-    get_sms_backend_classes, ALLOWED_SURVEY_DATE_FORMATS)
 from corehq.apps.domain.models import DayTimeWindow
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
-from dimagi.utils.django.fields import TrimmedCharField
-from dimagi.utils.couch.database import iter_docs
-from django.conf import settings
-import six
+from corehq.apps.reminders.forms import validate_time
+from corehq.apps.sms.models import (
+    FORWARD_ALL,
+    FORWARD_BY_KEYWORD,
+    SQLMobileBackend,
+)
+from corehq.apps.sms.util import (
+    ALLOWED_SURVEY_DATE_FORMATS,
+    get_sms_backend_classes,
+    strip_plus,
+    validate_phone_number,
+)
+from corehq.apps.users.models import CommCareUser
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -95,10 +106,7 @@ class ForwardingRuleForm(Form):
     def __init__(self, *args, **kwargs):
         super(ForwardingRuleForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Forwarding Rule Options'),
@@ -118,7 +126,7 @@ class ForwardingRuleForm(Form):
                 ),
             )
         )
-    
+
     def clean_keyword(self):
         forward_type = self.cleaned_data.get("forward_type")
         keyword = self.cleaned_data.get("keyword", "").strip()
@@ -214,6 +222,7 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
+        widget=SelectToggle(choices=ENABLED_DISABLED_CHOICES, attrs={"ko_value": "use_sms_conversation_times"}),
     )
     sms_conversation_times_json = CharField(
         required=False,
@@ -264,10 +273,12 @@ class SettingsForm(Form):
     sms_case_registration_owner_id = CharField(
         required=False,
         label=ugettext_noop("Default Case Owner"),
+        widget=forms.Select(choices=[]),
     )
     sms_case_registration_user_id = CharField(
         required=False,
         label=ugettext_noop("Registration Submitter"),
+        widget=forms.Select(choices=[]),
     )
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
@@ -458,7 +469,6 @@ class SettingsForm(Form):
             ),
             hqcrispy.FieldWithHelpBubble(
                 "use_sms_conversation_times",
-                data_bind="value: use_sms_conversation_times",
                 help_bubble_text=_("When this option is enabled, the system "
                     "will not send automated SMS to chat recipients when "
                     "those recipients are in the middle of a conversation."),
@@ -558,7 +568,7 @@ class SettingsForm(Form):
             self.section_chat,
         ]
 
-        if self._cchq_is_previewer:
+        if self.is_previewer:
             result.append(self.section_internal)
 
         result.append(
@@ -573,17 +583,12 @@ class SettingsForm(Form):
 
         return result
 
-    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, new_reminders_migrator=False,
-            *args, **kwargs):
-        self._cchq_domain = cchq_domain
-        self._cchq_is_previewer = cchq_is_previewer
-        self.new_reminders_migrator = new_reminders_migrator
+    def __init__(self, data=None, domain=None, is_previewer=False, *args, **kwargs):
+        self.domain = domain
+        self.is_previewer = is_previewer
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-lg-8'
+        self.helper = HQFormHelper()
 
         self.helper.layout = crispy.Layout(
             *self.sections
@@ -621,9 +626,8 @@ class SettingsForm(Form):
         current_values = {}
         for field_name in self.fields.keys():
             value = self[field_name].value()
-            if field_name in ["restricted_sms_times_json",
-                "sms_conversation_times_json"]:
-                if isinstance(value, six.string_types):
+            if field_name in ["restricted_sms_times_json", "sms_conversation_times_json"]:
+                if isinstance(value, str):
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value
@@ -675,12 +679,12 @@ class SettingsForm(Form):
         return value
 
     def clean_use_custom_chat_template(self):
-        if not self._cchq_is_previewer:
+        if not self.is_previewer:
             return None
         return self.cleaned_data.get("use_custom_chat_template") == CUSTOM
 
     def clean_custom_chat_template(self):
-        if not self._cchq_is_previewer:
+        if not self.is_previewer:
             return None
         value = self._clean_dependent_field("use_custom_chat_template",
             "custom_chat_template")
@@ -767,7 +771,7 @@ class SettingsForm(Form):
     def get_user_group_or_location(self, object_id):
         try:
             return SQLLocation.active_objects.get(
-                domain=self._cchq_domain,
+                domain=self.domain,
                 location_id=object_id,
                 location_type__shares_cases=True,
             )
@@ -776,8 +780,10 @@ class SettingsForm(Form):
 
         try:
             group = Group.get(object_id)
-            if group.doc_type == 'Group' and group.domain == self._cchq_domain and group.case_sharing:
+            if group.doc_type == 'Group' and group.domain == self.domain and group.case_sharing:
                 return group
+            elif group.is_deleted:
+                return None
         except ResourceNotFound:
             pass
 
@@ -786,7 +792,7 @@ class SettingsForm(Form):
     def get_user(self, object_id):
         try:
             user = CommCareUser.get(object_id)
-            if user.doc_type == 'CommCareUser' and user.domain == self._cchq_domain:
+            if user.doc_type == 'CommCareUser' and user.domain == self.domain:
                 return user
         except ResourceNotFound:
             pass
@@ -830,7 +836,7 @@ class SettingsForm(Form):
         return int(self.cleaned_data.get("sms_conversation_length"))
 
     def clean_custom_daily_outbound_sms_limit(self):
-        if not self._cchq_is_previewer:
+        if not self.is_previewer:
             return None
 
         if self.cleaned_data.get('override_daily_outbound_sms_limit') != ENABLED:
@@ -844,8 +850,8 @@ class SettingsForm(Form):
 
 
 class BackendForm(Form):
-    _cchq_domain = None
-    _cchq_backend_id = None
+    domain = None
+    backend_id = None
     name = CharField(
         label=ugettext_noop("Name")
     )
@@ -874,7 +880,7 @@ class BackendForm(Form):
 
     @property
     def is_global_backend(self):
-        return self._cchq_domain is None
+        return self.domain is None
 
     @property
     def general_fields(self):
@@ -897,8 +903,8 @@ class BackendForm(Form):
                 ),
             ])
 
-        if self._cchq_backend_id:
-            backend = SQLMobileBackend.load(self._cchq_backend_id)
+        if self.backend_id:
+            backend = SQLMobileBackend.load(self.backend_id)
             if backend.show_inbound_api_key_during_edit:
                 self.fields['inbound_api_key'].initial = backend.inbound_api_key
                 fields.append(crispy.Field('inbound_api_key'))
@@ -907,13 +913,10 @@ class BackendForm(Form):
 
     def __init__(self, *args, **kwargs):
         button_text = kwargs.pop('button_text', _("Create SMS Gateway"))
-        self._cchq_domain = kwargs.pop('domain')
-        self._cchq_backend_id = kwargs.pop('backend_id')
+        self.domain = kwargs.pop('domain')
+        self.backend_id = kwargs.pop('backend_id')
         super(BackendForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -940,7 +943,7 @@ class BackendForm(Form):
             ),
         )
 
-        if self._cchq_backend_id:
+        if self.backend_id:
             #   When editing, don't allow changing the name because name might be
             # referenced as a contact-level backend preference.
             #   By setting disabled to True, Django makes sure the value won't change
@@ -957,7 +960,7 @@ class BackendForm(Form):
             value = value.strip().upper()
         if value is None or value == "":
             raise ValidationError(_("This field is required."))
-        if re.compile("\s").search(value) is not None:
+        if re.compile(r"\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
         if self.is_global_backend:
@@ -965,15 +968,15 @@ class BackendForm(Form):
             # ensure name is not duplicated among other global backends
             is_unique = SQLMobileBackend.name_is_unique(
                 value,
-                backend_id=self._cchq_backend_id
+                backend_id=self.backend_id
             )
         else:
             # We're using the form to create a domain-level backend, so
             # ensure name is not duplicated among other backends owned by this domain
             is_unique = SQLMobileBackend.name_is_unique(
                 value,
-                domain=self._cchq_domain,
-                backend_id=self._cchq_backend_id
+                domain=self.domain,
+                backend_id=self.backend_id
             )
 
         if not is_unique:
@@ -1024,10 +1027,7 @@ class BackendMapForm(Form):
         self.fields['catchall_backend_id'].choices = backend_choices
 
     def setup_crispy(self):
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-2 col-md-2'
-        self.helper.field_class = 'col-sm-5 col-md-5'
+        self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1182,10 +1182,7 @@ class SendRegistrationInvitationsForm(Form):
         super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
         self.set_app_id_choices()
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 'app_id',
@@ -1269,20 +1266,18 @@ class InitiateAddSMSBackendForm(Form):
             if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
                 friendly_name = klass.get_generic_name()
                 backend_choices.append((api_id, friendly_name))
+        backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
         self.fields['hq_api_id'].choices = backend_choices
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_class = "form form-horizontal"
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             hqcrispy.B3MultiField(
                 _("Create Another Gateway"),
                 InlineField('action'),
-                Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
+                Div(InlineField('hq_api_id', css_class="ko-select2"), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
                     mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
-                    css_class='btn-success',
+                    css_class='btn-primary',
                     type='submit',
                     style="margin-left:5px;"
                 ), css_class='col-sm-3 col-md-2 col-lg-2'),
@@ -1326,10 +1321,7 @@ class SubscribeSMSForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(SubscribeSMSForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
-        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Subscribe settings'),
@@ -1366,11 +1358,8 @@ class ComposeMessageForm(forms.Form):
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
         super(ComposeMessageForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_action = reverse('send_to_recipients', args=[domain])
-        self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-md-10 col-lg-10'
         self.helper.layout = crispy.Layout(
             crispy.Field('recipients', rows=2, css_class='sms-typeahead'),
             crispy.Field('message', rows=2),

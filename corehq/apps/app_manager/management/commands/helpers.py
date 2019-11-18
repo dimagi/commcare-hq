@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import logging
+from collections import namedtuple
+
 from django.core.management import BaseCommand
+
 from corehq.apps.app_manager.models import Application
-from corehq.util.couch import iter_update, DocUpdate
+from corehq.util.couch import DocUpdate, iter_update
 
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')

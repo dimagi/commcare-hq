@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import decimal
 from jsonobject.base_properties import AbstractDateProperty
@@ -70,7 +68,7 @@ class DateTimeProperty(AbstractDateProperty):
         return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
-re_trans_datetime = re.compile("""
+re_trans_datetime = re.compile(r"""
     ^
     (\d{4})  # year
     -
@@ -91,7 +89,7 @@ re_trans_datetime = re.compile("""
 # this is like jsonobject.api.re_datetime,
 # but without the "time" part being optional
 # i.e. I just removed (...)? surrounding the second two lines
-re_loose_datetime = re.compile("""
+re_loose_datetime = re.compile(r"""
     ^
     (\d{4})  # year
     \D?

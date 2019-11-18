@@ -2,22 +2,22 @@
 
 <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
 <div id="deleted-app-modal" class="modal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">{% trans 'Oops! This application was deleted.' %}</h4>
-            </div>
-            <div class="modal-body">
-                <p>{% trans 'If you want your application back, click Restore.' %}</p>
-            </div>
-            <div class="modal-footer">
-                <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
-                    {% trans "Restore" %}
-                </a>
-                <a href="#" class="btn btn-default" data-dismiss="modal">
-                    {% trans "No thanks, get me out of here" %}
-                </a>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans 'Oops! This application was deleted.' %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>{% trans 'If you want your application back, click Restore.' %}</p>
+      </div>
+      <div class="modal-footer">
+        <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
+          {% trans "Restore" %}
+        </a>
+        <a href="#" class="btn btn-default" data-dismiss="modal">
+          {% trans "No thanks, get me out of here" %}
+        </a>
+      </div>
     </div>
+  </div>
 </div>

@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import os
 import sys
 from django.core.management import BaseCommand, CommandError
-from corehq.blobs.migrate import EXPORTERS
+from corehq.blobs.export import EXPORTERS
 from corehq.blobs.zipdb import get_export_filename
 from corehq.util.decorators import change_log_level
 

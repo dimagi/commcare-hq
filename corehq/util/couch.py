@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -8,7 +5,6 @@ from copy import deepcopy
 from functools import partial
 from time import sleep
 
-import requests
 from couchdbkit import ResourceNotFound, BulkSaveError, Document
 from django.conf import settings
 from django.http import Http404
@@ -17,7 +13,6 @@ from jsonobject.exceptions import WrappingAttributeError
 from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
 from memoized import memoized
-from dimagi.utils.requestskit import get_auth
 
 
 class DocumentNotFound(Exception):
@@ -89,7 +84,7 @@ def get_classes_by_doc_type():
             # exclude abstract base classes (which don't have an app_label)
             pass
         else:
-            # a base class (e.g. CommCareCase) wins over a subclass (e.g. BiharCase)
+            # a base class (e.g. CommCareCase) wins over a subclass (e.g. SupplyPointCase)
             if klass._doc_type not in classes_by_doc_type:
                 classes_by_doc_type[klass._doc_type] = klass
         queue.extend(klass.__subclasses__())
@@ -259,15 +254,15 @@ def send_keys_to_couch(db, keys):
     Copied from dimagi-utils get_docs. Returns a response for every key.
     """
     url = db.uri + '/_all_docs'
-    r = requests.post(url=url,
+    rsession = db._request_session
+    r = rsession.post(url=url,
                       data=json.dumps({'keys': [_f for _f in keys if _f]}),
                       headers={'content-type': 'application/json'},
-                      auth=get_auth(url),
                       params={'include_docs': 'true'})
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3, verbose=False):
+def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -309,8 +304,8 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
         return updated_doc_id
 
     def _iter_update(doc_ids, try_num):
-        with IterDB(db, chunksize=100) as iter_db:
-            for chunk in chunked(set(doc_ids), 100):
+        with IterDB(db, chunksize=chunksize) as iter_db:
+            for chunk in chunked(set(doc_ids), chunksize):
                 for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')
                     doc_id = res.get('id', None)

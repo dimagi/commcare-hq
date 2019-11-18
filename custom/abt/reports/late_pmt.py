@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from dateutil.rrule import rrule, DAILY, MO, TU, WE, TH, FR, SA
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
@@ -15,14 +12,15 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent
+from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent, OUTGOING
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
     LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
 
 
 class LatePMTUsers(SqlData):
-    engine_id = 'default'
+    engine_id = DEFAULT_ENGINE_ID
 
     @property
     def table_name(self):
@@ -36,7 +34,6 @@ class LatePMTUsers(SqlData):
     def filters(self):
         filters = []
         filter_fields = [
-            'user_id',
             'country',
             'level_1',
             'level_2',
@@ -46,6 +43,8 @@ class LatePMTUsers(SqlData):
         for filter_field in filter_fields:
             if filter_field in self.config and self.config[filter_field]:
                 filters.append(EQ(filter_field, filter_field))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(EQ('doc_id', 'user_id'))
         return filters
 
     @property
@@ -84,6 +83,12 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     slug = 'late_pmt'
     name = "Late PMT"
 
+    languages = (
+        'en',
+        'fra',
+        'por'
+    )
+
     fields = [
         DatespanFilter,
         UsernameFilter,
@@ -116,12 +121,12 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def enddate(self):
-        return self.request.datespan.enddate
+        return self.request.datespan.end_of_end_day
 
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Date Submitted")),
+            DataTablesColumn(_("Missing Report Date")),
             DataTablesColumn(_("Username")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Country")),
@@ -133,7 +138,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def query_for_group_a(self):
+    def get_users_in_group_a(self):
         data = SMS.objects.filter(
             domain=self.domain,
             couch_recipient_doc_type='CommCareUser',
@@ -143,6 +148,8 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 self.startdate,
                 self.enddate
             )
+        ).exclude(
+            text="123"
         ).values('date', 'couch_recipient').annotate(
             number_of_sms=Count('couch_recipient')
         )
@@ -187,6 +194,9 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 group
             ]
 
+        def not_in_group(key, group):
+            return key not in group
+
         users = self.get_users
         dates = rrule(
             DAILY,
@@ -195,20 +205,18 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
         rows = []
-        users_in_group_a = []
-        users_in_group_b = []
+        sub_status = self.report_config['submission_status']
         if users:
-            if self.report_config['submission_status'] in ['group_a', '']:
-                users_in_group_a = self.query_for_group_a
-            elif self.report_config['submission_status'] in ['group_b', '']:
-                users_in_group_b = self.get_users_in_group_b
+            group_a = self.get_users_in_group_a
+            group_b = self.get_users_in_group_b
 
             for date in dates:
                 for user in users:
-                    if (date.date(), user['user_id']) not in users_in_group_a:
-                        group = 'No PMT data Submitted'
-                    elif (date.date(), user['user_id']) not in users_in_group_b:
-                        group = 'Incorrect PMT data Submitted'
+                    key = (date.date(), user['user_id'])
+                    if not_in_group(key, group_a) and sub_status != 'group_b':
+                        group = _('No PMT data Submitted')
+                    elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':
+                        group = _('Incorrect PMT data Submitted')
                     else:
                         continue
                     rows.append(_to_report_format(date, user, group))

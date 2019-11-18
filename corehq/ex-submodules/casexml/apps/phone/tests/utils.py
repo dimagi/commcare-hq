@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import (
@@ -81,7 +79,7 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
         project or Domain(name=restore_user.domain),
         restore_user,
         params,
-        async=False,
+        is_async=False,
         overwrite_cache=False
     )
     if last_sync:

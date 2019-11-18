@@ -1,14 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from crispy_forms.helper import FormHelper
 from datetime import datetime, timedelta
 from dateutil import parser
 from django.conf import settings
@@ -23,23 +19,24 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Form as CCHQForm, AdvancedForm
+from corehq.apps.app_manager.models import Form as AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reminders.util import get_form_list
+from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -66,15 +63,12 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
-import six
-from six.moves import range
-from six.moves import filter
 
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
 
-    if not isinstance(value, (six.text_type, str)) or not re.match('^\d?\d:\d\d$', value):
+    if not isinstance(value, (str, str)) or not re.match(r'^\d?\d:\d\d$', value):
         raise error
 
     try:
@@ -88,7 +82,7 @@ def validate_time(value):
 def validate_date(value):
     error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
 
-    if not isinstance(value, (six.text_type, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
+    if not isinstance(value, (str, str)) or not re.match(r'^\d\d\d\d-\d\d-\d\d$', value):
         raise error
 
     try:
@@ -113,11 +107,9 @@ def validate_int(value, min_value):
     return value
 
 
-class CommaSeparatedListField(CharField):
-    def to_python(self, value):
-        if not value:
-            return []
-        return value.split(',')
+class RelaxedMultipleChoiceField(MultipleChoiceField):
+    def validate(self, value):
+        pass
 
 
 def get_system_admin_label(data_bind=""):
@@ -144,7 +136,8 @@ class ContentForm(Form):
         required=False,
         widget=HiddenInput,
     )
-    form_unique_id = ChoiceField(
+    # The app id and form unique id of this form, separated by '|'
+    app_and_form_unique_id = ChoiceField(
         required=False,
         label=ugettext_lazy("Form"),
     )
@@ -196,10 +189,10 @@ class ContentForm(Form):
 
         self.schedule_form = kwargs.pop('schedule_form')
         super(ContentForm, self).__init__(*args, **kwargs)
-        self.set_form_unique_id_choices()
+        self.set_app_and_form_unique_id_choices()
 
-    def set_form_unique_id_choices(self):
-        self.fields['form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
+    def set_app_and_form_unique_id_choices(self):
+        self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
@@ -229,11 +222,11 @@ class ContentForm(Form):
 
         return cleaned_value
 
-    def clean_form_unique_id(self):
+    def clean_app_and_form_unique_id(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
             return None
 
-        value = self.cleaned_data.get('form_unique_id')
+        value = self.cleaned_data.get('app_and_form_unique_id')
         if not value:
             raise ValidationError(_("This field is required"))
 
@@ -323,8 +316,11 @@ class ContentForm(Form):
                 message=self.cleaned_data['message'],
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
+            combined_id = self.cleaned_data['app_and_form_unique_id']
+            app_id, form_unique_id = split_combined_id(combined_id)
             return SMSSurveyContent(
-                form_unique_id=self.cleaned_data['form_unique_id'],
+                app_id=app_id,
+                form_unique_id=form_unique_id,
                 expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
                 reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
                 submit_partially_completed_forms=
@@ -369,7 +365,10 @@ class ContentForm(Form):
                 ),
             ),
             crispy.Div(
-                crispy.Field('form_unique_id'),
+                crispy.Field(
+                    'app_and_form_unique_id',
+                    css_class="hqwebapp-select2",
+                ),
                 data_bind=(
                     "visible: $root.content() === '%s' || $root.content() === '%s'" %
                     (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_IVR_SURVEY)
@@ -432,7 +431,7 @@ class ContentForm(Form):
         ]
 
     @staticmethod
-    def compute_initial(content):
+    def compute_initial(domain, content):
         """
         :param content: An instance of a subclass of corehq.messaging.scheduling.models.abstract.Content
         """
@@ -443,7 +442,10 @@ class ContentForm(Form):
             result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
-            result['form_unique_id'] = content.form_unique_id
+            result['app_and_form_unique_id'] = get_combined_id(
+                content.app_id,
+                content.form_unique_id
+            )
             result['survey_expiration_in_hours'] = content.expire_after // 60
             if (content.expire_after % 60) != 0:
                 # The old framework let you enter minutes. If it's not an even number of hours, round up.
@@ -452,18 +454,21 @@ class ContentForm(Form):
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
                 result['survey_reminder_intervals'] = \
-                    ', '.join(six.text_type(i) for i in content.reminder_intervals)
+                    ', '.join(str(i) for i in content.reminder_intervals)
             else:
                 result['survey_reminder_intervals_enabled'] = 'N'
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
-            result['form_unique_id'] = content.form_unique_id
-            result['ivr_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
+            result['app_and_form_unique_id'] = get_combined_id(
+                content.app_id,
+                content.form_unique_id
+            )
+            result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
             result['max_question_attempts'] = content.max_question_attempts
         elif isinstance(content, SMSCallbackContent):
             result['message'] = content.message
-            result['sms_callback_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
+            result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -580,7 +585,7 @@ class CustomEventForm(ContentForm):
         return minutes_to_wait
 
     @staticmethod
-    def compute_initial(event):
+    def compute_initial(domain, event):
         """
         :param event: An instance of a subclass of corehq.messaging.scheduling.models.abstract.Event
         """
@@ -601,7 +606,7 @@ class CustomEventForm(ContentForm):
         else:
             raise TypeError("Unexpected event type: %s" % type(event))
 
-        result.update(ContentForm.compute_initial(event.content))
+        result.update(ContentForm.compute_initial(domain, event.content))
 
         return result
 
@@ -962,7 +967,7 @@ class ScheduleForm(Form):
     )
     active = ChoiceField(
         required=True,
-        label='',
+        label=ugettext_lazy('Status'),
         choices=(
             ('Y', ugettext_lazy("Active")),
             ('N', ugettext_lazy("Inactive")),
@@ -987,8 +992,8 @@ class ScheduleForm(Form):
         label=ugettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
-            tuple((six.text_type(x), '') for x in range(-3, 0)) +
-            tuple((six.text_type(x), '') for x in range(1, 29))
+            tuple((str(x), '') for x in range(-3, 0)) +
+            tuple((str(x), '') for x in range(1, 29))
         )
     )
     send_time_type = ChoiceField(
@@ -1045,17 +1050,20 @@ class ScheduleForm(Form):
             (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, ugettext_lazy("Case Groups")),
         )
     )
-    user_recipients = CommaSeparatedListField(
+    user_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
-    user_group_recipients = CommaSeparatedListField(
+    user_group_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
-    user_organization_recipients = CommaSeparatedListField(
+    user_organization_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     include_descendant_locations = BooleanField(
         required=False,
@@ -1068,13 +1076,15 @@ class ScheduleForm(Form):
             ('Y', ugettext_lazy("Only users at the following organization levels")),
         ),
     )
-    location_types = CommaSeparatedListField(
+    location_types = RelaxedMultipleChoiceField(
         required=False,
         label='',
+        widget=SelectMultiple(choices=[]),
     )
-    case_group_recipients = CommaSeparatedListField(
+    case_group_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("Case Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     content = ChoiceField(
         required=True,
@@ -1134,6 +1144,18 @@ class ScheduleForm(Form):
 
     use_advanced_user_data_filter = True
 
+    @classmethod
+    def get_send_frequency_by_ui_type(cls, ui_type):
+        return {
+            Schedule.UI_TYPE_IMMEDIATE: cls.SEND_IMMEDIATELY,
+            Schedule.UI_TYPE_DAILY: cls.SEND_DAILY,
+            Schedule.UI_TYPE_WEEKLY: cls.SEND_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY: cls.SEND_MONTHLY,
+            Schedule.UI_TYPE_CUSTOM_DAILY: cls.SEND_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE: cls.SEND_CUSTOM_IMMEDIATE,
+            Schedule.UI_TYPE_UNKNOWN: None,
+        }[ui_type]
+
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
         # Don't let the result of one short-circuit the expression and prevent calling the others.
@@ -1192,23 +1214,23 @@ class ScheduleForm(Form):
     def add_initial_for_weekly_schedule(self, initial):
         weekdays = self.initial_schedule.get_weekdays()
         initial['send_frequency'] = self.SEND_WEEKLY
-        initial['weekdays'] = [six.text_type(day) for day in weekdays]
+        initial['weekdays'] = [str(day) for day in weekdays]
 
     def add_initial_for_monthly_schedule(self, initial):
         initial['send_frequency'] = self.SEND_MONTHLY
-        initial['days_of_month'] = [six.text_type(e.day) for e in self.initial_schedule.memoized_events]
+        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
 
     def add_initial_for_custom_daily_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_DAILY
         initial['custom_event_formset'] = [
-            CustomEventForm.compute_initial(event)
+            CustomEventForm.compute_initial(self.domain, event)
             for event in self.initial_schedule.memoized_events
         ]
 
     def add_initial_for_custom_immediate_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_IMMEDIATE
         initial['custom_event_formset'] = [
-            CustomEventForm.compute_initial(event)
+            CustomEventForm.compute_initial(self.domain, event)
             for event in self.initial_schedule.memoized_events
         ]
 
@@ -1273,13 +1295,13 @@ class ScheduleForm(Form):
 
         initial.update({
             'recipient_types': list(recipient_types),
-            'user_recipients': ','.join(user_recipients),
-            'user_group_recipients': ','.join(user_group_recipients),
-            'user_organization_recipients': ','.join(user_organization_recipients),
-            'case_group_recipients': ','.join(case_group_recipients),
+            'user_recipients': user_recipients,
+            'user_group_recipients': user_group_recipients,
+            'user_organization_recipients': user_organization_recipients,
+            'case_group_recipients': case_group_recipients,
             'include_descendant_locations': self.initial_schedule.include_descendant_locations,
             'restrict_location_types': 'Y' if len(self.initial_schedule.location_type_filter) > 0 else 'N',
-            'location_types': ','.join(six.text_type(i) for i in self.initial_schedule.location_type_filter),
+            'location_types': [str(i) for i in self.initial_schedule.location_type_filter],
         })
 
     def add_initial_for_content(self, initial):
@@ -1310,7 +1332,7 @@ class ScheduleForm(Form):
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
-    def compute_initial(self):
+    def compute_initial(self, domain):
         result = {}
         schedule = self.initial_schedule
         if schedule:
@@ -1384,18 +1406,17 @@ class ScheduleForm(Form):
         return self.initial_schedule and self.initial_schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE
 
     @memoized
-    def get_form_and_app(self, form_unique_id):
+    def get_form_and_app(self, app_and_form_unique_id):
         """
         Returns the form and app associated with the primary application
         document (i.e., not a build).
         """
         error_msg = _("Please choose a form")
         try:
-            form, app = CCHQForm.get_form(form_unique_id, and_app=True)
+            app_id, form_unique_id = split_combined_id(app_and_form_unique_id)
+            app = get_app(self.domain, app_id)
+            form = app.get_form(form_unique_id)
         except:
-            raise ValidationError(error_msg)
-
-        if app.domain != self.domain:
             raise ValidationError(error_msg)
 
         return form, app
@@ -1429,14 +1450,15 @@ class ScheduleForm(Form):
         schedule_form_initial = {}
         standalone_content_form_initial = {}
         if schedule:
-            schedule_form_initial = self.compute_initial()
+            schedule_form_initial = self.compute_initial(domain)
             if schedule.ui_type in (
                 Schedule.UI_TYPE_IMMEDIATE,
                 Schedule.UI_TYPE_DAILY,
                 Schedule.UI_TYPE_WEEKLY,
                 Schedule.UI_TYPE_MONTHLY,
             ):
-                standalone_content_form_initial = ContentForm.compute_initial(schedule.memoized_events[0].content)
+                standalone_content_form_initial = ContentForm.compute_initial(domain,
+                                                                              schedule.memoized_events[0].content)
 
         super(ScheduleForm, self).__init__(*args, initial=schedule_form_initial, **kwargs)
         self.standalone_content_form = ContentForm(
@@ -1486,11 +1508,8 @@ class ScheduleForm(Form):
 
     @staticmethod
     def create_form_helper():
-        helper = FormHelper()
+        helper = HQFormHelper()
         helper.form_tag = False
-        helper.form_class = 'form form-horizontal'
-        helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         return helper
 
     @cached_property
@@ -1530,14 +1549,8 @@ class ScheduleForm(Form):
     def get_before_content_layout_fields(self):
         return [
             crispy.Fieldset(
-                '',
-                hqcrispy.B3MultiField(
-                    '',
-                    crispy.Div(
-                        twbscrispy.InlineField('active'),
-                        css_class='col-sm-3',
-                    ),
-                ),
+                _("Scheduling"),
+                crispy.Field('active'),
             ),
             crispy.Fieldset(
                 self.scheduling_fieldset_legend,
@@ -1553,7 +1566,7 @@ class ScheduleForm(Form):
                 hqcrispy.B3MultiField(
                     '',
                     crispy.HTML(
-                        '<span data-bind="click: addCustomEvent" class="btn btn-success">'
+                        '<span data-bind="click: addCustomEvent" class="btn btn-primary">'
                         '<i class="fa fa-plus"></i> %s</span>'
                         % _("Add Event")
                     ),
@@ -1741,12 +1754,10 @@ class ScheduleForm(Form):
 
     def get_recipients_layout_fields(self):
         return [
-            hqcrispy.B3MultiField(
-                _("Recipient(s)"),
-                crispy.Field(
-                    'recipient_types',
-                    template='scheduling/partials/recipient_types_picker.html',
-                ),
+            crispy.Field(
+                'recipient_types',
+                data_bind="selectedOptions: recipient_types",
+                style="width: 100%;"
             ),
             crispy.Div(
                 crispy.Field(
@@ -1898,7 +1909,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for user_id in value.strip().split(','):
+        for user_id in value:
             user_id = user_id.strip()
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if user and not user.is_deleted():
@@ -1918,7 +1929,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for group_id in value.strip().split(','):
+        for group_id in value:
             group_id = group_id.strip()
             group = Group.get(group_id)
             if group.doc_type != 'Group' or group.domain != self.domain:
@@ -1935,7 +1946,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_id in value.strip().split(','):
+        for location_id in value:
             location_id = location_id.strip()
             try:
                 location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
@@ -1953,7 +1964,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_type_id in value.strip().split(','):
+        for location_type_id in value:
             location_type_id = location_type_id.strip()
             try:
                 location_type = LocationType.objects.get(domain=self.domain, pk=location_type_id)
@@ -1971,7 +1982,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for case_group_id in value.strip().split(','):
+        for case_group_id in value:
             case_group_id = case_group_id.strip()
             case_group = CommCareCaseGroup.get(case_group_id)
             if case_group.doc_type != 'CommCareCaseGroup' or case_group.domain != self.domain:
@@ -2262,7 +2273,7 @@ class ScheduleForm(Form):
             except Exception:
                 raise ValidationError(err)
             if (not isinstance(value, list) or not value or
-                    any(not isinstance(v, six.text_type) for v in value)):
+                    any(not isinstance(v, str) for v in value)):
                 raise ValidationError(err)
         else:
             value = [value]
@@ -2349,21 +2360,13 @@ class ScheduleForm(Form):
         else:
             raise ValueError("Unexpected send_time_type: %s" % event_type)
 
-    def assert_alert_schedule(self, schedule):
-        if not isinstance(schedule, AlertSchedule):
-            raise TypeError("Expected AlertSchedule")
-
-    def assert_timed_schedule(self, schedule):
-        if not isinstance(schedule, TimedSchedule):
-            raise TypeError("Expected TimedSchedule")
-
     def save_immediate_schedule(self):
         content = self.standalone_content_form.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_simple_alert(self.domain, content,
@@ -2379,7 +2382,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_daily_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2410,7 +2413,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_weekly_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2447,7 +2450,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_monthly_schedule(
                 self.distill_model_timed_event(),
                 sorted_days_of_month,
@@ -2486,7 +2489,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_custom_daily_schedule(
                 event_and_content_objects,
                 total_iterations=total_iterations,
@@ -2515,7 +2518,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_custom_alert(event_and_content_objects, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects,
@@ -2593,8 +2596,8 @@ class BroadcastForm(ScheduleForm):
         result.extend(super(BroadcastForm, self).get_scheduling_layout_fields())
         return result
 
-    def compute_initial(self):
-        result = super(BroadcastForm, self).compute_initial()
+    def compute_initial(self, domain):
+        result = super(BroadcastForm, self).compute_initial(self.domain)
         if self.initial_broadcast:
             result['schedule_name'] = self.initial_broadcast.name
             self.add_initial_recipients(self.initial_broadcast.recipients, result)
@@ -2810,15 +2813,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    skip_running_rule_post_save = BooleanField(
-        required=False,
-        label=ugettext_lazy("Skip running rule post save"),
-    )
-
     allow_custom_immediate_schedule = True
 
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
-        self.new_reminders_migrator = kwargs.pop('new_reminders_migrator', False)
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
@@ -2848,16 +2845,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-    def split_app_and_form_unique_id(self, value):
-        return value.split('|')
-
     @property
     def current_visit_scheduler_form(self):
         value = self['visit_scheduler_app_and_form_unique_id'].value()
         if not value:
             return {}
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        app_id, form_unique_id = split_combined_id(value)
         try:
             form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         except:
@@ -2961,8 +2955,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 # capturing any number of name, value pairs
                 break
 
-    def compute_initial(self):
-        result = super(ConditionalAlertScheduleForm, self).compute_initial()
+    def compute_initial(self, domain):
+        result = super(ConditionalAlertScheduleForm, self).compute_initial(self.domain)
 
         if self.initial_rule:
             action_definition = self.initial_rule.memoized_actions[0].definition
@@ -3009,7 +3003,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_offset'] = abs(schedule.start_offset)
 
                 if schedule.start_day_of_week >= 0:
-                    result['start_day_of_week'] = six.text_type(schedule.start_day_of_week)
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
 
             if schedule.stop_date_case_property_name:
                 result['stop_date_case_property_enabled'] = self.YES
@@ -3128,6 +3122,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
                     css_class='col-sm-4',
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("This cannot be changed after initial configuration."),
+                    ),
+                    css_class='col-sm-12',
+                ),
             ),
             hqcrispy.B3MultiField(
                 _("Use case property stop date"),
@@ -3174,9 +3175,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: capture_custom_metadata_item() === 'Y'",
                 ),
             ])
-
-        if self.new_reminders_migrator:
-            result.append(crispy.Field('skip_running_rule_post_save'))
 
         return result
 
@@ -3327,7 +3325,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if not value:
             raise ValidationError(_("This field is required"))
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        app_id, form_unique_id = split_combined_id(value)
         form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
 
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
@@ -3367,7 +3365,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if value is None or value <= 0:
             raise ValidationError(_("Please enter a number greater than 0"))
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(visit_scheduler_app_and_form_unique_id)
+        app_id, form_unique_id = split_combined_id(visit_scheduler_app_and_form_unique_id)
         form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         self.validate_visit(form, value - 1)
 
@@ -3438,7 +3436,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
 
-        app_id, form_unique_id = self.split_app_and_form_unique_id(
+        app_id, form_unique_id = split_combined_id(
             self.cleaned_data['visit_scheduler_app_and_form_unique_id']
         )
 
@@ -3574,26 +3572,28 @@ class ConditionalAlertForm(Form):
             raise ValueError("Initial values are set by the form")
 
         if self.initial_rule:
-            kwargs['initial'] = self.compute_initial()
+            kwargs['initial'] = self.compute_initial(domain)
 
         super(ConditionalAlertForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                "",
-                crispy.Field('name'),
+                _("Basic Information"),
+                crispy.Field('name', data_bind="value: name, valueUpdate: 'afterkeydown'"),
             ),
         )
 
-    def compute_initial(self):
+    def compute_initial(self, domain):
         return {
             'name': self.initial_rule.name,
         }
+
+    @property
+    def rule_name(self):
+        return self.cleaned_data.get('name')
 
 
 class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):

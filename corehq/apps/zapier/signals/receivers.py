@@ -1,13 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.db.models.signals import pre_save, post_delete
+from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
+
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpBadRequest
 
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
+from corehq.motech.repeaters.models import FormRepeater
 
 
 @receiver(pre_save, sender=ZapierSubscription)

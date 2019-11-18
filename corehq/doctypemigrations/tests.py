@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 from copy import deepcopy
 from django.test import TestCase
@@ -12,7 +10,6 @@ from corehq.doctypemigrations.migrator import Migrator
 from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.couch.bulk import get_docs
 from django.conf import settings
-from six.moves import zip
 
 
 class TestDocTypeMigrations(TestCase):
@@ -33,13 +30,7 @@ class TestDocTypeMigrations(TestCase):
 
         self.docs = [
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
-            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com',
-             '_attachments': {
-                 "greeting.txt": {
-                     "content_type": "text/plain", "data": base64.b64encode("hi"),
-                     "digest": "md5-QTVOnBwGnrw6Tx9YG1ZRyA==", "revpos": 1,
-                 }
-             }},
+            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
             {'doc_type': 'Group', 'name': 'User Group'},
             {'doc_type': 'Group-Deleted', 'name': 'Deleted User Group'},
         ]

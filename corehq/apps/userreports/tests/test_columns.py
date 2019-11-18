@@ -1,30 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
-from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
 
+from sqlagg import SumWhen
+
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
 from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
 from corehq.apps.userreports.reports.factory import ReportColumnFactory
-from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
+from corehq.apps.userreports.reports.specs import (
+    AggregateDateColumn,
+    FieldColumn,
+    PercentageColumn,
+)
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
-
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
-from six.moves import range
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -60,7 +64,7 @@ class TestFieldColumn(SimpleTestCase):
             'default',
             'percent_of_total',
         ]:
-            self.assertEquals(FieldColumn, type(
+            self.assertEqual(FieldColumn, type(
                 ReportColumnFactory.from_spec({
                     "aggregation": "simple",
                     "field": "doc_id",
@@ -308,7 +312,7 @@ class TestExpandedColumn(TestCase):
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
-        self.assertEqual(cols[1].view.whens, {'negative': 1})
+        self.assertEqual(cols[1].view.whens, [['negative', 1]])
 
     def test_none_in_values(self):
         """
@@ -337,7 +341,7 @@ class TestExpandedColumn(TestCase):
 
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
-        self.assertEqual(sorted(expected_rows), sorted(data))
+        self.assertItemsEqual(expected_rows, data)
 
 
 class TestAggregateDateColumn(SimpleTestCase):

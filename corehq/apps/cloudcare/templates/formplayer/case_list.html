@@ -2,204 +2,204 @@
 {% load i18n %}
 
 <script type="text/template" id="case-view-list-template">
-    <div class="module-caselist-container">
+  <div class="module-caselist-container">
 
-      <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
+    <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
-      <div class="module-search-container">
-        <div class="input-group input-group-lg">
-          <input type="text" class="form-control" placeholder="Search" id="searchText">
-          <div class="input-group-btn">
-            <button class="btn btn-default" type="button" id="case-list-search-button">
-                <i class="fa fa-search" aria-hidden="true"></i>
-            </button>
-          </div>
+    <div class="module-search-container">
+      <div class="input-group input-group-lg">
+        <input type="text" class="form-control" placeholder="Search" id="searchText">
+        <div class="input-group-btn">
+          <button class="btn btn-default" type="button" id="case-list-search-button">
+            <i class="fa fa-search" aria-hidden="true"></i>
+          </button>
         </div>
       </div>
-
-      <% if (useGrid) { %>
-        <section class="js-case-container clearfix"></section>
-      <% } else { %>
-        <div class="module-caselist-table-container">
-          <table class="table module-table module-table-caselist">
-          <% if(!useTiles) { %>
-            <thead>
-              <tr>
-                <% _.each(headers, function(header, index) { %>
-                  <% if (columnVisible(index)) { %>
-                    <% if (columnSortable(index)) { %>
-                        <th class="module-caselist-header header-clickable formplayer-request" data-id="<%= index %>"> <%= header %></th>
-                    <% } else { %>
-                        <th class="module-caselist-header" data-id="<%= index %>"> <%= header %></th>
-                    <% } %>
-                  <% } %>
-                <% }); %>
-              </tr>
-            </thead>
-          <% } %>
-            <% if (hasNoItems) { %>
-            <tbody>
-              <tr>
-                <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
-                  <div class="alert alert-info">{% trans "List is empty." %}</div>
-                </td>
-              </tr>
-            </tbody>
-            <% } %>
-            <tbody class="wrapper js-case-container">
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-
-      <% if (actions) { %>
-        <div class="caselist-actions">
-        <% _.each(actions, function(action, index) { %>
-            <div class="caselist-action-button btn-group formplayer-request">
-              <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
-            </div>
-        <% }) %>
-        </div>
-      <% } %>
-
-      <% if (pageCount) { %>
-        <div>
-          <nav class="module-caselist-pagination-container">
-            <ul class="pagination">
-              <% if (currentPage > 0) { %>
-              <li class="page-item" id="prev-page">
-                <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
-                  <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-                  <span class="sr-only">{% trans "Previous" %}</span>
-                </a>
-              </li>
-              <% } else { %>
-              <li class="paginate-disabled">
-                <a class="paginate-disabled">
-                  <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-                  <span class="sr-only">{% trans "Previous (none)" %}</span>
-                </a>
-              </li>
-              <% } %>
-              <% for (i = 0; i < pageCount; i++) { %>
-                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
-              <% } %>
-              <% if (currentPage < pageCount - 1) { %>
-              <li class="page-item" id="next-page">
-                <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
-                  <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-                  <span class="sr-only">{% trans "Next" %}</span>
-                </a>
-              </li>
-              <% } else { %>
-              <li class="paginate-disabled">
-                <a class="paginate-disabled">
-                  <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-                  <span class="sr-only">{% trans "Next (none)" %}</span>
-                </a>
-              </li>
-              <% } %>
-            </ul>
-          </nav>
-        </div>
-      <% } %>
     </div>
+
+    <% if (useGrid) { %>
+    <section class="js-case-container clearfix"></section>
+    <% } else { %>
+    <div class="module-caselist-table-container">
+      <table class="table module-table module-table-caselist">
+        <% if(!useTiles) { %>
+        <thead>
+        <tr>
+          <% _.each(headers, function(header, index) { %>
+          <% if (columnVisible(index)) { %>
+          <% if (columnSortable(index)) { %>
+          <th class="module-caselist-header header-clickable formplayer-request" data-id="<%= index %>"> <%= header %></th>
+          <% } else { %>
+          <th class="module-caselist-header" data-id="<%= index %>"> <%= header %></th>
+          <% } %>
+          <% } %>
+          <% }); %>
+        </tr>
+        </thead>
+        <% } %>
+        <% if (hasNoItems) { %>
+        <tbody>
+        <tr>
+          <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+            <div class="alert alert-info">{% trans "List is empty." %}</div>
+          </td>
+        </tr>
+        </tbody>
+        <% } %>
+        <tbody class="wrapper js-case-container">
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <% if (actions) { %>
+    <div class="caselist-actions">
+      <% _.each(actions, function(action, index) { %>
+      <div class="caselist-action-button btn-group formplayer-request">
+        <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (pageCount) { %>
+    <div>
+      <nav class="module-caselist-pagination-container">
+        <ul class="pagination">
+          <% if (currentPage > 0) { %>
+          <li class="page-item" id="prev-page">
+            <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
+              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
+              <span class="sr-only">{% trans "Previous" %}</span>
+            </a>
+          </li>
+          <% } else { %>
+          <li class="paginate-disabled">
+            <a class="paginate-disabled">
+              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
+              <span class="sr-only">{% trans "Previous (none)" %}</span>
+            </a>
+          </li>
+          <% } %>
+          <% for (i = 0; i < pageCount; i++) { %>
+          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+          <% } %>
+          <% if (currentPage < pageCount - 1) { %>
+          <li class="page-item" id="next-page">
+            <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
+              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
+              <span class="sr-only">{% trans "Next" %}</span>
+            </a>
+          </li>
+          <% } else { %>
+          <li class="paginate-disabled">
+            <a class="paginate-disabled">
+              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
+              <span class="sr-only">{% trans "Next (none)" %}</span>
+            </a>
+          </li>
+          <% } %>
+        </ul>
+      </nav>
+    </div>
+    <% } %>
+  </div>
 </script>
 
 <script type="text/template" id="case-view-item-template">
-    <% _.each(data, function(datum, index) { %>
-        <% if (!(styles[index].widthHint === 0)) { %>
-          <% if (styles[index].displayFormat === 'Image') { %>
-            <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
-          <% } else if (styles[index].displayFormat === 'Graph') { %>
-            <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
-          <% } else { %>
-            <td class="module-caselist-column"><%= datum %></td>
-          <% } %>
-        <% } %>
-    <% }); %>
+  <% _.each(data, function(datum, index) { %>
+  <% if (!(styles[index].widthHint === 0)) { %>
+  <% if (styles[index].displayFormat === 'Image') { %>
+  <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+  <% } else if (styles[index].displayFormat === 'Graph') { %>
+  <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
+  <% } else { %>
+  <td class="module-caselist-column"><%= datum %></td>
+  <% } %>
+  <% } %>
+  <% }); %>
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-    <div class="<%= prefix %>-cell-grid-style">
+  <div class="<%= prefix %>-cell-grid-style">
     <% _.each(data, function(datum, index) { %>
     <div class="<%= prefix %>-grid-style-<%= index %> box">
-        <% if (styles[index].displayFormat === 'Image') {
-            if(resolveUri(datum)) { %>
-                <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%= resolveUri(datum) %>"/>
-            <% } %>
-        <% } else if(styles[index].widthHint === 0) { %>
-            <div style="display:none;"><%= datum %></div>
-        <% } else { %>
-            <div><%= datum %></div>
-        <% } %>
+      <% if (styles[index].displayFormat === 'Image') {
+      if(resolveUri(datum)) { %>
+      <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%= resolveUri(datum) %>"/>
+      <% } %>
+      <% } else if(styles[index].widthHint === 0) { %>
+      <div style="display:none;"><%= datum %></div>
+      <% } else { %>
+      <div><%= datum %></div>
+      <% } %>
     </div>
     <% }); %>
-    </div>
+  </div>
 </script>
 
 <script type="text/template" id="cell-layout-style-template">
-    <% _.each(models, function(model){ %>
-        .<%= model.id %> {
-            grid-area: <%= model.gridStyle %>;
-            font-size: <%= model.fontStyle %>;
-        }
-    <% }); %>
+  <% _.each(models, function(model){ %>
+  .<%= model.id %> {
+  grid-area: <%= model.gridStyle %>;
+  font-size: <%= model.fontStyle %>;
+  }
+  <% }); %>
 </script>
 
 <script type="text/template" id="cell-container-style-template">
-    .list-cell-container-style {
-        width: <%= model.widthPercentage %>%;
-        height: 0;
-        padding-bottom: <%= model.heightPercentage %>%;
-        display: inline-block;
-        border: 1px solid white;
-        border-collapse: collapse;
-        vertical-align: top;
-        float: left;
-        background-color: #f2f2f1;
-    }
+  .list-cell-container-style {
+  width: <%= model.widthPercentage %>%;
+  height: 0;
+  padding-bottom: <%= model.heightPercentage %>%;
+  display: inline-block;
+  border: 1px solid white;
+  border-collapse: collapse;
+  vertical-align: top;
+  float: left;
+  background-color: #f2f2f1;
+  }
 </script>
 
 <script type="text/template" id="cell-grid-style-template">
-    .<%= model.prefix %>-cell-grid-style {
-        display: grid;
-        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
-        grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
-        background-color: transparent;
-        color: #685c53;
-        justify-items: left;
-        padding-left: 20px;
-        padding-top: 10px;
-    }
+  .<%= model.prefix %>-cell-grid-style {
+  display: grid;
+  grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
+  grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
+  background-color: transparent;
+  color: #685c53;
+  justify-items: left;
+  padding-left: 20px;
+  padding-top: 10px;
+  }
 </script>
 
 <script type="text/template" id="case-view-list-detail-template">
-    <div class="module-caselist-container">
-        <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
-        <div class="module-caselist-table-container">
-            <table class="table module-table module-table-caselist">
-                <thead>
-                <tr>
-                    <% _.each(headers, function(header, index) { %>
-                    <% if (!(styles[index].widthHint === 0)) { %>
-                    <th class="module-caselist-header"> <%= header %></th>
-                    <% } %>
-                    <% }); %>
-                </tr>
-                </thead>
-                <% if (hasNoItems) { %>
-                <tbody>
-                <tr>
-                    <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
-                        <div class="alert alert-info">{% trans "List is empty." %}</div>
-                    </td>
-                </tr>
-                </tbody>
-                <% } %>
-                <tbody class="wrapper js-case-container">
-                </tbody>
-            </table>
-        </div>
+  <div class="module-caselist-container">
+    <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
+    <div class="module-caselist-table-container">
+      <table class="table module-table module-table-caselist">
+        <thead>
+        <tr>
+          <% _.each(headers, function(header, index) { %>
+          <% if (!(styles[index].widthHint === 0)) { %>
+          <th class="module-caselist-header"> <%= header %></th>
+          <% } %>
+          <% }); %>
+        </tr>
+        </thead>
+        <% if (hasNoItems) { %>
+        <tbody>
+        <tr>
+          <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+            <div class="alert alert-info">{% trans "List is empty." %}</div>
+          </td>
+        </tr>
+        </tbody>
+        <% } %>
+        <tbody class="wrapper js-case-container">
+        </tbody>
+      </table>
     </div>
+  </div>
 </script>

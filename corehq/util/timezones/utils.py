@@ -1,10 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
 import dateutil
 import pytz
-import six
 from functools import reduce
 from memoized import memoized
 
@@ -59,7 +55,7 @@ def get_timezone_for_user(couch_user_or_id, domain):
         if isinstance(couch_user_or_id, CouchUser):
             requesting_user = couch_user_or_id
         else:
-            assert isinstance(couch_user_or_id, six.string_types)
+            assert isinstance(couch_user_or_id, str), type(couch_user_or_id)
             try:
                 requesting_user = WebUser.get_by_user_id(couch_user_or_id)
             except CouchUser.AccountTypeError:

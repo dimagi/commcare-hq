@@ -1,29 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import Counter
-import os
-import re
 import datetime
 import json
-import csv342 as csv
+import os
+import re
 import sys
 import tempfile
+from collections import Counter
 
 from django.conf import settings
 
+import csv
 from celery.task import task
+
+from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
+from corehq.util.test_utils import unit_testing_only
+from couchexport.models import Format
+from dimagi.utils.django.email import send_HTML_email
+from soil.util import expose_zipped_blob_download
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.util.quickcache import quickcache
 from corehq.apps.es import DomainES
-
-from dimagi.utils.django.email import send_HTML_email
-
-from soil.util import expose_zipped_blob_download
-from couchexport.models import Format
-from io import open
-
+from corehq.util.quickcache import quickcache
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
@@ -53,19 +50,10 @@ def get_domain_from_url(path):
 
 @quickcache(['domain'])
 def domain_restricts_superusers(domain):
-    domain = Domain.get_by_name(domain)
-    if not domain:
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
         return False
-    return domain.restrict_superusers
-
-
-def user_has_custom_top_menu(domain_name, couch_user):
-    """
-    This is currently used for a one-off custom case (ewsghana, ilsgateway)
-    that required to be a toggle instead of a custom domain module setting
-    """
-    return (toggles.CUSTOM_MENU_BAR.enabled(domain_name) and
-            not couch_user.is_superuser)
+    return domain_obj.restrict_superusers
 
 
 def get_domains_created_by_user(creating_user):
@@ -107,8 +95,8 @@ def guess_domain_language(domain_name):
     A domain does not have a default language, but its apps do. Return
     the language code of the most common default language across apps.
     """
-    domain = Domain.get_by_name(domain_name)
-    counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
+    domain_obj = Domain.get_by_name(domain_name)
+    counter = Counter([app.default_language for app in domain_obj.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
@@ -182,3 +170,10 @@ def silence_during_tests():
         return open(os.devnull, 'w')
     else:
         return sys.stdout
+
+
+@unit_testing_only
+def clear_domain_names(*domain_names):
+    for domain_names in domain_names:
+        for domain in iter_all_domains_and_deleted_domains_with_name(domain_names):
+            domain.delete()

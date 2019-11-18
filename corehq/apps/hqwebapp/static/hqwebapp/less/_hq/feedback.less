@@ -1,0 +1,52 @@
+feedback {
+  display: inline-block;
+}
+
+.feedback-smiles {
+  text-align: center;
+
+  .btn-link {
+    text-decoration: none;
+    width: 100%;
+    font-weight: bold;
+    border-radius: 10px;
+    padding-top: 20px;
+    padding-bottom: 25px;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .fa {
+    font-size: 100px;
+    display: block;
+  }
+
+  .rate-bad {
+    color: @cc-att-neg-mid;
+
+    &.selected {
+      background-color: @cc-att-neg-mid;
+      color: white;
+    }
+  }
+
+  .rate-ok {
+    color: @cc-dark-warm-accent-mid;
+
+    &.selected {
+      background-color: @cc-dark-warm-accent-mid;
+      color: white;
+    }
+  }
+
+  .rate-good {
+    color: @cc-att-pos-mid;
+
+    &.selected {
+      background-color: @cc-att-pos-mid;
+      color: white;
+    }
+  }
+}

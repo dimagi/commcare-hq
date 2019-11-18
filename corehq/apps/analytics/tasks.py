@@ -1,55 +1,57 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-from __future__ import division
-import csv342 as csv
-import os
-
+import json
+import logging
 import math
+import os
+import time
+from datetime import date, datetime, timedelta
+
+from django.conf import settings
+
+import csv
+import KISSmetrics
+import requests
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+import tinys3
 from celery.schedules import crontab
 from celery.task import periodic_task
-import tinys3
+from email_validator import EmailNotValidError, validate_email
+from memoized import memoized
+from requests import HTTPError
+
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    ProBonoStatus,
+    SoftwarePlanEdition,
+    SoftwarePlanVisibility,
+    Subscription,
+    SubscriptionType,
+)
+from corehq.apps.analytics.utils import (
+    analytics_enabled_for_email,
+    get_instance_string,
+    get_meta,
+)
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
-from corehq.util.dates import unix_time
-from corehq.apps.analytics.utils import get_instance_string, get_meta
-from datetime import datetime, date, timedelta
-import time
-import json
-import requests
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import KISSmetrics
-import logging
-
-from django.conf import settings
-from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import analytics_task
-from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
+    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
+    DATADOG_HUBSPOT_SENT_FORM_METRIC,
+    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC,
+    DATADOG_WEB_USERS_GAUGE,
     count_by_response_code,
     update_datadog_metrics,
-    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
-    DATADOG_WEB_USERS_GAUGE,
-    DATADOG_HUBSPOT_SENT_FORM_METRIC,
-    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
-
-from dimagi.utils.logging import notify_exception
-from memoized import memoized
-
-from corehq.apps.analytics.utils import analytics_enabled_for_email
-from io import open
-from six.moves import range
-
-_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('biyeun', 'dimagi.com'),
-                                               '{}@{}'.format('jschweers', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
-                                           send_to_ops=False)
+from corehq.util.dates import unix_time
+from corehq.util.decorators import analytics_task
+from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -72,6 +74,10 @@ HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
 
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
+
+
 def _raise_for_urllib3_response(response):
     '''
     this mimics the behavior of requests.response.raise_for_status so we can
@@ -91,15 +97,12 @@ def _track_on_hubspot(webuser, properties):
     """
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
+        data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
         _hubspot_post(
             url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 six.moves.urllib.parse.quote(webuser.get_email())
             ),
-            data=json.dumps(
-                {'properties': [
-                    {'property': k, 'value': v} for k, v in properties.items()
-                ]}
-            ),
+            data=json.dumps(data),
         )
 
 
@@ -216,10 +219,6 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if hubspot_id and hubspot_cookie:
-        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-            hubspot_id=hubspot_id,
-            form_id=form_id
-        )
         data = {
             'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
@@ -232,18 +231,24 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
         if extra_fields:
             data.update(extra_fields)
 
-        response = _send_hubspot_form_request(url, data)
+        response = _send_hubspot_form_request(hubspot_id, form_id, data)
         _log_response('HS', data, response)
         response.raise_for_status()
 
 
 @count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
-def _send_hubspot_form_request(url, data):
+def _send_hubspot_form_request(hubspot_id, form_id, data):
+    # Submits a urlencoded form, not JSON.  data should use "true"/"false" for bools
+    # https://developers.hubspot.com/docs/methods/forms/submit_form
+    url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        hubspot_id=hubspot_id,
+        form_id=form_id
+    )
     return requests.post(url, data=data)
 
 
 @analytics_task(serializer='pickle', )
-def update_hubspot_properties_v2(webuser, properties):
+def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
@@ -254,8 +259,8 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         return
 
     tracking_info = {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
+        'created_account_in_hq': 'true',
+        'is_a_commcare_user': 'true',
         'lifecyclestage': 'lead',
     }
     env = get_instance_string()
@@ -268,7 +273,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
     if web_user.atypical_user:
         tracking_info.update({
-            'atypical_user': True
+            'atypical_user': 'true'
         })
 
     tracking_info.update(get_ab_test_properties(web_user))
@@ -281,12 +286,12 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
 
 @analytics_task(serializer='pickle', )
-def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
 @analytics_task(serializer='pickle', )
-def track_built_app_on_hubspot_v2(webuser):
+def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -294,7 +299,7 @@ def track_built_app_on_hubspot_v2(webuser):
 
 
 @analytics_task(serializer='pickle', )
-def track_confirmed_account_on_hubspot_v2(webuser):
+def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -318,23 +323,22 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task_v2.delay(
+        send_hubspot_form_task.delay(
             form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
 
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
+def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
-    # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
-    web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
+    web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
+def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
@@ -342,7 +346,7 @@ def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
 
 
 @analytics_task(serializer='pickle', )
-def track_job_candidate_on_hubspot_v2(user_email):
+def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
     }
@@ -350,7 +354,7 @@ def track_job_candidate_on_hubspot_v2(user_email):
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
+def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -374,15 +378,18 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    if analytics_enabled_for_email(email):
-        timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-        _track_workflow_task_v2.delay(email, event, properties, timestamp)
+    try:
+        if analytics_enabled_for_email(email):
+            timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+            _track_workflow_task.delay(email, event, properties, timestamp)
+    except Exception:
+        notify_exception(None, "Error tracking kissmetrics workflow")
 
 
 @analytics_task(serializer='pickle', )
-def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
+def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             return value.encode('utf-8')
         return value
 
@@ -392,7 +399,7 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
@@ -401,7 +408,7 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
 
 
 @analytics_task(serializer='pickle', )
-def identify_v2(email, properties):
+def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.
@@ -431,22 +438,17 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-def _log_failed_periodic_data(email, message):
-    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
-        False, "ANALYTICS - Failed to sync periodic data", {
-            'user_email': email,
-            'message': message,
-        }
-    )
-
-
-@periodic_task(serializer='pickle', run_every=crontab(minute="0", hour="4"), queue='background_queue')
+@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -587,7 +589,13 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            soft_assert(to=[settings.SUPPORT_EMAIL,
+                            '{}@{}'.format('miemma', 'dimagi.com'),
+                            '{}@{}'.format('aphilippot', 'dimagi.com'),
+                            '{}@{}'.format('colaughlin', 'dimagi.com')],
+                        send_to_ops=False)(False,
+                                           'Error submitting periodic analytics data to Hubspot or Kissmetrics',
+                                           {'response': e.response.content.decode('utf-8')})
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -618,7 +626,7 @@ def _track_periodic_data_on_kiss(submit_json):
     ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
 
     filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'wb') as csvfile:
+    with open(filename, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(headers)
 
@@ -650,7 +658,7 @@ def _log_response(target, data, response):
         response=response_text
     )
 
-    if status_code != 200:
+    if 400 <= status_code < 600:
         logger.error(message)
     else:
         logger.debug(message)
@@ -664,3 +672,88 @@ def get_ab_test_properties(user):
             'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }
 
+
+@analytics_task()  # TODO - remove analytics_task decorator after changes are deployed to all environments.
+def update_subscription_properties_by_domain(domain):
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj:
+        affected_users = WebUser.view(
+            'users/web_users_by_domain', reduce=False, key=domain, include_docs=True
+        ).all()
+
+        for web_user in affected_users:
+            properties = get_subscription_properties_by_user(web_user)
+            update_subscription_properties_by_user.delay(web_user.get_id, properties)
+
+
+@analytics_task()
+def update_subscription_properties_by_user(web_user_id, properties):
+    web_user = WebUser.get_by_user_id(web_user_id)
+    identify(web_user.username, properties)
+    update_hubspot_properties(web_user, properties)
+
+
+def get_subscription_properties_by_user(couch_user):
+
+    def _is_paying_subscription(subscription, plan_version):
+        NON_PAYING_SERVICE_TYPES = [
+            SubscriptionType.TRIAL,
+            SubscriptionType.EXTENDED_TRIAL,
+            SubscriptionType.SANDBOX,
+            SubscriptionType.INTERNAL,
+        ]
+
+        NON_PAYING_PRO_BONO_STATUSES = [
+            ProBonoStatus.YES,
+            ProBonoStatus.DISCOUNTED,
+        ]
+        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL and
+                subscription.service_type not in NON_PAYING_SERVICE_TYPES and
+                subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES and
+                plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
+
+    # Note: using "yes" and "no" instead of True and False because spec calls
+    # for using these values. (True is just converted to "True" in KISSmetrics)
+    all_subscriptions = []
+    paying_subscribed_editions = []
+    subscribed_editions = []
+    for domain_name in couch_user.domains:
+        subscription = Subscription.get_active_subscription_by_domain(domain_name)
+        plan_version = (
+            subscription.plan_version
+            if subscription is not None
+            else DefaultProductPlan.get_default_plan_version()
+        )
+        subscribed_editions.append(plan_version.plan.edition)
+        if subscription is not None:
+            all_subscriptions.append(subscription)
+            if _is_paying_subscription(subscription, plan_version):
+                paying_subscribed_editions.append(plan_version.plan.edition)
+
+    def _is_one_of_editions(edition):
+        return 'yes' if edition in subscribed_editions else 'no'
+
+    def _is_a_pro_bono_status(status):
+        return 'yes' if status in [s.pro_bono_status for s in all_subscriptions] else 'no'
+
+    def _is_on_extended_trial():
+        service_types = [s.service_type for s in all_subscriptions]
+        return 'yes' if SubscriptionType.EXTENDED_TRIAL in service_types else 'no'
+
+    def _max_edition():
+        for edition in paying_subscribed_editions:
+            assert edition in [e[0] for e in SoftwarePlanEdition.CHOICES]
+
+        return max(paying_subscribed_editions) if paying_subscribed_editions else ''
+
+    env = get_instance_string()
+
+    return {
+        '{}is_on_community_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
+        '{}is_on_standard_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.STANDARD),
+        '{}is_on_pro_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.PRO),
+        '{}is_on_pro_bono_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.YES),
+        '{}is_on_discounted_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
+        '{}is_on_extended_trial_plan'.format(env): _is_on_extended_trial(),
+        '{}max_edition_of_paying_plan'.format(env): _max_edition()
+    }

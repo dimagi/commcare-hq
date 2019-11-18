@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.urls import reverse
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from django.conf import settings
-from django.urls import reverse
-from django.template.loader import render_to_string
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.domain.views.internal import EditInternalDomainInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
-
 from corehq.util.log import send_HTML_email
-from dimagi.utils.web import get_url_base
 
 
 def _domains_over_x_forms(num_forms=200, domains=None):
@@ -60,7 +58,7 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue'
 )
@@ -102,7 +100,7 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue',
 )

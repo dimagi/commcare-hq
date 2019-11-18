@@ -1,36 +1,36 @@
 <nav>
-{% for section_title, navs in sections %}
+  {% for section_title, navs in sections %}
     <h2 class="text-hq-nav-header">{{ section_title }}</h2>
     <ul class="nav nav-hq-sidebar">
-        {% for nav in navs %}
-            <li
-                class="{% if nav.is_active and not nav.subpage %}active{% endif %}{% if nav.description %} has-description{% endif %}"
-                {% if nav.id %}id="{{ nav.id }}"{% endif %}
-            >
-                <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover popover-report" data-title="{{ nav.title }}"
-                    data-content="{{ nav.description }}" {% endif %}
-                    {% if section_title == "Reports" %}class='report-nav' title="{{ nav.title }}" {%endif%}>
-                    {% if nav.warning %}
-                        <span class="label label-warning pull-right">
+      {% for nav in navs %}
+        <li
+          class="{% if nav.is_active and not nav.subpage %}active{% endif %}{% if nav.description %} has-description{% endif %}"
+          {% if nav.id %}id="{{ nav.id }}"{% endif %}
+        >
+          <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover popover-report" data-title="{{ nav.title }}"
+             data-content="{{ nav.description }}" {% endif %}
+             {% if section_title == "Reports" %}class='report-nav' title="{{ nav.title }}" {%endif%}>
+            {% if nav.warning %}
+              <span class="label label-warning pull-right">
                             <i class="fa fa-warning"></i> {{ nav.warning }}
                         </span>
-                    {% endif %}
-                    {% if nav.icon %}<i class="{{ nav.icon }}"></i>{% endif %}
-                    {{ nav.title }}
-                </a>
-
-                {% if nav.subpage and nav.subpage.title %}
-                <ul class="nav">
-                    <li class="active"><a href="#">{{ nav.subpage.title }}</a></li>
-                </ul>
-                {% endif %}
-            </li>
-            {% if nav.warning %}
-            <li>
-
-            </li>
             {% endif %}
-        {% endfor %}
+            {% if nav.icon %}<i class="{{ nav.icon }}"></i>{% endif %}
+            {{ nav.title }}
+          </a>
+
+          {% if nav.subpage and nav.subpage.title %}
+            <ul class="nav">
+              <li class="active"><a href="#">{{ nav.subpage.title }}</a></li>
+            </ul>
+          {% endif %}
+        </li>
+        {% if nav.warning %}
+          <li>
+
+          </li>
+        {% endif %}
+      {% endfor %}
     </ul>
-{% endfor %}
+  {% endfor %}
 </nav>

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import time
 import os
 from datetime import datetime, timedelta
@@ -19,7 +17,6 @@ from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
 from pact.tests.utils import get_all_forms_in_all_domains
 from pact.utils import submit_xform
-from io import open
 
 
 START_DATE = datetime.utcnow() - timedelta(days=7)

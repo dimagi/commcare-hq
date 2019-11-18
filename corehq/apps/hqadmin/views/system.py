@@ -1,44 +1,46 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import json
 import socket
 from collections import defaultdict, namedtuple
 
-import requests
 from django.conf import settings
-from django.http import (
-    HttpResponse,
-)
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
+
+import requests
 from requests.exceptions import HTTPError
 
-from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor)
-from corehq.apps.hqadmin.service_checks import run_checks
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
-    use_nvd3_v3
-from corehq.toggles import any_toggle_enabled, SUPPORT
-from corehq.util.supervisord.api import (
-    PillowtopSupervisorApi,
-    SupervisorException,
-    all_pillows_supervisor_status,
-    pillow_supervisor_status
-)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
-from corehq.apps.hqadmin import service_checks, escheck
-from corehq.apps.hqadmin.history import get_recent_changes, download_changes
+from pillowtop.utils import (
+    get_all_pillows_json,
+    get_pillow_config_by_name,
+    get_pillow_json,
+)
+
+from corehq.apps.domain.decorators import (
+    require_superuser,
+    require_superuser_or_contractor,
+)
+from corehq.apps.hqadmin import escheck, service_checks
+from corehq.apps.hqadmin.history import download_changes, get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqadmin.utils import get_celery_stats
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
+from corehq.apps.hqadmin.views.utils import (
+    BaseAdminSectionView,
+    get_hqadmin_base_context,
+)
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_nvd3_v3,
+)
+from corehq.toggles import SUPPORT, any_toggle_enabled
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -71,7 +73,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
         context['redis'] = service_checks.check_redis()
-        context['rabbitmq'] = service_checks.check_rabbitmq()
+        context['rabbitmq'] = service_checks.check_rabbitmq(settings.CELERY_BROKER_URL)
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
@@ -124,9 +126,6 @@ def system_ajax(request):
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
-        for meta in pillow_meta:
-            meta.update(supervisor_status[meta['name']])
         return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
@@ -199,53 +198,23 @@ def pillow_operation_api(request):
             'success': error is None,
             'message': error,
         }
-        response.update(pillow_supervisor_status(pillow_name))
         if pillow_config:
             response.update(get_pillow_json(pillow_config))
         return json_response(response)
 
-    @any_toggle_enabled(SUPPORT)
-    def reset_pillow(request):
-        pillow.reset_checkpoint()
-        if PillowtopSupervisorApi().restart_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response("Checkpoint reset but failed to restart pillow. "
-                                "Restart manually to complete reset.")
-
-    @any_toggle_enabled(SUPPORT)
-    def start_pillow(request):
-        if PillowtopSupervisorApi().start_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response('Unknown error')
-
-    @any_toggle_enabled(SUPPORT)
-    def stop_pillow(request):
-        if PillowtopSupervisorApi().stop_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response('Unknown error')
-
     if pillow:
         try:
-            if operation == 'reset_checkpoint':
-                reset_pillow(request)
-            if operation == 'start':
-                start_pillow(request)
-            if operation == 'stop':
-                stop_pillow(request)
             if operation == 'refresh':
                 return get_response()
-        except SupervisorException as e:
+        except Exception as e:
             return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
 
 def get_rabbitmq_management_url():
-    if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
+    if settings.CELERY_BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.CELERY_BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:
@@ -303,47 +272,3 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
-
-
-class RecentCouchChangesView(BaseAdminSectionView):
-    urlname = 'view_recent_changes'
-    template_name = 'hqadmin/couch_changes.html'
-    page_title = ugettext_lazy("Recent Couch Changes")
-
-    @use_nvd3_v3
-    @use_datatables
-    @use_jquery_ui
-    @method_decorator(require_superuser_or_contractor)
-    def dispatch(self, *args, **kwargs):
-        return super(RecentCouchChangesView, self).dispatch(*args, **kwargs)
-
-    @property
-    def page_context(self):
-        count = int(self.request.GET.get('changes', 1000))
-        changes = list(get_recent_changes(get_db(), count))
-        domain_counts = defaultdict(lambda: 0)
-        doc_type_counts = defaultdict(lambda: 0)
-        for change in changes:
-            domain_counts[change['domain']] += 1
-            doc_type_counts[change['doc_type']] += 1
-
-        def _to_chart_data(data_dict):
-            return [
-                {'label': l, 'value': v} for l, v in sorted(list(data_dict.items()), key=lambda tup: tup[1], reverse=True)
-            ][:20]
-
-        return {
-            'count': count,
-            'recent_changes': changes,
-            'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
-            'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
-        }
-
-
-@require_superuser_or_contractor
-def download_recent_changes(request):
-    count = int(request.GET.get('changes', 10000))
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="recent_changes.csv"'
-    download_changes(get_db(), count, resp)
-    return resp

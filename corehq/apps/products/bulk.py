@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
+
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.models import Program
 
 

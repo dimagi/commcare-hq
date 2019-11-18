@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
@@ -98,6 +96,7 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
         ret['view_mode'] = 'submissions'
         tabular_context = PatientDetailsReport(self.request).report_context
         tabular_context.update(ret)
+        self.base_template = "succeed/patient_submissions.html"
         self.report_template_path = "patient_submissions.html"
         tabular_context['patient_id'] = self.request_params['patient_id']
         return tabular_context

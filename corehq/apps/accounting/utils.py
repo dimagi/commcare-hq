@@ -1,14 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import defaultdict, namedtuple
 import datetime
 import logging
+from collections import defaultdict, namedtuple
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from django_prbac.models import Role, UserRole, Grant
+from django_prbac.models import Grant, Role, UserRole
+
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -20,7 +19,6 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-
 
 logger = logging.getLogger('accounting')
 
@@ -57,9 +55,9 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'feature_type': feature.feature_type,
         'feature_id': feature.id,
         'rate_id': feature_rate.id,
-        'monthly_fee': feature_rate.monthly_fee.__str__(),
+        'monthly_fee': str(feature_rate.monthly_fee),
         'monthly_limit': feature_rate.monthly_limit,
-        'per_excess_fee': feature_rate.per_excess_fee.__str__(),
+        'per_excess_fee': str(feature_rate.per_excess_fee),
     }
 
 
@@ -80,7 +78,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
     return {
         'name': product_rate.name,
         'rate_id': product_rate.id,
-        'monthly_fee': product_rate.monthly_fee.__str__(),
+        'monthly_fee': str(product_rate.monthly_fee),
     }
 
 
@@ -350,3 +348,9 @@ def is_downgrade(current_edition, next_edition):
     from corehq.apps.accounting.models import SoftwarePlanEdition
     plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
     return plans.index(current_edition) > plans.index(next_edition)
+
+
+def clear_plan_version_cache():
+    from corehq.apps.accounting.models import SoftwarePlan
+    for software_plan in SoftwarePlan.objects.all():
+        SoftwarePlan.get_version.clear(software_plan)

@@ -1,13 +1,10 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
 from collections import OrderedDict
+from functools import reduce
 
 from django.template.defaultfilters import slugify
 
-from memoized import memoized
 import sqlagg
+from memoized import memoized
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 
@@ -20,10 +17,6 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-import six
-from six.moves import zip
-from functools import reduce
-from six.moves import range
 
 
 class SqlReportException(Exception):
@@ -239,7 +232,7 @@ class SqlData(ReportDataSource):
     @property
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
-            if isinstance(string_or_filter, six.string_types):
+            if isinstance(string_or_filter, str):
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter
@@ -252,10 +245,13 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
-        return sqlagg.QueryContext(
+        qc = sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit
         )
+        for c in self.columns:
+            qc.append_column(c.view)
+        return qc
 
     def get_data(self, start=None, limit=None):
         data = self._get_data(start=start, limit=limit)
@@ -275,9 +271,6 @@ class SqlData(ReportDataSource):
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context(start=start, limit=limit)
-        for c in self.columns:
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.resolve(session.connection(), self.filter_values)
@@ -288,9 +281,6 @@ class SqlData(ReportDataSource):
 
     def get_sql_queries(self):
         qc = self.query_context()
-        for c in self.columns:
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.get_query_strings(session.connection())
@@ -427,7 +417,7 @@ def calculate_total_row(rows):
         num_cols = len(rows[0])
         for i in range(num_cols):
             colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
+            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), int)]
             if len(columns):
                 total_row.append(reduce(lambda x, y: x + y, columns, 0))
             else:

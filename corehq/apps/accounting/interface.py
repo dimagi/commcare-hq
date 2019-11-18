@@ -1,16 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
+from decimal import Decimal
 
-from django.urls import reverse
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from couchexport.models import Format
 from memoized import memoized
 
-from corehq.const import SERVER_DATE_FORMAT
+from couchexport.models import Format
+
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -19,6 +18,7 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.const import SERVER_DATE_FORMAT
 
 from .dispatcher import AccountingAdminInterfaceDispatcher
 from .filters import (
@@ -26,6 +26,7 @@ from .filters import (
     ActiveStatusFilter,
     BillingContactFilter,
     CreatedSubAdjMethodFilter,
+    CustomerAccountFilter,
     DateCreatedFilter,
     DateFilter,
     DimagiContactFilter,
@@ -34,6 +35,8 @@ from .filters import (
     DueDatePeriodFilter,
     EndDateFilter,
     EntryPointFilter,
+    InvoiceBalanceFilter,
+    InvoiceNumberFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -49,7 +52,6 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
-    CustomerAccountFilter
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -57,6 +59,7 @@ from .models import (
     BillingContactInfo,
     CreditAdjustment,
     CreditAdjustmentReason,
+    CustomerInvoice,
     FeatureType,
     Invoice,
     PaymentRecord,
@@ -67,14 +70,8 @@ from .models import (
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
     WireInvoice,
-    CustomerInvoice
 )
-from .utils import (
-    get_money_str,
-    make_anchor_tag,
-    quantize_accounting_decimal,
-)
-from six.moves import map
+from .utils import get_money_str, make_anchor_tag, quantize_accounting_decimal
 
 
 def invoice_column_cell(invoice):
@@ -523,7 +520,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
     @property
@@ -635,6 +632,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
     description = "List of all invoices"
     slug = "invoices"
     fields = [
+        'corehq.apps.accounting.interface.InvoiceNumberFilter',
+        'corehq.apps.accounting.interface.InvoiceBalanceFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -684,7 +683,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total Credits"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
         if not self.is_rendered_as_email:
@@ -791,6 +790,14 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = Invoice.objects.all()
+
+        invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
+        if invoice_id is not None:
+            queryset = queryset.filter(id=int(invoice_id))
+
+        invoice_balance = InvoiceBalanceFilter.get_value(self.request, self.domain)
+        if invoice_balance is not None:
+            queryset = queryset.filter(balance=Decimal(invoice_balance))
 
         if self.subscription:
             queryset = queryset.filter(subscription=self.subscription)
@@ -970,7 +977,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total Credits"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
         if not self.is_rendered_as_email:
@@ -1118,6 +1125,16 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             queryset = queryset.filter(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
+
+        subscriber_domain = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            invoices_for_domain = []
+            for invoice in queryset.all():
+                for subscription in invoice.subscriptions.all():
+                    if subscription.subscriber.domain == subscriber_domain:
+                        invoices_for_domain.append(invoice.pk)
+                        break
+            queryset = queryset.filter(id__in=invoices_for_domain)
 
         return queryset
 

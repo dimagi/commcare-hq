@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.contrib import admin
-from .models import SQLLocation, LocationType, LocationRelation
+
+from .models import LocationRelation, LocationType, SQLLocation
 
 
 class LocationTypeAdmin(admin.ModelAdmin):

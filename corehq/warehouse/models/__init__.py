@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.warehouse.models.dimensions import (
     UserDim,
     GroupDim,
@@ -32,30 +31,3 @@ from corehq.warehouse.models.staging import (
     AppStatusFormStaging,
     AppStatusSynclogStaging
 )
-
-
-def get_cls_by_slug(slug):
-    return {
-        GroupStagingTable.slug: GroupStagingTable,
-        DomainStagingTable.slug: DomainStagingTable,
-        UserStagingTable.slug: UserStagingTable,
-        FormStagingTable.slug: FormStagingTable,
-        SyncLogStagingTable.slug: SyncLogStagingTable,
-        LocationStagingTable.slug: LocationStagingTable,
-        ApplicationStagingTable.slug: ApplicationStagingTable,
-
-        UserDim.slug: UserDim,
-        GroupDim.slug: GroupDim,
-        LocationDim.slug: LocationDim,
-        DomainDim.slug: DomainDim,
-        UserLocationDim.slug: UserLocationDim,
-        DomainMembershipDim.slug: DomainMembershipDim,
-        UserGroupDim.slug: UserGroupDim,
-        ApplicationDim.slug: ApplicationDim,
-
-        ApplicationStatusFact.slug: ApplicationStatusFact,
-        FormFact.slug: FormFact,
-        SyncLogFact.slug: SyncLogFact,
-        AppStatusFormStaging.slug: AppStatusFormStaging,
-        AppStatusSynclogStaging.slug: AppStatusSynclogStaging
-    }[slug]

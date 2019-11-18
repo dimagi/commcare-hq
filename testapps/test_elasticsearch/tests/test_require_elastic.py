@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from unittest import expectedFailure
 from django.test import SimpleTestCase
-from elasticsearch import Elasticsearch
+from corehq.util.es.elasticsearch import Elasticsearch
 from .utils import require_elasticsearch
 
 

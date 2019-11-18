@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.utils.translation import ugettext_lazy
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
@@ -8,10 +5,11 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 
 
 class FilterDataSource(SqlData):
-    engine_id = 'default'
+    engine_id = DEFAULT_ENGINE_ID
 
     def __init__(self, domain, loc_level):
         self.config = {}
@@ -43,7 +41,7 @@ class FilterDataSource(SqlData):
 
 
 class UserFilterDataSource(SqlData):
-    engine_id = 'default'
+    engine_id = DEFAULT_ENGINE_ID
 
     def __init__(self, domain):
         self.config = {}

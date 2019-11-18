@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
@@ -40,7 +38,7 @@ class BaseMultimediaUploadController(object):
     @property
     def processing_url(self):
         from corehq.apps.hqmedia.views import MultimediaUploadStatusView
-        return reverse(MultimediaUploadStatusView.name)
+        return reverse(MultimediaUploadStatusView.urlname)
 
     @property
     def js_options(self):

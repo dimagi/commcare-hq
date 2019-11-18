@@ -1,8 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.app_manager.xpath_validator.wrapper import XpathValidationResponse
+from corehq.apps.app_manager.xpath_validator.wrapper import (
+    XpathValidationResponse,
+)
 
 
 class XpathValidatorTest(SimpleTestCase):
@@ -16,10 +17,20 @@ class XpathValidatorTest(SimpleTestCase):
         self.assertEqual(
             validate_xpath('data node'),
             XpathValidationResponse(is_valid=False, message=
-"""Lexical error on line 1. Unrecognized text.
+b"""Lexical error on line 1. Unrecognized text.
 data node
 -----^
 """))
+
+    def test_whitespace(self):
+        self.assertEqual(
+            validate_xpath('\n1 =\t2\r + 3'),
+            XpathValidationResponse(is_valid=True, message=None))
+
+    def test_unicode(self):
+        self.assertEqual(
+            validate_xpath('"Serviços e Supervisão"'),
+            XpathValidationResponse(is_valid=True, message=None))
 
     def test_real_valid(self):
         self.assertEqual(
@@ -32,7 +43,7 @@ data node
             validate_xpath(
                 "if(count(instance('commcaresession')/session/user/data/commcare_location_id) &gt; 0, instance('commcaresession')/session/user/data/commcare_location_id, /data/meta/userID)"),
             XpathValidationResponse(is_valid=False, message=
-"""Lexical error on line 1. Unrecognized text.
+b"""Lexical error on line 1. Unrecognized text.
 ...mmcare_location_id) &gt; 0, instance('co
 -----------------------^
 """))
@@ -46,7 +57,7 @@ data node
         self.assertEqual(
             validate_xpath('#hashtag'),
             XpathValidationResponse(is_valid=False,
-                                    message="hashtag is not a valid # expression\n"))
+                                    message=b"hashtag is not a valid # expression\n"))
 
     def test_case_hashtag(self):
         self.assertEqual(
@@ -57,4 +68,4 @@ data node
         self.assertEqual(
             validate_xpath('#case', allow_case_hashtags=False),
             XpathValidationResponse(is_valid=False,
-                                    message="case is not a valid # expression\n"))
+                                    message=b"case is not a valid # expression\n"))

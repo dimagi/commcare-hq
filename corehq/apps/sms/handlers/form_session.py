@@ -1,22 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import datetime
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.formplayer_api.smsforms.api import current_question
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
-    send_sms_to_verified_number,
     log_sms_exception,
+    send_sms_to_verified_number,
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list, get_date_format
-from corehq.apps.formplayer_api.smsforms.api import current_question
-from corehq.apps.smsforms.app import (
-    get_responses,
-    _responses_to_text,
-)
+from corehq.apps.smsforms.app import _responses_to_text, get_responses
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from datetime import datetime
 
 
 def form_session_handler(v, text, msg):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from django.test.testcases import TestCase
@@ -7,13 +5,14 @@ from django.test.testcases import TestCase
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
+    ProBonoStatus,
+    SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
-    SoftwarePlanEdition,
-    ProBonoStatus,
-    SubscriptionType
+    SubscriptionType,
 )
-from corehq.apps.analytics.signals import get_subscription_properties_by_user
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.analytics.tasks import get_subscription_properties_by_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
@@ -57,7 +56,7 @@ class TestSubscriptionProperties(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.base_domain.delete()
-        cls.user.delete()
+        clear_plan_version_cache()
         super(TestSubscriptionProperties, cls).tearDownClass()
 
     def test_properties(self):

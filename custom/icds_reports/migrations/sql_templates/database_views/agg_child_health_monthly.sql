@@ -84,7 +84,7 @@ CREATE VIEW agg_child_health_monthly AS
         "agg_child_health"."days_ration_given_child" AS "days_ration_given_child",
         COALESCE("agg_child_health"."zscore_grading_hfa_recorded_in_month", 0) AS "zscore_grading_hfa_recorded_in_month",
         COALESCE("agg_child_health"."zscore_grading_wfh_recorded_in_month", 0) AS "zscore_grading_wfh_recorded_in_month"
-    FROM "public"."awc_location_months" "awc_location_months"
+    FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND

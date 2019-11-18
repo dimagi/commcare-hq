@@ -5,109 +5,113 @@
 {% block title %}Restore Response{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 {% endblock stylesheets %}
 
 {% requirejs_main 'hqadmin/js/admin_restore' %}
 
 {% block content %}
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-xs-12">
-                <h3>Response Status Code: {{ status_code }}</h3>
-                <ul class="list-inline">
-                    <li><a href="https://help.commcarehq.org/display/commcarepublic/CommCare+Sync+Data" target="_blank">Docs</a></li>
-                    <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
-                    <li><a href="{{request.get_full_path}}&overwrite_cache=true">Overwrite Cache</a></li>
-                    <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>
-                </ul>
-                <div>
-                    Number of cases in this restore: <strong>{{num_cases}}</strong>
-                </div>
-                {% if case_type_counts %}
-                    <div>
-                        Number of cases by case type
-                    </div>
-                    <div>
-                        <ul>
-                            {% for case_type, count in case_type_counts.items %}
-                                <li>{{case_type}}: {{count}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-                <div>
-                    Number of locations in this restore: <strong>{{num_locations}}</strong>
-                </div>
-                {% if location_type_counts %}
-                    <div>
-                        Number of locations by location type
-                    </div>
-                    <div>
-                        <ul>
-                            {% for location_type, count in location_type_counts.items %}
-                                <li>{{location_type}}: {{count}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-
-                <div>
-                    Number of V1 reports in this restore: <strong>{{ num_v1_reports }}</strong>
-                </div>
-                {% if v1_report_row_counts %}
-                    <div>
-                        Number of rows by report
-                    </div>
-                    <div>
-                        <ul>
-                            {% for report_id, row_count in v1_report_row_counts.items %}
-                                <li>{{ report_id }}: <strong>{{ row_count }}</strong></li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-
-                <div>
-                    Number of V2 reports in this restore: <strong>{{ num_v2_reports }}</strong>
-                </div>
-                {% if v2_report_row_counts %}
-                <div>
-                    Number of rows by report
-                </div>
-                <div>
-                    <ul>
-                        {% for report_id, row_count in v2_report_row_counts.items %}
-                        <li>{{ report_id }}: <strong>{{ row_count }}</strong></li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-
-                <div>
-                    Number of ledger entries in this restore: <strong>{{ num_ledger_entries }}</strong>
-                </div>
-
-                <div>
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
-                        <li role="presentation"><a href="#timing-tab" role="tab" data-toggle="tab">Timing</a></li>
-                    </ul>
-
-                    <div class="tab-content">
-                        <div role="tabpanel" class="tab-pane active" id="payload-tab">
-                            {% if not hide_xml %}
-                                <pre id="payload" data-payload="{% html_attr payload %}"></pre>
-                            {% else %}
-                                XML is hidden
-                            {% endif %}
-                        </div>
-                        <div role="tabpanel" class="tab-pane" id="timing-tab">
-                            {% include 'hqadmin/partials/timing_data_table.html' with timing_data=timing_data %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <h3>Response Status Code: {{ status_code }}</h3>
+        <div class="alert alert-info">
+          A lot of caching happens on restore.
+          If you want timings for a cold cache, click Overwrite cache and run again.
         </div>
+        <ul class="list-inline">
+          <li><a href="https://help.commcarehq.org/display/commcarepublic/CommCare+Sync+Data" target="_blank">Docs</a></li>
+          <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
+          <li><a href="{{request.get_full_path}}&overwrite_cache=true">Overwrite Cache</a></li>
+          <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>
+        </ul>
+        <div>
+          Number of cases in this restore: <strong>{{num_cases}}</strong>
+        </div>
+        {% if case_type_counts %}
+          <div>
+            Number of cases by case type
+          </div>
+          <div>
+            <ul>
+              {% for case_type, count in case_type_counts.items %}
+                <li>{{case_type}}: {{count}}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+        <div>
+          Number of locations in this restore: <strong>{{num_locations}}</strong>
+        </div>
+        {% if location_type_counts %}
+          <div>
+            Number of locations by location type
+          </div>
+          <div>
+            <ul>
+              {% for location_type, count in location_type_counts.items %}
+                <li>{{location_type}}: {{count}}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div>
+          Number of V1 reports in this restore: <strong>{{ num_v1_reports }}</strong>
+        </div>
+        {% if v1_report_row_counts %}
+          <div>
+            Number of rows by report
+          </div>
+          <div>
+            <ul>
+              {% for report_id, row_count in v1_report_row_counts.items %}
+                <li>{{ report_id }}: <strong>{{ row_count }}</strong></li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div>
+          Number of V2 reports in this restore: <strong>{{ num_v2_reports }}</strong>
+        </div>
+        {% if v2_report_row_counts %}
+          <div>
+            Number of rows by report
+          </div>
+          <div>
+            <ul>
+              {% for report_id, row_count in v2_report_row_counts.items %}
+                <li>{{ report_id }}: <strong>{{ row_count }}</strong></li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div>
+          Number of ledger entries in this restore: <strong>{{ num_ledger_entries }}</strong>
+        </div>
+
+        <div>
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
+            <li role="presentation"><a href="#timing-tab" role="tab" data-toggle="tab">Timing</a></li>
+          </ul>
+
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="payload-tab">
+              {% if not hide_xml %}
+                <pre id="payload" data-payload="{% html_attr payload %}"></pre>
+              {% else %}
+                XML is hidden
+              {% endif %}
+            </div>
+            <div role="tabpanel" class="tab-pane" id="timing-tab">
+              {% include 'hqadmin/partials/timing_data_table.html' with timing_data=timing_data %}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 {% endblock content %}

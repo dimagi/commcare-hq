@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import _parse_xml
 import os
-import six
-from io import open
+
+from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.models import _parse_xml
 
 
 class XMLParsingTest(SimpleTestCase):
@@ -19,6 +17,6 @@ class XMLParsingTest(SimpleTestCase):
         except:    
             self.fail("Parsing normal string data shouldn't fail!")
         try:
-            _parse_xml(six.text_type(xml_data))
+            _parse_xml(xml_data.decode('utf-8'))
         except:    
             self.fail("Parsing unicode data shouldn't fail!")

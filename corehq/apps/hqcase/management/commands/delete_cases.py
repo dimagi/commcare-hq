@@ -1,17 +1,14 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
-from corehq.form_processor.utils import should_use_sql_backend
 from memoized import memoized
+
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import iter_bulk_delete
-from corehq.apps.users.models import CouchUser, CommCareUser
-from six.moves import input
+
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.form_processor.utils import should_use_sql_backend
 
 
 class Command(BaseCommand):

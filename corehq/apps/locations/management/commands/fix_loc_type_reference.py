@@ -1,11 +1,6 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
-from corehq.apps.locations.models import SQLLocation, LocationType
-from six.moves import input
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 
 class Command(BaseCommand):

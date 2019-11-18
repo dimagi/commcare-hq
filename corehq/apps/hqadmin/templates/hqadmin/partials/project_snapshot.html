@@ -1,16 +1,16 @@
 <html>
-    <head>
-    </head>
-    <body>
-        <h2>Deployed by {{ user }}, cheers!</h2>
-        {% if pr_merges %}
-        <p>We just deployed the following PRs:</p>
-        <ul>
-            {% for pr in pr_merges %}
-            <li>
-                <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
-                <i>opened by</i> @{{ pr.opened_by }}
-                <span class="diffstat" style="font-size:12px;font-weight:bold;color:#666;white-space:nowrap;cursor:default">
+<head>
+</head>
+<body>
+<h2>Deployed by {{ user }}, cheers!</h2>
+{% if pr_merges %}
+  <p>We just deployed the following PRs:</p>
+  <ul>
+    {% for pr in pr_merges %}
+      <li>
+        <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
+        <i>opened by</i> @{{ pr.opened_by }}
+        <span class="diffstat" style="font-size:12px;font-weight:bold;color:#666;white-space:nowrap;cursor:default">
                     <span class="text-diff-added" style="color:#55a532">
                       +{{ pr.additions }}
                     </span>
@@ -18,28 +18,28 @@
                       −{{ pr.deletions }}
                     </span>
                 </span>
-                {% for label in pr.labels %}
-                <span class="text-label" style="color:#{{ label.color }}">
+        {% for label in pr.labels %}
+          <span class="text-label" style="color:#{{ label.color }}">
                     {{ label.name }}
                 </span>
-                {% endfor %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% for label, prs in prs_by_label.items %}
-        <p>{{ label }}</p>
-        <ul>
-            {% for pr in prs %}
-            <li>
-                <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
-                : {{ pr.body }}
-            </li>
-            {% endfor %}
-        </ul>
         {% endfor %}
-        {% else %}
-        <p>No PRs were merged since last deploy.</p>
-        {% endif %}
-        <p>Here's the complete diff on github: <a href="{{ compare_url }}">{{ compare_url }}</a></p>
-    </body>
+      </li>
+    {% endfor %}
+  </ul>
+  {% for label, prs in prs_by_label.items %}
+    <p>{{ label }}</p>
+    <ul>
+      {% for pr in prs %}
+        <li>
+          <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
+          : {{ pr.body }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+{% else %}
+  <p>No PRs were merged since last deploy.</p>
+{% endif %}
+<p>Here's the complete diff on github: <a href="{{ compare_url }}">{{ compare_url }}</a></p>
+</body>
 </html>

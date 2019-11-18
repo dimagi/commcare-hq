@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -36,7 +34,6 @@ from corehq.messaging.scheduling.tasks import (
 from datetime import datetime, date, time
 from django.test import TestCase
 from mock import patch
-from six.moves import range
 
 
 class BaseScheduleTest(TestCase):

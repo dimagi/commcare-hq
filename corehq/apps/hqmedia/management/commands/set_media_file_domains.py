@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
+
 from corehq.apps.domain.models import Domain
 
 DOMS_TO_IGNORE = ['bug-reports']  # we don't care about updating media to include this domain
@@ -43,7 +42,7 @@ class Command(BaseCommand):
                     try:
                         if app.is_remote_app():
                             continue
-                        for _, m in app.get_media_objects():
+                        for _, m in app.get_media_objects(remove_unused=True):
                             if app.domain not in m.valid_domains:
                                 m.valid_domains.append(app.domain)
                                 self.stdout.write("adding domain %s to media file %s" % (app.domain, m._id))

@@ -1,3 +1,7 @@
-from .maps import StockStatusMapReport, ReportingStatusMapReport
-from .standard import (SimplifiedInventoryReport, InventoryReport,
-                       CurrentStockStatusReport, ReportingRatesReport)
+from .maps import ReportingStatusMapReport, StockStatusMapReport
+from .standard import (
+    CurrentStockStatusReport,
+    InventoryReport,
+    ReportingRatesReport,
+    SimplifiedInventoryReport,
+)

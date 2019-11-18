@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
@@ -16,7 +14,7 @@ class AppositIncomingView(IncomingBackendView):
 
     def post(self, request, api_key, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except:
             return HttpResponseBadRequest("Expected valid JSON as HTTP request body")
 

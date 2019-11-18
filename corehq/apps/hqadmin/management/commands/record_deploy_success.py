@@ -1,42 +1,39 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from datadog import api as datadog_api
-import requests
-from django.core.management import call_command
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from django.core.management.base import BaseCommand
-from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
+
 from django.conf import settings
-from corehq.util.log import send_HTML_email
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
+import requests
+from datadog import api as datadog_api
 
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
+from corehq.apps.hqadmin.models import HqDeploy
+from corehq.util.log import send_HTML_email
+
 STYLE_MARKDOWN = 'markdown'
-STYLE_SLACK = 'slack'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
 INTEGRATION_TEST_URL = 'https://jenkins.dimagi.com/job/integration-tests/'
 
 
-def integration_tests_link(style, url):
-    return make_link(style, 'tests', url)
-
-def diff_link(style, url):
-    return make_link(style, 'here', url)
+def integration_tests_link(url):
+    return make_link('tests', url)
 
 
-def dashboard_link(style, url):
-    return make_link(style, 'dashboard', url)
+def diff_link(url):
+    return make_link('here', url)
 
 
-def make_link(style, label, url):
-    if style == STYLE_MARKDOWN:
-        return '[{label}]({url})'.format(label=label, url=url)
-    elif style == STYLE_SLACK:
-        return '<{url}|{label}>'.format(label=label, url=url)
+def dashboard_link(url):
+    return make_link('dashboard', url)
+
+
+def make_link(label, url):
+    return '[{label}]({url})'.format(label=label, url=url)
 
 
 class Command(BaseCommand):
@@ -96,44 +93,30 @@ class Command(BaseCommand):
 
         deploy_notification_text += "Find the diff {diff_link}"
 
-        if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-            link = diff_link(STYLE_SLACK, compare_url)
-            if options['environment'] == 'staging':
-                channel = '#staging'
-            elif options['environment'] == 'icds':
-                channel = '#nic-server-standup'
-            else:
-                channel = '#hq-ops'
-            requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
-                "username": "Igor the Iguana",
-                "channel": channel,
-                "text": deploy_notification_text.format(
-                    dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
-                    diff_link=link,
-                    integration_tests_link=integration_tests_link(STYLE_SLACK, INTEGRATION_TEST_URL)
-                ),
-            }))
-
         if settings.DATADOG_API_KEY:
             tags = ['environment:{}'.format(options['environment'])]
-            link = diff_link(STYLE_MARKDOWN, compare_url)
+            link = diff_link(compare_url)
             datadog_api.Event.create(
                 title="Deploy Success",
                 text=deploy_notification_text.format(
-                    dashboard_link=dashboard_link(STYLE_MARKDOWN, DASHBOARD_URL),
+                    dashboard_link=dashboard_link(DASHBOARD_URL),
                     diff_link=link,
-                    integration_tests_link=integration_tests_link(STYLE_MARKDOWN, INTEGRATION_TEST_URL)
+                    integration_tests_link=integration_tests_link(INTEGRATION_TEST_URL)
                 ),
                 tags=tags,
                 alert_type="success"
             )
 
-            print("\n=============================================================\n" \
-                  "Congratulations! Deploy Complete.\n\n" \
-                  "Don't forget to keep an eye on the deploy dashboard to " \
-                  "make sure everything is running smoothly.\n\n" \
-                  "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
-                  "\n=============================================================\n")
+            print(
+                "\n=============================================================\n"
+                "Congratulations! Deploy Complete.\n\n"
+                "Don't forget to keep an eye on the deploy dashboard to "
+                "make sure everything is running smoothly.\n\n"
+                "https://app.datadoghq.com/dashboard/xch-zwt-vzv/hq-deploy-dashboard?tpl_var_environment={}"
+                "\n=============================================================\n".format(
+                    settings.SERVER_ENVIRONMENT
+                )
+            )
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
@@ -151,19 +134,18 @@ class Command(BaseCommand):
 
 
 def create_update_sentry_release():
-    from settingshelper import get_release_name
-    from raven import fetch_git_sha
+    from settingshelper import get_release_name, get_git_commit
     release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
     headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
     payload = {
         'version': release,
         'refs': [{
-            'repository': 'dimagi/commcare-hq',
-            'commit': fetch_git_sha(settings.BASE_DIR)
+            'repository': settings.SENTRY_REPOSITORY,
+            'commit': get_git_commit(settings.BASE_DIR)
         }],
-        'projects': ['commcarehq']
+        'projects': [settings.SENTRY_PROJECT_SLUG]
     }
-    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/'
+    releases_url = f'https://sentry.io/api/0/organizations/{settings.SENTRY_ORGANIZATION_SLUG}/releases/'
     response = requests.post(releases_url, headers=headers, json=payload)
     if response.status_code == 208:
         # already created so update
@@ -184,5 +166,6 @@ def notify_sentry_deploy(duration_mins):
             'dateFinished': json_format_datetime(utcnow),
         })
     version = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
-    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/{}/deploys/'.format(version)
+    org_slug = settings.SENTRY_ORGANIZATION_SLUG
+    releases_url = f'https://sentry.io/api/0/organizations/{org_slug}/releases/{version}/deploys/'
     requests.post(releases_url, headers=headers, json=payload)

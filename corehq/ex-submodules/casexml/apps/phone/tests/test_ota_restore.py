@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 import os
-from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
 from casexml.apps.phone.utils import get_restore_config
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
@@ -16,7 +13,6 @@ from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 from corehq.apps.users.util import normalize_username
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -26,7 +22,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 def get_registration_xml(restore_user):
-    return xml.tostring(xml.get_registration_element(restore_user))
+    return xml.tostring(xml.get_registration_element(restore_user)).decode('utf-8')
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -150,7 +146,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertNotIsInstance(restore_config_other_device.get_payload(), CachedResponse)
 
     def testUserRestoreWithCase(self):
-        xml_data = self.get_xml('create_short')
+        xml_data = self.get_xml('create_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
 
         # implicit length assertion
@@ -227,14 +223,16 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         def get_all_syncslogs():
             return [properly_wrap_sync_log(log.doc) for log in SyncLogSQL.objects.all()]
 
-        xml_data = self.get_xml('create_short')
+        xml_data = self.get_xml('create_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user, items=items)
 
-        sync_log_id = get_last_synclog_for_user(self.restore_user.user_id).get_id
+        sync_log_id = SyncLogSQL.objects.filter(
+            user_id=self.restore_user.user_id
+        ).order_by('date').last().synclog_id.hex
         expected_restore_payload = dummy_restore_xml(
             sync_log_id,
             const.CREATE_SHORT.format(user_id=self.restore_user.user_id),
@@ -266,7 +264,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
 
         # apply an update
-        xml_data = self.get_xml('update_short')
+        xml_data = self.get_xml('update_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
@@ -292,7 +290,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
                                sync_restore_payload)
 
     def testRestoreAttributes(self):
-        xml_data = self.get_xml('attributes')
+        xml_data = self.get_xml('attributes').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
@@ -306,7 +304,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
         restore_payload = deprecated_generate_restore_payload(
-            self.project, self.restore_user)
+            self.project, self.restore_user).decode('utf-8')
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)

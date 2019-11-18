@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from corehq.apps.sms.models import QueuedSMS
@@ -40,11 +37,11 @@ class TestVertexBackendRequestContent(TestCase):
         self.assertEqual(params['response'], 'Y')
         self.assertEqual(params['dest_mobileno'], strip_plus(TEST_PHONE_NUMBER))
         self.assertEqual(params['msgtype'], TEXT_MSG_TYPE)
-        self.assertEqual(params['message'], TEST_TEXT_MESSAGE)
+        self.assertEqual(params['message'].decode('ascii'), TEST_TEXT_MESSAGE)
 
         self.queued_sms.text = TEST_UNICODE_MESSAGE
         params = self.vertex_backend.populate_params(self.queued_sms)
-        self.assertEqual(params['message'], TEST_UNICODE_MESSAGE.encode('utf-8'))
+        self.assertEqual(params['message'].decode('utf-8'), TEST_UNICODE_MESSAGE)
         self.assertEqual(params['msgtype'], UNICODE_MSG_TYPE)
 
     def test_phone_number_is_valid(self):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
 

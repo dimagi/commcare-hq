@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test.testcases import TestCase, SimpleTestCase
+from django.test.testcases import SimpleTestCase, TestCase
+
 from mock import patch
 
+from corehq.apps.app_manager.models import (
+    Application,
+    Form,
+    FormLink,
+    Module,
+    import_app,
+)
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
-
 
 BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
@@ -20,6 +24,36 @@ BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
                 </data>
             </instance>
             <bind nodeset="/data/question1" type="xsd:string" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="question1-label">
+                        <value>question1</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/question1">
+            <label ref="jr:itext('question1-label')" />
+        </input>
+    </h:body>
+</h:html>
+"""
+
+INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+    <h:head>
+        <h:title>New Form</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{xmlns}" uiVersion="1" version="1" name="New Form">
+                    <question1 />
+                    <question2 />
+                </data>
+            </instance>
+            <bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" calculate="if(1, 2, 3, 4, 5)" />
             <itext>
                 <translation lang="en" default="">
                     <text id="question1-label">
@@ -55,7 +89,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make a build
-        build1 = app.make_build(previous_version=None)
+        build1 = app.make_build()
         build1.save()
 
         # modify first form
@@ -63,7 +97,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make second build
-        build2 = app.make_build(previous_version=build1)
+        build2 = app.make_build()
         build2.save()
 
         # modify first form
@@ -73,7 +107,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make third build
-        build3 = app.make_build(previous_version=build2)
+        build3 = app.make_build()
         build3.save()
 
         self.assertEqual(self.get_form_versions(build1), [1, 1])
@@ -85,7 +119,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make reverted build
-        build4 = app.make_build(previous_version=build3)
+        build4 = app.make_build()
         build4.save()
 
         self.assertEqual(self.get_form_versions(build4), [6, 1])
@@ -94,7 +128,7 @@ class FormVersioningTest(TestCase):
         xxx_app = import_app(app.export_json(dump_json=False), domain)
 
         # make build of copy
-        xxx_build1 = xxx_app.make_build(previous_version=None)
+        xxx_build1 = xxx_app.make_build()
         xxx_build1.save()
 
         # modify first form of copy app
@@ -102,7 +136,7 @@ class FormVersioningTest(TestCase):
         xxx_app.save()
 
         # make second build of copy
-        xxx_build2 = xxx_app.make_build(previous_version=xxx_build1)
+        xxx_build2 = xxx_app.make_build()
         xxx_build2.save()
 
         self.assertEqual(self.get_form_versions(xxx_build1), [1, 1])
@@ -113,7 +147,7 @@ class FormVersioningTest(TestCase):
         from lxml import etree
 
         suite = suite_models.Suite(
-            etree.fromstring(build.fetch_attachment('files/suite.xml').encode('utf-8'))
+            etree.fromstring(build.fetch_attachment('files/suite.xml'))
         )
         return [r.version for r in suite.xform_resources]
 

@@ -2,30 +2,30 @@
 {% load i18n %}
 
 {% block filter-controls %}
-    <div class="row">
-        <div class="col-md-6">
-            <label for="{{ filter.css_id }}-input-year">{% trans 'Year' %}: </label>
-            <select class="form-control" id="{{ filter.css_id }}-input-year" name="{{ filter.css_id }}-year">
-                {% for year_value, year_text in filter.years %}
-                    <option value="{{ year_value }}">{{ year_text }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="col-md-6">
-            <label for="{{ filter.css_id }}-input-quarter">{% trans 'Quarter' %}: </label>
-            <select class="form-control" id="{{ filter.css_id }}-input-quarter" name="{{ filter.css_id }}-quarter">
-                <option value="1">Q1 {% trans 'January' %} - {% trans 'March' %}</option>
-                <option value="2">Q2 {% trans 'April' %} - {% trans 'June' %}</option>
-                <option value="3">Q3 {% trans 'July' %} - {% trans 'September' %}</option>
-                <option value="4">Q4 {% trans 'October' %} - {% trans 'December' %}</option>
-            </select>
-        </div>
-        {{ filter.context }}
+  <div class="row">
+    <div class="col-md-6">
+      <label for="{{ filter.css_id }}-input-year">{% trans 'Year' %}: </label>
+      <select class="form-control" id="{{ filter.css_id }}-input-year" name="{{ filter.css_id }}-year">
+        {% for year_value, year_text in filter.years %}
+          <option value="{{ year_value }}">{{ year_text }}</option>
+        {% endfor %}
+      </select>
     </div>
-    {% block stylesheet %}
-    {% endblock %}
 
-    {% block js-inline %}
-    {% endblock %}
+    <div class="col-md-6">
+      <label for="{{ filter.css_id }}-input-quarter">{% trans 'Quarter' %}: </label>
+      <select class="form-control" id="{{ filter.css_id }}-input-quarter" name="{{ filter.css_id }}-quarter">
+        <option value="1">Q1 {% trans 'January' %} - {% trans 'March' %}</option>
+        <option value="2">Q2 {% trans 'April' %} - {% trans 'June' %}</option>
+        <option value="3">Q3 {% trans 'July' %} - {% trans 'September' %}</option>
+        <option value="4">Q4 {% trans 'October' %} - {% trans 'December' %}</option>
+      </select>
+    </div>
+    {{ filter.context }}
+  </div>
+  {% block stylesheet %}
+  {% endblock %}
+
+  {% block js-inline %}
+  {% endblock %}
 {% endblock %}

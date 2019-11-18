@@ -1,17 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import AUTO_SELECT_RAW, AUTO_SELECT_CASE
-from corehq.apps.app_manager.models import (
-    FormLink,
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_CASE,
+    AUTO_SELECT_RAW,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
+    WORKFLOW_PARENT_MODULE,
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
-    WORKFLOW_PARENT_MODULE,
-    FormDatum)
-from corehq.apps.app_manager.suite_xml.post_process.workflow import _replace_session_references_in_stack, CommandId
+)
+from corehq.apps.app_manager.models import FormDatum, FormLink
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    CommandId,
+    _replace_session_references_in_stack,
+)
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -355,6 +357,10 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(m4f2, case_type='patient')
         factory.form_requires_case(m4f2, case_type='patient')
         factory.advanced_form_autoloads(m4f2, AUTO_SELECT_RAW, 'case_id')
+
+        m5, m5f0 = factory.new_basic_module('m5', 'patient', parent_module=m1)
+        factory.form_requires_case(m5f0)
+
         for module in factory.app.get_modules():
             for form in module.get_forms():
                 form.post_form_workflow = mode

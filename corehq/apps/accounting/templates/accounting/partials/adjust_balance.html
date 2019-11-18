@@ -2,13 +2,13 @@
 {% load i18n %}
 
 <div class="modal fade" id="adjustBalanceModal-{{ adjust_balance_form.invoice.id }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">{% trans "Adjust Balance for Invoice #" %}{{ adjust_balance_form.invoice.invoice_number }}</h4>
-            </div>
-            {% crispy adjust_balance_form %}
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{% trans "Adjust Balance for Invoice #" %}{{ adjust_balance_form.invoice.invoice_number }}</h4>
+      </div>
+      {% crispy adjust_balance_form %}
     </div>
+  </div>
 </div>

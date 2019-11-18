@@ -33,7 +33,8 @@ hqDefine('toggle_ui/js/edit-flag', [
 
         self.init_items = function (config) {
             var items = config.items,
-                last_used = config.last_used || {};
+                last_used = config.last_used || {},
+                service_type = config.service_type || {};
             self.items.removeAll();
             _(items).each(function (item) {
                 var fields = item.split(':'),
@@ -43,6 +44,7 @@ hqDefine('toggle_ui/js/edit-flag', [
                     namespace: ko.observable(self.padded_ns[namespace]),
                     value: ko.observable(value),
                     last_used: ko.observable(last_used[value]),
+                    service_type: ko.observable(service_type[value]),
                 });
             });
         };
@@ -52,6 +54,7 @@ hqDefine('toggle_ui/js/edit-flag', [
                 namespace: ko.observable(self.padded_ns[namespace]),
                 value: ko.observable(),
                 last_used: ko.observable(),
+                service_type: ko.observable(),
             });
             self.change();
         };
@@ -112,6 +115,7 @@ hqDefine('toggle_ui/js/edit-flag', [
             last_used: initialPageData.get('last_used'),
             is_random_editable: initialPageData.get('is_random_editable'),
             randomness: initialPageData.get('randomness'),
+            service_type: initialPageData.get('service_type'),
         });
         $home.koApplyBindings(view);
         $home.on('change', 'input', view.change);

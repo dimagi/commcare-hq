@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging.handlers
 import smtplib
 
 # this is a handler for the python logging framework that is capable
 # of sending email alerts from a gmail account (the built-in email
 # handler doesn't support TLS)
+
 
 class TLSSMTPHandler(logging.handlers.SMTPHandler):
     def emit(self, record):
@@ -30,6 +29,7 @@ class TLSSMTPHandler(logging.handlers.SMTPHandler):
         server.login(self.username, self.password)
         server.sendmail(self.fromaddr, self.toaddrs, '%s\r\n\r\n%s' % (header, content))
         server.quit()
+
 
 def example_setup():
     root = logging.getLogger()

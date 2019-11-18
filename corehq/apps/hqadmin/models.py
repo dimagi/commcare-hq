@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import date
 
 from django.db import models
@@ -7,7 +5,11 @@ from django.db import models
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances, safe_force_seq_int
+from pillowtop.utils import (
+    get_all_pillow_instances,
+    get_pillow_by_name,
+    safe_force_seq_int,
+)
 
 
 class HqDeploy(Document):

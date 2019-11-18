@@ -1,24 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.dates import add_months
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.data_analytics.esaccessors import (
-    get_domain_device_breakdown_es, active_mobile_users, get_possibly_experienced
-)
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import (
-    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU,
-    DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
+    AMPLIFY_COUCH_TO_SQL_MAP,
+    BU_MAPPING,
+    DEFAULT_EXPERIENCED_THRESHOLD,
+    DEFAULT_PERFORMANCE_THRESHOLD,
+    NO_BU,
+    NOT_SET,
+    TEST_COUCH_TO_SQL_MAP,
 )
-import six
-
+from corehq.apps.data_analytics.esaccessors import (
+    active_mobile_users,
+    get_domain_device_breakdown_es,
+    get_possibly_experienced,
+)
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.domain.models import Domain
 
 UserCategories = namedtuple('UserCategories', 'active performing experienced total sms eligible')
 
@@ -33,8 +35,23 @@ class GIRTableGenerator(object):
         self.monthspan_list = datespan_object_list
 
     def build_table(self):
+
+        def fetch_latest_doc(dom1_id, dom2_id):
+            dom1 = Domain.get(dom1_id)
+            dom2 = Domain.get(dom2_id)
+            assert dom1.name == dom2.name
+            return dom2 if dom1.last_modified < dom2.last_modified else dom1
+
+        domains_by_name = {}
         rows = []
+        # filter out duplicate domain docs
         for domain in Domain.get_all():
+            if domain.name in domains_by_name:
+                latest_domain = fetch_latest_doc(domain.get_id, domains_by_name[domain.name].get_id)
+                domains_by_name[domain.name] = latest_domain
+            else:
+                domains_by_name[domain.name] = domain
+        for domain in domains_by_name.values():
             for monthspan in self.monthspan_list:
                 gir_dict = GIRTableGenerator.get_gir_dict_for_domain_and_monthspan(domain, monthspan)
                 rows.append(gir_dict)
@@ -115,7 +132,7 @@ class GIRTableGenerator(object):
             'month': monthspan.startdate,
             'domain_name': domain.name,
             'country':
-                ', '.join([six.text_type(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
+                ', '.join([str(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
             'sector': domain.internal.area,
             'subsector': domain.internal.sub_area,
             'bu': GIRTableGenerator.get_bu(domain),

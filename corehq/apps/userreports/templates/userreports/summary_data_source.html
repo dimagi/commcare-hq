@@ -1,79 +1,79 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% block page_content %}
-<h2>Summary</h2>
-<table class="table">
+  <h2>Summary</h2>
+  <table class="table">
     <colgroup>
-        <col width="10%">
-        <col width="90%">
+      <col width="10%">
+      <col width="90%">
     </colgroup>
     <tr>
-        <td>Name</td>
-        <td>{{ datasource_display_name }}</td>
+      <td>Name</td>
+      <td>{{ datasource_display_name }}</td>
     </tr>
     <tr>
-        <td>Filter</td>
-        <td><pre>{{ filter_summary }}</pre></td>
+      <td>Filter</td>
+      <td><pre>{{ filter_summary }}</pre></td>
     </tr>
-</table>
-<h2>Indicators</h2>
-<table class="table">
+  </table>
+  <h2>Indicators</h2>
+  <table class="table">
     <colgroup>
-        <col width="10%">
-        <col width="30%">
-        <col width="60%">
+      <col width="10%">
+      <col width="30%">
+      <col width="60%">
     </colgroup>
     <tr>
-        <th>Indicator</th>
-        <th>Comment</th>
-        <th>Summary</th>
+      <th>Indicator</th>
+      <th>Comment</th>
+      <th>Summary</th>
     </tr>
-{% for indicator in indicator_summary %}
-    <tr>
+    {% for indicator in indicator_summary %}
+      <tr>
         <td>{{ indicator.column_id }}</td>
         <td>{{ indicator.comment }}</td>
         <td><pre>{{ indicator.readable_output|safe }}</pre></td>
-    </tr>
-{% endfor %}
-</table>
-<h2>Named Expressions</h2>
-<table class="table">
+      </tr>
+    {% endfor %}
+  </table>
+  <h2>Named Expressions</h2>
+  <table class="table">
     <colgroup>
-        <col width="10%">
-        <col width="30%">
-        <col width="60%">
+      <col width="10%">
+      <col width="30%">
+      <col width="60%">
     </colgroup>
     <tr>
-        <th>Expression</th>
-        <th>Comment</th>
-        <th>Summary</th>
+      <th>Expression</th>
+      <th>Comment</th>
+      <th>Summary</th>
     </tr>
-{% for expression in named_expression_summary %}
-    <tr>
+    {% for expression in named_expression_summary %}
+      <tr>
         <td id="{{ named_expression_prefix }}:{{ expression.name }}">{{ expression.name }}</td>
         <td>{{ expression.comment }}</td>
         <td><pre>{{ expression.readable_output|safe }}</pre></td>
-    </tr>
-{% endfor %}
-</table>
-<h2>Named Filters</h2>
-<table class="table">
+      </tr>
+    {% endfor %}
+  </table>
+  <h2>Named Filters</h2>
+  <table class="table">
     <colgroup>
-        <col width="10%">
-        <col width="30%">
-        <col width="60%">
+      <col width="10%">
+      <col width="30%">
+      <col width="60%">
     </colgroup>
     <tr>
-        <th>Filter</th>
-        <th>Comment</th>
-        <th>Summary</th>
+      <th>Filter</th>
+      <th>Comment</th>
+      <th>Summary</th>
     </tr>
-{% for filter in named_filter_summary %}
-    <tr>
+    {% for filter in named_filter_summary %}
+      <tr>
         <td id="{{ named_filter_prefix }}:{{ filter.name }}">{{ filter.name }}</td>
         <td>{{ filter.comment }}</td>
         <td><pre>{{ filter.readable_output|safe }}</pre></td>
-    </tr>
-{% endfor %}
-</table>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}

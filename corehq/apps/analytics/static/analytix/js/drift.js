@@ -9,12 +9,14 @@ hqDefine('analytix/js/drift', [
     'analytix/js/logging',
     'analytix/js/utils',
     'analytix/js/hubspot',
+    'analytix/js/kissmetrix',
 ], function (
     _,
     initialAnalytics,
     logging,
     utils,
-    hubspot
+    hubspot,
+    kissmetrics
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
@@ -50,6 +52,14 @@ hqDefine('analytix/js/drift', [
                 hubspot.identify({email: e.data.email});
                 hubspot.trackEvent('Identified via Drift');
             });
+
+            $('#start-chat-cta-btn').click(function () {
+                _drift.api.startInteraction({
+                    interactionId: 51834,
+                    goToConversation: true,
+                });
+            });
+
         });
     });
 

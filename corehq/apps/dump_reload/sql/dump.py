@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import OrderedDict, Counter
+from collections import Counter, OrderedDict
 
 from django.apps import apps
 from django.conf import settings
@@ -10,8 +8,11 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
-    SimpleFilter, UsernameFilter, UserIDFilter, FilteredModelIteratorBuilder,
-    UniqueFilteredModelIteratorBuilder
+    FilteredModelIteratorBuilder,
+    SimpleFilter,
+    UniqueFilteredModelIteratorBuilder,
+    UserIDFilter,
+    UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label
@@ -21,8 +22,8 @@ from corehq.sql_db.config import partition_config
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormAttachmentSQL', SimpleFilter('form__domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
@@ -171,8 +172,8 @@ def get_model_iterator_builders_to_dump(domain, excludes):
 
 def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
     using = router.db_for_read(model_class)
-    if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
-        using = partition_config.get_form_processing_dbs()
+    if settings.USE_PARTITIONED_DATABASE and using == partition_config.proxy_db:
+        using = partition_config.form_processing_dbs
     else:
         using = [using]
 

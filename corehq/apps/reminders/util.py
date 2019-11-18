@@ -1,25 +1,54 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, time
 from functools import wraps
 
-from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.utils.translation import ugettext as _
 
-from corehq import privileges
-from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.apps.app_manager.models import Form
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+
+from corehq import privileges, toggles
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
+from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
+from corehq.apps.sms.mixin import (
+    CommCareMobileContactMixin,
+    InvalidFormatException,
+    apply_leniency,
+)
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
-from django_prbac.utils import has_privilege
+
+
+# Several SMS forms collect app id and form unique id in a single input
+def get_combined_id(app_id, form_unique_id):
+    if app_id is None and form_unique_id is None:
+        return None
+
+    app_id = app_id or ''
+    form_unique_id = form_unique_id or ''
+
+    if '|' in app_id:
+        raise ValueError("Unexpected token '|' in app_id '%s'" % app_id)
+
+    if '|' in form_unique_id:
+        raise ValueError("Unexpected token '|' in form_unique_id '%s'" % form_unique_id)
+
+    return '%s|%s' % (app_id, form_unique_id)
+
+
+def split_combined_id(combined_id):
+    if combined_id is None:
+        return None, None
+
+    if '|' not in combined_id:
+        raise ValueError("Combined id badly formatted")
+
+    return combined_id.split('|')
 
 
 class DotExpandedDict(dict):
@@ -63,22 +92,17 @@ class DotExpandedDict(dict):
 
 def get_form_list(domain):
     form_list = []
-    for app_id in get_app_ids_in_domain(domain):
-        latest_app = get_app(domain, app_id, latest=True)
-        if latest_app.doc_type == "Application":
+    briefs = get_brief_apps_in_domain(domain)
+    for brief in sorted(briefs, key=lambda b: b.name):
+        latest_app = get_app(domain, brief.id, latest=True)
+        if not is_remote_app(latest_app):
             for m in latest_app.get_modules():
                 for f in m.get_forms():
-                    form_list.append({"code": f.unique_id, "name": f.full_path_name})
+                    form_list.append({
+                        "code": get_combined_id(latest_app.master_id, f.unique_id),
+                        "name": f.full_path_name,
+                    })
     return form_list
-
-
-def get_form_name(form_unique_id):
-    try:
-        form = Form.get_form(form_unique_id)
-    except ResourceNotFound:
-        return _("[unknown]")
-
-    return form.full_path_name
 
 
 def get_recipient_name(recipient, include_desc=True):
@@ -107,7 +131,7 @@ def get_recipient_name(recipient, include_desc=True):
     else:
         name = "(unknown)"
         desc = ""
-    
+
     if include_desc:
         return "%s '%s'" % (desc, name)
     else:

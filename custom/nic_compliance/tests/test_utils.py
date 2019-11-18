@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 
 from django.test import TestCase, override_settings, Client
@@ -43,7 +40,6 @@ class TestDecodePassword(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        cls.web_user.delete()
         super(TestDecodePassword, cls).tearDownClass()
 
     def test_no_replay_attack_for_mobile_heartbeat_attempt(self):
@@ -53,9 +49,9 @@ class TestDecodePassword(TestCase):
             obfuscated_password = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
             client = Client(enforce_csrf_checks=False)
             auth_headers = {
-                'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode('%s:%s' % (
-                    self.username, obfuscated_password
-                )),
+                'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode(
+                    ('%s:%s' % (self.username, obfuscated_password)).encode('utf-8')
+                ).decode('utf-8'),
             }
             key_name = obfuscated_password_redis_key_for_user(self.username, obfuscated_password)
             self.assertEqual(redis_client.get(key_name), None)
@@ -77,9 +73,9 @@ class TestDecodePassword(TestCase):
             obfuscated_password = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
             client = Client(enforce_csrf_checks=False)
             auth_headers = {
-                'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode('%s:%s' % (
-                    self.username, obfuscated_password
-                )),
+                'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode(
+                    ('%s:%s' % (self.username, obfuscated_password)).encode('utf-8')
+                ).decode('utf-8'),
             }
             # ensure that login attempt gets stored
             key_name = obfuscated_password_redis_key_for_user(self.username, obfuscated_password)
@@ -129,10 +125,10 @@ class TestExtractPassword(TestCase):
 
     def test_invalid_regex_format(self):
         obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
+        self.assertEqual(extract_password(obfuscated_password), None)
 
         obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ=="
-        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
+        self.assertEqual(extract_password(obfuscated_password), None)
 
     def test_invalid_padding(self):
         obfuscated_password = "sha256$1e456bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="

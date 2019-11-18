@@ -1,6 +1,3 @@
-from __future__ import absolute_import, print_function
-
-from __future__ import unicode_literals
 import os
 import datetime
 
@@ -9,13 +6,12 @@ from django.core.management.base import BaseCommand
 
 from django.db import connections, transaction
 
-from corehq.sql_db.connections import get_icds_ucr_db_alias
-from io import open
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
 @transaction.atomic
 def _run_custom_sql_script(command, day=None):
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
         return
 

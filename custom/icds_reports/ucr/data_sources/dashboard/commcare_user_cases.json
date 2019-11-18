@@ -1,14 +1,25 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -84,6 +95,7 @@
         }
       }
     ],
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr-citus",
+    "disable_destructive_rebuild": true
   }
 }

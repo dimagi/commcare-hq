@@ -2,10 +2,11 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
     vm.label = "Institutional deliveries";
     vm.steps = {
         'map': {route: '/maternal_and_child/institutional_deliveries/map', label: 'Map View'},
@@ -82,7 +83,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     };
 }
 
-InstitutionalDeliveriesController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+InstitutionalDeliveriesController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('institutionalDeliveries', function() {
     return {

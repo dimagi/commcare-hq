@@ -1,2 +1,6 @@
-<select class="form-control" name="_loc_type" data-bind="options: allowed_child_types, value: loc_type"></select>
+<select class="form-control"
+  {% if attrs.disabled %}
+        disabled="disabled"
+  {% endif %}
+        name="_loc_type" data-bind="options: allowed_child_types, value: loc_type"></select>
 <input name="{{ name }}" type="hidden" data-bind="value: loc_type" />

@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
-from memoized import memoized
-from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.users.models import CommCareUser
+
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from memoized import memoized
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
+from corehq.apps.users.models import CommCareUser
 
 
 class EmailForm(forms.Form):
@@ -17,6 +18,7 @@ class EmailForm(forms.Form):
     email_body_html = forms.CharField()
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
+
 
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
@@ -256,7 +258,7 @@ class DisableUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         action = _("Disable") if self.user.is_active else _("Enable")
-        css_class = 'btn-danger' if self.user.is_active else 'btn-success'
+        css_class = 'btn-danger' if self.user.is_active else 'btn-primary'
         self.helper.layout = crispy.Layout(
             crispy.Field('reason'),
             crispy.Field('reset_password'),

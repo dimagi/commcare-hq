@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
+
 from django.test import SimpleTestCase
+
 from mock import patch
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -87,6 +87,7 @@ def test_gregorian_to_ethiopian(self, date_string, expected_result):
     }).get_transform_function()
 
     self.assertEqual(expected_result, transform(date_string))
+
 
 class CustomTransformTest(SimpleTestCase):
 

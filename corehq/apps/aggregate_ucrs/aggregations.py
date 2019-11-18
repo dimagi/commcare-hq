@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import total_ordering
 
-from corehq.apps.aggregate_ucrs.date_utils import Month, Week
 from dimagi.utils.parsing import json_format_date
+
+from corehq.apps.aggregate_ucrs.date_utils import Month, Week
 
 AGGREGATION_UNIT_CHOICE_MONTH = 'month'
 AGGREGATION_UNIT_CHOICE_WEEK = 'week'

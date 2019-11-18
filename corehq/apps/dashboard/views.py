@@ -1,33 +1,40 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
-from django.conf import settings
-from django.urls import reverse
-from django.http import HttpResponseRedirect
-from django.http.response import Http404
-from django.utils.translation import ugettext_noop, ugettext as _
-
 import math
 
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.http.response import Http404
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from django_prbac.utils import has_privilege
+
+from dimagi.utils.web import json_response
+
 from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.accounting.mixins import BillingModalsMixin
+from corehq.apps.app_manager.dbaccessors import (
+    domain_has_apps,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.dashboard.models import (
     AppsPaginator,
     DataPaginator,
     ReportsPaginator,
     Tile,
-    Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_edit_location_types,
+)
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
-from dimagi.utils.web import json_response
-from django_prbac.utils import has_privilege
+from corehq.util.context_processors import commcare_hq_names
 
 
 @login_and_domain_required
@@ -41,12 +48,6 @@ def default_dashboard_url(request, domain):
 
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
-
-    if couch_user and user_has_custom_top_menu(domain, couch_user):
-        return reverse('saved_reports', args=[domain])
-
-    if not domain_has_apps(domain):
-        return reverse('default_app', args=[domain])
 
     return reverse(DomainDashboardView.urlname, args=[domain])
 
@@ -78,7 +79,7 @@ def dashboard_tile_total(request, domain, slug):
 
 
 @location_safe
-class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/base.html'
@@ -108,12 +109,17 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     'help_text': tile.help_text,
                 }
                 if tile.paginator_class:
-                    items_per_page = 5
                     tile_context.update({
                         'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
-        return {'dashboard_tiles': tile_contexts}
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
+        return {
+            'dashboard_tiles': tile_contexts,
+            'user_can_view_odata_feed': user_can_view_odata_feed(
+                self.domain, self.request.couch_user
+            ),
+        }
 
 
 def _get_default_tiles(request):
@@ -130,7 +136,7 @@ def _get_default_tiles(request):
             return False
         user = request.couch_user
         return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.project)
+            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
         )
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
@@ -155,6 +161,12 @@ def _get_default_tiles(request):
     )
 
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
+    apps_link = lambda urlname, req: (
+        '' if domain_has_apps(request.domain)
+        else reverse(urlname, args=[request.domain])
+    )
+
+    commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
 
     return [
         Tile(
@@ -165,6 +177,7 @@ def _get_default_tiles(request):
             paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
         ),
         Tile(
@@ -179,12 +192,12 @@ def _get_default_tiles(request):
         ),
         Tile(
             request,
-            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
+            title=_('{cc_name} Supply Setup').format(cc_name=commcare_name),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=commcare_name),
         ),
         Tile(
             request,

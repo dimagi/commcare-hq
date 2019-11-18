@@ -1,15 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import calendar
-from datetime import datetime, date
+from datetime import date, datetime
+
 from ethiopian_date import EthiopianDateConverter
+
 from dimagi.utils.dates import force_to_datetime
 
 
 def get_month_display(month_index):
     try:
         return calendar.month_name[int(month_index)]
-    except (KeyError, ValueError):
+    except (KeyError, ValueError, TypeError):
         return ""
 
 

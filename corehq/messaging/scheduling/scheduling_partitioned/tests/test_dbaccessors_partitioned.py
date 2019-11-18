@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
@@ -76,7 +74,7 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
         cls.p2_uuid = uuid.UUID('8440dbd6-61b1-4b2f-a310-7e1768902d04')
 
     def tearDown(self):
-        for db in partition_config.get_form_processing_dbs():
+        for db in partition_config.form_processing_dbs:
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             TimedScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
 
@@ -85,26 +83,26 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p2_uuid), self.db2)
 
     def test_save_alert_schedule_instance(self):
-        self.assertEqual(AlertScheduleInstance.objects.using(partition_config.get_proxy_db()).count(), 0)
+        self.assertEqual(AlertScheduleInstance.objects.using(partition_config.proxy_db).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 0)
 
         instance = self.make_alert_schedule_instance(self.p1_uuid)
         save_alert_schedule_instance(instance)
 
-        self.assertEqual(AlertScheduleInstance.objects.using(partition_config.get_proxy_db()).count(), 0)
+        self.assertEqual(AlertScheduleInstance.objects.using(partition_config.proxy_db).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 1)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 0)
 
     def test_save_timed_schedule_instance(self):
-        self.assertEqual(TimedScheduleInstance.objects.using(partition_config.get_proxy_db()).count(), 0)
+        self.assertEqual(TimedScheduleInstance.objects.using(partition_config.proxy_db).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db2).count(), 0)
 
         instance = self.make_timed_schedule_instance(self.p2_uuid)
         save_timed_schedule_instance(instance)
 
-        self.assertEqual(TimedScheduleInstance.objects.using(partition_config.get_proxy_db()).count(), 0)
+        self.assertEqual(TimedScheduleInstance.objects.using(partition_config.proxy_db).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db2).count(), 1)
 
@@ -163,7 +161,7 @@ class TestSchedulingPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingPartitio
         save_timed_schedule_instance(self.timed_instance3_p2)
 
     def tearDown(self):
-        for db in partition_config.get_form_processing_dbs():
+        for db in partition_config.form_processing_dbs:
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             TimedScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
 

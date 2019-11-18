@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
@@ -27,6 +25,10 @@ class MessagingRuleProgressHelper(object):
     def rule_initiation_key(self):
         return 'messaging-rule-run-initiated-%s' % self.rule_id
 
+    @property
+    def rule_cancellation_key(self):
+        return 'messaging-rule-run-canceled-%s' % self.rule_id
+
     def set_rule_initiation_key(self):
         self.client.set(self.rule_initiation_key, 1, timeout=2 * 60 * 60)
 
@@ -44,6 +46,7 @@ class MessagingRuleProgressHelper(object):
         self.client.set(self.total_key, 0)
         self.client.expire(self.current_key, self.key_expiry)
         self.client.expire(self.total_key, self.key_expiry)
+        self.client.delete(self.rule_cancellation_key)
         self.set_rule_initiation_key()
 
     def set_rule_complete(self):
@@ -52,13 +55,26 @@ class MessagingRuleProgressHelper(object):
     def increment_current_case_count(self, fail_hard=False):
         try:
             self.client.incr(self.current_key)
-        except:
+            self.client.expire(self.current_key, self.key_expiry)
+        except Exception:
             if fail_hard:
                 raise
 
-    def set_total_case_count(self, value):
-        self.client.set(self.total_key, value)
+    def increase_total_case_count(self, value):
+        self.client.incr(self.total_key, delta=value)
         self.client.expire(self.total_key, self.key_expiry)
+
+    def cancel(self):
+        """Mark the current task as canceled
+
+        The task is responsible for checking to see if it has been
+        canceled and acting accordingly.
+        """
+        self.client.set(self.rule_cancellation_key, 1, timeout=2 * 60 * 60)
+
+    def is_canceled(self):
+        """Check if task has been canceled"""
+        return self.client.get(self.rule_cancellation_key) is not None
 
     @staticmethod
     def _int_or_zero(value):

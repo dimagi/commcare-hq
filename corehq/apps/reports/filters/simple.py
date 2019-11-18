@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy
+
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 
@@ -18,3 +17,8 @@ class SimpleDomain(BaseSimpleFilter):
     slug = 'domain_name'
     label = ugettext_lazy('Domain')
     help_inline = ugettext_lazy('Optional')
+
+
+class SimpleSearch(BaseSimpleFilter):
+    slug = 'search_string'
+    label = ugettext_lazy('Search')

@@ -1,10 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from uuid import uuid4
+
 from django.test import TestCase
+
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser

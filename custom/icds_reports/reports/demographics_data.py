@@ -1,23 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
+    PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text, \
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
     percent_lactating_women_enrolled_help_text, percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import (
     percent_increase, percent_diff, get_value, apply_exclude,
-    person_has_aadhaar_column, person_is_beneficiary_column
+    person_has_aadhaar_column, person_is_beneficiary_column,
+    get_color_with_green_positive,
 )
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
 def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     current_month = datetime(*config['month'])
@@ -74,18 +74,18 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
                     'percent': percent_increase('household', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'color': get_color_with_green_positive(percent_increase(
                         'household',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data)),
                     'value': get_value(data, 'household'),
                     'all': None,
                     'format': 'number',
                     'frequency': frequency,
-                    'redirect': 'registered_household'
+                    'redirect': 'demographics/registered_household'
                 },
                 {
-                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
+                    'label': _(AADHAR_SEEDED_BENEFICIARIES),
                     'help_text': percent_aadhaar_seeded_beneficiaries_help_text(),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -93,70 +93,70 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         prev_data,
                         'all_persons'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_aadhaar',
                         data,
                         prev_data,
-                        'all_persons') > 0 else 'red',
+                        'all_persons')),
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'adhaar'
+                    'redirect': 'demographics/adhaar'
                 }
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
+                    'label': _(CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'child_health',
                         data,
-                        prev_data, 'child_health_all') > 0 else 'red',
+                        prev_data, 'child_health_all')),
                     'value': get_value(data, 'child_health'),
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'enrolled_children'
+                    'redirect': 'demographics/enrolled_children'
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'label': _(PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_pregnant_women_enrolled_help_text(),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'ccs_pregnant',
                         data,
                         prev_data,
                         'ccs_pregnant_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'redirect': 'demographics/enrolled_women'
                 }
             ],
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'label': _(LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_lactating_women_enrolled_help_text(),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'css_lactating',
                         data,
                         prev_data,
                         'css_lactating_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'lactating_enrolled_women'
+                    'redirect': 'demographics/lactating_enrolled_women'
                 },
                 {
-                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
+                    'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_adolescent_girls_enrolled_help_text(),
                     'percent': percent_diff(
                         'person_adolescent',
@@ -164,17 +164,17 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         prev_data,
                         'person_adolescent_all'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_adolescent',
                         data,
                         prev_data,
                         'person_adolescent_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'redirect': 'demographics/adolescent_girls'
                 }
             ]
         ]

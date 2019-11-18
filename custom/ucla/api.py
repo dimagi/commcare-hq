@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.utils import is_commcarecase

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.util.workbook_json.excel import IteratorJSONReader
 
@@ -14,14 +12,14 @@ class IteratorJSONReaderTest(SimpleTestCase):
         return r
 
     def test_basic(self):
-        self.assertEquals(self.normalize([]), [])
+        self.assertEqual(self.normalize([]), [])
 
-        self.assertEquals(
+        self.assertEqual(
             self.normalize([['A', 'B', 'C'], ['1', '2', '3']]),
             [[('A', '1'), ('B', '2'), ('C', '3')]]
         )
 
-        self.assertEquals(
+        self.assertEqual(
             self.normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'],
                        ['1', '2', '3', '4', 'yes']]),
             [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True),
@@ -29,7 +27,7 @@ class IteratorJSONReaderTest(SimpleTestCase):
         )
 
     def test_list_headers_without_number(self):
-        self.assertEquals(
+        self.assertEqual(
             self.normalize([['A', 'data: key', 'user', 'user 2', 'is-ok?'],
                        ['1', '2', '3', '4', 'yes']]),
             [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True),

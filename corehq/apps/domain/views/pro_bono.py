@@ -1,13 +1,14 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.hqwebapp.decorators import use_select2
-from corehq.apps.domain.forms import ProBonoForm
-from corehq.apps.domain.views.accounting import DomainAccountingSettings, DomainSubscriptionView
-from corehq.apps.hqwebapp.views import BasePageView
 from memoized import memoized
+
+from corehq.apps.domain.forms import ProBonoForm
+from corehq.apps.domain.views.accounting import (
+    DomainAccountingSettings,
+    DomainSubscriptionView,
+)
+from corehq.apps.hqwebapp.views import BasePageView
 
 
 class ProBonoMixin(object):
@@ -50,10 +51,6 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
-
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -63,10 +60,6 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
-
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):

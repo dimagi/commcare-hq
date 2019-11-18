@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -
-from __future__ import absolute_import
-from __future__ import unicode_literals
 __author__ = 'dmyung'
 from datetime import datetime
 from couchdbkit import Database
@@ -104,7 +101,7 @@ class DebugViewResults64(ViewResults):
         fetch results and cache them
         """
         # reset dynamic keys
-        for key in  self._dynamic_keys:
+        for key in self._dynamic_keys:
             try:
                 delattr(self, key)
             except:
@@ -170,7 +167,7 @@ class DebugViewResults57(ViewResults):
         fetch results and cache them
         """
         # reset dynamic keys
-        for key in  self._dynamic_keys:
+        for key in self._dynamic_keys:
             try:
                 delattr(self, key)
             except:

@@ -2,92 +2,92 @@
 {% load crispy_forms_tags %}
 
 {% if phonenumbers %}
-    {% block phonenumber_list %}
+  {% block phonenumber_list %}
     <div id="phone-numbers-list" class="form form-horizontal">
-        <fieldset>
-            <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
+      <fieldset>
+        <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
         {% for phone in phonenumbers %}
-            <div class="form-group">
-                <div class="row">
-                    <label class="control-label col-sm-3 col-md-4 col-lg-2">+{{ phone.number }}<br />
-                    {% if user_type == "mobile" %}
+          <div class="form-group">
+            <div class="row">
+              <label class="control-label col-sm-3 col-md-4 col-lg-2">+{{ phone.number }}<br />
+                {% if user_type == "mobile" %}
 
-                    {% ifequal phone.status "verified" %}
+                  {% ifequal phone.status "verified" %}
                     <span class="label label-success">{% trans 'VERIFIED' %}</span>
-                    {% endifequal %}
+                  {% endifequal %}
 
-                    {% ifequal phone.status "pending" %}
+                  {% ifequal phone.status "pending" %}
                     <span class="label label-default">{% trans 'VERIFICATION PENDING' %}</span>
-                    {% endifequal %}
+                  {% endifequal %}
 
-                    {% ifequal phone.status "duplicate" %}
+                  {% ifequal phone.status "duplicate" %}
                     {% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}
-                        <span class="label label-warning">{% trans 'ALREADY IN USE' %}</span>
-                    {% if phone.dup_url %}</a>{% endif %}
-                    {% endifequal %}
+                  <span class="label label-warning">{% trans 'ALREADY IN USE' %}</span>
+                  {% if phone.dup_url %}</a>{% endif %}
+                  {% endifequal %}
 
-                    {% ifequal phone.status "invalid" %}
+                  {% ifequal phone.status "invalid" %}
                     <span class="label label-default">{% trans 'INVALID FORMAT' %}</span>
-                    {% endifequal %}
+                  {% endifequal %}
 
-                    {% endif %}
-                    </label>
-                    {% if user_type == "mobile" and can_use_inbound_sms %}
-                    {% ifequal phone.status "unverified" %}
-                        <form method="post"
-                              action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
-                              style="display: inline;">
-                              {% csrf_token %}
-                            <button type="submit"
-                                    data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
-                                    class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
-                            </button>
-                        </form>
-                    {% endifequal %}
+                {% endif %}
+              </label>
+              {% if user_type == "mobile" and can_use_inbound_sms %}
+                {% ifequal phone.status "unverified" %}
+                  <form method="post"
+                        action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
+                        style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                            class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
+                    </button>
+                  </form>
+                {% endifequal %}
 
-                    {% ifequal phone.status "duplicate" %}
-                        <button data-title="You cannot verify this phone because it is already being used elsewhere"
-                                class="btn btn-primary disabled verify-button">
-                            <i class="fa fa-signal"></i> {% trans 'Verify' %}
-                        </button>
-                    {% endifequal %}
+                {% ifequal phone.status "duplicate" %}
+                  <button data-title="You cannot verify this phone because it is already being used elsewhere"
+                          class="btn btn-primary disabled verify-button">
+                    <i class="fa fa-signal"></i> {% trans 'Verify' %}
+                  </button>
+                {% endifequal %}
 
-                    {% ifequal phone.status "pending" %}
-                        <button data-title="Re-send the verification SMS to this phone"
-                                class="btn btn-primary verify-button"
-                                data-toggle="modal"
-                                href="#reverify_{{phone.number|urlencode}}">
-                            <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
-                        </button>
-                    {% endifequal %}
-                    {% endif %}
+                {% ifequal phone.status "pending" %}
+                  <button data-title="Re-send the verification SMS to this phone"
+                          class="btn btn-primary verify-button"
+                          data-toggle="modal"
+                          href="#reverify_{{phone.number|urlencode}}">
+                    <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
+                  </button>
+                {% endifequal %}
+              {% endif %}
 
-                    <a class="btn btn-danger"
-                       data-toggle="modal"
-                       href="#delete_phonenumber_{{ forloop.counter }}">
-                        <i class="fa fa-remove"></i> {% trans 'Delete' %}
-                    </a>
-                    {% if not forloop.first %}
-                        <form class="input-inline input-group"
-                              name="make_phone_number_default"
-                              {% if user_type == "mobile" %}
-                              action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
-                              {% endif %}
-                              method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="form_type" value="make-phone-number-default"/>
-                            <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
-                            <button type="submit" class="btn btn-default">
-                                {% blocktrans %}Mark as primary{% endblocktrans %}
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
+              <a class="btn btn-danger"
+                 data-toggle="modal"
+                 href="#delete_phonenumber_{{ forloop.counter }}">
+                <i class="fa fa-remove"></i> {% trans 'Delete' %}
+              </a>
+              {% if not forloop.first %}
+                <form class="input-inline input-group"
+                      name="make_phone_number_default"
+                  {% if user_type == "mobile" %}
+                      action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
+                  {% endif %}
+                      method="POST">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="make-phone-number-default"/>
+                  <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
+                  <button type="submit" class="btn btn-default">
+                    {% blocktrans %}Mark as primary{% endblocktrans %}
+                  </button>
+                </form>
+              {% endif %}
             </div>
+          </div>
         {% endfor %}
-        </fieldset>
+      </fieldset>
     </div>
-    {% endblock %}
+  {% endblock %}
 {% endif %}
 
 {% crispy add_phone_number_form %}

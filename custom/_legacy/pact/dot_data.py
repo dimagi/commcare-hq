@@ -1,6 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
+from functools import cmp_to_key
+
+from corehq.util import cmp
 from django.conf import settings
 from pytz import timezone
 from datetime import datetime, timedelta, date
@@ -16,7 +17,6 @@ from pact.enums import (
 )
 
 from pact.models import CObservation
-from six.moves import range
 
 
 class DOTDayDose(object):
@@ -232,7 +232,7 @@ def sort_observations(observations):
     """
     Method to sort observations to make sure that the "winner" is at index 0
     """
-    return sorted(observations, cmp=cmp_observation, reverse=True)
+    return sorted(observations, key=cmp_to_key(cmp_observation), reverse=True)
 
 
 def get_dots_case_json(casedoc, anchor_date=None):

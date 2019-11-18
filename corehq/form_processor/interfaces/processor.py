@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import re
 from collections import namedtuple
@@ -10,15 +8,19 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
-from corehq.form_processor.models import Attachment
-from couchforms.const import ATTACHMENT_NAME
+from corehq.form_processor.exceptions import (
+    KafkaPublishingError,
+    PostSaveError,
+    XFormLockError,
+    XFormQuestionValueNotFound,
+)
 from memoized import memoized
+from ..system_action import system_action
 from ..utils import should_use_sql_backend
-import six
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
+HARD_DELETE_CASE_AND_FORMS = "hard_delete_case_and_forms"
 
 
 class FormProcessorInterface(object):
@@ -41,16 +43,6 @@ class FormProcessorInterface(object):
             return XFormInstanceSQL
         else:
             return XFormInstance
-
-    @property
-    @memoized
-    def sync_log_model(self):
-        from casexml.apps.phone.models import SyncLog
-
-        if self.use_sql_domain:
-            return SyncLog
-        else:
-            return SyncLog
 
     @property
     @memoized
@@ -97,7 +89,8 @@ class FormProcessorInterface(object):
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
-            lock.acquire()
+            if not lock.acquire(blocking=False):
+                raise XFormLockError(xform_id)
         except RedisError:
             lock = None
         return lock
@@ -155,7 +148,7 @@ class FormProcessorInterface(object):
 
         errors = []
         xml = xform.get_xml_element()
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             try:
                 update_response(xml, question, response, xmlns=xform.xmlns)
             except XFormQuestionValueNotFound:
@@ -183,7 +176,7 @@ class FormProcessorInterface(object):
             raise
         except KafkaPublishingError as e:
             from corehq.form_processor.submission_post import notify_submission_error
-            notify_submission_error(forms.submitted, e, 'Error publishing to Kafka')
+            notify_submission_error(forms.submitted, 'Error publishing to Kafka')
             raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error
@@ -197,10 +190,18 @@ class FormProcessorInterface(object):
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
+        assert case.domain == self.domain, (case.domain, self.domain)
+        args = [case, xforms]
+        args_json = [case.case_id, [f.form_id for f in xforms]]
+        system_action.submit(HARD_DELETE_CASE_AND_FORMS, args, args_json, self.domain)
+
+    @system_action(HARD_DELETE_CASE_AND_FORMS)
+    def _hard_delete_case_and_forms(case, xforms):
         domain = case.domain
         all_domains = {domain} | {xform.domain for xform in xforms}
         assert len(all_domains) == 1, all_domains
-        self.processor.hard_delete_case_and_forms(domain, case, xforms)
+        processor = FormProcessorInterface(domain).processor
+        processor.hard_delete_case_and_forms(domain, case, xforms)
 
     def apply_deprecation(self, existing_xform, new_xform):
         return self.processor.apply_deprecation(existing_xform, new_xform)
@@ -224,14 +225,13 @@ class FormProcessorInterface(object):
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)
 
-    def get_case_with_lock(self, case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(self, case_id, lock=False, wrap=False):
         """
         Get a case with option lock. If case not found in domains DB also check other DB
         and raise IllegalCaseId if found.
 
         :param case_id: ID of case to fetch
         :param lock: Get a Redis lock for the case. Returns None if False or case not found.
-        :param strip_history: If False, don't include case actions. (Couch only)
         :param wrap: Return wrapped case if True. (Couch only)
         :return: tuple(case, lock). Either could be None
         :raises: IllegalCaseId
@@ -240,7 +240,7 @@ class FormProcessorInterface(object):
         # check this domains DB first to support existing bad data
         from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 
-        case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
+        case, lock = self.processor.get_case_with_lock(case_id, lock, wrap)
         if case:
             return case, lock
 

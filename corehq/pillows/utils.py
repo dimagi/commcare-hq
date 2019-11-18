@@ -1,15 +1,15 @@
-from __future__ import absolute_import
+from couchdbkit.exceptions import ResourceNotFound
+from jsonobject.exceptions import WrappingAttributeError
 
-from __future__ import unicode_literals
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
+from corehq.const import ONE_DAY
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
@@ -55,9 +55,6 @@ def get_deleted_doc_types(doc_type):
     return DELETED_DOC_TYPES.get(doc_type, [])
 
 
-ONE_DAY = 60 * 60 * 24
-
-
 @quickcache(['user_id'], timeout=ONE_DAY)
 def get_user_type(user_id):
     if user_id == SYSTEM_USER_ID:
@@ -69,14 +66,14 @@ def get_user_type(user_id):
         return DEMO_USER_TYPE
     elif user_id == COMMTRACK_USERNAME:
         return COMMCARE_SUPPLY_USER_TYPE
-    else:
+    elif user_id:
         try:
             user = CouchUser.get(user_id)
             if user.is_web_user():
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
                 return MOBILE_USER_TYPE
-        except:
+        except (ResourceNotFound, WrappingAttributeError):
             pass
     return UNKNOWN_USER_TYPE
 
@@ -92,7 +89,6 @@ def get_all_expected_es_indices():
     yield GROUP_INDEX_INFO
     yield SMS_INDEX_INFO
     yield CASE_SEARCH_INDEX_INFO
-    yield LEDGER_INDEX_INFO
 
 
 def format_form_meta_for_es(form_metadata):

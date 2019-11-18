@@ -1,6 +1,8 @@
 <div class="form-group {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
-    <label class="control-label {{ label_class }}">
-        {{ label_html }}
+    <label class="control-label {{ label_class }} {% if multifield.required %}requiredField{% endif %}">
+        <label class="inner-control-label">
+            {{ label_html }}{% if multifield.required %}<span class="asteriskField">*</span>{% endif %}
+        </label>
         {% if help_bubble_text and multifield.css_id %}
             <span class="hq-help-template"
                 data-title="{{ multifield.label_html }}"

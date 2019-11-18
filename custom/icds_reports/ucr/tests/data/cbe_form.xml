@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<data name="Community Based Events (CBE)" uiVersion="1" version="15329" xmlns="http://openrosa.org/formdesigner/61238C23-7059-446D-8A9C-34107642CBB2" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+	<owner_id>61ddf99dbca8419d80c834988d5de609</owner_id>
+	<date_cbe_organise_previous>2018-11-02</date_cbe_organise_previous>
+	<cbe_organise>yes</cbe_organise>
+	<cbe_info>
+		<date_cbe_organise>2018-12-10</date_cbe_organise>
+		<date_cbe_organise_new>2018-12-10</date_cbe_organise_new>
+		<theme_cbe>third_fourth_month_of_pregnancy</theme_cbe>
+		<pregnant_woman_group>
+			<pregnant_women_ccs_records count="1" current_index="1" ids="11cd5ec5-c4ad-483f-b347-c9051a7983f8">
+				<item id="11cd5ec5-c4ad-483f-b347-c9051a7983f8" index="0">
+					<eligible>yes</eligible>
+					<name>dummy</name>
+				</item>
+			</pregnant_women_ccs_records>
+			<num_women>1</num_women>
+			<pregnant_women_list>11cd5ec5-c4ad-483f-b347-c9051a7983f8</pregnant_women_list>
+			<others_preganant_women>25</others_preganant_women>
+			<pregnant_women_message>asdfsdfasdfas</pregnant_women_message>
+		</pregnant_woman_group>
+		<other_participants>
+			<header_for_radio_button/>
+			<asha_participation>yes</asha_participation>
+			<anm_partcipation>no</anm_partcipation>
+			<nrlm_participation>yes</nrlm_participation>
+			<shg_participation>no</shg_participation>
+		</other_participants>
+		<event_photo/>
+	</cbe_info>
+	<date_cbe_organise_latest>2018-12-10</date_cbe_organise_latest>
+	<success>OK</success>
+	<commcare_usercase>
+		<n0:case case_id="580ec11c864543ceaa2ee9dbdadf2b6c" date_modified="2018-12-10T20:08:53.603+05:30" user_id="qwe56poiuytr4xcvbnmkjfghwerffdaa" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+			<n0:update>
+				<n0:date_cbe_organise_latest>2018-12-10</n0:date_cbe_organise_latest>
+			</n0:update>
+		</n0:case>
+	</commcare_usercase>
+	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+		<n1:deviceID>869432027489199</n1:deviceID>
+		<n1:timeStart>2018-12-10T20:08:29.507+05:30</n1:timeStart>
+		<n1:timeEnd>2018-12-10T20:08:53.603+05:30</n1:timeEnd>
+		<n1:username>adhaar.test</n1:username>
+		<n1:userID>32a8aab9d08a62fc855a34897cb4d4e5</n1:userID>
+		<n1:instanceID>adc42896-4fef-4821-9585-e7224022ba94</n1:instanceID>
+		<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare Android, version &quot;2.44.4&quot;(452676). App v15329. CommCare Version 2.44. Build 452676, built on: 2018-11-27</n2:appVersion>
+		<n1:drift>0</n1:drift>
+		<n3:location xmlns:n3="http://commcarehq.org/xforms"/>
+	</n1:meta>
+</data>

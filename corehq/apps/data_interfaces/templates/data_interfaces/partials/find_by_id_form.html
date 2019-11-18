@@ -4,15 +4,15 @@
 <legend data-bind="text: header"></legend>
 <div class="help-block" data-bind="html: help"></div>
 <div class="form-group" data-bind="css: {'has-error': error, 'has-success': link}">
-    <div class="col-sm-4 col-md-3">
-        <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'keyup', attr: {placeholder: placeholder}" />
-        <div class="help-block" data-bind="visible: error, text: error"></div>
-        <div class="help-block" data-bind="visible: link, html: linkMessage"></div>
-    </div>
-    <div class="col-sm-8 col-md-9">
-        <button type="button" class="btn btn-primary" data-bind="click: find, enable: allowFind">
-            <i class="fa fa-search"></i>
-            {% trans "Find" %}
-        </button>
-    </div>
+  <div class="col-sm-4 col-md-3">
+    <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'keyup', attr: {placeholder: placeholder}" />
+    <div class="help-block" data-bind="visible: error, text: error"></div>
+    <div class="help-block" data-bind="visible: link, html: linkMessage"></div>
+  </div>
+  <div class="col-sm-8 col-md-9">
+    <button type="button" class="btn btn-primary" data-bind="click: find, enable: allowFind">
+      <i class="fa fa-search"></i>
+      {% trans "Find" %}
+    </button>
+  </div>
 </div>

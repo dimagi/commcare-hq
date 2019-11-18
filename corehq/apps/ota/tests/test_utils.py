@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
-from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.util import format_username
+from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
-
-from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
+from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.util import format_username
 
 
 class RestorePermissionsTest(LocationHierarchyTestCase):
@@ -101,7 +99,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             None,
         )
         self.assertFalse(is_permitted)
-        self.assertRegexpMatches(message, 'was not in the domain')
+        self.assertRegex(message, 'was not in the domain')
 
     def test_web_user_permitted(self):
         is_permitted, message = is_permitted_to_restore(
@@ -166,7 +164,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             self.location_user,
         )
         self.assertFalse(is_permitted)
-        self.assertRegexpMatches(message, 'does not have permission')
+        self.assertRegex(message, 'does not have permission')
 
     def test_commcare_user_as_user_in_location(self):
         is_permitted, message = is_permitted_to_restore(
@@ -183,7 +181,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             self.wrong_location_user,
         )
         self.assertFalse(is_permitted)
-        self.assertRegexpMatches(message, 'not in allowed locations')
+        self.assertRegex(message, 'not in allowed locations')
 
     def test_web_user_as_user_in_location(self):
         is_permitted, message = is_permitted_to_restore(
@@ -200,7 +198,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             self.wrong_location_user,
         )
         self.assertFalse(is_permitted)
-        self.assertRegexpMatches(message, 'not in allowed locations')
+        self.assertRegex(message, 'not in allowed locations')
 
 
 class GetRestoreUserTest(TestCase):
@@ -287,4 +285,4 @@ class GetRestoreUserTest(TestCase):
             self.commcare_user,
             self.other_commcare_user
         )
-        self.assertEquals(user.user_id, self.other_commcare_user._id)
+        self.assertEqual(user.user_id, self.other_commcare_user._id)

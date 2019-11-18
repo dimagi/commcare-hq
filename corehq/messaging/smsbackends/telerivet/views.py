@@ -1,14 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.decorators import require_privilege_but_override_for_migrator
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
@@ -22,7 +20,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
-import six
 
 
 # Tuple of (hq field name, telerivet field name) tuples
@@ -130,7 +127,7 @@ class TelerivetSetupView(BaseMessagingSectionView):
         }
 
 
-@require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 @require_permission(Permissions.edit_data)
 @login_and_domain_required
 @require_GET
@@ -156,7 +153,7 @@ def get_last_inbound_sms(request, domain):
         })
 
 
-@require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 @require_permission(Permissions.edit_data)
 @login_and_domain_required
 @require_POST
@@ -206,7 +203,7 @@ def send_sample_sms(request, domain):
     })
 
 
-@require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 @require_permission(Permissions.edit_data)
 @login_and_domain_required
 @require_POST

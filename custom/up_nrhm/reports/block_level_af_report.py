@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
@@ -65,7 +62,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
             for index, row in enumerate(rs):
                 rows[index].append(row[-1])
                 if index == 10:
-                    numbers = re.split('/|\s|%', row[-1]['html'])
+                    numbers = re.split(r'/|\s|%', row[-1]['html'])
                     sum_row_10 += int(numbers[0])
                     denom_row_10 += int(numbers[1])
                 else:

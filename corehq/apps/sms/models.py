@@ -1,37 +1,43 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import hashlib
-import jsonfield
 import uuid
-from dimagi.ext.couchdbkit import *
-
-from datetime import datetime, timedelta
-from django.db import models, transaction, IntegrityError, connection
-from django.http import Http404
 from collections import namedtuple
+from datetime import datetime, timedelta
+
+from django.db import IntegrityError, connection, models, transaction
+from django.http import Http404
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import jsonfield
+from memoized import memoized
+
+from dimagi.ext.couchdbkit import Document, StringProperty
+from dimagi.utils.couch import CriticalSection
+
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Form
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms import util as smsutil
+from corehq.apps.sms.messages import (
+    MSG_MOBILE_WORKER_ANDROID_INVITATION,
+    MSG_MOBILE_WORKER_INVITATION_START,
+    MSG_MOBILE_WORKER_JAVA_INVITATION,
+    MSG_REGISTRATION_INSTALL_COMMCARE,
+    get_message,
+)
+from corehq.apps.sms.mixin import (
+    BadSMSConfigException,
+    CommCareMobileContactMixin,
+    InvalidFormatException,
+    PhoneNumberInUseException,
+    apply_leniency,
+)
+from corehq.apps.users.models import CouchUser
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException, PhoneNumberInUseException, apply_leniency,
-    BadSMSConfigException)
-from corehq.apps.sms import util as smsutil
-from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
-    MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_REGISTRATION_INSTALL_COMMCARE, get_message)
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch import CriticalSection
-from memoized import memoized
-from django.utils.translation import ugettext_noop, ugettext_lazy
-import six
-
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -608,7 +614,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, str) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -1047,6 +1053,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
     # This is redundantly stored here (as well as the subevent) so that it
     # doesn't have to be looked up for reporting.
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
     form_name = models.TextField(null=True)
 
@@ -1089,21 +1096,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
-    def create_ivr_subevent(self, recipient, form_unique_id, case_id=None):
-        recipient_type = MessagingEvent.get_recipient_type(recipient)
-        obj = MessagingSubEvent.objects.create(
-            parent=self,
-            date=datetime.utcnow(),
-            recipient_type=recipient_type,
-            recipient_id=recipient.get_id if recipient_type else None,
-            content_type=MessagingEvent.CONTENT_IVR_SURVEY,
-            form_unique_id=form_unique_id,
-            form_name=MessagingEvent.get_form_name_or_none(form_unique_id),
-            case_id=case_id,
-            status=MessagingEvent.STATUS_IN_PROGRESS,
-        )
-        return obj
-
     @classmethod
     def create_event_for_adhoc_sms(cls, domain, recipient=None,
             content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER):
@@ -1132,6 +1124,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type=self.recipient_type,
             recipient_id=self.recipient_id,
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+            app_id=self.app_id,
             form_unique_id=self.form_unique_id,
             form_name=self.form_name,
             case_id=case_id,
@@ -1159,9 +1152,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return self.messagingsubevent_set.all()
 
     @classmethod
-    def get_form_name_or_none(cls, form_unique_id):
+    def get_form_name_or_none(cls, domain, app_id, form_unique_id):
         try:
-            form = Form.get_form(form_unique_id)
+            app = get_app(domain, app_id)
+            form = app.get_form(form_unique_id)
             return form.full_path_name
         except:
             return None
@@ -1169,6 +1163,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
         content_type = cls.CONTENT_NONE
+        app_id = None
         form_unique_id = None
         form_name = None
 
@@ -1176,12 +1171,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             if action.recipient == KeywordAction.RECIPIENT_SENDER:
                 if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
                     content_type = cls.CONTENT_SMS_SURVEY
+                    app_id = action.app_id
                     form_unique_id = action.form_unique_id
-                    form_name = cls.get_form_name_or_none(action.form_unique_id)
+                    form_name = cls.get_form_name_or_none(keyword.domain, action.app_id, action.form_unique_id)
                 elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
-        return (content_type, form_unique_id, form_name)
+        return (content_type, app_id, form_unique_id, form_name)
 
     @classmethod
     def get_source_and_id_from_schedule_instance(cls, schedule_instance):
@@ -1229,15 +1225,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
-            return cls.CONTENT_SMS, None, None
+            return cls.CONTENT_SMS, None, None, None
         elif isinstance(content, SMSSurveyContent):
             app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
-            return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
+            return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
-            return cls.CONTENT_EMAIL, None, None
+            return cls.CONTENT_EMAIL, None, None, None
         else:
-            return cls.CONTENT_NONE, None, None
+            return cls.CONTENT_NONE, None, None, None
 
     @classmethod
     def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
@@ -1272,7 +1268,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def create_from_schedule_instance(cls, schedule_instance, content):
         source, source_id = cls.get_source_and_id_from_schedule_instance(schedule_instance)
-        content_type, form_unique_id, form_name = (
+        content_type, app_id, form_unique_id, form_name = (
             cls.get_content_info_from_content_object(schedule_instance.domain, content)
         )
 
@@ -1286,6 +1282,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             source=source,
             source_id=source_id,
             content_type=content_type,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             form_name=form_name,
             status=cls.STATUS_IN_PROGRESS,
@@ -1302,7 +1299,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         """
         recipient_type = self.get_recipient_type(contact)
 
-        content_type, form_unique_id, form_name = (
+        content_type, app_id, form_unique_id, form_name = (
             self.get_content_info_from_content_object(self.domain, content)
         )
 
@@ -1312,6 +1309,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None,
             content_type=content_type,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             form_name=form_name,
             case_id=case_id,
@@ -1324,8 +1322,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         keyword - the keyword object
         contact - the person who initiated the keyword
         """
-        content_type, form_unique_id, form_name = cls.get_content_info_from_keyword(
-            keyword)
+        content_type, app_id, form_unique_id, form_name = cls.get_content_info_from_keyword(keyword)
         recipient_type = cls.get_recipient_type(contact)
 
         return cls.objects.create(
@@ -1334,6 +1331,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             source=cls.SOURCE_KEYWORD,
             source_id=keyword.couch_id,
             content_type=content_type,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             form_name=form_name,
             status=cls.STATUS_IN_PROGRESS,
@@ -1473,6 +1471,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
     form_name = models.TextField(null=True)
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
@@ -1632,7 +1631,7 @@ class SelfRegistrationInvitation(models.Model):
         it gives the user the option to install the given app.
         """
         app_info_url = cls.get_app_info_url(domain, app_id)
-        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url)
+        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url.encode('utf-8')).decode('utf-8')
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
@@ -1935,7 +1934,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     class ExpectedDomainLevelBackend(Exception):
         pass
 
-    def __unicode__(self):
+    def __str__(self):
         if self.is_global:
             return "Global Backend '%s'" % self.name
         else:
@@ -2307,7 +2306,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))
@@ -2460,7 +2459,7 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
+        hashed_destination_phone_number = hashlib.sha1(destination_phone_number.encode('utf-8')).hexdigest()
         index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 
@@ -2788,6 +2787,7 @@ class KeywordAction(models.Model):
 
     # Only used for action in [ACTION_SMS_SURVEY, ACTION_STRUCTURED_SMS]
     # The form unique id of the form to use as a survey when processing this action.
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
 
     # Only used for action == ACTION_STRUCTURED_SMS
@@ -2819,8 +2819,11 @@ class KeywordAction(models.Model):
         if self.action == self.ACTION_SMS and not self.message_content:
             raise self.InvalidModelStateException("Expected a value for message_content")
 
-        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS] and not self.form_unique_id:
-            raise self.InvalidModelStateException("Expected a value for form_unique_id")
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS]:
+            if not self.app_id:
+                raise self.InvalidModelStateException("Expected a value for app_id")
+            if not self.form_unique_id:
+                raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta, time
 import logging
 from couchdbkit import ResourceNotFound
@@ -10,7 +8,6 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_date
 from pact.models import PactPatientCase, CObservation
 from pact.reports.dot import PactDOTPatientField
-import six
 
 
 class PactDOTAdminPatientField(PactDOTPatientField):
@@ -113,5 +110,5 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
                                         time())
         for num, obs in enumerate(self.tabular_data(mode, case_id, start_datetime, end_datetime)):
             dict_obj = obs.to_json()
-            row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], six.text_type) else dict_obj[x.prop_name] for x in self.headers]
+            row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], str) else dict_obj[x.prop_name] for x in self.headers]
             yield row

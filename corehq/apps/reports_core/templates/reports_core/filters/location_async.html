@@ -3,18 +3,18 @@
 {% load i18n %}
 
 {% block filter-controls %}
-    <span class="form-group report-filter-location-async"
-          id="group_{{ filter.css_id }}"
-          data-bind="visible: show_location_filter_bool()"
-          data-loc-url='{{ context_.loc_url }}'
-          data-locs='{{ context_.locations|JSON }}'
-          data-selected='{{ context_.loc_id|default_if_none:"" }}'
-          data-hierarchy='{{ context_.hierarchy|JSON }}'
-          data-max-drilldown-levels='{{ context_.max_drilldown_levels }}'>
+  <span class="form-group report-filter-location-async"
+        id="group_{{ filter.css_id }}"
+        data-bind="visible: show_location_filter_bool()"
+        data-loc-url='{{ context_.loc_url }}'
+        data-locs='{{ context_.locations|JSON }}'
+        data-selected='{{ context_.loc_id|default_if_none:"" }}'
+        data-hierarchy='{{ context_.hierarchy|JSON }}'
+        data-max-drilldown-levels='{{ context_.max_drilldown_levels }}'>
         <div data-bind="foreach: selected_path" style="display: inline-block;">
             {% block location_select %}
-                <select class="form-control"
-                        data-bind="options: children,
+              <select class="form-control"
+                      data-bind="options: children,
                                    optionsText: 'display_name',
                                    value: selected_child,
                                    disable: !can_edit_children()">

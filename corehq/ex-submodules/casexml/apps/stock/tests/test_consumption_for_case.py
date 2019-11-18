@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_daily_consumption,
     compute_consumption_or_default)
 from casexml.apps.stock.tests.mock_consumption import now

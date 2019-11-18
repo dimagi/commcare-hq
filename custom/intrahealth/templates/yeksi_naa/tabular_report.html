@@ -1,0 +1,47 @@
+{% extends "reports/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+{% block pretable %}
+    {% if not report.needs_filters %}
+        <div class="media">
+          <div class="media-body" style="height: 64px">
+            <h1 class="media-heading" style="text-align: center">{{ title }}<br/></h1>
+          </div>
+        </div>
+    {% endif %}{{ block.super }}
+{% endblock %}
+
+{% block reporttable %}
+{% if report.needs_filters %}
+    {% include 'reports/partials/description.html' %}
+{% else %}
+    {% if report %}
+        <br/>
+        <h2 class="media-heading" style="text-align: center">{{ report.report_table.title }}<br/><small>{{ report.report_table.comment }}</small><br/></h2>
+        {% include 'yeksi_naa/partials/report_table.html' with report_table=report.report_table charts=charts %}
+        <br/>
+    {% endif %}
+{% endif %}
+{% endblock %}
+{% block posttable %}{% endblock %}
+{% endblock %}
+
+{% block js-inline %}
+    <script type="text/template" id="js-template-loading-report">
+        <div class="report-loading-container">
+            <div class="report-loading">
+                <h4>{% trans "Chargement du rapport" %}</h4>
+                <i class="fa fa-spin fa-spinner"></i>
+            </div>
+        </div>
+    </script>
+  {% for chart in charts %}
+    {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
+      {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
+    {% endwith %}
+  {% endfor %}
+{% endblock js-inline %}
+

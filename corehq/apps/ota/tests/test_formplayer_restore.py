@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-
-import mock
-import six
 from django.http.response import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import reverse
+
+import mock
+import six
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
@@ -44,7 +41,7 @@ class FormplayerRestoreTest(TestCase):
         mock_restore.return_value = (HttpResponse('Success', status=200), None)
         resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, "Success")
+        self.assertEqual(resp.content.decode('utf-8'), "Success")
 
     def test_missing_as_user_param(self):
         resp = self._do_post({'version': 2.0})

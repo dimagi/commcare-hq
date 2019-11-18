@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
 import logging
 import datetime
@@ -15,6 +13,10 @@ class _CacheAccessor(object):
     cache_key = None
     timeout = None
     debug_info = None
+
+    def exists(self):
+        logger.debug('if exists {}'.format(self.debug_info))
+        return self.cache_key in get_redis_default_cache()
 
     def get_value(self):
         logger.debug('getting {}'.format(self.debug_info))
@@ -84,7 +86,7 @@ class _RestoreCache(_CacheAccessor):
             _get_domain_freshness_token(domain),
             _get_user_freshness_token(domain, user_id),
         ]])
-        return hashlib.md5(hashable_key).hexdigest()
+        return hashlib.md5(hashable_key.encode('utf-8')).hexdigest()
 
 
 class RestorePayloadPathCache(_RestoreCache):

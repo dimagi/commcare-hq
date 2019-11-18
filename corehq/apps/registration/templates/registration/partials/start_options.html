@@ -1,0 +1,151 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div id="registration-start-container"
+     class="reg-form-container reg-start-container">
+  <div class="well ">
+    <h2>
+      {% blocktrans %}
+        Choose How to Get Started With CommCare
+      {% endblocktrans %}
+    </h2>
+
+    <div class="row">
+
+      <div class="col-xs-6 col-break-reg">
+        <div class="tile-wrapper start-trial">
+          <a class="well tile"
+             id="js-start-trial"
+             href="#">
+            <h3>
+              {% blocktrans %}
+                Start a Trial
+              {% endblocktrans %}
+            </h3>
+            <div class="svg-icon">
+              {% include "registration/partials/icon/start_trial.html" %}
+            </div>
+
+            <p class="desc">
+              {% blocktrans %}
+                Explore sample CommCare apps or create your own, then
+                collect data on mobile devices and build reports.
+              {% endblocktrans %}
+            </p>
+
+            <p class="btn-wrapper">
+            <span class="btn btn-primary">
+              {% trans "Start Trial" %}
+            </span>
+            </p>
+
+            <ul class="check-list">
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  Trial CommCare's Advanced Plan
+                {% endblocktrans %}
+              </li>
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  Explore sample apps or build your own
+                {% endblocktrans %}
+              </li>
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  Publish apps to mobile devices, collect data, and create reports
+                {% endblocktrans %}
+              </li>
+            </ul>
+
+          </a>{# .well #}
+
+          <a href="#"
+             class="view-features">
+            {% blocktrans %}
+              More Info
+            {% endblocktrans %}
+          </a>
+        </div>{# .tile-wrapper #}
+
+
+      </div>{# .col-sm-6 #}
+      <div class="col-xs-6 col-break-reg">
+        <div class="tile-wrapper get-tour">
+          <a class="well tile"
+             id="js-get-tour"
+             href="#cta-form-get-demo"
+             data-toggle="modal"
+          >
+            <h3>
+              {% blocktrans %}
+                Get a Tour
+              {% endblocktrans %}
+            </h3>
+            <div class="svg-icon">
+              {% include "registration/partials/icon/get_tour.html" %}
+            </div>
+            <p class="desc">
+              {% blocktrans %}
+                Get a personal demo of CommCare's data collection,
+                service delivery, and reporting solutions.
+              {% endblocktrans %}
+            </p>
+
+            <p class="btn-wrapper">
+              <span class="btn btn-primary">
+                {% trans "Get Tour" %}
+              </span>
+            </p>
+
+            <ul class="check-list">
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  1:1 CommCare introduction
+                {% endblocktrans %}
+              </li>
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  Product experts available to answer technical questions
+                {% endblocktrans %}
+              </li>
+              <li>
+                <i class="fa fa-check"></i>
+                {% blocktrans %}
+                  Request demo apps customized to your own project
+                {% endblocktrans %}
+              </li>
+            </ul>
+
+          </a>{# .well #}
+
+          <a href="#"
+             class="view-features">
+            {% blocktrans %}
+              More Info
+            {% endblocktrans %}
+          </a>
+        </div>{# .tile-wrapper #}
+
+      </div>{# .col-sm-6 #}
+    </div>{# .row #}
+  </div>{#  .well #}
+
+  <div class="well form-bubble-purple other-options">
+    <h4>
+      {% blocktrans %}
+        Not sure which option is right for you?
+      {% endblocktrans %}
+    </h4>
+    <p class="text-center">
+      <button id="start-chat-cta-btn" class="btn btn-purple">
+        {% trans "Chat with Us" %}
+      </button>
+    </p>
+  </div>{#  .well.form-bubble-purple #}
+
+</div>{# .reg-form-container #}

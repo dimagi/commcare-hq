@@ -1,20 +1,15 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.utils.utils import clean_IN_filter_value
 
 
-class VHNDFormUCR(SqlData):
-    engine_id = 'icds-test-ucr'
-
+class VHNDFormUCR(IcdsSqlData):
     def __init__(self, config):
         self.awcs = config['awc_id']
         super(VHNDFormUCR, self).__init__(config)

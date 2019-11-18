@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import corehq.apps.ivr.tests.util as util
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.telerivet.tasks import EVENT_INCOMING, MESSAGE_TYPE_CALL
@@ -33,4 +31,4 @@ class TelerivetLogCallTestCase(util.LogCallTestCase):
 
     def check_response(self, response):
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '')
+        self.assertEqual(response.content.decode('utf-8'), '')

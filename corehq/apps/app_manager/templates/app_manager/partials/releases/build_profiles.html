@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+
 <div data-bind="saveButton: saveButton"></div>
 <div class="panel panel-appmanager">
   <div class="panel-heading">
@@ -8,71 +10,87 @@
   </div>
   <div class="panel-body">
     {% if app.is_remote_app %}
-    <div class="alert alert-danger" data-bind="visible: app_profiles().length > 1">
-    {% blocktrans %}
-        Remote applications only support one build profile. Please remove all but one profile before saving.
-    {% endblocktrans %}
-    </div>
+      <div class="alert alert-danger" data-bind="visible: app_profiles().length > 1">
+        {% blocktrans %}
+          Remote applications only support one build profile. Please remove all but one profile before saving.
+        {% endblocktrans %}
+      </div>
     {% endif %}
     <div class="help-block">
-        {% blocktrans %}
-            Application profiles let you install the same application with different languages
-            and options on different phones. Application profiles will appear in <em>new</em> versions
-            of the application.
-        {% endblocktrans %}
-        <span class="hq-help-template"
-              data-title="{% trans "Application Profiles" %}"
-              data-placement="left"
-              data-content="
+      {% blocktrans %}
+        Application profiles let you install the same application with different languages
+        and options on different phones. Application profiles will appear in <em>new</em> versions
+        of the application.
+      {% endblocktrans %}
+      <span class="hq-help-template"
+            data-title="{% trans "Application Profiles" %}"
+            data-placement="left"
+            data-content="
               {% blocktrans %}
                   Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>
               {% endblocktrans %}">
         </span>
     </div>
     <table class="table table-profiles">
-        <thead>
-            <tr class="row form-group">
-                <th>{% trans "Profile Name" %}</th>
-                <th>{% trans "Languages" %}</th>
-                <th>{% trans "Default Language" %}</th>
-                <th>{% trans "Practice Mobile Worker" %}
-                    <div class="text-warning"  data-bind="visible: !$data.enable_practice_users">
-                    <i class="fa fa-arrow-down"></i>
-                    {% trans "Upgrade to CommCare 2.30!" %}
-                    </div>
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody data-bind="foreach: app_profiles">
-            <tr class="row form-group">
-                <td class="col-sm-3"><span class="form-inline"><input class="form-control" data-bind="value: $data.name"/></span></td>
-                <td class="col-sm-3">
-                    <select class="language-select form-control"
-                            multiple="true"
-                            data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
-                    </select>
-                </td>
-                <td class="col-sm-3">
+      <thead>
+      <tr class="row form-group">
+        <th>{% trans "Profile Name" %}</th>
+        <th>{% trans "Languages" %}</th>
+        <th>{% trans "Default Language" %}</th>
+        <th>{% trans "Practice Mobile Worker" %}
+          <div class="text-warning"  data-bind="visible: !$data.enable_practice_users">
+            <i class="fa fa-arrow-down"></i>
+            {% trans "Upgrade to CommCare 2.30!" %}
+          </div>
+        </th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody data-bind="foreach: app_profiles">
+      <tr class="row form-group">
+        <td class="col-sm-3">
+                    <span class="form-inline">
+                        <input class="form-control" data-bind="value: $data.name"/>
+                      {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+                        <div data-bind="visible: $data.latestEnabledVersion">
+                            <b>
+                            {% trans "Latest Enabled Version:" %}
+                            <span data-bind="text: $data.latestEnabledVersion"></span>
+                            </b>
+                        </div>
+                      {% endif %}
+                    </span>
+        </td>
+        <td class="col-sm-3">
+          <select class="language-select form-control"
+                  multiple="true"
+                  data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
+          </select>
+        </td>
+        <td class="col-sm-3">
                     <span class="form-inline">
                         <select class="form-control" data-bind="value: defaultLang, options: langs"></select>
                     </span>
-                </td>
-                <td class="col-sm-3">
+        </td>
+        <td class="col-sm-3">
                     <span class="form-inline">
                         <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">
                             <option data-bind="value: $data.id, text: $data.text"></option>
                         </select>
                     </span>
-                </td>
-                <td><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeProfile"></i></a></td>
-                <input type="hidden" data-bind="value: id"/>
-            </tr>
-        </tbody>
+        </td>
+        <td>
+          <button class="btn btn-danger" data-bind="click: $root.removeProfile">
+            <i class="fa fa-remove"></i>
+          </button>
+        </td>
+        <input type="hidden" data-bind="value: id"/>
+      </tr>
+      </tbody>
     </table>
     <button class="btn btn-default" data-bind="click: newProfile">
-        <i class="fa fa-plus"></i>
-        {% trans "Add Profile" %}
+      <i class="fa fa-plus"></i>
+      {% trans "Add Profile" %}
     </button>
   </div>
 </div>

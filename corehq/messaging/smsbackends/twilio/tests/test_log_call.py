@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import corehq.apps.ivr.tests.util as util
 from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -43,4 +41,4 @@ class TwilioLogCallTestCase(util.LogCallTestCase):
 
     def check_response(self, response):
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, IVR_RESPONSE)
+        self.assertEqual(response.content.decode('utf-8'), IVR_RESPONSE)

@@ -17,7 +17,6 @@ either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
 
 
-from __future__ import unicode_literals
 def match_all():
     return {"match_all": {}}
 
@@ -49,7 +48,17 @@ def AND(*filters):
 
 def NOT(filter_):
     """Exclude docs matching the filter passed in"""
-    return {"not": filter_}
+    if 'or' in filter_:
+        # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
+        # but accepts the same logic
+        # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
+        return AND(*(NOT(condition) for condition in filter_['or']))
+    elif 'not' in filter_:
+        # This may not be strictly necessary
+        # but prevents {'not': {'not': A}}, in favor of just A
+        return filter_['not']
+    else:
+        return {"not": filter_}
 
 
 def not_term(field, value):
@@ -70,8 +79,7 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
     """Range filter that accepts datetime objects as arguments"""
     def format_date(date):
-        # TODO This probably needs more sophistication...
-        return date.isoformat()
+        return date if isinstance(date, str) else date.isoformat()
     params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
     return range_filter(field, *params)
 

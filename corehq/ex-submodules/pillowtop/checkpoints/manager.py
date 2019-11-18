@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from django.conf import settings
@@ -10,7 +8,6 @@ from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
-import six
 
 MAX_CHECKPOINT_DELAY = 300
 DELAY_SENTINEL = object()
@@ -127,10 +124,11 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
         self.last_update = datetime.utcnow()
+        self.last_log = datetime.utcnow()
         self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
-        frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
+        frequency_hit = context.changes_seen >= self.checkpoint_frequency
         time_hit = False
         if self.max_checkpoint_delay:
             seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
@@ -142,11 +140,15 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
     def update_checkpoint(self, change, context):
         if self.should_update_checkpoint(context):
+            context.reset()
             self.checkpoint.update_to(self.get_new_seq(change))
             self.last_update = datetime.utcnow()
             if self.checkpoint_callback:
                 self.checkpoint_callback.checkpoint_updated()
             return True
+        elif (datetime.utcnow() - self.last_log).total_seconds() > 10:
+            self.last_log = datetime.utcnow()
+            pillow_logging.info("Heartbeat: %s", self.get_new_seq(change))
 
         return False
 
@@ -197,7 +199,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         return kafka_seq_to_str(self.get_current_sequence_as_dict())
 
     def update_to(self, seq, change=None):
-        if isinstance(seq, six.string_types):
+        if isinstance(seq, str):
             kafka_seq = str_to_kafka_seq(seq)
         else:
             kafka_seq = seq

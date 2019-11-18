@@ -1,15 +1,12 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import json
 from datetime import datetime
 
 from django.core.management import BaseCommand
 
+from dimagi.utils.decorators.profile import profile
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import WebUser
-from dimagi.utils.decorators.profile import profile
 
 
 class Command(BaseCommand):
@@ -48,7 +45,6 @@ def _code_to_benchmark(domain, app_id, comment, user_id):
     copy = app.make_build(
         comment=comment,
         user_id=user_id,
-        previous_version=app.get_latest_app(released_only=False),
     )
     copy.save(increment_version=False)
     return copy

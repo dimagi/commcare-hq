@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -7,17 +5,15 @@ from collections import defaultdict, OrderedDict
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
-import six
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -67,8 +63,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         "label": "",
         "fills": fills,
         "rightLegend": {
-            "average": sum(average) / float(len(average) or 1),
-            "average_format": 'number',
+            "average": '%.2f' % (total_valid * 100 / float(total or 1)),
             "info": percent_adolescent_girls_enrolled_help_text(),
             "extended_info": [
                 {
@@ -96,7 +91,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -122,30 +117,22 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['valid'] or 0
         all_adolescent = row['all'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         row_values = {
             'valid': valid,
             'all': all_adolescent
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
             name,
             valid
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
@@ -165,7 +152,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -213,11 +200,16 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         data['blue'][date_in_miliseconds]['y'] += valid
         data['blue'][date_in_miliseconds]['all'] += all_adolescent
 
-    top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['value'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'value': sum(value) / len(value),
+        }
+        for key, value in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_value_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['value'], reverse=True)
 
     return {
         "chart_data": [
@@ -227,7 +219,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,
@@ -235,8 +227,8 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_value_and_name,
+        "top_five": all_locations_sorted_by_value_and_name[:5],
+        "bottom_five": all_locations_sorted_by_value_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

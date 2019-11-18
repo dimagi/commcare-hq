@@ -1,18 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import copy
 from datetime import datetime
 
 from django.test import TestCase
+
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
-from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
-from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
+from corehq.apps.userreports.app_manager.helpers import (
+    get_case_data_sources,
+    get_form_data_sources,
+)
+from corehq.apps.userreports.reports.builder import (
+    DEFAULT_CASE_PROPERTY_DATATYPES,
+)
 from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
@@ -164,6 +169,8 @@ class AppManagerDataSourceConfigTest(TestCase):
         data_source = data_sources[self.main_form.xmlns]
         form_properties = copy(self.case_properties)
         form_properties['state'] = 'string'
+        # prepend "form." on all form properties
+        form_properties = {'form.{}'.format(k): v for k, v in form_properties.items()}
         meta_properties = {
             'username': 'string',
             'userID': 'string',

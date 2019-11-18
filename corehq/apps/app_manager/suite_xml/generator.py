@@ -1,29 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from distutils.version import LooseVersion
-
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
+from corehq.apps.app_manager.suite_xml.features.scheduler import (
+    SchedulerFixtureContributor,
+)
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    EntryInstances,
+)
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
-from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
-from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtureContributor
-from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    WorkflowHelper,
+)
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    DetailContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.entries import (
+    EntriesContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.fixtures import (
+    FixtureContributor,
+)
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
-from corehq.apps.app_manager.suite_xml.sections.resources import(
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RemoteRequestContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
     LocaleResourceContributor,
     PracticeUserRestoreContributor,
 )
-from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
-from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource, LocalizedMenu, Text
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    LocalizedMenu,
+    MediaResource,
+    Suite,
+    Text,
+)
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
 
@@ -59,8 +77,8 @@ class SuiteGenerator(object):
             ])
 
         # by module
-        entries = EntriesContributor(self.suite, self.app, self.modules)
-        menus = MenuContributor(self.suite, self.app, self.modules)
+        entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
+        menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
@@ -114,20 +132,8 @@ class MediaSuiteGenerator(object):
     @property
     def media_resources(self):
         PREFIX = 'jr://file/'
-        # you have to call remove_unused_mappings
-        # before iterating through multimedia_map
-        self.app.remove_unused_mappings()
-        if self.app.multimedia_map is None:
-            self.app.multimedia_map = {}
-        filter_multimedia = self.app.media_language_map and self.build_profile
-        if filter_multimedia:
-            media_list = []
-            for lang in self.build_profile.langs:
-                media_list += self.app.media_language_map[lang].media_refs
-            requested_media = set(media_list)
-        for path, m in sorted(list(self.app.multimedia_map.items()), key=lambda item: item[0]):
-            if filter_multimedia and m.form_media and path not in requested_media:
-                continue
+        multimedia_map = self.app.multimedia_map_for_build(build_profile=self.build_profile, remove_unused=True)
+        for path, m in sorted(list(multimedia_map.items()), key=lambda item: item[0]):
             unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]

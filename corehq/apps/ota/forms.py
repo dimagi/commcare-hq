@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
+from django.utils.translation import ugettext
 
+from crispy_forms import layout as crispy
 # todo proper B3 Handle
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from django.utils.translation import ugettext
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from os.path import join
 
@@ -10,20 +8,19 @@ from testil import assert_raises, tempdir
 import corehq.blobs as mod
 from corehq.util.test_utils import generate_cases
 from settingshelper import SharedDriveConfiguration
-from io import open
 
 
 @generate_cases([
     dict(root=None, msg=r"invalid shared drive path: None$"),
-    dict(root=b"", msg=r"invalid shared drive path: ''$"),
-    dict(root=b"file", msg=r"shared drive path is not a directory: '.*/file'$"),
+    dict(root="", msg=r"invalid shared drive path: ''$"),
+    dict(root="file", msg=r"shared drive path is not a directory: '.*/file'$"),
     dict(blob_dir=None, msg="blob_dir is empty or not configured"),
     dict(blob_dir="", msg="blob_dir is empty or not configured"),
 ])
 def test_get_blobdb(self, msg, root=True, blob_dir=None):
     with tempdir() as tmp:
-        if root == b"file":
-            tmp = join(tmp, b"file")
+        if root == "file":
+            tmp = join(tmp, "file")
             with open(tmp, "w", encoding='utf-8') as fh:
                 fh.write("x")
         conf = SharedDriveConfiguration(

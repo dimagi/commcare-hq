@@ -2,15 +2,12 @@
 
 Usage: ./manage.py test --with-timing --timing-file=/path/to/timing.csv
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 import sys
 import time
 
 from nose.plugins import Plugin
 from corehq.tests.noseplugins.uniformresult import uniform_description
-from io import open
 
 
 class TimingPlugin(Plugin):

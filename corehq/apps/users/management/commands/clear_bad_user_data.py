@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
+
 from corehq.apps.es import UserES
 from corehq.apps.users.models import CommCareUser
-from corehq.util.couch import iter_update, DocUpdate
+from corehq.util.couch import DocUpdate, iter_update
 from corehq.util.log import with_progress_bar
 
 

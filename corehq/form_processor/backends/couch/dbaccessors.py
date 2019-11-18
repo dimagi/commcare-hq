@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
@@ -29,7 +27,11 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import AttachmentNotFound, LedgerValueNotFound
+from corehq.form_processor.exceptions import (
+    AttachmentNotFound,
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
@@ -39,12 +41,11 @@ from couchforms.dbaccessors import (
     get_form_ids_for_user,
     get_forms_by_id,
     get_form_ids_by_type,
-    get_form_ids_by_xmlns,
+    iter_form_ids_by_xmlns,
 )
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
-import six
 
 
 class FormAccessorCouch(AbstractFormAccessor):
@@ -82,7 +83,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         doc = XFormInstance.get_db().get(form_id)
         doc = doc_types()[doc['doc_type']].wrap(doc)
         if doc.external_blobs:
-            for name, meta in six.iteritems(doc.external_blobs):
+            for name, meta in doc.external_blobs.items():
                 with doc.fetch_attachment(name, stream=True) as content:
                     doc.deferred_put_attachment(
                         content,
@@ -116,15 +117,25 @@ class FormAccessorCouch(AbstractFormAccessor):
         return get_form_ids_for_user(domain, user_id)
 
     @staticmethod
+    def set_archived_state(form, archive, user_id):
+        operation = "archive" if archive else "unarchive"
+        form.doc_type = "XFormArchived" if archive else "XFormInstance"
+        form.history.append(XFormOperation(operation=operation, user=user_id))
+        # subclasses explicitly set the doc type so force regular save
+        XFormInstance.save(form)
+
+    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         def _form_delete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         def _form_undelete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
@@ -140,7 +151,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        return get_form_ids_by_xmlns(domain, xmlns)
+        return iter_form_ids_by_xmlns(domain, xmlns)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -195,10 +206,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
-
-    @staticmethod
-    def iter_case_ids_by_domain_and_type(domain, type_=None):
-        return get_case_ids_in_domain(domain, type=type_)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
@@ -269,6 +276,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
+        NotAllowed.check(domain)
         return _soft_undelete(CommCareCase.get_db(), case_ids)
 
     @staticmethod
@@ -337,6 +345,28 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from casexml.apps.stock.utils import get_current_ledger_state
         return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
 
+    @staticmethod
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
+        from corehq.apps.commtrack.models import StockState
+
+        assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+
+        filters = {'case_id__in': case_ids}
+        if section_ids:
+            assert isinstance(section_ids, list)
+            filters['section_id__in'] = section_ids
+        if entry_ids:
+            assert isinstance(entry_ids, list)
+            filters['product_id__in'] = entry_ids
+        if date_start:
+            filters['last_modifed__gte'] = date_start
+        if date_end:
+            filters['last_modified__lte'] = date_end
+
+        return list(StockState.objects.filter(**filters))
+
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
@@ -344,7 +374,7 @@ def _get_attachment_content(doc_class, doc_id, attachment_id):
         resp = doc.fetch_attachment(attachment_id, stream=True)
         content_type = doc.blobs[attachment_id].content_type
     except ResourceNotFound:
-        raise AttachmentNotFound(attachment_id)
+        raise AttachmentNotFound(doc_id, attachment_id)
 
     return AttachmentContent(content_type, resp)
 

@@ -1,21 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import json
-
+import warnings
+from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
-import warnings
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
-from casexml.apps.case.xform import cases_referenced_by_xform
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
+from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
-
 from dimagi.utils.parsing import json_format_datetime
-import six
+
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 
 def _get_test_form(domain):
@@ -80,11 +76,6 @@ class BasePayloadGenerator(object):
         return True
 
 
-class SOAPPayloadGeneratorMixin(object):
-    @property
-    def content_type(self):
-        return 'application/soap+xml'
-
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
 
@@ -138,7 +129,7 @@ class GeneratorCollection(object):
 
     def get_all_formats(self, for_domain=None):
         """returns all the formats added to this repeater collection"""
-        return [(name, format.label) for name, format in six.iteritems(self.format_generator_map)
+        return [(name, format.label) for name, format in self.format_generator_map.items()
                 if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
@@ -244,7 +235,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
             create=True,
             case_type='test',
             case_name='test case',
-        ).as_string()
+        ).as_text()
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
@@ -284,10 +275,10 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     deprecated_format_names = ('short_form_json',)
 
     def get_payload(self, repeat_record, form):
-        cases = cases_referenced_by_xform(form)
+        case_ids = list(get_case_ids_from_form(form))
         return json.dumps({'form_id': form.form_id,
                            'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case.case_id for case in cases]})
+                           'case_ids': case_ids})
 
     @property
     def content_type(self):

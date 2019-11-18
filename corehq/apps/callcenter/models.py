@@ -1,23 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import itertools
 from collections import namedtuple
 
-import itertools
-from jsonobject import JsonObject, BooleanProperty, SetProperty, StringProperty, ListProperty, ObjectProperty
+from jsonobject import (
+    BooleanProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    SetProperty,
+    StringProperty,
+)
 
 from corehq.apps.callcenter import const
-import six
 
 TypeRange = namedtuple('TypeRange', 'type, range_slug')
 
 
 class BasicIndicator(JsonObject):
     enabled = BooleanProperty(default=False)
-    date_ranges = SetProperty(six.text_type)
+    date_ranges = SetProperty(str)
 
 
 class TypedIndicator(BasicIndicator):
-    type = StringProperty(six.text_type)
+    type = StringProperty(str)
 
 
 class ByTypeWithTotal(JsonObject):
@@ -133,6 +137,3 @@ class CallCenterIndicatorConfig(JsonObject):
             indicator.enabled = True
             if parsed_indicator.date_range:
                 indicator.date_ranges.add(parsed_indicator.date_range)
-
-
-from .signals import *

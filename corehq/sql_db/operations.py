@@ -1,58 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import re
 
 from django.conf import settings
-from django.db import connection
-from django.db.migrations import RunPython
-from django.db.migrations.operations.special import RunSQL
+from django.db import router
+from django.db.migrations import RunPython, RunSQL
 from django.template import engines
 
-from corehq.sql_db.routers import allow_migrate
-from io import open
+import attr
+
+from corehq.util.django_migrations import noop_migration
 
 NOOP = object()
 
 
 class IndexRenameOperationException(Exception):
     pass
-
-
-class HqOpMixin(object):
-    """
-    Hack until we upgrade to Django 1.8 to allow selectively running custom operations
-    on different DB's
-    """
-
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        db_alias = schema_editor.connection.alias
-        if allow_migrate(db_alias, app_label):
-            super(HqOpMixin, self).database_forwards(app_label, schema_editor, from_state, to_state)
-
-    def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        db_alias = schema_editor.connection.alias
-        if allow_migrate(db_alias, app_label):
-            super(HqOpMixin, self).database_backwards(app_label, schema_editor, from_state, to_state)
-
-
-class HqRunSQL(HqOpMixin, RunSQL):
-    pass
-
-
-class HqRunPython(HqOpMixin, RunPython):
-    pass
-
-
-def noop_migration_fn(apps, schema_editor):
-    pass
-
-
-def noop_migration():
-    """
-    A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
-    """
-    return RunPython(noop_migration_fn, noop_migration_fn)
 
 
 class RunSqlLazy(RunSQL):
@@ -70,16 +32,14 @@ class RunSqlLazy(RunSQL):
         super(RunSqlLazy, self).__init__(sql_template_path, reverse_sql_template_path)
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        db_alias = schema_editor.connection.alias
-        if allow_migrate(db_alias, app_label):
+        if router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints):
             if not self.rendered_forwards:
                 self.sql = self._render_template(self.sql)
                 self.rendered_forwards = True
             super(RunSqlLazy, self).database_forwards(app_label, schema_editor, from_state, to_state)
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        db_alias = schema_editor.connection.alias
-        if allow_migrate(db_alias, app_label):
+        if router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints):
             if self.reverse_sql:
                 if not self.rendered_backwards:
                     self.reverse_sql = self._render_template(self.reverse_sql)
@@ -90,12 +50,21 @@ class RunSqlLazy(RunSQL):
         if path is NOOP:
             return "SELECT 1"
 
-        with open(path, encoding='utf-8') as f:
-            template_string = f.read()
+        if isinstance(path, SQL):
+            template_string = path.value
+        else:
+            with open(path, encoding='utf-8') as f:
+                template_string = f.read()
 
         template = engines['django'].from_string(template_string)
 
         return template.render(self.template_context)
+
+
+@attr.s
+class SQL(object):
+    """Marker class for SQL template strings"""
+    value = attr.ib()
 
 
 class RawSQLMigration(object):
@@ -110,6 +79,14 @@ class RawSQLMigration(object):
     non-reversible migration, set the reverse template to None:
 
         migrator.get_migration('sql_template.sql', None)  # non-reversible
+
+    Raw SQL templates (instead of a template names) can be passed to
+    `get_migration`:
+
+        migrator.get_migration(
+            'get_something.sql',
+            SQL("DROP FUNCTION get_something(TEXT);"),
+        )
     """
 
     def __init__(self, base_path_tuple, template_context=None):
@@ -120,12 +97,17 @@ class RawSQLMigration(object):
         if testing_only and not settings.UNIT_TESTING:
             return noop_migration()
 
-        forward_path = os.path.join(self.base_path, forward_template)
+        if isinstance(forward_template, SQL):
+            forward_path = forward_template
+        else:
+            forward_path = os.path.join(self.base_path, forward_template)
 
         if reverse_template is NOOP:
             reverse_path = NOOP
         elif reverse_template is None:
             reverse_path = None  # make the migration non-reversible
+        elif isinstance(reverse_template, SQL):
+            reverse_path = reverse_template
         else:
             reverse_path = os.path.join(self.base_path, reverse_template)
 
@@ -144,14 +126,14 @@ def _validate_old_index_name(index_name, table_name):
 
 
 def _validate_identifier(name):
-    allowed_chars = re.compile('^[\w\$]+$')
+    allowed_chars = re.compile(r'^[\w\$]+$')
     if not allowed_chars.match(name):
         raise IndexRenameOperationException("Invalid identifier given: %s" % name)
 
 
 def _rename_table_indexes(from_table, to_table):
     def fcn(apps, schema_editor):
-        with connection.cursor() as cursor:
+        with schema_editor.connection.cursor() as cursor:
             cursor.execute('SELECT indexname FROM pg_indexes WHERE tablename = %s', [from_table])
             indexes = [row[0] for row in cursor.fetchall()]
             for index_name in indexes:
@@ -176,6 +158,6 @@ def rename_table_indexes(from_table, to_table):
     rename_table_indexes and rename table operation in FIFO order. So for
     now, not allowing the reverse.
     """
-    return HqRunPython(
+    return RunPython(
         _rename_table_indexes(from_table, to_table)
     )

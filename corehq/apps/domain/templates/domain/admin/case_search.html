@@ -5,106 +5,106 @@
 {% requirejs_main 'domain/js/case_search_main' %}
 
 {% block page_content %}
-    {% include 'domain/admin/partials/case_search_templates.html' %}
-    {% initial_page_data 'case_types' case_types %}
-    {% initial_page_data 'values' values %}
-    {% registerurl 'case_search_config' request.domain %}
-    <h1>{% trans "Enable Case Search" %}</h1>
+  {% include 'domain/admin/partials/case_search_templates.html' %}
+  {% initial_page_data 'case_types' case_types %}
+  {% initial_page_data 'values' values %}
+  {% registerurl 'case_search_config' request.domain %}
+  <h1>{% trans "Enable Case Search" %}</h1>
 
-    <div class="row">
-        <div class="col-sm-6">
-            <form id="case-search-config">
-                {% csrf_token %}
-                <div data-bind="saveButton: saveButton"></div>
-                <p class="spacer"></p>
+  <div class="row">
+    <div class="col-sm-6">
+      <form id="case-search-config">
+        {% csrf_token %}
+        <div data-bind="saveButton: saveButton"></div>
+        <p class="spacer"></p>
 
-                <p>
-                    {% blocktrans %}Enabling case search for the project will allow mobile users to look up cases
-                        that don't necessarily belong to them, and claim them. Possible applications range from cases
-                        for patients who move from one location to another, and other lost-to-follow-up scenarios, to
-                        any scenario involving searching for information, products, people or items.{% endblocktrans %}
-                </p>
-                <p class="text-danger">
-                    {% blocktrans %}WARNING: Enabling Case Search allows users to read the data of
-                        other users' cases, and take ownership of them, from modules whose case lists are configured
-                        for searching.{% endblocktrans %}
-                </p>
+        <p>
+          {% blocktrans %}Enabling case search for the project will allow mobile users to look up cases
+            that don't necessarily belong to them, and claim them. Possible applications range from cases
+            for patients who move from one location to another, and other lost-to-follow-up scenarios, to
+            any scenario involving searching for information, products, people or items.{% endblocktrans %}
+        </p>
+        <p class="text-danger">
+          {% blocktrans %}WARNING: Enabling Case Search allows users to read the data of
+            other users' cases, and take ownership of them, from modules whose case lists are configured
+            for searching.{% endblocktrans %}
+        </p>
 
-                <p>
-                    <input id="enable" type="checkbox" data-bind="checked: toggleEnabled"/>
-                    <label for="enable">{% trans "Enable Case Search" %}</label>
-                </p>
+        <p>
+          <input id="enable" type="checkbox" data-bind="checked: toggleEnabled"/>
+          <label for="enable">{% trans "Enable Case Search" %}</label>
+        </p>
 
-                <div id="fuzzies_div" data-bind="visible: toggleEnabled">
-                    <h2>{% trans "Fuzzy Search Properties" %}</h2>
-                    <p>
-                        {% blocktrans %}
-                            Add a list of all fuzzy search properties by case type below. These are
-                            properties that might be spelled inexactly by a user, e.g. "name".
-                        {% endblocktrans %}
-                    </p>
+        <div id="fuzzies_div" data-bind="visible: toggleEnabled">
+          <h2>{% trans "Fuzzy Search Properties" %}</h2>
+          <p>
+            {% blocktrans %}
+              Add a list of all fuzzy search properties by case type below. These are
+              properties that might be spelled inexactly by a user, e.g. "name".
+            {% endblocktrans %}
+          </p>
 
-                    <div data-bind="template: { name: 'case_type_template',
+          <div data-bind="template: { name: 'case_type_template',
                                     foreach: fuzzyProperties,
                                     as: 'caseTypeProps' }"></div>
-                    <button type="button"
-                            class="btn btn-primary"
-                            data-bind="click: $root.addCaseType">
-                        <i class="fa fa-plus"></i> {% trans "Add case type" %}
-                    </button>
-                </div>
-
-                <div id="remove-characters" data-bind="visible: toggleEnabled">
-                    <h2>{% trans "Remove Special Characters" %}</h2>
-                    <p>
-                        {% blocktrans %}
-                            Remove characters from incoming search queries for particular case properties. For example, you can remove '+' from phone numbers or '-' from ID queries.
-                        {% endblocktrans %}
-                    </p>
-                    <table class="table table-striped">
-                        <thead>
-                            <th>
-                                Case Type
-                            </th>
-                            <th>
-                                Case Property
-                            </th>
-                            <th>
-                                String to remove
-                            </th>
-                            <th></th>
-                        </thead>
-                        <tbody data-bind="foreach: ignorePatterns">
-                            <tr>
-                                <td>
-                                    <select data-bind="options: $root.caseTypes,
-                                                       value: caseType">
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" data-bind="value: caseProperty" placeholder="e.g. name" />
-                                </td>
-                                <td>
-                                    <input type="text" data-bind="value: regex" placeholder="e.g. +" />
-                                </td>
-                                <td>
-                                    <button type="button"
-                                            class="btn btn-danger pull-right"
-                                            data-bind="click: function(){$parent.removeIgnorePatterns($data); $parent.change();}">
-                                    <i class="fa fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button type="button"
-                            class="btn btn-primary"
-                            data-bind="click: addIgnorePatterns">
-                        <i class="fa fa-plus"></i> {% trans "Add case property" %}
-                    </button>
-                </div>
-            </form>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-bind="click: $root.addCaseType">
+            <i class="fa fa-plus"></i> {% trans "Add case type" %}
+          </button>
         </div>
+
+        <div id="remove-characters" data-bind="visible: toggleEnabled">
+          <h2>{% trans "Remove Special Characters" %}</h2>
+          <p>
+            {% blocktrans %}
+              Remove characters from incoming search queries for particular case properties. For example, you can remove '+' from phone numbers or '-' from ID queries.
+            {% endblocktrans %}
+          </p>
+          <table class="table table-striped">
+            <thead>
+            <th>
+              Case Type
+            </th>
+            <th>
+              Case Property
+            </th>
+            <th>
+              String to remove
+            </th>
+            <th></th>
+            </thead>
+            <tbody data-bind="foreach: ignorePatterns">
+            <tr>
+              <td>
+                <select data-bind="options: $root.caseTypes,
+                                                       value: caseType">
+                </select>
+              </td>
+              <td>
+                <input type="text" data-bind="value: caseProperty" placeholder="e.g. name" />
+              </td>
+              <td>
+                <input type="text" data-bind="value: regex" placeholder="e.g. +" />
+              </td>
+              <td>
+                <button type="button"
+                        class="btn btn-danger pull-right"
+                        data-bind="click: function(){$parent.removeIgnorePatterns($data); $parent.change();}">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-bind="click: addIgnorePatterns">
+            <i class="fa fa-plus"></i> {% trans "Add case property" %}
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 
 {% endblock %}

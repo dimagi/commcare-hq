@@ -4,10 +4,10 @@
 {% load i18n %}
 
 {% block js-inline %}
-    <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
-    {% for chart in charts %}
-        {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
-            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
-        {% endwith %}
-    {% endfor %}
+  <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
+  {% for chart in charts %}
+    {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
+      {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
+    {% endwith %}
+  {% endfor %}
 {% endblock js-inline %}

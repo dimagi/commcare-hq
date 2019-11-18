@@ -1,14 +1,12 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from django.db import connections
 
+from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID
 
-new_table = 'config_report_icds-cas_static-child_cases_monthly_v2_198ccc06'
-old_table = 'config_report_icds-cas_static-child_cases_monthly_tabl_551fd064'
+new_table = get_table_name('icds-cas', 'static-child_cases_monthly_v2')
+old_table = get_table_name('icds-cas', 'static-child_cases_monthly_tableau_v2')
 
 migration_query = """
 UPDATE "{new_table}" B
@@ -33,7 +31,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, check, **options):
-        with connections['icds-ucr'].cursor() as cursor:
+        with connections[ICDS_UCR_CITUS_ENGINE_ID].cursor() as cursor:
             if check:
                 print('Query is')
                 print(migration_query)

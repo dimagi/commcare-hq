@@ -1,11 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from memoized import memoized
-from corehq.apps.locations.models import SQLLocation
-from .users import ExpandedMobileWorkerFilter
-from .api import EmwfOptionsView
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
+
+from memoized import memoized
+
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.controllers import (
+    LocationGroupOptionsController,
+)
+
+from .api import EmwfOptionsView
+from .users import ExpandedMobileWorkerFilter
 
 
 class LocationGroupFilter(ExpandedMobileWorkerFilter):
@@ -53,8 +57,6 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
 class LocationGroupFilterOptions(EmwfOptionsView):
 
     @property
-    def data_sources(self):
-        return [
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-        ]
+    @memoized
+    def options_controller(self):
+        return LocationGroupOptionsController(self.request, self.domain, self.search)

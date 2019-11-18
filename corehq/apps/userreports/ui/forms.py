@@ -1,22 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.userreports.models import guess_data_source_type
-from corehq.apps.userreports.ui import help_text
-from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
-from corehq.apps.userreports.util import get_table_name
-from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
+from corehq.apps.userreports.models import guess_data_source_type
+from corehq.apps.userreports.ui import help_text
+from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
+from corehq.apps.userreports.util import get_table_name
 
 
 class DocumentFormBase(forms.Form):
@@ -79,7 +78,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.helper.field_class = 'col-sm-9 col-md-9'
 
         fields = [
-            'config_id',
+            crispy.Field('config_id', css_class="hqwebapp-select2"),
             'title',
             'visible',
             'description',
@@ -93,17 +92,14 @@ class ConfigurableReportEditForm(DocumentFormBase):
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Report Configuration"),
-                *fields
-            ),
+            *fields
         )
         # Restrict edit for static reports
         if not read_only:
             self.helper.layout.append(
                 hqcrispy.FormActions(
                     twbscrispy.StrictButton(
-                        _("Save Changes"),
+                        _("Save"),
                         type="submit",
                         css_class="btn btn-primary",
                     ),
@@ -209,13 +205,10 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Edit Data Source"),
-                *fields
-            ),
+            *fields,
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save Changes"),
+                    _("Save"),
                     type="submit",
                     css_class="btn btn-primary",
                 ),

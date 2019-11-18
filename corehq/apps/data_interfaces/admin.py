@@ -1,13 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.contrib import admin
-from corehq.apps.data_interfaces.models import DomainCaseRuleRun, CaseRuleSubmission
+
+from corehq.apps.data_interfaces.models import (
+    CaseRuleSubmission,
+    DomainCaseRuleRun,
+)
 
 
 class DomainCaseRuleRunAdmin(admin.ModelAdmin):
 
     list_display = [
         'domain',
+        'case_type',
         'started_on',
         'finished_on',
         'status',
@@ -20,7 +23,7 @@ class DomainCaseRuleRunAdmin(admin.ModelAdmin):
     ]
 
     search_fields = [
-        'domain',
+        'domain', 'case_type', 'status'
     ]
 
     ordering = ['-started_on']

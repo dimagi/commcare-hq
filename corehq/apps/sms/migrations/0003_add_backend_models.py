@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from django.db import migrations, models
 
-from __future__ import absolute_import
-from django.db import models, migrations
-import dimagi.utils.couch.migration
 import jsonfield.fields
+
+import dimagi.utils.couch.migration
 
 
 class Migration(migrations.Migration):

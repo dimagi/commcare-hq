@@ -1,26 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from contextlib import contextmanager
 
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
+
 from mock import patch
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.apps.app_manager.exceptions import XFormValidationError
-from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.views import AppCaseSummaryView, AppFormSummaryView
-from corehq.apps.app_manager.views.forms import get_apps_modules
-from corehq.apps.builds.models import BuildSpec
 from pillowtop.es_utils import initialize_index_and_mapping
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 from corehq import toggles
-from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.users.models import WebUser
-from corehq.apps.domain.models import Domain
+from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -28,7 +18,20 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     ShadowModule,
 )
-from .test_form_versioning import BLANK_TEMPLATE
+from corehq.apps.app_manager.tests.util import add_build
+from corehq.apps.app_manager.views import (
+    AppCaseSummaryView,
+    AppFormSummaryView,
+)
+from corehq.apps.app_manager.views.forms import get_apps_modules
+from corehq.apps.builds.models import BuildSpec
+from corehq.apps.domain.models import Domain
+from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.users.models import WebUser
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+
+from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -143,7 +146,8 @@ class TestViews(TestCase):
         send_to_elasticsearch('apps', app.to_json())
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
-    def test_basic_app(self, mock):
+    @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)
+    def test_basic_app(self, mock1, mock2):
         module = self.app.add_module(Module.new_module("Module0", "en"))
         form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
         self.app.save()
@@ -193,6 +197,19 @@ class TestViews(TestCase):
         kwargs['form_unique_id'] = form.unique_id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
+        mock2.side_effect = XFormValidationError('')
+        bad_form = self.app.new_form(module.id, "Form1", "en",
+                                     attachment=INVALID_TEMPLATE.format(xmlns='xmlns-0.0'))
+        kwargs['form_unique_id'] = bad_form.unique_id
+        self.app.save()
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
+
+        bad_form = self.app.new_form(module.id, "Form1", "en",
+                                     attachment="this is not xml")
+        kwargs['form_unique_id'] = bad_form.unique_id
+        self.app.save()
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
+
     def test_advanced_module(self, mock):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()
@@ -219,12 +236,6 @@ class TestViews(TestCase):
             'app_id': self.app.id,
             'module_unique_id': module.unique_id,
         })
-
-    def test_dashboard(self, mock):
-        # This redirects to the dashboard
-        self._test_status_codes(['default_app'], {
-            'domain': self.project.name,
-        }, True)
 
     def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={

@@ -1,12 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-import contextlib
-import datetime
 import logging
 from collections import namedtuple
 
+from ddtrace import tracer
+from django.db import IntegrityError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -17,6 +13,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 import sys
+
+from casexml.apps.case.xform import close_extension_cases
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
@@ -28,13 +26,15 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
-    has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
+from corehq.apps.users.permissions import has_permission_to_view_report
+from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.util.datadog.utils import form_load_counter
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
@@ -46,7 +46,6 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
-import six
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -67,7 +66,7 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False, case_db=None):
+                 partial_submission=False, case_db=None, force_logs=False):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -93,8 +92,10 @@ class SubmissionPost(object):
         self.case_db = case_db
         if case_db:
             assert case_db.domain == domain
+        self.force_logs = force_logs
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+        self.track_load = form_load_counter("form_submission", domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -160,6 +161,7 @@ class SubmissionPost(object):
             return _('Form successfully saved!')
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
+        from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
         from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
@@ -212,6 +214,7 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def run(self):
+        self.track_load()
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
@@ -224,8 +227,26 @@ class SubmissionPost(object):
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
-            response = self.get_exception_response_and_log(submitted_form, self.path)
+
+            response = None
+            try:
+                xml = self.instance.decode()
+            except UnicodeDecodeError:
+                pass
+            else:
+                if 'log_subreport' in xml:
+                    response = self.get_exception_response_and_log(
+                        'Badly formed device log', submitted_form, self.path
+                    )
+
+            if not response:
+                response = self.get_exception_response_and_log(
+                    'Problem receiving submission', submitted_form, self.path
+                )
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
+
+        if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
+            return self.handle_system_action(submitted_form)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             return self.process_device_log(submitted_form)
@@ -235,39 +256,45 @@ class SubmissionPost(object):
         submission_type = 'unknown'
         openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
+            if len(xforms) > 1:
+                self.track_load(len(xforms) - 1)
             if self.case_db:
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
             else:
-                case_db_cache = self.interface.casedb_cache(domain=self.domain, lock=True, deleted_ok=True, xforms=xforms)
+                case_db_cache = self.interface.casedb_cache(
+                    domain=self.domain, lock=True, deleted_ok=True,
+                    xforms=xforms, load_src="form_submission",
+                )
 
             with case_db_cache as case_db:
                 instance = xforms[0]
 
                 if instance.is_duplicate:
-                    submission_type = 'duplicate'
-                    existing_form = xforms[1]
-                    stub = UnfinishedSubmissionStub.objects.filter(
-                        domain=instance.domain,
-                        xform_id=existing_form.form_id
-                    ).first()
+                    with tracer.trace('submission.process_duplicate'):
+                        submission_type = 'duplicate'
+                        existing_form = xforms[1]
+                        stub = UnfinishedSubmissionStub.objects.filter(
+                            domain=instance.domain,
+                            xform_id=existing_form.form_id
+                        ).first()
 
-                    result = None
-                    if stub:
-                        from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
-                        result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
-                    elif existing_form.is_error:
-                        from corehq.form_processor.reprocess import reprocess_form
-                        result = reprocess_form(existing_form, lock_form=False)
-                    if result and result.error:
-                        submission_type = 'error'
-                        openrosa_kwargs['error_message'] = result.error
-                        if existing_form.is_error:
-                            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                        result = None
+                        if stub:
+                            from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                            result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+                        elif existing_form.is_error:
+                            from corehq.form_processor.reprocess import reprocess_form
+                            result = reprocess_form(existing_form, lock_form=False)
+                        if result and result.error:
+                            submission_type = 'error'
+                            openrosa_kwargs['error_message'] = result.error
+                            if existing_form.is_error:
+                                openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                            else:
+                                openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         else:
-                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
-                    else:
-                        self.interface.save_processed_models([instance])
+                            self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
@@ -335,6 +362,7 @@ class SubmissionPost(object):
             revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
 
+    @tracer.wrap(name='submission.save_models')
     def save_processed_models(self, case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
@@ -358,16 +386,19 @@ class SubmissionPost(object):
             return "Error performing post save operations"
 
     @staticmethod
+    @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
+        case_db.clear_changed()
         try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
-            case_stock_result.case_result.close_extensions(
+            close_extension_cases(
                 case_db,
+                case_stock_result.case_models,
                 "SubmissionPost-%s-close_extensions" % instance.form_id
             )
         except PostSaveError:
@@ -380,6 +411,7 @@ class SubmissionPost(object):
             raise PostSaveError
 
     @staticmethod
+    @tracer.wrap(name='submission.process_cases_and_stock')
     def process_xforms_for_cases(xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
@@ -426,7 +458,7 @@ class SubmissionPost(object):
                 response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
-                response = self.get_retry_response(error_message, error_nature)
+                response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
                 response = openrosa_response.get_openarosa_success_response()
@@ -447,34 +479,48 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_retry_response(message, nature):
-        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+    def get_v3_error_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response
+        - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
+        - any other value of `nature` will result in the form being marked as a failure and retrying
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
         ).response()
 
     @staticmethod
-    def get_exception_response_and_log(error_instance, path):
-        logging.exception(
-            "Problem receiving submission to %s. Doc id: %s, Error %s" % (
-                path,
-                error_instance.form_id,
-                error_instance.problem
-            )
+    def get_exception_response_and_log(msg, error_instance, path):
+        logging.error(
+            msg,
+            extra={
+                'submission_path': path,
+                'form_id': error_instance.form_id,
+                'error_message': error_instance.problem
+            }
         )
+        # This are generally badly formed XML resulting from file corruption, encryption errors
+        # or other errors on the device which can not be recovered from.
+        # To prevent retries of these errors we submit a 422 response with `processing_failure` nature.
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=500,
+            nature=ResponseNature.PROCESSING_FAILURE,
+            status=422,
         ).response()
 
+    @tracer.wrap(name='submission.handle_system_action')
+    def handle_system_action(self, form):
+        handle_system_action(form, self.auth_context)
+        self.interface.save_processed_models([form])
+        response = HttpResponse(status=201)
+        return FormProcessingResult(response, form, [], [], 'system-action')
+
+    @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
-        if not ignore_device_logs:
+        if self.force_logs or not ignore_device_logs:
             try:
-                process_device_log(self.domain, device_log_form)
+                process_device_log(self.domain, device_log_form, self.force_logs)
             except Exception as e:
                 notify_exception(None, "Error processing device log", details={
                     'xml': self.instance,
@@ -488,56 +534,38 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = '{}: {}'.format(type(exception).__name__, six.text_type(exception))
+    error_message = '{}: {}'.format(type(exception).__name__, str(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
-    notify_submission_error(instance, exception, instance.problem)
-    FormAccessors(interface.domain).save_new_form(instance)
+
+    notify_submission_error(instance, instance.problem, sys.exc_info())
+
+    try:
+        FormAccessors(interface.domain).save_new_form(instance)
+    except IntegrityError:
+        # handle edge case where saving duplicate form fails
+        instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
+        FormAccessors(interface.domain).save_new_form(instance)
+    except XFormSaveError:
+        # try a simple save
+        instance.save()
 
 
-def notify_submission_error(instance, exception, message):
+def notify_submission_error(instance, message, exec_info=None):
     from corehq.util.global_request.api import get_request
+
+    exec_info = exec_info or sys.exc_info()
     domain = getattr(instance, 'domain', '---')
     details = {
         'domain': domain,
         'error form ID': instance.form_id,
     }
-    should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
+    should_email = not isinstance(exec_info[1], CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
         request = get_request()
-        notify_exception(request, message, details=details)
+        notify_exception(request, message, details=details, exec_info=exec_info)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
-
-
-class SubmissionProcessTracker(object):
-    def __init__(self, stub=None):
-        self.stub = stub
-
-    def submission_saved(self):
-        if self.stub:
-            self.stub.saved = True
-            self.stub.save()
-
-    def submission_fully_processed(self):
-        if self.stub:
-            self.stub.delete()
-
-
-@contextlib.contextmanager
-def unfinished_submission(instance):
-    unfinished_submission_stub = None
-    if not getattr(instance, 'deprecated_form_id', None):
-        # don't create stubs for form edits since we don't want to auto-reprocess them
-        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-            xform_id=instance.form_id,
-            timestamp=datetime.datetime.utcnow(),
-            saved=False,
-            domain=instance.domain,
-        )
-    tracker = SubmissionProcessTracker(unfinished_submission_stub)
-    yield tracker
-    tracker.submission_fully_processed()

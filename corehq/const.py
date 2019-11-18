@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
 USER_DATETIME_FORMAT_WITH_SEC = "%b %d, %Y %H:%M:%S %Z"
 
@@ -25,3 +24,5 @@ OPENROSA_VERSION_MAP = {
 }
 
 GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'
+
+ONE_DAY = 60 * 60 * 24

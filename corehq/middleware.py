@@ -1,20 +1,25 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import functools
 import logging
 import mimetypes
 import os
 import datetime
+import re
+import traceback
+import uuid
 from django.conf import settings
+from django.contrib.sessions.backends.cache import SessionStore
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 from django.utils.deprecation import MiddlewareMixin
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -117,10 +122,9 @@ class TimeoutMiddleware(MiddlewareMixin):
     def _session_expired(timeout, activity, time):
         if activity is None:
             return False
-        if time - string_to_utc_datetime(activity) > datetime.timedelta(minutes=timeout):
-            return True
-        else:
-            return False
+
+        time_since_activity = time - string_to_utc_datetime(activity)
+        return time_since_activity > datetime.timedelta(minutes=timeout)
 
     @staticmethod
     def _user_requires_secure_session(couch_user):
@@ -132,28 +136,30 @@ class TimeoutMiddleware(MiddlewareMixin):
             return
 
         secure_session = request.session.get('secure_session')
+        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
         domain = getattr(request, "domain", None)
         now = datetime.datetime.utcnow()
 
-        if not secure_session and (
-                (domain and Domain.is_secure_session_required(domain)) or
-                self._user_requires_secure_session(request.couch_user)):
-            if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
+        # figure out if we want to switch to secure_sessions
+        change_to_secure_session = (
+            not secure_session
+            and (
+                (domain and Domain.is_secure_session_required(domain))
+                or self._user_requires_secure_session(request.couch_user)))
+
+        if change_to_secure_session:
+            timeout = settings.SECURE_TIMEOUT
+            # force re-authentication if the user has been logged in longer than the secure timeout
+            if self._session_expired(timeout, request.user.last_login, now):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
+                request.session.set_expiry(timeout * 60)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-            else:
-                request.session['secure_session'] = True
-                request.session['last_request'] = json_format_datetime(now)
-                return
-        else:
-            last_request = request.session.get('last_request')
-            timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
-            if self._session_expired(timeout, last_request, now):
-                django_logout(request, template_name=settings.BASE_TEMPLATE)
-                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-            request.session['last_request'] = json_format_datetime(now)
+
+            request.session['secure_session'] = True
+
+        request.session.set_expiry(timeout * 60)
 
 
 def always_allow_browser_caching(fn):
@@ -196,7 +202,7 @@ class SentryContextMiddleware(MiddlewareMixin):
     def __init__(self, get_response=None):
         super(SentryContextMiddleware, self).__init__(get_response)
         try:
-            from raven.contrib.django.raven_compat.models import client
+            from sentry_sdk import configure_scope
         except ImportError:
             raise MiddlewareNotUsed
 
@@ -204,14 +210,87 @@ class SentryContextMiddleware(MiddlewareMixin):
             raise MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        from raven.contrib.django.raven_compat.models import client
+        from sentry_sdk import configure_scope
 
-        if getattr(request, 'couch_user', None):
-            client.extra_context({
-                'couch_user_id': request.couch_user.get_id
-            })
+        with configure_scope() as scope:
+            if getattr(request, 'couch_user', None):
+                scope.set_extra('couch_user_id', request.couch_user.get_id)
 
-        if getattr(request, 'domain', None):
-            client.tags_context({
-                'domain': request.domain
-            })
+            if getattr(request, 'domain', None):
+                scope.set_tag('domain', request.domain)
+
+
+session_logger = logging.getLogger('session_access_log')
+
+
+def log_call(func):
+    def with_logging(*args, **kwargs):
+        session_logger.info("\n\n\n")
+        session_logger.info(func.__name__ + " was called")
+        session_logger.info("\n\n\n")
+        for line in traceback.format_stack():
+            white_list = ['corehq/', 'custom/', func.__name__]
+            if any([c in line for c in white_list]):
+                session_logger.info(line.strip())
+        return func(*args, **kwargs)
+    return with_logging
+
+
+def decorate_all_methods(decorator):
+    def decorate(cls):
+        for attr in dir(cls):
+            if "__" not in attr and callable(getattr(cls, attr)):
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+    return decorate
+
+
+@decorate_all_methods(log_call)
+class LoggingSessionStore(SessionStore):
+    pass
+
+
+class LoggingSessionMiddleware(SessionMiddleware):
+
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        self.bypass_re = [
+            re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
+        ]
+
+    def _bypass_sessions(self, request):
+        return (
+            any(rx.match(request.path_info) for rx in self.bypass_re) and
+            toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER)
+        )
+
+    def process_response(self, request, response):
+        datadog_counter(
+            'commcare.bypass_sessions.requests_count',
+            tags=['bypass_sessions:{}'.format(request.__bypass_sessions),
+            'response_code:{}'.format(response.status_code)])
+        return super().process_response(request, response)
+
+    def process_request(self, request):
+        request.__bypass_sessions = self._bypass_sessions(request)
+        try:
+            match = re.search(r'/a/[0-9a-z-]+', request.path)
+            if match:
+                domain = match.group(0).split('/')[-1]
+                if request.__bypass_sessions:
+                    session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+                    request.session = self.SessionStore(session_key)
+                    request.session.save = lambda *x: None
+                    return
+                elif toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
+                    session_logger.info(
+                        "Logging session access for URL {}".format(request.path))
+                    self.SessionStore = LoggingSessionStore
+        except Exception as e:
+            session_logger.error(
+                "Exception {} in LoggingSessionMiddleware for url {}".format(
+                    str(e), request.path)
+            )
+            pass
+        super().process_request(request)

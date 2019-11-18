@@ -1,40 +1,48 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import json
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from collections import namedtuple
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
-from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView, BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import use_select2_v4
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.users.decorators import (
+    require_can_edit_web_users,
+    require_permission,
+)
 from corehq.apps.users.models import Permissions
-
+from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
-    SOAPCaseRepeaterForm,
-    SOAPLocationRepeaterForm,
-    Dhis2RepeaterForm)
-from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
+)
+from corehq.motech.repeaters.models import (
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    Repeater,
+    RepeatRecord,
+)
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.utils import b64_aes_encrypt
+
+RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
@@ -47,25 +55,18 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def repeaters(self):
+    def repeater_types_info(self):
         return [
-            (
-                r.__name__,
-                r.by_domain(self.domain),
-                r.friendly_name,
-                r.get_custom_url(self.domain)
-            )
+            RepeaterTypeInfo(r.__name__, r.friendly_name, r._has_config, r.by_domain(self.domain))
             for r in get_all_repeater_types().values() if r.available_for_domain(self.domain)
         ]
 
     @property
     def page_context(self):
         return {
-            'repeaters': self.repeaters,
+            'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
-            'gefingerpoken': (
-                # Set gefingerpoken_ to whether the user should be allowed to change MOTECH configuration.
-                # .. _gefingerpoken: https://en.wikipedia.org/wiki/Blinkenlights
+            'user_can_configure': (
                 self.request.couch_user.is_superuser or
                 self.request.couch_user.can_edit_motech() or
                 toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
@@ -142,6 +143,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
                 ciphertext=b64_aes_encrypt(cleaned_data['password'])
             )
         repeater.format = cleaned_data['format']
+        repeater.notify_addresses_str = cleaned_data['notify_addresses_str']
         repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 
@@ -199,10 +201,6 @@ class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(AddCaseRepeaterView, self).dispatch(request, *args, **kwargs)
-
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -227,38 +225,15 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
-class AddDhis2RepeaterView(AddFormRepeaterView):
+class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
-    repeater_form_class = Dhis2RepeaterForm
-    page_title = ugettext_lazy("Forward to DHIS2")
-    page_name = ugettext_lazy("Forward to DHIS2")
-
-    def set_repeater_attr(self, repeater, cleaned_data):
-        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
-        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
-        return repeater
-
-
-class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
-    repeater_form_class = SOAPCaseRepeaterForm
-
-    def make_repeater(self):
-        repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
-        repeater.operation = self.add_repeater_form.cleaned_data['operation']
-        return repeater
-
-
-class AddCustomSOAPLocationRepeaterView(AddRepeaterView):
-    repeater_form_class = SOAPLocationRepeaterForm
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
-
-    def make_repeater(self):
-        repeater = super(AddCustomSOAPLocationRepeaterView, self).make_repeater()
-        repeater.operation = self.add_repeater_form.cleaned_data['operation']
-        return repeater
 
 
 class EditRepeaterView(BaseRepeaterView):
@@ -342,7 +317,7 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
 @require_POST
@@ -408,11 +383,11 @@ def test_repeater(request, domain):
             resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
 
         except Exception as e:

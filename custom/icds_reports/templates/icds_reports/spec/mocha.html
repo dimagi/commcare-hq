@@ -2,7 +2,14 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-    {% include "hqwebapp/includes/angular.html" %}
+    <script src="{% static 'angular/angular.min.js' %}"></script>
+    <script src="{% static 'angular-route/angular-route.js' %}"></script>
+    <script src="{% static 'angular-resource/angular-resource.js' %}"></script>
+    <script src="{% static 'angular-message-format/angular-message-format.js' %}"></script>
+    <script src="{% static 'angular-messages/angular-messages.js' %}"></script>
+    <script src="{% static 'angular-cookies/angular-cookies.js' %}"></script>
+    <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+    <script src="{% static 'djangular/js/django-angular.min.js' %}"></script>
     <script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
@@ -48,6 +55,7 @@
     <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
     <script src="{% static 'js/angular-services/download.service.js' %}"></script>
     <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
+    <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
 
     <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
@@ -73,7 +81,7 @@
     <script src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
     <script src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
     <script src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
-    <script src="{% static 'js/directives/system-usage/system-usage.directive.js' %}"></script>
+    <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
     <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
     <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
     <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
@@ -83,7 +91,9 @@
     <script src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
     <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
     <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
+    <script src="{% static 'js/directives/service-delivery-dashboard/service-delivery-dashboard.directive.js' %}"></script>
     <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
+    <script src="{% static 'js/directives/lady-supervisor/lady-supervisor.directive.js' %}"></script>
     <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
     <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
     <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
@@ -115,7 +125,7 @@
     <script src="{% static 'icds_reports/js/spec/registered-household.directive.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/underweight-children-report.directive.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/property.filter.spec.js' %}"></script>
-    <script src="{% static 'icds_reports/js/spec/system-usage.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/program-summary.directive.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/india-numbers.filter.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/kpi.directive.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/navigation.directive.spec.js' %}"></script>

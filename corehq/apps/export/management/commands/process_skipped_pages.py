@@ -1,7 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import multiprocessing
 import os
 import re
@@ -10,16 +6,18 @@ import tempfile
 import zipfile
 from datetime import datetime
 
-import sh
 from django.core.management.base import BaseCommand, CommandError
+
+import sh
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.multiprocess import (
-    MultiprocessExporter, RetryResult,
-    UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
+    UNPROCESSED_PAGES_DIR,
+    MultiprocessExporter,
+    RetryResult,
+    _add_compressed_page_to_zip,
+)
 from corehq.util.files import safe_filename
-from six.moves import input
-from io import open
 
 
 class Command(BaseCommand):
@@ -157,7 +155,7 @@ class Command(BaseCommand):
         total_docs = 0
         for page_filename in os.listdir(unprocessed_path):
             page_path = os.path.join(unprocessed_path, page_filename)
-            page_search = re.search('page_(\d+).json.gz', page_filename)
+            page_search = re.search(r'page_(\d+).json.gz', page_filename)
             if page_search:
                 page_number = int(page_search.group(1))
             else:

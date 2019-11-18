@@ -4,62 +4,62 @@
 
 
 {% block breadcrumb %}
-    <li>{{ domain.name }}</li>
+  <li>{{ domain.name }}</li>
 {% endblock %}
 
 {% block page_content %}
-    <div class="row">
-        <div class="col-sm-12">
-            <h1 class="page-title">
-                {{ domain.name }}
-                <small>by
-                    {{ domain.author }}
-                </small>
-            </h1>
-        </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <h1 class="page-title">
+        {{ domain.name }}
+        <small>by
+          {{ domain.author }}
+        </small>
+      </h1>
     </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <dl class="dl-horizontal">
-                <dt>{% trans 'Description' %}</dt>
-                <dd>
-                    {% if domain.deployment.description %}
-                        {{ domain.deployment.description }}
-                    {% else %}
-                        <span class="label label-default">{% trans "None" %}</span>
-                    {% endif %}
-                </dd>
-                <dt>{% trans 'Users' %}</dt>
-                <dd>{{ domain.all_users|length }}</dd>
-                {% if domain.deployment.city %}
-                    <dt>{% trans 'City' %}</dt>
-                    <dd>{{ domain.deployment.city }}</dd>
-                {% endif %}
-                {% if domain.deployment.countries %}
-                    <dt>
-                        {% with total=domain.deployment.countries|length %}
-                            Countr{{ total|pluralize:"y,ies" }}
-                        {% endwith %}
-                    </dt>
-                    <dd>{{ domain.deployment.countries|join:", " }}</dd>
-                {% endif %}
-                {% if domain.deployment.region %}
-                    <dt>{% trans 'Region' %}</dt>
-                    <dd>{{ domain.deployment.region }}</dd>
-                {% endif %}
-                <dt>{% trans 'Languages' %}</dt>
-                <dd>
-                    {% if domain.languages %}
-                        {{ domain.readable_languages }}
-                    {% else %}
-                        <span class="label label-default">{% trans "None" %}</span>
-                    {% endif %}
-                </dd>
-                <dt>{% trans 'Active' %}</dt>
-                <dd>
-                    {{ domain.recent_submissions|yesno:"Yes,No" }}
-                </dd>
-            </dl>
-        </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <dl class="dl-horizontal">
+        <dt>{% trans 'Description' %}</dt>
+        <dd>
+          {% if domain.deployment.description %}
+            {{ domain.deployment.description }}
+          {% else %}
+            <span class="label label-default">{% trans "None" %}</span>
+          {% endif %}
+        </dd>
+        <dt>{% trans 'Users' %}</dt>
+        <dd>{{ domain.all_users|length }}</dd>
+        {% if domain.deployment.city %}
+          <dt>{% trans 'City' %}</dt>
+          <dd>{{ domain.deployment.city }}</dd>
+        {% endif %}
+        {% if domain.deployment.countries %}
+          <dt>
+            {% with total=domain.deployment.countries|length %}
+              Countr{{ total|pluralize:"y,ies" }}
+            {% endwith %}
+          </dt>
+          <dd>{{ domain.deployment.countries|join:", " }}</dd>
+        {% endif %}
+        {% if domain.deployment.region %}
+          <dt>{% trans 'Region' %}</dt>
+          <dd>{{ domain.deployment.region }}</dd>
+        {% endif %}
+        <dt>{% trans 'Languages' %}</dt>
+        <dd>
+          {% if domain.languages %}
+            {{ domain.readable_languages }}
+          {% else %}
+            <span class="label label-default">{% trans "None" %}</span>
+          {% endif %}
+        </dd>
+        <dt>{% trans 'Active' %}</dt>
+        <dd>
+          {{ domain.recent_submissions|yesno:"Yes,No" }}
+        </dd>
+      </dl>
     </div>
+  </div>
 {% endblock %}

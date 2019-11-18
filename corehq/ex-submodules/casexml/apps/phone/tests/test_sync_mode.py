@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from django.test.utils import override_settings
 from django.test import TestCase
+from mock import patch
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
@@ -45,7 +44,6 @@ from casexml.apps.phone.restore import (
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from six.moves import range
-from io import open
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -113,48 +111,25 @@ class BaseSyncTest(TestCase):
         else:
             sync_log = get_properly_wrapped_sync_log(sync_log_or_id)
 
-        if isinstance(sync_log, SimplifiedSyncLog):
-            all_ids = {}
-            all_ids.update(case_id_map)
-            all_ids.update(dependent_case_id_map)
-            self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
-            # livequery sync does not use or populate sync_log.index_tree
-            if self.restore_options['case_sync'] == LIVEQUERY:
-                self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
-            else:
-                self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
-                self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
-                for case_id, indices in case_id_map.items():
-                    if indices:
-                        index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                        self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()),
-                                         'case {} has unexpected indices'.format(case_id))
-                for case_id, indices in dependent_case_id_map.items():
-                    if indices:
-                        index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                        self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()))
-
+        all_ids = {}
+        all_ids.update(case_id_map)
+        all_ids.update(dependent_case_id_map)
+        self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
+        # livequery sync does not use or populate sync_log.index_tree
+        if self.restore_options['case_sync'] == LIVEQUERY:
+            self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
         else:
-            # check case map
-            self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
+            self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
+            self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
             for case_id, indices in case_id_map.items():
-                self.assertTrue(sync_log.phone_has_case(case_id))
-                state = sync_log.get_case_state(case_id)
-                self._checkLists(indices, state.indices)
-
-            # check dependent case map
-            self.assertEqual(len(dependent_case_id_map), len(sync_log.dependent_cases_on_phone))
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()),
+                                     'case {} has unexpected indices'.format(case_id))
             for case_id, indices in dependent_case_id_map.items():
-                self.assertTrue(sync_log.phone_has_dependent_case(case_id))
-                state = sync_log.get_dependent_case_state(case_id)
-                self._checkLists(indices, state.indices)
-
-            # test migration of old to new by migrating and testing again.
-            # this is a lazy way of running tests on a variety of edge cases
-            # without having to write explicit tests for the migration
-            migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
-            self.assertEqual(sync_log.get_state_hash(), migrated_sync_log.get_state_hash())
-            self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()))
 
 
 class DeprecatedBaseSyncTest(BaseSyncTest):
@@ -813,7 +788,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
     def test_deleted_case_doesnt_sync(self):
         case_id = uuid.uuid4().hex
         self.device.post_changes(case_id=case_id, create=True)
-        CaseAccessors(self.project.name).get_case(case_id).soft_delete()
+        CaseAccessors(self.project.name).soft_delete_cases([case_id])
         self.assertNotIn(case_id, self.device.sync().cases)
 
     def test_deleted_parent_doesnt_sync(self):
@@ -831,7 +806,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
                 )],
             )
         )
-        CaseAccessors().get_case(parent_id).soft_delete()
+        CaseAccessors(self.project.name).soft_delete_cases([parent_id])
         self.assertEqual(set(self.device.sync().cases), {child_id})
         # todo: in the future we may also want to purge the child
 
@@ -1205,6 +1180,7 @@ class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
     pass
 
 
+@patch('casexml.apps.phone.restore.INITIAL_SYNC_CACHE_THRESHOLD', 0)
 class SyncTokenCachingTest(BaseSyncTest):
 
     def testCaching(self):

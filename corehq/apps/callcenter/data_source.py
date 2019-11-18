@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from collections import namedtuple
@@ -8,7 +6,6 @@ from copy import deepcopy
 import settings
 from corehq.apps.callcenter.utils import get_call_center_domains
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from io import open
 
 MODULE_PATH = os.path.dirname(__file__)
 DATA_SOURCES_PATH = os.path.join(MODULE_PATH, 'data_sources')
@@ -66,9 +63,9 @@ def get_sql_adapters_for_domain(domain_name):
 
 
 def _get_sql_adapter(domain_name, data_source_json):
-    from corehq.apps.userreports.sql import IndicatorSqlAdapter
+    from corehq.apps.userreports.util import get_indicator_adapter
     data_source = _make_data_source_for_domain(data_source_json, domain_name)
-    return IndicatorSqlAdapter(data_source)
+    return get_indicator_adapter(data_source, load_source='callcenter')
 
 
 def _make_data_source_for_domain(data_source_json, domain_name):

@@ -1,11 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 
 from django.db import models
 
-from corehq.apps.data_analytics.const import NOT_SET, DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
-
+from corehq.apps.data_analytics.const import (
+    DEFAULT_EXPERIENCED_THRESHOLD,
+    DEFAULT_PERFORMANCE_THRESHOLD,
+    NOT_SET,
+)
 
 GIRExportRow = namedtuple('GIRExportRow',
                           'domain country sector subsector bu self_service test start device active_users '

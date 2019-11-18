@@ -1,8 +1,8 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% block page_content %}
-<form method='post' class="form-horizontal">
-	{% csrf_token %}
+  <form method='post' class="form-horizontal">
+    {% csrf_token %}
     <div class="form-group">
       <label for="report_spec" class="control-label col-sm-3 col-md-2 requiredField">{% trans "Report spec" %}<span class="asteriskField">*</span></label>
       <div class="col-sm-9 col-md-8">
@@ -16,5 +16,5 @@
         </button>
       </div>
     </div>
-</form>
+  </form>
 {% endblock %}

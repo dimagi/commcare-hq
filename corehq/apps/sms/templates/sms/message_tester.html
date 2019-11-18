@@ -2,23 +2,23 @@
 {% load i18n %}
 
 {% block page_content %}
-    <form class="form form-horizontal" action="{% url "message_test" domain phone_number %}" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>{% trans "Simulate Inbound Message from" %} +{{ phone_number }}</legend>
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="sms-message">{% trans "Message:" %}</label>
-                <div class="col-sm-9">
-                    <div>
-                        <textarea id="sms-message" name="message" class="form-control"></textarea>
-                    </div>
-                </div>
-            </div>
-        </fieldset>
-        <div class="form-actions">
-            <div class="col-sm-offset-2">
-                <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
-            </div>
+  <form class="form form-horizontal" action="{% url "message_test" domain phone_number %}" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>{% trans "Simulate Inbound Message from" %} +{{ phone_number }}</legend>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="sms-message">{% trans "Message:" %}</label>
+        <div class="col-sm-9">
+          <div>
+            <textarea id="sms-message" name="message" class="form-control"></textarea>
+          </div>
         </div>
-    </form>
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <div class="col-sm-offset-2">
+        <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
+      </div>
+    </div>
+  </form>
 {% endblock %}

@@ -3,46 +3,46 @@
 
 
 <div id="id_custom_event_templates">
-    <script type="text/html" id="id_custom_event_legend">
-        <span class="btn btn-danger"
-              data-bind="click: function() { $root.markCustomEventDeleted($parent.event_id); },
+  <script type="text/html" id="id_custom_event_legend">
+    <span class="btn btn-danger"
+          data-bind="click: function() { $root.markCustomEventDeleted($parent.event_id); },
                          visible: !$root.editing_custom_immediate_schedule()">
-            <i class="fa fa-remove"></i>
-        </span>
-        <span data-bind="visible: $root.send_frequency() === 'custom_daily'">
-            {% trans "Send on" %}
-            <strong>
-                {% trans "Day" %}
-                <span data-bind="text: day"></span>
-                {% trans "at" %}
-                <span data-bind="text: time, visible: $root.useTimeInput()"></span>
-                <span data-bind="text: case_property_name, visible: $root.useCasePropertyTimeInput()"></span>
-            </strong>
-        </span>
-        <span data-bind="visible: $root.send_frequency() === 'custom_immediate'">
-            {% trans "Wait" %}
-            <strong data-bind="text: waitTimeDisplay"></strong>
-            {% trans "and send" %}
-        </span>
-        <span class="btn"
-              data-bind="click: function() { $root.moveCustomEventUp($parent.event_id); },
-                         visible: !$root.editing_custom_immediate_schedule()">
-            <i class="fa fa-arrow-up"></i>
-        </span>
-        <span class="btn"
-              data-bind="click: function() { $root.moveCustomEventDown($parent.event_id); },
-                         visible: !$root.editing_custom_immediate_schedule()">
-            <i class="fa fa-arrow-down"></i>
-        </span>
+      <i class="fa fa-remove"></i>
+    </span>
+    <span data-bind="visible: $root.send_frequency() === 'custom_daily'">
+      {% trans "Send on" %}
+      <strong>
+        {% trans "Day" %}
+        <span data-bind="text: day"></span>
+        {% trans "at" %}
+        <span data-bind="text: time, visible: $root.useTimeInput()"></span>
+        <span data-bind="text: case_property_name, visible: $root.useCasePropertyTimeInput()"></span>
+      </strong>
+    </span>
+    <span data-bind="visible: $root.send_frequency() === 'custom_immediate'">
+      {% trans "Wait" %}
+      <strong data-bind="text: waitTimeDisplay"></strong>
+      {% trans "and send" %}
+    </span>
+    <span class="btn"
+          data-bind="click: function() { $root.moveCustomEventUp($parent.event_id); },
+                     visible: !$root.editing_custom_immediate_schedule()">
+      <i class="fa fa-arrow-up"></i>
+    </span>
+    <span class="btn"
+          data-bind="click: function() { $root.moveCustomEventDown($parent.event_id); },
+                     visible: !$root.editing_custom_immediate_schedule()">
+      <i class="fa fa-arrow-down"></i>
+    </span>
+  </script>
+  <div id="id_custom_event_empty_form_container">
+    <script type="text/html" id="id_custom_event_template___prefix__">
+      {% crispy schedule_form.custom_event_formset.empty_form %}
     </script>
-    <div id="id_custom_event_empty_form_container">
-        <script type="text/html" id="id_custom_event_template___prefix__">
-            {% crispy schedule_form.custom_event_formset.empty_form %}
-        </script>
-    </div>
-    {% for form in schedule_form.custom_event_formset %}
-        <script type="text/html" id="id_custom_event_template_{{ forloop.counter0 }}">
-            {% crispy form %}
-        </script>
-    {% endfor %}
+  </div>
+  {% for form in schedule_form.custom_event_formset %}
+    <script type="text/html" id="id_custom_event_template_{{ forloop.counter0 }}">
+      {% crispy form %}
+    </script>
+  {% endfor %}
 </div>

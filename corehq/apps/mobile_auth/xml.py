@@ -19,9 +19,13 @@
         </key_record>
     </auth_keys>
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from eulxml.xmlmap import XmlObject, StringField, DateTimeField, NodeListField, NodeField
+from eulxml.xmlmap import (
+    DateTimeField,
+    NodeField,
+    NodeListField,
+    StringField,
+    XmlObject,
+)
 
 
 def CustomDateTimeField(*args, **kwargs):

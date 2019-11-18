@@ -26,6 +26,7 @@
     </session>
     <stack>
       <create>
+        <command value="'m0'"/>
         <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <datum id="case_id_new_guppy_0" value="uuid()"/>

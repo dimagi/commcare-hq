@@ -2,54 +2,54 @@
 {% load i18n %}
 
 {% block actor-tab-container %}
-    <div class="col-sm-6">
-        <table class="table table-striped table-bordered">
-            <tr>
-                <th>{% trans "Username" %}</th>
-                <td>{{ user_doc.username }}</td>
-            </tr>
-            <tr>
-                <th>{% trans "Phone" %}</th>
-                <td>{{ user_doc.phone_number }}</td>
-            </tr>
-            <tr>
-                <th>{% trans "Email" %}</th>
-                <td>{{ user_doc.email }}</td>
-            </tr>
-        </table>
-    </div>
-    <div class="col-sm-8">
+  <div class="col-sm-6">
+    <table class="table table-striped table-bordered">
+      <tr>
+        <th>{% trans "Username" %}</th>
+        <td>{{ user_doc.username }}</td>
+      </tr>
+      <tr>
+        <th>{% trans "Phone" %}</th>
+        <td>{{ user_doc.phone_number }}</td>
+      </tr>
+      <tr>
+        <th>{% trans "Email" %}</th>
+        <td>{{ user_doc.email }}</td>
+      </tr>
+    </table>
+  </div>
+  <div class="col-sm-8">
     <h4>Active Patients ({{ assigned_patients|length }})</h4>
     <table class="table table-striped table-bordered">
-    <thead>
-    <tr>
-        <th>Pact ID</th>
-        <th>Name</th>
-        <th>HP Status</th>
-        <th>DOT Status</th>
-        <th>{# Submits #}</th>
-    </tr>
-
-    </thead>
-    {% for pt in assigned_patients %}
+      <thead>
         <tr>
-        <th>{{ pt.pactid }}</th>
-        <td>{{ pt.name }}</td>
-        <td> {{ pt.hp_status }} </td>
-
-        <td>
-            {% if pt.dot_url %}
-                <a href="{{ pt.dot_url }}">{{ pt.dot_status }}</a>
-            {% else %}
-                {{ pt.dot_status }}
-            {% endif %}
-        </td>
-        <td><a href="{{ pt.info_url }}">Profile</a></td>
+          <th>Pact ID</th>
+          <th>Name</th>
+          <th>HP Status</th>
+          <th>DOT Status</th>
+          <th>{# Submits #}</th>
         </tr>
-    {% endfor %}
+
+      </thead>
+      {% for pt in assigned_patients %}
+        <tr>
+          <th>{{ pt.pactid }}</th>
+          <td>{{ pt.name }}</td>
+          <td> {{ pt.hp_status }} </td>
+
+          <td>
+            {% if pt.dot_url %}
+              <a href="{{ pt.dot_url }}">{{ pt.dot_status }}</a>
+            {% else %}
+              {{ pt.dot_status }}
+            {% endif %}
+          </td>
+          <td><a href="{{ pt.info_url }}">Profile</a></td>
+        </tr>
+      {% endfor %}
     </table>
 
-    </div>
+  </div>
 
 
 {% endblock actor-tab-container %}

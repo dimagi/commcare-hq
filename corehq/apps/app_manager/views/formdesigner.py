@@ -1,61 +1,71 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import json
 import logging
 
-from django.urls import reverse
-from django.utils.translation import ugettext as _
-from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.shortcuts import render
-from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_GET
 
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.apps import get_apps_base_context
-from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
-
-from corehq.apps.app_manager.exceptions import AppManagerException, \
-    FormNotFoundException
-
-from corehq.apps.app_manager.views.utils import back_to_main, bail
-from corehq import toggles, privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_FORM_BUILDER_FORM_ID,
+    send_hubspot_form,
+)
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.const import (
     SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_NEXT_DUE,
     SCHEDULE_UNSCHEDULED_VISIT,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+)
+from corehq.apps.app_manager.models import Form, ModuleNotFoundException
+from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
+    is_linked_app,
     is_usercase_in_use,
 )
-from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
-    Form,
-    ModuleNotFoundException,
+from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
+from corehq.apps.app_manager.views.notifications import (
+    get_facility_for_form,
+    notify_form_opened,
 )
-from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.templatetags.xforms_extras import translate
-from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    bail,
+    form_has_submissions,
+    set_lang_cookie,
+)
+from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.domain.decorators import track_domain_request
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
-
 
 logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_form_builder_entered')
 def form_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
 
@@ -95,6 +105,13 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
 
 
 def _get_form_designer_view(request, domain, app, module, form):
+    if app and app.copy_of:
+        messages.warning(request, _(
+            "You tried to edit a form that was from a previous release, so "
+            "we have directed you to the latest version of your application."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
+
     if form.no_vellum:
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
@@ -104,6 +121,14 @@ def _get_form_designer_view(request, domain, app, module, form):
         ))
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
+
+    if is_linked_app(app):
+        messages.warning(request, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, this is a linked application and you can only make changes to the "
+            "upstream version."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
 
     send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
@@ -115,7 +140,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
 
-    vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
+    vellum_options = _get_base_vellum_options(request, domain, form, context['lang'])
     vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
@@ -142,16 +167,15 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
-    return render(request, "app_manager/form_designer.html", context)
+    response = render(request, "app_manager/form_designer.html", context)
+    set_lang_cookie(response, context['lang'])
+    return response
 
 
 @require_GET
 @require_can_edit_apps
-def get_form_data_schema(request, domain, form_unique_id):
+def get_form_data_schema(request, domain, app_id, form_unique_id):
     """Get data schema
-
-    One of `app_id` or `form_unique_id` is required. `app_id` is ignored
-    if `form_unique_id` is provided.
 
     :returns: A list of data source schema definitions. A data source schema
     definition is a dictionary. For details on the content of the dictionary,
@@ -159,26 +183,21 @@ def get_form_data_schema(request, domain, form_unique_id):
     """
     data = []
 
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceConflict:
-        raise Http404()
-
-    if app.domain != domain:
-        raise Http404()
+    app = get_app(domain, app_id)
+    form = app.get_form(form_unique_id)
 
     try:
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
     except AppManagerException as e:
-        notify_exception(request, message=e.message)
-        return HttpResponseBadRequest(_(
-            "There is an error in the case management of your application. "
-            "Please fix the error to see case properties in this tree"
-        ))
+        notify_exception(request, message=str(e))
+        return HttpResponseBadRequest(
+            str(e) or _("There is an error in the case management of your application. "
+            "Please fix the error to see case properties in this tree")
+        )
     except Exception as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(
@@ -195,12 +214,13 @@ def ping(request):
     return HttpResponse("pong")
 
 
-def _get_base_vellum_options(request, domain, app, displayLang):
+def _get_base_vellum_options(request, domain, form, displayLang):
     """
     Returns the base set of options that will be passed into Vellum
     when it is initialized.
     :param displayLang: --> derived from the base context
     """
+    app = form.get_app()
     return {
         'intents': {
             'templates': next(app_callout_templates),
@@ -217,7 +237,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
                 'video': reverse("hqmedia_uploader_video", args=[domain, app.id]),
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
-            'objectMap': app.get_object_map(),
+            'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
             'sessionid': request.COOKIES.get('sessionid'),
         },
     }
@@ -231,16 +251,20 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     core = {
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
+                                               'app_id': app.id,
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': translate(form.name, lang, app.langs),
+        'formName': translate(form.name, app.langs[0], app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
                                  'xform']),
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
+        'hasSubmissions': form_has_submissions(domain, app.id, form.get_unique_id()),
+        'hasSubmissionsUrl': reverse(FormHasSubmissionsView.urlname,
+                                     args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
             "meta/deviceID",
             "meta/instanceID",
@@ -303,8 +327,6 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
-        'remote_requests': (app.enable_remote_requests
-                            and toggles.REMOTE_REQUEST_QUESTION_TYPE.enabled(domain)),
     })
     return vellum_features
 

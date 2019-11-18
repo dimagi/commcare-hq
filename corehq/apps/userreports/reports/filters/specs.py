@@ -1,27 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.conf import settings
 from django.utils.module_loading import import_string
 
+from jsonobject.base import DefaultProperty
+
 from dimagi.ext.jsonobject import (
     BooleanProperty,
+    DictProperty,
     IntegerProperty,
     JsonObject,
     ListProperty,
     StringProperty,
-    DictProperty,
 )
-from jsonobject.base import DefaultProperty
+
 from corehq.apps.userreports.datatypes import DataTypeProperty
-from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    DATA_SOURCE_COLUMN,
+)
 from corehq.apps.userreports.reports.filters.values import (
-    PreFilterValue,
     ChoiceListFilterValue,
     DateFilterValue,
+    LocationDrilldownFilterValue,
+    MultiFieldChoiceListFilterValue,
     NumericFilterValue,
+    PreFilterValue,
     QuarterFilterValue,
-    LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -61,7 +64,7 @@ class FilterSpec(JsonObject):
         choices=[
             'date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list',
             'multi_field_dynamic_choice_list', 'location_drilldown',
-            'enikshay_location_hierarchy'
+            'village_choice_list'
         ]
     )
     # this shows up as the ID in the filter HTML.

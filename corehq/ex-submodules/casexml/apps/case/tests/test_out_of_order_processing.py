@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -7,7 +5,6 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import softer_assert
-from io import open
 
 
 class OutOfOrderCaseTest(TestCase):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import doctest
 from django.test import TestCase, SimpleTestCase
 from custom.openclinica.models import StudySettings, OpenClinicaSettings
@@ -36,7 +34,7 @@ class UtilsTests(TestCase):
 
     def test_get_metadata_from_settings(self):
         metadata = get_study_metadata_string(DOMAIN)
-        self.assertEqual(metadata, TEST_METADATA)
+        self.assertEqual(metadata.decode('utf-8'), TEST_METADATA)
 
 
 class DocTests(SimpleTestCase):

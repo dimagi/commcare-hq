@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
-from django.test import TestCase
-from casexml.apps.case.tests.util import check_xml_line_by_line
 
-from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
+from django.test import TestCase
+
+from casexml.apps.case.tests.util import check_xml_line_by_line
 from dimagi.ext.jsonobject import HISTORICAL_DATETIME_FORMAT
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.mobile_auth.utils import (
+    get_mobile_auth_payload,
+    new_key_record,
+)
 from corehq.apps.users.models import CommCareUser
 
 

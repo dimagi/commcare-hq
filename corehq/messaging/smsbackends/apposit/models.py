@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
@@ -84,7 +82,7 @@ class SQLAppositBackend(SQLSMSBackend):
         data = {
             'from': config.from_number,
             'to': msg.phone_number,
-            'message': msg.text.encode('utf-8'),
+            'message': msg.text,
         }
         json_payload = json.dumps(data)
         response = requests.post(

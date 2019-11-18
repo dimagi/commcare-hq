@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 from corehq.util.translation import localize
 from custom.ilsgateway.slab.handlers.transfer import TransferHandler
 
-from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
 from custom.ilsgateway.tanzania.handlers.emg import EmergencyHandler
 from custom.ilsgateway.tanzania.handlers.help import HelpHandler
@@ -20,16 +17,12 @@ from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
 from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
-from custom.ilsgateway.tanzania.handlers.supervision import SupervisionHandler
-from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
-from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
-import six
 
 
 def choose_handler(keyword, handlers):
-    for k, v in six.iteritems(handlers):
+    for k, v in handlers.items():
         if keyword.lower() in k:
             return v
     return None
@@ -78,21 +71,17 @@ def handle(verified_contact, text, msg):
     }
 
     handlers_for_registered_users = {
-        ('arrived', 'aliwasili'): ArrivedHandler,
         ('help', 'msaada'): HelpHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('stop', 'acha', 'hapo'): StopHandler,
-        ('yes', 'ndio', 'ndyo'): YesHandler,
         ('test',): MessageInitiatior,
     }
 
     handlers_for_registered_users_with_location = {
         ('soh', 'hmk'): SOHHandler,
-        ('submitted', 'nimetuma'): RandrHandler,
         ('delivered', 'dlvd', 'nimepokea'): DeliveredHandler,
         ('sijapokea',): NotDeliveredHandler,
         ('sijatuma',): NotSubmittedHandler,
-        ('supervision', 'usimamizi'): SupervisionHandler,
         ('la', 'um'): LossAndAdjustment,
         ('stockout', 'hakuna'): StockoutHandler,
         ('not',): not_function(args[0]) if args else None,
@@ -129,5 +118,5 @@ def handle(verified_contact, text, msg):
             return handler.help()
     elif keyword != 'l':
         with localize(verified_contact.owner.get_language_code()):
-            send_sms_to_verified_number(verified_contact, six.text_type(CONTACT_SUPERVISOR))
+            send_sms_to_verified_number(verified_contact, str(CONTACT_SUPERVISOR))
         return True

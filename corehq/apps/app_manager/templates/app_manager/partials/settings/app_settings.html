@@ -5,43 +5,56 @@
 
 <script type="text/html" id="CommcareSettings.widgets.select">
   <span>
-        <span data-bind="if: valueIsLegal()">
-            <select class="col-sm-3 form-control" data-bind="
-                options: options,
-                value: selectedOption,
-                optionsText: 'label',
-                attr: {disabled: !enabled(), id: inputId}
-            "></select>
-        </span>
-        <span data-bind="if: !valueIsLegal()" >
-            <select class="col-sm-3 form-control error" data-bind="
-                options: options,
-                value: writeSelectedOption,
-                optionsText: 'label',
-                attr: {disabled: !enabled(), id: inputId},
-                optionsCaption: value()
-            "></select>
-        </span>
+    <span data-bind="if: valueIsLegal()">
+      <select class="col-sm-3 form-control" data-bind="
+          options: options,
+          value: selectedOption,
+          optionsText: 'label',
+          attr: {disabled: !enabled(), id: inputId}
+      "></select>
     </span>
+    <span data-bind="if: !valueIsLegal()" >
+      <select class="col-sm-3 form-control error" data-bind="
+          options: options,
+          value: writeSelectedOption,
+          optionsText: 'label',
+          attr: {disabled: !enabled(), id: inputId},
+          optionsCaption: value()
+      "></select>
+    </span>
+  </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-  <span class="col-sm-3">
-        <input type="checkbox"
-               data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
-    </span>
+  <div class="checkbox-app-settings">
+    <input type="checkbox"
+           data-bind="checked: boolValue,
+                      attr: {
+                        disabled: !enabled() || showDisabledCheckbox(),
+                        id: inputId
+                      }"/>
+  </div>
+  <!-- ko if: showUncheckWarning -->
+  <div class="alert alert-warning alert-small">
+    <i class="fa fa-warning"></i>
+    {% blocktrans %}
+      You cannot re-enable this feature once it is disabled
+      until you upgrade your subscription.
+    {% endblocktrans %}
+  </div>
+  <!-- /ko -->
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
   <div class="row">
     <div class="col-sm-5">
-      <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
+      <input placeholder="Key" type="text" data-bind="value: key" class="form-control" autocomplete="off"/>
     </div>
     <div class="col-sm-1 text-center">
       <i class="fa fa-arrow-right"></i>
     </div>
     <div class="col-sm-5">
-      <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
+      <input placeholder="Value" type="text" data-bind="value: value" class="form-control" autocomplete="off"/>
     </div>
     <div class="col-sm-1">
       <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
@@ -92,7 +105,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
   <span>
-        <input type="text" class="col-sm-6 form-control" data-bind="
+        <input type="text" class="col-sm-6 form-control" autocomplete="off" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -147,153 +160,177 @@
 </script>
 
 {% if request|ui_notify_enabled:"APP_BUILDER_ADD_ONS" %}
-<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-no-arrow fade in"
-     data-slug="{{ "APP_BUILDER_ADD_ONS"|ui_notify_slug }}"
-     role="alert">
+  <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-no-arrow fade in"
+       data-slug="{{ "APP_BUILDER_ADD_ONS"|ui_notify_slug }}"
+       role="alert">
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
+      <span aria-hidden="true">&times;</span>
     </button>
     <p class="lead">{% trans 'New Add-ons tab' %}</p>
     <p>
+      {% blocktrans %}
         Intermediate functionality, such as child cases, can now be enabled or disabled using the
         <strong>Add-Ons</strong> tab below. Several feature previews, such as icons in the case list,
         are also now accessible in this tab.
+      {% endblocktrans %}
     </p>
-</div>
+  </div>
 {% endif %}
 
 <div class="tabbable">
-    <ul class="nav nav-tabs sticky-tabs">
-    {% if app.get_doc_type == 'LinkedApplication' %}
-        <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
-        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+  <ul class="nav nav-tabs sticky-tabs">
+    {% if is_linked_app %}
+      <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
+      <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+      <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
-        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-        {% if app.get_doc_type == 'Application' %}
-            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-        {% endif %}
-        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-        <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
+      <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      {% if not is_remote_app %}
+        <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+      {% endif %}
+      <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+      <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
     {% endif %}
-      <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-    </ul>
-    <div class="tab-content appmanager-tab-content">
-        {% if app.get_doc_type == 'LinkedApplication' %}
-        <div class="tab-pane" id="linked-app">
-            <div class="panel panel-appmanager panel-appmanager-form">
-                <form action="{% url "pull_master_app" domain app.id %}" method="POST">
-                    {% csrf_token %}
-                    <legend>Update from master application</legend>
-                    <div class="panel-body">
-                        <p> Your app is at version {{ app.version }}.
-                            {% if master_version %}The master app is at version {{ master_version }}.
-                            {% else %}Unable to get master version.
-                            {% endif %}
-                        </p>
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="notify">
-                                {% trans "Email when when finished (recommended for large applications)" %}
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-arrow-up"></i>
-                            {% trans "Update" %}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        {% endif %}
-        {% if app.get_doc_type == 'Application' %}
-            <div class="tab-pane" id="multimedia-tab">
-                <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator"/>
-                    {% trans "Loading ..." %}
-                </div>
-                <div data-bind="html: multimedia_page_html"></div>
-                <div data-bind="if: load_state() === 'error'">
-                    <button class="btn btn-default"
-                            data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                </div>
-            </div>
-        {% endif %}
-        <div class="tab-pane" id="languages">
-            {% include 'app_manager/languages.html' %}
-        </div>
-        <div class="tab-pane" id="actions">
-            {% if app.get_doc_type != 'LinkedApplication' %}
-                {% if copy_app_form %}
-                    <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
-                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                            {% crispy copy_app_form %}
-                        </form>
-                    </div>
+    <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+  </ul>
+  <div class="tab-content appmanager-tab-content">
+    {% if is_linked_app %}
+      <div class="tab-pane" id="linked-app">
+        <div class="panel panel-appmanager panel-appmanager-form">
+          <form action="{% url "pull_master_app" domain app.id %}" method="POST">
+            {% csrf_token %}
+            <legend>
+              {% trans "Update from master application" %}
+            </legend>
+            <div class="panel-body">
+              <p>
+                {% if upstream_url %}
+                  {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
+                    Your app was last pulled from
+                    <a href='{{ upstream_url }}'>{{ upstream_name }}</a>,
+                    version {{ upstream_version }}.
+                  {% endblocktrans %}
+                {% else %}
+                  {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
+                    Your app was last pulled from {{ upstream_name }}, version {{ upstream_version }}.
+                  {% endblocktrans %}
                 {% endif %}
-                {% if linked_domains_enabled %}
-                    <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
-                    <legend>{% trans 'Linked Project Whitelist' %}</legend>
-                    <div class="tab-pane panel-body">
-                        <div class="help-block">
-                            {% blocktrans %}
-                                Project spaces on this list are able to update linked applications
-                                with new changes to this application. Project spaces are automatically added to
-                                this list when this application is copied as a linked application to that project
-                                space. If you would like to prevent a project from making future updates,
-                                you can remove them from the list here.
-                            {% endblocktrans %}
-                        </div>
-                        <div data-bind="saveButton: saveButton"></div>
-                        <table class="table">
-                            <thead>
-                            <tr class="row">
-                                <th></th>
-                                <th>{% trans "Project Space" %}</th>
-                            </tr>
-                            </thead>
-                            <tbody data-bind="foreach: linkedDomains">
-                            <tr class="row">
-                                <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
-                                                                    data-bind="click: $root.removeDomain"></i></a></td>
-                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
-                            </tr>
-                            </tbody>
-                        </table>
+              </p>
+              <div class="form-horizontal">
+                {% if multiple_masters %}
+                  <div class="form-group">
+                    <div class="{% css_field_class %}">
+                      <select name="master_app_id" class="form-control hqwebapp-select2"
+                              data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
+                        <option value="">{% trans "Select a master app to pull" %}</option>
+                        {% for brief in master_briefs %}
+                          {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
+                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in master_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                        {% endfor %}
+                      </select>
                     </div>
-                    </div>
+                  </div>
+                {% else %}
+                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
                 {% endif %}
-                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
-                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                            {% csrf_token %}
-                            <legend>Export compressed application</legend>
-                            <div class="panel-body">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fa fa-arrow-down"></i>
-                                    {% trans "Download" %}
-                                </button>
-                            </div>
-                        </form>
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" name="notify">
+                        {% trans "Email when finished (recommended for large applications)" %}
+                      </label>
                     </div>
-                {% endif %}
-            {% endif %}
-            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-                <legend>{% trans "Delete Application" %}</legend>
-                <div class="panel-body">
-                    <a href="#delete-app-modal" class="btn btn-danger" data-toggle="modal">
-                        <i class="fa fa-trash"></i>
-                        {% trans "Delete this application" %}
-                    </a>
+                  </div>
                 </div>
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fa fa-arrow-up"></i>
+                      {% trans "Update" %}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+          </form>
         </div>
-        <div class="tab-pane" id="add-ons">
-            {% include 'app_manager/partials/settings/add_ons.html' %}
+      </div>
+    {% endif %}
+    {% if not is_remote_app %}
+      <div class="tab-pane" id="multimedia-tab">
+        <div data-bind="if: load_state() === 'loading'">
+          <i class="fa fa-spin fa-spinner"></i>
+          {% trans "Loading ..." %}
         </div>
-        <div class="tab-pane" id="commcare-settings">
-            {% include 'app_manager/partials/settings/commcare_settings.html' %}
+        <div data-bind="html: multimedia_page_html"></div>
+        <div data-bind="if: load_state() === 'error'">
+          <button class="btn btn-default"
+                  data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
         </div>
+      </div>
+    {% endif %}
+    <div class="tab-pane" id="languages">
+      {% include 'app_manager/languages.html' %}
     </div>
+    <div class="tab-pane" id="actions">
+      {% if not is_linked_app %}
+        {% if copy_app_form %}
+          <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
+            <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+              {% crispy copy_app_form %}
+            </form>
+          </div>
+        {% endif %}
+        {% if linked_domains_enabled %}
+          <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
+            <legend>{% trans 'Linked Project Whitelist' %}</legend>
+            <div class="tab-pane panel-body">
+              <div class="help-block">
+                {% blocktrans %}
+                  Project spaces on this list are able to update linked applications
+                  with new changes to this application. Project spaces are automatically added to
+                  this list when this application is copied as a linked application to that project
+                  space. If you would like to prevent a project from making future updates,
+                  you can remove them from the list here.
+                {% endblocktrans %}
+              </div>
+              <div data-bind="saveButton: saveButton"></div>
+              <table class="table">
+                <thead>
+                <tr class="row">
+                  <th></th>
+                  <th>{% trans "Project Space" %}</th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: linkedDomains">
+                <tr class="row">
+                  <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
+                                                      data-bind="click: $root.removeDomain"></i></a></td>
+                  <td class="col-sm-11"><span data-bind="text: $data"></span></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+      <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+        <legend>{% trans "Delete Application" %}</legend>
+        <div class="panel-body">
+          <a href="#delete-app-modal" class="btn btn-danger" data-toggle="modal">
+            <i class="fa fa-trash"></i>
+            {% trans "Delete this application" %}
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane" id="add-ons">
+      {% include 'app_manager/partials/settings/add_ons.html' %}
+    </div>
+    <div class="tab-pane" id="commcare-settings">
+      {% include 'app_manager/partials/settings/commcare_settings.html' %}
+    </div>
+  </div>
 </div>

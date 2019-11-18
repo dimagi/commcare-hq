@@ -15,77 +15,69 @@ hqDefine("translations/js/translations", function () {
             key,
             Translation = (function () {
                 var Translation = function (key, value) {
-                    var that = this;
-                    this.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
-                    this.value = hqImport('hqwebapp/js/ui-element').input().val(value);
-                    this.solid = true;
+                    var self = this;
+                    self.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
+                    var options = value ? [{label: value, value: value}] : [];
+                    self.value = hqImport('hqwebapp/js/ui-element').select(options);
+                    if (value) {
+                        self.value.val(value);
+                    }
+                    self.solid = true;
 
-                    this.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function () {
+                    self.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function () {
                         $(this).remove();
-                        translation_ui.deleteTranslation(that.key.val());
+                        translation_ui.deleteTranslation(self.key.val());
                     }).css({
                         cursor: 'pointer',
                     }).attr('title', gettext("Delete Translation"));
 
-                    this.$add = $('<button class="btn btn-default"><i class="fa fa-plus"></i></button>').click(function () {
+                    self.$add = $('<button class="btn btn-default"><i class="fa fa-plus"></i></button>').click(function () {
                         // remove any trailing whitespace from the input box
-                        that.key.val($.trim(that.key.val()));
-                        if (that.key.val() && !translation_ui.translations[that.key.val()]) {
-                            var hasError = translation_ui.addTranslation(that);
+                        self.key.val($.trim(self.key.val()));
+                        if (self.key.val() && !translation_ui.translations[self.key.val()]) {
+                            var hasError = translation_ui.addTranslation(self);
                             if (!hasError) {
                                 translation_ui.appendAdder();
                             }
                         } else {
-                            that.key.$edit_view.focus();
+                            self.key.$edit_view.focus();
                         }
                     }).css({
                         cursor: 'pointer',
                     }).attr('title', gettext("Add Translation")).hide();
-                    this.$error = $('<span></span>').addClass('label label-danger');
-                    this.ui = $('<div/>').addClass("row").addClass("form-group");
-                    $('<div/>').addClass("col-sm-3").append(this.key.ui).appendTo(this.ui);
-                    $('<div/>').addClass("col-sm-3").append(this.value.ui).appendTo(this.ui);
-                    $('<div/>').addClass("col-sm-1").append(this.$delete).append(this.$add).appendTo(this.ui);
-                    $('<div/>').addClass("col-sm-5").append(this.$error).appendTo(this.ui);
-                    this.ui = $('<div/>').append(this.ui);
-                    this.$error.hide();
+                    self.$error = $('<span></span>').addClass('label label-danger');
+                    self.ui = $('<div/>').addClass("row").addClass("form-group");
+                    $('<div/>').addClass("col-sm-3").append(self.key.ui).appendTo(self.ui);
+                    $('<div/>').addClass("col-sm-3").append(self.value.ui).appendTo(self.ui);
+                    $('<div/>').addClass("col-sm-1").append(self.$delete).append(self.$add).appendTo(self.ui);
+                    $('<div/>').addClass("col-sm-5").append(self.$error).appendTo(self.ui);
+                    self.ui = $('<div/>').append(self.ui);
+                    self.$error.hide();
 
                     var helperFunction = function () {
-                        if (that.solid) {
+                        if (self.solid) {
                             translation_ui.saveButton.fire('change');
                         }
                     };
 
-                    this.value.on('change', helperFunction);
+                    self.value.on('change', helperFunction);
 
-                    this.value.ui.find('input').select2({
+                    self.value.ui.find('select').select2({
                         minimumInputLength: 0,
-                        delay: 100,
                         allowClear: 1,
                         placeholder: ' ', // allowClear requires a placeholder
-                        initSelection: function (element, callback) {
-                            callback({
-                                id: element.val(),
-                                text: element.val(),
-                            });
-                        },
-                        createSearchChoice: function (term, data) {
-                            if (term !== "" && !_.find(data, function (d) { return d.text === term; })) {
-                                return {
-                                    id: term,
-                                    text: term,
-                                };
-                            }
-                        },
+                        tags: true,
+                        width: '100%',
                         ajax: {
+                            delay: 100,
                             url: suggestionURL,
-                            data: function (term, page) {
+                            data: function () {
                                 return {
                                     lang: translation_ui.lang,
-                                    key: that.key.val(),
+                                    key: self.key.val(),
                                 };
                             },
-                            results: function (data, page) {
+                            processResults: function (data) {
                                 return {
                                     results: _.map(_.compact(data), function (item) {
                                         return {
@@ -103,18 +95,19 @@ hqDefine("translations/js/translations", function () {
                 };
                 Translation.prototype = {
                     setSolid: function (solid) {
-                        this.solid = solid;
+                        var self = this;
+                        self.solid = solid;
                         if (solid) {
-                            this.ui.find("legend").closest(".row").remove();
-                            this.key.setEdit(false);
-                            this.$delete.show();
-                            this.$add.hide();
+                            self.ui.find("legend").closest(".row").remove();
+                            self.key.setEdit(false);
+                            self.$delete.show();
+                            self.$add.hide();
                         } else {
-                            this.ui.prepend("<div class='row'><div class='col-sm-12'><legend>" +
+                            self.ui.prepend("<div class='row'><div class='col-sm-12'><legend>" +
                                 gettext("Add Translation") + "</legend></div></div>");
-                            this.key.setEdit(true);
-                            this.$delete.hide();
-                            this.$add.show();
+                            self.key.setEdit(true);
+                            self.$delete.hide();
+                            self.$add.show();
                         }
                     },
                 };

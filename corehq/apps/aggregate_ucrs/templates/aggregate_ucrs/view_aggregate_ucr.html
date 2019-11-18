@@ -1,12 +1,12 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% block page_content %}
-    <h1>{{ aggregate_table.display_name }}</h1>
-    <form method='post' action="{% url 'rebuild_aggregate_ucr' domain aggregate_table.table_id %}" >
-        {% csrf_token %}
-        <button type="submit" class="btn btn-default disable-on-submit pull-right">
-          {% trans 'Rebuild Data'%}
-        </button>
-        <a href="{% url 'preview_aggregate_ucr' domain aggregate_table.table_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
-    </form>
+  <h1>{{ aggregate_table.display_name }}</h1>
+  <form method='post' action="{% url 'rebuild_aggregate_ucr' domain aggregate_table.table_id %}" >
+    {% csrf_token %}
+    <button type="submit" class="btn btn-default disable-on-submit pull-right">
+      {% trans 'Rebuild Data'%}
+    </button>
+    <a href="{% url 'preview_aggregate_ucr' domain aggregate_table.table_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
+  </form>
 {% endblock %}

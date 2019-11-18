@@ -1,8 +1,6 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
@@ -37,6 +35,7 @@ def export_all(request):
     return response
 
 from django.contrib.auth import views as auth_views
+
 
 @csrf_protect
 @never_cache
@@ -115,6 +114,7 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     context['model'] = model_name
     context['model_uuid'] = model_uuid
     return render(request, 'auditcare/model_instance_history.html', context)
+
 
 @login_required()
 @user_passes_test(lambda u: u.is_superuser)

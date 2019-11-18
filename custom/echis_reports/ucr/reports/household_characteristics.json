@@ -1,0 +1,285 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+ "report_id":"static-household_characterstics_report",
+   "data_source_table":"static-household_characterstics_data_source", 
+ "config": {
+   "description":"",
+   "title":"Household Characteristics Report",
+   "filters":[
+      {
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"health_post",
+         "field":"health_post_id",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+            "include_descendants":true,
+            "type":"location",
+            "show_full_path":false
+         },
+         "display":"Location"
+      },
+      {
+         "comment":null,
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"gote_name",
+         "field":"gote_name",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+
+         },
+         "display":"Gote Name"
+      }
+   ],
+   "data_source_type":"standard",
+   "visible":true,
+   "configured_charts":[
+
+   ],
+   "aggregation_columns":[
+      "health_post_id",
+      "health_post_name"
+   ],
+ 
+   "sort_expression":[
+
+   ],
+   "columns":[
+      {
+         "comment":null,
+         "field":"health_post_name",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"simple",
+         "column_id":"health_post_name",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Name"
+      },
+      {
+         "comment":null,
+         "field":"health_post_id",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":false,
+         "aggregation":"simple",
+         "column_id":"health_post_id",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field", 
+         "display":"Health Post Id"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"num_of_1_5_network",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"num_of_1_5_network",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"num_of_1_5_network"
+         },
+         "numerator":{
+            "field":"num_of_1_5_network_functional",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"num_of_1_5_network_functional",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"num_of_1_5_network_functional"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_num_of_functional_1_5_network",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of Functional 1 to 5 Network "
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"num_of_1_30_network",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"num_of_1_30_network",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"num_of_1_30_network"
+         },
+         "numerator":{
+            "field":"num_of_1_30_network_functional",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"num_of_1_30_network_functional",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"num_of_1_30_network_functional"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_num_of_functional_1_30_network",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of Functional 1 to 30 Network"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"household_count",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"household_count_percent_model",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"household_count_percent_model"
+         },
+         "numerator":{
+            "field":"num_of_model_households",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"num_of_model_households_nume",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"num_of_model_households_nume"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_num_of_model_households",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of Model Households"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"household_count",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"household_count",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"household_count"
+         },
+         "numerator":{
+            "field":"cbhi_enrolment",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"cbhi_enrolment",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"cbhi_enrolment"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_cbhi_enrolment",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of CBHI Households"
+      }
+   ]
+}
+}

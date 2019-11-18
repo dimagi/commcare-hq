@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import unicode_literals
-import csv342 as csv
 from datetime import datetime
 
-import pytz
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
 
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
+import csv
+import pytz
+
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.log import with_progress_bar
-from io import open
 
 
 class Command(BaseCommand):
@@ -25,11 +23,13 @@ class Command(BaseCommand):
 
     def handle(self, domain, data_source_id, *args, **kwargs):
         config, _ = get_datasource_config(data_source_id, domain)
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, load_source='find_datasource_mismatches')
         q = adapter.get_query_object()
-        document_store = get_document_store_for_doc_type(domain, config.referenced_doc_type)
+        document_store = get_document_store_for_doc_type(
+            domain, config.referenced_doc_type, load_source="find_datasource_mismatches")
         bad_rows = []
         for row in with_progress_bar(q, length=q.count()):
+            adapter.track_load()
             doc_id = row.doc_id
             doc = document_store.get_document(doc_id)
 

@@ -1,14 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import jsonobject
 import requests
-from requests import HTTPError
-from requests import RequestException
+from requests import HTTPError, RequestException
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.formplayer_api import const
-from corehq.apps.formplayer_api.exceptions import FormplayerRequestException, FormplayerAPIException
+from corehq.apps.formplayer_api.exceptions import (
+    FormplayerAPIException,
+    FormplayerRequestException,
+)
 from corehq.apps.formplayer_api.utils import get_formplayer_url
-from dimagi.utils.logging import notify_exception
 
 
 class ValidationAPIProblem(jsonobject.JsonObject):

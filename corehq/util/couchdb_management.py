@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.client import Database
 from corehq.util.couch import get_document_class_by_doc_type
 from memoized import memoized

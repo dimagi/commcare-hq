@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import uuid
 from xml.etree import cElementTree as ElementTree
@@ -190,7 +188,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
+            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -219,7 +217,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
+            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -248,7 +246,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
+            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -266,7 +264,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index relationship should only allow valid values
         """
-        with self.assertRaisesRegexp(CaseBlockError,
+        with self.assertRaisesRegex(CaseBlockError,
                                      'Valid values for an index relationship are "child" and "extension"'):
             CaseBlock(
                 case_id='abcdef',

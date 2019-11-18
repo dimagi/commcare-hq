@@ -78,7 +78,7 @@ hqDefine('accounting/js/pricing_table', [
         self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
 
-            var mailto = "<a href=\'mailto:" + self.invoicingContact + "'>billing-support@dimagi.com</a>";
+            var mailto = "<a href='mailto:" + self.invoicingContact + "'>" + self.invoicingContact + "</a>";
             if (self.isDowngrade() && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.currentPlan());
                 var newPlan = utils.capitalize(self.selectedPlan());

@@ -20,6 +20,7 @@ describe('Download Directive', function () {
                 ['awc', ['supervisor']],
             ]);
             $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -84,7 +85,6 @@ describe('Download Directive', function () {
                 {"name": "July", "id": 7},
                 {"name": "August", "id": 8},
                 {"name": "September", "id": 9},
-                {"name": "October", "id": 10},
             ];
 
             assert.deepEqual(expected, controller.months);
@@ -92,7 +92,7 @@ describe('Download Directive', function () {
 
         it('tests selected month', function () {
             var result = controller.selectedMonth;
-            var expected = 10;
+            var expected = 9;
             assert.equal(expected, result);
         });
 
@@ -187,16 +187,6 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
-        it('tests on indicator select when child beneficiary list is not selected', function () {
-            controller.selectedIndicator = 5;
-            var expected = "xlsx";
-
-            controller.onIndicatorSelect();
-            var result = controller.selectedFormat;
-
-            assert.equal(expected, result);
-        });
-
         it('tests isDistrictOrBelowSelected - state selected', function () {
             controller.selectedLocations = ['state', 'all'];
             var result = controller.isDistrictOrBelowSelected();
@@ -240,6 +230,100 @@ describe('Download Directive', function () {
             assert.isTrue(result);
         });
 
+        it('tests isTakeHomeRatioReportSelected - THR selected', function () {
+            controller.selectedIndicator = 10;
+            var result = controller.isTakeHomeRationReportSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isTakeHomeRatioReportSelected - THR not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isTakeHomeRationReportSelected();
+            assert.isFalse(result);
+        });
+
+        it('test to check if current month is enabled after first three days', function () {
+            var fakeDate = new Date(2019, 8, 4);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+                {"name": "September", "id": 9},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if current month is not enabled before first three days', function () {
+            var fakeDate = new Date(2019, 8, 2);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if AWW performance report is downloadable only till last month ' +
+            'after current month 15th ', function () {
+            var fakeDate = new Date(2019, 8, 17);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if AWW performance report is downloadable only till last before month ' +
+            'before current month 15th ', function () {
+            var fakeDate = new Date(2019, 8, 5);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
     });
 
     describe('Download Directive have access to features', function() {
@@ -256,6 +340,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -285,8 +370,63 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
+            var expected = 11;
+
             var length = controller.indicators.length;
-            assert.equal(8, length);
+            assert.equal(expected, length);
+        });
+
+        it('tests first possible data choice on THR raport', function () {
+            var fakeDate = new Date(2020, 8, 1);
+            var clock = sinon.useFakeTimers(fakeDate);
+            var expectedMonth = 7;
+            var expectedFirstYear = 2019;
+
+            controller.selectedYear = 2019;
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var firstAvailableMonth = controller.months[0].id;
+            var actualFirstYear = controller.selectedYear;
+
+            assert.equal(expectedMonth, firstAvailableMonth);
+            assert.equal(expectedFirstYear, actualFirstYear);
+            clock.restore();
+        });
+
+        it('tests latest possible data choice on THR raport', function () {
+            var fakeDate = new Date(2023, 8, 15);
+            var clock = sinon.useFakeTimers(fakeDate);
+            var expectedMonth = 8;
+            var expectedYear = 2023;
+            controller.yearsCopy = _.range(2017, 2024);
+
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var m = controller.months;
+            var y = controller.yearsCopy;
+            var actualMonth = m[m.length - 1].id - 1;
+            var actualYear = y[y.length - 1];
+
+            assert.equal(expectedMonth, actualMonth);
+            assert.equal(expectedYear, actualYear);
+            clock.restore();
+        });
+
+        it('tests THR Report AWC hierarchy reduction', function () {
+            for (var i = 0; i < 5; i++) {
+                controller.hierarchy[i].selected = i;
+                controller.selectedLocations[i] = i;
+            }
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var awcHierarchy = controller.hierarchy[4].selected;
+            var awcLocation = controller.selectedLocations[4];
+
+            assert.isNull(awcHierarchy);
+            assert.isNull(awcLocation);
         });
     });
 
@@ -304,6 +444,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", false);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -334,7 +475,56 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(8, length);
+            assert.equal(10, length);
+        });
+    });
+
+    describe('Download Directive have access to features', function () {
+        var $scope, $httpBackend, controller;
+
+        pageData.registerUrl('icds-ng-template', 'template');
+        pageData.registerUrl('icds_locations', 'icds_locations');
+        beforeEach(module('icdsApp', function ($provide) {
+            $provide.constant("userLocationId", null);
+            $provide.constant("locationHierarchy", [
+                ['awc', ['supervisor']],
+                ['block', ['district']],
+                ['district', ['state']],
+                ['state', [null]],
+                ['supervisor', ['block']]]);
+            $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("isAlertActive", false);
+        }));
+
+        beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
+            $scope = $rootScope.$new();
+            $httpBackend = _$httpBackend_;
+
+            var mockLocation = {
+                "locations": [{
+                    "location_type_name": "state", "parent_id": null,
+                    "location_id": "9951736acfe54c68948225cc05fbbd63", "name": "Chhattisgarh",
+                }],
+            };
+
+            $httpBackend.expectGET('template').respond(200, '<div></div>');
+            $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
+
+            var fakeDate = new Date(2016, 9, 1);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+
+            var element = window.angular.element("<download data='test'></download>");
+            var compiled = $compile(element)($scope);
+
+            $httpBackend.flush();
+            $scope.$digest();
+            controller = compiled.controller('download');
+            clock.restore();
+        }));
+
+        it('tests that all users have access to ISSNIP monthly register', function () {
+            var length = controller.indicators.length;
+            assert.equal(11, length);
         });
     });
 

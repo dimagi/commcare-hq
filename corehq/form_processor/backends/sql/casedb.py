@@ -1,21 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq import toggles
+
 
 class CaseDbCacheSQL(AbstractCaseDbCache):
     case_model_classes = (CommCareCaseSQL,)
     case_update_strategy = SqlCaseUpdateStrategy
 
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xforms=None):
-        super(CaseDbCacheSQL, self).__init__(domain, strip_history, deleted_ok, lock, wrap, initial, xforms)
+    def __init__(self, *args, **kw):
+        super(CaseDbCacheSQL, self).__init__(*args, **kw)
         if not self.wrap:
             raise ValueError('CaseDbCacheSQL does not support unwrapped models')
 
@@ -51,7 +46,3 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
     def filter_closed_extensions(self, extensions_to_close):
         # noop for SQL since the filtering already happened when we fetched the IDs
         return extensions_to_close
-
-    def post_process_case(self, case, xform):
-        if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(case.domain, toggles.NAMESPACE_DOMAIN):
-            self.case_update_strategy(case).reconcile_transactions_if_necessary()

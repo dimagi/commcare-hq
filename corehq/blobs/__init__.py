@@ -1,10 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
-
 from .exceptions import Error, NotFound  # noqa: F401
 
-DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 
@@ -42,14 +37,6 @@ def _get_migrating_db(new_db, old_db):
     return MigratingBlobDB(new_db, old_db)
 
 
-class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):
-
-    @property
-    def md5_hash(self):
-        if self.digest and self.digest.startswith("md5-"):
-            return self.digest[4:]
-
-
 class CODES:
     """Blob type codes.
 
@@ -85,15 +72,15 @@ class CODES:
     commcarebuild = 7   # CommCareBuild
     data_import = 8     # case_importer
 
-    # FormExportInstance, CaseExportInstance, SavedBasicExport
-    data_export = 9
-    basic_export = 10   # SavedBasicExport
+    data_export = 9     # FormExportInstance, CaseExportInstance
+    basic_export = 10   # SavedBasicExport (obsolete)
 
     invoice = 11        # InvoicePdf
     restore = 12
     fixture = 13        # domain-fixtures
     demo_user_restore = 14  # DemoUserRestore
     data_file = 15      # domain data file (see DataFile class)
+    form_multimedia = 16     # form submission multimedia zip
 
 
 CODES.name_of = {code: name

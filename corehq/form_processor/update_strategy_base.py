@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
-import six
 
 
-class UpdateStrategy(six.with_metaclass(ABCMeta, object)):
+class UpdateStrategy(metaclass=ABCMeta):
     @abstractproperty
     def case_implementation_class(self):
         pass

@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
+
 from .models import CommCareBuild, CommCareBuildConfig
 
 
-def get_all_versions(versions=None):
+def get_all_versions(versions):
     """
     Returns a list of all versions found in the database,
     plus those in the optional list parameter.
     """
-    versions = versions or []
     db = CommCareBuild.get_db()
     results = db.view('builds/all', group_level=1).all()
     versions += [result['key'][0] for result in results]

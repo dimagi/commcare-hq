@@ -1,23 +1,23 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="query-view-list-template">
-    <form>
-        <p><h2><%- title %></h2></p>
-        <table class="table table-hover table-striped table-bordered">
-            <tbody>
-            </tbody>
-        </table>
-        <button class="btn btn-default" type="submit" id="query-submit-button">
-            <div>Submit</div>
-        </button>
-    </form>
+  <form>
+    <p><h2><%- title %></h2></p>
+    <table class="table table-hover table-striped table-bordered">
+      <tbody>
+      </tbody>
+    </table>
+    <button class="btn btn-default" type="submit" id="query-submit-button">
+      <div>Submit</div>
+    </button>
+  </form>
 </script>
 
 <script type="text/template" id="query-view-item-template">
-    <td class="col-sm-2">
-        <div><%- text ? text : "" %></div>
-    </td>
-    <td class="col-sm-2">
-        <input type="text" class="query-field form-control">
-    </td>
+  <td class="col-sm-2">
+    <div><%- text ? text : "" %></div>
+  </td>
+  <td class="col-sm-2">
+    <input type="text" class="query-field form-control">
+  </td>
 </script>

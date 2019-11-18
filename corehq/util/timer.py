@@ -1,11 +1,11 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import time
+import uuid
 
 from functools import wraps
 from memoized import memoized
 import itertools
+
+from dimagi.utils.logging import notify_exception
 
 
 class NestableTimer(object):
@@ -18,6 +18,7 @@ class NestableTimer(object):
         self.subs = []
         self.root = self if is_root else None
         self.parent = None
+        self.uuid = uuid.uuid4()
 
     def init(self, root, parent):
         self.root = root
@@ -43,20 +44,32 @@ class NestableTimer(object):
 
     @property
     def percent_of_total(self):
-        return (self.duration / self.root.duration * 100) if self.duration and self.root else None
+        if self.duration and self.root and self.root.duration:
+            return self.duration / self.root.duration * 100
+        else:
+            return None
 
     @property
     def percent_of_parent(self):
-        return (self.duration / self.parent.duration * 100) if self.parent else None
+        if self.duration and self.parent and self.parent.duration:
+            return self.duration / self.parent.duration * 100
+        else:
+            return None
 
     def to_dict(self):
-        return {
+        timer_dict = {
             'name': self.name,
             'duration': self.duration,
             'percent_total': self.percent_of_total,
             'percent_parent': self.percent_of_parent,
             'subs': [sub.to_dict() for sub in self.subs]
         }
+        if not self.duration:
+            timer_dict.update({
+                'beginning': self.beginning,
+                'end': self.end
+            })
+        return timer_dict
 
     def to_list(self, exclude_root=False):
         root = [] if exclude_root else [self]
@@ -78,11 +91,12 @@ class NestableTimer(object):
         return "%s.%s" % (self.parent.full_name, self.name)
 
     def __repr__(self):
-        return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(
+        return "NestableTimer(name='{}', beginning={}, end={}, parent='{}', subs='{}')".format(
             self.name,
             self.beginning,
             self.end,
-            self.parent.name if self.parent else ''
+            self.parent.name if self.parent else '',
+            self.subs
         )
 
 
@@ -121,7 +135,12 @@ class TimingContext(object):
         return not self.stack
 
     def is_started(self):
-        return self.peek().beginning is not None
+        """Check if the timer has been started
+
+        Returns false if the timer has not yet started or was started
+        and then stopped, otherwise true.
+        """
+        return bool(self.stack) and self.peek().beginning is not None
 
     def start(self):
         if self.is_started():
@@ -133,8 +152,12 @@ class TimingContext(object):
             name = self.root.name
         timer = self.peek()
         if timer.name != name:
-            raise TimerError("stopping wrong timer: {} (expected {})".format(
-                             timer.name, name))
+            notify_exception(
+                None,
+                "stopping wrong timer: {} (expected {})".format(timer.name, name),
+                details={"self": self, "timer": timer},
+            )
+            return
         if timer.beginning is None:
             raise TimerError("timer not started")
         assert timer.end is None, "timer already ended"
@@ -174,6 +197,11 @@ class TimingContext(object):
     def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
+
+    def __repr__(self):
+        return "TimingContext(root='{}')".format(
+            self.root
+        )
 
 
 class TimerError(Exception):

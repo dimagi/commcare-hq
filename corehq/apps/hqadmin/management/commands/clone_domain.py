@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import Q
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
-from six.moves import input
-import six
 
 types = [
     "feature_flags",
@@ -122,7 +120,6 @@ class Command(BaseCommand):
     def set_flags(self):
         from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
         from corehq.feature_previews import all_previews
-        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
         for toggle in all_toggles():
             if toggle.enabled(self.existing_domain, NAMESPACE_DOMAIN):
@@ -138,8 +135,6 @@ class Command(BaseCommand):
                     if preview.save_fn is not None:
                         preview.save_fn(self.new_domain, True)
 
-        toggle_js_domain_cachebuster.clear(self.new_domain)
-
     def copy_fixtures(self):
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
@@ -152,9 +147,6 @@ class Command(BaseCommand):
                 self.save_couch_copy(item, self.new_domain)
 
         # TODO: FixtureOwnership - requires copying users & groups
-
-        existing_fixture_config = CalendarFixtureSettings.for_domain(self.existing_domain)
-        self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_locations(self, types_only=False):
         from corehq.apps.locations.models import LocationType, SQLLocation
@@ -304,18 +296,18 @@ class Command(BaseCommand):
         old_id = doc._id
 
         attachments = {}
-        attachemnt_stubs = None
+        attachment_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachemnt_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
+            attachment_stubs = {k: v.to_json() for k, v in doc.blobs.items()}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']
         elif "_attachments" in doc and doc['_attachments']:
-            attachemnt_stubs = doc["_attachments"]
+            attachment_stubs = doc["_attachments"]
             del doc['_attachments']
-        if attachemnt_stubs:
+        if attachment_stubs:
             # fetch attachments before assigning new _id
-            attachments = {k: doc.fetch_attachment(k) for k in attachemnt_stubs}
+            attachments = {k: doc.fetch_attachment(k) for k in attachment_stubs}
 
         doc._id = uuid.uuid4().hex
         del doc['_rev']
@@ -327,7 +319,7 @@ class Command(BaseCommand):
         else:
             doc.save()
             for k, attach in attachments.items():
-                doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
+                doc.put_attachment(attach, name=k, content_type=attachment_stubs[k]["content_type"])
 
         new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)

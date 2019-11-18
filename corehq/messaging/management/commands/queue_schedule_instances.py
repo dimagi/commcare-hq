@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_active_schedule_instance_ids,
@@ -18,19 +16,15 @@ from corehq.messaging.scheduling.tasks import (
     handle_case_timed_schedule_instance,
 )
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
-from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
 from django.core.management.base import BaseCommand
 from time import sleep
 
 
 def skip_domain(domain):
-    return (
-        any_migrations_in_progress(domain) or
-        REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain)
-    )
+    return any_migrations_in_progress(domain)
 
 
 class Command(BaseCommand):
@@ -57,13 +51,17 @@ class Command(BaseCommand):
         raise ValueError("Unexpected class: %s" % cls)
 
     def get_enqueue_lock(self, cls, schedule_instance_id, next_event_due):
-        client = get_redis_client()
         key = "create-task-for-%s-%s-%s" % (
             cls.__name__,
             schedule_instance_id.hex,
             next_event_due.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return client.lock(key, timeout=60 * 60)
+        return get_redis_lock(
+            key,
+            timeout=60 * 60,
+            name="create_task_for_%s" % cls.__name__,
+            track_unreleased=False,
+        )
 
     @handle_connection_failure(get_db_aliases=get_default_and_partitioned_db_aliases)
     def create_tasks(self):

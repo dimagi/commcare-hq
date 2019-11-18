@@ -1,7 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import date
 import json
+from datetime import date
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,100 +9,133 @@ from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
-from django.urls import reverse
 from django.http import (
+    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
     HttpResponseRedirect,
-    Http404,
     JsonResponse,
 )
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+from couchdbkit import ResourceNotFound
+from django_prbac.decorators import requires_privilege_raise404
+from django_prbac.models import Grant, Role
+from django_prbac.utils import has_privilege
+from memoized import memoized
+from six.moves.urllib.parse import urlencode
+
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from couchdbkit import ResourceNotFound
 
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from corehq.apps.domain.views.accounting import (
-    BillingStatementPdfView,
-    PAYMENT_ERROR_MESSAGES,
-    InvoiceStripePaymentView,
-    WireInvoiceView,
-    BulkStripePaymentView,
-    DomainAccountingSettings
-)
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_jquery_ui,
-    use_multiselect,
-)
-from corehq.const import USER_DATE_FORMAT
-
-import csv342 as csv
-from memoized import memoized
-
-from corehq.apps.accounting.enterprise import EnterpriseReport
-from corehq.apps.accounting.forms import (
-    BillingAccountBasicForm, BillingAccountContactForm, CreditForm,
-    SubscriptionForm, CancelForm,
-    PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
-    TestReminderEmailFrom,
-    CreateAdminForm,
-    EnterpriseSettingsForm,
-    SuppressInvoiceForm,
-    SuppressSubscriptionForm,
-)
-from corehq.apps.accounting.exceptions import (
-    NewSubscriptionError, InvoiceError, CreditLineError,
-    CreateAccountingAdminError,
-    SubscriptionAdjustmentError,
-)
-from corehq.apps.accounting.interface import (
-    AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
-    InvoiceInterface, WireInvoiceInterface, CustomerInvoiceInterface
-)
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
+    AccountFilterAsyncHandler,
+    BillingContactInfoAsyncHandler,
+    DomainFilterAsyncHandler,
     FeatureRateAsyncHandler,
-    Select2RateAsyncHandler,
-    SoftwareProductRateAsyncHandler,
+    InvoiceBalanceAsyncHandler,
+    InvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
-    Select2InvoiceTriggerHandler,
     Select2CustomerInvoiceTriggerHandler,
+    Select2InvoiceTriggerHandler,
+    Select2RateAsyncHandler,
+    SoftwarePlanAsyncHandler,
+    SoftwareProductRateAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
-    AccountFilterAsyncHandler,
-    DomainFilterAsyncHandler,
-    BillingContactInfoAsyncHandler,
-    SoftwarePlanAsyncHandler,
+)
+from corehq.apps.accounting.enterprise import EnterpriseReport
+from corehq.apps.accounting.exceptions import (
+    CreateAccountingAdminError,
+    CreditLineError,
+    InvoiceError,
+    NewSubscriptionError,
+    SubscriptionAdjustmentError,
+)
+from corehq.apps.accounting.forms import (
+    AdjustBalanceForm,
+    BillingAccountBasicForm,
+    BillingAccountContactForm,
+    CancelForm,
+    ChangeSubscriptionForm,
+    CreateAdminForm,
+    CreditForm,
+    EnterpriseSettingsForm,
+    FeatureRateForm,
+    HideInvoiceForm,
+    InvoiceInfoForm,
+    PlanInformationForm,
+    ProductRateForm,
+    RemoveAutopayForm,
+    ResendEmailForm,
+    SoftwarePlanVersionForm,
+    SubscriptionForm,
+    SuppressInvoiceForm,
+    SuppressSubscriptionForm,
+    TestReminderEmailFrom,
+    TriggerBookkeeperEmailForm,
+    TriggerCustomerInvoiceForm,
+    TriggerInvoiceForm,
+)
+from corehq.apps.accounting.interface import (
+    AccountingInterface,
+    CustomerInvoiceInterface,
+    InvoiceInterface,
+    SoftwarePlanInterface,
+    SubscriptionInterface,
+    WireInvoiceInterface,
 )
 from corehq.apps.accounting.models import (
-    Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription, CustomerBillingRecord,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod, InvoicePdf
+    BillingAccount,
+    CreditAdjustment,
+    CreditLine,
+    CustomerBillingRecord,
+    CustomerInvoice,
+    DefaultProductPlan,
+    Invoice,
+    InvoicePdf,
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    StripePaymentMethod,
+    Subscription,
+    WireInvoice,
 )
 from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
-    fmt_feature_rate_dict, fmt_product_rate_dict,
+    fmt_feature_rate_dict,
+    fmt_product_rate_dict,
+    get_customer_cards,
     has_subscription_already_ended,
     log_accounting_error,
     quantize_accounting_decimal,
-    get_customer_cards
 )
-from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
-from corehq import privileges
-from django_prbac.decorators import requires_privilege_raise404
-from django_prbac.models import Role, Grant
-from django_prbac.utils import has_privilege
-
-from six.moves.urllib.parse import urlencode
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
+from corehq.apps.domain.views.accounting import (
+    PAYMENT_ERROR_MESSAGES,
+    BillingStatementPdfView,
+    BulkStripePaymentView,
+    DomainAccountingSettings,
+    InvoiceStripePaymentView,
+    WireInvoiceView,
+)
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.views import (
+    BaseSectionPageView,
+    CRUDPaginatedViewMixin,
+)
+from corehq.const import USER_DATE_FORMAT
 
 
 @require_superuser
@@ -122,7 +153,6 @@ class AccountingSectionView(BaseSectionPageView):
 
     @method_decorator(require_superuser)
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -208,6 +238,13 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return CreditForm(self.account, None)
 
     @property
+    @memoized
+    def remove_autopay_form(self):
+        if self.request.method == 'POST' and 'remove_autopay' in self.request.POST:
+            return RemoveAutopayForm(self.account, self.request.POST)
+        return RemoveAutopayForm(self.account)
+
+    @property
     def page_context(self):
         return {
             'account': self.account,
@@ -216,9 +253,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                 if self.account.auto_pay_enabled else None
             ),
             'credit_form': self.credit_form,
-            'credit_list': CreditLine.objects.filter(account=self.account),
+            'credit_list': CreditLine.objects.filter(account=self.account, is_active=True),
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
+            'remove_autopay_form': self.remove_autopay_form,
             'subscription_list': [
                 (
                     sub,
@@ -260,6 +298,9 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
+        elif 'remove_autopay' in self.request.POST:
+            self.remove_autopay_form.remove_autopay_user_from_account()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
 
@@ -318,7 +359,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
-                errors.extend([e.message])
+                errors.extend([str(e)])
                 self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 
@@ -435,7 +476,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_form': self.credit_form,
             'can_change_subscription': self.subscription.is_active,
             'change_subscription_form': self.change_subscription_form,
-            'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'credit_list': CreditLine.objects.filter(subscription=self.subscription, is_active=True),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
             "subscription_has_ended": (
@@ -656,6 +697,7 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
 
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -832,6 +874,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
             'suppress_invoice_form': self.suppress_invoice_form,
+            'hide_invoice_form': self.hide_invoice_form,
         }
 
     @property
@@ -862,6 +905,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             return SuppressInvoiceForm(self.invoice, self.request.POST)
         return SuppressInvoiceForm(self.invoice)
 
+    @property
+    @memoized
+    def hide_invoice_form(self):
+        if self.request.method == 'POST':
+            return HideInvoiceForm(self.invoice, self.request.POST)
+        return HideInvoiceForm(self.invoice)
+
     def post(self, request, *args, **kwargs):
         if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
@@ -884,6 +934,9 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
                 else:
                     return HttpResponseRedirect(InvoiceInterface.get_url())
+        elif HideInvoiceForm.submit_kwarg in self.request.POST:
+            if self.hide_invoice_form.is_valid():
+                self.hide_invoice_form.hide_invoice()
         return self.get(request, *args, **kwargs)
 
 
@@ -1137,6 +1190,8 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
+        InvoiceNumberAsyncHandler,
+        InvoiceBalanceAsyncHandler,
     ]
 
     @method_decorator(require_superuser)
@@ -1410,7 +1465,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):

@@ -4,7 +4,7 @@ hqDefine('sms/js/backend_map',[
     "knockout",
     "hqwebapp/js/initial_page_data",
 ], function (_, $, ko, initialPageData) {
-    function BackendMapping(prefix, backendId) {
+    function backendMapping(prefix, backendId) {
         'use strict';
         var self = {};
         self.prefix = ko.observable(prefix);
@@ -12,7 +12,7 @@ hqDefine('sms/js/backend_map',[
         return self;
     }
 
-    function BackendMapViewModel(initial) {
+    function backendMapViewModel(initial) {
         'use strict';
         var self = {};
 
@@ -21,7 +21,7 @@ hqDefine('sms/js/backend_map',[
         _.map(
             initial.backend_map,
             function (mapping) {
-                self.backend_map.push(BackendMapping(mapping.prefix, mapping.backend_id));
+                self.backend_map.push(backendMapping(mapping.prefix, mapping.backend_id));
             }
         );
 
@@ -37,7 +37,7 @@ hqDefine('sms/js/backend_map',[
         });
 
         self.addMapping = function () {
-            self.backend_map.push(BackendMapping('', ''));
+            self.backend_map.push(backendMapping('', ''));
         };
 
         self.removeMapping = function () {
@@ -47,7 +47,7 @@ hqDefine('sms/js/backend_map',[
     }
 
     $(function () {
-        var backendViewModel = BackendMapViewModel({
+        var backendViewModel = backendMapViewModel({
             'backend_map': initialPageData.get('form.backend_map'),
         });
         $('#backend-map-form').koApplyBindings(backendViewModel);

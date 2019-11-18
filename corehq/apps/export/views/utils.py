@@ -1,94 +1,56 @@
-from __future__ import absolute_import
-
-from __future__ import division
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 
 from django.contrib import messages
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
-
-from corehq.blobs.exceptions import NotFound
-from corehq.util.download import get_download_response
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.export.models.new import DataFile, DatePeriod
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
-
 import pytz
-from corehq import privileges
+from memoized import memoized
+
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.toggles import NAMESPACE_DOMAIN
+from couchexport.models import Format
+from dimagi.utils.web import get_url_base, json_response
+from soil import DownloadBase
+from soil.progress import get_task_status
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-    ExportFormValidationException,
-    ExportAsyncException,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
-)
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    SMSExportDataSchema,
-    FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
-)
 from corehq.apps.export.const import (
-    FORM_EXPORT,
     CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
+    FORM_EXPORT,
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
 )
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    FormExportDataSchema,
 )
+from corehq.apps.export.models.new import DataFile, DatePeriod, RowNumberColumn
+from corehq.apps.export.tasks import generate_schema_for_all_builds
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-    use_angular_js)
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import (
-    can_download_data_files,
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    can_download_data_files,
     has_permission_to_view_report,
+    ODATA_FEED_PERMISSION,
 )
+from corehq.blobs.exceptions import NotFound
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import Format
-from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.web import json_response, get_url_base
-from soil import DownloadBase
-from soil.progress import get_task_status
 
 
 def get_timezone(domain, couch_user):
@@ -110,6 +72,16 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
+def user_can_view_odata_feed(domain, couch_user):
+    domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
+    return (domain_can_view_odata
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data=ODATA_FEED_PERMISSION
+            ))
+
+
 class ExportsPermissionsManager(object):
     """
     Encapsulates some shortcuts for checking export permissions.
@@ -125,7 +97,7 @@ class ExportsPermissionsManager(object):
 
     def __init__(self, form_or_case, domain, couch_user):
         super(ExportsPermissionsManager, self).__init__()
-        if form_or_case not in [None, 'form', 'case']:
+        if form_or_case and form_or_case not in ['form', 'case']:
             raise ValueError("Unrecognized value for form_or_case")
         self.form_or_case = form_or_case
         self.domain = domain
@@ -145,7 +117,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case is None:
+        if not self.form_or_case:
             return self.has_form_export_permissions or self.has_case_export_permissions
         elif self.form_or_case == "form":
             return self.has_form_export_permissions
@@ -158,13 +130,18 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False):
-        if not (self.has_edit_permissions or self.has_view_permissions
-                or (is_deid and self.has_deid_view_permissions)):
+    @property
+    def has_odata_permissions(self):
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
+        if not (self.has_view_permissions
+                or (is_deid and self.has_deid_view_permissions)
+                or (is_odata and self.has_odata_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
-        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+        if not (self.has_view_permissions or self.has_deid_view_permissions):
             raise Http404()
 
 
@@ -225,6 +202,59 @@ class DashboardFeedMixin(DailySavedExportMixin):
     def report_class(self):
         from corehq.apps.export.views.list import DashboardFeedListView
         return DashboardFeedListView
+
+
+class ODataFeedMixin(object):
+
+    @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED))
+    def dispatch(self, *args, **kwargs):
+        return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+
+    @property
+    def terminology(self):
+        return {
+            'page_header': _("OData Feed Settings"),
+            'help_text': "",
+            'name_label': _("OData Feed Name"),
+            'choose_fields_label': _("Choose the fields you want to include in this feed."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the field labels in the Power BI/Tableau
+            """),
+        }
+
+    def create_new_export_instance(self, schema):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+        instance.is_odata_config = True
+        instance.transform_dates = False
+        return instance
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedMixin, self).page_context
+        context['format_options'] = ["odata"]
+        return context
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance._id = None
+        export_instance._rev = None
+        return export_instance
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import ODataFeedListView
+        return ODataFeedListView
+
+    def get_export_instance(self, schema, original_export_instance):
+        export_instance = super(ODataFeedMixin, self).get_export_instance(schema, original_export_instance)
+        clean_odata_columns(export_instance)
+        export_instance.is_odata_config = True
+        export_instance.transform_dates = False
+        export_instance.name = _("Copy of {}").format(export_instance.name)
+        return export_instance
 
 
 class GenerateSchemaFromAllBuildsView(View):
@@ -359,3 +389,22 @@ class DataFileDownloadDetail(BaseProjectDataView):
             raise Http404
         data_file.delete()
         return HttpResponse(status=204)
+
+
+def can_view_form_exports(couch_user, domain):
+    return ExportsPermissionsManager('form', domain, couch_user).has_form_export_permissions
+
+
+def can_view_case_exports(couch_user, domain):
+    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
+
+
+def clean_odata_columns(export_instance):
+    for table in export_instance.tables:
+        for column in table.columns:
+            column.label = column.label.replace('@', '').replace(
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace(
+                '#', '').replace(',', '')
+            # truncate labels for PowerBI and Tableau limits
+            if len(column.label) >= 255:
+                column.label = column.label[:255]

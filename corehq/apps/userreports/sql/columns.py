@@ -1,19 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 import sqlalchemy
 from sqlagg import SumWhen
+
 from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.userreports.sql.util import decode_column_name
 
 
 def column_to_sql(column):
-    column_name = column.database_column_name
-    if isinstance(column_name, bytes):
-        column_name = column_name.decode('utf-8')
+    column_name = decode_column_name(column)
     return sqlalchemy.Column(
         column_name,
         _get_column_type(column.datatype),
@@ -29,10 +25,10 @@ def expand_column(report_column, distinct_values, lang):
         alias = "{}-{}".format(report_column.column_id, index)
         if val is None:
             sql_agg_col = SumWhen(
-                whens={'"{}" is NULL'.format(report_column.field): 1}, else_=0, alias=alias
+                whens=[['"{}" is NULL'.format(report_column.field), 1]], else_=0, alias=alias
             )
         else:
-            sql_agg_col = SumWhen(report_column.field, whens={val: 1}, else_=0, alias=alias)
+            sql_agg_col = SumWhen(report_column.field, whens=[[val, 1]], else_=0, alias=alias)
 
         columns.append(UCRExpandDatabaseSubcolumn(
             "{}-{}".format(report_column.get_header(lang), val),

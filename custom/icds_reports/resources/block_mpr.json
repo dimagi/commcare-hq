@@ -2,12 +2,13 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_4a_6_pse",
+        "id": "static-{domain}-static-dashboard_mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
         "columns": [
           {
-            "column_name": "owner_id",
-            "agg_fun": "count"
+            "column_name": "awc_count",
+            "column_in_report": "owner_id",
+            "agg_fun": "sum"
           }
         ]
       }
@@ -301,7 +302,9 @@
   "supplementary_nutrition": {
     "data_source" : [
       {
-        "id": "static-{domain}-static-mpr_4a_6_pse",
+        "id": "static-{domain}-static-dashboard_mpr_4a_6_pse",
+        "date_filter_field": "submitted_on",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "open_bfast_count",
@@ -384,12 +387,13 @@
   "using_salt": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_4b_infra_forms",
+        "id": "static-{domain}-static-mpr_4b_web_infra",
         "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "use_salt",
-            "agg_fun": "sum"
+            "agg_fun": "last_value",
+            "group_by": "awc_id"
           }
         ]
       }
@@ -398,7 +402,7 @@
   "programme_coverage": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_4a_6_pse",
+        "id": "static-{domain}-static-dashboard_mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -688,8 +692,9 @@
   "preschool": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_4a_6_pse",
+        "id": "static-{domain}-static-dashboard_mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "open_pse_count",
@@ -1118,6 +1123,7 @@
       {
         "id": "static-{domain}-mpr_9_vhnd_forms",
         "date_filter_field": "submitted_on",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "done_when_planned",
@@ -1186,8 +1192,9 @@
   "referral_services": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_10a_person_cases",
+        "id": "static-{domain}-static-mpr_10ab_person_cases",
         "date_filter_field": "last_referral_date",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "referred_premature",
@@ -1307,13 +1314,7 @@
               "operator": "!=",
               "value": 0
             }
-          }
-        ]
-      },
-      {
-        "id": "static-{domain}-static-mpr_10b_person_cases",
-        "date_filter_field": "last_referral_date",
-        "columns": [
+          },
           {
             "column_name": "referred_bleeding",
             "column_in_report": "referred_bleeding_all",
@@ -1425,6 +1426,7 @@
       {
         "id": "static-{domain}-static-mpr_11_visitor_book_forms",
         "date_filter_field": "submitted_on",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "visitor_icds_sup",

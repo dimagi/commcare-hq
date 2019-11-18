@@ -1,8 +1,0 @@
-{% extends "users/base_template.html" %}
-{% load hq_shared_tags %}
-
-{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
-
-{% block page_content %}
-    {% include "hqwebapp/partials/bulk_upload.html" %}
-{% endblock %}

@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 from django.db import models, migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -32,7 +28,7 @@ class Migration(migrations.Migration):
             field=models.CharField(default=None, max_length=100, null=True),
             preserve_default=True,
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             """
             UPDATE
                 form_processor_ledgervalue
@@ -44,7 +40,7 @@ class Migration(migrations.Migration):
             """,
             "SELECT 1"
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             """
             UPDATE
                 form_processor_ledgervalue

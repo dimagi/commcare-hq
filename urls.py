@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 from django.conf.urls import url, include
 from django.shortcuts import render
@@ -12,13 +10,13 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
+from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.settings import logo
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.reports.urls import report_urls
-from corehq.apps.registration.utils import PRICING_LINK
+from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
@@ -43,8 +41,6 @@ domain_specific = [
     url(r'^logo.png', logo, name='logo'),
     url(r'^apps/', include('corehq.apps.app_manager.urls')),
     url(r'^api/', include('corehq.apps.api.urls')),
-    # the receiver needs to accept posts at an endpoint that might
-    # not have a slash, so don't include it at the root urlconf
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
     url(r'^enterprise/', include(accounting_domain_specific)),
@@ -55,8 +51,6 @@ domain_specific = [
     url(r'^phone/', include('corehq.apps.mobile_auth.urls')),
     url(r'^sms/', include('corehq.apps.sms.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
-    url(r'^indicators/mvp/', include('mvp.urls')),
-    url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
@@ -75,6 +69,8 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^', include('custom.icds_reports.urls')),
+    url(r'^', include('custom.icds.urls')),
+    url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
@@ -86,6 +82,7 @@ domain_specific = [
     url(r'^zipline/', include('custom.zipline.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
+    url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
 ]
 
 urlpatterns = [
@@ -105,9 +102,7 @@ urlpatterns = [
     url(r'^hq/sms/', include(sms_admin_interface_urls)),
     url(r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     url(r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
-    url(r'^hq/reports/', include(report_urls)),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
-    url(r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
@@ -145,7 +140,7 @@ urlpatterns = [
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
-        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/(?P<scheduled_report_secret>[\w-]+)/',
+        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps")
 ] + LOCAL_APP_URLS
@@ -158,20 +153,12 @@ if settings.ENABLE_PRELOGIN_SITE:
 
 if settings.DEBUG:
     try:
-        from debug_toolbar import urls as debug_toolbar_urls
+        import debug_toolbar
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass
-
-    if 'package_monitor' in settings.INSTALLED_APPS:
-        try:
-            urlpatterns += [
-                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
-            ]
-        except ImportError:
-            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

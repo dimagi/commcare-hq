@@ -1,0 +1,239 @@
+{
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-household_with_access_to_Latrine_by_type_report",
+   "data_source_table":"static-household_with_access_to_Latrine_by_type_data_source",
+   "config":{
+   "description":"",
+   "title":"Household with access to Latrine by type Report",
+   "filters":[
+      {
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"health_post",
+         "field":"health_post_id",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+            "include_descendants":true,
+            "type":"location",
+            "show_full_path":false
+         },
+         "display":"Location"
+      },
+      {
+         "comment":null,
+         "datatype":"string",
+         "type":"dynamic_choice_list",
+         "show_all":true,
+         "slug":"gote_name",
+         "field":"gote_name",
+         "ancestor_expression":{
+
+         },
+         "choice_provider":{
+
+         },
+         "display":"Gote Name"
+      }
+   ],
+   "data_source_type":"standard",
+   "visible":true,
+   "configured_charts":[
+
+   ],
+   "aggregation_columns":[
+      "health_post_id",
+      "health_post_name"
+   ],
+ 
+   "sort_expression":[
+
+   ],
+   "columns":[
+      {
+         "comment":null,
+         "field":"health_post_name",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"simple",
+         "column_id":"health_post_name",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Name"
+      },
+      {
+         "comment":null,
+         "field":"health_post_id",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":false,
+         "aggregation":"simple",
+         "column_id":"health_post_id",
+         "width":null,
+         "transform":{
+
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Id"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"household_count",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"household_count_percent_improved_latrine",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"household_count_percent_improved_latrine"
+         },
+         "numerator":{
+            "field":"improved_latrine",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"nume_improved_latrine",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"nume_improved_latrine"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_improved_latrine",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of Improved Latrine"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"household_count",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"household_count_percent_un_improved_latrine",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"household_count_percent_un_improved_latrine"
+         },
+         "numerator":{
+            "field":"un_improved_latrine",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"nume_un_improved_latrine",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"nume_un_improved_latrine"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_un_improved_latrine",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of un Improved Latrine"
+      },
+      {
+         "description":null,
+         "format":"both",
+         "denominator":{
+            "field":"household_count",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"household_count_percent_latrine_not_available",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"household_count_percent_latrine_not_available"
+         },
+         "numerator":{
+            "field":"latrine_not_available",
+            "sortable":false,
+            "description":null,
+            "width":null,
+            "css_class":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"nume_latrine_not_available",
+            "visible":true,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"nume_latrine_not_available"
+         },
+         "transform":{
+
+         },
+         "column_id":"percent_latrine_not_available",
+         "visible":true,
+         "calculate_total":false,
+         "type":"percent",
+         "display":"Percent of Not Available Latrine"
+      }
+   ]
+}
+}

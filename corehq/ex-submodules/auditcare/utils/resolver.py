@@ -1,9 +1,8 @@
 #Source: http://djangosnippets.org/snippets/1378/ which yielded: http://pastebin.com/raw.php?i=7KfALc0j
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import RegexURLPattern, Resolver404, get_resolver
 
 __all__ = ('resolve_to_name',)
+
 
 def _pattern_resolve_to_name(self, path):
     match = self.regex.search(path)
@@ -16,6 +15,7 @@ def _pattern_resolve_to_name(self, path):
         else:
             name = "%s.%s" % (self.callback.__module__, self.callback.__name__)
         return name
+
 
 def _resolver_resolve_to_name(self, path):
     tried = []

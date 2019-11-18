@@ -1,18 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
-import lxml
-from lxml.doctestcompare import LXMLOutputChecker, LHTMLOutputChecker
-import mock
-from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
-    BuildSpec
 import difflib
+import os
+
+import lxml
+import mock
 from lxml import etree
+from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
 
 import commcare_translations
-from corehq.util.test_utils import TestFileMixin, unit_testing_only
 from corehq.apps.app_manager.models import Application
-import six
+from corehq.apps.app_manager.util import app_doc_types
+from corehq.apps.builds.models import (
+    BuildSpec,
+    CommCareBuild,
+    CommCareBuildConfig,
+)
+from corehq.util.test_utils import TestFileMixin, unit_testing_only
 
 
 class TestXmlMixin(TestFileMixin):
@@ -91,7 +93,7 @@ def normalize_attributes(xml):
     """Sort XML attributes to make it easier to find differences"""
     for node in xml.iterfind(".//*"):
         if node.attrib:
-            attrs = sorted(six.iteritems(node.attrib))
+            attrs = sorted(node.attrib.items())
             node.attrib.clear()
             node.attrib.update(attrs)
     return xml
@@ -172,15 +174,13 @@ def commtrack_enabled(is_enabled):
 
 @unit_testing_only
 def delete_all_apps():
-    results = Application.get_db().view(
-        'app_manager/applications',
-        reduce=False,
-        include_docs=False,
-    ).all()
-    for result in results:
-        try:
-            app = Application.get(result['id'])
-        except Exception:
-            pass
-        else:
-            app.delete()
+    for doc_type in app_doc_types():
+        res = Application.get_db().view(
+            'all_docs/by_doc_type',
+            startkey=[doc_type],
+            endkey=[doc_type, {}],
+            reduce=False,
+            include_docs=True
+        )
+        for row in res:
+            Application.get_db().delete_doc(row['doc'])

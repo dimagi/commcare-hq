@@ -1,19 +1,20 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.hqwebapp.decorators import use_select2_v4
+from memoized import memoized
+
+from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.smsbillables.async_handlers import (
+    PublicSMSRatesAsyncHandler,
     SMSRatesAsyncHandler,
     SMSRatesSelect2AsyncHandler,
-    PublicSMSRatesAsyncHandler,
 )
-from corehq.apps.smsbillables.forms import SMSRateCalculatorForm, PublicSMSRateCalculatorForm
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
-from corehq.apps.hqwebapp.views import BasePageView
-from memoized import memoized
+from corehq.apps.smsbillables.forms import (
+    PublicSMSRateCalculatorForm,
+    SMSRateCalculatorForm,
+)
 
 
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
@@ -22,7 +23,6 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
@@ -49,7 +49,6 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 

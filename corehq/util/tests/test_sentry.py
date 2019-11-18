@@ -1,9 +1,6 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from django.test import SimpleTestCase, override_settings
-from corehq.util.sentry import HQSanitzeSystemPasswordsProcessor
+from corehq.util.sentry import HQSanitzeSystemPasswords
 
 
 class HQSentryTest(SimpleTestCase):
@@ -30,7 +27,7 @@ class HQSentryTest(SimpleTestCase):
             'pw2': '********',
         }
         with override_settings(COUCH_DATABASES=overridden_dbs):
-            processor = HQSanitzeSystemPasswordsProcessor(client=None)
+            sanitizer = HQSanitzeSystemPasswords()
             for test in [
                 '{pw}',
                 'http://username:{pw}@example.com',
@@ -40,10 +37,10 @@ class HQSentryTest(SimpleTestCase):
             ]:
                 formatted_test = test.format(**subs)
                 expected_result = test.format(**masks)
-                self.assertEqual(expected_result, processor.sanitize('key', formatted_test))
+                self.assertEqual(expected_result, sanitizer.sanitize('key', formatted_test))
 
             for edge_case in [
                 (None, None),
                 ({'foo': 'bar'}, {'foo': 'bar'}),
             ]:
-                self.assertEqual(edge_case[1], processor.sanitize('key', edge_case[0]))
+                self.assertEqual(edge_case[1], sanitizer.sanitize('key', edge_case[0]))

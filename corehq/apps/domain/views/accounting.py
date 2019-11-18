@@ -1,84 +1,111 @@
-from __future__ import absolute_import, unicode_literals
 import datetime
+import json
 from collections import namedtuple
 from decimal import Decimal
-import json
 
-from couchdbkit import ResourceNotFound
-import dateutil
+from django.conf import settings
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
-from django.views.generic import View
 from django.db.models import Sum
-from django.conf import settings
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.contrib import messages
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.generic import View
 
-from corehq.const import USER_DATE_FORMAT
+import dateutil
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from dimagi.utils.web import json_response
+
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-    use_select2,
-)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
     SubscriptionAdjustmentError,
+)
+from corehq.apps.accounting.forms import (
+    AnnualPlanContactForm,
+    EnterprisePlanContactForm,
+)
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
+from corehq.apps.accounting.models import (
+    MINIMUM_SUBSCRIPTION_LENGTH,
+    UNLIMITED_FEATURE_USAGE,
+    BillingAccount,
+    BillingAccountType,
+    BillingRecord,
+    CreditLine,
+    CustomerInvoice,
+    DefaultProductPlan,
+    EntryPoint,
+    Invoice,
+    InvoicePdf,
+    LastPayment,
+    PaymentMethodType,
+    SoftwarePlanEdition,
+    StripePaymentMethod,
+    Subscription,
+    SubscriptionType,
+    WireInvoice,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
     CreditStripePaymentHandler,
     InvoiceStripePaymentHandler,
 )
-from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
-from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanContactForm
-from corehq.apps.accounting.utils import (
-    get_change_status, get_privileges, fmt_dollar_amount,
-    quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, is_downgrade
-)
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.users.models import Permissions
-from corehq import privileges
-from django_prbac.utils import has_privilege
-from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SubscriptionType,
-    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType,
-    Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, CustomerInvoice,
-    StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeStatusHandler,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
-    get_feature_name,
     DESC_BY_EDITION,
+    get_feature_name,
     get_feature_recurring_interval,
 )
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
+    get_change_status,
+    get_customer_cards,
+    get_privileges,
+    is_downgrade,
+    log_accounting_error,
+    quantize_accounting_decimal,
+)
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.forms import (
-    ConfirmNewSubscriptionForm, EditBillingAccountInfoForm, ConfirmSubscriptionRenewalForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm,
+    INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,
+    AdvancedExtendedTrialForm,
+    ConfirmNewSubscriptionForm,
+    ConfirmSubscriptionRenewalForm,
+    ContractedPartnerForm,
+    DimagiOnlyEnterpriseForm,
+    EditBillingAccountInfoForm,
+    SelectSubscriptionTypeForm,
 )
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
-from memoized import memoized
-from dimagi.utils.web import json_response
-
 from corehq.apps.users.decorators import require_permission
-from six.moves import map
-
+from corehq.apps.users.models import Permissions
+from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
     400: ugettext_lazy('Your request was not formatted properly.'),
@@ -155,6 +182,12 @@ class DomainAccountingSettings(BaseProjectSettingsView):
     def current_subscription(self):
         return Subscription.get_active_subscription_by_domain(self.domain)
 
+    @property
+    def main_context(self):
+        context = super(DomainAccountingSettings, self).main_context
+        context['show_prepaid_modal'] = False
+        return context
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -178,6 +211,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'price': None,
         }
         cards = None
+        trial_length = None
         if subscription:
             cards = get_customer_cards(self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
@@ -202,6 +236,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
+            if subscription.is_trial and subscription.date_end is not None:
+                trial_length = (subscription.date_end - subscription.date_start).days
+
         if subscription:
             credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
             credit_lines = [cl for cl in credit_lines if cl.balance > 0]
@@ -225,6 +262,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'css_class': "label-plan label-plan-%s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
+            'trial_length': trial_length,
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
@@ -308,6 +346,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def page_context(self):
         from corehq.apps.domain.views.sms import SMSRatesView
+        subs = self.current_subscription
         return {
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -321,7 +360,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
             ),
-            'can_change_subscription': self.current_subscription.user_can_change_subscription(self.request.user)
+            'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
         }
 
 
@@ -345,7 +384,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
                                           is_ops_user=is_ops_user)
 
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -485,7 +523,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': True
+            'show_plan': True,
+            'show_overdue_invoice_modal': False,
         })
         return pagination_context
 
@@ -538,7 +577,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):
@@ -811,7 +851,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @method_decorator(require_superuser)
     @use_jquery_ui
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
@@ -832,6 +871,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     }
                 ))
         return self.get(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(InternalSubscriptionManagementView, self).main_context
+        context['show_prepaid_modal'] = False
+        return context
 
     @property
     def page_context(self):
@@ -1013,7 +1058,6 @@ class SelectPlanView(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 
@@ -1238,10 +1282,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def steps(self):

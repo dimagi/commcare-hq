@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from dimagi.utils.couch import CriticalSection
+
+from corehq.apps.receiverwrapper.util import submit_form_locally
 
 
 def form_requires_input(form):

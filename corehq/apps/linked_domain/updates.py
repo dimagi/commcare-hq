@@ -1,38 +1,49 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from functools import partial
+
+from toggle.shortcuts import set_toggle
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import LinkedApplication
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
 )
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
-    MODEL_FLAGS, MODELS_ROLES, MODEL_LOCATION_DATA, MODEL_PRODUCT_DATA,
-    MODEL_USER_DATA, MODEL_CASE_SEARCH
+    MODEL_CASE_SEARCH,
+    MODEL_FLAGS,
+    MODEL_LOCATION_DATA,
+    MODEL_PRODUCT_DATA,
+    MODEL_USER_DATA,
+    MODELS_ROLES,
 )
-from corehq.apps.linked_domain.local_accessors import (
-    get_toggles_previews as local_toggles_previews,
-    get_custom_data_models as local_custom_data_models,
-    get_user_roles as local_get_user_roles,
-)
-from corehq.apps.linked_domain.remote_accessors import (
-    get_toggles_previews as remote_toggles_previews,
-    get_custom_data_models as remote_custom_data_models,
-    get_user_roles as remote_get_user_roles,
-    get_case_search_config as remote_get_case_search_config,
-)
+from corehq.apps.linked_domain.local_accessors import \
+    get_custom_data_models as local_custom_data_models
+from corehq.apps.linked_domain.local_accessors import \
+    get_toggles_previews as local_toggles_previews
+from corehq.apps.linked_domain.local_accessors import \
+    get_user_roles as local_get_user_roles
+from corehq.apps.linked_domain.remote_accessors import \
+    get_case_search_config as remote_get_case_search_config
+from corehq.apps.linked_domain.remote_accessors import \
+    get_custom_data_models as remote_custom_data_models
+from corehq.apps.linked_domain.remote_accessors import \
+    get_toggles_previews as remote_toggles_previews
+from corehq.apps.linked_domain.remote_accessors import \
+    get_user_roles as remote_get_user_roles
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.util import get_static_report_mapping, get_ucr_class_name
+from corehq.apps.userreports.util import (
+    get_static_report_mapping,
+    get_ucr_class_name,
+)
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
-from toggle.shortcuts import set_toggle
 
 
 def update_model_type(domain_link, model_type, model_detail=None):
@@ -88,7 +99,6 @@ def update_user_roles(domain_link):
     else:
         master_results = local_get_user_roles(domain_link.master_domain)
 
-    _convert_web_apps_permissions(domain_link, master_results)
     _convert_reports_permissions(domain_link, master_results)
 
     local_roles = UserRole.view(
@@ -132,26 +142,6 @@ def update_case_search_config(domain_link):
 
     if query_addition:
         CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
-
-
-def _convert_web_apps_permissions(domain_link, master_results):
-    """Mutates the master result docs to convert web app permissions.
-    """
-    linked_apps_by_master = {
-        app.master: app._id
-        for app in get_docs_in_domain_by_class(domain_link.linked_domain, LinkedApplication)
-    }
-    for role_def in master_results:
-        view_web_apps_list = []
-        for app_id in role_def['permissions']['view_web_apps_list']:
-            master_app_id = get_app(domain_link.master_domain, app_id).master_id
-            try:
-                linked_app_id = linked_apps_by_master[master_app_id]
-            except KeyError:
-                continue
-            view_web_apps_list.append(linked_app_id)
-
-        role_def['permissions']['view_web_apps_list'] = view_web_apps_list
 
 
 def _convert_reports_permissions(domain_link, master_results):

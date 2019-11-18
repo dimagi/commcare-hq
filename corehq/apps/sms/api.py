@@ -1,36 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import random
 import string
+from datetime import datetime
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.sms.messages import (
+    MSG_DUPLICATE_USERNAME,
+    MSG_OPTED_IN,
+    MSG_OPTED_OUT,
+    MSG_REGISTRATION_WELCOME_CASE,
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
+    MSG_USERNAME_TOO_LONG,
+    get_message,
+)
+from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    MessagingEvent,
+    PhoneBlacklist,
+    PhoneNumber,
+    QueuedSMS,
+    SelfRegistrationInvitation,
+    SQLMobileBackend,
+    SQLSMSBackend,
+)
+from corehq.apps.sms.util import (
+    clean_phone_number,
+    clean_text,
+    get_sms_backend_classes,
+    is_contact_active,
+    register_sms_contact,
+    strip_plus,
+)
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
-
-from dimagi.utils.modules import to_function
-from dimagi.utils.logging import notify_exception
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_sms_backend_classes)
-from corehq.apps.sms.models import (OUTGOING, INCOMING,
-    PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend, SQLSMSBackend, QueuedSMS, PhoneNumber)
-from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
-    MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
-    MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.util import is_contact_active
-from corehq.apps.domain.models import Domain
 from corehq.form_processor.utils import is_commcarecase
-from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.apps.sms.util import register_sms_contact, strip_plus
-from corehq import toggles
-import six
-from six.moves import range
+from corehq.util.datadog.utils import sms_load_counter
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -110,7 +127,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     """
     if phone_number is None:
         return False
-    if isinstance(phone_number, six.integer_types):
+    if isinstance(phone_number, int):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
@@ -129,14 +146,14 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
-        backend_name = backend_name.strip() if isinstance(backend_name, six.string_types) else ''
+        backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
             except BadSMSConfigException as e:
                 if logged_subevent:
                     logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
-                        additional_error_text=six.text_type(e))
+                        additional_error_text=str(e))
                 return False
 
             msg.backend_id = backend.couch_id
@@ -161,7 +178,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     except BadSMSConfigException as e:
         if logged_subevent:
             logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
-                additional_error_text=six.text_type(e))
+                additional_error_text=str(e))
             return False
         raise
 
@@ -252,6 +269,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """
+    sms_load_counter("outbound", msg.domain)()
     try:
         msg.text = clean_text(msg.text)
     except Exception:
@@ -364,8 +382,8 @@ def process_pre_registration(msg):
     if any_migrations_in_progress(invitation.domain):
         raise DelayProcessing()
 
-    domain = Domain.get_by_name(invitation.domain, strict=True)
-    if not domain.sms_mobile_worker_registration_enabled:
+    domain_obj = Domain.get_by_name(invitation.domain, strict=True)
+    if not domain_obj.sms_mobile_worker_registration_enabled:
         return False
 
     text = msg.text.strip()
@@ -437,11 +455,14 @@ def process_sms_registration(msg):
         if any_migrations_in_progress(domain_name):
             raise DelayProcessing()
 
-        domain = Domain.get_by_name(domain_name, strict=True)
+        domain_obj = Domain.get_by_name(domain_name, strict=True)
 
-        if domain is not None:
-            if domain_has_privilege(domain, privileges.INBOUND_SMS):
-                if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
+        if domain_obj is not None:
+            if domain_has_privilege(domain_obj, privileges.INBOUND_SMS):
+                if (
+                        keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
+                        and domain_obj.sms_mobile_worker_registration_enabled
+                ):
                     if keyword4 != '':
                         username = keyword4
                     else:
@@ -454,9 +475,9 @@ def process_sms_registration(msg):
                             invitation.completed()
                             user_data = invitation.custom_user_data
 
-                        username = process_username(username, domain)
+                        username = process_username(username, domain_obj)
                         password = random_password()
-                        new_user = CommCareUser.create(domain.name, username, password, user_data=user_data)
+                        new_user = CommCareUser.create(domain_obj.name, username, password, user_data=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 
@@ -466,27 +487,27 @@ def process_sms_registration(msg):
                         entry.save()
                         registration_processed = True
 
-                        if domain.enable_registration_welcome_sms_for_mobile_worker:
-                            send_sms(domain.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain.name))
+                        if domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+                            send_sms(domain_obj.name, None, cleaned_phone_number,
+                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain_obj.name))
                     except ValidationError as e:
-                        send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
+                        send_sms(domain_obj.name, None, cleaned_phone_number, e.messages[0])
 
-                elif domain.sms_case_registration_enabled:
+                elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
-                        domain=domain.name,
-                        case_type=domain.sms_case_registration_type,
+                        domain=domain_obj.name,
+                        case_type=domain_obj.sms_case_registration_type,
                         case_name="unknown",
-                        user_id=domain.sms_case_registration_user_id,
+                        user_id=domain_obj.sms_case_registration_user_id,
                         contact_phone_number=cleaned_phone_number,
                         contact_phone_number_is_verified="1",
-                        owner_id=domain.sms_case_registration_owner_id,
+                        owner_id=domain_obj.sms_case_registration_owner_id,
                     )
                     registration_processed = True
-                    if domain.enable_registration_welcome_sms_for_case:
-                        send_sms(domain.name, None, cleaned_phone_number,
-                                 get_message(MSG_REGISTRATION_WELCOME_CASE, domain=domain.name))
-            msg.domain = domain.name
+                    if domain_obj.enable_registration_welcome_sms_for_case:
+                        send_sms(domain_obj.name, None, cleaned_phone_number,
+                                 get_message(MSG_REGISTRATION_WELCOME_CASE, domain=domain_obj.name))
+            msg.domain = domain_obj.name
             msg.save()
 
     return registration_processed
@@ -533,7 +554,9 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 
 def is_opt_message(text, keyword_list):
-    if not isinstance(text, six.string_types):
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
+    if not isinstance(text, str):
         return False
 
     text = text.strip().upper()
@@ -587,6 +610,7 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
+    sms_load_counter("inbound", msg.domain)()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:

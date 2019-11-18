@@ -1,10 +1,11 @@
-function AdditionalModalController($location, $uibModalInstance, filters, genders, ages, haveAccessToFeatures) {
+function AdditionalModalController($location, $uibModalInstance, filters, genders, ages, agesServiceDeliveryDashboard, haveAccessToFeatures) {
     var vm = this;
     vm.filters = filters;
 
     vm.genders = window.angular.copy(genders);
 
     vm.ages = window.angular.copy(ages);
+    vm.agesServiceDeliveryDashboard = window.angular.copy(agesServiceDeliveryDashboard);
     vm.haveAccessToFeatures = haveAccessToFeatures;
 
     if (!vm.haveAccessToFeatures) {
@@ -20,7 +21,7 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 
-    vm.apply = function() {
+    vm.apply = function () {
         hqImport('analytix/js/google').track.event('Additional Filter', 'Filter Changed', '');
         $uibModalInstance.close({
             gender: vm.selectedGender,
@@ -28,7 +29,7 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
         });
     };
 
-    vm.reset = function() {
+    vm.reset = function () {
         vm.selectedAge = '';
         vm.selectedGender = '';
     };
@@ -60,9 +61,9 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
 
-    vm.getPlaceholder = function() {
+    vm.getPlaceholder = function () {
         var placeholder = '';
-        filtersObjects.forEach(function(filterObject) {
+        filtersObjects.forEach(function (filterObject) {
             if (filterObject.value) {
                 var val = filterObject.value;
                 if (filterObject.label === 'Age') val += ' m';
@@ -86,7 +87,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
             controller: AdditionalModalController,
             controllerAs: '$ctrl',
             resolve: {
-                filters: function() {
+                filters: function () {
                     return vm.filters;
                 },
             },
@@ -101,12 +102,12 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 }
 
 AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'haveAccessToFeatures'];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'agesServiceDeliveryDashboard', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("additionalFilter", function() {
+window.angular.module('icdsApp').directive("additionalFilter", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
             filters: '=',
         },

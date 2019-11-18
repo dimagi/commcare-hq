@@ -1,0 +1,9 @@
+{% load i18n %}
+{% blocktrans %}
+Dear {{ username }},
+
+The fixture upload for {{ domain }} you started has finished.
+
+Upload start time: {{ time_start }}
+Upload end time: {{ time_end }}
+Upload messages: {{ messages }}

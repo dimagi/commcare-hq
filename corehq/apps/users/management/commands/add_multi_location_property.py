@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
-from corehq.apps.es import filters, UserES, users as user_filters
+from corehq.apps.es import UserES, filters
+from corehq.apps.es import users as user_filters
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_location_data
-from corehq.util.couch import iter_update, DocUpdate
+from corehq.util.couch import DocUpdate, iter_update
 from corehq.util.log import with_progress_bar
 
 

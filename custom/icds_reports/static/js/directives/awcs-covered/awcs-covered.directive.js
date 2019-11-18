@@ -2,10 +2,11 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Launched";
     vm.steps = {
         'map': {route: '/icds_cas_reach/awcs_covered/map', label: 'Map View'},
@@ -76,7 +77,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
 }
 
-AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('awcsCovered', function() {
     return {

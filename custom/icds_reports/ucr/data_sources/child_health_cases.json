@@ -1,7 +1,19 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,8 +22,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -30,6 +41,24 @@
       "type": "boolean_expression",
       "property_value": "child_health"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "Person name",
@@ -172,11 +201,11 @@
         "display_name": null,
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -184,7 +213,9 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "supervisor_id"
       },
@@ -196,18 +227,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
       },
@@ -219,21 +249,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "district_id"
       },
@@ -245,24 +271,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "state_id"
       },
@@ -1194,6 +1213,28 @@
         "type": "expression",
         "is_primary_key": false,
         "is_nullable": true,
+        "column_id": "mother_phone_number",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "contact_phone_number"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "mother_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
         "column_id": "bf_at_birth",
         "expression": {
           "datatype": null,
@@ -1291,46 +1332,17 @@
         "datatype": "date",
         "type": "expression",
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "not",
-            "filter": {
-              "operator": "in",
-              "type": "boolean_expression",
-              "expression": {
-                "type": "named",
-                "name": "aadhar_number_from_person_case"
-              },
-              "property_value": ["", null]
-            }
-          },
-          "expression_if_true": {
-            "type": "conditional",
-            "test": {
-              "type": "not",
-              "filter": {
-                "operator": "in",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "named",
-                  "name": "aadhar_date_from_person_case"
-                },
-                "property_value": ["", null]
-              }
-            },
-            "expression_if_true": {
-              "type": "named",
-              "name": "aadhar_date_from_person_case"
-            },
-            "expression_if_false": {
-              "type": "named",
-              "name": "aadhar_date_from_forms"
-            }
-          },
-          "expression_if_false": {
-            "type": "constant",
-            "constant": null
-          }
+          "type": "constant",
+          "constant": null
+        }
+      },
+      {
+        "column_id": "mother_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "mother_id"
         }
       }
     ],
@@ -1513,72 +1525,6 @@
             }
           }
         }
-      },
-      "aadhar_date_from_forms": {
-        "type": "nested",
-        "argument_expression": {
-          "type": "reduce_items",
-          "aggregation_fn": "first_item",
-          "items_expression": {
-            "type": "filter_items",
-            "items_expression": {
-              "type": "icds_get_case_history_by_date",
-              "xmlns": [
-                "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
-                "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
-                "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
-              ],
-              "case_id_expression": {
-                "type": "named",
-                "name": "parent_id"
-              }
-            },
-            "filter_expression": {
-              "type": "not",
-              "filter": {
-                "operator": "in",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "update",
-                    "aadhar_number"
-                  ]
-                },
-                "property_value": [
-                  "",
-                  null
-                ]
-              }
-            }
-          }
-        },
-        "value_expression": {
-          "type": "property_name",
-          "property_name": "@date_modified"
-        }
-      },
-      "aadhar_date_from_person_case": {
-        "type": "related_doc",
-        "related_doc_type": "CommCareCase",
-        "doc_id_expression": {
-          "type": "icds_parent_id"
-        },
-        "value_expression": {
-          "type": "property_name",
-          "property_name": "aadhar_date"
-        }
-      },
-      "aadhar_number_from_person_case": {
-        "type": "related_doc",
-        "related_doc_type": "CommCareCase",
-        "doc_id_expression": {
-          "type": "icds_parent_id"
-        },
-        "value_expression": {
-          "type": "property_name",
-          "property_name": "aadhar_number"
-        }
       }
     },
     "named_filters": {
@@ -1683,15 +1629,13 @@
         "property_value": true
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+     "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

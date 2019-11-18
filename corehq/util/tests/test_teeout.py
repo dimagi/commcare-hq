@@ -1,20 +1,17 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import re
 import sys
-from contextlib import contextmanager
-from six import StringIO
+from io import StringIO
 
 from corehq.util.teeout import tee_output
-from testil import assert_raises, replattr, eq
+from testil import assert_raises, eq
 
 
 def test_tee_output():
     fileobj = StringIO()
-    with assert_raises(Error), stdfake() as fake, tee_output(fileobj):
-        print("testing...")
-        sys.stderr.write("fail.\n")
+    fake = fakesys()
+    with assert_raises(Error), tee_output(fileobj, sys=fake):
+        print("testing...", file=fake.stdout)
+        fake.stderr.write("fail.\n")
         raise Error("stop")
     eq(fake.stdout.getvalue(), "testing...\n")
     eq(fake.stderr.getvalue(), "fail.\n")
@@ -23,12 +20,13 @@ def test_tee_output():
         "fail.\n"
         "Traceback (most recent call last):\n"
         "  ...\n"
-        "Error: stop\n")
+        "corehq.util.tests.test_teeout.Error: stop\n")
 
 
 def test_tee_output_with_KeyboardInterrupt():
     fileobj = StringIO()
-    with assert_raises(KeyboardInterrupt), stdfake() as fake, tee_output(fileobj):
+    fake = fakesys()
+    with assert_raises(KeyboardInterrupt), tee_output(fileobj, sys=fake):
         raise KeyboardInterrupt("errrt")
     eq(fake.stdout.getvalue(), "")
     eq(fake.stderr.getvalue(), "")
@@ -40,20 +38,23 @@ def test_tee_output_with_KeyboardInterrupt():
 
 def test_tee_output_with_SystemExit():
     fileobj = StringIO()
-    with assert_raises(SystemExit), stdfake() as fake, tee_output(fileobj):
+    fake = fakesys()
+    with assert_raises(SystemExit), tee_output(fileobj, sys=fake):
         raise SystemExit(1)
     eq(fake.stdout.getvalue(), "")
     eq(fake.stderr.getvalue(), "")
     eq(fileobj.getvalue(), "")
 
 
-@contextmanager
-def stdfake():
+def fakesys():
     class fake(object):
         stdout = StringIO()
         stderr = StringIO()
-    with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
-        yield fake
+
+        def exc_info():
+            return sys.exc_info()
+
+    return fake
 
 
 def sanitize_tb(value):

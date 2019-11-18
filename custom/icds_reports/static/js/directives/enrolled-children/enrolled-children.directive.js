@@ -3,10 +3,11 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService) {
+    baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
 
     var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
@@ -22,7 +23,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         vm.genderLabel = genders[genderIndex].name;
     }
 
-    vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
+    vm.label = "Children enrolled for Anganwadi Services";
     vm.steps = {
         'map': {route: '/demographics/enrolled_children/map', label: 'Map View'},
         'chart': {route: '/demographics/enrolled_children/chart', label: 'Chart View'},
@@ -121,7 +122,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {

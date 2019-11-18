@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
@@ -68,7 +66,7 @@ def get_all_reverse_indices_info(domain, case_ids, relationship=None):
 
 
 def _get_keys_for_reverse_index_view(domain, case_ids, relationship=None):
-    assert not isinstance(case_ids, six.string_types)
+    assert not isinstance(case_ids, (six.text_type, bytes))
     if relationship is None:
         return [[domain, case_id, 'reverse_index', reln]
                 for case_id in case_ids for reln in [CASE_INDEX_CHILD, CASE_INDEX_EXTENSION]]

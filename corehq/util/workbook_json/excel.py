@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import io
 from zipfile import BadZipfile
 from tempfile import NamedTemporaryFile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
-import six
-from six.moves import zip
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import UploadedFile
+from django.utils.translation import ugettext as _
 
 
 class InvalidExcelFileException(Exception):
@@ -22,6 +20,10 @@ class HeaderValueError(Exception):
 
 
 class StringTypeRequiredError(Exception):
+    pass
+
+
+class WorkbookJSONError(Exception):
     pass
 
 
@@ -66,14 +68,16 @@ class IteratorJSONReader(object):
     def get_fieldnames(self):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
-            if not isinstance(field, six.string_types):
+            if not isinstance(field, str):
                 raise HeaderValueError('Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
         return list(obj)
 
     @classmethod
     def set_field_value(cls, obj, field, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, str):
             value = value.strip()
         # try dict
         try:
@@ -141,6 +145,42 @@ class IteratorJSONReader(object):
         obj[field] = value
 
 
+def get_workbook(file_or_filename):
+    try:
+        return WorkbookJSONReader(file_or_filename)
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        raise WorkbookJSONError(_(
+            "Upload failed! "
+            "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+            "Error details: {}."
+        ).format(e))
+    except JSONReaderError as e:
+        raise WorkbookJSONError(_(
+            "Upload failed due to a problem with Excel columns. Error details: {}."
+        ).format(e))
+    except HeaderValueError as e:
+        raise WorkbookJSONError(_(
+            "Upload encountered a data type error: {}."
+        ).format(e))
+    except AttributeError as e:
+        raise WorkbookJSONError(_(
+            "Error processing Excel file: {}."
+        ).format(e))
+
+
+def get_single_worksheet(file_or_filename, title=None):
+    workbook = get_workbook(file_or_filename)
+
+    try:
+        worksheet = workbook.get_worksheet(title=title)
+    except WorksheetNotFound:
+        raise WorkbookJSONError(_(
+            "Could not find sheet '{title}'."
+        ).format(title=title) if title else _("Uploaded file does not contian any sheets."))
+
+    return worksheet
+
+
 class WorksheetNotFound(Exception):
 
     def __init__(self, title):
@@ -190,15 +230,17 @@ class WorksheetJSONReader(IteratorJSONReader):
 class WorkbookJSONReader(object):
 
     def __init__(self, file_or_filename):
-        if isinstance(file_or_filename, InMemoryUploadedFile):
+        check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
+        if isinstance(file_or_filename, check_types):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
+            file_or_filename.seek(0)
             tmp.write(file_or_filename.read())
             tmp.close()
             file_or_filename = tmp.name
         try:
             self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:
-            raise InvalidExcelFileException(six.text_type(e))
+            raise InvalidExcelFileException(str(e))
         self.worksheets_by_title = {}
         self.worksheets = []
 
@@ -248,10 +290,10 @@ def format_header(path, value):
     # pretty sure making a string-builder would be slower than concatenation
     s = path[0]
     for p in path[1:]:
-        if isinstance(p, six.string_types):
-            s += ': %s' % p
+        if isinstance(p, str):
+            s += f': {p}'
         elif isinstance(p, int):
-            s += ' %s' % (p + 1)
+            s += f' {p + 1}'
     if isinstance(value, bool):
         s += '?'
         value = 'yes' if value else 'no'
@@ -278,10 +320,10 @@ def alphanumeric_sort_key(key):
 
 
 def enforce_string_type(value):
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         return value
 
-    if isinstance(value, six.integer_types):
+    if isinstance(value, int):
         return str(value)
 
     # Don't try to guess for decimal types how they should be converted to string

@@ -1,31 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from celery.task import task
-from functools import wraps
+import inspect
 import logging
-import requests
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.util.global_request import get_request
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.logging import notify_exception
+import warnings
+from contextlib import ContextDecorator, contextmanager
+from functools import wraps
+
 from django.conf import settings
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
-from six.moves import zip
 
+import requests
+from celery.task import task
 
-class ContextDecorator(object):
-    """
-    A base class that enables a context manager to also be used as a decorator.
-    https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
-    """
+from dimagi.utils.logging import notify_exception
 
-    def __call__(self, fn):
-        @wraps(fn)
-        def decorated(*args, **kwds):
-            with self:
-                return fn(*args, **kwds)
-        return decorated
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.global_request import get_request
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -48,6 +35,36 @@ def handle_uncaught_exceptions(mail_admins=True):
     return _outer
 
 
+@contextmanager
+def silence_and_report_error(message, datadog_metric):
+    """
+    Prevent a piece of code from ever causing 500s if it errors
+
+    Instead, report the issue to sentry and track the overall count on datadog
+    """
+
+    try:
+        yield
+    except Exception:
+        notify_exception(None, message)
+        datadog_counter(datadog_metric)
+        if settings.UNIT_TESTING:
+            raise
+
+
+def run_only_when(condition):
+    def outer(fn):
+        @wraps(fn)
+        def inner(*args, **kwargs):
+            if condition:
+                return fn(*args, **kwargs)
+        return inner
+    return outer
+
+
+enterprise_skip = run_only_when(not settings.ENTERPRISE_MODE)
+
+
 class change_log_level(ContextDecorator):
     """
     Temporarily change the log level of a specific logger.
@@ -64,6 +81,13 @@ class change_log_level(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logger.setLevel(self.original_level)
+
+
+@contextmanager
+def ignore_warning(warning_class):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', warning_class)
+        yield
 
 
 class require_debug_true(ContextDecorator):
@@ -86,12 +110,11 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     Lines args and kwargs up with those specified in the definition of fn and
     passes the result to `format_str.format()`.
     """
-    varnames = fn.__code__.co_varnames
-    kwargs.update(dict(zip(varnames, args)))
-    return ("{}-" + format_str).format(fn.__name__, **kwargs)
+    callargs = inspect.getcallargs(fn, *args, **kwargs)
+    return ("{}-" + format_str).format(fn.__name__, **callargs)
 
 
-def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
+def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
                 queue='background_queue', ignore_result=True):
     """
     Define a task to be executed one at a time.  If another serial_task with
@@ -117,6 +140,8 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
+        from dimagi.utils.couch import get_redis_lock, release_lock
+
         @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)
@@ -124,20 +149,13 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
             if settings.UNIT_TESTING:  # Don't depend on redis
                 return fn(*args, **kwargs)
 
-            client = get_redis_client()
             key = _get_unique_key(unique_key, fn, *args, **kwargs)
-            lock = client.lock(key, timeout=timeout)
+            lock = get_redis_lock(key, timeout=timeout, name=fn.__name__)
             if lock.acquire(blocking=False):
                 try:
-                    # Actually call the function
-                    ret_val = fn(*args, **kwargs)
-                except Exception:
-                    # Don't leave the lock around if the task fails
+                    return fn(*args, **kwargs)
+                finally:
                     release_lock(lock, True)
-                    raise
-
-                release_lock(lock, True)
-                return ret_val
             else:
                 msg = "Could not aquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)

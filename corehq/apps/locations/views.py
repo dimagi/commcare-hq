@@ -1,19 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
+
+from dimagi.utils.couch import get_redis_lock, release_lock
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -25,42 +26,40 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
+from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.locations.tasks import download_locations_async, import_locations_async
+from corehq.apps.locations.tasks import (
+    download_locations_async,
+    import_locations_async,
+)
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
+from corehq.apps.reports.filters.controllers import EmwfOptionsController
+from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
-from .permissions import (
-    locations_access_required,
-    is_locations_admin,
-    can_edit_location,
-    require_can_edit_locations,
-    user_can_edit_location_types,
-    can_edit_location_types,
-    user_can_edit_any_location,
-    can_edit_any_location,
-)
+from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
+from .permissions import (
+    can_edit_location,
+    can_edit_location_types,
+    can_edit_or_view_location,
+    locations_access_required,
+    require_can_edit_locations,
+    require_can_edit_or_view_locations,
+    user_can_edit_location_types,
+)
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
-import six
-from six.moves import map
-from six.moves import range
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ logger = logging.getLogger(__name__)
 def default(request, domain):
     if request.couch_user.can_edit_locations():
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
-    elif user_can_edit_location_types(request.couch_user, request.project):
+    elif user_can_edit_location_types(request.couch_user, domain):
         return HttpResponseRedirect(reverse(LocationTypesView.urlname, args=[domain]))
     return no_permissions(request)
 
@@ -79,8 +78,11 @@ def lock_locations(func):
     # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
     def func_wrapper(request, *args, **kwargs):
         key = "import_locations_async-{domain}".format(domain=request.domain)
-        client = get_redis_client()
-        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
+        lock = get_redis_lock(
+            key,
+            timeout=LOCK_LOCATIONS_TIMEOUT,
+            name="import_locations_async",
+        )
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
@@ -153,10 +155,6 @@ def check_pending_locations_import(redirect=False):
 class BaseLocationView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
-    @method_decorator(require_can_edit_locations)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
-
     @property
     def can_access_all_locations(self):
         return self.request.couch_user.has_permission(self.domain, 'access_all_locations')
@@ -184,23 +182,14 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(check_pending_locations_import())
+    @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
-        return super(LocationsListView, self).dispatch(request, *args, **kwargs)
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def show_inactive(self):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
-
-    @property
-    def can_edit_root(self):
-        # once permissions are unified, this need only be can_access_all_locations
-        loc_restricted = self.request.project.location_restriction_for_users
-        return self.can_access_all_locations and (
-            not loc_restricted
-            or (loc_restricted and not self.request.couch_user.get_sql_location(self.domain))
-        )
 
     @property
     def page_context(self):
@@ -209,8 +198,7 @@ class LocationsListView(BaseLocationView):
             'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'can_edit_root': self.can_edit_root,
-            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
+            'can_edit_root': self.can_access_all_locations,
         }
 
     def get_visible_locations(self):
@@ -234,12 +222,21 @@ class LocationsListView(BaseLocationView):
             return [to_json(user.get_sql_location(self.domain))]
 
 
-class LocationsSearchView(EmwfOptionsView):
+class LocationOptionsController(EmwfOptionsController):
+
     @property
     def data_sources(self):
         return [
             (self.get_locations_size, self.get_locations),
         ]
+
+
+class LocationsSearchView(EmwfOptionsView):
+
+    @property
+    @memoized
+    def options_controller(self):
+        return LocationOptionsController(self.request, self.domain, self.search)
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -248,14 +245,12 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(is_locations_admin)
+    @method_decorator(require_can_edit_locations)
+    @method_decorator(locations_access_required)
+    @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def show_index_in_fixture(self):
-        return toggles.INDEX_LOCATION_DATA.enabled(self.domain)
 
 
 class LocationTypesView(BaseDomainView):
@@ -268,10 +263,10 @@ class LocationTypesView(BaseDomainView):
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
-    @method_decorator(can_edit_location_types)
     @use_jquery_ui
+    @method_decorator(can_edit_location_types)
+    @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import())
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -291,7 +286,6 @@ class LocationTypesView(BaseDomainView):
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
-            'has_user': loc_type.has_user,
             'code': loc_type.code,
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
@@ -307,9 +301,9 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
-            return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
+            return isinstance(pk, str) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative, has_user,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -327,7 +321,6 @@ class LocationTypesView(BaseDomainView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.has_user = has_user
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
@@ -358,6 +351,7 @@ class LocationTypesView(BaseDomainView):
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+            loc_type['name'] = loc_type['name'].strip()
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
@@ -501,19 +495,10 @@ class LocationTypesView(BaseDomainView):
         return ordered_loc_types
 
 
-@location_safe
-class NewLocationView(BaseLocationView):
-    urlname = 'create_location'
-    page_title = ugettext_noop("New Location")
+class BaseEditLocationView(BaseLocationView):
     template_name = 'locations/manage/location.html'
     creates_new_location = True
     form_tab = 'basic'
-
-    @use_multiselect
-    @use_select2_v4
-    @method_decorator(check_pending_locations_import(redirect=True))
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -540,18 +525,6 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
-    def location(self):
-        parent_id = self.request.GET.get('parent')
-        parent = (get_object_or_404(SQLLocation, domain=self.domain, location_id=parent_id)
-                  if parent_id else None)
-        return SQLLocation(domain=self.domain, parent=parent)
-
-    @property
-    def consumption(self):
-        return None
-
-    @property
-    @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
         return LocationFormSet(
@@ -560,6 +533,37 @@ class NewLocationView(BaseLocationView):
             request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
+
+    def form_valid(self):
+        messages.success(self.request, _('Location saved!'))
+        return HttpResponseRedirect(
+            reverse(EditLocationView.urlname,
+                    args=[self.domain,
+                          self.location_form.location.location_id]),
+        )
+
+    def settings_form_post(self, request, *args, **kwargs):
+        if self.location_form.is_valid():
+            self.location_form.save()
+            return self.form_valid()
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def consumption(self):
+        return None
+
+    @property
+    @memoized
+    def location(self):
+        parent_id = self.request.GET.get('parent')
+        parent = (get_object_or_404(SQLLocation, domain=self.domain,
+                                    location_id=parent_id)
+                  if parent_id else None)
+        return SQLLocation(domain=self.domain, parent=parent)
+
+    @method_decorator(lock_locations)
+    def post(self, request, *args, **kwargs):
+        return self.settings_form_post(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -571,30 +575,19 @@ class NewLocationView(BaseLocationView):
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
             'creates_new_location': self.creates_new_location,
-            'loc_types_with_users': self._get_loc_types_with_users(),
         }
 
-    def _get_loc_types_with_users(self):
-        return list(LocationType.objects
-                    .filter(domain=self.domain, has_user=True)
-                    .values_list('name', flat=True))
 
-    def form_valid(self):
-        messages.success(self.request, _('Location saved!'))
-        return HttpResponseRedirect(
-            reverse(EditLocationView.urlname,
-                    args=[self.domain, self.location_form.location.location_id]),
-        )
+@location_safe
+class NewLocationView(BaseEditLocationView):
+    urlname = 'create_location'
+    page_title = ugettext_noop("New Location")
 
-    def settings_form_post(self, request, *args, **kwargs):
-        if self.location_form.is_valid():
-            self.location_form.save()
-            return self.form_valid()
-        return self.get(request, *args, **kwargs)
-
-    @method_decorator(lock_locations)
-    def post(self, request, *args, **kwargs):
-        return self.settings_form_post(request, *args, **kwargs)
+    @use_multiselect
+    @method_decorator(require_can_edit_locations)
+    @method_decorator(check_pending_locations_import(redirect=True))
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
 
 @location_safe
@@ -663,13 +656,14 @@ def unarchive_location(request, domain, loc_id):
 
 
 @location_safe
-class EditLocationView(NewLocationView):
+class EditLocationView(BaseEditLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
-    @method_decorator(can_edit_location)
-    @use_select2_v4
+    @use_multiselect
+    @method_decorator(check_pending_locations_import(redirect=True))
+    @method_decorator(can_edit_or_view_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -723,8 +717,7 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def users_form(self):
-        if (not self.request.couch_user.can_edit_commcare_users()
-                or not self.can_access_all_locations):
+        if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
@@ -755,17 +748,42 @@ class EditLocationView(NewLocationView):
 
     @property
     def page_name(self):
-        return mark_safe(_("Edit {name} <small>{type}</small>").format(
+        if self.request.is_view_only:
+            name = _("View {name} <small>{type}</small>")
+        else:
+            name = _("Edit {name} <small>{type}</small>")
+        return mark_safe(name.format(
             name=self.location.name, type=self.location.location_type_name
         ))
 
     @property
+    def can_edit_commcare_users(self):
+        return self.request.couch_user.can_edit_commcare_users()
+
+    @property
+    def can_edit_users_in_location(self):
+        return (self.request.couch_user.can_edit_users_in_locations()
+                or self.request.couch_user.can_edit_commcare_users())
+
+    @property
     def page_context(self):
         context = super(EditLocationView, self).page_context
+
+        if self.request.is_view_only:
+            make_form_readonly(self.location_form.location_form)
+            make_form_readonly(self.location_form.custom_location_data.form)
+            make_form_readonly(self.products_form)
+            make_form_readonly(self.related_location_form)
+            make_form_readonly(self.users_form)
+        elif not self.can_edit_users_in_location:
+            make_form_readonly(self.users_form)
+
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
             'related_location_form': self.related_location_form,
+            'can_edit_commcare_users': self.can_edit_commcare_users,
+            'can_edit_users_in_location': self.can_edit_users_in_location,
         })
         return context
 
@@ -797,10 +815,22 @@ class EditLocationView(NewLocationView):
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
+        if self.request.is_view_only:
+            messages.error(request,
+                           _("You do not have permission to edit locations."))
+            return super(EditLocationView, self).get(request, *args, **kwargs)
+
+        if self.request.POST['form_type'] == "location-users":
+            if self.can_edit_users_in_location:
+                return self.users_form_post(request, *args, **kwargs)
+            else:
+                messages.error(
+                    request, _("You do not have permission to edit Mobile Workers.")
+                )
+                return super(EditLocationView, self).get(request, *args, **kwargs)
+
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
-        elif self.request.POST['form_type'] == "location-users":
-            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
@@ -816,6 +846,10 @@ class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'hqwebapp/soil_status_full.html'
+
+    @method_decorator(require_can_edit_locations)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -839,7 +873,7 @@ class LocationImportView(BaseLocationView):
     page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
-    @method_decorator(can_edit_any_location)
+    @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
@@ -922,8 +956,7 @@ class LocationImportView(BaseLocationView):
 
 @require_can_edit_locations
 @location_safe
-def location_importer_job_poll(request, domain, download_id,
-                               template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id):
     template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id)
@@ -938,7 +971,7 @@ def location_importer_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-@require_can_edit_locations
+@require_can_edit_or_view_locations
 @location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
@@ -956,7 +989,7 @@ def location_export(request, domain):
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
 
-@require_can_edit_locations
+@require_can_edit_or_view_locations
 @location_safe
 def location_download_job_poll(request, domain,
                                download_id,
@@ -973,6 +1006,10 @@ def location_download_job_poll(request, domain,
 class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')
+
+    @method_decorator(require_can_edit_or_view_locations)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
@@ -1000,20 +1037,13 @@ def child_locations_for_select2(request, domain):
     page = int(request.GET.get('page', 1))
     user = request.couch_user
 
-    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
-
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    locs = []
-    user_loc = user.get_sql_location(domain)
-
-    if user_can_edit_any_location(user, request.project):
-        locs = base_queryset.filter(domain=domain, is_archived=False)
-    elif user_loc:
-        locs = user_loc.get_descendants(include_self=True)
-
-    if locs != [] and query:
+    locs = (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(domain=domain, is_archived=False))
+    if query:
         locs = locs.filter(name__icontains=query)
 
     # 10 results per page

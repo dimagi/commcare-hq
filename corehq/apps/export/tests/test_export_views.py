@@ -1,40 +1,35 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 import json
 import os
 from io import BytesIO
-import datetime
 
-from botocore.response import StreamingBody
 from django.test import TestCase
 from django.urls import reverse
+
+from botocore.response import StreamingBody
 from mock import patch
 
-from corehq.apps.export.models import CaseExportInstance
-from corehq.apps.export.models.new import DataFile
-from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
-    get_form_export_instances,
-    get_case_export_instances,
+    get_case_exports_by_domain,
+    get_form_exports_by_domain,
 )
+from corehq.apps.export.models import CaseExportInstance
+from corehq.apps.export.models.new import DataFile
 from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
-from corehq.apps.export.views.list import (
-    DailySavedExportListView,
-)
+from corehq.apps.export.views.list import DailySavedExportListView
 from corehq.apps.export.views.new import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
 )
 from corehq.apps.export.views.utils import DataFileDownloadDetail
+from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled, generate_cases
-from io import open
 
 
 class FakeDB(object):
@@ -121,7 +116,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
 @generate_cases([
     (0, 999),
     (1000, 1999),
-    (12000, None)
+    (11000, None)  # This test uses this file (test_export_views.py). `11000` must be less than its size.
 ], DataFileDownloadDetailTest)
 @flag_enabled('DATA_FILE_DOWNLOAD')
 def test_data_file_download_partial(self, start, end):
@@ -190,7 +185,7 @@ class ExportViewTest(ViewTestCase):
             follow=True
         )
         self.assertEqual(resp.status_code, 200)
-        exports = get_form_export_instances(self.domain.name)
+        exports = get_form_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -232,7 +227,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        exports = get_case_export_instances(self.domain.name)
+        exports = get_case_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -272,7 +267,7 @@ class ExportViewTest(ViewTestCase):
             "external_blobs": {},
             "export_format": "csv",
             "include_errors": False,
-            "type": "form",
+            "type": "case",
             "name": "A Villager's Health > Registrationaa > Reg form: 2016-06-27"
         })
         resp = self.client.post(
@@ -283,7 +278,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        exports = get_case_export_instances(self.domain.name)
+        exports = get_case_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -295,14 +290,12 @@ class ExportViewTest(ViewTestCase):
         }
 
         resp = self.client.post(
-            reverse(DailySavedExportListView.urlname, args=[self.domain.name]),
-            json.dumps({
-                "export": {"id": export._id},
-                "form_data": filter_form_data
-            }),
-            content_type="application/json",
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
-            HTTP_DJNG_REMOTE_METHOD='commit_filters',
+            reverse('commit_filters', args=[self.domain.name]),
+            {
+                "export_id": export._id,
+                "model_type": "case",
+                "form_data": json.dumps(filter_form_data),
+            },
         )
         self.assertEqual(resp.status_code, 200)
         response_content = json.loads(resp.content)

@@ -1,12 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from mock import patch, MagicMock
 from django.test import TestCase
+
+from mock import MagicMock, patch
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
-from ..models import DropboxUploadHelper
 from ..exceptions import DropboxUploadAlreadyInProgress
+from ..models import DropboxUploadHelper
 
 
 @patch('corehq.apps.dropbox.models.DropboxUploadHelper._ensure_valid_token', MagicMock())

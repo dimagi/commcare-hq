@@ -1,27 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime, date, time
-from decimal import Decimal
 import json
 import os
-import uuid
 import re
+import uuid
+from datetime import date, datetime, time
+from decimal import Decimal
+
 import six
 import sqlalchemy
-
-
+from django.db import DEFAULT_DB_ALIAS
 from mock import patch
-from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.app_manager.xform_builder import XFormBuilder
-from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
-from io import open
+from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.change_feed import data_sources
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
@@ -48,14 +47,14 @@ def get_data_source_with_related_doc_type():
         return DataSourceConfiguration.wrap(structure)
 
 
-def get_sample_doc_and_indicators(fake_time_now=None):
+def get_sample_doc_and_indicators(fake_time_now=None, owner_id='some-user-id'):
     if fake_time_now is None:
         fake_time_now = datetime.utcnow()
     date_opened = datetime(2014, 6, 21)
     sample_doc = dict(
         _id=uuid.uuid4().hex,
         opened_on=json_format_datetime(date_opened),
-        owner_id='some-user-id',
+        owner_id=owner_id,
         doc_type="CommCareCase",
         domain='user-reports',
         name='sample name',
@@ -70,7 +69,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         'doc_id': sample_doc['_id'],
         'repeat_iteration': 0,
         'date': date_opened,
-        'owner': 'some-user-id',
+        'owner': owner_id,
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
         'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,
@@ -129,7 +128,7 @@ def get_simple_xform():
         'MN': 'MN',
         'VT': 'VT',
     })
-    return xform.tostring()
+    return xform.tostring().decode('utf-8')
 
 
 def load_data_from_db(table_name):
@@ -142,7 +141,7 @@ def load_data_from_db(table_name):
         else:
             return value_str
 
-    engine = connection_manager.get_session_helper('default').engine
+    engine = connection_manager.get_session_helper(DEFAULT_DB_ALIAS).engine
     metadata = sqlalchemy.MetaData(bind=engine)
     metadata.reflect(bind=engine)
     table = metadata.tables[table_name]
@@ -162,8 +161,15 @@ def load_data_from_db(table_name):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])
-                elif isinstance(value, six.string_types):
-                    row[idx] = value.encode('utf-8')
                 elif value is None:
                     row[idx] = ''
             yield dict(zip(columns, row))
+
+
+def mock_filter_missing_domains(configs):
+    return configs
+
+
+skip_domain_filter_patch = patch(
+    'corehq.apps.userreports.pillow._filter_missing_domains', mock_filter_missing_domains
+)

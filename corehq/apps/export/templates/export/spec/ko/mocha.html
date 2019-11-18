@@ -2,14 +2,14 @@
 {% load hq_shared_tags %}
 
 {% block dependencies %}
-<script src="{% static 'export/js/const.js' %}"></script>
-<script src="{% static 'export/js/utils.js' %}"></script>
-<script src="{% static 'export/js/models.js' %}"></script>
+  <script src="{% static 'export/js/const.js' %}"></script>
+  <script src="{% static 'export/js/utils.js' %}"></script>
+  <script src="{% static 'export/js/models.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
-<script src="{% static 'export/spec/data/export_instances.js' %}"></script>
-<script src="{% static 'export/spec/ExportInstance.spec.js' %}"></script>
-<script src="{% static 'export/spec/ExportColumn.spec.js' %}"></script>
-<script src="{% static 'export/spec/Exports.Utils.spec.js' %}"></script>
+  <script src="{% static 'export/spec/data/export_instances.js' %}"></script>
+  <script src="{% static 'export/spec/ExportInstance.spec.js' %}"></script>
+  <script src="{% static 'export/spec/ExportColumn.spec.js' %}"></script>
+  <script src="{% static 'export/spec/Exports.Utils.spec.js' %}"></script>
 {% endblock %}

@@ -1,6 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.motech.repeaters.models import UpdateCaseRepeater, CreateCaseRepeater, CaseRepeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    CreateCaseRepeater,
+    UpdateCaseRepeater,
+)
 
 
 class EventTypes(object):

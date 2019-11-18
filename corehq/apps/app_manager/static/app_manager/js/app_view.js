@@ -27,7 +27,7 @@ hqDefine("app_manager/js/app_view", function () {
         var $domainContainer = $("#id_domain");
         if ($domainContainer.length) {
             $domainContainer.koApplyBindings({
-                domain_names: initial_page_data("domain_names"),
+                domain_names: [''].concat(initial_page_data("domain_names")),   // prepend with blank so placeholder works
             });
         }
 

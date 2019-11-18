@@ -1,77 +1,114 @@
-# coding=utf-8
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-from collections import OrderedDict
 import json
 import logging
+from collections import OrderedDict
 from distutils.version import LooseVersion
+
+from django.contrib import messages
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
+from django.utils.translation import ugettext as _
+from django.views import View
+from django.views.decorators.http import require_GET
 
 from lxml import etree
 
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, gettext_lazy
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.urls import reverse
-from django.views.decorators.http import require_GET
-from django.contrib import messages
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
-    handle_media_edits
-from corehq.apps.case_search.models import case_search_enabled_for_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.daterange import get_simple_dateranges
-
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits, \
-    clear_xmlns_app_id_cache
 from corehq import toggles
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    ParentCasePropertyBuilder,
+)
 from corehq.apps.app_manager.const import (
+    CLAIM_DEFAULT_RELEVANT_CONDITION,
     MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
-    CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
-from corehq.apps.app_manager.util import (
-    is_valid_case_type,
-    is_usercase_in_use,
-    prefix_usercase_properties,
-    module_offers_search,
-    module_case_hierarchy_has_circular_reference)
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
-from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
-from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
-from corehq.apps.userreports.models import ReportConfiguration, \
-    StaticReportConfiguration
-from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
+    CaseListForm,
     CaseSearch,
     CaseSearchProperty,
+    DefaultCaseSearchProperty,
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FixtureSelect,
     FormActionCondition,
+    MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
     ParentSelect,
+    ReportAppConfig,
     ReportModule,
     ShadowModule,
     SortElement,
-    ReportAppConfig,
     UpdateCaseAction,
-    FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations,
+    get_all_mobile_filter_configs,
+    get_auto_filter_configurations,
 )
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
-from six.moves import map
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+    get_uuids_by_instance_id,
+)
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.util import (
+    generate_xmlns,
+    is_usercase_in_use,
+    is_valid_case_type,
+    module_case_hierarchy_has_circular_reference,
+    module_offers_search,
+    prefix_usercase_properties,
+)
+from corehq.apps.app_manager.views.media_utils import (
+    handle_media_edits,
+    process_media_attribute,
+)
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    bail,
+    clear_xmlns_app_id_cache,
+    get_langs,
+    handle_custom_icon_edits,
+)
+from corehq.apps.app_manager.xform import CaseError
+from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    track_domain_request,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
+from corehq.apps.hqmedia.models import (
+    ApplicationMediaReference,
+    CommCareMultimedia,
+)
+from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
+from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +122,7 @@ def get_module_template(user, module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module, lang=None):
+def get_module_view_context(request, app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
@@ -96,6 +133,7 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
+        'name_enum': module.name_enum,
         'requires_case_details': module.requires_case_details(),
         'unique_id': module.unique_id,
     }
@@ -105,26 +143,26 @@ def get_module_view_context(app, module, lang=None):
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,
         })
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
+        context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
         context.update(_get_advanced_module_view_context(app, module))
     elif isinstance(module, ReportModule):
         context.update(_get_report_module_context(app, module))
     else:
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
-        context.update(_get_basic_module_view_context(app, module, case_property_builder))
+        context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
+        context.update(_get_basic_module_view_context(request, app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
     context.update({'module_brief': module_brief})
     return context
 
 
-def _get_shared_module_view_context(app, module, case_property_builder, lang=None):
+def _get_shared_module_view_context(request, app, module, case_property_builder, lang=None):
     '''
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
     context = {
-        'details': _get_module_details_context(app, module, case_property_builder, case_type),
+        'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'js_options': {
@@ -137,7 +175,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
-        }
+        },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
@@ -145,7 +183,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         print_uploader = MultimediaHTMLUploadController(
             slug,
             reverse(
-                ProcessDetailPrintTemplateUploadView.name,
+                ProcessDetailPrintTemplateUploadView.urlname,
                 args=[app.domain, app.id, module.unique_id],
             )
         )
@@ -182,13 +220,13 @@ def _get_advanced_module_view_context(app, module):
     }
 
 
-def _get_basic_module_view_context(app, module, case_property_builder):
+def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
         'parent_case_modules': _get_modules_with_parent_case_type(
             app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
+            add_ons.show("submenus", request, app, module=module) and not module.is_training_module
         ),
     }
 
@@ -265,7 +303,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
-        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
+        'uuids_by_instance_id': get_uuids_by_instance_id(app),
     }
     return context
 
@@ -325,7 +363,10 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
     langs = None if lang is None else [lang]
-    options.update({f.unique_id: trans(f.name, langs) for f in forms})
+    options.update({f.unique_id: {
+        'name': trans(f.name, langs),
+        'post_form_workflow': f.post_form_workflow,
+    } for f in forms})
 
     return {
         'options': options,
@@ -333,7 +374,7 @@ def _case_list_form_options(app, module, case_type_, lang=None):
     }
 
 
-def _get_module_details_context(app, module, case_property_builder, case_type_):
+def _get_module_details_context(request, app, module, case_property_builder, case_type_, messages=messages):
     subcase_types = list(app.get_subcase_types(module.case_type))
     item = {
         'label': gettext_lazy('Case List'),
@@ -345,10 +386,14 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'short': module.case_details.short,
         'long': module.case_details.long,
     }
-    case_properties = case_property_builder.get_properties(case_type_)
-    if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
-        usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
-        case_properties |= usercase_properties
+    try:
+        case_properties = case_property_builder.get_properties(case_type_)
+        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
+            usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
+            case_properties |= usercase_properties
+    except CaseError as e:
+        case_properties = []
+        messages.error(request, "Error in Case Management: %s" % e)
 
     item['properties'] = sorted(case_properties)
     item['fixture_select'] = module.fixture_select
@@ -389,6 +434,7 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
@@ -399,10 +445,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
+        'case_list-menu_item_use_default_image_for_all': None,
+        'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        'case_list_form_use_default_image_for_all': None,
+        'case_list_form_use_default_audio_for_all': None,
         "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
@@ -412,6 +462,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
+        "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
         "root_module_id": None,
@@ -458,6 +509,10 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit("name_enum"):
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
@@ -513,36 +568,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
-    if should_edit('case_list_form_media_image'):
-        new_path = process_media_attribute(
-            'case_list_form_media_image',
-            resp,
-            request.POST.get('case_list_form_media_image')
-        )
-        module.case_list_form.set_icon(lang, new_path)
-
-    if should_edit('case_list_form_media_audio'):
-        new_path = process_media_attribute(
-            'case_list_form_media_audio',
-            resp,
-            request.POST.get('case_list_form_media_audio')
-        )
-        module.case_list_form.set_audio(lang, new_path)
-
-    if should_edit('case_list-menu_item_media_image'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_image',
-            resp,
-            request.POST.get('case_list-menu_item_media_image')
-        )
-        module.case_list.set_icon(lang, val)
-    if should_edit('case_list-menu_item_media_audio'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_audio',
-            resp,
-            request.POST.get('case_list-menu_item_media_audio')
-        )
-        module.case_list.set_audio(lang, val)
 
     if should_edit("name"):
         name = request.POST.get("name", None)
@@ -561,10 +586,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             module[SLUG].label[lang] = request.POST[label]
 
     if should_edit("root_module_id"):
+        old_root = module['root_module_id']
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
+        if not old_root and module['root_module_id']:
+            track_workflow(request.couch_user.username, "User associated module with a parent")
+        elif old_root and not module['root_module_id']:
+            track_workflow(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -572,6 +602,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.excluded_form_ids = excl
 
     handle_media_edits(request, module, should_edit, resp, lang)
+    handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
+    if hasattr(module, 'case_list'):
+        handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -587,7 +620,6 @@ def _new_advanced_module(request, domain, app, name, lang):
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
@@ -625,20 +657,25 @@ def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_unique_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
-    if record is not None:
-        messages.success(
-            request,
-            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
-                record.module.default_name(app=app),
-                reverse('undo_delete_module', args=[domain, record.get_id])
-            ),
-            extra_tags='html'
-        )
-        app.save()
-        clear_xmlns_app_id_cache(domain)
+    if module.get_child_modules():
+        messages.error(request, _('"{}" has sub-menus. You must remove these before '
+                                  'you can delete it.').format(module.default_name()))
+        return back_to_main(request, domain, app_id)
+
+    record = app.delete_module(module_unique_id)
+    messages.success(
+        request,
+        _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
+            name=record.module.default_name(app=app),
+            url=reverse('undo_delete_module', args=[domain, record.get_id])
+        ),
+        extra_tags='html'
+    )
+    app.save()
+    clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
 
 
@@ -800,7 +837,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.short.custom_variables = custom_variables['short']
 
@@ -809,7 +846,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.long.custom_variables = custom_variables['long']
 
@@ -906,8 +943,13 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
+
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
+
+    if 'name_enum' in params:
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     try:
         app.save()
@@ -919,7 +961,6 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 
@@ -938,13 +979,11 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string("app_manager/partials/build_errors.html", {
-        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})
@@ -961,7 +1000,17 @@ def new_module(request, domain, app_id):
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
 
-    if module_type == 'case' or module_type == 'survey':  # survey option added for V2
+    if module_type == 'biometrics':
+        enroll_module, enroll_form_id = _init_biometrics_enroll_module(app, lang)
+        _init_biometrics_identify_module(app, lang, enroll_form_id)
+
+        app.save()
+
+        response = back_to_main(request, domain, app_id=app_id,
+                                module_id=enroll_module.id, form_id=0)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
             name = name or 'Case List'
         else:
@@ -1024,6 +1073,105 @@ def _init_module_case_type(module):
         module.case_type = 'case'
 
 
+def _init_biometrics_enroll_module(app, lang):
+    """
+    Creates Enrolment Module for Biometrics
+    """
+    module = app.add_module(Module.new_module(_("Registration"), lang))
+
+    form_name = _("Enroll New Person")
+
+    context = {
+        'xmlns_uuid': generate_xmlns(),
+        'form_name': form_name,
+        'name_label': _("What is your name?"),
+        'simprints_enrol_label': _("Scan Fingerprints"),
+        'lang': lang,
+    }
+    context.update(app.biometric_context)
+    attachment = render_to_string(
+        "app_manager/simprints_enrolment_form.xml",
+        context=context
+    )
+
+    enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
+    enroll.actions.open_case = OpenCaseAction(
+        name_path="/data/name",
+        condition=FormActionCondition(type='always'),
+    )
+    enroll.actions.update_case = UpdateCaseAction(
+        update={
+            'simprintsId': '/data/simprintsId',
+            'rightIndex': '/data/rightIndex',
+            'rightThumb': '/data/rightThumb',
+            'leftIndex': '/data/leftIndex',
+            'leftThumb': '/data/leftThumb',
+        },
+        condition=FormActionCondition(type='always'),
+    )
+
+    module.case_type = 'person'
+
+    return module, enroll.get_unique_id()
+
+
+def _init_biometrics_identify_module(app, lang, enroll_form_id):
+    """
+    Creates Identification Module for Biometrics
+    """
+    module = app.add_module(Module.new_module(_("Identify Registered Person"), lang))
+
+    # make sure app has Register From Case List Add-On enabled
+    app.add_ons["register_from_case_list"] = True
+
+    # turn on Register from Case List with Simprints Enrolment form
+    module.case_list_form = CaseListForm(
+        form_id=enroll_form_id,
+        label=dict([(lang, _("Enroll New Person"))]),
+    )
+    case_list = module.case_details.short
+    case_list.lookup_enabled = True
+    case_list.lookup_action = "com.simprints.id.IDENTIFY"
+    case_list.lookup_name = _("Scan Fingerprint")
+    case_list.lookup_extras = list([
+        dict(key=key, value="'{}'".format(value))
+        for key, value in app.biometric_context.items()
+    ])
+    case_list.lookup_responses = [
+        {'key': 'fake'},
+    ]
+    case_list.lookup_display_results = True
+    case_list.lookup_field_header[lang] = _("Confidence")
+    case_list.lookup_field_template = 'simprintsId'
+
+    form_name = _("Followup with Person")
+
+    context = {
+        'xmlns_uuid': generate_xmlns(),
+        'form_name': form_name,
+        'lang': lang,
+        'placeholder_label': mark_safe(_(
+            "This is your follow up form for {}. Delete this label and add "
+            "questions for any follow up visits."
+        ).format(
+            "<output value=\"instance('casedb')/casedb/case[@case_id = "
+            "instance('commcaresession')/session/data/case_id]/case_name\" "
+            "vellum:value=\"#case/case_name\" />"
+        ))
+    }
+    attachment = render_to_string(
+        "app_manager/simprints_followup_form.xml",
+        context=context
+    )
+
+    identify = app.new_form(module.id, form_name, lang, attachment=attachment)
+    identify.requires = 'case'
+    identify.actions.update_case = UpdateCaseAction(
+        condition=FormActionCondition(type='always'))
+
+    module.case_type = 'person'
+
+
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
     short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
@@ -1055,6 +1203,15 @@ def view_module_legacy(request, domain, app_id, module_id):
     """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id)
+
+
+class ExistingCaseTypesView(LoginAndDomainMixin, View):
+    urlname = 'existing_case_types'
+
+    def get(self, request, domain):
+        return JsonResponse({
+            'existing_case_types': list(get_case_types_for_domain_es(domain))
+        })
 
 
 FN = 'fn'

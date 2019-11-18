@@ -1,55 +1,58 @@
-from __future__ import absolute_import, unicode_literals
-from collections import defaultdict
 import json
+from collections import defaultdict
 
-from couchdbkit import ResourceNotFound
-from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import View
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.auth.views import password_reset_confirm
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.debug import sensitive_post_parameters
+from django.views.generic import View
 
-from corehq import toggles
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.web import json_response
+from toggle.models import Toggle
+
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
-    enable_case_search,
     disable_case_search,
+    enable_case_search,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+)
+from corehq.apps.domain.forms import (
+    USE_LOCATION_CHOICE,
+    USE_PARENT_LOCATION_CHOICE,
+    DomainGlobalSettingsForm,
+    DomainMetadataForm,
+    PrivacySecurityForm,
+    ProjectSettingsForm,
+)
+from corehq.apps.domain.models import LICENSES, Domain
+from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
-from dimagi.utils.couch.resource_conflict import retry_resource
-from corehq import privileges, feature_previews
-from django_prbac.utils import has_privilege
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
-from corehq.apps.domain.forms import (
-    DomainGlobalSettingsForm, DomainMetadataForm, PrivacySecurityForm,
-    USE_PARENT_LOCATION_CHOICE, USE_LOCATION_CHOICE,
-)
-from corehq.apps.domain.models import Domain, LICENSES
-from corehq.apps.domain.forms import ProjectSettingsForm
-from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
-from memoized import memoized
-from dimagi.utils.web import json_response
-
-from toggle.models import Toggle
-from corehq.apps.hqwebapp.signals import clear_login_attempts
-from corehq.apps.ota.models import MobileRecoveryMeasure
-import six
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -117,7 +120,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -390,11 +392,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        request_json = json.loads(request.body)
+        request_json = json.loads(request.body.decode('utf-8'))
         enable = request_json.get('enable')
         fuzzies_by_casetype = request_json.get('fuzzy_properties')
         updated_fuzzies = []
-        for case_type, properties in six.iteritems(fuzzies_by_casetype):
+        for case_type, properties in fuzzies_by_casetype.items():
             fp, created = FuzzyProperties.objects.get_or_create(
                 domain=self.domain,
                 case_type=case_type
@@ -503,7 +505,6 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            toggle_js_domain_cachebuster.clear(self.domain)
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)

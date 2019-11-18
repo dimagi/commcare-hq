@@ -1,25 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-import re
 import uuid
-import xml.etree.cElementTree as ET
 from xml.etree import cElementTree as ElementTree
 
-from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
-from casexml.apps.case import const
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.xml import get_case_xml
+from casexml.apps.case.util import property_changed_in_action
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.exceptions import (
+    CaseNotFound,
+    MissingFormXml,
+)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
-from dimagi.utils.parsing import json_format_datetime
-import six
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
@@ -57,7 +54,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     """
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
-    if not isinstance(case_blocks, six.string_types):
+    if not isinstance(case_blocks, str):
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
@@ -160,46 +157,12 @@ def get_case_by_identifier(domain, identifier):
     return None
 
 
-def _process_case_block(domain, case_block, attachments, old_case_id):
-    def get_namespace(element):
-        m = re.match('\{.*\}', element.tag)
-        return m.group(0)[1:-1] if m else ''
-
-    def local_attachment(attachment, old_case_id, tag):
-        mime = attachment['server_mime']
-        size = attachment['attachment_size']
-        src = attachment['attachment_src']
-        cached_attachment = get_cached_case_attachment(domain, old_case_id, tag)
-        attachment_meta, attachment_stream = cached_attachment.get()
-        return UploadedFile(attachment_stream, src, size=size, content_type=mime)
-
-    # Remove namespace because it makes looking up tags a pain
-    root = ET.fromstring(case_block)
-    xmlns = get_namespace(root)
-    case_block = re.sub(' xmlns="[^"]+"', '', case_block, count=1)
-
-    root = ET.fromstring(case_block)
-    tag = "attachment"
-    xml_attachments = root.find(tag)
-    ret_attachments = {}
-
-    if xml_attachments:
-        for attach in xml_attachments:
-            attach.attrib['from'] = 'local'
-            attach.attrib['src'] = attachments[attach.tag]['attachment_src']
-            ret_attachments[attach.attrib['src']] = local_attachment(attachments[attach.tag], old_case_id, attach.tag)
-
-    # Add namespace back in without { } added by ET
-    root.attrib['xmlns'] = xmlns
-    return ET.tostring(root), ret_attachments
-
-
 def submit_case_block_from_template(domain, template, context, xmlns=None,
         user_id=None, device_id=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
-    case_block = ElementTree.tostring(ElementTree.XML(case_block))
+    case_block = ElementTree.tostring(ElementTree.XML(case_block)).decode('utf-8')
 
     return submit_case_blocks(
         case_block,
@@ -236,7 +199,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close)
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
         domain,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,
@@ -258,10 +221,7 @@ def bulk_update_cases(domain, case_changes, device_id):
     case_blocks = []
     for case_id, case_properties, close in case_changes:
         case_block = _get_update_or_close_case_block(case_id, case_properties, close)
-        # Ensure the XML is formatted properly
-        # An exception is raised if not
-        case_block = ElementTree.tostring(case_block.as_xml())
-        case_blocks.append(case_block)
+        case_blocks.append(case_block.as_text())
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
 
 
@@ -274,3 +234,19 @@ def resave_case(domain, case, send_post_save_signal=True):
             case.save()
         else:
             CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+def get_last_non_blank_value(case, case_property):
+    case_transactions = sorted(case.actions, key=lambda t: t.server_date, reverse=True)
+    for case_transaction in case_transactions:
+        try:
+            property_changed_info = property_changed_in_action(
+                case.domain,
+                case_transaction,
+                case.case_id,
+                case_property
+            )
+        except MissingFormXml:
+            property_changed_info = None
+        if property_changed_info and property_changed_info.new_value:
+            return property_changed_info.new_value

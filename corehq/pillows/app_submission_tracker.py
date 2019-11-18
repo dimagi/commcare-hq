@@ -1,7 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
@@ -25,6 +21,7 @@ from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
                                                 num_processes=1, process_num=0, **kwargs):
     """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     This gets a pillow which iterates through all forms and marks the corresponding app
     as having submissions. This could be expanded to be more generic and include
     other processing that needs to happen on each form
@@ -55,7 +52,7 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
     def process_doc(self, doc):
         change = self._doc_to_change(doc, self.data_source_type, self.data_source_name)
         try:
-            self.pillow_processor.process_change(None, change)
+            self.pillow_processor.process_change(change)
         except Exception:
             return False
         else:
@@ -157,7 +154,7 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         form_submission_changes = self._doc_to_changes(doc)
         for change in form_submission_changes:
             try:
-                self.pillow_processor.process_change(None, change)
+                self.pillow_processor.process_change(change)
             except Exception:
                 return False
         return True

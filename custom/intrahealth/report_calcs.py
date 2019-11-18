@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_date
@@ -14,7 +12,6 @@ from custom.intrahealth import (
     PRODUCT_NAMES,
 )
 from custom.intrahealth.utils import get_domain, get_location_by_type, get_loc_from_case
-import six
 
 
 def get_value_from_path(dictionary, path, default_value=None):
@@ -213,7 +210,7 @@ class RupturesDeStocks(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        for k, v in six.iteritems(form.form):
+        for k, v in form.form.items():
             if re.match("^rupture.*hv$", k):
                 if 'date_rapportage' in form.form and form.form['date_rapportage']:
                     product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())

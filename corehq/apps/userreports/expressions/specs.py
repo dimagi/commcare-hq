@@ -1,29 +1,38 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import hashlib
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
-import six
+import textwrap
 
+from dimagi.ext.jsonobject import (
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    StringProperty,
+)
+from pillowtop.dao.exceptions import DocumentNotFoundError
+
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
-from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
+from corehq.apps.userreports.const import (
+    NAMED_EXPRESSION_PREFIX,
+    XFORM_CACHE_KEY_PREFIX,
+)
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions.getters import (
+    safe_recursive_lookup,
+    transform_from_datatype,
+)
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
+from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.couch import get_db_by_doc_type
-from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
-from corehq.apps.userreports.datatypes import DataTypeProperty
-from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
-from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.util.couch import get_db_by_doc_type
+
 from .utils import eval_statements
 
 
@@ -38,6 +47,17 @@ class IdentityExpressionSpec(JsonObject):
 
 
 class IterationNumberExpressionSpec(JsonObject):
+    """
+    These are very simple expressions with no config. They return the index
+    of the repeat item starting from 0 when used with a
+    ``base_item_expression``.
+
+    .. code:: json
+
+       {
+           "type": "base_iteration_number"
+       }
+    """
     type = TypeProperty('base_iteration_number')
 
     def __call__(self, item, context=None):
@@ -48,13 +68,29 @@ class IterationNumberExpressionSpec(JsonObject):
 
 
 class ConstantGetterSpec(JsonObject):
+    """
+    There are two formats for constant expressions. The simplified format is
+    simply the constant itself. For example ``"hello"``, or ``5``.
+
+    The complete format is as follows. This expression returns the constant
+    ``"hello"``:
+
+    .. code:: json
+
+       {
+           "type": "constant",
+           "constant": "hello"
+       }
+    """
     type = TypeProperty('constant')
     constant = DefaultProperty()
 
     @classmethod
     def wrap(self, obj):
         if 'constant' not in obj:
-            raise BadSpecError('"constant" property is required!')
+            raise BadSpecError('"constant" property is required in object beginning with <pre>{}</pre>'.format(
+                textwrap.shorten(str(obj), width=75, placeholder="...")
+            ))
         return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):
@@ -65,6 +101,21 @@ class ConstantGetterSpec(JsonObject):
 
 
 class PropertyNameGetterSpec(JsonObject):
+    """
+    This expression returns ``doc["age"]``:
+
+    .. code:: json
+
+       {
+           "type": "property_name",
+           "property_name": "age"
+       }
+
+    An optional ``"datatype"`` attribute may be specified, which will
+    attempt to cast the property to the given data type. The options are
+    "date", "datetime", "string", "integer", and "decimal". If no datatype
+    is specified, "string" will be used.
+    """
     type = TypeProperty('property_name')
     property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
@@ -84,8 +135,23 @@ class PropertyNameGetterSpec(JsonObject):
 
 
 class PropertyPathGetterSpec(JsonObject):
+    """
+    This expression returns ``doc["child"]["age"]``:
+
+    .. code:: json
+
+       {
+           "type": "property_path",
+           "property_path": ["child", "age"]
+       }
+
+    An optional ``"datatype"`` attribute may be specified, which will
+    attempt to cast the property to the given data type. The options are
+    "date", "datetime", "string", "integer", and "decimal". If no datatype
+    is specified, "string" will be used.
+    """
     type = TypeProperty('property_path')
-    property_path = ListProperty(six.text_type, required=True)
+    property_path = ListProperty(str, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
@@ -100,6 +166,40 @@ class PropertyPathGetterSpec(JsonObject):
 
 
 class NamedExpressionSpec(JsonObject):
+    """
+    Last, but certainly not least, are named expressions. These are special
+    expressions that can be defined once in a data source and then used
+    throughout other filters and indicators in that data source. This allows
+    you to write out a very complicated expression a single time, but still
+    use it in multiple places with a simple syntax.
+
+    Named expressions are defined in a special section of the data source.
+    To reference a named expression, you just specify the type of
+    ``"named"`` and the name as follows:
+
+    .. code:: json
+
+       {
+           "type": "named",
+           "name": "my_expression"
+       }
+
+    This assumes that your named expression section of your data source
+    includes a snippet like the following:
+
+    .. code:: json
+
+       {
+           "my_expression": {
+               "type": "property_name",
+               "property_name": "test"
+           }
+       }
+
+    This is just a simple example - the value that ``"my_expression"`` takes
+    on can be as complicated as you want *as long as it doesn't reference
+    any other named expressions*.
+    """
     type = TypeProperty('named')
     name = StringProperty(required=True)
 
@@ -109,11 +209,7 @@ class NamedExpressionSpec(JsonObject):
         self._context = context
 
     def _context_cache_key(self, item):
-        json_item = json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)
-        if six.PY3:
-            json_item = json_item.encode('utf-8')
-        item_hash = hashlib.md5(json_item).hexdigest()
-        return 'named_expression-{}-{}'.format(self.name, item_hash)
+        return 'named_expression-{}-{}'.format(self.name, id(item))
 
     def __call__(self, item, context=None):
         key = self._context_cache_key(item)
@@ -130,6 +226,44 @@ class NamedExpressionSpec(JsonObject):
 
 
 class ConditionalExpressionSpec(JsonObject):
+    """
+    This expression returns ``"legal" if doc["age"] > 21 else "underage"``:
+
+    .. code::json
+
+       {
+           "type": "conditional",
+           "test": {
+               "operator": "gt",
+               "expression": {
+                   "type": "property_name",
+                   "property_name": "age",
+                   "datatype": "integer"
+               },
+               "type": "boolean_expression",
+               "property_value": 21
+           },
+           "expression_if_true": {
+               "type": "constant",
+               "constant": "legal"
+           },
+           "expression_if_false": {
+               "type": "constant",
+               "constant": "underage"
+           }
+       }
+
+    Note that this expression contains other expressions inside it! This is
+    why expressions are powerful. (It also contains a filter, but we haven't
+    covered those yet - if you find the ``"test"`` section confusing, keep
+    reading...)
+
+    Note also that it's important to make sure that you are comparing values
+    of the same type. In this example, the expression that retrieves the age
+    property from the document also casts the value to an integer. If this
+    datatype is not specified, the expression will compare a string to the
+    ``21`` value, which will not produce the expected results!
+    """
     type = TypeProperty('conditional')
     test = DictProperty(required=True)
     expression_if_true = DefaultProperty(required=True)
@@ -154,6 +288,26 @@ class ConditionalExpressionSpec(JsonObject):
 
 
 class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    This expression returns ``doc["siblings"][0]``:
+
+    .. code:: json
+
+       {
+           "type": "array_index",
+           "array_expression": {
+               "type": "property_name",
+               "property_name": "siblings"
+           },
+           "index_expression": {
+               "type": "constant",
+               "constant": 0
+           }
+       }
+
+    It will return nothing if the siblings property is not a list, the index
+    isn't a number, or the indexed item doesn't exist.
+    """
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
     index_expression = DefaultProperty(required=True)
@@ -181,6 +335,43 @@ class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class SwitchExpressionSpec(JsonObject):
+    """
+    This expression returns the value of the expression for the case that
+    matches the switch on expression. Note that case values may only be
+    strings at this time.
+
+    .. code:: json
+
+       {
+           "type": "switch",
+           "switch_on": {
+               "type": "property_name",
+               "property_name": "district"
+           },
+           "cases": {
+               "north": {
+                   "type": "constant",
+                   "constant": 4000
+               },
+               "south": {
+                   "type": "constant",
+                   "constant": 2500
+               },
+               "east": {
+                   "type": "constant",
+                   "constant": 3300
+               },
+               "west": {
+                   "type": "constant",
+                   "constant": 65
+               },
+           },
+           "default": {
+               "type": "constant",
+               "constant": 0
+           }
+       }
+    """
     type = TypeProperty('switch')
     switch_on = DefaultProperty(required=True)
     cases = DefaultProperty(required=True)
@@ -209,6 +400,34 @@ class SwitchExpressionSpec(JsonObject):
 
 
 class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    .. code:: json
+
+       {
+           "type": "iterator",
+           "expressions": [
+               {
+                   "type": "property_name",
+                   "property_name": "p1"
+               },
+               {
+                   "type": "property_name",
+                   "property_name": "p2"
+               },
+               {
+                   "type": "property_name",
+                   "property_name": "p3"
+               },
+           ],
+           "test": {}
+       }
+
+    This will emit ``[doc.p1, doc.p2, doc.p3]``. You can add a ``test``
+    attribute to filter rows from what is emitted - if you don't specify
+    this then the iterator will include one row per expression it contains
+    regardless of what is passed in. This can be used/combined with the
+    ``base_item_expression`` to emit multiple rows per document.
+    """
     type = TypeProperty('iterator')
     expressions = ListProperty(required=True)
     # an optional filter to test the values on - if they don't match they won't be included in the iteration
@@ -252,6 +471,25 @@ class RootDocExpressionSpec(JsonObject):
 
 
 class RelatedDocExpressionSpec(JsonObject):
+    """
+    This can be used to lookup a property in another document. Here's an
+    example that lets you look up ``form.case.owner_id`` from a form.
+
+    .. code:: json
+
+       {
+           "type": "related_doc",
+           "related_doc_type": "CommCareCase",
+           "doc_id_expression": {
+               "type": "property_path",
+               "property_path": ["form", "case", "@case_id"]
+           },
+           "value_expression": {
+               "type": "property_name",
+               "property_name": "owner_id"
+           }
+       }
+    """
     type = TypeProperty('related_doc')
     related_doc_type = StringProperty()
     doc_id_expression = DictProperty(required=True)
@@ -274,7 +512,9 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, context):
-        document_store = get_document_store_for_doc_type(context.root_doc['domain'], related_doc_type)
+        document_store = get_document_store_for_doc_type(
+            context.root_doc['domain'], related_doc_type,
+            load_source="related_doc_expression")
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
@@ -296,6 +536,28 @@ class RelatedDocExpressionSpec(JsonObject):
 
 
 class NestedExpressionSpec(JsonObject):
+    """
+    These can be used to nest expressions. This can be used, e.g. to pull a
+    specific property out of an item in a list of objects.
+
+    The following nested expression is the equivalent of a ``property_path``
+    expression to ``["outer", "inner"]`` and demonstrates the functionality.
+    More examples can be found in the `practical examples`_.
+
+    .. code:: json
+
+       {
+           "type": "nested",
+           "argument_expression": {
+               "type": "property_name",
+               "property_name": "outer"
+           },
+           "value_expression": {
+               "type": "property_name",
+               "property_name": "inner"
+           }
+       }
+    """
     type = TypeProperty('nested')
     argument_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
@@ -313,12 +575,43 @@ class NestedExpressionSpec(JsonObject):
 
 
 class DictExpressionSpec(JsonObject):
+    """
+    These can be used to create dictionaries of key/value pairs. This is
+    only useful as an intermediate structure in another expression since the
+    result of the expression is a dictionary that cannot be saved to the
+    database.
+
+    See the `practical examples`_
+    for a way this can be used in a ``base_item_expression`` to emit
+    multiple rows for a single form/case based on different properties.
+
+    Here is a simple example that demonstrates the structure. The keys of
+    ``properties`` must be text, and the values must be valid expressions
+    (or constants):
+
+    .. code:: json
+
+       {
+           "type": "dict",
+           "properties": {
+               "name": "a constant name",
+               "value": {
+                   "type": "property_name",
+                   "property_name": "prop"
+               },
+               "value2": {
+                   "type": "property_name",
+                   "property_name": "prop2"
+               }
+           }
+       }
+    """
     type = TypeProperty('dict')
     properties = DictProperty(required=True)
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, six.string_types):
+            if not isinstance(key, str):
                 raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
@@ -336,6 +629,60 @@ class DictExpressionSpec(JsonObject):
 
 
 class EvalExpressionSpec(JsonObject):
+    """
+    ``evaluator`` expression can be used to evaluate statements that contain
+    arithmetic (and simple python like statements). It evaluates the
+    statement specified by ``statement`` which can contain variables as
+    defined in ``context_variables``.
+
+    .. code:: json
+
+       {
+           "type": "evaluator",
+           "statement": "a + b - c + 6",
+           "context_variables": {
+               "a": 1,
+               "b": 20,
+               "c": 2
+           }
+       }
+
+    This returns 25 (1 + 20 - 2 + 6).
+
+    ``statement`` can be any statement that returns a valid number. All
+    python math
+    `operators <https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators>`__
+    except power operator are available for use.
+
+    ``context_variables`` is a dictionary of Expressions where keys are
+    names of variables used in the ``statement`` and values are expressions
+    to generate those variables. Variables can be any valid numbers (Python
+    datatypes ``int``, ``float`` and ``long`` are considered valid numbers.)
+    or also expressions that return numbers. In addition to numbers the
+    following types are supported:
+
+    -  ``date``
+    -  ``datetime``
+
+    Only the following functions are permitted:
+
+    -  ``rand()``: generate a random number between 0 and 1
+    -  ``randint(max)``: generate a random integer between 0 and ``max``
+    -  ``int(value)``: convert ``value`` to an int. Value can be a number or
+       a string representation of a number
+    -  ``float(value)``: convert ``value`` to a floating point number
+    -  ``str(value)``: convert ``value`` to a string
+    -  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
+       seconds. This is useful for getting the number of seconds between two
+       dates.
+
+       -  e.g. ``timedelta_to_seconds(time_end - time_start)``
+
+    -  ``range(start, [stop], [skip])``: the same as the python ```range``
+       function <https://docs.python.org/2/library/functions.html#range>`__.
+       Note that for performance reasons this is limited to 100 items or
+       less.
+    """
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty()
@@ -477,6 +824,21 @@ class _GroupsExpressionSpec(JsonObject):
 
 
 class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
+    """
+    ``get_case_sharing_groups`` will return an array of the case sharing
+    groups that are assigned to a provided user ID. The array will contain
+    one document per case sharing group.
+
+    .. code:: json
+
+       {
+           "type": "get_case_sharing_groups",
+           "user_id_expression": {
+               "type": "property_path",
+               "property_path": ["form", "meta", "userID"]
+           }
+       }
+    """
     type = TypeProperty('get_case_sharing_groups')
 
     def _get_groups_from_user(self, user):
@@ -487,6 +849,21 @@ class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
 
 
 class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
+    """
+    ``get_reporting_groups`` will return an array of the reporting groups that
+    are assigned to a provided user ID. The array will contain one document
+    per reporting group.
+
+    .. code:: json
+
+       {
+           "type": "get_reporting_groups",
+           "user_id_expression": {
+               "type": "property_path",
+               "property_path": ["form", "meta", "userID"]
+           }
+       }
+    """
     type = TypeProperty('get_reporting_groups')
 
     def _get_groups_from_user(self, user):
@@ -497,6 +874,29 @@ class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
 
 
 class SplitStringExpressionSpec(JsonObject):
+    """
+    This expression returns ``(doc["foo bar"]).split(' ')[0]``:
+
+    .. code:: json
+
+       {
+           "type": "split_string",
+           "string_expression": {
+               "type": "property_name",
+               "property_name": "multiple_value_string"
+           },
+           "index_expression": {
+               "type": "constant",
+               "constant": 0
+           },
+           "delimiter": ","
+       }
+
+    The delimiter is optional and is defaulted to a space. It will return
+    nothing if the string_expression is not a string, or if the index isn't
+    a number or the indexed item doesn't exist. The index_expression is also
+    optional. Without it, the expression will return the list of elements.
+    """
     type = TypeProperty('split_string')
     string_expression = DictProperty(required=True)
     index_expression = DefaultProperty(required=False)
@@ -508,7 +908,7 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, six.string_types):
+        if not isinstance(string_value, str):
             return None
 
         index_value = None
@@ -531,6 +931,25 @@ class SplitStringExpressionSpec(JsonObject):
 
 
 class CoalesceExpressionSpec(JsonObject):
+    """
+    This expression returns the value of the expression provided, or the
+    value of the default_expression if the expression provided evalutes to a
+    null or blank string.
+
+    .. code:: json
+
+       {
+           "type": "coalesce",
+           "expression": {
+               "type": "property_name",
+               "property_name": "district"
+           },
+           "default_expression": {
+               "type": "constant",
+               "constant": "default_district"
+           }
+       }
+    """
     type = TypeProperty('coalesce')
     expression = DictProperty(required=True)
     default_expression = DictProperty(required=True)

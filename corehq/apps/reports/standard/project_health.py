@@ -1,23 +1,24 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.hqwebapp.decorators import use_nvd3
-from corehq.apps.users.util import raw_username
+from collections import namedtuple
+from itertools import chain
+
+from django.db.models import Sum
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from memoized import memoized
+
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
-from memoized import memoized
+
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
-from itertools import chain
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
-from django.db.models import Sum
-from six.moves import range
+from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.users.util import raw_username
 
 
 def get_performance_threshold(domain_name):
@@ -408,6 +409,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
+        context = super().template_context
         performance_threshold = get_performance_threshold(self.domain)
         prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         six_months_reports = []
@@ -419,10 +421,11 @@ class ProjectHealthDashboard(ProjectReport):
             r.update({'inactive': report.inactive})
             six_months_reports.append(r)
 
-        return {
+        context.update({
             'six_months_reports': six_months_reports,
             'this_month': prior_months_reports[-1],
             'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,
             'domain': self.domain,
-        }
+        })
+        return context

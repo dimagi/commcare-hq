@@ -1,12 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from django.core.management import BaseCommand
 from casexml.apps.phone.checksum import Checksum
 from six.moves import range
-from io import open
 
 
 class Command(BaseCommand):
@@ -73,7 +69,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, sync_logs, **options):
-        from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
+        from casexml.apps.phone.models import properly_wrap_sync_log
 
         logs = []
         log_names = []
@@ -89,12 +85,6 @@ class Command(BaseCommand):
                 with open(filename, encoding='utf-8') as f:
                     wrapped_log = properly_wrap_sync_log(json.loads(f.read()))
                     logs.append(wrapped_log)
-                    if isinstance(wrapped_log, SyncLog):
-                        log_names.append('migrated-{}'.format(log_name))
-                        logs.append(SimplifiedSyncLog.from_other_format(wrapped_log))
-                    elif getattr(wrapped_log, 'migrated_from', None):
-                        log_names.append('migrated_from-{}'.format(log_name))
-                        logs.append(properly_wrap_sync_log(wrapped_log.to_json()['migrated_from']))
 
         print('state hashes')
         for i in range(len(log_names)):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 
 import datetime
@@ -25,7 +23,6 @@ from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.mixins import UnicodeMixIn
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import WrappingAttributeError
 from lxml import etree
@@ -33,14 +30,17 @@ from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import (
+    MissingFormXml,
+    NotAllowed,
+    XFormNotFound,
+)
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import clean_metadata
 
 from couchforms import const
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.jsonobject_extensions import GeoPointProperty
-from couchforms.signals import xform_archived, xform_unarchived
-import six
 
 
 def doc_types():
@@ -114,7 +114,7 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
+class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
     """An XForms instance."""
@@ -165,7 +165,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                     )
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
-            raise XFormNotFound
+            raise XFormNotFound(docid)
 
     @property
     def form_id(self):
@@ -243,7 +243,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def app_version(self):
         return None
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
@@ -274,6 +274,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         return safe_index(self, path.split("/"))
 
     def soft_delete(self):
+        NotAllowed.check(self.domain)
         self.doc_type += DELETED_SUFFIX
         self.save()
 
@@ -285,7 +286,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             try:
                 return self[const.TAG_XML]
             except AttributeError:
-                return None
+                raise MissingFormXml(self.form_id)
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
@@ -299,7 +300,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def _xml_string_to_element(self, xml_string):
 
         def _to_xml_element(payload):
-            if isinstance(payload, six.text_type):
+            if isinstance(payload, str):
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
 
@@ -340,33 +341,19 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             return meta_json
 
         return {name: _meta_to_json(meta)
-            for name, meta in six.iteritems(self.blobs)
+            for name, meta in self.blobs.items()
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):
-        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
+        return hashlib.md5(self.get_xml()).hexdigest()
 
-    def archive(self, user_id=None):
-        if self.is_archived:
-            return
-        self.doc_type = "XFormArchived"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='archive',
-        ))
-        self.save()
-        xform_archived.send(sender="couchforms", xform=self)
-
-    def unarchive(self, user_id=None):
+    def archive(self, user_id=None, trigger_signals=True):
         if not self.is_archived:
-            return
-        self.doc_type = "XFormInstance"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='unarchive',
-        ))
-        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-        xform_unarchived.send(sender="couchforms", xform=self)
+            FormAccessors.do_archive(self, True, user_id, trigger_signals)
+
+    def unarchive(self, user_id=None, trigger_signals=True):
+        if self.is_archived:
+            FormAccessors.do_archive(self, False, user_id, trigger_signals)
 
 
 class XFormError(XFormInstance):
@@ -462,7 +449,7 @@ class SubmissionErrorLog(XFormError):
     """
     md5 = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
@@ -506,12 +493,38 @@ class UnfinishedSubmissionStub(models.Model):
     date_queued = models.DateTimeField(null=True, db_index=True)
     attempts = models.IntegerField(default=0)
 
-    def __unicode__(self):
-        return six.text_type(
+    def __str__(self):
+        return str(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"
             "saved={s.saved},"
+            "domain={s.domain})"
+        ).format(s=self)
+
+    class Meta(object):
+        app_label = 'couchforms'
+        indexes = (
+            models.Index(['xform_id']),
+        )
+
+
+class UnfinishedArchiveStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
+    timestamp = models.DateTimeField(db_index=True)
+    archive = models.BooleanField(default=False)
+    history_updated = models.BooleanField(default=False)
+    domain = models.CharField(max_length=256)
+
+    def __str__(self):
+        return str(
+            "UnfinishedArchiveStub("
+            "xform_id={s.xform_id},"
+            "user_id={s.user_id},"
+            "timestamp={s.timestamp},"
+            "archive={s.archive},"
+            "history_updated={s.history_updated},"
             "domain={s.domain})"
         ).format(s=self)
 

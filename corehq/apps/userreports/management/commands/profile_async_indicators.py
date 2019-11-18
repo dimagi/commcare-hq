@@ -1,12 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import cProfile
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
-from corehq.apps.userreports.management.commands.profile_data_source import print_profile_stats
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
+from corehq.apps.userreports.management.commands.profile_data_source import (
+    print_profile_stats,
+)
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.tasks import _get_config
@@ -29,7 +30,8 @@ class Command(BaseCommand):
         configs = {}
         docs = {}
         for indicator in indicators:
-            doc_store = get_document_store_for_doc_type(domain, indicator.doc_type)
+            doc_store = get_document_store_for_doc_type(
+                domain, indicator.doc_type, load_source="profile_async_indicators")
             docs[indicator.doc_id] = doc_store.get_document(indicator.doc_id)
             for config_id in indicator.indicator_config_ids:
                 configs[config_id] = _get_config(config_id)

@@ -1,24 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import functools
 from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext
 
-from corehq.apps.app_manager import id_strings
 from memoized import memoized
-from corehq.apps.app_manager.util import module_offers_search,\
-    create_temp_sort_column, get_sort_and_sort_only_columns
-import langcodes
+
 import commcare_translations
+import langcodes
+from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_offers_search,
+)
 from corehq.util.translation import localize
 from langcodes import langs_by_code
-import six
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in dct.items() if value])
+    return {key: value for key, value in dct.items() if value}
 
 
 def convert_to_two_letter_code(lc):
@@ -38,7 +40,8 @@ def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, fo
         return id_strings.module_custom_icon_locale(module, custom_icon_form), custom_icon_text
 
 
-def _create_custom_app_strings(app, lang, for_default=False):
+def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=None):
+    # build_profile_id is relevant only if for_default is true
 
     def trans(d):
         return clean_trans(d, langs)
@@ -50,16 +53,17 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
         return text
 
-    langs = [lang] + app.langs
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
 
     for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
         yield id, value
 
+    ccz_langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+    langs = [lang] + ccz_langs
     if for_default:
         # include language code names and current language
-        for lc in app.langs:
+        for lc in ccz_langs:
             name = langcodes.get_name(lc) or lc
             if not name:
                 continue
@@ -82,10 +86,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in six.iteritems(column.graph_configuration.locale_specific_config):
+                    for property, values in column.graph_configuration.locale_specific_config.items():
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
                     for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in six.iteritems(item.locale_specific_config):
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)
@@ -107,8 +111,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
 
-        icon = module.icon_app_string(lang, for_default=for_default)
-        audio = module.audio_app_string(lang, for_default=for_default)
+        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
+            for item in module.name_enum:
+                yield id_strings.module_name_enum_variable(module, item.key_as_variable), trans(item.value)
+
+        icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+        audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
         if icon:
             yield id_strings.module_icon_locale(module), icon
@@ -127,13 +135,13 @@ def _create_custom_app_strings(app, lang, for_default=False):
                         id_strings.report_column_header(config.uuid, column.column_id),
                         column.get_header(lang)
                     )
-                for chart_id, graph_config in six.iteritems(config.complete_graph_configs):
+                for chart_id, graph_config in config.complete_graph_configs.items():
                     for index, item in enumerate(graph_config.annotations):
                         yield id_strings.mobile_ucr_annotation(module, config.uuid, index), trans(item.values)
-                    for property, values in six.iteritems(graph_config.locale_specific_config):
+                    for property, values in graph_config.locale_specific_config.items():
                         yield id_strings.mobile_ucr_configuration(module, config.uuid, property), trans(values)
                     for index, item in enumerate(graph_config.series):
-                        for property, values in six.iteritems(item.locale_specific_config):
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.mobile_ucr_series_configuration(
                                 module, config.uuid, index, property
                             ), trans(values)
@@ -141,8 +149,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
-                icon = module.case_list.icon_app_string(lang, for_default=for_default)
-                audio = module.case_list.audio_app_string(lang, for_default=for_default)
+                icon = module.case_list.icon_app_string(lang, for_default=for_default,
+                                                        build_profile_id=build_profile_id)
+                audio = module.case_list.audio_app_string(lang, for_default=for_default,
+                                                          build_profile_id=build_profile_id)
                 if icon:
                     yield id_strings.case_list_icon_locale(module), icon
                 if audio:
@@ -161,8 +171,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
 
-            icon = form.icon_app_string(lang, for_default=for_default)
-            audio = form.audio_app_string(lang, for_default=for_default)
+            if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
+                for item in form.name_enum:
+                    yield id_strings.form_name_enum_variable(form, item.key_as_variable), trans(item.value)
+
+            icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+            audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
             custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
             if icon:
                 yield id_strings.form_icon_locale(form), icon
@@ -179,8 +193,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 id_strings.case_list_form_locale(module),
                 trans(module.case_list_form.label) or "Create a new Case"
             )
-            icon = module.case_list_form.icon_app_string(lang, for_default=for_default)
-            audio = module.case_list_form.audio_app_string(lang, for_default=for_default)
+            icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
+                                                         build_profile_id=build_profile_id)
+            audio = module.case_list_form.audio_app_string(lang, for_default=for_default,
+                                                           build_profile_id=build_profile_id)
             if icon:
                 yield id_strings.case_list_form_icon_locale(module), icon
             if audio:
@@ -199,19 +215,21 @@ class AppStringsBase(object):
             translations[id] = value
         return translations
 
-    def create_custom_app_strings(self, app, lang, for_default=False):
-        custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))
+    def create_custom_app_strings(self, app, lang, for_default=False, build_profile_id=None):
+        custom = dict(_create_custom_app_strings(app, lang, for_default=for_default,
+                                                 build_profile_id=build_profile_id))
         if not for_default:
             custom = non_empty_only(custom)
         return custom
 
-    def create_app_strings(self, app, lang, for_default=False):
+    def create_app_strings(self, app, lang, for_default=False, build_profile_id=None):
+        # build_profile_id is relevant only if for_default is true
         messages = {}
-        for part in self.app_strings_parts(app, lang, for_default=for_default):
+        for part in self.app_strings_parts(app, lang, for_default=for_default, build_profile_id=build_profile_id):
             messages.update(part)
         return commcare_translations.dumps(messages)
 
-    def app_strings_parts(self, app, lang, for_default=False):
+    def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
         raise NotImplementedError()
 
     def create_default_app_strings(self, app, build_profile_id=None):
@@ -222,7 +240,7 @@ class AppStringsBase(object):
             if lc == "default":
                 continue
             new_messages = commcare_translations.loads(
-                self.create_app_strings(app, lc, for_default=True)
+                self.create_app_strings(app, lc, for_default=True, build_profile_id=build_profile_id)
             )
 
             for key, val in new_messages.items():
@@ -279,37 +297,38 @@ class AppStringsBase(object):
 
 class DumpKnownAppStrings(AppStringsBase):
 
-    def app_strings_parts(self, app, lang, for_default=False):
+    def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
         commcare_version = app.build_version.vstring if app.build_version else None
 
-        yield self.create_custom_app_strings(app, lang, for_default=for_default)
+        yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
         yield self.get_default_translations(lang, commcare_version)
         yield non_empty_only(app.translations.get(lang, {}))
 
 
 class SimpleAppStrings(AppStringsBase):
 
-    def app_strings_parts(self, app, lang, for_default=False):
-        yield self.create_custom_app_strings(app, lang, for_default=for_default)
+    def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
+        yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
         if not for_default:
             yield non_empty_only(app.translations.get(lang, {}))
 
 
 class SelectKnownAppStrings(AppStringsBase):
+    """
+    Like DumpKnownAppStrings, but instead of returning all default
+    translations, only returns those used by the app.
+
+    This is the default behaviour.
+    """
 
     def get_app_translation_keys(self, app):
-        return set.union(set(), *(
-            set(t.keys()) for t in app.translations.values()
-        ))
+        return {k for t in app.translations.values() for k in t.keys()}
 
-    def app_strings_parts(self, app, lang, for_default=False):
-        yield self.create_custom_app_strings(app, lang,
-                                             for_default=for_default)
+    def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
+        yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
         commcare_version = app.build_version.vstring if app.build_version else None
         cc_trans = self.get_default_translations(lang, commcare_version)
-        yield dict((key, cc_trans[key])
-                   for key in self.get_app_translation_keys(app)
-                   if key in cc_trans)
+        yield {key: cc_trans[key] for key in self.get_app_translation_keys(app) if key in cc_trans}
         yield non_empty_only(app.translations.get(lang, {}))
 
 

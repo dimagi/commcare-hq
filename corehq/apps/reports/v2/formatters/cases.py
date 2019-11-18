@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from couchdbkit import ResourceNotFound
-
 from django.urls import NoReverseMatch
 from django.utils import html
 from django.utils.translation import ugettext as _
 
+from couchdbkit import ResourceNotFound
+
 from casexml.apps.case.models import CommCareCaseAction
+
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES_MAP,
-    SPECIAL_CASE_PROPERTIES,
     CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
+    SPECIAL_CASE_PROPERTIES_MAP,
 )
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.groups.models import Group
@@ -104,16 +102,11 @@ class CaseDataFormatter(BaseDataFormatter):
     @property
     def _link(self):
         try:
-            link = absolute_reverse(
+            return absolute_reverse(
                 'case_data', args=[self.domain, self.raw_data.get('_id')]
             )
         except NoReverseMatch:
-            return _("No link found")
-        return html.mark_safe(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(
-                link, _("View Case")
-            )
-        )
+            return None
 
     @property
     def _case_info_context(self):

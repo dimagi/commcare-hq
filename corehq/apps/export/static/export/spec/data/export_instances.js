@@ -22,6 +22,7 @@ SampleExportInstances = {
                 "selected": false,
                 "label": "question1",
                 "doc_type": "ExportColumn",
+                "tags": [],
             }, {
                 "show": true,
                 "item": {
@@ -49,6 +50,7 @@ SampleExportInstances = {
                 "selected": false,
                 "label": "question3",
                 "doc_type": "ExportColumn",
+                "tags": [],
             }],
             "doc_type": "TableConfiguration",
         }],
@@ -78,6 +80,7 @@ SampleExportInstances = {
                 "selected": false,
                 "label": "question1",
                 "doc_type": "ExportColumn",
+                "tags": [],
             }, {
                 "show": true,
                 "item": {
@@ -105,6 +108,7 @@ SampleExportInstances = {
                 "selected": false,
                 "label": "question3",
                 "doc_type": "ExportColumn",
+                "tags": [],
             }],
             "doc_type": "TableConfiguration",
         }],

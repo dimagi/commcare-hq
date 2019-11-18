@@ -6,44 +6,44 @@
 {% block title %}{% trans "Registration" %}{% endblock %}
 
 {% block header %}
-<div class="page-header container">
+  <div class="page-header container">
     <h1>{% blocktrans %}{{ hr_name }} Registration{% endblocktrans %}</h1>
-</div>
+  </div>
 {% endblock %}
 
 {% block content %}
 
-{% if invitation.already_registered %}
-<div>
-    <p>
+  {% if invitation.already_registered %}
+    <div>
+      <p>
         {% blocktrans %}
-        Thank you for registering.
-        Please <a class="btn btn-default" target="_blank" href="{{ google_play_store_url }}">click here</a> to go to the Google Play store, and then download and install CommCare.
+          Thank you for registering.
+          Please <a class="btn btn-default" target="_blank" href="{{ google_play_store_url }}">click here</a> to go to the Google Play store, and then download and install CommCare.
         {% endblocktrans %}
-    </p>
-</div>
-{% elif invitation.expired %}
-<div class="alert-alert-danger">
-    <p>
+      </p>
+    </div>
+  {% elif invitation.expired %}
+    <div class="alert-alert-danger">
+      <p>
         {% blocktrans %}
-        Your registration invitation has expired. Please contact your administrator.
+          Your registration invitation has expired. Please contact your administrator.
         {% endblocktrans %}
-    </p>
-</div>
-{% elif not can_add_extra_mobile_workers %}
-<div class="alert alert-danger">
-    <p>
+      </p>
+    </div>
+  {% elif not can_add_extra_mobile_workers %}
+    <div class="alert alert-danger">
+      <p>
         {% blocktrans %}
-        ERROR: Cannot register another user because this project has exceeded its user
-        limit. Please contact your administrator.
+          ERROR: Cannot register another user because this project has exceeded its user
+          limit. Please contact your administrator.
         {% endblocktrans %}
-    </p>
-</div>
-{% else %}
-<div id="registration-form">
-    {% crispy form %}
-</div>
-{% endif %}
+      </p>
+    </div>
+  {% else %}
+    <div id="registration-form">
+      {% crispy form %}
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block mobile-logout %}{% endblock %}

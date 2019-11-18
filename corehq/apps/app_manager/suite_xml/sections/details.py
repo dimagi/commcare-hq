@@ -1,18 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import os
+from collections import namedtuple
 from xml.sax.saxutils import escape
 
-import six
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
+from memoized import memoized
 
+from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+from corehq.apps.app_manager.suite_xml.features.scheduler import (
+    schedule_detail_variables,
+)
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_all_instances_referenced_in_xpaths,
+)
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -36,23 +42,16 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
     XpathVariable,
 )
-from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
-    get_sort_and_sort_only_columns
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.xpath import session_var, XPath
-from corehq import toggles
-from memoized import memoized
-from io import open
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_offers_search,
+)
+from corehq.apps.app_manager.xpath import XPath, session_var
 
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
-
-    def __init__(self, suite, app, modules, build_profile_id=None):
-        super(DetailContributor, self).__init__(suite, app, modules)
-        self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
         def include_sort(detail_type, detail):
@@ -68,6 +67,13 @@ class DetailContributor(SectionContributor):
                                 detail.custom_xml,
                                 xmlclass=Detail
                             )
+                            expected = id_strings.detail(module, detail_type)
+                            if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+                                raise SuiteValidationError(
+                                    "Menu {}, \"{}\", uses custom case list xml. The "
+                                    "specified detail ID is '{}', expected '{}'"
+                                    .format(module.id, module.default_name(), d.id, expected)
+                                )
                             r.append(d)
                         else:
                             detail_column_infos = get_detail_column_infos(
@@ -242,8 +248,8 @@ class DetailContributor(SectionContributor):
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=bool(len(case_list_form.all_image_paths())),
-                media_audio=bool(len(case_list_form.all_audio_paths())),
+                media_image=case_list_form.uses_image(build_profile_id=self.build_profile_id),
+                media_audio=case_list_form.uses_audio(build_profile_id=self.build_profile_id),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
@@ -478,7 +484,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
     return instances
 
 

@@ -1,25 +1,45 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import include, url
-from corehq.apps.domain.views.sms import PublicSMSRatesView
-from corehq.apps.settings.views import (
-    TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
-    TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
-    TwoFactorResetView, TwoFactorPhoneDeleteView
-)
-from two_factor.urls import urlpatterns as tf_urls
+
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
-from corehq.apps.hqwebapp.views import (
-    MaintenanceAlertsView, redirect_to_default,
-    yui_crossdomain, password_change, no_permissions, login, logout,
-    debug_notify,
-    quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror,
-    dropbox_upload, domain_login, retrieve_download, toggles_js,
-    server_up, BugReportView,
-    redirect_to_dimagi,
-    temporary_google_verify,
+from two_factor.urls import urlpatterns as tf_urls
+
+from corehq.apps.domain.views.sms import PublicSMSRatesView
+from corehq.apps.hqwebapp.session_details_endpoint.views import (
+    SessionDetailsView,
 )
-from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
+from corehq.apps.hqwebapp.views import (
+    BugReportView,
+    MaintenanceAlertsView,
+    activate_alert,
+    create_alert,
+    deactivate_alert,
+    debug_notify,
+    domain_login,
+    dropbox_upload,
+    jserror,
+    login,
+    logout,
+    no_permissions,
+    osdd,
+    password_change,
+    quick_find,
+    redirect_to_default,
+    redirect_to_dimagi,
+    retrieve_download,
+    server_up,
+    temporary_google_verify,
+    yui_crossdomain,
+)
+from corehq.apps.settings.views import (
+    TwoFactorBackupTokensView,
+    TwoFactorDisableView,
+    TwoFactorPhoneDeleteView,
+    TwoFactorPhoneSetupView,
+    TwoFactorProfileView,
+    TwoFactorResetView,
+    TwoFactorSetupCompleteView,
+    TwoFactorSetupView,
+)
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -66,7 +86,6 @@ domain_specific = [
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
-    url(r'toggles.js$', toggles_js, name='toggles_js'),
 ]
 
 prelogin_root = [

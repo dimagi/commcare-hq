@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.db import models
 
 
@@ -41,6 +38,8 @@ class AggAwcDailyView(models.Model):
     cases_ccs_lactating_all = models.IntegerField(blank=True, null=True)
     cases_child_health_all = models.IntegerField(blank=True, null=True)
     daily_attendance_open = models.IntegerField(blank=True, null=True)
+    total_eligible_pse = models.IntegerField(null=True)
+    total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True)
@@ -51,7 +50,7 @@ class AggAwcDailyView(models.Model):
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_daily_view'
 
@@ -107,7 +106,7 @@ class DailyAttendanceView(models.Model):
     image_name = models.TextField(blank=True, null=True, help_text="/form/photo_children_present")
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'daily_attendance_view'
 
@@ -193,11 +192,174 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting_v2 = models.TextField(blank=True, null=True)
     current_month_stunting_v2_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
+    aww_phone_number = models.TextField(blank=True, null=True)
+    mother_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'child_health_monthly_view'
+
+
+class AggLsMonthly(models.Model):
+    """
+    Contains rows for LS data.
+    This view is the join between tables:
+        1) agg_ls
+        2) agg_awc
+        3) awc_location_months
+    """
+    supervisor_id = models.TextField(primary_key=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    awc_visits = models.IntegerField(help_text='Unique AWC visits by LS in the month')
+    vhnd_observed = models.IntegerField(help_text='Vhnd forms submitted by LS where vhnd date in the month')
+    beneficiary_vists = models.IntegerField(help_text='beneficiary visits made by LS in the month')
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'agg_ls_monthly'
+
+
+class ServiceDeliveryMonthly(models.Model):
+    """
+    Contains rows for Service delivery report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
+    num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
+    num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    gm_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 0-3 years of children"
+    )
+    gm_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 3-5 years of children"
+    )
+    children_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 0-3 years"
+    )
+    children_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-5 years"
+    )
+    children_3_6 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-6 years"
+    )
+
+    pse_attended_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended pse for atleast 21 days in the month"
+    )
+    lunch_count_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children had lunch for atleast 21 days in the month"
+    )
+    thr_given_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Take home ration given to PW/LW and children(6-36 months) for atleast 21 days"
+    )
+    total_thr_candidates = models.IntegerField(
+        blank=True, null=True,
+        help_text="Sum of PW/LW  and children of age 6-36 months"
+    )
+    valid_visits = models.IntegerField(
+        blank=True, null=True,
+        help_text="Valid home visits"
+    )
+    expected_visits = models.IntegerField(
+        blank=True, null=True,
+        help_text="Expected Home visits"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'service_delivery_monthly'
+
+
+class TakeHomeRationMonthly(models.Model):
+    """
+    Contains rows for THR report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
+    is_launched = models.TextField(null=True)
+    month = models.DateField(blank=True, null=True)
+    thr_given_21_days = models.IntegerField(null=True)
+    total_thr_candidates = models.IntegerField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'thr_report_monthly'
 
 
 class AggAwcMonthly(models.Model):
@@ -421,9 +583,41 @@ class AggAwcMonthly(models.Model):
     )
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_monthly'
+
+
+class AWWIncentiveReportMonthly(models.Model):
+    """Monthly updated table that holds metrics for the incentive report"""
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    district_id = models.TextField(blank=True, null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    awc_id = models.CharField(max_length=40, primary_key=True)
+    is_launched = models.TextField(null=True)
+    block_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    state_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    block_name = models.TextField(null=True)
+    supervisor_name = models.TextField(null=True)
+    awc_name = models.TextField(null=True)
+    aww_name = models.TextField(null=True)
+    contact_phone_number = models.TextField(null=True)
+    wer_weighed = models.SmallIntegerField(null=True)
+    wer_eligible = models.SmallIntegerField(null=True)
+    awc_num_open = models.SmallIntegerField(null=True)
+    valid_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'aww_incentive_report_monthly'
 
 
 class AggCcsRecordMonthly(models.Model):
@@ -499,7 +693,7 @@ class AggCcsRecordMonthly(models.Model):
     expected_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ccs_record_monthly'
 
@@ -551,6 +745,7 @@ class CcsRecordMonthlyView(models.Model):
     home_visit_date = models.DateField(blank=True, null=True)
     ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
     mobile_number = models.TextField(blank=True, null=True)
@@ -561,6 +756,7 @@ class CcsRecordMonthlyView(models.Model):
     person_name = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
     pregnant = models.IntegerField(blank=True, null=True)
+    pregnant_all = models.IntegerField(blank=True, null=True)
     rupture = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     trimester = models.IntegerField(blank=True, null=True)
@@ -569,9 +765,20 @@ class CcsRecordMonthlyView(models.Model):
     using_ifa = models.IntegerField(blank=True, null=True)
     lactating = models.IntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    open_in_month = models.SmallIntegerField(blank=True, null=True)
+    closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'ccs_record_monthly_view'
 
@@ -751,7 +958,7 @@ class AggChildHealthMonthly(models.Model):
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_child_health_monthly'
 
@@ -782,17 +989,13 @@ class AwcLocationMonths(models.Model):
     contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'awc_location_months'
 
 
 class DishaIndicatorView(models.Model):
-    awc_id = models.TextField(primary_key=True)
-    awc_name = models.TextField(blank=True, null=True)
-    supervisor_id = models.TextField(blank=True, null=True)
-    supervisor_name = models.TextField(blank=True, null=True)
-    block_id = models.TextField(blank=True, null=True)
+    block_id = models.TextField(primary_key=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)
@@ -820,8 +1023,6 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     extra_meal_percent = models.DecimalField(
@@ -848,6 +1049,62 @@ class DishaIndicatorView(models.Model):
         max_digits=16, decimal_places=8, blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'icds_disha_indicators'
+
+
+class NICIndicatorsView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+
+    cases_household = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating = models.IntegerField(blank=True, null=True)
+    cases_child_health = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    ebf_in_month = models.IntegerField(blank=True, null=True)
+    cf_initiation_in_month = models.IntegerField(blank=True, null=True)
+    bf_at_birth = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'nic_indicators'
+
+
+class DailyIndicatorsView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    pse_eligible = models.IntegerField(blank=True, null=True)
+    total_attended_pse = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    daily_attendance_open = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'daily_indicators'
+
+
+class MWCDReportView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    num_launched_districts = models.IntegerField(blank=True, null=True)
+    num_launched_states = models.IntegerField(blank=True, null=True)
+    awc_with_gm_devices = models.IntegerField(blank=True, null=True)
+    cases_household = models.IntegerField(blank=True, null=True)
+    cases_child_health = models.IntegerField(blank=True, null=True)
+    total_mothers = models.IntegerField(blank=True, null=True)
+    num_ls_launched = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'mwcd_report'

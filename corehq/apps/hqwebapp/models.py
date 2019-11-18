@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from corehq.util.quickcache import quickcache
 from corehq.util.markup import mark_up_urls
+from corehq.util.quickcache import quickcache
+
+from .signals import *
+
+PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
@@ -23,6 +26,7 @@ class MaintenanceAlert(models.Model):
     active = models.BooleanField(default=False)
 
     text = models.TextField()
+    domains = ArrayField(models.CharField(max_length=126), null=True)
 
     class Meta(object):
         app_label = 'hqwebapp'
@@ -32,7 +36,8 @@ class MaintenanceAlert(models.Model):
         return mark_up_urls(self.text)
 
     def __repr__(self):
-        return "MaintenanceAlert(text='{}', active='{}')".format(self.text, self.active)
+        return "MaintenanceAlert(text='{}', active='{}', domains='{}')".format(
+            self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
 
     def save(self, *args, **kwargs):
         MaintenanceAlert.get_latest_alert.clear(MaintenanceAlert)
@@ -46,6 +51,3 @@ class MaintenanceAlert(models.Model):
             return active_alerts[0]
         else:
             return ''
-
-
-from .signals import *

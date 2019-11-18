@@ -191,4 +191,24 @@
       </create>
     </stack>
   </entry>
+  <entry>
+    <command id="m5-f0">
+      <text>
+        <locale id="forms.m5f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum function="uuid()" id="case_id_new_patient_0"/>
+      <datum detail-confirm="m5_case_long" detail-select="m5_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id"/>
+    </session>
+    <stack>
+      <create>
+        <command value="'m5'"/>
+        <datum id="case_id_new_patient_0" value="uuid()"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      </create>
+    </stack>
+  </entry>
 </partial>

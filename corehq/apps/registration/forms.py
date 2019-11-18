@@ -1,33 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from captcha.fields import CaptchaField
+import re
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _, ugettext
+from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
+
+from captcha.fields import CaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
+from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm
+from corehq.apps.users.models import CouchUser
 
-# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
-from django.utils.functional import lazy
-import six
-import re
-
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
-
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class RegisterWebUserForm(forms.Form):
@@ -162,8 +160,13 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
+                        ugettext("Back"),
+                        css_id="back-to-start-btn",
+                        css_class="btn btn-default btn-lg hide",
+                    ),
+                    twbscrispy.StrictButton(
                         ugettext("Next"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
                     hqcrispy.InlineField('is_mobile'),
@@ -192,13 +195,13 @@ class RegisterWebUserForm(forms.Form):
                         data_bind="checked: eulaConfirmed"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Previous"),
-                        css_class="btn btn-primary-dark btn-lg",
+                        ugettext("Back"),
+                        css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Finish"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
                                   "disable: disableNextStepTwo"
                     )
@@ -214,7 +217,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
@@ -269,7 +272,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -305,7 +308,7 @@ class DomainRegistrationForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -380,7 +383,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -401,7 +404,7 @@ class _BaseForm(object):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -414,22 +417,21 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
-        domain = None
+        domain_obj = None
         location = None
         if 'domain' in kwargs:
-            domain = Domain.get_by_name(kwargs['domain'])
+            domain_obj = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
         if 'location' in kwargs:
             location = kwargs['location']
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain and domain.commtrack_enabled:
-            widget = LocationSelectWidget(domain.name, select2_version='v3')
+        if domain_obj and domain_obj.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=widget,
+                                                          widget=LocationSelectWidget(domain_obj.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain.name, wrap=False)
+            programs = Program.by_domain(domain_obj.name, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices

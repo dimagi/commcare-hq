@@ -1,20 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import logging
+from collections import namedtuple
 from itertools import groupby
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
-from dimagi.utils.decorators.log_exception import log_exception
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.stock.models import StockTransaction
-from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.stock import const as stockconst
-from corehq.form_processor.parsers.ledgers import get_stock_actions
+from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.decorators.log_exception import log_exception
 
+from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import MissingFormXml
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.parsers.ledgers import get_stock_actions
+from corehq.util.datadog.utils import ledger_load_counter
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -44,11 +44,16 @@ class StockProcessingResult(object):
         processor = interface.ledger_processor
         ledger_db = interface.ledger_db
 
+        track_load = ledger_load_counter("process_stock", self.domain)
+        normal_helpers = []
+        deprecated_helpers = []
         for helper in self.stock_report_helpers:
             assert helper.domain == self.domain
-
-        normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
-        deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
+            if not helper.deprecated:
+                normal_helpers.append(helper)
+            else:
+                deprecated_helpers.append(helper)
+            track_load(len(helper.transactions))
 
         models_result = processor.get_models_to_update(
             self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
@@ -111,7 +116,10 @@ def process_stock(xforms, case_db=None):
     process the commtrack xml constructs in an incoming submission
     """
     if not case_db:
-        case_db = FormProcessorInterface(xforms[0].domain).casedb_cache()
+        case_db = FormProcessorInterface(xforms[0].domain).casedb_cache(
+            domain=xforms[0].domain,
+            load_src="process_stock",
+        )
     else:
         assert isinstance(case_db, AbstractCaseDbCache)
 
@@ -119,9 +127,13 @@ def process_stock(xforms, case_db=None):
     case_action_intents = []
     sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     for xform in sorted_forms:
-        actions_for_form = get_stock_actions(xform)
-        stock_report_helpers += actions_for_form.stock_report_helpers
-        case_action_intents += actions_for_form.case_action_intents
+        try:
+            actions_for_form = get_stock_actions(xform)
+            stock_report_helpers += actions_for_form.stock_report_helpers
+            case_action_intents += actions_for_form.case_action_intents
+        except MissingFormXml:
+            if not xform.is_deprecated:
+                raise
 
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
@@ -209,7 +221,7 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
     """
 
     # these come out latest first, so reverse them below
-    stock_transactions = (
+    stock_transactions = list(
         StockTransaction
         .get_ordered_transactions_for_stock(
             case_id=case_id, section_id=section_id, product_id=product_id)
@@ -217,6 +229,9 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
         .select_related('report')
     )
     balance = None
+    if stock_transactions:
+        domain = stock_transactions[0].report.domain
+        ledger_load_counter("rebuild_stock", domain)(len(stock_transactions))
     for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
             yield _DeleteStockTransaction(stock_transaction)

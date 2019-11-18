@@ -1,34 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
+import itertools
 import json
 
-import itertools
 from django.contrib import messages
-from django.urls import reverse
 from django.db.models.query import Prefetch
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.db.transaction import atomic
+from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
-from django.db.transaction import atomic
-
-from memoized import memoized
 from django.views.generic import View
+
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
 
 from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
+from corehq.apps.data_dictionary import util
+from corehq.apps.data_dictionary.models import (
+    PROPERTY_TYPE_CHOICES,
+    CaseProperty,
+    CaseType,
+)
 from corehq.apps.data_dictionary.util import save_case_property
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.data_dictionary import util
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty, PROPERTY_TYPE_CHOICES
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-
-from couchexport.writers import Excel2007ExportWriter
-from couchexport.models import Format
-
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 
@@ -115,14 +113,14 @@ def _export_data_dictionary(domain):
     )
     export_data = {}
     for case_type in queryset:
-        export_data[case_type.name] = [{
-            'Case Property': prop.name,
-            'Group': prop.group,
-            'Data Type': prop.data_type,
-            'Description': prop.description,
-            'Deprecated': prop.deprecated
+        export_data[case_type.name or _("No Name")] = [{
+            _('Case Property'): prop.name,
+            _('Group'): prop.group,
+            _('Data Type'): prop.data_type,
+            _('Description'): prop.description,
+            _('Deprecated'): prop.deprecated
         } for prop in case_type.properties.all()]
-    headers = ('Case Property', 'Group', 'Data Type', 'Description', 'Deprecated')
+    headers = (_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated'))
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [headers]) for tab_name in export_data]
@@ -173,7 +171,7 @@ class DataDictionaryView(BaseProjectDataView):
 
 class UploadDataDictionaryView(BaseProjectDataView):
     page_title = _("Upload Data Dictionary")
-    template_name = "data_dictionary/import_data_dict.html"
+    template_name = "hqwebapp/bulk_upload.html"
     urlname = 'upload_data_dict'
 
     @method_decorator(login_and_domain_required)

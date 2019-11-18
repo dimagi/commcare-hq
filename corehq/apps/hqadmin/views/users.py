@@ -1,13 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import itertools
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -22,35 +17,44 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.http.response import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.generic import FormView, TemplateView, View
+
+from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from lxml.builder import E
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from couchforms.openrosa_response import RESPONSE_XMLNS
+from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
-    check_lockout, domain_admin_required, login_or_basic, require_superuser)
+    check_lockout,
+    domain_admin_required,
+    login_or_basic,
+    require_superuser,
+)
+from corehq.apps.hqadmin.forms import (
+    AuthenticateAsForm,
+    DisableTwoFactorForm,
+    DisableUserForm,
+    SuperuserManagementForm,
+)
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
-from couchforms.openrosa_response import RESPONSE_XMLNS
-from dimagi.utils.django.email import send_HTML_email
-
-from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, SuperuserManagementForm, DisableTwoFactorForm, DisableUserForm)
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-
-from six.moves import filter
 
 
 class UserAdministration(BaseAdminSectionView):
@@ -187,17 +191,21 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def _parse_reports(xpath, xml_payload):
         reports = xml_payload.findall(xpath)
-        report_row_counts = {
-            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-            for report in reports
-            if 'report_id' in report.attrib
-        }
+        report_row_counts = {}
+        for report in reports:
+            if 'report_id' in report.attrib:
+                report_id = report.attrib['report_id']
+                if 'id' in report.attrib:
+                    report_id = '--'.join([report.attrib['id'], report_id])
+                report_row_count = len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                report_row_counts[report_id] = report_row_count
         return len(reports), report_row_counts
 
     @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        restore_id = restore_id_element.text if restore_id_element else None
+        # note: restore_id_element is ALWAYS falsy, so check explicitly for `None`
+        restore_id = restore_id_element.text if restore_id_element is not None else None
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
@@ -260,11 +268,12 @@ class AdminRestoreView(TemplateView):
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)
             else:
-                message = _('Unexpected restore response {}: {}. '
-                            'If you believe this is a bug please report an issue.').format(response.status_code,
-                                                                                           response.content)
+                message = _(
+                    'Unexpected restore response {}: {}. '
+                    'If you believe this is a bug please report an issue.'
+                ).format(response.status_code, response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
@@ -542,7 +551,8 @@ class AppBuildTimingsView(TemplateView):
                 build_application_zip(
                     include_multimedia_files=True,
                     include_index_files=True,
-                    app=app,
+                    domain=app.domain,
+                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',

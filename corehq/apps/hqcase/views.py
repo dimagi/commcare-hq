@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.contrib import messages
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
+from soil import DownloadBase
+
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.es.case_search import CasePropertyAggregation, CaseSearchES
-from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
-from corehq.apps.hqwebapp.decorators import use_select2_v4
+from corehq.apps.hqcase.tasks import (
+    delete_exploded_case_task,
+    explode_case_task,
+)
 from corehq.form_processor.utils import should_use_sql_backend
-from soil import DownloadBase
 
 
 class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
@@ -21,7 +20,6 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     template_name = "hqcase/explode_cases.html"
     page_title = "Explode Cases"
 
-    @use_select2_v4
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, *args, **kwargs):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
@@ -35,19 +33,8 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         context = super(ExplodeCasesView, self).get_context_data(**kwargs)
         context.update({
             'domain': self.domain,
-            'previous_explosions': self._get_previous_explosions()
         })
         return context
-
-    def _get_previous_explosions(self):
-        results = CaseSearchES().domain(self.domain).aggregation(
-            CasePropertyAggregation('explosions', 'cc_explosion_id')
-        ).size(0).run()
-
-        return sorted(
-            list(results.aggregations.explosions.counts_by_bucket().items()),
-            key=lambda x: -x[1]  # sorted by number of cases
-        )
 
     def post(self, request, domain):
         if 'explosion_id' in request.POST:

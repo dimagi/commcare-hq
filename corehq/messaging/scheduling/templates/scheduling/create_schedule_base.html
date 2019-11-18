@@ -3,42 +3,42 @@
 
 
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     /*
         Without doing this, the datepicker shows up behind the recipients buttons.
         It's z-index is set by jquery-ui within a style attribute on the element, so we update it here.
     */
     #ui-datepicker-div {
-        z-index: 10 !important;
+      z-index: 10 !important;
     }
     .form-horizontal .form-group > .controls-multiple > .row {
-        margin-left: 0px;
+      margin-left: 0px;
     }
     .form-horizontal .form-group > div .row select {
-        margin-left: 0px;
+      margin-left: 0px;
     }
     .controls-multiple .row div {
-        padding-left: 0px;
+      padding-left: 0px;
     }
     .day-of-month-choices-table {
-        width: 100%;
+      width: 100%;
     }
     .day-of-month-choices-cell {
-        width: 14%;
+      width: 14%;
     }
     .translation-controls {
-        margin-bottom: 15px;
+      margin-bottom: 15px;
     };
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'current_values' schedule_form.current_values %}
-    {% initial_page_data 'language_list' schedule_form.language_list %}
-    {% initial_page_data 'current_select2_user_recipients' schedule_form.current_select2_user_recipients %}
-    {% initial_page_data 'current_select2_user_group_recipients' schedule_form.current_select2_user_group_recipients %}
-    {% initial_page_data 'current_select2_user_organization_recipients' schedule_form.current_select2_user_organization_recipients %}
-    {% initial_page_data 'current_select2_location_types' schedule_form.current_select2_location_types %}
-    {% initial_page_data 'current_select2_case_group_recipients' schedule_form.current_select2_case_group_recipients %}
-    {% initial_page_data 'current_visit_scheduler_form' schedule_form.current_visit_scheduler_form %}
+  {% initial_page_data 'current_values' schedule_form.current_values %}
+  {% initial_page_data 'language_list' schedule_form.language_list %}
+  {% initial_page_data 'current_select2_user_recipients' schedule_form.current_select2_user_recipients %}
+  {% initial_page_data 'current_select2_user_group_recipients' schedule_form.current_select2_user_group_recipients %}
+  {% initial_page_data 'current_select2_user_organization_recipients' schedule_form.current_select2_user_organization_recipients %}
+  {% initial_page_data 'current_select2_location_types' schedule_form.current_select2_location_types %}
+  {% initial_page_data 'current_select2_case_group_recipients' schedule_form.current_select2_case_group_recipients %}
+  {% initial_page_data 'current_visit_scheduler_form' schedule_form.current_visit_scheduler_form %}
 {% endblock %}

@@ -7,6 +7,31 @@
         "table_id": "location_hierarchy",
         "display_name": "Location Hierarchy",
         "configured_filter":  {
+            "type": "and",
+            "filters": [
+                {
+                    "operator": "eq",
+                    "expression": {
+                         "datatype": null,
+                         "type": "property_name",
+                         "property_name": "is_active"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": true
+                },
+                {
+                    "operator": "not_eq",
+                    "expression": {
+                         "datatype": null,
+                         "type": "property_name",
+                         "property_name": "base_doc"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "CouchUser-Deleted"
+                }
+            ]
         },
         "configured_indicators": [
             {

@@ -1,60 +1,74 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
 import time
 import uuid
-
-from django.db.transaction import atomic
-from six.moves import map
-
-from couchdbkit import PreconditionFailed
+from collections import defaultdict
+from datetime import datetime
+from functools import reduce
+from importlib import import_module
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.template.loader import render_to_string
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration.api import set_tz_migration_complete
-from corehq.blobs import CODES as BLOB_CODES
-from corehq.blobs.mixin import BlobMixin
-from corehq.dbaccessors.couchapps.all_docs import \
-    get_all_doc_ids_for_domain_grouped_by_db
-from corehq.util.soft_assert import soft_assert
-from couchforms.analytics import domain_has_submission_in_last_30_days
-from dimagi.ext.couchdbkit import (
-    Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-    DocumentSchema, SchemaProperty, DictProperty,
-    StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
-)
-from django.urls import reverse
 from django.db import models
 from django.db.models import F
+from django.db.transaction import atomic
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import quickcache
+
+from couchdbkit import PreconditionFailed
+from memoized import memoized
+
+from couchforms.analytics import domain_has_submission_in_last_30_days
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+    TimeProperty,
+)
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
-    iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
+    apply_update,
+    get_safe_write_kwargs,
+    iter_bulk_delete,
+    iter_docs,
 )
-from memoized import memoized
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from django.utils.html import format_html
 from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
-from itertools import chain
+
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.appstore.models import SnapshotMixin
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs import CODES as BLOB_CODES
+from corehq.blobs.mixin import BlobMixin
+from corehq.dbaccessors.couchapps.all_docs import (
+    get_all_doc_ids_for_domain_grouped_by_db,
+)
+from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from langcodes import langs as all_langs
-from collections import defaultdict
-from importlib import import_module
 
-from .exceptions import InactiveTransferDomainException, NameUnavailableException
-
-from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
-
+from .exceptions import (
+    InactiveTransferDomainException,
+    NameUnavailableException,
+)
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
-from functools import reduce
-from six import unichr
 
 lang_lookup = defaultdict(str)
 
@@ -263,10 +277,24 @@ class DayTimeWindow(DocumentSchema):
 
 
 class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
-    """Domain is the highest level collection of people/stuff
-       in the system.  Pretty much everything happens at the
-       domain-level, including user membership, permission to
-       see data, reports, charts, etc."""
+    """
+        Domain is the highest level collection of people/stuff
+        in the system.  Pretty much everything happens at the
+        domain-level, including user membership, permission to
+        see data, reports, charts, etc.
+
+        Exceptions: accounting has some models that combine multiple domains,
+        which make "enterprise" multi-domain features like the enterprise dashboard possible.
+
+        Naming conventions:
+        Most often, variables representing domain names are named `domain`, and
+        variables representing domain objects are named `domain_obj`. New code should
+        follow this convention, unless it's in an area that consistently uses `domain`
+        for the object and `domain_name` for the string.
+
+        There's a `project` attribute attached to requests that's a domain object.
+        In spite of this, don't use `project` in new code.
+   """
 
     _blobdb_type_code = BLOB_CODES.domain
 
@@ -358,6 +386,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
+
+    # Allowed number of max OData feeds that this domain can create.
+    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    odata_feed_limit = IntegerProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -468,8 +500,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @staticmethod
     @quickcache(['name'], timeout=24 * 60 * 60)
     def is_secure_session_required(name):
-        domain = Domain.get_by_name(name)
-        return domain and domain.secure_sessions
+        domain_obj = Domain.get_by_name(name)
+        return domain_obj and domain_obj.secure_sessions
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -495,17 +527,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return Domain.active_for_couch_user(couch_user, is_active=is_active)
         else:
             return []
-
-    @classmethod
-    def field_by_prefix(cls, field, prefix=''):
-        # unichr(0xfff8) is something close to the highest character available
-        res = cls.view("domain/fields_by_prefix",
-                       group=True,
-                       startkey=[field, True, prefix],
-                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
-        vals = [(d['value'], d['key'][2]) for d in res]
-        vals.sort(reverse=True)
-        return [(v[1], v[0]) for v in vals]
 
     def add(self, model_instance, is_active=True):
         """
@@ -546,17 +567,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return list(set(a.application_version for a in apps))
 
     @cached_property
-    def has_case_management(self):
-        for app in self.full_applications():
-            if app.doc_type == 'Application':
-                if app.has_case_management():
-                    return True
-        return False
-
-    @cached_property
     def has_media(self):
+        from corehq.apps.app_manager.util import is_remote_app
         for app in self.full_applications():
-            if app.doc_type == 'Application' and app.has_media():
+            if not is_remote_app(app) and app.has_media():
                 return True
         return False
 
@@ -578,9 +592,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def readable_languages(self):
         return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
-
-    def __unicode__(self):
-        return self.name
 
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60)
@@ -641,14 +652,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
         from corehq.apps.domain.utils import get_domain_url_slug
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
-        if Domain.get_by_name(name):
+        if domain_or_deleted_domain_exists(name):
             prefix = name
             while len(prefix):
                 name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
-                if Domain.get_by_name(name):
+                if domain_or_deleted_domain_exists(name):
                     # should never happen
                     raise NameUnavailableException
                 if len(name) <= max_length:
@@ -668,7 +680,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return [d['key'] for d in cls.get_all(include_docs=False)]
+        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
     def get_all_ids(cls):
@@ -682,14 +694,24 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
+        ).all()] + [d['key'] for d in Domain.view(
+            "domain/deleted_domains",
+            startkey=prefix,
+            endkey=prefix + "zzz",
+            reduce=False,
+            include_docs=False
         ).all()]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+
         self.last_modified = datetime.utcnow()
         if not self._rev:
+            if domain_or_deleted_domain_exists(self.name):
+                raise NameUnavailableException(self.name)
             # mark any new domain as timezone migration complete
             set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
@@ -785,13 +807,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
-            def convert_form_unique_id_function(form_unique_id):
-                from corehq.apps.app_manager.models import FormBase
-                form = FormBase.get_form(form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                return form_copy.unique_id
+            def convert_form_unique_id_function(app_id, form_unique_id):
+                app = get_app(self.name, app_id)
+                form = app.get_form(form_unique_id)
+                m_index, f_index = app.get_form_location(form.unique_id)
+                app_copy = new_app_components[app._id]
+                form_copy = new_app_components[app._id].get_module(m_index).get_form(f_index)
+                return app_copy.get_id, form_copy.unique_id
 
             if share_reminders:
                 for rule in AutomaticUpdateRule.by_domain(
@@ -931,32 +953,38 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def copies_of_parent(self):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
-    def delete(self):
+    def delete(self, leave_tombstone=False):
+        if not leave_tombstone and not settings.UNIT_TESTING:
+            raise ValueError(
+                'Cannot delete domain without leaving a tombstone except during testing')
         self._pre_delete()
-        super(Domain, self).delete()
+        if leave_tombstone:
+            domain = self.get(self._id)
+            if not domain.doc_type.endswith('-Deleted'):
+                domain.doc_type = '{}-Deleted'.format(domain.doc_type)
+                domain.save()
+        else:
+            super().delete()
+
+        # The save signals can undo effect of clearing the cache within the save
+        # because they query the stale view (but attaches the up to date doc).
+        # This is only a problem on delete/soft-delete,
+        # because these change the presence in the index, not just the doc content.
+        # Since this is rare, I'm opting to just re-clear the cache here
+        # rather than making the signals use a strict lookup or something like that.
+        self.clear_caches()
 
     def _pre_delete(self):
-        from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
 
-        dynamic_deletion_operations = []
-        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
-        for result in results:
-            response = result[1]
-            if isinstance(response, Exception):
-                message = "Error occurred during domain pre_delete {}".format(self.name)
-                raise DomainDeleteException(message, response)
-            elif response:
-                assert isinstance(response, list)
-                dynamic_deletion_operations.extend(response)
+        # delete SQL models first because UCR tables are indexed by configs in couch
+        apply_deletion_operations(self.name)
 
-        # delete all associated objects
+        # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-        apply_deletion_operations(self.name, dynamic_deletion_operations)
-
-    def all_media(self, from_apps=None):  # todo add documentation or refactor
+    def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
@@ -974,7 +1002,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             for app in apps:
                 if app.doc_type != 'Application':
                     continue
-                for _, m in app.get_media_objects():
+                for _, m in app.get_media_objects(remove_unused=True):
                     if m.get_id not in media_ids:
                         media.append(m)
                         media_ids.add(m.get_id)
@@ -1268,23 +1296,9 @@ class DomainAuditRecordEntry(models.Model):
 
     @classmethod
     @atomic
-    def update_calculations(cls, domain, model, method=None):
+    def update_calculations(cls, domain, property_to_update):
         obj, is_new = cls.objects.get_or_create(domain=domain)
-
-        config = {
-            ('retrieve_download', None): "cp_n_downloads_custom_exports",
-            ('ConfigurableReportView', None): "cp_n_viewed_ucr_reports",
-            ('ProjectReportDispatcher', None): "cp_n_viewed_non_ucr_reports",
-            ('ReportConfiguration', 'create'): "cp_n_reports_created",
-            ('ReportConfiguration', 'update'): "cp_n_reports_edited",
-            ('ReportNotification', None): "cp_n_saved_scheduled_reports",
-            ('release_build', None): "cp_n_click_app_deploy",
-            ('form_source', None): "cp_n_form_builder_entered",
-            ('patch_xform', None): "cp_n_saved_app_changes",
-            ('edit_module_attr', None): "cp_n_saved_app_changes",
-            ('edit_app_attr', None): "cp_n_saved_app_changes"
-        }
-
-        property_to_update = config.get((model, method))
         setattr(obj, property_to_update, F(property_to_update) + 1)
-        obj.save()
+        # update_fields prevents the possibility of a race condition
+        # https://stackoverflow.com/a/1599090
+        obj.save(update_fields=[property_to_update])

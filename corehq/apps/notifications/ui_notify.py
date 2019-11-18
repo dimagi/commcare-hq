@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.conf import settings
 
 from corehq.toggles import was_user_created_after
@@ -108,4 +107,25 @@ DATA_FIND_BY_ID = StaticUINotify(
     'data_find_by_id_sept2018',
     ends_on=datetime(2018, 11, 1),
     only_visible_for_users_created_before=datetime(2018, 9, 26),
+)
+
+FORMS_CASES_URL_IN_EXPORTS = StaticUINotify(
+    'forms_cases_url_in_exports_jan2019',
+    ends_on=datetime(2019, 2, 14)
+)
+
+USERS_PERMISSIONS_UPDATES = StaticUINotify(
+    'users_permissions_updates_april2019',
+    ends_on=datetime(2019, 6, 3),
+    only_visible_for_users_created_before=datetime(2019, 4, 3),
+)
+
+ECD_PREVIEW_UPDATE = StaticUINotify(
+    'ecd_preview_update_jul2019',
+    ends_on=datetime(2019, 9, 12),
+)
+
+BI_PREVIEW_UPDATE = StaticUINotify(
+    'bi_preview_update_aug2019',
+    ends_on=datetime(2019, 12, 31),
 )

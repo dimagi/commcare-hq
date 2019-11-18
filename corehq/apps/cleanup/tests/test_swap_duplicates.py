@@ -1,18 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 
 from django.core.management import call_command
 from django.test import TestCase
+
 from testil import tempdir
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import \
-    FIXED_FORM_PROBLEM_TEMPLATE, BAD_FORM_PROBLEM_TEMPLATE
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
-from io import open
+
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    BAD_FORM_PROBLEM_TEMPLATE,
+    FIXED_FORM_PROBLEM_TEMPLATE,
+)
+from corehq.apps.receiverwrapper.util import submit_form_locally
 
 DOMAIN = "test"
 
@@ -22,7 +23,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     root = os.path.dirname(__file__)
 
     def _submit_form(self, id_=None):
-        xform_source = self.get_xml('xform_template').format(xmlns="foo", name="bar", id=id_ or uuid.uuid4().hex)
+        xform_source = self.get_xml('xform_template').decode('utf-8').format(xmlns="foo", name="bar", id=id_ or uuid.uuid4().hex)
         result = submit_form_locally(xform_source, DOMAIN)
         return result.xform
 
@@ -43,13 +44,13 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
             bad_form = XFormInstance.get(bad_form_id)
             self.assertEqual(bad_form.doc_type, "XFormDuplicate")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 bad_form.problem, BAD_FORM_PROBLEM_TEMPLATE.format(good_dup_id, "")
             )
 
             good_dup_form = XFormInstance.get(good_dup_id)
             self.assertEqual(good_dup_form.doc_type, "XFormInstance")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 good_dup_form.problem, FIXED_FORM_PROBLEM_TEMPLATE.format(
                     id_=bad_form_id, datetime_=""
                 )

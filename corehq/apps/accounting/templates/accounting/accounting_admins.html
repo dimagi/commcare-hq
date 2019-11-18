@@ -6,89 +6,89 @@
 {% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
 
 {% block pagination_header %}
-    <h2>{% trans 'Manage Accounting Admins' %}</h2>
-    <p class="lead">
+  <h2>{% trans 'Manage Accounting Admins' %}</h2>
+  <p class="lead">
     {% blocktrans %}
-        Add or delete users that can view and edit accounting settings.
+      Add or delete users that can view and edit accounting settings.
     {% endblocktrans %}
-    </p>
+  </p>
 {% endblock %}
 
 {% block pagination_templates %}
-    <script type="text/html" id="accounting-admin-row">
-        <td class="col-sm-8">
-            <a data-bind="text: username"></a>
-        </td>
-        <td class="col-sm-4">
-            <button type="button"
-                    data-toggle="modal"
-                    data-bind="
+  <script type="text/html" id="accounting-admin-row">
+    <td class="col-sm-8">
+      <a data-bind="text: username"></a>
+    </td>
+    <td class="col-sm-4">
+      <button type="button"
+              data-toggle="modal"
+              data-bind="
                         attr: {
                             'data-target': '#remove-admin-' + id
                         }
                     "
-                    class="btn btn-danger">
-                <i class="fa fa-remove"></i> {% trans 'Remove' %}
-            </button>
+              class="btn btn-danger">
+        <i class="fa fa-remove"></i> {% trans 'Remove' %}
+      </button>
 
-            <div class="modal fade"
-                 data-bind="
+      <div class="modal fade"
+           data-bind="
                     attr: {
                         id: 'remove-admin-' + id
                     }
                  ">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h4 class="modal-title">
-                                {% blocktrans %}
-                                    Remove <strong data-bind="text: username"></strong>
-                                    from admins?
-                                {% endblocktrans %}
-                            </h4>
-                        </div>
-                        <div class="modal-body">
-                            <p>
-                                {% blocktrans %}
-                                Yes, remove <strong data-bind="text: username"></strong>'s
-                                Accounting Admin privileges.
-                                {% endblocktrans %}
-                            </p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button"
-                                    class="btn btn-default"
-                                    data-dismiss="modal">
-                                {% trans 'Cancel' %}
-                            </button>
-                            <button type="button"
-                                    class="btn btn-danger delete-item-confirm"
-                                    data-loading-text="{% trans 'Removing User...' %}">
-                                <i class="fa fa-remove"></i> {% trans 'Remove User' %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">
+                {% blocktrans %}
+                  Remove <strong data-bind="text: username"></strong>
+                  from admins?
+                {% endblocktrans %}
+              </h4>
             </div>
-        </td>
-    </script>
-    <script type="text/html" id="accounting-admin-new">
-        <td class="col-sm-8">
-            <a data-bind="text: username"></a>
-        </td>
-        <td class="col-sm-4">
-            <span class="label label-success">{% trans 'New' %}</span>
-        </td>
-    </script>
-    <script type="text/html" id="accounting-admin-removed">
-        <td class="col-sm-8">
-            <a data-bind="text: username"></a>
-        </td>
-        <td class="col-sm-4">
-            <span class="label label-default">{% trans 'Removed' %}</span>
-        </td>
-    </script>
+            <div class="modal-body">
+              <p>
+                {% blocktrans %}
+                  Yes, remove <strong data-bind="text: username"></strong>'s
+                  Accounting Admin privileges.
+                {% endblocktrans %}
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-default"
+                      data-dismiss="modal">
+                {% trans 'Cancel' %}
+              </button>
+              <button type="button"
+                      class="btn btn-danger delete-item-confirm"
+                      data-loading-text="{% trans 'Removing User...' %}">
+                <i class="fa fa-remove"></i> {% trans 'Remove User' %}
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </td>
+  </script>
+  <script type="text/html" id="accounting-admin-new">
+    <td class="col-sm-8">
+      <a data-bind="text: username"></a>
+    </td>
+    <td class="col-sm-4">
+      <span class="label label-success">{% trans 'New' %}</span>
+    </td>
+  </script>
+  <script type="text/html" id="accounting-admin-removed">
+    <td class="col-sm-8">
+      <a data-bind="text: username"></a>
+    </td>
+    <td class="col-sm-4">
+      <span class="label label-default">{% trans 'Removed' %}</span>
+    </td>
+  </script>
 
 {% endblock %}

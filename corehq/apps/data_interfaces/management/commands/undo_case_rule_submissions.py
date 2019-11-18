@@ -1,12 +1,11 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
-from corehq.apps.data_interfaces.models import CaseRuleUndoer
-from dateutil.parser import parse
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
-from six.moves import input
+
+from dateutil.parser import parse
+
+from corehq.apps.data_interfaces.models import CaseRuleUndoer
 
 
 class Command(BaseCommand):
@@ -30,7 +29,7 @@ class Command(BaseCommand):
 
     def validate_since(self, since):
         if since:
-            if not re.match('^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$', since):
+            if not re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$', since):
                 raise CommandError("Please enter UTC timestamp for --since in the format: YYYY-MM-DD HH:MM:SS")
             return parse(since)
         else:

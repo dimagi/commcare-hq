@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.es.cases import CaseES
-import six
 
 
 def scroll_case_ids_by_domain_and_case_type(domain, case_type, chunk_size=100):
@@ -20,7 +17,7 @@ def scroll_case_ids_by_domain_and_case_type(domain, case_type, chunk_size=100):
     result = []
 
     for case_id in query.scroll():
-        if not isinstance(case_id, six.string_types):
+        if not isinstance(case_id, str):
             raise ValueError("Something is wrong with the query, expected ids only")
 
         result.append(case_id)

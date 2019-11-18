@@ -1,23 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import subprocess
+
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 from compressor.exceptions import FilterError
 from compressor.filters import CompilerFilter
 from compressor.js import JsCompressor
 from compressor.utils.stringformat import FormattableString as fstr
-from django.conf import settings
-from django.utils.safestring import mark_safe
 
 
 # For use with node.js' uglifyjs minifier
 # Code taken from: https://roverdotcom.github.io/blog/2014/05/28/javascript-error-reporting-with-source-maps-in-django/
 class UglifySourcemapFilter(CompilerFilter):
     command = (
-        b"uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
-        b" --source-map-url {mapurl} --source-map-root {maproot} -c -m")
+        "uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
+        " --source-map-url {mapurl} --source-map-root {maproot} -c -m")
 
     def input(self, **kwargs):
         return self.content
@@ -37,11 +35,11 @@ class UglifySourcemapFilter(CompilerFilter):
             else:
                 infiles.append(infile[2])
 
-        options['infiles'] = b' '.join(f for f in infiles)
+        options['infiles'] = ' '.join(f for f in infiles)
 
-        options['mapfile'] = kwargs['outfile'].replace(b'.js', b'.map.js')
+        options['mapfile'] = kwargs['outfile'].replace('.js', '.map.js')
 
-        options['mapurl'] = b'{}{}'.format(
+        options['mapurl'] = '{}{}'.format(
             settings.STATIC_URL, options['mapfile']
         )
 
@@ -75,10 +73,9 @@ class JsUglifySourcemapCompressor(JsCompressor):
     def output(self, mode='file', forced=False):
         content = self.filter_input(forced)
         if not content:
-            return b''
+            return ''
 
-        concatenated_content = b'\n'.join(
-            c.encode(self.charset) for c in content)
+        concatenated_content = '\n'.join(c for c in content)
 
         if settings.COMPRESS_ENABLED or forced:
             js_compress_dir = os.path.join(

@@ -1,17 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from crispy_forms.bootstrap import PrependedText
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
-
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.forms import FormListForm
-from corehq.apps.products.models import Product
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
-from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from crispy_forms.bootstrap import PrependedText
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
+
+from corehq.apps.consumption.shortcuts import (
+    get_default_monthly_consumption,
+    set_default_consumption_for_product,
+)
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.products.models import SQLProduct
 
 
 class CommTrackSettingsForm(forms.Form):
@@ -61,7 +62,6 @@ class CommTrackSettingsForm(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
-        from .views import StockLevelsView
         domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -74,7 +74,7 @@ class CommTrackSettingsForm(forms.Form):
                 'stock_emergency_level',
                 'stock_understock_threshold',
                 'stock_overstock_threshold'
-            ) if not LOCATION_TYPE_STOCK_RATES.enabled(domain) else None,
+            ),
             Fieldset(
                 _('Consumption Settings'),
                 PrependedText('use_auto_consumption', ''),
@@ -117,17 +117,17 @@ class ConsumptionForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         layout = []
-        products = Product.by_domain(domain)
-        for p in products:
-            field_name = 'default_%s' % p._id
-            display = _('Default %(product_name)s') % {'product_name': p.name}
+        products = SQLProduct.active_objects.filter(domain=domain)
+        for product in products:
+            field_name = 'default_%s' % product.product_id
+            display = _('Default %(product_name)s') % {'product_name': product.name}
             layout.append(field_name)
             self.fields[field_name] = forms.DecimalField(
                 label=display,
                 required=False,
                 initial=get_default_monthly_consumption(
                     self.domain,
-                    p._id,
+                    product.product_id,
                     None,
                     None
                 )
@@ -143,56 +143,12 @@ class ConsumptionForm(forms.Form):
     def save(self):
         for field in self.fields:
             val = self.cleaned_data[field]
-            product = Product.get(field.split('_')[1])
+            product = SQLProduct.objects.get(product_id=field.split('_')[1])
             assert product.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
-                product._id, self.domain
+                product.product_id, self.domain
             )
             set_default_consumption_for_product(
                 self.domain,
-                product._id,
+                product.product_id,
                 val,
             )
-
-
-class LocationTypeStockLevels(forms.Form):
-    """
-    Sub form for configuring stock levels for a specific location type
-    """
-    emergency_level = forms.DecimalField(
-        label=ugettext_noop("Emergency Level (months)"),
-        required=True,
-    )
-    understock_threshold = forms.DecimalField(
-        label=ugettext_noop("Low Stock Level (months)"),
-        required=True,
-    )
-    overstock_threshold = forms.DecimalField(
-        label=ugettext_noop("Overstock Level (months)"),
-        required=True,
-    )
-
-    def clean(self):
-        cleaned_data = super(LocationTypeStockLevels, self).clean()
-        emergency = cleaned_data.get('emergency_level')
-        understock = cleaned_data.get('understock_threshold')
-        overstock = cleaned_data.get('overstock_threshold')
-        if not self.errors and not (emergency < understock < overstock):
-            raise forms.ValidationError(_(
-                "The Emergency Level must be less than the Low Stock Level, "
-                "which much must be less than the Overstock Level."
-            ))
-        return cleaned_data
-
-
-class StockLevelsForm(FormListForm):
-    """
-    Form for specifying stock levels per location type
-    """
-
-    child_form_class = LocationTypeStockLevels
-    columns = [
-        {'label': _("Location Type"), 'key': 'loc_type'},
-        'emergency_level',
-        'understock_threshold',
-        'overstock_threshold',
-    ]

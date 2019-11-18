@@ -1,6 +1,4 @@
 # Stub models file
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals

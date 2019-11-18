@@ -1,33 +1,43 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from functools import cmp_to_key
+
+from dimagi.utils.logging import notify_exception
+
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.formplayer_api.smsforms.api import (
+    TouchformsError,
+    current_question,
+)
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
     send_sms_to_verified_number,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.logging import notify_exception
-from corehq.apps.smsforms.app import get_responses, start_session
-from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
-from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
+from corehq.apps.sms.messages import *
+from corehq.apps.sms.models import (
+    WORKFLOW_KEYWORD,
+    Keyword,
+    KeywordAction,
+    MessagingEvent,
+)
+from corehq.apps.sms.util import (
+    get_formplayer_exception,
+    touchforms_error_is_config_error,
+)
+from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.groups.models import Group
-from corehq.apps.formplayer_api.smsforms.api import current_question, TouchformsError
-from corehq.apps.app_manager.models import Form
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
-from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
-from corehq import toggles
-from six.moves import filter
-
-
-LOCATION_KEYWORD = 'LOCATION'
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    ScheduleInstance,
+)
 
 
 class StructuredSMSException(Exception):
@@ -55,7 +65,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
         "#START": global_keyword_start,
         "#STOP": global_keyword_stop,
         "#CURRENT": global_keyword_current,
-        "#UPDATE": global_keyword_update
     }
 
     inbound_metadata = MessageMetadata(
@@ -65,58 +74,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
 
     fcn = global_keywords.get(global_keyword, global_keyword_unknown)
     return fcn(v, text, msg, text_words, open_sessions)
-
-
-def can_update_location_via_sms(domain):
-    return toggles.ALLOW_LOCATION_UPDATE_OVER_SMS.enabled(domain)
-
-
-def global_keyword_update(v, text, msg, text_words, open_sessions):
-
-    outbound_metadata = MessageMetadata(
-        workflow=WORKFLOW_KEYWORD,
-    )
-
-    if v.owner_doc_type != 'CommCareUser':
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v), metadata=outbound_metadata)
-        return True
-
-    if len(text_words) > 1:
-        keyword = text_words[1]
-        if keyword.upper() == LOCATION_KEYWORD and can_update_location_via_sms(v.domain):
-            site_code = text_words[2:]
-            if not site_code:
-                send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
-                                            metadata=outbound_metadata)
-                return True
-
-            site_code = site_code[0].lower()
-
-            location = SQLLocation.objects.get_or_None(domain=v.domain,
-                                                       site_code=site_code)
-            if location:
-                v.owner.set_location(location)
-                send_sms_to_verified_number(
-                    v,
-                    get_message(MSG_UPDATE_LOCATION_SUCCESS),
-                    metadata=outbound_metadata
-                )
-                return True
-            else:
-                send_sms_to_verified_number(
-                    v,
-                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, v, context=[site_code]),
-                    metadata=outbound_metadata
-                )
-                return True
-        else:
-            send_sms_to_verified_number(
-                v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v, (keyword,)), metadata=outbound_metadata
-            )
-    else:
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE, v),
-                                    metadata=outbound_metadata)
-    return True
 
 
 def global_keyword_start(v, text, msg, text_words, open_sessions):
@@ -154,7 +111,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             reminder_id=session.reminder_id,
             xforms_session_couch_id=session._id,
         )
-        
+
         resp = current_question(session.session_id, v.domain)
         send_sms_to_verified_number(v, resp.event.text_prompt,
             metadata=outbound_metadata)
@@ -334,13 +291,13 @@ def get_case_id(contact, case=None):
     return case_id
 
 
-def get_app_module_form(form_unique_id, logged_subevent=None):
+def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     """
     Returns (app, module, form, error, error_code)
     """
     try:
-        form = Form.get_form(form_unique_id)
-        app = form.get_app()
+        app = get_app(domain, app_id)
+        form = app.get_form(form_unique_id)
         module = form.get_module()
         return (app, module, form, False, None)
     except:
@@ -413,8 +370,8 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
-    app, module, form, error_occurred, error_code = get_app_module_form(
-        survey_keyword_action.form_unique_id, logged_subevent)
+    app, module, form, error_occurred, error_code = get_app_module_form(domain,
+        survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
         clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
@@ -531,7 +488,8 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            form = Form.get_form(action.form_unique_id)
+            app = get_app(survey_keyword.domain, action.app_id)
+            form = app.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
     return False
@@ -650,7 +608,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         subevent.save()
 
     # Process structured sms actions first
-    actions = sorted(survey_keyword.keywordaction_set.all(), cmp=cmp_fcn)
+    actions = sorted(survey_keyword.keywordaction_set.all(), key=cmp_to_key(cmp_fcn))
     for survey_keyword_action in actions:
         if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
             contact = sender
@@ -688,6 +646,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 content.set_context(case=case)
             elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
                 content = SMSSurveyContent(
+                    app_id=survey_keyword_action.app_id,
                     form_unique_id=survey_keyword_action.form_unique_id,
                     expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
                 )

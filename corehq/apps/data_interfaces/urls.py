@@ -1,26 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import include, url
+
 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
-    CaseGroupListView,
-    CaseGroupCaseManagementView,
-    ArchiveFormView,
-    XFormManagementView,
-    XFormManagementStatusView,
-    AutomaticUpdateRuleListView,
-    xform_management_job_poll,
-    default,
     AddCaseRuleView,
+    AutomaticUpdateRuleListView,
+    CaseGroupCaseManagementView,
+    CaseGroupListView,
     EditCaseRuleView,
-    find_by_id,
     ExploreCaseDataView,
+    XFormManagementStatusView,
+    XFormManagementView,
+    default,
+    find_by_id,
+    xform_management_job_poll,
 )
+
 from .interfaces import FormManagementMode
 
-
 edit_data_urls = [
-    url(r'^archive_forms/$', ArchiveFormView.as_view(), name=ArchiveFormView.urlname),
     url(r'^xform_management/$', XFormManagementView.as_view(), name=XFormManagementView.urlname),
     url(
         r'^xform_management/status/(?P<mode>{archive}|{restore})/(?P<download_id>{id_regex})/$'.format(

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 ONGOING_NON_REPORTING = _('SMS report MISSING from these facilities over the past 3 weeks! Please follow up:\n%s')

@@ -1,8 +1,8 @@
 hqDefine("app_manager/js/details/case_list_callout", function () {
     var caseListLookupViewModel = function ($el, state, lang, saveButton) {
         'use strict';
-        var self = this,
-            detail_type = $el.data('detail-type');
+        var self = {};
+        var detailType = $el.data('detail-type');
 
         var observableKeyValue = function (obs) {
             var self = {};
@@ -21,28 +21,27 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             $el.find(".case-list-lookup-icon button").on("click", _fireChange); // Trigger save button when icon upload buttons are clicked
         };
 
-        var _remove_empty = function (type) {
+        var _removeEmpty = function (type) {
             self[type].remove(function (t) {
-                var is_blank = (!t.key() && !t.value());
-                return is_blank;
+                return (!t.key() && !t.value());
             });
         };
 
-        self.add_item = function (type) {
-            _remove_empty(type);
+        self.addItem = function (type) {
+            _removeEmpty(type);
             var data = (type === 'extras') ? {key: '', value: ''} : {key: ''};
             self[type].push(observableKeyValue(data));
         };
 
-        self.remove_item = function (type, item) {
+        self.removeItem = function (type, item) {
             self[type].remove(item);
             if (self[type]().length === 0) {
-                self.add_item(type);
+                self.addItem(type);
             }
             _fireChange();
         };
 
-        var _trimmed_extras = function () {
+        var _trimmedExtras = function () {
             return _.compact(_.map(self.extras(), function (extra) {
                 if (!(extra.key() === "" && extra.value() === "")) {
                     return {key: extra.key(), value: extra.value()};
@@ -50,7 +49,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             }));
         };
 
-        var _trimmed_responses = function () {
+        var _trimmedResponses = function () {
             return _.compact(_.map(self.responses(), function (response) {
                 if (response.key() !== "") {
                     return {key: response.key()};
@@ -59,25 +58,23 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
         };
 
         self.serialize = function () {
-            var image_path = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
+            var imagePath = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
 
-            var data = {
+            return {
                 lookup_enabled: self.lookup_enabled(),
                 lookup_autolaunch: self.lookup_autolaunch(),
                 lookup_action: self.lookup_action(),
                 lookup_name: self.lookup_name(),
-                lookup_extras: _trimmed_extras(),
-                lookup_responses: _trimmed_responses(),
-                lookup_image: image_path,
+                lookup_extras: _trimmedExtras(),
+                lookup_responses: _trimmedResponses(),
+                lookup_image: imagePath,
                 lookup_display_results: self.lookup_display_results(),
                 lookup_field_header: self.lookup_field_header.val(),
                 lookup_field_template: self.lookup_field_template(),
             };
-
-            return data;
         };
 
-        var _validate_inputs = function (errors) {
+        var _validateInputs = function (errors) {
             errors = errors || [];
             $el.find('input[required]').each(function () {
                 var $this = $(this);
@@ -95,12 +92,12 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             return errors;
         };
 
-        var _validate_extras = function (errors) {
+        var _validateExtras = function (errors) {
             errors = errors || [];
-            var $extras = $el.find("." + detail_type + "-extras"),
+            var $extras = $el.find("." + detailType + "-extras"),
                 $extra_help = $extras.find(".help-block");
 
-            if (!_trimmed_extras().length) {
+            if (!_trimmedExtras().length) {
                 $extras.addClass('has-error');
                 $extra_help.show();
                 errors.push($extra_help.text());
@@ -114,17 +111,17 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
 
         var _validate_responses = function (errors) {
             errors = errors || [];
-            var $responses = $el.find("." + detail_type + "-responses"),
-                $response_help = $responses.find(".help-block");
+            var $responses = $el.find("." + detailType + "-responses"),
+                $responseHelp = $responses.find(".help-block");
 
-            if (!_trimmed_responses().length) {
+            if (!_trimmedResponses().length) {
                 $responses.addClass('has-error');
-                $response_help.show();
-                errors.push($response_help.text());
+                $responseHelp.show();
+                errors.push($responseHelp.text());
             }
             else {
                 $responses.removeClass('has-error');
-                $response_help.hide();
+                $responseHelp.hide();
             }
             return errors;
         };
@@ -137,8 +134,8 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             });
 
             if (self.lookup_enabled()) {
-                _validate_inputs(errors);
-                _validate_extras(errors);
+                _validateInputs(errors);
+                _validateExtras(errors);
                 _validate_responses(errors);
             }
 
@@ -167,10 +164,10 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
         }));
 
         if (self.extras().length === 0) {
-            self.add_item('extras');
+            self.addItem('extras');
         }
         if (self.responses().length === 0) {
-            self.add_item('responses');
+            self.addItem('responses');
         }
 
         self.lookup_display_results = ko.observable(state.lookup_display_results);
@@ -214,10 +211,12 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
         });
 
         self.initSaveButtonListeners(self.$el);
+
+        return self;
     };
 
     var createCaseListLookupViewModel = function ($el, state, lang, saveButton) {
-        return new caseListLookupViewModel($el, state, lang, saveButton);
+        return caseListLookupViewModel($el, state, lang, saveButton);
     };
 
     return {

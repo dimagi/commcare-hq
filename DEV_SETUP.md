@@ -3,15 +3,31 @@ Setting up CommCare HQ for Developers
 
 Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
+### (Optional) Copying data from an existing HQ install
+
+If you're setting up HQ on a new computer, you may have an old, functional environment around.  If you don't want to start from scratch, back up your postgres and couch data.
+
+* PostgreSQL
+  * Create a pg dump.  You'll need to verify the host IP address:
+    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+* Couchdb
+  * From a non-docker install: Copy `/var/lib/couchdb2/`
+  * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+
+Save those backups to somewhere you'll be able to access from the new environment.
+
 ### Downloading and configuring CommCare HQ
 
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 2.7](https://www.python.org/downloads/)
+- [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
+  - `sudo apt install python3-distutils python3-dev`
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+- [Pango](https://pango.gnome.org/) 
+  - `sudo apt install libpango1.0-0`
 
 ##### macOS Notes
 
@@ -24,14 +40,15 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
-  - [libmagic](macappstore.org/libmagic)
+  - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
+  - [pango](https://www.pango.org/) (available via homebrew)
 
 #### Setup virtualenv
 
 Run the following commands:
 
     $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
+    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
 
 #### Clone and setup repo / requirements
 
@@ -41,17 +58,18 @@ Once all the dependencies are in order, please do the following:
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
-    $ pip install -r requirements/requirements.txt
+    $ setvirtualenvproject  # optional - sets this directory as the project root
 
-(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+Next, install the appropriate requirements (only one is necessary).
 
-There is also a separate collection of Dimagi dev oriented tools that you can install:
+* Recommended for those developing CommCareHQ
+  * `$ pip install -r requirements/dev-requirements.txt`
+* For production environments
+  * `$ pip install -r requirements/prod-requirements.txt`
+* Minimum required packages
+  * `$ pip install -r requirements/requirements.txt`
 
-    $ pip install -r requirements/dev-requirements.txt
-
-And for production environments you may want:
-
-    $ pip install -r requirements/prod-requirements.txt
+(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
@@ -64,24 +82,36 @@ First create your `localsettings.py` file:
 
 Enter `localsettings.py` and do the following:
 - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist and are writeable. If they do not exist, create them.
-- Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
 - You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
 Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then run:
 
     $ mkdir sharedfiles
 
+### Set up docker services
+
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
-Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
-the command to run is
 
-    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
+### (Optional) Copying data from an existing HQ install
+
+If you previously created backups of another HQ install's data, you can now copy that to the new install.
+
+* Postgres
+  * Make sure postgres is running: `./scripts/docker ps`
+  * Make sure `psql` is installed
+    * Ubuntu: `$ sudo apt install postgresql postgresql-contrib`
+  * Restore the backup: `psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql`
+* Couchdb
+  * Stop couch `./scripts/docker stop couch`
+  * Copy the `couchdb2/` dir to `~/.local/share/dockerhq/couchdb2`.
+  * Start couch `./scripts/docker start couch`
+  * Fire up fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
 
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
-The easiest way to do this is using the docker instructions below.
+The easiest way to do this is using the docker instructions above.
 
 Populate your database:
 
@@ -94,8 +124,7 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-To set up elasticsearch indexes run the following (Ignore warnings
-related to Raven for the following two commands.):
+To set up elasticsearch indexes run the following:
 
     $ ./manage.py ptop_preindex
 
@@ -117,7 +146,7 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
     For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
     repository. Run the following commands:
 
-        $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        $ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
     For macOS: Install with Homebrew:
@@ -193,10 +222,10 @@ Install LESS and UglifyJS:
 
 For all STATICFILES changes (primarily LESS and JavaScript), run:
 
-    $ manage.py collectstatic
-    $ manage.py compilejsi18n
-    $ manage.py fix_less_imports_collectstatic
-    $ manage.py compress
+    $ ./manage.py collectstatic
+    $ ./manage.py compilejsi18n
+    $ ./manage.py fix_less_imports_collectstatic
+    $ ./manage.py compress
 
 
 #### Formplayer
@@ -206,6 +235,12 @@ Formplayer is a Java service that allows us to use applications on the web inste
 In `localsettings.py`:
 ```
 FORMPLAYER_URL = 'http://localhost:8010'
+LOCAL_APPS += ('django_extensions',)
+```
+
+When running HQ, be sure to use `runserver_plus`:
+```
+python manage.py runserver_plus
 ```
 
 Then you need to have formplayer running. There are a few options as described below.
@@ -247,11 +282,21 @@ re-fetching it using the same command above. Feel free to add it to your
 $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 ```
 
+#### Browser Settings
+
+We recommend disabling the cache. In Chrome, go to Dev Tools > Settings > Preferences > Network and check "Disable cache (while DevTools is open)"
+
 
 Running CommCare HQ
 -------------------
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
+
+```bash
+$ ./manage.py check_services
+```
+
+Some of the services listed there aren't necessary for very basic operation, but it can give you a good idea of what's broken.
 
 Then run the following separately:
 
@@ -261,11 +306,8 @@ Then run the following separately:
     # Keeps elasticsearch index in sync
     $ ./manage.py run_ptop --all
 
-    # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
-    # For Mac / Linux
-    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
-    # Windows
-    > manage.py celeryd --settings=settings
+    # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
+    $ celery -A corehq worker -l info
 
 Create a superuser for your local environment
 
@@ -280,8 +322,18 @@ By default, HQ uses vellum minified build files to render form-designer. To use 
 VELLUM_DEBUG = "dev"
 ```
 
-    # simlink your Vellum code to submodules/formdesigner
+    # symlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
+
+
+Airflow
+-------
+
+It is usually not required to have a local airflow environment running.
+
+However, if you do need to get setup on Airflow (which is used to back some reporting infrastructure)
+you can follow the instructions in the [pipes repository](https://github.com/dimagi/pipes/).
+
 
 Running Tests
 -------------
@@ -410,5 +462,4 @@ https://github.com/jeffh/sniffer/
 
 ## Other links
 
-+ [Pre-Docker environment setup instructions](https://github.com/dimagi/commcare-hq/blob/master/PRE_DOCKER_SETUP.md)
 + [Common Issues](https://github.com/dimagi/commcare-hq/blob/master/COMMON_ISSUES.md)

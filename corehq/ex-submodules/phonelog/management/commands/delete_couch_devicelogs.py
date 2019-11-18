@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from corehq.util.couch import IterDB
@@ -9,7 +6,6 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.couch.database import iter_docs_with_retry
 from django.core.management import BaseCommand
 from couchforms.models import XFormInstance
-from io import open
 
 
 class Command(BaseCommand):

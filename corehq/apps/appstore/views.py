@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from datetime import date
-from six.moves.urllib.parse import urlencode
 
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.conf import settings
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
+from memoized import memoized
+from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import apply_update
 from dimagi.utils.couch.resource_conflict import retry_resource
-from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 
@@ -29,9 +30,12 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
-import six
-
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.elastic import (
+    es_query,
+    fill_mapping_with_facets,
+    parse_args_for_es,
+)
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
 DEPLOYMENT_FACETS = ['deployment.region']
@@ -66,7 +70,7 @@ def rewrite_url(request, path):
 
 
 def inverse_dict(d):
-    return dict([(v, k) for k, v in six.iteritems(d)])
+    return dict([(v, k) for k, v in d.items()])
 
 
 def can_view_app(req, dom):
@@ -97,6 +101,11 @@ class BaseCommCareExchangeSectionView(BaseSectionPageView):
     def dispatch(self, request, *args, **kwargs):
         if self.include_unapproved and not self.request.user.is_superuser:
             raise Http404()
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseCommCareExchangeSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -180,7 +189,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            e.message, res['_source']['_id'])
+                            str(e), res['_source']['_id'])
                     )
                 )
 
@@ -277,13 +286,13 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", 
 
 @require_superuser
 def approve_app(request, snapshot):
-    domain = Domain.get(snapshot)
+    domain_obj = Domain.get(snapshot)
     if request.GET.get('approve') == 'true':
-        domain.is_approved = True
-        domain.save()
+        domain_obj.is_approved = True
+        domain_obj.save()
     elif request.GET.get('approve') == 'false':
-        domain.is_approved = False
-        domain.save()
+        domain_obj.is_approved = False
+        domain_obj.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 
@@ -309,8 +318,16 @@ def import_app(request, snapshot):
 
         full_apps = from_project.full_applications(include_builds=False)
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
+        new_doc = None
         for app in full_apps:
-            new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            try:
+                new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            except ReportConfigurationNotFoundError:
+                messages.error(request, _("App was not imported as it "
+                                          "contains references to a user configurable report"))
+
+        if not new_doc:
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
         clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
@@ -330,9 +347,9 @@ def copy_snapshot(request, snapshot):
         messages.error(request, _('You must agree to our terms of service to download an app'))
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
-    dom = Domain.get(snapshot)
-    if request.method == "POST" and dom.is_snapshot:
-        assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
+    domain_obj = Domain.get(snapshot)
+    if request.method == "POST" and domain_obj.is_snapshot:
+        assert domain_obj.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
@@ -344,7 +361,7 @@ def copy_snapshot(request, snapshot):
         form = DomainRegistrationForm(args)
 
         if request.POST.get('new_project_name', ""):
-            if not dom.published:
+            if not domain_obj.published:
                 messages.error(request, _("This project is not published and can't be downloaded"))
                 return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
@@ -353,11 +370,11 @@ def copy_snapshot(request, snapshot):
                 return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
             new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
-            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
+            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(domain_obj.name, new_domain_name)]):
                 try:
-                    new_domain = dom.save_copy(new_domain_name,
-                                               new_hr_name=form.cleaned_data['hr_name'],
-                                               user=user)
+                    new_domain = domain_obj.save_copy(new_domain_name,
+                                                      new_hr_name=form.cleaned_data['hr_name'],
+                                                      user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
                     ensure_explicit_community_subscription(
@@ -371,7 +388,7 @@ def copy_snapshot(request, snapshot):
             def inc_downloads(d):
                 d.downloads += 1
 
-            apply_update(dom, inc_downloads)
+            apply_update(domain_obj, inc_downloads)
             messages.success(request, render_to_string("appstore/partials/view_wiki.html",
                                                        {"pre": _("Project copied successfully!")}),
                              extra_tags="html")

@@ -1,87 +1,96 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import jsonfield
-import pytz
 import re
 from collections import defaultdict
+from copy import deepcopy
+from datetime import date, datetime, time, timedelta
+
+from django.conf import settings
+from django.contrib.postgres.fields import JSONField
+from django.db import models, transaction
+from django.db.models import Q
+from django.utils.translation import ugettext_lazy
+
+import jsonfield
+import pytz
+from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse
+from jsonobject.api import JsonObject
+from jsonobject.properties import (
+    BooleanProperty,
+    IntegerProperty,
+    StringProperty,
+)
+from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
-from copy import deepcopy
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.const import (
-    VISIT_WINDOW_START,
-    VISIT_WINDOW_END,
-    VISIT_WINDOW_DUE_DATE,
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
 )
+from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.messaging.scheduling.const import (
+    VISIT_WINDOW_DUE_DATE,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_START,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
+    CustomContent,
+    EmailContent,
     Schedule,
     SMSContent,
-    EmailContent,
     SMSSurveyContent,
-    CustomContent,
-)
-from corehq.messaging.scheduling.tasks import (
-    refresh_case_alert_schedule_instances,
-    refresh_case_timed_schedule_instances,
-    delete_case_alert_schedule_instances,
-    delete_case_timed_schedule_instances,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+)
+from corehq.messaging.scheduling.tasks import (
+    delete_case_alert_schedule_instances,
+    delete_case_timed_schedule_instances,
+    refresh_case_alert_schedule_instances,
+    refresh_case_timed_schedule_instances,
+)
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query,
+    paginate_query_across_partitioned_databases,
+)
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
-from couchdbkit.exceptions import ResourceNotFound
-from datetime import date, datetime, time, timedelta
-from dateutil.parser import parse
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch import CriticalSection
-from memoized import memoized
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
-from django.conf import settings
-from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction
-from django.db.models import Q
-from corehq.apps.hqcase.utils import update_case
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
-from django.utils.translation import ugettext_lazy
-from jsonobject.api import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty
-import six
 
-ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
+ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 def _try_date_conversion(date_or_string):
-    if (
-        isinstance(date_or_string, six.string_types) and
-        ALLOWED_DATE_REGEX.match(date_or_string)
-    ):
+    if isinstance(date_or_string, bytes):
+        date_or_string = date_or_string.decode('utf-8')
+    if isinstance(date_or_string, str) and ALLOWED_DATE_REGEX.match(date_or_string):
         try:
             return parse(date_or_string)
         except ValueError:
             pass
-
     return date_or_string
 
 
@@ -121,8 +130,8 @@ class AutomaticUpdateRule(models.Model):
     class RuleError(Exception):
         pass
 
-    def __unicode__(self):
-        return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
+    def __str__(self):
+        return f"rule: '{self.name}', id: {self.id}, domain: {self.domain}"
 
     @property
     def references_parent_case(self):
@@ -157,17 +166,19 @@ class AutomaticUpdateRule(models.Model):
         return False
 
     @classmethod
-    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+    def get_referenced_app_form_pairs_from_sms_surveys(cls, domain):
         """
         Examines all of the scheduling rules in the given domain and returns
-        all form_unique_ids that are referenced from SMS Surveys.
+        all app + form_unique_id pairs that are referenced from SMS Surveys.
+
+        Returns list of tuples, each (app_id, form_unique_id)
         """
         result = []
         for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             for event in schedule.memoized_events:
                 if isinstance(event.content, SMSSurveyContent):
-                    result.append(event.content.form_unique_id)
+                    result.append((event.content.app_id, event.content.form_unique_id))
 
         return list(set(result))
 
@@ -197,7 +208,7 @@ class AutomaticUpdateRule(models.Model):
             if not isinstance(definition, allowed_criteria_definitions):
                 return False
 
-        action_definition = self.get_messaging_rule_action_definition()
+        action_definition = self.get_action_definition()
 
         allowed_recipient_types = (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
@@ -253,8 +264,8 @@ class AutomaticUpdateRule(models.Model):
 
         :param to_domain: The name of the domain to attempt copying this alert to
 
-        :param convert_form_unique_id_function: A function which should take one argument, the form unique id
-        which pertains to the form unique id of a form in this alert's domain, and returns the form unique id
+        :param convert_form_unique_id_function: A function which should take two arguments, the app id and
+        form unique id which pertain a form in this alert's domain, and returns the app id and form unique id
         of the same copied form in to_domain. This is optional, and if omitted, alerts which use SMS Surveys
         will not be copied.
         """
@@ -296,7 +307,7 @@ class AutomaticUpdateRule(models.Model):
                         "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
                     )
 
-            action_definition = self.get_messaging_rule_action_definition()
+            action_definition = self.get_action_definition()
             schedule = action_definition.schedule
 
             new_schedule = self.copy_schedule(schedule, to_domain,
@@ -316,7 +327,9 @@ class AutomaticUpdateRule(models.Model):
         return new_rule
 
     def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
-        copied_content.form_unique_id = convert_form_unique_id_function(original_content.form_unique_id)
+        copied_content.app_id, copied_content.form_unique_id = convert_form_unique_id_function(
+            original_content.app_id, original_content.form_unique_id
+        )
 
     def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):
         """
@@ -477,14 +490,14 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, case_type, boundary_date=None, db=None):
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
         if should_use_sql_backend(domain):
-            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+            return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
         else:
-            return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
+            return cls._iter_cases_from_es(domain, case_type, boundary_date=boundary_date)
 
     @classmethod
-    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -496,11 +509,16 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
-                yield c_id
+            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
         else:
-            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
-                yield c_id
+            return paginate_query_across_partitioned_databases(
+                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+            )
+
+    @classmethod
+    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
+        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
+        return CaseAccessors(domain).iter_cases(case_ids)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -515,7 +533,7 @@ class AutomaticUpdateRule(models.Model):
             query = query.server_modified_range(lte=boundary_date)
 
         for case_id in query.scroll():
-            if not isinstance(case_id, six.string_types):
+            if not isinstance(case_id, str):
                 raise ValueError("Something is wrong with the query, expected ids only")
 
             yield case_id
@@ -529,7 +547,7 @@ class AutomaticUpdateRule(models.Model):
             self.deleted = True
             self.save()
             if self.workflow == self.WORKFLOW_SCHEDULING:
-                schedule = self.get_messaging_rule_schedule()
+                schedule = self.get_schedule()
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
@@ -676,7 +694,7 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
-    def get_messaging_rule_action_definition(self):
+    def get_action_definition(self):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             raise ValueError("Expected scheduling workflow")
 
@@ -690,8 +708,8 @@ class AutomaticUpdateRule(models.Model):
 
         return action_definition
 
-    def get_messaging_rule_schedule(self):
-        return self.get_messaging_rule_action_definition().schedule
+    def get_schedule(self):
+        return self.get_action_definition().schedule
 
 
 class CaseRuleCriteria(models.Model):
@@ -824,7 +842,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         for value in values:
             if value is None:
                 continue
-            if isinstance(value, six.string_types) and not value.strip():
+            if isinstance(value, str) and not value.strip():
                 continue
             return True
 
@@ -840,7 +858,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             return False
 
         for value in self.get_case_values(case):
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 try:
                     if regex.match(value):
                         return True
@@ -939,6 +957,8 @@ class CaseRuleActionResult(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    __hash__ = None
 
     def _validate_int(self, value):
         if not isinstance(value, int):
@@ -1145,7 +1165,7 @@ class VisitSchedulerIntegrationHelper(object):
         self.scheduler_module_info = scheduler_module_info
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60)
+    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60, memoize_timeout=60, session_function=None)
     def get_visit_scheduler_module_and_form(cls, domain, app_id, form_unique_id):
         app = get_latest_released_app(domain, app_id)
         if app is None:
@@ -1402,6 +1422,12 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
 
 
 class CaseRuleSubmission(models.Model):
+    """This model records which forms were submitted as a result of a case
+    update rule. This serves both as a log as well as providing the ability
+    to undo the effects of rules in case of errors.
+
+    This data is not stored permanently but is removed after 90 days (see tasks file)
+    """
     domain = models.CharField(max_length=126)
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
 
@@ -1483,6 +1509,7 @@ class DomainCaseRuleRun(models.Model):
     STATUS_HALTED = 'H'
 
     domain = models.CharField(max_length=126)
+    case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
     status = models.CharField(max_length=1)

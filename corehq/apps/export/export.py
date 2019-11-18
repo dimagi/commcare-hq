@@ -1,27 +1,21 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import contextlib
-import time
-import sys
-from collections import Counter
-
 import datetime
+import sys
+import time
+from collections import Counter
 
 from couchdbkit import ResourceConflict
 
+from couchexport.export import FormattedRow, get_writer
+from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from couchexport.export import FormattedRow, get_writer
-from couchexport.models import Format
-from corehq.elastic import iter_es_docs_from_query
-from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.files import safe_filename, TransientTempfile
-from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.esaccessors import (
-    get_form_export_base_query,
     get_case_export_base_query,
+    get_form_export_base_query,
     get_sms_export_base_query,
 )
 from corehq.apps.export.models.new import (
@@ -29,9 +23,11 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
-import six
-from io import open
+from corehq.elastic import iter_es_docs_from_query
+from corehq.toggles import PAGINATED_EXPORTS
+from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
+from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS, load_counter
+from corehq.util.files import TransientTempfile, safe_filename
 
 
 class ExportFile(object):
@@ -110,7 +106,9 @@ class _ExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        return self.writer.write([(table, [FormattedRow(data=row.data)])])
+        return self.writer.write([
+            (table, [FormattedRow(data=row.data, hyperlink_column_indices=row.hyperlink_column_indices)])
+        ])
 
     def get_preview(self):
         return self.writer.get_preview()
@@ -140,7 +138,7 @@ class _PaginatedExportWriter(object):
 
         with open(self.path, 'wb') as file_handle:
             self.writer.open(
-                six.iteritems(self._get_paginated_headers()),
+                self._get_paginated_headers().items(),
                 file_handle,
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
@@ -222,7 +220,7 @@ class _PaginatedExportWriter(object):
             (<table.path>, <page>): (['Column1', 'Column2'],)
         }
         '''
-        return {self._paged_table_index(table): (headers,) for table, headers in six.iteritems(self.headers)}
+        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.items()}
 
     def _get_paginated_table_titles(self):
         '''
@@ -238,7 +236,7 @@ class _PaginatedExportWriter(object):
         }
         '''
         paginated_table_titles = {}
-        for table, table_name in six.iteritems(self.table_names):
+        for table, table_name in self.table_names.items():
             paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
                 table_name, format(self.pages[table], '03')
             )
@@ -280,12 +278,15 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(export_instances, filters, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        domain,
+        export_ids,
+        exports_type,
+        username,
         filters,
         download.download_id,
         filename=filename
@@ -342,6 +343,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     total_rows = 0
     compute_total = 0
     write_total = 0
+    track_load = load_counter(export_instance.type, "export", export_instance.domain)
 
     for row_number, doc in enumerate(documents):
         total_bytes += sys.getsizeof(doc)
@@ -374,6 +376,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
 
             total_rows += len(rows)
 
+        track_load()
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
@@ -382,6 +385,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
+    _record_export_duration(end - start, export_instance)
 
 
 def _time_in_milliseconds():
@@ -401,6 +405,11 @@ def _record_datadog_export_duration(duration, doc_bytes, n_rows, tags):
 
 
 def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
+    # deprecated: datadog histograms used this way are usually meaningless
+    # because they are aggregated on a 10s window (so unless you're constantly
+    # processing at least 100 measurements per 10s window then the percentile
+    # will approximate the average). Also more nuanced reasons. See
+    # https://confluence.dimagi.com/x/4ArDAQ#TroubleshootingPasteboard/HQchatdumpingground-Datadog
     datadog_histogram(metric, duration, tags=tags)
     if doc_bytes:
         datadog_histogram(
@@ -414,6 +423,16 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
             duration // n_rows,
             tags=tags,
         )
+
+
+def _record_export_duration(duration, export):
+    export.last_build_duration = duration
+    try:
+        export.save()
+    except ResourceConflict:
+        export = get_properly_wrapped_export_instance(export.get_id)
+        export.last_build_duration = duration
+        export.save()
 
 
 def _get_base_query(export_instance):
@@ -440,7 +459,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export')
+@datadog_track_errors('rebuild_export', duration_buckets=DAY_SCALE_TIME_BUCKETS)
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
@@ -450,22 +469,6 @@ def rebuild_export(export_instance, progress_tracker):
         export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
         with export_file as payload:
             save_export_payload(export_instance, payload)
-
-
-def should_rebuild_export(export, last_access_cutoff):
-    """
-    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
-    :return: True if export should be rebuilt
-    """
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
-    is_auto_rebuild = last_access_cutoff is not None
-    return not is_auto_rebuild or (
-        export.auto_rebuild_enabled
-        and (
-            export.last_accessed is None
-            or export.last_accessed > last_access_cutoff
-        )
-    )
 
 
 def save_export_payload(export, payload):

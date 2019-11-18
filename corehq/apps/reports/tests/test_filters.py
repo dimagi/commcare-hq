@@ -1,21 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase, TestCase
-from mock import patch
 from django.test.client import RequestFactory
 
-from corehq.apps.locations.models import LocationType
-from corehq.apps.reports.filters.api import paginate_options
-from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
-    PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
-from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.models import WebUser
+from mock import patch
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import clear_domain_names
+from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
-from six.moves import range
-from six.moves import map
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.controllers import paginate_options
+from corehq.apps.reports.filters.forms import (
+    PARAM_SLUG_APP_ID,
+    PARAM_SLUG_MODULE,
+    PARAM_SLUG_STATUS,
+    PARAM_VALUE_STATUS_ACTIVE,
+    FormsByApplicationFilter,
+    FormsByApplicationFilterParams,
+)
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
+from corehq.apps.users.models import WebUser
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -121,15 +125,20 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
 
 class TestExpandedMobileWorkerFilter(TestCase):
     def setUp(self):
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_get_assigned_locations_default(self, assigned_locations_patch):
@@ -142,15 +151,20 @@ class TestExpandedMobileWorkerFilter(TestCase):
 class TestLocationRestrictedMobileWorkerFilter(TestCase):
     def setUp(self):
         self.subject = ExpandedMobileWorkerFilter
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):
@@ -172,15 +186,20 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
 class TestCaseListFilter(TestCase):
     def setUp(self):
         self.subject = CaseListFilter
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):

@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from mock import patch
-
 from django.test import TestCase
 
+from mock import patch
+
 from casexml.apps.phone.tests.utils import call_fixture_generator
+
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException
@@ -167,7 +166,7 @@ class LocationGroupTest(TestCase):
 
         fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
         self.assertEqual(len(fixture), 1)
-        self.assertEquals(len(fixture[0].findall('.//state')), 0)
+        self.assertEqual(len(fixture[0].findall('.//state')), 0)
 
     def test_location_fixture_generator_domain_no_locations(self):
         """

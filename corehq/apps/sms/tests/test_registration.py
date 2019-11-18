@@ -1,37 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import json
-from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
-    SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
+
+from django.test import Client, TestCase
+
+from django_prbac.models import Role
+from mock import Mock, patch
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment,
+)
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import (
     _MESSAGES,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION,
     MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_MOBILE_WORKER_ANDROID_INVITATION,
-    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
     MSG_REGISTRATION_INSTALL_COMMCARE,
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
 )
-from corehq.apps.sms.models import (SQLMobileBackendMapping, SelfRegistrationInvitation,
-    SMS, OUTGOING, PhoneNumber)
+from corehq.apps.sms.models import (
+    OUTGOING,
+    SMS,
+    PhoneNumber,
+    SelfRegistrationInvitation,
+    SQLMobileBackendMapping,
+)
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from django_prbac.models import Role
-from django.test import Client, TestCase
-from mock import patch, Mock
-
 
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
 DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
-DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL.encode('utf-8'))
+DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL.encode('utf-8')).decode('utf-8')
 
 
 def noop(*args, **kwargs):
@@ -443,7 +453,7 @@ class RegistrationAPITestCase(TestCase):
 
     def make_api_post(self, domain, username, password, payload):
         c = Client()
-        auth = 'Basic ' + base64.b64encode('{}:{}'.format(username, password))
+        auth = 'Basic ' + base64.b64encode('{}:{}'.format(username, password).encode('utf-8')).decode('utf-8')
         return c.post('/a/{}/api/v0_5/sms_user_registration/'.format(domain.name), json.dumps(payload),
             HTTP_AUTHORIZATION=auth, content_type='application/json')
 
@@ -604,7 +614,7 @@ class RegistrationAPITestCase(TestCase):
                 {},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"app_id": "This field is required"}}')
+            self.assertEqual(response.content.decode('utf-8'), '{"sms_user_registration": {"app_id": "This field is required"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -613,8 +623,8 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': 123},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content,
-                '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+            self.assertEqual(response.content.decode('utf-8'),
+                '{"sms_user_registration": {"app_id": "Expected type: str"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -623,7 +633,7 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': '123'},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"users": "This field is required"}}')
+            self.assertEqual(response.content.decode('utf-8'), '{"sms_user_registration": {"users": "This field is required"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -632,5 +642,5 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': '123', 'users': [{}]},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content,
+            self.assertEqual(response.content.decode('utf-8'),
                 '{"sms_user_registration": {"phone_number": "This field is required"}}')

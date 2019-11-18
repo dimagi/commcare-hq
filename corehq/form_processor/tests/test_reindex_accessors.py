@@ -1,26 +1,24 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import time
 import uuid
 from datetime import datetime
 from unittest import SkipTest
 
 from django.conf import settings
-from django.db import connections
+from django.db import connections, DEFAULT_DB_ALIAS
 from django.test import TestCase
 
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sql_backend
-from six.moves import range
 
 
 class BaseReindexAccessorTest(object):
     accessor_class = None
+    doc_type = None
 
     @classmethod
     def setUpClass(cls):
@@ -55,7 +53,7 @@ class BaseReindexAccessorTest(object):
 
     @classmethod
     def _analyse(cls):
-        db_cursor = connections['default'].cursor()
+        db_cursor = connections[DEFAULT_DB_ALIAS].cursor()
         with db_cursor as cursor:
             cursor.execute('ANALYSE')  # the doc count query relies on this
 
@@ -116,15 +114,20 @@ class BaseReindexAccessorTest(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch_global[1:3])
 
     def test_get_doc_count(self):
-        self.assertEqual(16, self.accessor_class().get_approximate_doc_count('default'))
+        self.assertEqual(16, self.accessor_class().get_approximate_doc_count(DEFAULT_DB_ALIAS))
 
     def test_get_doc_count_domain(self):
-        self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count('default'))
+        self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count(DEFAULT_DB_ALIAS))
+
+    def test_doc_store(self):
+        doc_store = get_document_store_for_doc_type(self.domain, self.doc_type)
+        self.assertSetEqual(set(self.all_doc_ids_domain), set(doc_store.iter_document_ids()))
 
 
 @use_sql_backend
 class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = CaseReindexAccessor
+    doc_type = 'CommCareCase'
 
     @classmethod
     def setUpClass(cls):
@@ -145,6 +148,7 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
 @use_sql_backend
 class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = FormReindexAccessor
+    doc_type = 'XFormInstance'
 
     @classmethod
     def setUpClass(cls):
@@ -163,6 +167,7 @@ class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
 @use_sql_backend
 class UnshardedLedgerReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = LedgerReindexAccessor
+    doc_type = 'ledger'
 
     @classmethod
     def setUpClass(cls):

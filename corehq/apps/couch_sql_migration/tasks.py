@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from corehq.apps.es import DomainES, filters, aggregations
+from corehq.apps.es import DomainES, aggregations, filters
 from corehq.util.datadog.gauges import datadog_gauge
 
 
-@periodic_task(serializer='pickle', queue='background_queue', run_every=crontab(minute=0, hour=10),
+@periodic_task(queue='background_queue', run_every=crontab(minute=0, hour=10),
                acks_late=True, ignore_result=True)
 def couch_sql_migration_stats():
     result = (

@@ -1,9 +1,14 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
+{% block dependencies %}
+  <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+{% endblock %}
+
 {% block mocha_tests %}
-<script src="{% static 'hqwebapp/spec/assert_properties_spec.js' %}"></script>
-<script src="{% static 'hqwebapp/spec/urllib_spec.js' %}"></script>
+  <script src="{% static 'hqwebapp/spec/assert_properties_spec.js' %}"></script>
+  <script src="{% static 'hqwebapp/spec/urllib_spec.js' %}"></script>
+  <script src="{% static 'hqwebapp/spec/widgets_spec.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
@@ -50,7 +48,7 @@ class UpdateFormTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        actual_form_xml = Command().update_form_data(form, NEW_USERNAME).decode('utf-8')
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
@@ -71,7 +69,7 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
 
         # Test that the metadata changed in the database
-        actual_form_xml = form.get_attachment("form.xml")
+        actual_form_xml = form.get_attachment("form.xml").decode('utf-8')
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
         # Test that the operations history is updated in this form

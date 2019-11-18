@@ -1,14 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
+import time
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
+from requests.exceptions import ConnectionError
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
-import six
 
 
 class PaginationEventHandler(object):
@@ -21,6 +20,22 @@ class PaginationEventHandler(object):
         """
         pass
 
+    def page_exception(self, exception):
+        """ Called on the load if it raises an exception
+
+        :param exception: the exception that was raised
+
+        returns a boolean of whether the exception was handled
+        """
+        return False
+
+    def page(self, results):
+        """Called just after loading a page of results, but before processing it
+
+        :param results: The page of results.
+        """
+        pass
+
     def page_end(self, total_emitted, duration, *args, **kwargs):
         """Called at the end of each page of data
 
@@ -29,6 +44,10 @@ class PaginationEventHandler(object):
         :param args: Argument list that was passed to the ``data_function`` for this page
         :param kwargs: Keyword arguments that were passed to the ``data_function`` for this page
         """
+        pass
+
+    def stop(self):
+        """Called at the end of the iteration"""
         pass
 
 
@@ -43,9 +62,20 @@ class DelegatingPaginationEventHandler(PaginationEventHandler):
         for handler in self.handlers:
             handler.page_start(total_emitted, *args, **kwargs)
 
+    def page_exception(self, exception):
+        return any(h.page_exception(exception) for h in self.handlers)
+
+    def page(self, results):
+        for handler in self.handlers:
+            handler.page(results)
+
     def page_end(self, total_emitted, duration, *args, **kwargs):
         for handler in self.handlers:
             handler.page_end(total_emitted, duration, *args, **kwargs)
+
+    def stop(self):
+        for handler in self.handlers:
+            handler.stop()
 
 
 class ArgsProvider(object):
@@ -54,6 +84,16 @@ class ArgsProvider(object):
 
         :returns: tuple of args list and kwargs dict"""
         raise NotImplementedError
+
+    def adjust_results(self, results, args, kwargs):
+        """Adjust results given args and kwargs used to retrieve them
+
+        :param results: list of results loaded with `args` and `kwargs`.
+        :param args: args used to load results.
+        :param kwargs: kwargs used to load results.
+        :returns: adjusted list of results.
+        """
+        return results
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         """Return the next set of args and kwargs
@@ -103,18 +143,27 @@ def paginate_function(data_function, args_provider, event_handler=None):
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
-        len_results = len(results)
 
+        try:
+            results = list(results)
+        except Exception as e:
+            if event_handler.page_exception(e):
+                continue
+            raise
+
+        results = args_provider.adjust_results(results, args, kwargs)
+        event_handler.page(results)
         for item in results:
             yield item
 
-        total_emitted += len_results
+        total_emitted += len(results)
         event_handler.page_end(total_emitted, datetime.utcnow() - start_time, *args, **kwargs)
 
-        item = item if len_results else None
+        item = item if results else None
         try:
             args, kwargs = args_provider.get_next_args(item, *args, **kwargs)
         except StopIteration:
+            event_handler.stop()
             break
 
 
@@ -137,7 +186,7 @@ def unpack_jsonobject(json_object):
         return {unpack_jsonobject(x) for x in json_object}
     elif isinstance(json_object, JsonDict):
         return {
-            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in json_object.items()
         }
     return json_object
 
@@ -146,13 +195,16 @@ class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
         self.resume = bool(getattr(iterator_state, '_rev', None))  # if there is a _rev then we're resuming
-        self.resume_args = iterator_state.args
-        self.resume_kwargs = iterator_state.kwargs
+        self.resume_args = iterator_state.to_json()['args']
+        self.resume_kwargs = iterator_state.to_json()['kwargs']
 
     def get_initial_args(self):
         if self.resume:
             return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
+
+    def adjust_results(self, results, args, kwargs):
+        return self.args_provider.adjust_results(results, args, kwargs)
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         return self.args_provider.get_next_args(last_item, *last_args, **last_kwargs)
@@ -164,13 +216,18 @@ class ResumableFunctionIterator(object):
     Iteration can be efficiently stopped and resumed.
 
     :param iteration_key: A unique key identifying the iteration. This
-    key will be used in combination with `iteration_function` name to maintain state
-    about an iteration that is in progress. The state will be maintained
-    indefinitely unless it is removed with `discard_state()`.
-    :param data_function: function to iterate over. Must return an list of data elements.
+    key will be used in combination with `iteration_function` name to
+    maintain state about an iteration that is in progress. The state
+    will be maintained indefinitely unless it is removed with
+    `discard_state()`.
+    :param data_function: function to iterate over. Must return an list
+    of data elements.
     :param args_provider: An instance of the ``ArgsProvider`` class.
-    :param item_getter: Function which can be used to get an item by ID. Used for retrying items that failed.
-    :param event_handler: Instance of ``PaginationEventHandler`` to be notified on page start and page end.
+    :param item_getter: Function which can be used to get an item by ID.
+    Used for retrying items that failed.
+    :param event_handler: Instance of ``PaginationEventHandler`` to be
+    notified on page events. May raise ``StopToResume`` to terminate the
+    iteration immediately (it may be resumed later).
     """
 
     def __init__(self, iteration_key, data_function, args_provider, item_getter, event_handler=None):
@@ -205,12 +262,15 @@ class ResumableFunctionIterator(object):
         resumable_args = ResumableArgsProvider(self.state, self.args_provider)
         event_handler = self._get_event_handler()
 
-        for item in paginate_function(self.data_function, resumable_args, event_handler):
-            yield item
+        try:
+            for item in paginate_function(self.data_function, resumable_args, event_handler):
+                yield item
+        except StopToResume:
+            return
 
         retried = {}
         while self.state.retry != retried:
-            for item_id, retries in six.iteritems(self.state.retry):
+            for item_id, retries in self.state.retry.items():
                 if retries == retried.get(item_id):
                     continue  # skip already retried (successfully)
                 retried[item_id] = retries
@@ -276,8 +336,19 @@ class ResumableFunctionIterator(object):
     def _save_state(self):
         self.state.timestamp = datetime.utcnow()
         state_json = self.state.to_json()
-        self.couch_db.save_doc(state_json)
+        self._save_state_json(state_json)
         self._state = ResumableIteratorState(state_json)
+
+    def _save_state_json(self, state_json):
+        for x in range(5):
+            try:
+                self.couch_db.save_doc(state_json)
+            except ConnectionError as err:
+                if x < 4 and "BadStatusLine(\"''\",)" in repr(err):
+                    time.sleep(2 ** x)
+                    continue
+                raise
+            break
 
     def discard_state(self):
         try:
@@ -304,6 +375,10 @@ class ResumableIteratorEventHandler(PaginationEventHandler):
         self.iterator.state.args = list(args)
         self.iterator.state.kwargs = kwargs
         self.iterator._save_state()
+
+
+class StopToResume(Exception):
+    pass
 
 
 class TooManyRetries(Exception):

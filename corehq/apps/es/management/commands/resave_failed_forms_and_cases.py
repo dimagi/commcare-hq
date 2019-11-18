@@ -1,35 +1,21 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import argparse
-from datetime import datetime
-
 from django.core.management.base import BaseCommand
-from six.moves import input
 
-from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import (
-    compare_xforms,
-    compare_cases,
-)
-from corehq.form_processor.interfaces.dbaccessors import (
-    FormAccessors,
-    CaseAccessors,
-)
-from corehq.form_processor.utils.xform import resave_form
-from corehq.apps.hqcase.utils import resave_case
-from corehq.util.log import with_progress_bar
+from corehq.util.argparse_types import date_type
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import (
+    compare_cases,
+    compare_xforms,
+)
+from corehq.apps.hqcase.utils import resave_case
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.utils.xform import resave_form
+from corehq.util.log import with_progress_bar
+
 DATE_FORMAT = "%Y-%m-%d"
-
-
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
 
 
 class Command(BaseCommand):
@@ -37,12 +23,12 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument(
             'start_date',
-            type=valid_date,
+            type=date_type,
             help='The start date (inclusive). format YYYY-MM-DD'
         )
         parser.add_argument(
             'end_date',
-            type=valid_date,
+            type=date_type,
             help='The end date (exclusive). format YYYY-MM-DD'
         )
         parser.add_argument('--xforms', action='store_true')

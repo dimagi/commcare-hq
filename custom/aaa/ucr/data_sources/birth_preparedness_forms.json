@@ -1,0 +1,274 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-birth_preparedness",
+    "display_name": "Forms - Birth Preparedness (REACH Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {},
+    "configured_filter": {
+      "type": "boolean_expression",
+      "operator": "eq",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "datatype": "datetime",
+          "property_name": "received_on"
+        }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "date_referral",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "date_referral"]
+        }
+      },
+      {
+        "column_id": "place_referral",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "place_referral"]
+        }
+      },
+      {
+        "column_id": "anc_facility",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_facility"
+          }
+        }
+      },
+      {
+        "column_id": "anc_weight",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_weight"
+          }
+        }
+      },
+      {
+        "column_id": "bp_sys",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_sys"
+          }
+        }
+      },
+      {
+        "column_id": "bp_dias",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_dias"
+          }
+        }
+      },
+      {
+        "column_id": "anc_hemoglobin",
+        "datatype": "decimal",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_hemoglobin"
+          }
+        }
+      },
+      {
+        "column_id": "anc_abdominal_exam",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_abdominal_exam"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "anc_abnormalities",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_abnormalities"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "date_task",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "item", "filter", "date_task"]
+        }
+      },
+      {
+        "column_id": "user_role",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "user_role"]
+        }
+      },
+      {
+        "column_id": "inform_danger_signs",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp2", "inform_danger_signs"]
+        }
+      },
+      {
+        "column_id": "immediate_breastfeeding",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp2", "immediate_breastfeeding"]
+        }
+      }
+    ],
+    "named_expressions": {
+      "anc_details": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "type": "filter_items",
+            "items_expression": {
+	          "type": "property_path",
+	          "property_path": ["form", "bp1", "iteration", "item"]
+            },
+            "filter_expression": {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "property_path",
+                  "property_path": ["filter", "anc_details"]
+                },
+                "operator": "in",
+                "property_value": ["", null]
+              }
+            }
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "value_expression": {
+          "type": "property_path",
+          "property_path": ["filter", "anc_details"]
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "aaa-data"
+  }
+}

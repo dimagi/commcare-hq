@@ -1,12 +1,11 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from collections import defaultdict
-from github import Github
+
 from django.template.loader import render_to_string
+
 import requests
 from gevent.pool import Pool
+from github import Github
 
 LABELS_TO_EXPAND = [
     "product/all-users-all-environments",

@@ -1,22 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 
+from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.shortcuts import redirect
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django import forms
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
-from .models import (CustomDataFieldsDefinition, CustomDataField,
-                     validate_reserved_words)
-import six
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.toggles import REGEX_FIELD_VALIDATION
+
+from .models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+    validate_reserved_words,
+)
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -82,10 +84,8 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
-    is_multiple_choice = forms.BooleanField(required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
-    index_in_fixture = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -116,7 +116,6 @@ class CustomDataModelMixin(object):
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
     show_purge_existing = False
-    show_index_in_fixture = False
     entity_string = None  # User, Group, Location, Product...
 
     @use_jquery_ui
@@ -130,7 +129,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(six.text_type(cls.entity_string))
+        return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -156,14 +155,10 @@ class CustomDataModelMixin(object):
     def get_field(self, field):
         if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
             choices = []
-            is_multiple_choice = False
             regex = field.get('regex')
             regex_msg = field.get('regex_msg')
         else:
             choices = field.get('choices')
-            is_multiple_choice = (field.get('is_multiple_choice')
-                                  if MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
-                                  else False)
             regex = None
             regex_msg = None
         return CustomDataField(
@@ -171,10 +166,8 @@ class CustomDataModelMixin(object):
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=choices,
-            is_multiple_choice=is_multiple_choice,
             regex=regex,
             regex_msg=regex_msg,
-            index_in_fixture=field.get('index_in_fixture'),
         )
 
     @property
@@ -183,7 +176,6 @@ class CustomDataModelMixin(object):
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
             "show_purge_existing": self.show_purge_existing,
-            "show_index_in_fixture": self.show_index_in_fixture,
         }
 
     @property
@@ -202,7 +194,7 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _("{} fields saved successfully").format(
-                six.text_type(self.entity_string)
+                str(self.entity_string)
             )
             messages.success(request, msg)
             return redirect(self.urlname, self.domain)

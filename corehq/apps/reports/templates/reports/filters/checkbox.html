@@ -2,13 +2,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <input style="margin-top: 9px;"
-           type="checkbox"
-           id="{{ css_id }}"
-           value="True"
-           name="{{ slug }}"
-           {% if checked %}
-           checked="checked"
-           {% endif %}
-            />
+  <input style="margin-top: 9px;"
+         type="checkbox"
+         id="{{ css_id }}"
+         value="True"
+         name="{{ slug }}"
+    {% if checked %}
+         checked="checked"
+    {% endif %}
+  />
 {% endblock %}

@@ -1,25 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 import functools
 import uuid
-import datetime
+
 from django.test import TestCase
+
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
+
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
     count_downloads_for_all_snapshots,
+    deleted_domain_exists,
+    domain_exists,
+    domain_or_deleted_domain_exists,
     get_doc_count_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
+    get_doc_ids_in_domain_by_type,
     get_docs_in_domain_by_class,
     get_domain_ids_by_names,
+    iter_all_domains_and_deleted_domains_with_name,
+    iterate_doc_ids_in_domain_by_type,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
-from couchforms.models import XFormInstance
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type, iterate_doc_ids_in_domain_by_type
-from dimagi.utils.couch.database import get_db
 
 
 class DBAccessorsTest(TestCase):
@@ -147,13 +153,10 @@ class DBAccessorsTest(TestCase):
             return domain._id
 
         names = ['b', 'a', 'c']
-        expected_ids = [_create_domain(name) for name in names]
+        expected_ids = {name: _create_domain(name) for name in names}
 
         ids = get_domain_ids_by_names(names)
         self.assertEqual(ids, expected_ids)
-
-        ids = get_domain_ids_by_names(names[:-1])
-        self.assertEqual(ids, expected_ids[:-1])
 
     def test_count_downloads_for_all_snapshots(self):
         counts = [5, 12, 10]
@@ -163,3 +166,22 @@ class DBAccessorsTest(TestCase):
             copy.save()
         self.assertEqual(
             count_downloads_for_all_snapshots(self.project.get_id), sum(counts))
+
+    def test_deleted_domain_exists(self):
+        x = Domain(name='x')
+        x.save()
+        y = Domain(name='y')
+        y.save()
+        y.delete(leave_tombstone=True)
+        self.addCleanup(x.delete)
+        self.addCleanup(y.delete)
+        self.assertTrue(domain_exists('x'))
+        self.assertFalse(deleted_domain_exists('x'))
+        self.assertTrue(domain_or_deleted_domain_exists('x'))
+
+        self.assertFalse(domain_exists('y'))
+        self.assertTrue(deleted_domain_exists('y'))
+        self.assertTrue(domain_or_deleted_domain_exists('y'))
+
+        self.assertTrue(len(list(iter_all_domains_and_deleted_domains_with_name('x'))), 1)
+        self.assertTrue(len(list(iter_all_domains_and_deleted_domains_with_name('y'))), 1)

@@ -7,17 +7,17 @@
 
 {% block title %}
   {% trans "Releases" %} -
-    {% if app.name %}
-        {{ app.name|html_name }}
-    {% else %}
-        {% trans 'Applications' %}
-    {% endif %}
+  {% if app.name %}
+    {{ app.name|html_name }}
+  {% else %}
+    {% trans 'Applications' %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
-    {% endcompress %}
+  {% compress js %}
+    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+  {% endcompress %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
@@ -29,8 +29,10 @@
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
   {% initial_page_data 'build_profiles' app.build_profiles %}
-  {% initial_page_data 'fetch_limit' fetchLimit %}
+  {% initial_page_data 'latest_version_for_build_profiles' latest_version_for_build_profiles %}
   {% initial_page_data 'latestReleasedVersion' latest_released_version %}
+  {% initial_page_data 'master_briefs' master_briefs %}{# linked apps only #}
+  {% initial_page_data 'multiple_masters' multiple_masters %}{# linked apps only #}
   {% initial_page_data 'practice_users' practice_users %}
   {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
   {% initial_page_data 'intro_only' intro_only %}
@@ -38,7 +40,9 @@
   {% initial_page_data 'latest_build_id' latest_build_id %}
   {% initial_page_data 'sms_contacts' sms_contacts %}
   {% initial_page_data 'confirm' confirm %}
+  {% initial_page_data 'upstream_url' upstream_url_template %}
   {% registerurl "app_data_json" app.domain '---' %}
+  {% registerurl "app_form_summary_diff" domain '---' '---' %}
   {% registerurl "paginate_releases" domain app.id %}
   {% registerurl "delete_copy" domain app.id %}
   {% registerurl "download_jad" domain '---' %}
@@ -54,6 +58,7 @@
   {% registerurl "download_multimedia_zip" app.domain '---' %}
   {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
   {% registerurl "formplayer_main" app.domain %}
+  {% registerurl "app_form_summary" app.domain '---' %}
   <div class="tab-pane" id="releases">
     {% include "app_manager/partials/releases/releases.html" %}
   </div>

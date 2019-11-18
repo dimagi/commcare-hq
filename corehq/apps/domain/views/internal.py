@@ -1,38 +1,48 @@
-from __future__ import absolute_import, unicode_literals
 import copy
 
-from django.views.decorators.http import require_GET
-from django.views.generic import View
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from django.urls import reverse
+from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
-from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.http import require_GET
+from django.views.generic import View
 
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from memoized import memoized
+
+from dimagi.utils.web import get_ip, json_request, json_response
+
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.toggle_ui.views import ToggleEditView
-from corehq.apps.users.models import CouchUser
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
-from dimagi.utils.web import json_request
-from corehq import privileges, feature_previews
-from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
+from corehq.apps.domain.calculations import (
+    CALC_FNS,
+    CALC_ORDER,
+    CALCS,
+    dom_calc,
+)
 from corehq.apps.domain.decorators import (
-    domain_admin_required, login_required, require_superuser, login_and_domain_required
+    domain_admin_required,
+    login_and_domain_required,
+    login_required,
+    require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
 from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
-from memoized import memoized
-from dimagi.utils.web import get_ip, json_response
-
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
+from corehq.apps.toggle_ui.views import ToggleEditView
+from corehq.apps.users.models import CouchUser
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -72,7 +82,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
-        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
+        can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
             return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
         initial = {
@@ -80,6 +90,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'is_test': self.domain_object.is_test,
             'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
+            'odata_feed_limit': self.domain_object.odata_feed_limit,
             'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
@@ -203,24 +215,34 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = ugettext_lazy("Feature Flags and Privileges")
     template_name = 'domain/admin/flags_and_privileges.html'
 
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
+    def _get_toggles(self):
 
-    @memoized
-    def enabled_flags(self):
-        def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
-        unsorted_toggles = [(
-            toggle,
-            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
-            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
-        ) for toggle in all_toggles()]
+        def _sort_key(toggle):
+            return (not (toggle['domain_enabled'] or toggle['user_enabled']),
+                    toggle['tag_index'],
+                    toggle['label'])
+
+        unsorted_toggles = [{
+            'slug': toggle.slug,
+            'label': toggle.label,
+            'description': toggle.description,
+            'help_link': toggle.help_link,
+            'tag': toggle.tag.name,
+            'tag_index': toggle.tag.index,
+            'tag_description': toggle.tag.description,
+            'tag_css_class': toggle.tag.css_class,
+            'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
+            'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'user_enabled': toggle.enabled(self.request.couch_user.username,
+                                           namespace=toggles.NAMESPACE_USER),
+        } for toggle in toggles.all_toggles()]
+
         return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
@@ -233,10 +255,32 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
-            'flags': self.enabled_flags(),
+            'toggles': self._get_toggles(),
             'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }
+
+
+@method_decorator(require_superuser, name='dispatch')
+class ProjectLimitsView(BaseAdminProjectSettingsView):
+    urlname = 'internal_project_limits_summary'
+    page_title = ugettext_lazy("Project Limits")
+    template_name = 'domain/admin/project_limits.html'
+
+    @property
+    def page_context(self):
+        return {
+            'project_limits': {
+                'submissions': self._get_submission_rate_limits()
+            }
+        }
+
+    def _get_submission_rate_limits(self):
+        return [
+            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+             'percent_usage': round(100 * current_usage / limit, 1)}
+            for key, current_usage, limit in submission_rate_limiter.iter_rates(self.domain)
+        ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):
@@ -289,7 +333,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if not TRANSFER_DOMAIN.enabled(request.domain):
+        if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
         return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
 
@@ -386,8 +430,9 @@ def toggle_diff(request, domain):
     diff = []
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
-                for t in feature_previews.all_previews() + all_toggles()
-                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
+                for t in feature_previews.all_previews() + toggles.all_toggles()
+                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
+                and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
         diff.sort(key=lambda x: x['label'])
     return json_response(diff)
 

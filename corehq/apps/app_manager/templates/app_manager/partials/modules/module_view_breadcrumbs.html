@@ -1,8 +1,8 @@
 {% load xforms_extras %}
 {% if module %}
-<li>
+  <li>
     <a href="{% url "view_module" domain app.id module.unique_id %}">
-        <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
+      <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
     </a>
-</li>
+  </li>
 {% endif %}

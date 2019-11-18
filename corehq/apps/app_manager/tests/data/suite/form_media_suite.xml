@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite version="1" descriptor="Media Suite File">
+  <media path="../../commcare">
+    <resource id="media-18e63eb214a719bc614787d15fc87c5e-module0_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/456/module0_en.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-71775ddd96c209a3ef1c43bd95e96c8b-module0_en.png" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/123/module0_en.png</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-3827580cd02c0bc38ccfe9e28f0b3a0e-module0_hin.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/789/module0_hin.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-947716527b2fc7772737f1bae597930b-q1_en.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_0/q1_en.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-368ef7fc202767c37b58490885314cb5-q1_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_2/q1_en.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-bffe1a3b38c51b3abc2a1721540116b8-q1_hin.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_1/q1_hin.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-e5cce5c17843811c60a9f4898e710cef-q2_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_1/q2_en.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-18d788cb4e37fd89a981f7a5371bfdc2-q2_hin.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_2/q2_hin.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-657f0ae54f3ffa90257f3052d051cb24-q2_hin.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_0/q2_hin.mp3</location>
+    </resource>
+  </media>
+</suite>

@@ -4,20 +4,20 @@
 {% load compress %}
 
 {% block title %}
-    {% trans "Web Apps" %}
+  {% trans "Web Apps" %}
 {% endblock %}
 
 {% block page_title %}{% endblock %}
 
 {% block head %}
-    {{ block.super }}
-    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
-    <style id="persistent-cell-layout-style"></style>
-    <style id="persistent-cell-grid-style"></style>
-    <style id="list-cell-layout-style"></style>
-    <style id="list-cell-grid-style"></style>
-    <style id="list-cell-container-style"></style>
+  {{ block.super }}
+  <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+  <style id="persistent-cell-layout-style"></style>
+  <style id="persistent-cell-grid-style"></style>
+  <style id="list-cell-layout-style"></style>
+  <style id="list-cell-grid-style"></style>
+  <style id="list-cell-container-style"></style>
 {% endblock %}
 
 {% block navigation %}{{ block.super }}
@@ -32,33 +32,33 @@
 {% endblock navigation %}
 
 {% block stylesheets %}
-    {% compress css %}
-        <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-        <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-        <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
-        <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
-    {% endcompress %}
+  {% compress css %}
+    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
+    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+    <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
+    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
+  {% endcompress %}
 
   {% if less_debug %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
   {% else %}
-  {% compress css %}
+    {% compress css %}
       <link type="text/less"
             rel="stylesheet"
             media="all"
@@ -71,77 +71,77 @@
             rel="stylesheet"
             media="all"
             href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
-  {% endcompress %}
+    {% endcompress %}
   {% endif %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    {% include "formplayer/dependencies.html" %}
-    <script src="{% static "cloudcare/js/formplayer/main.js" %}"></script>
+  {% include "formplayer/dependencies.html" %}
+  <script src="{% static "cloudcare/js/formplayer/main.js" %}"></script>
 {% endblock %}
 
 {% block content %}
 
-    {% initial_page_data 'apps' apps %}
-    {% initial_page_data 'domain_is_on_trial' domain_is_on_trial %}
-    {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
-    {% initial_page_data 'domain' domain %}
-    {% initial_page_data 'environment' environment %}
-    {% initial_page_data 'formplayer_url' formplayer_url %}
-    {% initial_page_data 'grid_polyfill_path' 'css-grid-polyfill-binaries/css-polyfills.js'|static %}
-    {% initial_page_data 'language' language %}
-    {% initial_page_data 'maps_api_key' maps_api_key %}
-    {% initial_page_data 'single_app_mode' single_app_mode %}
-    {% initial_page_data 'username' username %}
-    {% initial_page_data 'use_live_query' use_live_query %}
-    {% registerurl 'list_case_exports' request.domain %}
-    {% registerurl 'list_form_exports' request.domain %}
-    {% registerurl 'case_data' request.domain '---' %}
-    {% registerurl 'render_form_data' request.domain '---' %}
+  {% initial_page_data 'apps' apps %}
+  {% initial_page_data 'domain_is_on_trial' domain_is_on_trial %}
+  {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'environment' environment %}
+  {% initial_page_data 'formplayer_url' formplayer_url %}
+  {% initial_page_data 'grid_polyfill_path' 'css-grid-polyfill-binaries/css-polyfills.js'|static %}
+  {% initial_page_data 'language' language %}
+  {% initial_page_data 'maps_api_key' maps_api_key %}
+  {% initial_page_data 'single_app_mode' single_app_mode %}
+  {% initial_page_data 'username' username %}
+  {% initial_page_data 'use_live_query' use_live_query %}
+  {% registerurl 'list_case_exports' request.domain %}
+  {% registerurl 'list_form_exports' request.domain %}
+  {% registerurl 'case_data' request.domain '---' %}
+  {% registerurl 'render_form_data' request.domain '---' %}
 
-    <!-- For now we won't touch this since the form entry code is coupled with it  -->
+  <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
-    <div id="cloudcare-main" class="cloudcare-home-content">
-        <section id="case-crumbs" style="width: 800px"></section>
-        <section id="cases"></section>
-        <div id="menu-container">
-            <section id="formplayer-progress-container"></section>
-            <div id="restore-as-region"></div>
-            <div id="breadcrumb-region"></div>
-            <section id="cloudcare-notifications" class="container notifications-container"></section>
-            <div class="container case-tile-container">
-                <div id="persistent-case-tile"></div>
-            </div>
-            <div id="menu-region" class="container"></div>
-            <section id="webforms" data-bind="
+  <div id="cloudcare-main" class="cloudcare-home-content">
+    <section id="case-crumbs" style="width: 800px"></section>
+    <section id="cases"></section>
+    <div id="menu-container">
+      <section id="formplayer-progress-container"></section>
+      <div id="restore-as-region"></div>
+      <div id="breadcrumb-region"></div>
+      <section id="cloudcare-notifications" class="container notifications-container"></section>
+      <div class="container case-tile-container">
+        <div id="persistent-case-tile"></div>
+      </div>
+      <div id="menu-region" class="container"></div>
+      <section id="webforms" data-bind="
                 template: {
                     name: 'form-fullform-ko-template',
                     afterRender: afterRender
                 }">
-            </section>
-        </div>
-        <small id="version-info"></small>
-        {% if request.couch_user.can_edit_data %}
-        <section id="cloudcare-debugger" data-bind="
+      </section>
+    </div>
+    <small id="version-info"></small>
+    {% if request.couch_user.can_edit_data %}
+      <section id="cloudcare-debugger" data-bind="
           template: {
               name: 'instance-viewer-ko-template',
               afterRender: adjustWidth
           }
         "></section>
-        {% endif %}
-    </div>
+    {% endif %}
+  </div>
 
-    {% include 'form_entry/templates.html' %}
-    {% include 'formplayer/debugger.html' %}
-    {% include 'formplayer/grid_view.html' %}
-    {% include 'formplayer/settings_view.html' %}
-    {% include 'formplayer/case_detail.html' %}
-    {% include 'formplayer/case_list.html' %}
-    {% include 'formplayer/menu_list.html' %}
-    {% include 'formplayer/users.html' %}
-    {% include 'formplayer/session_list.html' %}
-    {% include 'formplayer/query_view.html' %}
-    {% include 'formplayer/confirmation_modal.html' %}
-    {% include 'formplayer/progress.html' %}
+  {% include 'form_entry/templates.html' %}
+  {% include 'formplayer/debugger.html' %}
+  {% include 'formplayer/grid_view.html' %}
+  {% include 'formplayer/settings_view.html' %}
+  {% include 'formplayer/case_detail.html' %}
+  {% include 'formplayer/case_list.html' %}
+  {% include 'formplayer/menu_list.html' %}
+  {% include 'formplayer/users.html' %}
+  {% include 'formplayer/session_list.html' %}
+  {% include 'formplayer/query_view.html' %}
+  {% include 'formplayer/confirmation_modal.html' %}
+  {% include 'formplayer/progress.html' %}
 
 {% endblock %}

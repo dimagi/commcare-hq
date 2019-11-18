@@ -8,14 +8,14 @@
       You can try out creating reports
       but won't be able to save them.
     {% endblocktrans %}
-      {% if pricing_page_url %}
-        {% blocktrans %}
+    {% if pricing_page_url %}
+      {% blocktrans %}
         To save reports, please <a href="{{ pricing_page_url }}" id="js-click-preview-subscribe" target="_blank">Subscribe to our Pro Plan</a>.
-        {% endblocktrans %}
-      {% else %}
-        {% blocktrans %}
+      {% endblocktrans %}
+    {% else %}
+      {% blocktrans %}
         To save more reports, please contact our Support Team.
-        {% endblocktrans %}
-      {% endif %}
+      {% endblocktrans %}
+    {% endif %}
   </p>
 </div>

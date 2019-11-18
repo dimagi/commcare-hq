@@ -1,18 +1,17 @@
-from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod, abstractproperty
-import six
 
 
-class BaseSuiteContributor(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, suite, app, modules):
+class BaseSuiteContributor(metaclass=ABCMeta):
+    def __init__(self, suite, app, modules, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
         self.suite = suite
         self.app = app
         self.modules = modules
-        self.entries_helper = EntriesHelper(app, modules)
+        self.build_profile_id = build_profile_id
+        self.entries_helper = EntriesHelper(app, modules, build_profile_id=self.build_profile_id)
 
 
-class SectionContributor(six.with_metaclass(ABCMeta, BaseSuiteContributor)):
+class SectionContributor(BaseSuiteContributor, metaclass=ABCMeta):
     @abstractproperty
     def section_name(self):
         pass
@@ -22,7 +21,7 @@ class SectionContributor(six.with_metaclass(ABCMeta, BaseSuiteContributor)):
         return []
 
 
-class SuiteContributorByModule(six.with_metaclass(ABCMeta, BaseSuiteContributor)):
+class SuiteContributorByModule(BaseSuiteContributor, metaclass=ABCMeta):
     section = None
 
     @abstractmethod
@@ -30,7 +29,7 @@ class SuiteContributorByModule(six.with_metaclass(ABCMeta, BaseSuiteContributor)
         return []
 
 
-class PostProcessor(six.with_metaclass(ABCMeta, BaseSuiteContributor)):
+class PostProcessor(BaseSuiteContributor, metaclass=ABCMeta):
     @abstractmethod
     def update_suite(self):
         pass

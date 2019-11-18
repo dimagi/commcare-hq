@@ -1,15 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 from collections import Counter
+
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
-from mock import patch, MagicMock
 
+from mock import MagicMock, patch
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
 from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, DataSourceConfiguration
 
 
 @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))

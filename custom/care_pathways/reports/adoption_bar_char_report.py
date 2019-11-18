@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat

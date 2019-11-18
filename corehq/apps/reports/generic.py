@@ -1,48 +1,48 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-import io
 import datetime
-import re
-import pytz
+import io
 import json
+import re
+from itertools import chain
 
-from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.shortcuts import render
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
-from django.shortcuts import render
 from django.urls import NoReverseMatch
-from corehq.apps.domain.utils import normalize_domain_name
+from django.utils.translation import ugettext
 
-from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.models import ReportConfig
-from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
+from celery.utils.log import get_task_logger
+from memoized import memoized
+
+from couchexport.export import export_from_tables, get_writer
+from couchexport.shortcuts import export_response
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.web import json_request, json_response
+
+from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
     use_datatables,
-    use_select2,
     use_daterangepicker,
+    use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.users.models import CouchUser
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse, request_as_dict
-from couchexport.export import export_from_tables
-from couchexport.shortcuts import export_response
-from memoized import memoized
-from dimagi.utils.modules import to_function
-from dimagi.utils.web import json_request, json_response
-from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
-from django.utils.translation import ugettext
-from .export import get_writer
-import six
-from six.moves import zip
-from six.moves import range
+from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.tasks import export_all_rows_task
+from corehq.apps.reports.util import DatatablesParams, get_report_timezone
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+
+from corehq import toggles
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -162,6 +162,7 @@ class GenericReportView(object):
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
@@ -208,6 +209,7 @@ class GenericReportView(object):
 
         request_data = state.get('request')
         request = FakeHttpRequest()
+        request.domain = self.domain
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
@@ -251,13 +253,7 @@ class GenericReportView(object):
     @property
     @memoized
     def timezone(self):
-        if not self.domain:
-            return pytz.utc
-        else:
-            try:
-                return get_timezone_for_user(self.request.couch_user, self.domain)
-            except AttributeError:
-                return get_timezone_for_user(None, self.domain)
+        return get_report_timezone(self.request, self.domain)
 
     @property
     @memoized
@@ -306,7 +302,7 @@ class GenericReportView(object):
         filters = []
         fields = self.fields
         for field in fields or []:
-            if isinstance(field, six.string_types):
+            if isinstance(field, str):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -356,7 +352,9 @@ class GenericReportView(object):
             Nothing specific to the report should go here, use report_context for that.
             Must return a dict.
         """
-        return dict()
+        return {
+            'rendered_as': self.rendered_as,
+        }
 
     @property
     def report_context(self):
@@ -437,7 +435,7 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
-            field_fn = to_function(field) if isinstance(field, six.string_types) else field
+            field_fn = to_function(field) if isinstance(field, str) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
         has_datespan = any([is_editable_datespan(field) for field in self.fields])
@@ -481,7 +479,8 @@ class GenericReportView(object):
             report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
-            layout_flush_content=self.flush_layout
+            layout_flush_content=self.flush_layout,
+            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -503,8 +502,11 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
-            'asyncUrl': async_url,
+            'asyncUrl': async_url
         }
+
+    def icds_pre_release_features(self):
+        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """
@@ -524,7 +526,7 @@ class GenericReportView(object):
         """
         self.context.update(rendered_as=self.rendered_as)
         self.context.update({
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
@@ -681,6 +683,7 @@ class GenericReportView(object):
         Intention: Not to be overridden in general.
         Returns the tabular export of the data, if available.
         """
+        self.is_rendered_as_export = True
         if self.exportable_all:
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
@@ -752,7 +755,6 @@ class GenericReportView(object):
 
     @use_nvd3
     @use_jquery_ui
-    @use_select2
     @use_datatables
     @use_daterangepicker
     def decorator_dispatcher(self, request, *args, **kwargs):
@@ -824,6 +826,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
+    exporting_as_excel = False
 
     # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
     sortable = True
@@ -959,7 +962,7 @@ class GenericTabularReport(GenericReportView):
         # using regex breaks values then we should use a parser instead, and
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -990,7 +993,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1000,12 +1002,13 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in self.export_rows]
-        table.extend(rows)
+        self.exporting_as_excel = True
+        rows = (_unformat_row(row) for row in self.export_rows)
+        table = chain(table, rows)
         if self.total_row:
-            table.append(_unformat_row(self.total_row))
+            table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
-            table.extend([_unformat_row(row) for row in self.statistics_rows])
+            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
 
@@ -1189,7 +1192,22 @@ class PaginatedReportMixin(object):
         return res
 
 
-class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
+class GetParamsMixin(object):
+
+    @property
+    def shared_pagination_GET_params(self):
+        """
+        Override the params and applies all the params of the originating view to the GET
+        so as to get sorting working correctly with the context of the GET params
+        """
+        ret = super(GetParamsMixin, self).shared_pagination_GET_params
+        for k, v in self.request.GET.lists():
+            ret.append(dict(name=k, value=v))
+        return ret
+
+
+class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin,
+                                     PaginatedReportMixin, GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 
@@ -1215,21 +1233,3 @@ class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
             return res['hits'].get('total', 0)
         else:
             return 0
-
-
-class GetParamsMixin(object):
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in self.request.GET.iterlists():
-            ret.append(dict(name=k, value=v))
-        return ret
-
-
-class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin, ElasticTabularReport):
-    pass

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from copy import copy
 
@@ -7,7 +5,6 @@ from jsonobject.api import re_date
 
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.dates import iso_string_to_datetime
-import six
 
 
 def scrub_meta(xform):
@@ -84,7 +81,7 @@ def _flatten_dict(dictionary):
 
 
 def _remove_unused_meta_attributes(meta_block):
-    for key in meta_block.keys():
+    for key in list(meta_block.keys()):
         # remove attributes from the meta block
         if key.startswith('@'):
             del meta_block[key]
@@ -126,6 +123,8 @@ def _get_text_attribute(node):
     else:
         value = node
 
-    if not isinstance(value, six.string_types):
-        value = six.text_type(value)
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    elif not isinstance(value, str):
+        value = str(value)
     return value

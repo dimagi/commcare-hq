@@ -1,27 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
 import inspect
 from functools import wraps
 
 from django.conf import settings
 
-from sqlagg import (
-    ColumnNotFoundException,
-    TableNotFoundException,
-)
+from sqlagg import ColumnNotFoundException
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
     TableNotFoundWarning,
     UserReportsError,
+    translate_programming_error,
 )
 from corehq.util.soft_assert import soft_assert
-import six
 
 _soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
     exponential_backoff=True,
 )
 
@@ -36,11 +30,12 @@ def catch_and_raise_exceptions(func):
             ProgrammingError,
             InvalidQueryColumn,
         ) as e:
+            error = translate_programming_error(e)
+            if isinstance(error, TableNotFoundWarning):
+                raise error
             if not settings.UNIT_TESTING:
-                _soft_assert(False, six.text_type(e))
-            raise UserReportsError(six.text_type(e))
-        except TableNotFoundException:
-            raise TableNotFoundWarning
+                _soft_assert(False, str(e))
+            raise UserReportsError(str(e))
     return _inner
 
 

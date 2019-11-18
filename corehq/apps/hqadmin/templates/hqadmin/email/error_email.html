@@ -2,17 +2,17 @@
 <body>
 <h3>{{ message }}</h3>
 {% if details %}
-<h3>Details</h3>
-<table>
+  <h3>Details</h3>
+  <table>
     <tbody>
-        {% for key, value in details.items %}
-        <tr>
-            <td>{{ key }}</td>
-            <td>{{ value }}</td>
-        </tr>
-        {% endfor %}
+    {% for key, value in details.items %}
+      <tr>
+        <td>{{ key }}</td>
+        <td>{{ value }}</td>
+      </tr>
+    {% endfor %}
     </tbody>
-</table>
+  </table>
 {% endif %}
 
 <p>Method: {{ method }}</p>
@@ -20,54 +20,54 @@
 <p>User: {% if username %}{{ username }}{% else %}Unknown{% endif %}</p>
 
 {% for line in tb_list %}
-{% if forloop.counter0 == 0 %}
-<h3>{{ line }}</h3>
-{% elif 'site-packages' in line %}
-<pre style="color: #DDDDDD">{{ line }}</pre>
-{% else %}
-<pre style="background-color: #FFFFE0">{{ line }}</pre>
-{% endif %}
+  {% if forloop.counter0 == 0 %}
+    <h3>{{ line }}</h3>
+  {% elif 'site-packages' in line %}
+    <pre style="color: #DDDDDD">{{ line }}</pre>
+  {% else %}
+    <pre style="background-color: #FFFFE0">{{ line }}</pre>
+  {% endif %}
 {% endfor %}
 
 <h3>Code Context</h3>
 {% if code %}
-<div>{{ code|safe }}</div>
+  <div>{{ code|safe }}</div>
 {% else %}
-<div>Not available.</div>
+  <div>Not available.</div>
 {% endif %}
 
 <h3>Parameters</h3>
 
 <h4>GET</h4>
 {% if get %}
-<table>
+  <table>
     <tbody>
-        {% for key, value in get %}
-        <tr>
-            <td><pre>{{ key }}</pre></td>
-            <td><pre>{{ value }}</pre></td>
-        </tr>
-        {% endfor %}
+    {% for key, value in get %}
+      <tr>
+        <td><pre>{{ key }}</pre></td>
+        <td><pre>{{ value }}</pre></td>
+      </tr>
+    {% endfor %}
     </tbody>
-</table>
+  </table>
 {% else %}
-    Nothing found.
+  Nothing found.
 {% endif %}
 
 <h4>POST</h4>
 {% if post %}
-<table>
+  <table>
     <tbody>
-        {% for key, value in post.items %}
-        <tr>
-            <td><pre>{{ key }}</pre></td>
-            <td><pre>{{ value }}</pre></td>
-        </tr>
-        {% endfor %}
+    {% for key, value in post.items %}
+      <tr>
+        <td><pre>{{ key }}</pre></td>
+        <td><pre>{{ value }}</pre></td>
+      </tr>
+    {% endfor %}
     </tbody>
-</table>
+  </table>
 {% else %}
-    Nothing found.
+  Nothing found.
 {% endif %}
 
 <h3>Request</h3>

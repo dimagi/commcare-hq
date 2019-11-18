@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>{{ form_name }}</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/{{ xmlns_uuid }}" uiVersion="1" version="1" name="{{ form_name }}">
+                    <followup_placeholder />
+                </data>
+            </instance>
+            <instance src="jr://instance/casedb" id="casedb" />
+            <instance src="jr://instance/session" id="commcaresession" />
+            <bind vellum:nodeset="#form/followup_placeholder" nodeset="/data/followup_placeholder" />
+            <itext>
+                <translation lang="{{ lang }}" default="">
+                    <text id="followup_placeholder-label">
+                        <value>{{ placeholder_label }}</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+        <vellum:hashtags>{&quot;#case/case_name&quot;:null}</vellum:hashtags>
+        <vellum:hashtagTransforms>{&quot;prefixes&quot;:{&quot;#case/&quot;:&quot;instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/&quot;}}</vellum:hashtagTransforms>
+    </h:head>
+    <h:body>
+        <trigger vellum:ref="#form/followup_placeholder" ref="/data/followup_placeholder" appearance="minimal">
+            <label ref="jr:itext('followup_placeholder-label')" />
+        </trigger>
+    </h:body>
+</h:html>

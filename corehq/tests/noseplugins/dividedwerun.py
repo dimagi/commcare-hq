@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
-import six
 import types
 from hashlib import md5
 from unittest import SkipTest
@@ -82,9 +79,9 @@ class DividedWeRunPlugin(Plugin):
                     desc = skip
                     name = test.context.__name__
                     if "." in name:
-                        name, skip.__name__ = name.rsplit("." if six.PY3 else b'.', 1)
+                        name, skip.__name__ = name.rsplit(".", 1)
                     else:
-                        skip.__name__ = "*" if six.PY3 else b'*'
+                        skip.__name__ = "*"
                     skip.__module__ = name
             else:
                 desc = test.test.descriptor
@@ -109,6 +106,6 @@ def name_of(test):
 
 def get_score(test):
     name = name_of(test)
-    if isinstance(name, six.text_type):
+    if isinstance(name, str):
         name = name.encode('utf-8')
     return md5(name).hexdigest()[0]

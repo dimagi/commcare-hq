@@ -1,0 +1,113 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% if charts %}
+    <div class="row">
+        {% for chart in charts %}
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-{{ chart_span }} collapse">
+            <svg style='height: {{ chart.height }}px'> </svg>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}
+style="width:auto;">
+<!--    <thead class="table table-striped datatable">-->
+<!--            <tr>-->
+<!--                {% for header in report_table.headers %}-->
+<!--                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>-->
+<!--                        <i class="icon-white fa dt-sort-icon"></i>-->
+<!--                        {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}-->
+<!--                        {% if header.help_text %}-->
+<!--                            <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>-->
+<!--                        {% endif %}-->
+<!--                    </th>-->
+<!--                {% endfor %}-->
+<!--            </tr>-->
+<!--    </thead>-->
+  <thead class="table table-striped datatable">
+    {% for header in report_table.headers %}
+    <tr>
+      <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+              <i class="icon-white fa dt-sort-icon"></i>
+              {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+              {% if header.help_text %}
+                  <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+              {% endif %}
+      </th>
+       {% for col in header.row %}
+      <td>
+                {% include 'yeksi_naa/partials/tabular_cell.html' %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </thead>
+<!--    <tbody>-->
+<!--    {% block tabular-body %}-->
+<!--    {% if report_table.pagination.is_on %}-->
+<!--        <tr>-->
+<!--            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">-->
+<!--                {% trans "Veuillez patienter..." %}-->
+<!--            </td>-->
+<!--        </tr>-->
+<!--    {% endif %}-->
+<!--    {% for row in report_table.rows %}-->
+<!--        <tr>-->
+<!--            {% for col in row %}-->
+<!--                {% include 'yeksi_naa/partials/tabular_cell.html' %}-->
+<!--            {% endfor %}-->
+<!--        </tr>-->
+<!--    {% endfor %}-->
+<!--    {% endblock %}-->
+<!--    </tbody>-->
+<!--    {% if report_table.total_row and report_table.rows %}-->
+<!--        <tfoot>-->
+<!--        <tr>-->
+<!--            {% for col in report_table.total_row %}-->
+<!--                {% include 'yeksi_naa/partials/tabular_cell.html' %}-->
+<!--            {% endfor %}-->
+<!--        </tr>-->
+<!--        </tfoot>-->
+<!--    {% endif %}-->
+</table>
+
+<script>
+   {% if report_table and report_table.datatables %}
+   $(function() {
+        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+            dataTableElem: '#report_table_{{ report_table.slug }}',
+            defaultRows: {{ report_table.default_rows|default:10 }},
+            startAtRowNum: {{ report_table.start_at_row|default:0 }},
+            showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+            loadingTemplateSelector: '#js-template-loading-report',
+            defaultSort: true,
+            {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
+            autoWidth: {{ report_table.headers.auto_width|JSON }},
+            {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
+
+
+            {% if report_table.pagination.is_on %}
+                ajaxSource: '{{ report_table.pagination.source }}',
+                ajaxParams: {{ report_table.pagination.params|JSON }},
+            {% endif %}
+
+            {% if report_table.bad_request_error_text %}
+                badRequestErrorText: "<span class='label label-danger'>Sorry!</span> {{ report_table.bad_request_error_text }}",
+            {% endif %}
+
+            fixColumns: true,
+            fixColsNumLeft: 1,
+            fixColsWidth: 130
+        });
+        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+        if (typeof standardHQReport !== 'undefined') {
+            standardHQReport.handleTabularReportCookies(reportTables);
+        }
+        reportTables.render();
+    });
+    {% endif %}
+</script>

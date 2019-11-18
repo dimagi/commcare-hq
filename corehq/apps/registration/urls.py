@@ -1,18 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.apps.registration.views import (
+    ProcessRegistrationView,
     RegisterDomainView,
     UserRegistrationView,
-    ProcessRegistrationView,
-    registration_default,
     confirm_domain,
-    resend_confirmation,
     eula_agreement,
+    registration_default,
+    resend_confirmation,
     send_mobile_reminder,
 )
-
 
 urlpatterns = [
     url(r'^$', registration_default, name='registration_default'),

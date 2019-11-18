@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
-from django.contrib.postgres.fields import ArrayField
-from six.moves import map
-
 
 NOTIFICATION_TYPES = (
     ('billing', 'Billing Notification'),

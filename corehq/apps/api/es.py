@@ -1,32 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import datetime
 import json
 import logging
 
-import six
 from django.http import HttpResponse
-from django.utils.decorators import method_decorator, classonlymethod
+from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
-from elasticsearch.exceptions import ElasticsearchException, NotFoundError
+
+from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
+from corehq.util.es.interface import ElasticsearchInterface
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new, report_shard_failures
-from corehq.pillows.base import restore_property_dict, VALUE_TAG
+from corehq.elastic import (
+    ESError,
+    get_es_new,
+    report_and_fail_on_shard_failures,
+)
+from corehq.pillows.base import VALUE_TAG, restore_property_dict
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 from no_exceptions.exceptions import Http400
 
 logger = logging.getLogger('es')
@@ -80,6 +85,7 @@ class ESView(View):
         super(ESView, self).__init__()
         self.domain = domain.lower()
         self.es = get_es_new()
+        self.es_interface = ElasticsearchInterface(self.es)
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -118,11 +124,10 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            result = self.es.get(self.index, doc_id)
+            doc = self.es_interface.get_doc(self.index, '_all', doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
-        doc = result['_source']
         if doc.get('domain') != self.domain:
             raise object_does_not_exist(self.doc_type, doc_id)
 
@@ -144,8 +149,8 @@ class ESView(View):
             es_query['fields'] = fields
 
         try:
-            es_results = self.es.search(self.index, es_type, body=es_query)
-            report_shard_failures(es_results)
+            es_results = self.es_interface.search(self.index, es_type, body=es_query)
+            report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
@@ -161,7 +166,6 @@ class ESView(View):
                         querystring)
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, str(e), es_query)
-            notify_exception(None, message=msg)
             raise ESError(msg)
 
         hits = []
@@ -226,10 +230,9 @@ class ESView(View):
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = request.body
-            raw_query = json.loads(raw_post)
-        except Exception as ex:
-            content_response = dict(message="Error parsing query request", exception=ex.message)
+            raw_query = json.loads(request.body.decode('utf-8'))
+        except Exception as e:
+            content_response = dict(message="Error parsing query request", exception=str(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
@@ -331,8 +334,8 @@ class UserES(ESView):
         self.validate_query(es_query)
 
         try:
-            es_results = self.es.search(self.index, es_type, body=es_query)
-            report_shard_failures(es_results)
+            es_results = self.es_interface.search(self.index, es_type, body=es_query)
+            report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
                 self.index, str(e), es_query)
@@ -612,7 +615,7 @@ class ElasticAPIQuerySet(object):
 
             return self.with_fields(payload=new_payload)
 
-        elif isinstance(idx, six.integer_types):
+        elif isinstance(idx, int):
             if idx >= 0:
                 # Leverage efficicent backend slicing
                 return list(self[idx:idx+1])[0]
@@ -623,32 +626,86 @@ class ElasticAPIQuerySet(object):
             raise TypeError('Unsupported type: %s', type(idx))
 
 
+SUPPORTED_DATE_FORMATS = [
+    ISO_DATE_FORMAT,
+    '%Y-%m-%dT%H:%M:%S',
+    '%Y-%m-%dT%H:%M:%S.%f',
+    '%Y-%m-%dT%H:%MZ',  # legacy Case API date format
+]
+
+
 def validate_date(date):
-    try:
-        datetime.datetime.strptime(date, ISO_DATE_FORMAT)
-    except ValueError:
+    for pattern in SUPPORTED_DATE_FORMATS:
         try:
-            datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            return datetime.datetime.strptime(date, pattern)
         except ValueError:
-            try:
-                datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
-            except ValueError:
-                raise DateTimeError("Date not in the correct format")
-    return date
+            pass
+
+    # No match
+    raise DateTimeError("Unknown date format: {}".format(date))
+
 
 RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
 
-# Note that dates are already in a string format when they arrive as query params
-query_param_transforms = {
-    'xmlns': lambda v: {'term': {'xmlns.exact': v}},
-    'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
-    'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
-    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
-    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
-}
+
+class DateRangeParams(object):
+    def __init__(self, param, term=None):
+        self.term = term or param
+        self.start_param = '{}_start'.format(param)
+        self.end_param = '{}_end'.format(param)
+
+    def consume_params(self, raw_params):
+        start = raw_params.pop(self.start_param, None)
+        end = raw_params.pop(self.end_param, None)
+        if start:
+            start = validate_date(start)
+        if end:
+            end = validate_date(end)
+
+        if start or end:
+            # Note that dates are already in a string format when they arrive as query params
+            return filters.date_range(self.term, gte=start, lte=end)
+
+
+class TermParam(object):
+    def __init__(self, param, term=None, analyzed=False):
+        self.param = param
+        self.term = term or param
+        self.analyzed = analyzed
+
+    def consume_params(self, raw_params):
+        value = raw_params.pop(self.param, None)
+        if value:
+            # convert non-analyzed values to lower case
+            value = value.lower() if self.analyzed else value
+            return filters.term(self.term, value)
+
+
+query_param_consumers = [
+    TermParam('xmlns', 'xmlns.exact'),
+    TermParam('xmlns.exact'),
+    TermParam('case_name', 'name', analyzed=True),
+    TermParam('case_type', 'type', analyzed=True),
+    # terms listed here to prevent conversion of their values to lower case since
+    # since they are indexed as `not_analyzed` in ES
+    TermParam('type.exact'),
+    TermParam('name.exact'),
+    TermParam('external_id.exact'),
+    TermParam('contact_phone_number'),
+
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('date_modified', 'modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
+    DateRangeParams('indexed_on'),
+]
 
 
 def es_search(request, domain, reserved_query_params=None):
+    return es_search_by_params(request.GET, domain, reserved_query_params)
+
+
+def es_search_by_params(search_params, domain, reserved_query_params=None):
     payload = {
         "filter": {
             "and": [
@@ -660,8 +717,8 @@ def es_search(request, domain, reserved_query_params=None):
     # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
     # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
     # XML / JSON.
-    if '_search' in request.GET:
-        additions = json.loads(request.GET['_search'])
+    if '_search' in search_params:
+        additions = json.loads(search_params['_search'])
 
         if 'filter' in additions:
             payload['filter']['and'].append(additions['filter'])
@@ -670,23 +727,31 @@ def es_search(request, domain, reserved_query_params=None):
             payload['query'] = additions['query']
 
     # ?q=<lucene>
-    if 'q' in request.GET:
+    if 'q' in search_params:
         payload['query'] = payload.get('query', {})
-        payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
+        payload['query']['query_string'] = {'query': search_params['q']}  # A bit indirect?
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
-    for key in set(request.GET.keys()) - reserved_query_params:
-        if key.endswith('__full'): continue
-        
-        value = request.GET[key]
+    query_params = {
+        param: value
+        for param, value in search_params.items()
+        if param not in reserved_query_params and not param.endswith('__full')
+    }
+    for consumer in query_param_consumers:
+        try:
+            payload_filter = consumer.consume_params(query_params)
+        except DateTimeError as e:
+            raise Http400("Bad query parameter: {}".format(str(e)))
 
-        if key in query_param_transforms:
-            try:
-                payload["filter"]["and"].append(query_param_transforms[key](value))
-            except DateTimeError:
-                raise Http400("Bad query parameter")
-        else:
-            payload["filter"]["and"].append({"term": {key: value}})
+        if payload_filter:
+            payload["filter"]["and"].append(payload_filter)
+
+    # add unconsumed filters
+    for param, value in query_params.items():
+        # assume these fields are analyzed in ES so convert to lowercase
+        # Any fields that are not analyzed in ES should be in the ``query_param_consumers`` above
+        value = value.lower()
+        payload["filter"]["and"].append(filters.term(param, value))
 
     return payload

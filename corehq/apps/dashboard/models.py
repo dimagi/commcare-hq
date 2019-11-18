@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.urls import reverse, resolve, Resolver404
-from corehq.tabs.uitab import url_is_location_safe
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
-from corehq.apps.export.views.utils import ExportsPermissionsManager
-from corehq.apps.reports.models import ReportConfig
+from django.urls import Resolver404, resolve, reverse
+
 from memoized import memoized
+
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.export.models.new import (
+    CaseExportInstance,
+    FormExportInstance,
+)
+from corehq.apps.export.views.utils import ExportsPermissionsManager
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.tabs.uitab import url_is_location_safe
 
 
 class Tile(object):
@@ -203,18 +206,18 @@ class DataPaginator(TilePaginator):
     @memoized
     def form_exports(self):
         exports = []
-        if self.permissions.has_edit_permissions:
+        if self.permissions.has_form_export_permissions:
             from corehq.apps.export.dbaccessors import get_form_exports_by_domain
-            exports = get_form_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
+            exports = get_form_exports_by_domain(self.request.domain)
         return exports
 
     @property
     @memoized
     def case_exports(self):
         exports = []
-        if self.permissions.has_edit_permissions:
+        if self.permissions.has_case_export_permissions:
             from corehq.apps.export.dbaccessors import get_case_exports_by_domain
-            exports = get_case_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
+            exports = get_case_exports_by_domain(self.request.domain)
         return exports
 
     def _paginated_items(self, items_per_page, skip):

@@ -1,14 +1,15 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
-from corehq.form_processor.interfaces import dbaccessors
-from casexml.apps.case.models import CommCareCase
 import random
-from corehq.util.log import with_progress_bar
+
+from casexml.apps.case.models import CommCareCase
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+
 from corehq.apps.couch_sql_migration.diff import filter_case_diffs
 from corehq.apps.tzmigration.timezonemigration import json_diff
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
-from six.moves import range
+from corehq.form_processor.backends.couch.update_strategy import (
+    CouchCaseUpdateStrategy,
+)
+from corehq.form_processor.interfaces import dbaccessors
+from corehq.util.log import with_progress_bar
 
 
 def check_domain(domain, num_cases=1000, randomization=100):

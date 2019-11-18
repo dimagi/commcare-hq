@@ -1,17 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
-    delete_all_report_configs
+from corehq.apps.userreports.dbaccessors import (
+    delete_all_report_configs,
+    get_all_report_configs,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
 from corehq.apps.userreports.tests.utils import (
-    get_sample_report_config, mock_datasource_config
+    get_sample_report_config,
+    mock_datasource_config,
 )
 
 
@@ -128,26 +134,27 @@ class ReportConfigurationTest(SimpleTestCase):
 
 class ReportConfigurationDbTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ReportConfigurationDbTest, cls).setUpClass()
+    def setUp(self):
+        super(ReportConfigurationDbTest, self).setUp()
         domain_foo = Domain(name='foo')
         domain_foo.save()
         domain_bar = Domain(name='bar')
         domain_bar.save()
 
+        # TODO - handle cleanup appropriately so this isn't needed
+        delete_all_report_configs()
+
         ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
         ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
         ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
         for domain in Domain.get_all():
             domain.delete()
-        super(ReportConfigurationDbTest, cls).tearDownClass()
+        super(ReportConfigurationDbTest, self).tearDown()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
@@ -181,6 +188,7 @@ class ReportTranslationTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ReportTranslationTest, cls).setUpClass()
+        delete_all_report_configs()
         data_source = DataSourceConfiguration(
             domain=cls.DOMAIN,
             table_id="foo",

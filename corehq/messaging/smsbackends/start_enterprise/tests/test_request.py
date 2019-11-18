@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
 from corehq.apps.sms.util import strip_plus

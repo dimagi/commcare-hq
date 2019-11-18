@@ -1,33 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import SimpleTestCase, TransactionTestCase
-from mock import patch, Mock, call
+import uuid
+from datetime import date, time
 
-from corehq.apps.accounting.models import (
-    Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
-    Subscriber)
+from django.test import SimpleTestCase, TransactionTestCase
+
+from mock import Mock, call, patch
+
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
-from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler, _deactivate_schedules
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscriber,
+    Subscription,
+)
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler,
+    _deactivate_schedules,
+)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CreateScheduleInstanceActionDefinition,
+)
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
-    Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
+    CommCareUser,
+    Permissions,
+    UserRole,
+    UserRolePresets,
+    WebUser,
 )
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
     SMSContent,
     SMSSurveyContent,
-    ScheduledBroadcast,
-    ImmediateBroadcast,
-    TimedSchedule,
     TimedEvent,
-    AlertSchedule,
+    TimedSchedule,
 )
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
-from datetime import date, time
-import uuid
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):
@@ -64,7 +78,12 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.get_or_create_with_permissions(
             self.domain.name,
-            Permissions(edit_apps=True, edit_web_users=True),
+            Permissions(
+                edit_apps=True,
+                edit_web_users=True,
+                view_web_users=True,
+                view_roles=True,
+            ),
             "Custom Role"
         )
         self.custom_role.save()
@@ -151,8 +170,15 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         for u in self.user_roles:
             user_role = UserRole.get(u.get_id)
             user_role.permissions = Permissions(
-                view_reports=True, edit_commcare_users=True, edit_locations=True,
-                edit_apps=True, edit_data=True
+                view_reports=True,
+                edit_commcare_users=True,
+                view_commcare_users=True,
+                edit_groups=True,
+                view_groups=True,
+                edit_locations=True,
+                view_locations=True,
+                edit_apps=True,
+                edit_data=True
             )
             user_role.save()
 
@@ -295,6 +321,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
     def create_survey_content(self):
         return SMSSurveyContent(
+            app_id='456',
             form_unique_id='123',
             expire_after=60,
         )
@@ -356,7 +383,7 @@ class DeactivateScheduleTest(TransactionTestCase):
         elif isinstance(obj, ImmediateBroadcast):
             schedule = AlertSchedule.objects.get(schedule_id=obj.schedule_id)
         elif isinstance(obj, AutomaticUpdateRule):
-            schedule = AlertSchedule.objects.get(schedule_id=obj.get_messaging_rule_schedule().schedule_id)
+            schedule = AlertSchedule.objects.get(schedule_id=obj.get_schedule().schedule_id)
         else:
             raise TypeError("Expected ScheduledBroadcast, ImmediateBroadcast, or AutomaticUpdateRule")
 
@@ -403,7 +430,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p3.call_count, 2)
             p3.assert_has_calls(
                 [
-                    call(rule.domain, rule.pk)
+                    call(rule)
                     for rule in (self.domain_1_sms_schedules[2], self.domain_1_survey_schedules[2])
                 ],
                 any_order=True
@@ -433,7 +460,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             p2.assert_called_once_with(b.schedule_id, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
-            p3.assert_called_once_with(rule.domain, rule.pk)
+            p3.assert_called_once_with(rule)
 
         self.assertSchedulesActive(self.domain_1_sms_schedules)
         self.assertSchedulesInactive(self.domain_1_survey_schedules)

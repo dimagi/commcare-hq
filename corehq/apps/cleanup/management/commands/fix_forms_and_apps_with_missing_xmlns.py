@@ -1,14 +1,16 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import uuid
 import re
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 
+from django.core.management.base import BaseCommand
+
 from couchdbkit import ResourceNotFound
+
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
@@ -20,13 +22,6 @@ from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
-from couchforms.const import ATTACHMENT_NAME
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand
-import six
-from io import open
-
 
 ONE_HOUR = 60 * 60
 
@@ -89,7 +84,7 @@ class Command(BaseCommand):
                 app_to_unique_ids_map[(app_id, domain)].add(form_unique_id)
 
         # Logging here instead of in the loop to reduce superfluous repeated lines
-        for key, unique_ids in six.iteritems(app_to_unique_ids_map):
+        for key, unique_ids in app_to_unique_ids_map.items():
             for form_unique_id in unique_ids:
                 new_log_file.write(unique_ids_map_log_message(
                     key[0], key[1], form_unique_id
@@ -105,8 +100,8 @@ class Command(BaseCommand):
                 try:
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
-                    log_file.write(e.message)
-                    print(e.message)
+                    log_file.write(str(e))
+                    print(str(e))
                     continue
 
                 if unique_id:
@@ -199,7 +194,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:
@@ -232,11 +227,11 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 
-        data = wrapped_xml.data_node.render()
+        data = wrapped_xml.data_node.render().decode('utf-8')
         data = data.replace("undefined", xmlns, 1)
         wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
         wrapped_xml.instance_node.append(parse_xml(data))
-        new_xml = wrapped_xml.render()
+        new_xml = wrapped_xml.render().decode('utf-8')
 
         form_in_build.source = new_xml
         form_in_build.form_migrated_from_undefined_xmlns = datetime.utcnow()
@@ -341,6 +336,6 @@ def get_xmlns(form_unique_id, app_id, domain):
 def name_matches(xform_name, form_names):
     if xform_name in list(form_names.values()):
         return True
-    if xform_name in ["{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
+    if xform_name in ["{} [{}]".format(v, k) for k, v in form_names.items()]:
         return True
     return False

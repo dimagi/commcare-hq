@@ -2,206 +2,205 @@
 {% load i18n %}
 
 <div class="modal-dialog">
-    <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title">{% trans "Version" %} <span data-bind="text: version"></span></h4>
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h4 class="modal-title">{% trans "Version" %} <span data-bind="text: version"></span></h4>
+    </div>
+    <div class="modal-body">
+      {% if not has_mobile_workers %}
+        <div class="alert alert-danger">
+          {% blocktrans %}
+            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
+            Before you can publish your application,
+          {% endblocktrans %}
+          <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
         </div>
-        <div class="modal-body">
-        {% if not has_mobile_workers %}
-            <div class="alert alert-danger">
-                {% blocktrans %}
-                    Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
-                    Before you can publish your application,
-                {% endblocktrans %}
-                <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
-            </div>
-        {% else %}
-            <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
-                <div class="panel panel-appmanager">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a
-                                data-toggle="collapse"
-                                href="#panel-android"
-                                aria-expanded="true"
-                                aria-controls="panel-android"
-                                data-bind="
+      {% else %}
+        <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
+          <div class="panel panel-appmanager">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a
+                  data-toggle="collapse"
+                  href="#panel-android"
+                  aria-expanded="true"
+                  aria-controls="panel-android"
+                  data-bind="
                                     click: get_short_odk_url,
                                     attr: {'data-parent': '#deploy-accordion_' + id()}
                                 ">
-                                <i class="fcc fcc-applications"></i>
-                                {% trans "Download to Android" %}
-                            </a>
-                        </h4>
-                    </div>
-                    <div class="panel-collapse in collapse" id="panel-android">
-                        <div class="panel-body">
-                            <div data-bind="bootstrapTabs: true">
-                                <div class="tabbable">
-                                    <ul class="nav nav-pills" role="tablist">
-                                      <li class="active">
-                                        <a href="#online-install-tab" data-toggle="tab">
-                                          {% trans "Online Install" %}
-                                        </a>
-                                      </li>
+                  <i class="fcc fcc-applications"></i>
+                  {% trans "Download to Android" %}
+                </a>
+              </h4>
+            </div>
+            <div class="panel-collapse in collapse" id="panel-android">
+              <div class="panel-body">
+                <div data-bind="bootstrapTabs: true">
+                  <div class="tabbable">
+                    <ul class="nav nav-pills" role="tablist">
+                      <li class="active">
+                        <a href="#online-install-tab" data-toggle="tab">
+                          {% trans "Online Install" %}
+                        </a>
+                      </li>
 
-                                      <li>
-                                        <a href="#offline-install-tab" data-toggle="tab">
-                                          {% trans "Offline Install" %}
-                                        </a>
-                                      </li>
-                                    </ul>
-                                    <div class="tab-content appmanager-tab-content">
-                                        <div class="tab-pane active" id="online-install-tab">
-                                            <p>
-                                                {% trans "Download" %}
-                                                <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
-                                                    {% trans "CommCare from Google Play" %}
-                                                </a>
-                                                {% trans "to your Android device." %}
-                                            </p>
-                                            {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
-                                                <div class="form-inline">
-                                                    <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
-                                                        <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
-                                                </div>
-                                            {% endif %}
-                                            {% if multimedia_state.has_media %}
-                                                <div class="checkbox">
-                                                    <label data-bind="visible: allow_media_install">
-                                                        <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
-                                                        {% trans "Include Multimedia" %}
-                                                        <span data-bind="visible: !mm_supported()" class="label label-default">
+                      <li>
+                        <a href="#offline-install-tab" data-toggle="tab">
+                          {% trans "Offline Install" %}
+                        </a>
+                      </li>
+                    </ul>
+                    <div class="tab-content appmanager-tab-content">
+                      <div class="tab-pane active" id="online-install-tab">
+                        <p>
+                          {% trans "Download" %}
+                          <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
+                            {% trans "CommCare from Google Play" %}
+                          </a>
+                          {% trans "to your Android device." %}
+                        </p>
+                        {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
+                          <div class="form-inline">
+                            <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+                            <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                          </div>
+                        {% endif %}
+                        {% if multimedia_state.has_media %}
+                          <div class="checkbox">
+                            <label data-bind="visible: allow_media_install">
+                              <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                              {% trans "Include Multimedia" %}
+                              <span data-bind="visible: !mm_supported()" class="label label-default">
                                                             {% trans "Only supported for versions made after 2013-10-15" %}
                                                         </span>
-                                                    </label>
-                                                </div>
-                                            {% endif %}
-                                                <div class="checkbox">
-                                                    <label data-bind="visible: has_commcare_flavor_target">
-                                                        <input type="checkbox" data-bind="checked: download_targeted_version">
-                                                        {% trans "Download Targeted Version" %}
-                                                    </label>
-                                                </div>
-                                                <p>
-                                                    {% blocktrans %}
-                                                    Open the app on your Android and use one of the following installation methods:
-                                                    {% endblocktrans %}
-                                                </p>
-                                                <p>
-                                                    <a href="#" data-bind="
+                            </label>
+                          </div>
+                        {% endif %}
+                        <div class="checkbox">
+                          <label data-bind="visible: has_commcare_flavor_target">
+                            <input type="checkbox" data-bind="checked: download_targeted_version">
+                            {% trans "Download Targeted Version" %}
+                          </label>
+                        </div>
+                        <p>
+                          {% blocktrans %}
+                            Open the app on your Android and use one of the following installation methods:
+                          {% endblocktrans %}
+                        </p>
+                        <p>
+                          <a href="#" data-bind="
                                                         openRemoteModal: full_odk_install_url,
                                                         click: clickScan
                                                     ">
-                                                        {% trans "Scan Application Barcode" %}
-                                                    </a>
-                                                </p>
-                                                <p>
-                                                    <a href="#" data-bind="
+                            {% trans "Scan Application Barcode" %}
+                          </a>
+                        </p>
+                        <p>
+                          <a href="#" data-bind="
                                                         click: click_app_code,
                                                         visible: !app_code() && !failed_url_generation() && !generating_url()
                                                         ">
-                                                        {% trans "Enter App Code" %}
-                                                    </a>
-                                                    <span data-bind="visible: app_code">
+                            {% trans "Enter App Code" %}
+                          </a>
+                          <span data-bind="visible: app_code">
                                                         {% trans "Enter app code on installation screen: " %}
                                                         <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
-                                                    <img data-bind="visible: generating_url()"
-                                                        src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
-                                                    <span class="text-warning" data-bind="
+                          <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
+                          <span class="text-warning" data-bind="
                                                         visible: failed_url_generation() && !generating_url()
                                                         ">
                                                         {% blocktrans %}
-                                                        (No app code available. If you would like to use an app code instead
-                                                        of scanning the application barcode, try making another version.)
+                                                          (No app code available. If you would like to use an app code instead
+                                                          of scanning the application barcode, try making another version.)
                                                         {% endblocktrans %}
                                                     </span>
-                                                </p>
-                                            </div>
-                                        <div class="tab-pane" id="offline-install-tab">
-                                            <div data-bind="ifnot: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0')">
-                                                Upgrade to CommCare 2.13 to use this feature
-                                            </div>
-                                            <div data-bind="ifnot: allow_media_install">
-                                                Offline install is unavailable for Remote Apps.
-                                            </div>
-                                            <div data-bind="if: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
-                                                {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
-                                                <div class="form-inline">
-                                                    <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
-                                                        <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
-                                                </div>
-                                                {% endif %}
-                                                <ol>
-                                                    <li>
-                                                        {% trans "Download" %}
-                                                        <a href="#" data-bind="click: function () {
+                        </p>
+                      </div>
+                      <div class="tab-pane" id="offline-install-tab">
+                        <div data-bind="ifnot: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0')">
+                          Upgrade to CommCare 2.13 to use this feature
+                        </div>
+                        <div data-bind="ifnot: allow_media_install">
+                          Offline install is unavailable for Remote Apps.
+                        </div>
+                        <div data-bind="if: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
+                          {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
+                            <div class="form-inline">
+                              <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+                              <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                            </div>
+                          {% endif %}
+                          <ol>
+                            <li>
+                              {% trans "Download" %}
+                              <a href="#" data-bind="click: function () {
                                                             download_application_zip(false, build_profile());
                                                         }">
-                                                            CommCare_v<span data-bind="text: version"></span>.ccz
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        {% trans "Transfer this file to your Android phone's file system" %}
-                                                    </li>
-                                                    <li>
-                                                        {% blocktrans %}
-                                                        From CommCare ODK's install screen menu, bring up the
-                                                        application menu by hitting the three dots in the upper
-                                                        right or by hitting the menu button on your phone to
-                                                        select Offline Install
-                                                        {% endblocktrans %}
-                                                    </li>
-                                                    <li>
-                                                        {% trans "You'll be prompted to select this file from your phone's file system and install will begin" %}
-                                                    </li>
-                                                </ol>
-                                                {% if multimedia_state.has_media %}
-                                                <div>
-                                                    {% blocktrans %}
-                                                        Note: Offline install automatically installs all multimedia
-                                                        included in your form. All subsequent remote updates will also
-                                                        include multimedia which could require a lot of data. See the
-                                                        <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>
-                                                            Help Site
-                                                        </a> for more info.
-                                                    {% endblocktrans %}
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                CommCare_v<span data-bind="text: version"></span>.ccz
+                              </a>
+                            </li>
+                            <li>
+                              {% trans "Transfer this file to your Android phone's file system" %}
+                            </li>
+                            <li>
+                              {% blocktrans %}
+                                From CommCare ODK's install screen menu, bring up the
+                                application menu by hitting the three dots in the upper
+                                right or by hitting the menu button on your phone to
+                                select Offline Install
+                              {% endblocktrans %}
+                            </li>
+                            <li>
+                              {% trans "You'll be prompted to select this file from your phone's file system and install will begin" %}
+                            </li>
+                          </ol>
+                          {% if multimedia_state.has_media %}
+                            <div>
+                              {% blocktrans %}
+                                Note: Offline install automatically installs all multimedia
+                                included in your form. All subsequent remote updates will also
+                                include multimedia which could require a lot of data. See the
+                                <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCare+for+Android+Smartphones'>
+                                  Help Site
+                                </a> for more info.
+                              {% endblocktrans %}
                             </div>
+                          {% endif %}
                         </div>
+                      </div>
                     </div>
+                  </div>
                 </div>
-                {% if can_view_cloudcare and app.cloudcare_enabled %}
-                    <div class="panel panel-appmanager">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a class="track-usage-link"
-                                   target="_blank"
-                                   data-category="App Manager"
-                                   data-action="Deploy Type"
-                                   data-label="Open in Web Apps"
-                                   data-bind="attr: {href: $root.webAppsUrl(id, '{{ app.id }}')}">
-                                    <i class="fa fa-desktop"></i>
-                                    {% trans 'Open in Web Apps' %}
-                                </a>
-                            </h4>
-                        </div>
-                    </div>
-                {% endif %}
-                <div class="panel panel-appmanager">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse"
-                               data-bind="
+              </div>
+            </div>
+          </div>
+          {% if can_view_cloudcare and app.cloudcare_enabled %}
+            <div class="panel panel-appmanager">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a class="track-usage-link"
+                     target="_blank"
+                     data-category="App Manager"
+                     data-action="Deploy Type"
+                     data-label="Open in Web Apps"
+                     data-bind="attr: {href: $root.webAppsUrl(id, '{{ app.id }}')}">
+                    <i class="fa fa-desktop"></i>
+                    {% trans 'Open in Web Apps' %}
+                  </a>
+                </h4>
+              </div>
+            </div>
+          {% endif %}
+          <div class="panel panel-appmanager">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse"
+                   data-bind="
                                click: function() { track_deploy_type('Download to Java Phone'); },
                                attr: {
                                    href: '#' + id() + '_download_java',
@@ -209,45 +208,45 @@
                                    'data-parent': '#deploy-accordion_' + id()
                                 }
                                "
-                               aria-expanded="true" aria-controls="panel-java">
-                                <i class="fcc fcc-applications"></i>
-                                {% trans "Download to Java Phone" %}
-                            </a>
-                        </h4>
-                    </div>
-                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
-                        <div class="panel-body">
-                            <ol data-bind="if: reveal_java_download()">
-                                <li>
-                                    {% trans "Download <strong>both</strong> of the following files:" %}
-                                    <p><a data-bind="attr: {href: $root.reverse('download_jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                    <p><a data-bind="attr: {href: $root.reverse('download_jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
-                                </li>
-                                <li>
-                                    {% trans "For help on how to install, see" %}
-                                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
-                                </li>
-                                <li>
-                                    {% trans "If you have any issues with the installation, please refer to" %}
-                                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
-                                </li>
-                            </ol>
-                            <p data-bind="if: !reveal_java_download()">
-                                {% blocktrans %}
-                                This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version,
-                                {{ lastest_j2me_enabled_build }}
-                                to install on Java Phone.
-                                {% endblocktrans %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% if can_send_sms %}
-                <div class="panel panel-appmanager">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse"
-                               data-bind="
+                   aria-expanded="true" aria-controls="panel-java">
+                  <i class="fcc fcc-applications"></i>
+                  {% trans "Download to Java Phone" %}
+                </a>
+              </h4>
+            </div>
+            <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
+              <div class="panel-body">
+                <ol data-bind="if: reveal_java_download()">
+                  <li>
+                    {% trans "Download <strong>both</strong> of the following files:" %}
+                    <p><a data-bind="attr: {href: $root.reverse('download_jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                    <p><a data-bind="attr: {href: $root.reverse('download_jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                  </li>
+                  <li>
+                    {% trans "For help on how to install, see" %}
+                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
+                  </li>
+                  <li>
+                    {% trans "If you have any issues with the installation, please refer to" %}
+                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
+                  </li>
+                </ol>
+                <p data-bind="if: !reveal_java_download()">
+                  {% blocktrans %}
+                    This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version,
+                    {{ lastest_j2me_enabled_build }}
+                    to install on Java Phone.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </div>
+          {% if can_send_sms %}
+            <div class="panel panel-appmanager">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse"
+                     data-bind="
                                    click: onSMSPanelClick,
                                    attr: {
                                       href: '#' + id() + '_sms',
@@ -255,45 +254,45 @@
                                       'data-parent': '#deploy-accordion_' + id()
                                    }
                                 "
-                               aria-expanded="true" aria-controls="panel-sms">
-                                <i class="fcc fcc-messaging"></i>
-                                {% trans "Send to phone via SMS" %}
-                            </a>
-                        </h4>
+                     aria-expanded="true" aria-controls="panel-sms">
+                    <i class="fcc fcc-messaging"></i>
+                    {% trans "Send to phone via SMS" %}
+                  </a>
+                </h4>
+              </div>
+              <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
+                <div class="panel-body">
+                  <div data-bind="if: !reveal_java_download()">
+                    {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
+                  </div>
+                  <div data-bind="if: reveal_java_download(), bootstrapTabs: true">
+                    <div class="tabbable">
+                      <ul class="nav nav-pills">
+                        <li class="active">
+                          <a>{% trans "Send Java Phone app" %}</a>
+                        </li>
+                        <li>
+                          <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
+                        </li>
+                      </ul>
+                      <div class="tab-content">
+                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=False %}
+                      </div>
+                      <div class="tab-content">
+                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
+                      </div>
                     </div>
-                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
-                        <div class="panel-body">
-                            <div data-bind="if: !reveal_java_download()">
-                                {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
-                            </div>
-                            <div data-bind="if: reveal_java_download(), bootstrapTabs: true">
-                                <div class="tabbable">
-                                    <ul class="nav nav-pills">
-                                        <li class="active">
-                                            <a>{% trans "Send Java Phone app" %}</a>
-                                        </li>
-                                        <li>
-                                            <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content">
-                                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=False %}
-                                    </div>
-                                    <div class="tab-content">
-                                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                  </div>
                 </div>
-                {% endif %}
-                {% if multimedia_state.has_media %}
-                    <div class="panel panel-appmanager">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a data-toggle="collapse"
-                                   data-bind="
+              </div>
+            </div>
+          {% endif %}
+          {% if multimedia_state.has_media %}
+            <div class="panel panel-appmanager">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse"
+                     data-bind="
                                       click: function() { track_deploy_type('Download Multimedia'); },
                                       attr: {
                                         href: '#' + id() + '_multimedia',
@@ -301,41 +300,41 @@
                                         'data-parent': '#deploy-accordion_' + id()
                                       }
                                    "
-                                   aria-expanded="true" aria-controls="panel-multimedia">
-                                    <i class="fa fa-camera"></i>
-                                    {% trans 'Download Multimedia' %}
-                                </a>
-                            </h4>
-                        </div>
-                        <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
-                            <div class="panel-body">
-                                {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-                {% if request|toggle_enabled:"SUPPORT" %}
-                    <div class="panel panel-appmanager">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a class="track-usage-link"
-                                   target="_blank"
-                                   data-category="App Manager"
-                                   data-action="Deploy Type"
-                                   data-label="View Source Files"
-                                   data-bind="attr: {href: $root.reverse('download_index', id)}">
-                                    <i class="fa fa-file-text-o"></i>
-                                    {% trans 'View Source Files' %}
-                                </a>
-                            </h4>
-                        </div>
-                    </div>
-                {% endif %}
+                     aria-expanded="true" aria-controls="panel-multimedia">
+                    <i class="fa fa-camera"></i>
+                    {% trans 'Download Multimedia' %}
+                  </a>
+                </h4>
+              </div>
+              <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
+                <div class="panel-body">
+                  {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
+                </div>
+              </div>
             </div>
-        {% endif %}
+          {% endif %}
+          {% if request|toggle_enabled:"SUPPORT" %}
+            <div class="panel panel-appmanager">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a class="track-usage-link"
+                     target="_blank"
+                     data-category="App Manager"
+                     data-action="Deploy Type"
+                     data-label="View Source Files"
+                     data-bind="attr: {href: $root.reverse('download_index', id)}">
+                    <i class="fa fa-file-text-o"></i>
+                    {% trans 'View Source Files' %}
+                  </a>
+                </h4>
+              </div>
+            </div>
+          {% endif %}
         </div>
-        <div class="modal-footer">
-            <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
-        </div>
+      {% endif %}
     </div>
+    <div class="modal-footer">
+      <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
+    </div>
+  </div>
 </div>

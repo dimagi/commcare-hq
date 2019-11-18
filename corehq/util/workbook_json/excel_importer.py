@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from datetime import datetime, timedelta
 
@@ -24,9 +22,9 @@ class ExcelImporter(object):
         self.task = task
         self.progress = 0
         self.total_rows = 100
-        if getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+        if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
             # Log progress since tasks are executed synchronously when
-            # CELERY_ALWAYS_EAGER is true
+            # CELERY_TASK_ALWAYS_EAGER is true
             self.log = logging.getLogger(__name__).info
         else:
             self.log = lambda *a, **k: None

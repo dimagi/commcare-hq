@@ -5,49 +5,49 @@
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
 {% block page_content %}
-<div class="row">
+  <div class="row">
     <div class="col-sm-4">
-        <h2>{% trans "My Projects" %}</h2>
-            <ul class="nav nav-pills nav-stacked">
-            {% for domain in domains_for_user %}
-                <li><a href="{% url "domain_homepage" domain.name %}">{{ domain.display_name }}</a></li>
-            {% endfor %}
-            </ul>
-        {% if open_invitations %}
+      <h2>{% trans "My Projects" %}</h2>
+      <ul class="nav nav-pills nav-stacked">
+        {% for domain in domains_for_user %}
+          <li><a href="{% url "domain_homepage" domain.name %}">{{ domain.display_name }}</a></li>
+        {% endfor %}
+      </ul>
+      {% if open_invitations %}
         <h2>{% trans "Project Invitations" %}</h2>
-            <ul class="list-unstyled">
-            {% for invitation in open_invitations %}
-                <li style="padding-bottom: 6px;">
-                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-success btn-xs">
-                        Accept
-                    </a>
-                    {{  invitation.domain }}
-                </li>
-            {% endfor %}
-            </ul>
-        {% endif %}
+        <ul class="list-unstyled">
+          {% for invitation in open_invitations %}
+            <li style="padding-bottom: 6px;">
+              <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-primary btn-xs">
+                Accept
+              </a>
+              {{  invitation.domain }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
     <div class="col-sm-4">
     </div>
     <div class="col-sm-4">
 
-        {% if not restrict_domain_creation or request.user.is_superuser %}
-            <aside class="well">
-                <h3>{% trans "Have a new idea?" %}</h3>
-                <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
-                <div>{% trans "or" %}</div>
-                <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
-            </aside>
-        {% endif %}
+      {% if not restrict_domain_creation or request.user.is_superuser %}
         <aside class="well">
-            <h3>{% trans "Need ideas?" %}</h3>
-            <p>
-                {% url "appstore" as appstore_url %}
-                {% blocktrans %}
-                    Check out the <a href="{{ appstore_url }}">CommCare Exchange</a>.
-                {% endblocktrans %}
-            </p>
+          <h3>{% trans "Have a new idea?" %}</h3>
+          <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
+          <div>{% trans "or" %}</div>
+          <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
         </aside>
+      {% endif %}
+      <aside class="well">
+        <h3>{% trans "Need ideas?" %}</h3>
+        <p>
+          {% url "appstore" as appstore_url %}
+          {% blocktrans %}
+            Check out the <a href="{{ appstore_url }}">CommCare Exchange</a>.
+          {% endblocktrans %}
+        </p>
+      </aside>
     </div>
-</div>
+  </div>
 {% endblock %}

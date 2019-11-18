@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+import binascii
+import urllib.request
+import urllib.parse
+import urllib.error
 from django.conf import settings
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm
-import six
 
 MACH_URL = "http://smsgw.a2p.mme.syniverse.com/sms.php"
 
@@ -67,7 +66,7 @@ class SQLMachBackend(SQLSMSBackend):
         )
 
     def handle_response(self, msg, response):
-        if not isinstance(response, six.string_types):
+        if not isinstance(response, str):
             raise SyniverseException(
                 "Unrecognized response received from Syniverse "
                 "backend %s" % self.pk
@@ -97,9 +96,9 @@ class SQLMachBackend(SQLSMSBackend):
             text = msg.text.encode('iso-8859-1')
             params['msg'] = text
         except UnicodeEncodeError:
-            params['msg'] = msg.text.encode('utf-16-be').encode('hex')
+            params['msg'] = binascii.hexlify(msg.text.encode('utf-16-be'))
             params['encoding'] = 'ucs'
-        url = '%s?%s' % (MACH_URL, six.moves.urllib.parse.urlencode(params))
-        resp = six.moves.urllib.request.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        url = '%s?%s' % (MACH_URL, urllib.parse.urlencode(params))
+        resp = urllib.request.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read().decode('utf-8')
         self.handle_response(msg, resp)
         return resp

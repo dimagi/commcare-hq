@@ -62,6 +62,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'clipboard/dist/clipboard': 'Clipboard',
                     'ace-builds/src-min-noconflict/ace': 'ace',
                     'DOMPurify/dist/purify.min': 'DOMPurify',
+                    'moment/moment': 'moment',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',

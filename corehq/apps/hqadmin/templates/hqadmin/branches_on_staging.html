@@ -1,28 +1,28 @@
 <!doctype html>
 <html>
 <head>
-    <title>CommCare HQ - Branches Currently Deployed</title>
+  <title>CommCare HQ - Branches Currently Deployed</title>
 </head>
 <body>
 
-    <h1>Branches Currently Deployed</h1>
-    <p>This page only means something on staging.</p>
-    {% for submodule, branches in branches_by_submodule %}
-        {% if branches %}
-            {% if submodule %}
-                <h3>{{ submodule }}</h3>
-            {% else %}
-                <h2>Branches</h2>
-            {% endif %}
-            <ul>
-            {% for branch in branches %}
-                <li>
-                    <a href="https://github.com/dimagi/commcare-hq/compare/{{ branch.branch }}" target="_blank">{{ branch.branch }}</a>
-                    (<a href="https://github.com/dimagi/commcare-hq/commit/{{ branch.commit }}" target="_blank">{{ branch.commit }}</a>)
-                </li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endfor %}
+<h1>Branches Currently Deployed</h1>
+<p>This page only means something on staging.</p>
+{% for submodule, branches in branches_by_submodule %}
+  {% if branches %}
+    {% if submodule %}
+      <h3>{{ submodule }}</h3>
+    {% else %}
+      <h2>Branches</h2>
+    {% endif %}
+    <ul>
+      {% for branch in branches %}
+        <li>
+          <a href="https://github.com/dimagi/commcare-hq/compare/{{ branch.branch }}" target="_blank">{{ branch.branch }}</a>
+          (<a href="https://github.com/dimagi/commcare-hq/commit/{{ branch.commit }}" target="_blank">{{ branch.commit }}</a>)
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endfor %}
 </body>
 </html>

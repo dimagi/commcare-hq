@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 REDIS_USED_PASSWORDS_LIST_PREFIX = 'used_passwords_'
 REDIS_LOGIN_ATTEMPTS_LIST_PREFIX = '$$la'
 RESTRICT_USED_PASSWORDS_NUM = 3  # passwords inclusive of current password

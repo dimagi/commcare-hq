@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
-from mock import patch, MagicMock
+
+from mock import MagicMock, patch
 
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.models import (
+    ReportConfiguration,
     StaticReportConfiguration,
     get_report_configs,
-    ReportConfiguration,
 )
+from corehq.util.test_utils import TestFileMixin
 
 
 @patch('corehq.apps.userreports.models.ReportConfiguration.get_db', new=MagicMock())

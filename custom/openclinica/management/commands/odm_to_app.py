@@ -1,8 +1,6 @@
 """
 Create a template app from ODM-formatted OpenClinica study metadata
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.models import (
@@ -24,7 +22,6 @@ from custom.openclinica.const import (
     CC_ENROLLMENT_DATE,
 )
 from custom.openclinica.utils import odm_nsmap, quote_nan
-from io import open
 
 
 # Map ODM data types to ODK XForm data types
@@ -138,7 +135,7 @@ class Study(StudyObject):
         xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
         xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
         xform.new_question(CC_ENROLLMENT_DATE, 'Enrollment Date', data_type='date')
-        return xform.tostring(pretty_print=True)
+        return xform.tostring(pretty_print=True).decode('utf-8')
 
     def new_reg_subject_module(self, app):
 
@@ -254,7 +251,7 @@ class StudyEvent(StudyObject):
                 study_form.add_item_groups_to_xform(xform)
             xform.new_question('end_date', 'End Date', data_type='date')
             xform.new_question('end_time', 'End Time', data_type='time')
-            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf-8')
 
         def get_preload_action():
             return PreloadAction(
@@ -381,7 +378,7 @@ class StudyForm(StudyObject):
         self.add_item_groups_to_xform(xform)
         xform.new_question('end_date', 'End Date', data_type='date')
         xform.new_question('end_time', 'End Time', data_type='time')
-        return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+        return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf-8')
 
 
 class ItemGroup(StudyObject):
@@ -452,8 +449,7 @@ class Item(StudyObject):
         """
         Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
 
-        >>> import six
-        >>> Item.get_condition('LT', ['5']) if six.PY3 else Item.get_condition('LT', ['5']).encode('utf-8')
+        >>> Item.get_condition('LT', ['5'])
         '. < 5'
 
         """

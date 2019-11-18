@@ -1,0 +1,26 @@
+DELETE FROM "daily_attendance" WHERE month = %(month)s
+{"month": "2019-01-01T00:00:00"}
+
+            INSERT INTO "daily_attendance" (
+              SELECT DISTINCT ON (awc_id, submitted_on)
+                doc_id as doc_id,
+                awc_id as awc_id,
+                month as month,
+                submitted_on as pse_date,
+                awc_open_count as awc_open_count,
+                1 as count,
+                eligible_children as eligible_children,
+                attended_children as attended_children,
+                attended_children_percent as attended_children_percent,
+                form_location as form_location,
+                form_location_lat as form_location_lat,
+                form_location_long as form_location_long,
+                image_name as image_name,
+                pse_conducted as pse_conducted,
+                supervisor_id as supervisor_id
+              FROM "ucr_icds-cas_static-daily_feeding_forms_85b1167f"
+              WHERE month = %(start_month)s and (awc_open_count=1 OR awc_not_open = 1)
+              ORDER BY awc_id, submitted_on, inserted_at DESC
+            )
+        
+{"start_month": "2019-01-01"}

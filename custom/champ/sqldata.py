@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from sqlagg.columns import CountUniqueColumn, SumColumn, SimpleColumn
 from sqlagg.filters import EQ, NOT, BETWEEN, IN, OR
 
@@ -9,7 +7,6 @@ from corehq.apps.userreports.util import get_table_name
 from custom.champ.utils import PREVENTION_XMLNS, ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, POST_TEST_XMLNS, \
     ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS
 from custom.utils.utils import clean_IN_filter_value
-from six.moves import filter
 
 
 class ChampSqlData(SqlData):

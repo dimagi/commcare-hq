@@ -1,19 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
-from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
+from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
-def get_cas_reach_data(domain, now_date, config, show_test=False):
+def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_features=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -36,14 +32,23 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         return queryset
 
     def get_data_for_daily_usage(date, filters):
-        queryset = AggAwcDailyView.objects.filter(
-            date=date, **filters
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            awcs=Sum('num_awcs'),
-            daily_attendance=Sum('daily_attendance_open')
-        )
+        if pre_release_features:
+            queryset = AggAwcDailyView.objects.filter(
+                date=date, **filters
+            ).values(
+                'aggregation_level'
+            ).annotate(
+                daily_attendance=Sum('daily_attendance_open')
+            )
+        else:
+            queryset = AggAwcDailyView.objects.filter(
+                date=date, **filters
+            ).values(
+                'aggregation_level'
+            ).annotate(
+                awcs=Sum('num_launched_awcs'),
+                daily_attendance=Sum('daily_attendance_open')
+            )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
@@ -54,7 +59,6 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     del config['prev_month']
 
     awc_this_month_data = get_data_for_awc_monthly(current_month, config)
-    awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
 
     current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
 
@@ -70,28 +74,31 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             date -= relativedelta(days=1)
             daily_two_days_ago = get_data_for_daily_usage(date, config)
         daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+        awcs = get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs')
         number_of_awc_open_yesterday = {
             'label': _('Number of AWCs Open yesterday'),
             'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                             "by the AWW or the AWW helper")),
-            'color': 'green' if daily_attendance_percent > 0 else 'red',
+            'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
-            'all': get_value(daily_yesterday, 'awcs'),
-            'format': 'div',
+            'all': awcs,
+            'format': 'number_and_percent',
             'frequency': 'day',
-            'redirect': 'awc_daily_status',
+            'redirect': 'icds_cas_reach/awc_daily_status',
         }
     else:
+        awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
+        awcs = get_value(awc_this_month_data, 'awcs')
         number_of_awc_open_yesterday = {
             'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
-            'color': 'green' if monthly_attendance_percent > 0 else 'red',
+            'color': get_color_with_green_positive(monthly_attendance_percent),
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
-            'all': get_value(awc_this_month_data, 'all_awcs'),
-            'format': 'div',
+            'all': awcs,
+            'format': 'number_and_percent',
             'frequency': 'month',
         }
 
@@ -101,16 +108,13 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                 {
                     'label': _('AWCs Launched'),
                     'help_text': awcs_launched_help_text(),
-                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
-                    'color': 'green' if percent_increase(
-                        'awcs',
-                        awc_this_month_data,
-                        awc_prev_month_data) > 0 else 'red',
-                    'value': get_value(awc_this_month_data, 'awcs'),
-                    'all': get_value(awc_this_month_data, 'all_awcs'),
-                    'format': 'div',
+                    'color': None,
+                    'percent': None,
+                    'value': awcs,
+                    'all': None,
+                    'format': 'number',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
+                    'redirect': 'icds_cas_reach/awcs_covered'
                 },
                 number_of_awc_open_yesterday
             ],

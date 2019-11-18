@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq import toggles
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_usercase_properties
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    ParentCasePropertyBuilder,
+    get_usercase_properties,
+)
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.apps.data_dictionary.util import get_case_property_description_dict

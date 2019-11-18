@@ -1,26 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import uuid
-from datetime import datetime
 import random
 import string
+import uuid
+from datetime import datetime
 
 from django.test import TestCase
-from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
-from corehq.apps.commtrack.models import SQLProduct
 
+from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
+
+from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockReportHelper,
+    StockTransactionHelper,
+)
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
-from six.moves import range
 
 DOMAIN_MAX_LENGTH = 25
 
@@ -105,10 +106,10 @@ class StockReportDomainTest(TestCase):
     def test_stock_report(self):
         self.create_report()
         filtered_stock_report = StockReport.objects.filter(domain=self.domain)
-        self.assertEquals(filtered_stock_report.count(), 1)
+        self.assertEqual(filtered_stock_report.count(), 1)
         stock_report = filtered_stock_report.get()
-        self.assertEquals(stock_report.form_id, self.form._id)
-        self.assertEquals(stock_report.domain, self.domain)
+        self.assertEqual(stock_report.form_id, self.form._id)
+        self.assertEqual(stock_report.domain, self.domain)
 
     @run_with_all_backends
     def test_get_case_ledger_state(self):

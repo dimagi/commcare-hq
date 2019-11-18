@@ -1,41 +1,41 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
-from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
-from corehq.apps.reports.filters.api import MobileWorkersOptionsView
-from corehq.apps.hqwebapp.decorators import (
-    use_multiselect,
-    use_select2_v4,
-)
+from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.sms.models import Keyword
+from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.reports.util import get_simplified_users
+from corehq.apps.sms.models import Keyword
 from corehq.apps.sms.verify import (
-    initiate_sms_verification_workflow,
     VERIFICATION__ALREADY_IN_USE,
     VERIFICATION__ALREADY_VERIFIED,
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
+    initiate_sms_verification_workflow,
+)
+from corehq.apps.users.decorators import (
+    require_can_edit_groups,
+    require_can_edit_or_view_groups,
 )
 from corehq.apps.users.forms import GroupMembershipForm
-from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.messaging.scheduling.util import domain_has_reminders
-from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from memoized import memoized
 
 
 class GroupNotFoundException(Exception):
@@ -62,7 +62,7 @@ def get_group_or_404(domain, group_id):
 class BulkSMSVerificationView(BaseDomainView):
     urlname = 'bulk_sms_verification'
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_groups)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(BulkSMSVerificationView, self).dispatch(*args, **kwargs)
@@ -124,9 +124,8 @@ class BulkSMSVerificationView(BaseDomainView):
 
 class BaseGroupsView(BaseUserSettingsView):
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_groups)
     @use_multiselect
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 
@@ -139,6 +138,9 @@ class BaseGroupsView(BaseUserSettingsView):
         context = super(BaseGroupsView, self).main_context
         context.update({
             'all_groups': self.all_groups,
+            'is_case_sharing_enabled': has_privilege(
+                self.request, privileges.CASE_SHARING_GROUPS
+            ),
             'needs_to_downgrade_locations': (
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
@@ -167,6 +169,8 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_name(self):
+        if self.request.is_view_only:
+            return _('Viewing Group "%s"') % self.group.name
         return _('Editing Group "%s"') % self.group.name
 
     @property
@@ -218,13 +222,19 @@ class EditGroupMembersView(BaseGroupsView):
         )
         return {
             'group': self.group,
+            'group_members': self.members,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.members),
             'group_membership_form': self.group_membership_form,
+            'can_edit_group_membership': (self.couch_user.can_edit_users_in_groups()
+                                          or self.couch_user.can_edit_commcare_users()),
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
+            'show_disable_case_sharing': not has_privilege(
+                self.request, privileges.CASE_SHARING_GROUPS
+            ) and self.group.case_sharing,
         }
 
     @property
     def domain_uses_case_sharing(self):
-        domain = Domain.get_by_name(Group.get(self.group_id).domain)
-        return domain.case_sharing_included()
+        domain_obj = Domain.get_by_name(Group.get(self.group_id).domain)
+        return domain_obj.case_sharing_included()

@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from datetime import datetime, timedelta
+
 from django import template
 from django.urls import reverse
-from datetime import datetime, timedelta
+
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from six.moves import range
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = SERVER_DATETIME_FORMAT_NO_SEC
@@ -124,4 +122,3 @@ def aggregate_section_totals(section_name, results_arr, daily):
             sum += item
         ret = "<td>%d</td>" % sum
     return ret
-                           

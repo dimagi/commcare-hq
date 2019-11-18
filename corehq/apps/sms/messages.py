@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.translation import localize
-from django.utils.translation import ugettext as _, ugettext_noop
 
 MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
 MSG_TOUCHFORMS_DOWN = "sms.survey.temporarilydown"
@@ -41,15 +41,12 @@ MSG_MOBILE_WORKER_JAVA_INVITATION = "sms.invitation.mobile.java"
 MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
 MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
 MSG_REGISTRATION_INSTALL_COMMCARE = "sms.registration.installcommcare"
-MSG_UPDATE = "sms.update"
-MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND = "sms.update.location.sitecodenotfound"
-MSG_UPDATE_UNRECOGNIZED_ACTION = "sms.update.unrecognizedaction"
-MSG_UPDATE_LOCATION_SYNTAX = "sms.update.location.syntax"
-MSG_UPDATE_LOCATION_SUCCESS = "sms.update.location.success"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
-    MSG_TOUCHFORMS_DOWN: ugettext_noop("An error has occurred. Please try again later. If the problem persists, try restarting the survey."),
+    MSG_TOUCHFORMS_DOWN: ugettext_noop(
+        "Our system is receiving a lot of messages now. "
+        "Can you re-send in 15 minutes? Apologies for the inconvenience!"),
     MSG_TOUCHFORMS_ERROR: ugettext_noop("Internal server error."),
     MSG_CHOICE_OUT_OF_RANGE: ugettext_noop("Answer is out of range."),
     MSG_INVALID_CHOICE: ugettext_noop("Invalid choice."),
@@ -95,11 +92,6 @@ _MESSAGES = {
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
     MSG_REGISTRATION_INSTALL_COMMCARE:
         ugettext_noop("To install CommCare, follow this link to the Google Play store: {0}"),
-    MSG_UPDATE_UNRECOGNIZED_ACTION: ugettext_noop('Error: Unrecognized update action provided.'),
-    MSG_UPDATE: ugettext_noop("Usage: #update <keyword>"),
-    MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND: ugettext_noop("Location with site code {0} was not found."),
-    MSG_UPDATE_LOCATION_SYNTAX: ugettext_noop("Usage: #update location <site_code>"),
-    MSG_UPDATE_LOCATION_SUCCESS: ugettext_noop("Location updated successfully."),
 }
 
 

@@ -1,20 +1,12 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import inspect
 from collections import defaultdict
 import importlib
 import os
-import six
 
 from django.contrib import messages
 import settingshelper as helper
-
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
 
 DEBUG = True
 LESS_DEBUG = DEBUG
@@ -111,20 +103,17 @@ if os.path.exists(_formdesigner_path):
 del _formdesigner_path
 
 LOG_HOME = FILEPATH
-COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
-UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
-UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -136,7 +125,8 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.LoggingSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -159,8 +149,6 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
-    'custom.icds_reports.middleware.ICDSAuditMiddleware',
-    'corehq.apps.domain.middleware.DomainAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -169,6 +157,11 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+]
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -191,7 +184,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -206,7 +199,6 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
-    'raven.contrib.django.raven_compat',
     'django_user_agents',
 )
 
@@ -234,13 +226,13 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -248,6 +240,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db',
     'corehq.sql_accessors',
@@ -260,16 +253,15 @@ HQ_APPS = (
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
-    'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -306,17 +298,16 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
+    'corehq.apps.saved_reports',
     'corehq.apps.userreports',
     'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
-    'corehq.apps.indicators',
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
@@ -346,16 +337,10 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'custom.bihar',
-    'hsph',
-    'mvp',
-    'mvp_docs',
-    'mvp_indicators',
     'pact',
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.hope',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -371,39 +356,12 @@ HQ_APPS = (
 
     'custom.icds',
     'custom.icds_reports',
-    'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
-)
+    'custom.aaa',
 
-# also excludes any app starting with 'django.'
-APPS_TO_EXCLUDE_FROM_TESTS = (
-    'captcha',
-    'couchdbkit.ext.django',
-    'corehq.apps.ivr',
-    'corehq.messaging.smsbackends.mach',
-    'corehq.messaging.smsbackends.http',
-    'corehq.apps.settings',
-    'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.yo',
-    'corehq.messaging.smsbackends.smsgh',
-    'corehq.messaging.smsbackends.push',
-    'corehq.messaging.smsbackends.apposit',
-    'crispy_forms',
-    'django_extensions',
-    'django_prbac',
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'djcelery',
-    'gunicorn',
-    'langcodes',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'two_factor',
-    'custom.apps.crs_reports',
-    'custom.m4change',
+    'custom.ccqa',
 )
 
 # any built-in management commands we want to override should go in hqscripts
@@ -431,10 +389,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/billing/statements/',
+    '/a/%(domain)s/settings/project/billing_information/',
+    '/a/%(domain)s/settings/project/flags/',
     '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/flags/'
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/project_limits/',
+    '/a/%(domain)s/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -482,9 +444,11 @@ BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRIVACY_EMAIL = 'privacy@example.com'
 CONTACT_EMAIL = 'info@example.com'
+FEEDBACK_EMAIL = 'feedback@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -493,11 +457,14 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 ENABLE_SOFT_ASSERT_EMAILS = True
 
 SERVER_ENVIRONMENT = 'localdev'
-ICDS_ENVS = ('icds', 'icds-new')
+ICDS_ENVS = ('icds',)
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -519,11 +486,9 @@ FIXTURE_GENERATORS = [
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
 ]
@@ -544,10 +509,14 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_ANNOTATIONS = {
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
+
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -562,7 +531,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
@@ -570,6 +539,35 @@ CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
 CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
+
+# in seconds
+CELERY_HEARTBEAT_THRESHOLDS = {
+    "analytics_queue": 30 * 60,
+    "async_restore_queue": 60,
+    "background_queue": None,
+    "case_import_queue": 60,
+    "case_rule_queue": None,
+    "celery": 60,
+    "celery_periodic": None,
+    "email_queue": 30,
+    "export_download_queue": 30,
+    "icds_aggregation_queue": None,
+    "icds_dashboard_reports_queue": None,
+    "ils_gateway_sms_queue": None,
+    "logistics_background_queue": None,
+    "logistics_reminder_queue": None,
+    "reminder_case_update_queue": 15 * 60,
+    "reminder_queue": 15 * 60,
+    "reminder_rule_queue": 15 * 60,
+    "repeat_record_queue": 60 * 60,
+    "saved_exports_queue": 6 * 60 * 60,
+    "send_report_throttled": 6 * 60 * 60,
+    "sms_queue": 5 * 60,
+    "submission_reprocessing_queue": 60 * 60,
+    "sumologic_logs_queue": 6 * 60 * 60,
+    "ucr_indicator_queue": None,
+    "ucr_queue": None,
+}
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -653,9 +651,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-PILLOW_RETRY_QUEUE_ENABLED = False
-
-SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -707,10 +703,17 @@ GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
-LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-LOCAL_REPEATERS = ()
+
+RUN_FORM_META_PILLOW = True
+RUN_CASE_SEARCH_PILLOW = True
+RUN_UNKNOWN_USER_PILLOW = True
+
+# Set to True to remove the `actions` and `xform_id` fields from the
+# ES Case index. These fields contribute high load to the shard
+# databases.
+CASE_ES_DROP_FORM_FIELDS = False
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -722,18 +725,13 @@ ENABLE_PRELOGIN_SITE = False
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
 
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 1.7
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -742,7 +740,8 @@ BITLY_APIKEY = ''
 INTERNAL_DATA = defaultdict(list)
 
 COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
-
+# Run reindex every 10 minutes (by default)
+COUCH_REINDEX_SCHEDULE = {'timedelta': {'minutes': 10}}
 
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
@@ -822,10 +821,6 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
-ENVIRONMENT_HOSTS = {
-    'pillowtop': ['localhost']
-}
-
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
@@ -861,10 +856,12 @@ KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
+COMMCARE_HQ_NAME = {
+    "default": "CommCare HQ",
+}
+COMMCARE_NAME = {
+    "default": "CommCare",
+}
 
 ENTERPRISE_MODE = False
 
@@ -874,15 +871,19 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-SENTRY_PUBLIC_KEY = None
-SENTRY_PRIVATE_KEY = None
-SENTRY_PROJECT_ID = None
-SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_DSN = None
+SENTRY_REPOSITORY = 'dimagi/commcare-hq'
+SENTRY_ORGANIZATION_SLUG = 'dimagi'
+SENTRY_PROJECT_SLUG = 'commcarehq'
+
+# used for creating releases and deploys
 SENTRY_API_KEY = None
 
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
 RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+# Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
@@ -897,24 +898,34 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-# Example:
-# TRANSIFEX_DETAILS = {
-#     'organization': 'selfproject',
-#     'project': {
-#        'icds-test': ['test-1236', 'test-hindi-marathi'],
-#     },
-#     'teams': {
-#         'icds-test': {
-#              source lang code at HQ : link to team on transifex
-#             'en': 'https://www.transifex.com/selfproject/teams/'
-#         }
-#     },
-#     'token': 'api-token'
-#
-# }
-# ToDO: make it support for multiple domains
-TRANSIFEX_DETAILS = None
-from env_settings import *
+
+DEFAULT_ODATA_FEED_LIMIT = 25
+
+# used for providing separate landing pages for different URLs
+# default will be used if no hosts match
+CUSTOM_LANDING_TEMPLATE = {
+    # "icds-cas.gov.in": 'icds/login.html',
+    # "default": 'login_and_password/login.html',
+}
+
+ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -933,16 +944,11 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if error.message != 'No module named localsettings':
+    if str(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
-
-COUCH_DATABASES['default'] = {
-    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
-    for (k, v) in COUCH_DATABASES['default'].items()
-}
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
@@ -993,9 +999,12 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
+                'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
+                'corehq.util.context_processors.emails',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1037,6 +1046,9 @@ LOGGING = {
         },
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
+        },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
         },
     },
     'filters': {
@@ -1107,30 +1119,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'ucr_diff': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_diff',
-            'filename': UCR_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_exception': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_exception',
-            'filename': UCR_EXCEPTION_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_timing',
-            'filename': UCR_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1141,10 +1129,6 @@ LOGGING = {
         },
         'null': {
             'class': 'logging.NullHandler',
-        },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
         'soft_asserts': {
             "level": "DEBUG",
@@ -1162,6 +1146,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1174,7 +1166,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1189,7 +1181,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1233,21 +1225,6 @@ LOGGING = {
             'level': 'INFO',
             'propogate': True,
         },
-        'ucr_timing': {
-            'handlers': ['ucr_timing'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_diff': {
-            'handlers': ['ucr_diff'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_exception': {
-            'handlers': ['ucr_exception'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
@@ -1257,11 +1234,6 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True
-        },
-        'sentry.errors.uncaught': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
         },
         'soft_asserts': {
             'handlers': ['soft_asserts', 'console'],
@@ -1273,11 +1245,25 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'warehouse': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1296,46 +1282,43 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
-MVP_INDICATOR_DB = 'mvp-indicators'
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
 }
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-if six.PY3:
-    NEW_USERS_GROUPS_DB = 'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-    NEW_FIXTURES_DB = 'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
+NEW_FIXTURES_DB = 'fixtures'
+FIXTURES_DB = NEW_FIXTURES_DB
 
-    NEW_DOMAINS_DB = 'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = NEW_DOMAINS_DB
 
-    NEW_APPS_DB = 'apps'
-    APPS_DB = NEW_APPS_DB
+NEW_APPS_DB = 'apps'
+APPS_DB = NEW_APPS_DB
 
-    META_DB = 'meta'
-else:
-    NEW_USERS_GROUPS_DB = b'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+META_DB = 'meta'
 
-    NEW_FIXTURES_DB = b'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
-
-    NEW_DOMAINS_DB = b'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
-
-    NEW_APPS_DB = b'apps'
-    APPS_DB = NEW_APPS_DB
-
-    META_DB = b'meta'
+_serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+for _name in ["default", "redis"]:
+    if _name not in CACHES:  # noqa: F405
+        continue
+    _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+    assert _options.get('SERIALIZER', _serializer) == _serializer, (
+        "Refusing to change SERIALIZER. Remove that option from "
+        "localsettings or whereever redis caching is configured. {}"
+        .format(_options)
+    )
+    _options['SERIALIZER'] = _serializer
+del _name, _options, _serializer
 
 
 COUCHDB_APPS = [
@@ -1362,7 +1345,6 @@ COUCHDB_APPS = [
     'fluff_filter',
     'hqcase',
     'hqmedia',
-    'hope',
     'case_importer',
     'indicators',
     'locations',
@@ -1374,6 +1356,7 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
+    'saved_reports',
     'sms',
     'smsforms',
     'telerivet',
@@ -1389,9 +1372,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'hsph',
-    'mvp',
-    ('mvp_docs', MVP_INDICATOR_DB),
     'pact',
     'accounting',
     'succeed',
@@ -1403,7 +1383,6 @@ COUCHDB_APPS = [
     ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
-    ('bihar', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -1422,8 +1401,6 @@ COUCHDB_APPS = [
     # applications
     ('app_manager', APPS_DB),
 ]
-
-COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
@@ -1676,7 +1653,28 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'xform-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
             'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow_old',
+        },
+        {
+            'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
@@ -1688,12 +1686,17 @@ PILLOWTOPS = {
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
+            'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
+            'name': 'group-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
@@ -1719,23 +1722,6 @@ PILLOWTOPS = {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
-        },
-    ],
-    'core_ext': [
-        {
-            'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1767,6 +1753,33 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
+        },
+    ],
+    'core_ext': [
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
+        },
+        {
+            'name': 'location-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [
@@ -1803,22 +1816,6 @@ PILLOWTOPS = {
     ]
 }
 
-BASE_REPEATERS = (
-    'corehq.motech.repeaters.models.FormRepeater',
-    'corehq.motech.repeaters.models.CaseRepeater',
-    'corehq.motech.repeaters.models.CreateCaseRepeater',
-    'corehq.motech.repeaters.models.UpdateCaseRepeater',
-    'corehq.motech.repeaters.models.ShortFormRepeater',
-    'corehq.motech.repeaters.models.AppStructureRepeater',
-    'corehq.motech.repeaters.models.UserRepeater',
-    'corehq.motech.repeaters.models.LocationRepeater',
-    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
-    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
-)
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
-
-
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
     os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
@@ -1830,91 +1827,18 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_activity.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_type.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_district.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_state.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3i_pregnancies.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4a6_preschool_education.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4b_iodized_salt.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_child_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_pregnancy_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6ac_pse_attendance.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6b_pse_attendance_per_year.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_7_growth_monitored.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_8_immunizations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_9_vhnd.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3i_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3ii_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4a_6_pse.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4b_infra_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_5_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6ac_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6b_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'list_pnc_delivery_complications.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_above_6mo_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_days_open.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_locations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_mgmt_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_beneficiary_feedback.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_born_last_30_days.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_child_nutrition_status.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_children_weighed.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_comp_feeding.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ebf.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_handwashing.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ifa_consumption.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_immun_complete.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_names.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_nutrition_status.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_lbw_pre_term.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_pregnant_women_names.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'testing', '*.json'),
-
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
 
 
@@ -1926,6 +1850,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
@@ -1934,11 +1859,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1948,7 +1871,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
@@ -1965,28 +1890,26 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-
-    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
-
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -2009,11 +1932,6 @@ COUCH_CACHE_BACKENDS = [
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
-    'hsph',
-    'care-bihar',
-    'bihar',
-    'hsph-dev',
-    'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'crs-remind',
     'succeed',
@@ -2032,6 +1950,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
     ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
+    ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
@@ -2039,8 +1958,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -2049,9 +1966,13 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = []
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
+]
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = []
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
+]
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2067,28 +1988,15 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'care-bihar': 'custom.bihar',
-    'bihar': 'custom.bihar',
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mvp-potou': 'mvp',
-    'mvp-sauri': 'mvp',
-    'mvp-bonsaaso': 'mvp',
-    'mvp-ruhiira': 'mvp',
-    'mvp-mwandama': 'mvp',
-    'mvp-sada': 'mvp',
-    'mvp-tiby': 'mvp',
-    'mvp-mbola': 'mvp',
-    'mvp-koraro': 'mvp',
-    'mvp-pampaida': 'mvp',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.icds_reports',
+    'reach-test': 'custom.aaa',
+    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -2102,7 +2010,6 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
@@ -2113,12 +2020,6 @@ DOMAIN_MODULE_MAP = {
     'ewsghana-test-4': 'custom.ewsghana',
     'ewsghana-test-5': 'custom.ewsghana',
     'ewsghana-test3': 'custom.ewsghana',
-    'ils-gateway': 'custom.ilsgateway',
-    'ils-gateway-training': 'custom.ilsgateway',
-    'ilsgateway-full-test': 'custom.ilsgateway',
-    'ilsgateway-test-2': 'custom.ilsgateway',
-    'ilsgateway-test3': 'custom.ilsgateway',
-    'mvp-mayange': 'mvp',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
@@ -2150,6 +2051,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
+
+    'ccqa': 'custom.ccqa',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
@@ -2159,10 +2062,17 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-RESTORE_TIMING_DOMAINS = {
+# Domains that we want to tag in datadog
+DATADOG_DOMAINS = {
     # ("env", "domain"),
+    ("production", "born-on-time-2"),
+    ("production", "hki-nepal-suaahara-2"),
     ("production", "malawi-fp-study"),
+    ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "isth-production"),
+    ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
@@ -2183,7 +2093,6 @@ COMPRESS_OFFLINE_CONTEXT = {
 COMPRESS_CSS_HASHING_METHOD = 'content'
 
 
-
 if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
@@ -2196,22 +2105,51 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
+if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
+    try:
+        from ddtrace import tracer
+        tracer.enabled = False
+    except ImportError:
+        pass
+
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
 
-SENTRY_CONFIGURED = False
-_raven_config = helper.configure_sentry(
-    BASE_DIR,
-    SERVER_ENVIRONMENT,
-    SENTRY_PUBLIC_KEY,
-    SENTRY_PRIVATE_KEY,
-    SENTRY_PROJECT_ID
-)
-if _raven_config:
-    RAVEN_CONFIG = _raven_config
+if not SENTRY_DSN:
+    pub_key = globals().get('SENTRY_PUBLIC_KEY')
+    priv_key = globals().get('SENTRY_PRIVATE_KEY')
+    project_id = globals().get('SENTRY_PROJECT_ID')
+    if pub_key and priv_key and project_id:
+        SENTRY_DSN = 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        )
+
+        import warnings
+        warnings.warn(inspect.cleandoc(f"""SENTRY configuration has changed
+
+            Please replace SENTRY_PUBLIC_KEY, SENTRY_PRIVATE_KEY, SENTRY_PROJECT_ID with SENTRY_DSN:
+
+            SENTRY_DSN = {SENTRY_DSN}
+
+            The following settings are also recommended:
+                SENTRY_ORGANIZATION_SLUG
+                SENTRY_PROJECT_SLUG
+                SENTRY_REPOSITORY
+
+            SENTRY_QUERY_URL is not longer needed.
+            """), DeprecationWarning)
+
+if SENTRY_DSN:
+    if 'SENTRY_QUERY_URL' not in globals():
+        SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
+    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
     SENTRY_CONFIGURED = True
-    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+else:
+    SENTRY_CONFIGURED = False
+
 
 CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:

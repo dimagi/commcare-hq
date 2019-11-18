@@ -1,13 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import itertools
 import logging
 from datetime import date
 
 from django.apps import apps
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Q
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
@@ -15,14 +15,19 @@ from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.userreports.dbaccessors import (
+    delete_all_ucr_tables_for_domain,
+)
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +104,10 @@ def _delete_web_user_membership(domain_name):
     inactive_web_users = WebUser.by_domain(domain_name, is_active=False)
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
-        web_user.save()
+        if settings.UNIT_TESTING and not web_user.domain_memberships:
+            web_user.delete()
+        else:
+            web_user.save()
 
 
 def _terminate_subscriptions(domain_name):
@@ -204,7 +212,6 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('form_processor', _delete_all_cases),
     CustomDeletion('form_processor', _delete_all_forms),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain'),
-    ModelDeletion('calendar_fixture', 'CalendarFixtureSettings', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
@@ -236,13 +243,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     CustomDeletion('custom_data_fields', _delete_custom_data_fields),
+    CustomDeletion('ucr', delete_all_ucr_tables_for_domain),
 ]
 
 
-def apply_deletion_operations(domain_name, dynamic_operations):
-    all_ops = dynamic_operations or []
-    all_ops.extend(DOMAIN_DELETE_OPERATIONS)
-    raw_ops, model_ops = _split_ops_by_type(all_ops)
+def apply_deletion_operations(domain_name):
+    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
 
     with connection.cursor() as cursor:
         for op in raw_ops:

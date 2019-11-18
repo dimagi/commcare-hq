@@ -1,17 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from datetime import timedelta
-from corehq.apps.sms.util import strip_plus
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.messaging.scheduling.util import utcnow
-from couchdbkit import MultipleResultsFound
+
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
-from six.moves import zip
 
+from couchdbkit import MultipleResultsFound
+
+from corehq.apps.sms.util import strip_plus
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.messaging.scheduling.util import utcnow
+
+from . import signals
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -86,7 +87,7 @@ class SQLXFormsSession(models.Model):
             ['session_is_open', 'connection_id'],
         ]
 
-    def __unicode__(self):
+    def __str__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns,
              "domain": self.domain,
@@ -240,6 +241,3 @@ class SQLXFormsSession(models.Model):
 
 def get_session_by_session_id(id):
     return SQLXFormsSession.by_session_id(id)
-
-
-from . import signals

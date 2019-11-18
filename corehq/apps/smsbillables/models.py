@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+
 from corehq import toggles
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
@@ -16,14 +14,19 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SQLMobileBackend,
 )
-from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
+from corehq.apps.sms.phonenumbers_helper import (
+    get_country_code_and_national_number,
+)
+from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.smsbillables.exceptions import (
+    AmbiguousPrefixException,
+    RetryBillableTaskException,
+)
 from corehq.apps.smsbillables.utils import (
     get_twilio_message,
     log_smsbillables_error,
 )
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException, RetryBillableTaskException
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 

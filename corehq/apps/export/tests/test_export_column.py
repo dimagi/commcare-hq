@@ -1,34 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
+
 from django.test import SimpleTestCase
+
 from mock import patch
 
-from corehq.util.view_utils import absolute_reverse
 from corehq.apps.export.const import (
-    PLAIN_USER_DEFINED_SPLIT_TYPE,
-    MULTISELCT_USER_DEFINED_SPLIT_TYPE,
-    MISSING_VALUE,
     EMPTY_VALUE,
+    MISSING_VALUE,
+    MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
 )
 from corehq.apps.export.models import (
-    ExportColumn,
-    StockExportColumn,
-    RowNumberColumn,
     CaseIndexExportColumn,
     CaseIndexItem,
+    ExportColumn,
+    ExportItem,
+    GeopointItem,
     MultiMediaExportColumn,
     MultiMediaItem,
-    PathNode,
-    SplitGPSExportColumn,
-    GeopointItem,
-    ExportItem,
-    SplitUserDefinedExportColumn,
-    SplitExportColumn,
-    UserDefinedExportColumn,
     MultipleChoiceItem,
     Option,
+    PathNode,
+    RowNumberColumn,
+    SplitExportColumn,
+    SplitGPSExportColumn,
+    SplitUserDefinedExportColumn,
+    StockExportColumn,
+    UserDefinedExportColumn,
 )
+from corehq.util.view_utils import absolute_reverse
 
 MockLedgerValue = namedtuple('MockLedgerValue', ['entry_id', 'section_id'])
 
@@ -190,13 +190,13 @@ class StockExportColumnTest(SimpleTestCase):
         with patch(
                 'corehq.apps.export.models.new.get_ledger_section_entry_combinations',
                 return_value=[
-                    MockLedgerValue(section_id='abc', entry_id='def'),
-                    MockLedgerValue(section_id='abc', entry_id='def'),
                     MockLedgerValue(section_id='123', entry_id='456'),
+                    MockLedgerValue(section_id='abc', entry_id='def'),
                 ]):
 
             headers = list(column.get_headers())
             self.assertEqual(headers, ['water (123)', 'water (abc)'])
+
 
 class TestRowNumberColumn(SimpleTestCase):
 
@@ -352,36 +352,46 @@ class TestSplitExportColumn(SimpleTestCase):
 
 
 class TestMultiMediaExportColumn(SimpleTestCase):
+    column = MultiMediaExportColumn(
+        item=MultiMediaItem(
+            path=[PathNode(name='form'), PathNode(name='photo')],
+        ),
+    )
 
     def test_get_value(self):
-        column = MultiMediaExportColumn(
-            item=MultiMediaItem(
-                path=[PathNode(name='form'), PathNode(name='photo')],
-            ),
-        )
-
-        result = column.get_value('my-domain', '1234', {'photo': '1234.jpg'}, [PathNode(name='form')])
+        doc = {'external_blobs': {'1234.jpg': {}},
+               'photo': '1234.jpg'}
+        result = self.column.get_value('my-domain', '1234', doc, [PathNode(name='form')])
         self.assertEqual(
             result,
             absolute_reverse('api_form_attachment', args=('my-domain', '1234', '1234.jpg'))
         )
-        result = column.get_value('my-domain', '1234', {'photo': None}, [PathNode(name='form')])
+
+    def test_missing_value(self):
+        doc = {'external_blobs': {},
+               'photo': None}
+        result = self.column.get_value('my-domain', '1234', doc, [PathNode(name='form')])
         self.assertEqual(result, MISSING_VALUE)
 
-        result = column.get_value('my-domain', '1234', {'photo': ''}, [PathNode(name='form')])
+    def test_empty_string(self):
+        doc = {'external_blobs': {},
+               'photo': ''}
+        result = self.column.get_value('my-domain', '1234', doc, [PathNode(name='form')])
         self.assertEqual(result, '')
 
-    def test_get_value_excel_format(self):
-        column = MultiMediaExportColumn(
-            item=MultiMediaItem(
-                path=[PathNode(name='form'), PathNode(name='photo')],
-            ),
-        )
+    def test_mismatched_value_type(self):
+        doc = {'external_blobs': {},
+               'photo': "this clearly isn't a photo"}
+        result = self.column.get_value('my-domain', "this clearly isn't a photo", doc, [PathNode(name='form')])
+        self.assertEqual(result, "this clearly isn't a photo")
 
-        result = column.get_value(
+    def test_get_value_excel_format(self):
+        doc = {'external_blobs': {'1234.jpg': {}},
+               'photo': '1234.jpg'}
+        result = self.column.get_value(
             'my-domain',
             '1234',
-            {'photo': '1234.jpg'},
+            doc,
             [PathNode(name='form')],
             transform_dates=True,
         )

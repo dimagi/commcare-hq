@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from django.db import models
 from kafka.common import TopicPartition
@@ -23,7 +21,8 @@ def str_to_kafka_seq(seq):
 def kafka_seq_to_str(seq):
     # json doesn't like tuples as keys
     seq = {'{},{}'.format(*key): val for key, val in seq.items()}
-    return json.dumps(seq)
+    json_seq = json.dumps(seq)
+    return json_seq
 
 
 class DjangoPillowCheckpoint(models.Model):

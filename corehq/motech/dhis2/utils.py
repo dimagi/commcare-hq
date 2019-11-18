@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import date, timedelta
+
 from dateutil.relativedelta import relativedelta
-from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.util.couch import get_document_or_not_found
+
 from dimagi.utils.dates import DateSpan
+
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.util.couch import get_document_or_not_found
 
 
 def get_report_config(domain_name, ucr_id):

@@ -2,38 +2,38 @@
 {% load hq_shared_tags %}
 
 {% block js %}
-    <script src="{% static "case/js/repeat_records.js" %}"></script>
+  <script src="{% static "case/js/repeat_records.js" %}"></script>
 {% endblock js %}
 
 <table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>{% trans "Last Sent" %}</th>
-            <th>{% trans "URL" %}</th>
-            <th>{% trans "Status" %}</th>
-            <th>{% trans "Attempts" %}</th>
-            <th>{% trans "Action" %}</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for repeat_record in repeat_records %}
-            <tr>
-                <td>{{ repeat_record.last_checked }}</td>
-                <td>{{ repeat_record.url }}</td>
-                <td>{{ repeat_record.state|lower }}</td>
-                <td>
-                    {% for attempt in repeat_record.attempts %}
-                        <div>{{ attempt.datetime }}: {{ attempt.message }}</div>
-                    {% endfor %}
-                </td>
-                <td>
-                    <a class="btn btn-default requeue-record-payload"
-                       role="button"
-                       data-record-id="{{ repeat_record.record_id }}">
-                        {% trans "Requeue Request" %}
-                    </a>
-                </td>
-            </tr>
+  <thead>
+    <tr>
+      <th>{% trans "Last Sent" %}</th>
+      <th>{% trans "URL" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th>{% trans "Attempts" %}</th>
+      <th>{% trans "Action" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for repeat_record in repeat_records %}
+    <tr>
+      <td>{{ repeat_record.last_checked }}</td>
+      <td>{{ repeat_record.url }}</td>
+      <td>{{ repeat_record.state|lower }}</td>
+      <td>
+        {% for attempt in repeat_record.attempts %}
+          <div>{{ attempt.datetime }}: {{ attempt.message }}</div>
         {% endfor %}
-    </tbody>
+      </td>
+      <td>
+        <a class="btn btn-default requeue-record-payload"
+           role="button"
+           data-record-id="{{ repeat_record.record_id }}">
+          {% trans "Requeue Request" %}
+        </a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
 </table>

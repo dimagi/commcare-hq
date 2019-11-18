@@ -1,0 +1,21 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+<br/>
+<br/>
+<br/>
+<h2 class="media-heading">{{ report.report_table.title }}</h2><br/>
+    {% for subtitle in report.report_table.subtitle %}
+        <h4>{{ subtitle }}</h4>
+    {% endfor %}
+{% if report.has_sections %}
+    {% include 'icds_reports/partials/sections_report_table.html' with report_table=report.report_table%}
+{%  else %}
+{% include 'icds_reports/partials/report_table.html' with report_table=report.report_table%}
+{% endif %}
+<br/>
+{% if report.posttitlte %}
+    {{ report.posttitle }}
+<br/>
+{% endif %}

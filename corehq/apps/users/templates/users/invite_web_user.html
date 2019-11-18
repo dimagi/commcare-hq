@@ -4,19 +4,19 @@
 {% load i18n %}
 
 {% block page_content %}
-    <form class="form-horizontal" method="post" action="">{% csrf_token %}
-        <legend>{% trans 'Information for new Web User' %}</legend>
-        {% crispy registration_form %}
-        <div class="form-actions">
-            <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                <button type="submit" class="btn btn-primary">
-                    {% if request_id %}
-                        {% trans "Add User" %}
-                    {% else %}
-                        {% trans "Send Invite" %}
-                    {% endif %}
-                </button>
-            </div>
-        </div>
-    </form>
+  <form class="form-horizontal" method="post" action="">{% csrf_token %}
+    <legend>{% trans 'Information for new Web User' %}</legend>
+    {% crispy registration_form %}
+    <div class="form-actions">
+      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+        <button type="submit" class="btn btn-primary">
+          {% if request_id %}
+            {% trans "Add User" %}
+          {% else %}
+            {% trans "Send Invite" %}
+          {% endif %}
+        </button>
+      </div>
+    </div>
+  </form>
 {% endblock %}

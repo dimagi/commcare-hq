@@ -1,22 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.locations.forms import LocationSelectWidget
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
-from corehq.motech.repeaters.repeater_generators import RegisterGenerator
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from email_validator import EmailNotValidError, validate_email
+from memoized import memoized
 
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.users.util import raw_username
-
-from memoized import memoized
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 
@@ -25,8 +27,8 @@ class GenericRepeaterForm(forms.Form):
 
     url = forms.URLField(
         required=True,
-        label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/',
+        label=_('URL to forward to'),
+        help_text=_('Please enter the full URL, like "http://www.example.com/forwarding/"'),
         widget=forms.TextInput(attrs={"class": "url"})
     )
     auth_type = forms.ChoiceField(
@@ -40,17 +42,22 @@ class GenericRepeaterForm(forms.Form):
     )
     username = forms.CharField(
         required=False,
-        label='Username',
+        label=_('Username'),
     )
     password = forms.CharField(
         required=False,
-        label='Password',
+        label=_('Password'),
         widget=forms.PasswordInput(render_value=True)
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip SSL certificate verification'),
         required=False,
         help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
+    )
+    notify_addresses_str = forms.CharField(
+        required=False,
+        label=_("Addresses to send notifications"),
+        help_text=_("A comma-separated list of email addresses to send error notifications"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -109,6 +116,7 @@ class GenericRepeaterForm(forms.Form):
             self.special_crispy_fields["auth_type"],
             "username",
             "password",
+            "notify_addresses_str",
             self.special_crispy_fields["skip_cert_verify"],
         ])
         return form_fields
@@ -125,7 +133,7 @@ class GenericRepeaterForm(forms.Form):
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
-                        css_class='btn btn-info disabled',
+                        css_class='btn btn-default disabled',
                     ),
                     crispy.Div(
                         css_id='test-forward-result',
@@ -138,6 +146,15 @@ class GenericRepeaterForm(forms.Form):
             "auth_type": twbscrispy.PrependedText('auth_type', ''),
             "skip_cert_verify": twbscrispy.PrependedText('skip_cert_verify', ''),
         }
+
+    def clean_notify_addresses_str(self):
+        data = self.cleaned_data['notify_addresses_str']
+        are_valid = (validate_email(addr) for addr in re.split('[, ]+', data) if addr)
+        try:
+            all(are_valid)
+        except EmailNotValidError:
+            raise forms.ValidationError(_("Contains an invalid email address."))
+        return data
 
     def clean(self):
         cleaned_data = super(GenericRepeaterForm, self).clean()
@@ -166,13 +183,13 @@ class CaseRepeaterForm(GenericRepeaterForm):
     white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Case Types'),
-        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
     black_listed_users = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
-        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
 
@@ -224,12 +241,14 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id',
-                                                                 select2_version='v4')
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['location_id', 'atom_feed_enabled'] + fields
+        return [
+            'location_id',
+            twbscrispy.PrependedText('atom_feed_enabled', ''),
+        ] + fields
 
     def clean(self):
         cleaned_data = super(OpenmrsRepeaterForm, self).clean()
@@ -247,39 +266,6 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                     'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
-
-
-class Dhis2RepeaterForm(FormRepeaterForm):
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
-        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields
-
-
-class SOAPCaseRepeaterForm(CaseRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
-
-
-class SOAPLocationRepeaterForm(GenericRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
 
 
 class EmailBulkPayload(forms.Form):

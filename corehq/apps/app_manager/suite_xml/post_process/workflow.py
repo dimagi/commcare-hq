@@ -1,21 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
-import re
 from xml.sax.saxutils import unescape
 
+from memoized import memoized
+
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import (
-    RETURN_TO, )
+from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
-from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    XPath
-from memoized import memoized
-from six.moves import filter
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    CreateFrame,
+    Stack,
+    StackDatum,
+)
+from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
 
 
 class WorkflowHelper(PostProcessor):
@@ -26,7 +26,7 @@ class WorkflowHelper(PostProcessor):
     @property
     @memoized
     def root_module_datums(self):
-        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        root_modules = [module for module in self.modules if module.put_in_root]
         return [
             datum for module in root_modules
             for datum in self.get_module_datums('m{}'.format(module.id)).values()
@@ -83,9 +83,12 @@ class WorkflowHelper(PostProcessor):
         target_module_id = match.group(1)
         target_form_id = match.group(2)
 
+        frame_children = []
+
         module_command = id_strings.menu_id(target_module)
         module_datums = self.get_module_datums(target_module_id)
         form_datums = module_datums[target_form_id]
+        frame_children = []
 
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
@@ -94,12 +97,16 @@ class WorkflowHelper(PostProcessor):
             root_module = target_module.root_module
             if root_module and include_target_root:
                 datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                root_module_command = id_strings.menu_id(target_module.root_module)
+                if root_module_command != id_strings.ROOT:
+                    frame_children.append(CommandId(root_module_command))
+            frame_children.append(CommandId(module_command))
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
 
-        frame_children = [CommandId(module_command)] if module_command != id_strings.ROOT else []
         frame_children.extend(common_datums)
+
         if not module_only:
             frame_children.append(CommandId(command))
             frame_children.extend(remaining_datums)
@@ -245,7 +252,7 @@ class EndOfFormNavigationWorkflow(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.const import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
 
@@ -453,7 +460,7 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datum from the case list form
         :return: CaseListFormStackFrames object
         """
-        from corehq.apps.app_manager.models import WORKFLOW_CASE_LIST
+        from corehq.apps.app_manager.const import WORKFLOW_CASE_LIST
         source_session_var = self._get_source_session_var(form, target_module.case_type)
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
@@ -589,8 +596,7 @@ class CommandId(object):
     def __eq__(self, other):
         return self.id == other.id
 
-    def __ne__(self, other):
-        return not self == other
+    __hash__ = None
 
     def __repr__(self):
         return 'ModuleCommand(id={})'.format(self.id)
@@ -602,7 +608,7 @@ class WorkflowDatumMeta(object):
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
-    type_regex = re.compile("\[@case_type='([\w-]+)'\]")
+    type_regex = re.compile(r"\[@case_type='([\w-]+)'\]")
 
     def __init__(self, datum_id, nodeset, function):
         self.id = datum_id
@@ -659,8 +665,7 @@ class WorkflowDatumMeta(object):
     def __eq__(self, other):
         return self.id == other.id
 
-    def __ne__(self, other):
-        return not self == other
+    __hash__ = None
 
     def __repr__(self):
         return 'WorkflowDatumMeta(id={}, case_type={})'.format(self.id, self.case_type)

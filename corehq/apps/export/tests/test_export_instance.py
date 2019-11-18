@@ -1,33 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import mock
 from collections import namedtuple
-from django.test import TestCase, SimpleTestCase
 
-from corehq.apps.export.const import PROPERTY_TAG_CASE
+from django.test import SimpleTestCase, TestCase
+
+import mock
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.const import PROPERTY_TAG_CASE
 from corehq.apps.export.models import (
-    ExportItem,
-    StockItem,
-    MultipleChoiceItem,
-    FormExportDataSchema,
+    MAIN_TABLE,
     CaseExportDataSchema,
-    InferredSchema,
-    InferredExportGroupSchema,
-    ExportGroupSchema,
     CaseExportInstance,
+    ExportGroupSchema,
+    ExportItem,
+    FormExportDataSchema,
     FormExportInstance,
-    TableConfiguration,
+    FormExportInstanceDefaults,
+    InferredExportGroupSchema,
+    InferredSchema,
+    MultiMediaExportColumn,
+    MultipleChoiceItem,
+    PathNode,
+    ScalarItem,
     SplitExportColumn,
     StockFormExportColumn,
-    PathNode,
-    MAIN_TABLE,
-    FormExportInstanceDefaults,
-    MultiMediaExportColumn,
-    ScalarItem,
+    StockItem,
+    TableConfiguration,
 )
-from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
-    TOP_MAIN_FORM_TABLE_PROPERTIES
+from corehq.apps.export.system_properties import (
+    MAIN_FORM_TABLE_PROPERTIES,
+    TOP_MAIN_FORM_TABLE_PROPERTIES,
+)
 
 MockRequest = namedtuple('MockRequest', 'domain')
 
@@ -223,12 +225,12 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
         instance = self._generate_instance({self.app_id: 3}, self.schema)
 
         self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 20)
+        self.assertEqual(len(instance.tables[0].columns), 21)
 
         # adding in 'name' shouldn't create any new columns
         instance = self._generate_instance({self.app_id: 3}, self.new_schema, instance)
         self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 20)
+        self.assertEqual(len(instance.tables[0].columns), 21)
 
 
 @mock.patch(
@@ -389,14 +391,14 @@ class TestExportInstanceDefaultFilters(SimpleTestCase):
         form_export = FormExportInstance()
         form_export_wrapped = FormExportInstance.wrap({})
         for e in [form_export, form_export_wrapped]:
-            self.assertListEqual(e.filters.user_types, [0])
+            self.assertListEqual(e.filters.user_types, [0, 5])
 
     def test_default_case_values(self):
-        # Confirm that CaseExportInstances set the default show_all_data flag correctly
+        # Confirm that CaseExportInstances set the default project_data flag correctly
         case_export = CaseExportInstance()
         case_export_wrapped = CaseExportInstance.wrap({})
         for e in [case_export, case_export_wrapped]:
-            self.assertTrue(e.filters.show_all_data)
+            self.assertTrue(e.filters.show_project_data)
 
 
 class TestExportInstance(SimpleTestCase):

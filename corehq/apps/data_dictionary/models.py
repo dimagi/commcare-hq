@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch import CriticalSection
-
 
 PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),

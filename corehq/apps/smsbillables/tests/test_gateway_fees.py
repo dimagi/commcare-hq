@@ -1,28 +1,27 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from mock import patch
 from random import choice, randint
 
 from django.apps import apps
 from django.test import TestCase
+
+from mock import patch
+
 from corehq import toggles
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
-from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import (
+    bootstrap_usage_fees,
+)
 from corehq.apps.smsbillables.models import (
-    add_twilio_gateway_fee,
     SmsBillable,
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
     SmsUsageFee,
-    SmsUsageFeeCriteria
+    SmsUsageFeeCriteria,
+    add_twilio_gateway_fee,
 )
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-import six
-from six.moves import range
 
 
 class TestGatewayFee(TestCase):
@@ -342,7 +341,7 @@ class TestGatewayFee(TestCase):
         self.other_currency.delete()
         SMS.by_domain(generator.TEST_DOMAIN).delete()
 
-        for api_id, backend_id in six.iteritems(self.backend_ids):
+        for api_id, backend_id in self.backend_ids.items():
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}

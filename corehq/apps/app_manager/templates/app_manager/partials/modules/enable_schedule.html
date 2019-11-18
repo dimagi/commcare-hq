@@ -2,83 +2,83 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% if module.all_forms_require_a_case or module.has_schedule %}
-    <div id="module-scheduler">
-        <div data-bind="saveButton: saveButton"></div>
-        <legend>
-            {% trans "Visit Scheduler" %}
-        </legend>
+  <div id="module-scheduler">
+    <div data-bind="saveButton: saveButton"></div>
+    <legend>
+      {% trans "Visit Scheduler" %}
+    </legend>
 
-        <form>
-            <div class="form-group">
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
-                        {% trans "Enable visit scheduler" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans 'Visit Schedule' %}"
-                              data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
-                    </label>
-                    {% if not module.all_forms_require_a_case %}
-                        <div class="alert alert-danger">
-                            <strong>
-                                {% blocktrans %}
-                                    Visit schedule will be ignored as not all
-                                    forms in the case list update or close a case.
-                                {% endblocktrans %}
-                            </strong>
-                        </div>
-                    {% endif %}
-                </div>
+    <form>
+      <div class="form-group">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
+            {% trans "Enable visit scheduler" %}
+            <span class="hq-help-template"
+                  data-title="{% trans 'Visit Schedule' %}"
+                  data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
+          </label>
+          {% if not module.all_forms_require_a_case %}
+            <div class="alert alert-danger">
+              <strong>
+                {% blocktrans %}
+                  Visit schedule will be ignored as not all
+                  forms in the case list update or close a case.
+                {% endblocktrans %}
+              </strong>
             </div>
-        </form>
-        <fieldset data-bind="visible: hasSchedule">
-            <legend>{% trans "Schedule Phases" %}</legend>
-            <table class="table table-hover table-condensed">
-                <thead>
-                    <th></th>
-                    <th>{% trans "Schedule Phase Number" %}</th>
-                    <th>{% trans "Schedule Anchor Property" %}</th>
-                    <th>{% trans "Forms in this phase" %}</th>
-                    <th></th>
-                </thead>
-                <tbody data-bind="template: { name: 'phase-template', foreach: phases},
+          {% endif %}
+        </div>
+      </div>
+    </form>
+    <fieldset data-bind="visible: hasSchedule">
+      <legend>{% trans "Schedule Phases" %}</legend>
+      <table class="table table-hover table-condensed">
+        <thead>
+        <th></th>
+        <th>{% trans "Schedule Phase Number" %}</th>
+        <th>{% trans "Schedule Anchor Property" %}</th>
+        <th>{% trans "Forms in this phase" %}</th>
+        <th></th>
+        </thead>
+        <tbody data-bind="template: { name: 'phase-template', foreach: phases},
                                   sortableList: phases"></tbody>
-            </table>
-            <button class="btn btn-default" data-bind="click: addPhase">
-                <i class="fa fa-plus"></i>
-                {% trans "Add Phase" %}
-            </button>
-        </fieldset>
-    </div>
-    <script id="phase-template" type="text/html">
-        <tr class="phase" data-bind="style: {cursor: 'move'}">
-            <td>
-                <i class="grip sortable-handle fa fa-arrows-v"
-                   data-bind="event: {mousedown: function(){ $(':focus').blur(); }},
+      </table>
+      <button class="btn btn-default" data-bind="click: addPhase">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Phase" %}
+      </button>
+    </fieldset>
+  </div>
+  <script id="phase-template" type="text/html">
+    <tr class="phase" data-bind="style: {cursor: 'move'}">
+      <td>
+        <i class="grip sortable-handle fa fa-arrows-v"
+           data-bind="event: {mousedown: function(){ $(':focus').blur(); }},
                               visible: $data !== $parent.selectedPhase()"></i>
-                <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
+        <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
                                   event: { blur: function() { $parent.selectPhase(''); } }"/>
-            </td>
-            <td data-bind="text: $index() + 1"></td>
-            <td>
-                <div href="#" data-bind="jqueryElement: anchor.ui"></div>
-            </td>
-            <td data-bind="text: form_abbreviations"></td>
-            <td>
-                <i style="cursor: pointer;" class="fa fa-remove"
-                   data-bind="click: $parent.removePhase,
+      </td>
+      <td data-bind="text: $index() + 1"></td>
+      <td>
+        <div href="#" data-bind="jqueryElement: anchor.ui"></div>
+      </td>
+      <td data-bind="text: form_abbreviations"></td>
+      <td>
+        <i style="cursor: pointer;" class="fa fa-remove"
+           data-bind="click: $parent.removePhase,
                               visible: forms().length == 0
                               "></i>
-                <i style="cursor: pointer;"
-                   class="fa fa-question-circle icon-blue"
-                   title="{% trans 'You can only delete phases that have no forms' %}"
-                   data-bind="visible: forms().length != 0"></i>
-            </td>
-        </tr>
-    </script>
+        <i style="cursor: pointer;"
+           class="fa fa-question-circle icon-blue"
+           title="{% trans 'You can only delete phases that have no forms' %}"
+           data-bind="visible: forms().length != 0"></i>
+      </td>
+    </tr>
+  </script>
 {% else %}
-    {% blocktrans %}
-        Visit schedules can only be used when all the forms in the case list<br/>
-        update or close a case, which means registration forms must go in a separate case list.
-    {% endblocktrans %}
+  {% blocktrans %}
+    Visit schedules can only be used when all the forms in the case list<br/>
+    update or close a case, which means registration forms must go in a separate case list.
+  {% endblocktrans %}
 {% endif %}

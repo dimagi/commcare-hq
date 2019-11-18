@@ -1,13 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
+
 from couchdbkit import ResourceNotFound
+
+from soil import DownloadBase
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-
-from soil import DownloadBase
-import six
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
@@ -40,14 +39,6 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         case_group.save()
 
     return response
-
-
-def archive_forms_old(domain, user_id, username, uploaded_data):
-    # used by excel archive forms
-    form_ids = [row.get('form_id') for row in uploaded_data]
-    from .interfaces import FormManagementMode
-    mode = FormManagementMode(FormManagementMode.ARCHIVE_MODE)
-    return archive_or_restore_forms(domain, user_id, username, form_ids, mode, from_excel=True)
 
 
 def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
@@ -105,7 +96,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, six.string_types) and (
+    return isinstance(case_property, str) and (
         case_property.startswith("parent/") or
         case_property.startswith("host/")
     )

@@ -1,27 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import (
-    set_migration_started, set_migration_not_started,
-    get_migration_status)
-from corehq.apps.domain_migration_flags.models import MigrationStatus, DomainMigrationProgress
+    MigrationStatus,
+    get_migration_status,
+    migration_in_progress,
+    set_migration_complete,
+    set_migration_not_started,
+    set_migration_started,
+)
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 
 COUCH_TO_SQL_SLUG = 'couch_to_sql'
 
 
-def set_couch_sql_migration_started(domain):
-    set_migration_started(domain, COUCH_TO_SQL_SLUG)
+def get_couch_sql_migration_status(domain):
+    return get_migration_status(domain, COUCH_TO_SQL_SLUG)
+
+
+def set_couch_sql_migration_started(domain, live_migrate=False):
+    if not live_migrate:
+        # allow live (dry run) migration to be completed
+        if get_couch_sql_migration_status(domain) == MigrationStatus.DRY_RUN:
+            # avoid "Cannot start a migration that is already in state dry_run"
+            set_couch_sql_migration_not_started(domain)
+    set_migration_started(domain, COUCH_TO_SQL_SLUG, dry_run=live_migrate)
 
 
 def set_couch_sql_migration_not_started(domain):
     set_migration_not_started(domain, COUCH_TO_SQL_SLUG)
 
 
-def couch_sql_migration_in_progress(domain):
-    return get_migration_status(domain, COUCH_TO_SQL_SLUG, strict=True) == MigrationStatus.IN_PROGRESS
+def couch_sql_migration_in_progress(domain, include_dry_runs=True):
+    return migration_in_progress(domain, COUCH_TO_SQL_SLUG, include_dry_runs)
 
 
 def _notify_dimagi_users_on_domain(domain):
@@ -48,8 +58,7 @@ def _notify_dimagi_users_on_domain(domain):
 def set_couch_sql_migration_complete(domain):
     from corehq.apps.couch_sql_migration.couchsqlmigration import commit_migration
     commit_migration(domain)
-    # no need to keep this around anymore since state is kept on domain model
-    DomainMigrationProgress.objects.filter(domain=domain, migration_slug=COUCH_TO_SQL_SLUG).delete()
+    set_migration_complete(domain, COUCH_TO_SQL_SLUG)
     # we get this for free
     set_tz_migration_complete(domain)
     _notify_dimagi_users_on_domain(domain)

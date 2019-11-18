@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from contextlib import contextmanager
 
 from django.http import HttpRequest
@@ -7,6 +5,7 @@ from django.http import HttpRequest
 
 def _is_http_request(obj):
     return obj and isinstance(obj, HttpRequest)
+
 
 def request_from_args_or_kwargs(*args, **kwargs):
     req = None

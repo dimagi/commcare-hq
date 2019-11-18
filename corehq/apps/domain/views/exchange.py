@@ -1,35 +1,39 @@
-from __future__ import absolute_import, unicode_literals
 import datetime
-import logging
-import json
 import io
+import json
+import logging
 
-import dateutil
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
-from django.urls import reverse
+from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect
-from django.contrib import messages
-from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.forms import (
-    SnapshotSettingsForm,
-    SnapshotApplicationForm,
-    SnapshotFixtureForm,
-)
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+import dateutil
 from memoized import memoized
+from PIL import Image
+
 from dimagi.utils.web import get_ip, get_site_domain
 
+from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.forms import (
+    SnapshotApplicationForm,
+    SnapshotFixtureForm,
+    SnapshotSettingsForm,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 
 
 def _publish_snapshot(request, domain, published_snapshot=None):
@@ -96,8 +100,13 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if get_domain_master_link(request.domain):
+        if is_linked_domain(request.domain):
             raise Http404()
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -118,6 +127,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @method_decorator(domain_admin_required)
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
+        msg = """
+            The CommCare Exchange is being retired in early December 2019.
+            If you have questions or concerns, please contact <a href='mailto:{}'>{}</a>.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -286,8 +300,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         if self.has_published_apps and self.has_signed_eula and self.has_valid_form:
             new_license = request.POST['license']
             if request.POST.get('share_multimedia', False):
-                app_ids = self.snapshot_settings_form._get_apps_to_publish()
-                media = self.domain_object.all_media(from_apps=app_ids)
+                item_ids = self.snapshot_settings_form._get_items_to_publish()
+                media = self.domain_object.all_media(from_apps=item_ids)
                 for m_file in media:
                     if self.domain not in m_file.shared_by:
                         m_file.shared_by.append(self.domain)

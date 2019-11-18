@@ -2,10 +2,12 @@ hqDefine("reports/js/form_data_main", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "reports/js/single_form",
+    "analytix/js/kissmetrix",
 ], function (
     $,
     initialPageData,
-    singleForm
+    singleForm,
+    kissmetrics
 ) {
     $(function () {
         singleForm.initSingleForm({
@@ -14,4 +16,6 @@ hqDefine("reports/js/form_data_main", [
             ordered_question_values: initialPageData.get("ordered_question_values"),
         });
     });
+
+    kissmetrics.track.event('Viewed Form Submission');
 });

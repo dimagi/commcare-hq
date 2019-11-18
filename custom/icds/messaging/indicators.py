@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -27,7 +24,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_last_form_submissions_by_user,
 )
 from corehq.util.quickcache import quickcache
-from corehq.warehouse.models.facts import ApplicationStatusFact
+from corehq.util.soft_assert import soft_assert
 from custom.icds.const import (
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
@@ -36,6 +33,7 @@ from custom.icds.const import (
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
 )
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
@@ -53,7 +51,7 @@ def get_report_configs(domain):
     app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
-        for module in app.modules if isinstance(module, ReportModule)
+        for module in app.get_report_modules()
         for report_config in module.report_configs
         if report_config.report_id in REPORT_IDS
     }
@@ -230,6 +228,32 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         return [self.render_template(context, language_code=language_code)]
 
 
+# All process_sms tasks should hopefully be finished in 4 hours
+@quickcache([], timeout=60 * 60 * 4)
+def is_aggregate_inactive_aww_data_fresh(send_email=False):
+    # Heuristic to check if collect_inactive_awws task ran succesfully today or yesterday
+    #   This would return False if both today and yesterday's task failed
+    #   or if the last-submission is older than a day due to pillow lag.
+    last_submission = AggregateInactiveAWW.objects.filter(
+        last_submission__isnull=False
+    ).aggregate(Max('last_submission'))['last_submission__max']
+    if not last_submission:
+        return False
+    is_fresh = last_submission >= (datetime.today() - timedelta(days=1)).date()
+    SMS_TEAM = ['{}@{}'.format('icds-sms-rule', 'dimagi.com')]
+    if not send_email:
+        return is_fresh
+    _soft_assert = soft_assert(to=SMS_TEAM, send_to_ops=False)
+    if is_fresh:
+        _soft_assert(False, "The weekly inactive SMS rule is successfully triggered for this week")
+    else:
+        _soft_assert(False,
+            "The weekly inactive SMS rule is skipped for this week as latest_submission {} data is older than one day"
+            .format(str(last_submission))
+        )
+    return is_fresh
+
+
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
     template = 'aww_no_submissions.txt'
     last_submission_date = None
@@ -238,16 +262,19 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_date = ApplicationStatusFact.objects.filter(
-            user_dim__user_id=user.get_id,
-            domain=domain,
-        ).aggregate(value=Max("last_form_submission_date"))["value"]
+        result = AggregateInactiveAWW.objects.filter(
+            awc_id=user.location_id).values('last_submission').first()
+        if result:
+            self.last_submission_date = result['last_submission']
 
     def get_messages(self, language_code=None):
+        if not is_aggregate_inactive_aww_data_fresh(send_email=True):
+            return []
+
         more_than_one_week = False
         more_than_one_month = False
-        one_month_ago = datetime.utcnow() - timedelta(days=30)
-        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        one_month_ago = (datetime.utcnow() - timedelta(days=30)).date()
+        one_week_ago = (datetime.utcnow() - timedelta(days=7)).date()
 
         if not self.last_submission_date or self.last_submission_date < one_month_ago:
             more_than_one_month = True

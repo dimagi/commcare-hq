@@ -1,22 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from uuid import uuid4
 
 from django.db.models import (
     BigIntegerField,
-    BooleanField,
     CharField,
     DateTimeField,
     IntegerField,
     Model,
     PositiveSmallIntegerField,
 )
-from partial_index import PartialIndex
+from memoized import memoized
+from partial_index import PartialIndex, PQ
 
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
 
-from .util import NullJsonField
+from .util import get_content_md5, NullJsonField
 
 
 def uuid4_hex():
@@ -77,28 +75,58 @@ class BlobMeta(PartitionedModel, Model):
             PartialIndex(
                 fields=['expires_on'],
                 unique=False,
-                where='expires_on IS NOT NULL',
+                where=PQ(expires_on__isnull=False),
+            ),
+            PartialIndex(
+                fields=['type_code', 'created_on'],
+                unique=False,
+                where=PQ(domain='icds-cas'),
             ),
         ]
 
     def __repr__(self):
         return "<BlobMeta id={self.id} key={self.key}>".format(self=self)
 
+    @property
+    def is_image(self):
+        """Use content type to check if blob is an image"""
+        return (self.content_type or "").startswith("image/")
+
+    def open(self):
+        """Get a file-like object containing blob content
+
+        The returned object should be closed when it is no longer needed.
+        """
+        from . import get_blob_db
+        return get_blob_db().get(key=self.key)
+
+    @memoized
+    def content_md5(self):
+        """Get RFC-1864-compliant Content-MD5 header value"""
+        with self.open() as fileobj:
+            return get_content_md5(fileobj)
+
+
+class DeletedBlobMeta(PartitionedModel, Model):
+    """Metadata about a non-temporary object deleted from the blob db
+
+    This is intended for research purposes when a blob is missing. It can
+    be used to answer the question "Was the blob deleted by HQ?"
+    """
+
+    partition_attr = "parent_id"
+    objects = RestrictedManager()
+
+    id = IntegerField(primary_key=True)
+    domain = CharField(max_length=255)
+    parent_id = CharField(max_length=255)
+    name = CharField(max_length=255)
+    key = CharField(max_length=255)
+    type_code = PositiveSmallIntegerField()
+    created_on = DateTimeField()
+    deleted_on = DateTimeField()
+
 
 class BlobMigrationState(Model):
     slug = CharField(max_length=20, unique=True)
     timestamp = DateTimeField(auto_now=True)
-
-
-class BlobExpiration(Model):
-    '''
-    This models records when temporary blobs should be deleted
-    '''
-    bucket = CharField(max_length=255)
-    identifier = CharField(max_length=255, db_index=True)
-    expires_on = DateTimeField(db_index=True)
-    created_on = DateTimeField(auto_now=True)
-    length = IntegerField()
-
-    # This is set to True when the blob associated has been successfully deleted
-    deleted = BooleanField(default=False, db_index=True)

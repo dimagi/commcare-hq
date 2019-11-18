@@ -15,7 +15,7 @@ function MapOrSectorController($location, storageService, locationsService) {
         //Found on stackoverflow: https://stackoverflow.com/questions/16701522/how-to-linebreak-an-svg-text-within-javascript/28553412#28553412
         //Replace svg text element to:
         //<text><tspan></tspan><tspan></tspan>...<text>
-        d3.selectAll(".nv-x.nv-axis .tick text").each(function() {
+        d3.selectAll(".nv-x.nv-axis .tick text").each(function () {
             var text = d3.select(this),
                 words = text.text().split(/\s+/).reverse(),
                 word, line = [],
@@ -44,11 +44,9 @@ function MapOrSectorController($location, storageService, locationsService) {
 
         chart: {
             type: 'multiBarHorizontalChart',
-            width: 1400,
-            height: 550,
             margin: {
                 bottom: 40,
-                left: 100,
+                left: 150,
             },
             x: function (d) {
                 return d[0];
@@ -73,7 +71,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                     if (vm.data.mapData.format === "number") {
                         return d3.format("d")(d);
                     }
-                    var max = d3.max(vm.data.mapData.chart_data[0].values, function(value) {
+                    var max = d3.max(vm.data.mapData.chart_data[0].values, function (value) {
                         return value[1];
                     });
                     return max < 0.1 ? d3.format(".2%")(d) : d3.format("%")(d);
@@ -81,7 +79,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                 axisLabelDistance: 20,
             },
             tooltip: {
-                contentGenerator: function(d) {
+                contentGenerator: function (d) {
                     if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
                         return 'NA';
                     }
@@ -96,10 +94,10 @@ function MapOrSectorController($location, storageService, locationsService) {
                     });
                 },
             },
-            callback: function(chart) {
-                var height = 550;
+            callback: function (chart) {
+                var height = 1500;
                 var calcHeight = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
-                vm.chartOptions.chart.height = calcHeight > height ? calcHeight : height;
+                vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
@@ -114,6 +112,9 @@ function MapOrSectorController($location, storageService, locationsService) {
                     });
                 });
 
+                nv.utils.windowResize(function () {
+                    wrapXAxisLabels();
+                });
                 wrapXAxisLabels();
 
                 return chart;
@@ -122,7 +123,7 @@ function MapOrSectorController($location, storageService, locationsService) {
         caption: {
             enable: true,
             html: function () {
-                return '<i class="fa fa-info-circle"></i> ' + (vm.data.mapData !== void(0) ? vm.data.mapData.info : "");
+                return '<i class="fa fa-info-circle"></i> ' + (vm.data.mapData !== void (0) ? vm.data.mapData.info : "");
             },
             css: {
                 'text-align': 'center',
@@ -141,7 +142,7 @@ function MapOrSectorController($location, storageService, locationsService) {
     };
 }
 
-MapOrSectorController.$inject = [ '$location', 'storageService', 'locationsService'];
+MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService'];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 

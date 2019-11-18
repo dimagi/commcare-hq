@@ -3,23 +3,27 @@
 {% load menu_tags %}
 
 {% block content %}
-    {% block page_breadcrumbs %}{% endblock %}
-    <div class="container-fluid">
-        <div class="row {% block page_row_classes %}{% endblock %}">
-            <div id="hq-sidebar" class="{% block page_sidebar_classes %}col-xs-4 col-sm-3 col-lg-2{% endblock %} col-hq-sidebar nav-hq-sidebar">
-                {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
-            </div>
-            <div id="hq-content" class="{% block page_content_classes %}col-xs-8 col-sm-9 col-lg-10{% endblock %}">
-                {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
-                {% if page_title_block %}
-                <div class="page-header" style="margin-top: 0;">
-                    <h1 style="font-size: 1.8em;">{{ page_title_block }}</h1>
-                </div>
-                {% else %}
-                {% block pre_page_content %}<div class="spacer"></div>{% endblock %}
-                {% endif %}
-                {% block page_content %}{% endblock page_content %}
-            </div>
-        </div>
+  {% block page_breadcrumbs %}{% endblock %}
+  <div class="container-fluid">
+    <div class="row {% block page_row_classes %}{% endblock %}">
+      <div id="hq-sidebar"
+           class="{% block page_sidebar_classes %}col-xs-4 col-sm-3 col-lg-2{% endblock %} col-hq-sidebar nav-hq-sidebar">
+        {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
+      </div>{# #hq-sidebar #}
+      <div id="hq-content"
+           class="{% block page_content_classes %}col-xs-8 col-sm-9 col-lg-10{% endblock %}">
+        {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
+        {% if page_title_block %}
+          <div class="page-header" style="margin-top: 0;">
+            <h1 style="font-size: 1.8em;">{{ page_title_block }}</h1>
+          </div>
+        {% else %}
+          {% block pre_page_content %}
+            <div class="spacer"></div>
+          {% endblock %}
+        {% endif %}
+        {% block page_content %}{% endblock page_content %}
+      </div>
     </div>
+  </div>
 {% endblock content %}

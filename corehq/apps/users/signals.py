@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.db.models.signals import post_save
-from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
-from corehq.elastic import send_to_elasticsearch
+from django.db.models.signals import post_save
+from django.dispatch import Signal, receiver
 
+from corehq.elastic import send_to_elasticsearch
 
 commcare_user_post_save = Signal(providing_args=["couch_user"])
 couch_user_post_save = Signal(providing_args=["couch_user"])

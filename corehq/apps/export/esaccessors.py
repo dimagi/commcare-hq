@@ -1,42 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from elasticsearch import ElasticsearchException
+from corehq.util.es.elasticsearch import ElasticsearchException
 
-from corehq.apps.es import CaseES, GroupES, LedgerES
-from corehq.apps.es import FormES
+from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
-from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
-from corehq.toggles import EXPORT_NO_SORT
-import six
+from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
     query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain)
-            .xmlns(xmlns)
-            .remove_default_filter('has_user'))
+             .domain(domain)
+             .xmlns(xmlns)
+             .remove_default_filter('has_user'))
 
     if app_id:
         query = query.app(app_id)
-    if not EXPORT_NO_SORT.enabled(domain):
-        query = query.sort("received_on")
-
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
-    return query
+    return query.sort("received_on")
 
 
 def get_case_export_base_query(domain, case_type):
-    query = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
-            .case_type(case_type))
-
-    if not EXPORT_NO_SORT.enabled(domain):
-        query = query.sort("opened_on")
-
-    return query
+            .case_type(case_type)
+            .sort("opened_on"))
 
 
 def get_sms_export_base_query(domain):
@@ -52,24 +39,12 @@ def get_groups_user_ids(group_ids):
 
     results = []
     for user_list in q.values_list("users", flat=True):
-        if isinstance(user_list, six.string_types):
+        if isinstance(user_list, str):
             results.append(user_list)
         else:
             results.extend(user_list)
 
     return results
-
-
-def get_ledger_section_entry_combinations(domain):
-    """Get all section / entry combinations in a domain.
-    :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
-    """
-    terms = [
-        AggregationTerm('section_id', 'section_id'),
-        AggregationTerm('entry_id', 'entry_id'),
-    ]
-    query = LedgerES().domain(domain)
-    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
 
 
 def get_case_name(case_id):

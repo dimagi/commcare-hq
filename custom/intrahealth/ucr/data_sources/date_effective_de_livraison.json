@@ -1,0 +1,214 @@
+{
+  "domains": [
+    "test-pna",
+    "ipm-senegal",
+    "testing-ipm-senegal"
+  ],
+  "server_environment": ["production", "pna"],
+  "config": {
+    "table_id": "date_effective_de_livraison",
+    "display_name": "date effective de livraison",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {
+    },
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "http://openrosa.org/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505"
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "PPS ID",
+        "datatype": "string",
+        "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "location_id"
+            ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "District"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "Region"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "region_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "region_name"
+            ]
+        },
+        "column_id": "region_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+            "type": "related_doc",
+            "related_doc_type": "Location",
+            "doc_id_expression": {
+                "type": "property_path",
+                "property_path": ["form", "location_id"]
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "name"
+            }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "district_name"
+            ]
+        },
+        "column_id": "district_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "date_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "real_date_repeat"
+            ]
+          },
+          "type": "date"
+        },
+        "column_id": "real_date_repeat"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "nb_pps_visites"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "nb_pps_visites"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
+  }
+}

@@ -5,14 +5,14 @@
 {% load xforms_extras %}
 
 {% block head %}{{ block.super }}
-    {% if include_fullstory %}
-        {% include 'analytics/fullstory.html' %}
-    {% endif %}
-    {% if not vellum_debug %}
-        <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
-    {% elif vellum_debug == "dev-min" %}
-        <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
-    {% endif %}
+  {% if include_fullstory %}
+    {% include 'analytics/fullstory.html' %}
+  {% endif %}
+  {% if not vellum_debug %}
+    <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
+  {% elif vellum_debug == "dev-min" %}
+    <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
+  {% endif %}
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -25,136 +25,143 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'moment/moment.js' %}"></script>
-    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
-    <script>
-        /*
-            When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
-            Since these bundles are used by both requirejs and non-requirejs pages, `define` needs to exist,
-            so it's set up as a no-op in hqModules.js. But if `define` is defined, require.js returns early
-            without doing anything. So, for form builder, where the HQ page doesn't use requirejs but vellum
-            itself does, `define` gets changed from a no-op back to undefined so that require.js will re-define it.
-        */
-        define = undefined;
-    </script>
-    {% compress js %}
-        <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-        <script src="{% static 'js/ws4redis.js' %}"></script>
-        <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-        <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
-    {% endcompress %}
+  <script src="{% static 'moment/moment.js' %}"></script>
+  {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+  <script>
+    /*
+        When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
+        Since these bundles are used by both requirejs and non-requirejs pages, `define` needs to exist,
+        so it's set up as a no-op in hqModules.js. But if `define` is defined, require.js returns early
+        without doing anything. So, for form builder, where the HQ page doesn't use requirejs but vellum
+        itself does, `define` gets changed from a no-op back to undefined so that require.js will re-define it.
+    */
+    define = undefined;
+  </script>
+  {% compress js %}
+    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+    <script src="{% static 'js/ws4redis.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
 
 {% block form-view %}
-    {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
-    {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
-    {% initial_page_data 'form_name' form.name|trans:app.langs %}
-    {% initial_page_data 'form_comment' form.comment %}
-    {% initial_page_data 'form_uses_cases' form.uses_cases %}
-    {% initial_page_data 'is_registration_form' form.is_registration_form %}
-    {% initial_page_data 'is_survey' module.is_surveys %}
-    {% initial_page_data 'notification_options' notification_options %}
-    {% initial_page_data 'requirejs_args' requirejs_args %}
-    {% initial_page_data 'requirejs_url' requirejs_url|static %}
-    {% initial_page_data 'vellum_debug' vellum_debug %}
-    {% initial_page_data 'vellum_options' vellum_options %}
-    {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
-    {% initial_page_data 'requirejs_static_url' 'requirejs/require.js'|static %}
+  {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
+  {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
+  {% initial_page_data 'form_name' form.name|trans:langs %}
+  {% initial_page_data 'form_comment' form.comment %}
+  {% initial_page_data 'form_uses_cases' form.uses_cases %}
+  {% initial_page_data 'is_registration_form' form.is_registration_form %}
+  {% initial_page_data 'is_survey' module.is_surveys %}
+  {% initial_page_data 'notification_options' notification_options %}
+  {% initial_page_data 'requirejs_args' requirejs_args %}
+  {% initial_page_data 'requirejs_url' requirejs_url|static %}
+  {% initial_page_data 'vellum_debug' vellum_debug %}
+  {% initial_page_data 'vellum_options' vellum_options %}
+  {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
+  {% initial_page_data 'requirejs_static_url' 'requirejs/require.js'|static %}
 
-    <div id="formdesigner" class="clearfix loading"></div>
+  <div id="formdesigner" class="clearfix loading"></div>
 
-    <script type="text/html" id="js-fd-manage-case">
-      <div class="btn-group pull-right">
-        <a class="btn btn-manage" href="{% url "view_form" domain app.id form.unique_id %}">
-          <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
-        </a>
-      </div>
-    </script>
-
-    <script type="text/html" id="fd-hq-helptext-registration">
-        <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>
-        <p>
-          {% blocktrans %}
-            Users will fill it out when they need to <strong>add</strong> a new item to the application.
-          {% endblocktrans %}
-        </p>
-    </script>
-
-    <script type="text/html" id="fd-hq-helptext-close">
-        close form
-    </script>
-
-    <script type="text/html" id="fd-hq-helptext-followup">
-        <h4>{% blocktrans %}This is a <i class="fcc fcc-app-updateform"></i> Followup Form.{% endblocktrans %}</h4>
-        <p>
-          {% blocktrans %}
-            Users will fill it out when they need to <strong>update</strong> an item that has already been added to the application.
-          {% endblocktrans %}
-        </p>
-    </script>
-
-    <script type="text/html" id="fd-hq-helptext-survey">
-        <h4>{% blocktrans %}This is a <i class="fa fa-file-o"></i> Survey.{% endblocktrans %}</h4>
-        <p>
-          {% blocktrans %}
-          It's useful for asking questions once, for information that you won't need to follow up on later.
-          {% endblocktrans %}
-        </p>
-    </script>
-
-    <script type="text/html" id="fd-hq-edit-formname-button">
-      <a href="#edit-form-name-modal" class="link-edit-form" data-toggle="modal">
-        <i class="fa fa-pencil"></i>
+  <script type="text/html" id="js-fd-form-actions">
+    <div class="btn-group pull-right">
+      <a class="btn btn-form-action track-usage-link" href="{% url "app_form_summary" domain app.id %}"
+         data-category="App Builder" data-action="Form Action Link" data-label="App Summary"
+      >
+        <i class="fa fa-list-alt"></i> {% trans 'App Summary' %}
       </a>
-    </script>
+      <a class="btn btn-form-action track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
+         data-category="App Builder" data-action="Form Action Link" data-label="Manage Case"
+      >
+        <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
+      </a>
+    </div>
+  </script>
+
+  <script type="text/html" id="fd-hq-helptext-registration">
+    <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>
+    <p>
+      {% blocktrans %}
+        Users will fill it out when they need to <strong>add</strong> a new item to the application.
+      {% endblocktrans %}
+    </p>
+  </script>
+
+  <script type="text/html" id="fd-hq-helptext-close">
+    close form
+  </script>
+
+  <script type="text/html" id="fd-hq-helptext-followup">
+    <h4>{% blocktrans %}This is a <i class="fcc fcc-app-updateform"></i> Followup Form.{% endblocktrans %}</h4>
+    <p>
+      {% blocktrans %}
+        Users will fill it out when they need to <strong>update</strong> an item that has already been added to the application.
+      {% endblocktrans %}
+    </p>
+  </script>
+
+  <script type="text/html" id="fd-hq-helptext-survey">
+    <h4>{% blocktrans %}This is a <i class="fa fa-file-o"></i> Survey.{% endblocktrans %}</h4>
+    <p>
+      {% blocktrans %}
+        It's useful for asking questions once, for information that you won't need to follow up on later.
+      {% endblocktrans %}
+    </p>
+  </script>
+
+  <script type="text/html" id="fd-hq-edit-formname-button">
+    <a href="#edit-form-name-modal" class="link-edit-form" data-toggle="modal">
+      <i class="fa fa-pencil"></i>
+    </a>
+  </script>
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
 
 {% block modals %}{{ block.super }}
   <div class="modal fade" id="edit-form-name-modal">
-      <div class="modal-dialog">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                  </button>
-                  <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
+        </div>
+        <form name="update-form-data" class="form-horizontal" data-bind="submit:update">
+          <div class="modal-body">
+            <div class="form-group">
+              <div class="col-sm-3">
+                <label for="update-form-name" class="control-label">
+                  {% trans "Form Name" %}
+                </label>
               </div>
-              <form name="update-form-data" class="form-horizontal" data-bind="submit:update">
-                  <div class="modal-body">
-                      <div class="form-group">
-                          <div class="col-sm-3">
-                              <label for="update-form-name" class="control-label">
-                                  {% trans "Form Name" %}
-                              </label>
-                          </div>
-                          <div class="col-sm-9">
-                              <input type="text" data-bind="value: name" class="form-control" />
-                          </div>
-                      </div>
-                      <div class="form-group">
-                          <div class="col-sm-3">
-                              <label for="update-form-name" class="control-label">
-                                  {% trans "Comment" %}
-                              </label>
-                          </div>
-                          <div class="col-sm-9">
+              <div class="col-sm-9">
+                <input type="text" data-bind="value: name" class="form-control" />
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-3">
+                <label for="update-form-name" class="control-label">
+                  {% trans "Comment" %}
+                </label>
+              </div>
+              <div class="col-sm-9">
                               <textarea rows="5"
                                         data-bind="value: comment"
                                         class="form-control"></textarea>
-                          </div>
-                      </div>
-                  </div>
-                  <div class="modal-footer">
-                      <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                      <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
-                  </div>
-              </form>
+              </div>
+            </div>
           </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
+          </div>
+        </form>
       </div>
+    </div>
   </div>
 {% endblock %}
 

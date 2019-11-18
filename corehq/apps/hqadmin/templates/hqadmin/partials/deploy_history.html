@@ -1,38 +1,38 @@
 {% load humanize %}
 
 <div class="panel panel-default">
-    <div class="panel-heading">
-        <h2 class="panel-title">
-             <a data-toggle="collapse" href="#deploy-panel">Deploy History</a>
-        </h2>
+  <div class="panel-heading">
+    <h2 class="panel-title">
+      <a data-toggle="collapse" href="#deploy-panel">Deploy History</a>
+    </h2>
+  </div>
+  <div class="panel-collapse collapse in" id="deploy-panel">
+    <div class="panel-body">
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>User</th>
+          <th>Diff url</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for deploy in deploy_history %}
+          <tr>
+            <td>
+              {{ deploy.date|naturaltime }}<br/>
+              <small>{{ deploy.date }}</small>
+            </td>
+            <td>{{ deploy.user }}</td>
+            <td>
+              {% if deploy.diff_url %}
+                <p><a href="{{ deploy.diff_url  }}">diff with previous</a></p>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="panel-collapse collapse in" id="deploy-panel">
-        <div class="panel-body">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>User</th>
-                    <th>Diff url</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for deploy in deploy_history %}
-                    <tr>
-                        <td>
-                            {{ deploy.date|naturaltime }}<br/>
-                            <small>{{ deploy.date }}</small>
-                        </td>
-                        <td>{{ deploy.user }}</td>
-                        <td>
-                            {% if deploy.diff_url %}
-                            <p><a href="{{ deploy.diff_url  }}">diff with previous</a></p>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>

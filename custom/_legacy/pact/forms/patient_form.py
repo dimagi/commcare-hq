@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 
 #from the models, we have this, (couchmodels.py)

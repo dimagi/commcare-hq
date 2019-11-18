@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+xmlns:jr="http://openrosa.org/javarosa"
+xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>My more &amp; awesome form</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A181BAB5-EDDF-4888-B703-FAD79F325398" uiVersion="1" version="None" name="My more &amp; awesome form">
+                    <question1/>
+                    <question2/>
+                    <question3>
+                        <question4/>
+                        <question5/>
+                    </question3>
+                    <question7/>
+                    <question6/>
+                    <add_markdown/>
+                    <update_markdown/>
+                    <remove_markdown/>
+                    <vetoed_markdown/>
+                    <blank_value_node />
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                    <orx:deviceID/>
+                    <orx:timeStart/>
+                    <orx:timeEnd/>
+                    <orx:username/>
+                    <orx:userID/>
+                    <orx:instanceID/>
+                    <cc:appVersion/>
+                    <orx:drift/>
+                    </orx:meta>
+                </data>
+            </instance>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <bind nodeset="/data/question1" type="xsd:string"/>
+            <bind nodeset="/data/question2"/>
+            <bind nodeset="/data/question3"/>
+            <bind nodeset="/data/question3/question4" type="xsd:int"/>
+            <bind nodeset="/data/question3/question5"/>
+            <bind nodeset="/data/question7" type="xsd:date"/>
+            <bind nodeset="/data/question6"/>
+            <bind nodeset="/data/add_markdown" type="xsd:string"/>
+            <bind nodeset="/data/update_markdown" type="xsd:string"/>
+            <bind nodeset="/data/remove_markdown" type="xsd:string"/>
+            <bind nodeset="/data/vetoed_markdown" type="xsd:string"/>
+            <bind nodeset="/data/blank_value_node" type="xsd:string" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="question1-label">
+                        <value>in english</value>
+                    </text>
+                    <text id="question2-label">
+                        <value>one &lt; two</value>
+                    </text>
+                    <text id="question2-item1-label">
+                        <value>item1</value>
+                    </text>
+                    <text id="question2-item2-label">
+                        <value>item2</value>
+                    </text>
+                    <text id="question3-label">
+                        <value>question3</value>
+                    </text>
+                    <text id="question3/question4-label">
+                        <value>question6: <output value="/data/question6"/></value>
+                    </text>
+                    <text id="question3/question5-label">
+                        <value>English Label</value>
+                    </text>
+                    <text id="question7-label">
+                        <value>question1: <output value="/data/question1"/> &lt; 5</value>
+                    </text>
+                    <text id="add_markdown-label">
+                        <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
+                        <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
+                    </text>
+                    <text id="update_markdown-label">
+                        <value>## smaller_markdown</value>
+                        <value form="markdown">## smaller_markdown</value>
+                    </text>
+                    <text id="remove_markdown-label">
+                        <value>no longer markdown</value>
+                        <value form="markdown">no longer markdown</value>
+                    </text>
+                    <text id="vetoed_markdown-label">
+                        <value>*i just happen to like stars a lot*</value>
+                    </text>
+                    <text id="blank_value_node-label">
+                        <value></value>
+                        <value form="audio">en-audio.mp3</value>
+                    </text>
+                </translation>
+                <translation lang="fra">
+                    <text id="question1-label">
+                        <value>it's in french</value>
+                    </text>
+                    <text id="question2-label">
+                        <value>un &lt; deux</value>
+                    </text>
+                    <text id="question2-item1-label">
+                        <value>item1</value>
+                    </text>
+                    <text id="question2-item2-label">
+                        <value>item2</value>
+                    </text>
+                    <text id="question3-label">
+                        <value>question3's label</value>
+                    </text>
+                    <text id="question3/question4-label">
+                        <value>question6: <output value="/data/question6"/></value>
+                    </text>
+                    <text id="question3/question5-label">
+                        <value>English Label</value>
+                    </text>
+                    <text id="question7-label">
+                        <value>question7</value>
+                    </text>
+                    <text id="add_markdown-label">
+                        <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
+                        <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
+                    </text>
+                    <text id="update_markdown-label">
+                        <value>## smaller_markdown</value>
+                        <value form="markdown">## smaller_markdown</value>
+                    </text>
+                    <text id="remove_markdown-label">
+                        <value>just plain text</value>
+                        <value form="markdown">just plain text</value>
+                    </text>
+                    <text id="vetoed_markdown-label">
+                        <value>*i just happen to like stars a lot*</value>
+                    </text>
+                    <text id="blank_value_node-label">
+                        <value></value>
+                        <value form="audio">fra-audio.mp3</value>
+                    </text>
+                </translation>
+            </itext>
+        <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
+        <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()"/>
+        <bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
+        <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()"/>
+        <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
+        <setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username"/>
+        <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid"/>
+        <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
+        <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+        <setvalue event="xforms-revalidate" ref="/data/meta/drift" value="if(count(instance('commcaresession')/session/context/drift) = 1, instance('commcaresession')/session/context/drift, '')"/>
+    </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/question1">
+            <label ref="jr:itext('question1-label')"/>
+        </input>
+        <select1 ref="/data/question2">
+            <label ref="jr:itext('question2-label')"/>
+            <item>
+                <label ref="jr:itext('question2-item1-label')"/>
+                <value>item1</value>
+            </item>
+            <item>
+                <label ref="jr:itext('question2-item2-label')"/>
+                <value>item2</value>
+            </item>
+        </select1>
+        <group ref="/data/question3">
+            <label ref="jr:itext('question3-label')"/>
+            <input ref="/data/question3/question4">
+                <label ref="jr:itext('question3/question4-label')"/>
+            </input>
+            <trigger ref="/data/question3/question5" appearance="minimal">
+                <label ref="jr:itext('question3/question5-label')"/>
+            </trigger>
+        </group>
+        <input ref="/data/question7">
+            <label ref="jr:itext('question7-label')"/>
+        </input>
+        <input ref="/data/add_markdown">
+            <label ref="jr:itext('add_markdown-label')"/>
+        </input>
+        <input ref="/data/update_markdown">
+            <label ref="jr:itext('update_markdown-label')"/>
+        </input>
+        <input ref="/data/remove_markdown">
+            <label ref="jr:itext('remove_markdown-label')"/>
+        </input>
+        <input ref="/data/vetoed_markdown">
+            <label ref="jr:itext('vetoed_markdown-label')"/>
+        </input>
+        <input ref="/data/blank_value_node">
+            <label ref="jr:itext('blank_value_node-label')" />
+        </input>
+    </h:body>
+</h:html>

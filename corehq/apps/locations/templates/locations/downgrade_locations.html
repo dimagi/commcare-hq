@@ -3,41 +3,41 @@
 {% load hq_shared_tags %}
 
 {% block page_content %}
-<div class="col-sm-6">
+  <div class="col-sm-6">
     <h2>{% trans "Organizations" %}</h2>
 
     <p>
-        {% blocktrans %}
+      {% blocktrans %}
         Your project no longer has access to the Organization feature. To
         access this feature, you must subscribe to the Standard plan or higher.
         Until you change your subscription or discontinue your use of
         Organization features, you will not be able to add or remove mobile
         workers from groups. Fix this using one of the options below:
-        {% endblocktrans %}
+      {% endblocktrans %}
     </p>
 
     <p>
-        <a class="btn btn-primary" href="{% url "domain_subscription_view" request.domain %}">
-            {% trans "Change your subscription" %}
-        </a>
+      <a class="btn btn-primary" href="{% url "domain_subscription_view" request.domain %}">
+        {% trans "Change your subscription" %}
+      </a>
     </p>
 
     <p>
-        <form action="{% url "unassign_users" request.domain %}" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="redirect" value="{{ request.path }}">
-            <input value="{% trans "Remove Mobile Workers From Organizations" %}"
-                   type="submit" class="btn btn-danger"></input>
-        </form>
+    <form action="{% url "unassign_users" request.domain %}" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="redirect" value="{{ request.path }}">
+      <input value="{% trans "Remove Mobile Workers From Organizations" %}"
+             type="submit" class="btn btn-danger"></input>
+    </form>
     </p>
 
     <div class="alert alert-danger">
-        {% blocktrans %}
+      {% blocktrans %}
         WARNING: Case Sharing may not work correctly when you discontinue
         organizations. Any organization case sharing settings will be removed
         and mobile workers assigned to case sharing organization levels will no
         longer share cases.
-        {% endblocktrans %}
+      {% endblocktrans %}
     </div>
-</div>
+  </div>
 {% endblock %}

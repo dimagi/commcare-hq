@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import itertools
 
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider, TooManyRetries
-from six.moves import range
 
 
 class TestArgsProvider(ArgsProvider):

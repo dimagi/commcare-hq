@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import sqlalchemy
-from sqlalchemy import *
 from datetime import date
 
-from corehq.sql_db.connections import connection_manager
+import sqlalchemy
+from sqlalchemy import *
+
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 
 metadata = sqlalchemy.MetaData()
 
@@ -29,7 +28,7 @@ region_table = Table("region_report_data",
 
 
 def load_data():
-    engine = connection_manager.get_engine('default')
+    engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
     metadata.bind = engine
     user_table.drop(engine, checkfirst=True)
     region_table.drop(engine, checkfirst=True)

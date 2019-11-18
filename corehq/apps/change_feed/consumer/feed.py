@@ -1,20 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from copy import copy
 
 from django.conf import settings
+
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
+
+from dimagi.utils.logging import notify_error
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
+from pillowtop.models import kafka_seq_to_str
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
-from dimagi.utils.logging import notify_error
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
-from pillowtop.models import kafka_seq_to_str
-from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
-from six.moves import range
 
 MIN_TIMEOUT = 500
 
@@ -39,7 +38,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.process_num = process_num
         self._consumer = None
 
-    def __unicode__(self):
+    def __str__(self):
         return 'KafkaChangeFeed: topics: {}, client: {}'.format(self._topics, self._client_id)
 
     @property
@@ -183,7 +182,8 @@ def change_from_kafka_message(message):
         document_store = get_document_store(
             data_source_type=change_meta.data_source_type,
             data_source_name=change_meta.data_source_name,
-            domain=change_meta.domain
+            domain=change_meta.domain,
+            load_source="change_feed",
         )
     except UnknownDocumentStore:
         document_store = None

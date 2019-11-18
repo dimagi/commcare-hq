@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
@@ -14,7 +12,7 @@ from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \
+from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_pillow, \
     remove_group_from_users
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -165,7 +163,7 @@ class GroupToUserPillowDbTest(TestCase):
         producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
         # process using pillow
-        pillow = get_group_to_user_pillow()
+        pillow = get_group_pillow()
         pillow.process_changes(since=since, forever=False)
 
         # confirm updated in elasticsearch
@@ -181,7 +179,7 @@ class GroupToUserPillowDbTest(TestCase):
         since = get_topic_offset(topics.GROUP)
         producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
-        pillow = get_group_to_user_pillow()
+        pillow = get_group_pillow()
         pillow.process_changes(since=since, forever=False)
 
         # confirm removed in elasticsearch

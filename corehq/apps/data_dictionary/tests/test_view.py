@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
-from django.urls import reverse
 from django.test import Client, TestCase
+from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled

@@ -1,22 +1,18 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_registered_household_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -66,7 +62,7 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_registered_household_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -91,26 +87,18 @@ def get_registered_household_sector_data(domain, config, loc_level, location_id,
         'household': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         name = row['%s_name' % loc_level]
         household = row['household']
-        result_set.add(name)
 
         row_values = {
             'household': household
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
-    for name, value_dict in six.iteritems(tooltips_data):
+    for name, value_dict in tooltips_data.items():
         chart_data['blue'].append([name, value_dict['household'] or 0])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
@@ -130,7 +118,7 @@ def get_registered_household_sector_data(domain, config, loc_level, location_id,
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_registered_household_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -175,11 +163,16 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
 
         data['blue'][date_in_miliseconds]['y'] += household
 
-    top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['value'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'value': sum(value) / len(value)
+        }
+        for key, value in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_value_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['value'], reverse=True)
 
     return {
         "chart_data": [
@@ -189,7 +182,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Registered Households",
                 "strokeWidth": 2,
@@ -197,8 +190,8 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_value_and_name,
+        "top_five": all_locations_sorted_by_value_and_name[:5],
+        "bottom_five": all_locations_sorted_by_value_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

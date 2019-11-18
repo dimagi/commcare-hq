@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
-from django.db import migrations, models
-from corehq.sql_db.operations import RawSQLMigration
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -14,6 +7,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0006_fix_functions'),
     ]
 
-    operations = [
-        migrator.get_migration('setup_category_tables.sql'),
-    ]
+    operations = []

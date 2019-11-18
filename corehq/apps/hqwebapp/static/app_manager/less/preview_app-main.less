@@ -1,22 +1,12 @@
 @import '../../hqwebapp/less/_hq/includes/variables.less';
 @import '../../hqwebapp/less/_hq/includes/mixins.less';
+@import "variables";
 
 /* this file is included in app_manager/apps_base.html and is relevant to the
 EXTERNAL styling of the preview app container in app manager.
 
 For the styling of the app preview content and layout, please check out
 preview_app/less */
-
-@preview-phone-wrapper-width: 315px;
-@preview-phone-width: 250px;
-@preview-tablet-wrapper-width: 520px;
-@preview-tablet-width: 450px;
-@preview-tablet-height: 644px;
-@preview-phone-height: 444px;
-@preview-phone-case-offset-y: 40px;
-@preview-phone-case-offset-x: 15px;
-
-@preview-toggler-width: 15px;
 
 @transition-speed: .5s;
 
@@ -132,7 +122,7 @@ preview_app/less */
 
   .fa {
     position: absolute;
-    left: 3px;
+    left: @preview-toggler-width / 2 - 4px;
     top: 50%;
     font-size: 11px;
     color: white;

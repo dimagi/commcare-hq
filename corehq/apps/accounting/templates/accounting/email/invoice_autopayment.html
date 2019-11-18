@@ -3,101 +3,101 @@
 <p>{{ greeting }}</p>
 
 <p>
-    {% blocktrans %}
-        Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
-    {% endblocktrans %}
+  {% blocktrans %}
+    Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+  {% endblocktrans %}
 </p>
 <table cellpadding="2" border="1"  style="border-collapse:collapse;">
+  <tr>
+    <th align="right">
+      {% trans 'Statement No.' %}:
+    </th>
+    <td>
+      {{ statement_number }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Project Space' %}:
+    </th>
+    <td>
+      <a href="{{ domain_url }}">
+        {{ domain }}
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Software Plan' %}:
+    </th>
+    <td>
+      {{ plan_name }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Status' %}:
+    </th>
+    <td>
+      {{ payment_status }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Amount Due this Month' %}:
+    </th>
+    <td>
+      {{ amount_due }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Total Balance' %}:
+    </th>
+    <td>
+      {{ total_balance }}
+    </td>
+  </tr>
+  {% if total_balance > 0 %}
     <tr>
-        <th align="right">
-            {% trans 'Statement No.' %}:
-        </th>
-        <td>
-            {{ statement_number }}
-        </td>
+      <th align="right">
+        {% trans 'Payment Due Date' %}:
+      </th>
+      <td>
+        {{ date_due }}
+      </td>
     </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Project Space' %}:
-        </th>
-        <td>
-            <a href="{{ domain_url }}">
-                {{ domain }}
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Software Plan' %}:
-        </th>
-        <td>
-            {{ plan_name }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Status' %}:
-        </th>
-        <td>
-            {{ payment_status }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Amount Due this Month' %}:
-        </th>
-        <td>
-            {{ amount_due }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Total Balance' %}:
-        </th>
-        <td>
-            {{ total_balance }}
-        </td>
-    </tr>
-    {% if total_balance > 0 %}
-        <tr>
-            <th align="right">
-                {% trans 'Payment Due Date' %}:
-            </th>
-            <td>
-                {{ date_due }}
-            </td>
-        </tr>
-    {% endif  %}
+  {% endif  %}
 </table>
 
 <p>
-    {% blocktrans %}
-        You have selected to automatically pay this invoice using a credit card
-        with the last four digits {{ last_4 }}. Your credit card will automatically
-        be charged on {{ date_due }}. You can alter this
-        setting by logging into your project space on CommCareHQ and navigating to
-        <a href="{{ statements_url }}">Billing Statements</a>.
-    {% endblocktrans %}
+  {% blocktrans %}
+    You have selected to automatically pay this invoice using a credit card
+    with the last four digits {{ last_4 }}. Your credit card will automatically
+    be charged on {{ date_due }}. You can alter this
+    setting by logging into your project space on CommCareHQ and navigating to
+    <a href="{{ statements_url }}">Billing Statements</a>.
+  {% endblocktrans %}
 </p>
 <p>
-    {% blocktrans %}
-        Thank you for using {{ plan_name }}. If you have any questions, please don't
-        hesitate to contact {{ invoicing_contact_email }}.
-    {% endblocktrans %}
-</p>
-
-<p>
-    {% blocktrans %}
-        Best Regards,<br />
-        The CommCare HQ Team<br />
-        www.commcarehq.org
-    {% endblocktrans %}
+  {% blocktrans %}
+    Thank you for using {{ plan_name }}. If you have any questions, please don't
+    hesitate to contact {{ invoicing_contact_email }}.
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
-        Statement From:
-        CommCare HQ and the corporation Dimagi, Inc.
-        585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
-    {% endblocktrans %}
+  {% blocktrans %}
+    Best Regards,<br />
+    The CommCare HQ Team<br />
+    www.commcarehq.org
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Statement From:
+    CommCare HQ and the corporation Dimagi, Inc.
+    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+  {% endblocktrans %}
 </p>

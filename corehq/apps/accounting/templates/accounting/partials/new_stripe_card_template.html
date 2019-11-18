@@ -2,104 +2,104 @@
 {% load i18n %}
 
 <script type="text/html" id="new-stripe-card-template">
-    <div class="modal fade" id="card-modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">{% trans "Add New Credit Card" %}</h4>
-                </div>
-                <div class="modal-body form-horizontal">
-                    <input type="hidden"
-                           name="stripeToken"
-                           data-bind="value: token" />
-                    <div class="alert alert-success"
-                         data-bind="visible: isProcessing">
-                        <i class="fa fa-refresh fa-spin"></i> {% trans "Processing your request" %}
-                    </div>
-                    <div class="alert alert-danger"
-                         data-bind="visible: errorMsg() != '',
-                                    text: errorMsg">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="control-label col-sm-3">
-                            {% trans 'Card Number' %}
-                        </label>
-                        <div class="col-sm-9">
-                            <input type="text"
-                                   data-bind="value: number, disable: isProcessing"
-                                   size="20"
-                                   class="form-control"
-                                   placeholder="xxxx-xxxx-xxxx-xxxx", />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="control-label col-sm-3">
-                            {% trans 'CVC' context "Check digits of credit card"%}
-                        </label>
-                        <div class="col-sm-3">
-                            <input type="text"
-                                   data-bind="value: cvc, disable: isProcessing"
-                                   size="4"
-                                   class="form-control"
-                                   placeholder="xxxx"/>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="control-label col-sm-3">
-                            {% trans 'Expiration' %}
-                        </label>
-                        <div class="col-sm-9">
-                            <div class="row">
-                                <div class="col-sm-2">
-                                    <input type="text"
-                                           data-bind="value: expMonth, disable: isProcessing"
-                                           size="2"
-                                           class="form-control"
-                                           placeholder="MM" />
-                                </div>
-                                <div class="col-sm-4">
-                                    <input type="text"
-                                       data-bind="value: expYear, disable: isProcessing"
-                                       size="4"
-                                       class="form-control"
-                                       placeholder="YYYY" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-offset-3 col-sm-9">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="autopay" data-bind="checked: isAutopay, disable: isProcessing"/>
-                                    {% trans 'Use this card to autopay' %}
-                                </label>
-                            </div>
-                            <span class="help-block">
-                                <i class="fa fa-info-circle"></i>
-                                {% blocktrans %}
-                                    We use <a href="http://www.stripe.com/" target="_blank">Stripe</a>
-                                    to process this transaction.
-                                {% endblocktrans %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button style="" type="button" class="btn btn-default" data-dismiss="modal">
-                        {% trans 'Cancel' %}
-                    </button>
-                    <button type="button" class="btn btn-success"
-                            data-bind="click: saveCard,
-                                       enable: !isProcessing()">
-                        {% trans 'Save' %}
-                    </button>
-                </div>
-            </div>
+  <div class="modal fade" id="card-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% trans "Add New Credit Card" %}</h4>
         </div>
+        <div class="modal-body form-horizontal">
+          <input type="hidden"
+                 name="stripeToken"
+                 data-bind="value: token" />
+          <div class="alert alert-success"
+               data-bind="visible: isProcessing">
+            <i class="fa fa-refresh fa-spin"></i> {% trans "Processing your request" %}
+          </div>
+          <div class="alert alert-danger"
+               data-bind="visible: errorMsg() != '',
+                                    text: errorMsg">
+          </div>
+
+          <div class="form-group">
+            <label class="control-label col-sm-3">
+              {% trans 'Card Number' %}
+            </label>
+            <div class="col-sm-9">
+              <input type="text"
+                     data-bind="value: number, disable: isProcessing"
+                     size="20"
+                     class="form-control"
+                     placeholder="xxxx-xxxx-xxxx-xxxx", />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="control-label col-sm-3">
+              {% trans 'CVC' context "Check digits of credit card"%}
+            </label>
+            <div class="col-sm-3">
+              <input type="text"
+                     data-bind="value: cvc, disable: isProcessing"
+                     size="4"
+                     class="form-control"
+                     placeholder="xxxx"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="control-label col-sm-3">
+              {% trans 'Expiration' %}
+            </label>
+            <div class="col-sm-9">
+              <div class="row">
+                <div class="col-sm-2">
+                  <input type="text"
+                         data-bind="value: expMonth, disable: isProcessing"
+                         size="2"
+                         class="form-control"
+                         placeholder="MM" />
+                </div>
+                <div class="col-sm-4">
+                  <input type="text"
+                         data-bind="value: expYear, disable: isProcessing"
+                         size="4"
+                         class="form-control"
+                         placeholder="YYYY" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="autopay" data-bind="checked: isAutopay, disable: isProcessing"/>
+                  {% trans 'Use this card to autopay' %}
+                </label>
+              </div>
+              <span class="help-block">
+                                <i class="fa fa-info-circle"></i>
+                {% blocktrans %}
+                  We use <a href="http://www.stripe.com/" target="_blank">Stripe</a>
+                  to process this transaction.
+                {% endblocktrans %}
+                            </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button style="" type="button" class="btn btn-default" data-dismiss="modal">
+            {% trans 'Cancel' %}
+          </button>
+          <button type="button" class="btn btn-primary"
+                  data-bind="click: saveCard,
+                                       enable: !isProcessing()">
+            {% trans 'Save' %}
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </script>

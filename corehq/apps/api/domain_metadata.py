@@ -1,22 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
-
-from corehq.apps.api.resources.auth import AdminAuthentication
-from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
-from corehq.apps.es.domains import DomainES
 
 from tastypie import fields
 from tastypie.exceptions import NotFound
-from tastypie.resources import Resource, ModelResource
+from tastypie.resources import ModelResource, Resource
 
 from dimagi.utils.dates import force_to_datetime
-from six.moves import map
+
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
+from corehq.apps.api.resources.auth import AdminAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.serializers import XFormInstanceSerializer
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
+from corehq.apps.es.domains import DomainES
 
 
 def _get_domain(bundle):
@@ -47,8 +44,8 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     def dehydrate_billing_properties(self, bundle):
-        domain = _get_domain(bundle)
-        subscription = Subscription.get_active_subscription_by_domain(domain.name)
+        domain_obj = _get_domain(bundle)
+        subscription = Subscription.get_active_subscription_by_domain(domain_obj.name)
         return {
             "date_start": (subscription.date_start
                            if subscription is not None else None),
@@ -59,46 +56,42 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         }
 
     def dehydrate_calculated_properties(self, bundle):
-        domain = _get_domain(bundle)
+        calc_prop_prefix = 'cp_'
+        domain_obj = _get_domain(bundle)
         try:
             es_data = (DomainES()
-                       .in_domains([domain.name])
+                       .in_domains([domain_obj.name])
                        .size(1)
                        .run()
                        .hits[0])
             base_properties = {
                 prop_name: es_data[prop_name]
-                for prop_name in es_data if prop_name[:3] == 'cp_'
+                for prop_name in es_data
+                if prop_name.startswith(calc_prop_prefix)
             }
             try:
-                audit_record = DomainAuditRecordEntry.objects.get(domain=domain.name)
+                audit_record = DomainAuditRecordEntry.objects.get(domain=domain_obj.name)
             except DomainAuditRecordEntry.DoesNotExist:
                 audit_record = None
-            extra_properties = [
-                "cp_n_downloads_custom_exports",
-                "cp_n_viewed_ucr_reports",
-                "cp_n_viewed_non_ucr_reports",
-                "cp_n_reports_created",
-                "cp_n_reports_edited",
-                "cp_n_saved_scheduled_reports",
-                "cp_n_click_app_deploy",
-                "cp_n_saved_app_changes",
-            ]
-            for prop in extra_properties:
-                base_properties.update({prop: getattr(audit_record, prop, 0)})
+            extra_properties = {
+                field.name: getattr(audit_record, field.name, 0)
+                for field in DomainAuditRecordEntry._meta.fields
+                if field.name.startswith(calc_prop_prefix)
+            }
+            base_properties.update(extra_properties)
             return base_properties
         except IndexError:
-            logging.exception('Problem getting calculated properties for {}'.format(domain.name))
+            logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
 
     def dehydrate_domain_properties(self, bundle):
         return _get_domain(bundle)._doc
 
     def obj_get(self, bundle, **kwargs):
-        domain = Domain.get_by_name(kwargs.get('domain'))
-        if domain is None:
+        domain_obj = Domain.get_by_name(kwargs.get('domain'))
+        if domain_obj is None:
             raise NotFound
-        return domain
+        return domain_obj
 
     def obj_get_list(self, bundle, **kwargs):
         if kwargs.get('domain'):

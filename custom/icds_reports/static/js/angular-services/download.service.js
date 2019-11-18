@@ -33,5 +33,22 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                 }
             );
         },
+        downloadCasData: function (data) {
+            gtag.event('CAS Data', 'Fetching data started', 'Creating Task');
+            return $http.post(url('cas_export'),
+                $.param(data),
+                {
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                }
+            ).then(
+                function (response) {
+                    gtag.event('CAS Data', 'Fetching data succeeded', 'Creating Task');
+                    return response.data;
+                },
+                function () {
+                    gtag.event('CAS Data', 'Fetching data failed', 'Creating Task');
+                }
+            );
+        },
     };
 }]);

@@ -1,115 +1,23 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-import six.moves.html_parser
-import json
+import csv
 from collections import defaultdict
-import csv342 as csv
-from datetime import timedelta
 
 from django.contrib import messages
-from django.http import (
-    HttpResponseRedirect,
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseNotFound,
-    JsonResponse,
-    StreamingHttpResponse,
-)
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django.views.generic import TemplateView
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from dimagi.utils.dates import add_months
+from dimagi.utils.django.management import export_as_csv_action
+from dimagi.utils.web import json_response
 
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.data_analytics.const import GIR_FIELDS
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor,
-    login_or_basic, domain_admin_required,
-    check_lockout)
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
-from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
-    use_nvd3_v3
-from corehq.elastic import parse_args_for_es
-from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
-    CommCareCaseSQLRawDocSerializer
-from corehq.util.supervisord.api import (
-    PillowtopSupervisorApi,
-    SupervisorException,
-    all_pillows_supervisor_status,
-    pillow_supervisor_status
-)
-from dimagi.utils.dates import add_months
-from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.django.management import export_as_csv_action
-from dimagi.utils.web import json_response
-from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm,
-    DisableTwoFactorForm, DisableUserForm)
-from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-import six
-
-
-@require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
-def stats_data(request):
-    histo_type = request.GET.get('histogram_type')
-    interval = request.GET.get("interval", "week")
-    datefield = request.GET.get("datefield")
-    get_request_params_json = request.GET.get("get_request_params", None)
-    get_request_params = (
-        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
-        if get_request_params_json is not None else {}
-    )
-
-    stats_kwargs = {
-        k: get_request_params[k]
-        for k in get_request_params if k != "domain_params_es"
-    }
-    if datefield is not None:
-        stats_kwargs['datefield'] = datefield
-
-    domain_params_es = get_request_params.get("domain_params_es", {})
-
-    if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
-        request.datespan.enddate += timedelta(days=1)
-
-    domain_params, __ = parse_args_for_es(request, prefix='es_')
-    domain_params.update(domain_params_es)
-
-    domains = get_project_spaces(facets=domain_params)
-
-    try:
-        return json_response(get_stats_data(
-            histo_type,
-            domains,
-            request.datespan,
-            interval,
-            **stats_kwargs
-        ))
-    except HistoTypeNotFoundException:
-        return HttpResponseBadRequest(
-            'histogram_type param must be one of <ul><li>{}</li></ul>'
-            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC)))
-
-
-@require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
-def admin_reports_stats_data(request):
-    return stats_data(request)
-
-
-class DimagisphereView(TemplateView):
-
-    def get_context_data(self, **kwargs):
-        context = super(DimagisphereView, self).get_context_data(**kwargs)
-        context['tvmode'] = 'tvmode' in self.request.GET
-        return context
 
 
 def top_five_projects_by_country(request):

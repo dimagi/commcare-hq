@@ -48,7 +48,7 @@ CREATE VIEW agg_awc_daily_view AS
         "agg_awc"."num_launched_blocks" AS "num_launched_blocks",
         "agg_awc"."num_launched_supervisors" AS "num_launched_supervisors",
         "agg_awc"."num_launched_awcs" AS "num_launched_awcs"
-    FROM "public"."awc_location" "awc_location"
+    FROM "public"."awc_location_local" "awc_location"
     LEFT JOIN "public"."agg_awc_daily" "agg_awc" ON (
         ("awc_location"."aggregation_level" = "agg_awc"."aggregation_level") AND
         ("awc_location"."state_id" = "agg_awc"."state_id") AND

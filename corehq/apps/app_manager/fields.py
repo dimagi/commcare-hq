@@ -1,25 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import logging
-from django.urls import reverse
-from django.http import Http404
 import collections
 import itertools
+import logging
+from copy import copy
+
 from django import forms
+from django.http import Http404
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
+from memoized import memoized
+
+from couchforms.analytics import get_exports_by_form
+
 from corehq.apps.app_manager.analytics import get_exports_by_application
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_RAW, \
-    DATA_SOURCE_TYPE_FORM
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_CASE,
+    DATA_SOURCE_TYPE_FORM,
+    DATA_SOURCE_TYPE_RAW,
+)
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
-from couchforms.analytics import get_exports_by_form
-from memoized import memoized
-from six.moves import map
-
+from corehq.util.soft_assert import soft_assert
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -165,16 +171,12 @@ def get_app_sources(domain):
 
 
 class ApplicationDataRMIHelper(object):
-    """ApplicationDataRMIHelper is meant to generate the response for the
-    djangoRMI methods required to initialize form controlled by
-    hq.app_data_drilldown.ng.js.
-
-    Note / todo: This Helper should be merged with ApplicationDataSourceUIHelper.
-    Holding off to a different PR, as I want to isolate QA to just the exports
-    (the first thing to use this) --Biyeun
-
+    """
+    ApplicationDataRMIHelper is meant to generate the response for
+    corehq.apps.export.views.get_app_data_drilldown_values
     """
     UNKNOWN_SOURCE = '_unknown'
+    UNKNOWN_MODULE_ID = '_unknown_module'
 
     APP_TYPE_ALL = 'all'
     APP_TYPE_DELETED = 'deleted'
@@ -182,28 +184,24 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True, form_placeholders=None,
-                 case_placeholders=None, form_labels=None):
+    def __init__(self, domain, user, as_dict=True):
         self.domain = domain
         self.user = user
         self.as_dict = as_dict
-        default_form_labels = AppFormRMIPlaceholder(
+        self.form_labels = AppFormRMIPlaceholder(
             application=_("Application"),
             module=_("Menu"),
             form=_("Form"),
         )
-        self.form_labels = form_labels or default_form_labels
-        default_form_placeholder = AppFormRMIPlaceholder(
+        self.form_placeholders = AppFormRMIPlaceholder(
             application=_("Select Application"),
             module=_("Select Menu"),
             form=_("Select Form"),
         )
-        self.form_placeholders = form_placeholders or default_form_placeholder
-        default_case_placeholder = AppCaseRMIPlaceholder(
+        self.case_placeholders = AppCaseRMIPlaceholder(
             application=_("Select Application"),
             case_type=_("Select Case Type"),
         )
-        self.case_placeholders = case_placeholders or default_case_placeholder
         if self.as_dict:
             self.form_labels = self.form_labels._asdict()
             self.form_placeholders = self.form_placeholders._asdict()
@@ -439,15 +437,27 @@ class ApplicationDataRMIHelper(object):
         forms_by_app_by_module = {}
         for form in self._all_forms:
             has_app = form.get('has_app', False)
-            app_langs = []
-            if self.user.language in form['app'].get('langs', {}):
-                app_langs.append(self.user.language)
 
-            app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
+            app_langs = copy(form['app'].get('langs', []))
+
+            # Move user's language to the front (if applicable)
+            if self.user.language in app_langs:
+                app_langs.insert(0, self.user.language)
+
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
-            module = form.get('module')
-            module_id = (module['id'] if has_app and module is not None
-                         else self.UNKNOWN_SOURCE)
+            module = None
+            module_id = self.UNKNOWN_MODULE_ID
+            if 'module' in form:
+                module = form['module']
+            if has_app and module is not None:
+                if 'id' in module:
+                    module_id = module['id']
+                elif hasattr(module, 'id'):
+                    # module is an instance, not a dictionary. id is a
+                    # property method, not a key. (FB 285678, HI-141)
+                    module_id = module.id
+                else:
+                    module_id = self.UNKNOWN_SOURCE
             module_name = self._get_item_name(
                 module, has_app, app_langs, _("Unknown Module")
             )
@@ -482,9 +492,9 @@ class ApplicationDataRMIHelper(object):
         return modules_by_app, forms_by_app_by_module
 
     def get_form_rmi_response(self):
-        """Use this to generate the response that initializes the form
-        controlled by hq.app_data_drilldown.ng.js if you are drilling down
-        to an XForm + app_id pair"""
+        """
+        Used for creating form-based exports (XForm + app id pair).
+        """
         modules_by_app, forms_by_app_by_module = self._get_modules_and_forms(self.as_dict)
         response = AppFormRMIResponse(
             app_types=self._get_app_type_choices_for_forms(self.as_dict),
@@ -543,9 +553,8 @@ class ApplicationDataRMIHelper(object):
         return case_types_by_app
 
     def get_case_rmi_response(self):
-        """Use this to generate a response that initializes the form
-        controlled by hq.app_data_drilldown.ng.js if you are drilling down to
-        a Case Type.
+        """
+        Used for creating case-based exports.
         """
         apps_by_type = self._get_applications_by_type(as_dict=False)
         case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict)

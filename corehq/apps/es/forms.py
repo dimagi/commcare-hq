@@ -2,11 +2,10 @@
 FormES
 --------
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.pillows.mappings import NULL_VALUE
-from .es_query import HQESQuery
+
 from . import filters
+from .es_query import HQESQuery
 
 
 class FormES(HQESQuery):
@@ -21,6 +20,7 @@ class FormES(HQESQuery):
     @property
     def builtin_filters(self):
         return [
+            form_ids,
             xmlns,
             app,
             submitted,
@@ -48,6 +48,10 @@ class FormES(HQESQuery):
         """Include only archived forms, which are normally excluded"""
         return (self.remove_default_filter('is_xform_instance')
                 .filter(filters.doc_type('xformarchived')))
+
+
+def form_ids(form_ids):
+    return filters.term('_id', form_ids)
 
 
 def xmlns(xmlnss):

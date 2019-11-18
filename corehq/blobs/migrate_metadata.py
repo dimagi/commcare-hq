@@ -1,11 +1,6 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from functools import partial
 from itertools import groupby
 
-import six
 from couchdbkit import ResourceNotFound
 from django.db import connections
 
@@ -29,7 +24,6 @@ from corehq.apps.users.models import CommCareUser
 
 import casexml.apps.case.models as cases
 import couchforms.models as xform
-from couchexport.models import SavedBasicExport
 from custom.icds_reports.models.helper import IcdsFile
 
 
@@ -43,7 +37,7 @@ class MultiDbMigrator(object):
 
     def iter_migrators(self):
         from . import migrate as mod
-        SqlMigrator, BlobMetaMigrator = make_migrators(mod)
+        NoStateMigrator, SqlMigrator, BlobMetaMigrator = make_migrators(mod)
         couch_migrator = partial(BlobMetaMigrator, blob_helper=couch_blob_helper)
 
         def db_key(doc_type):
@@ -53,7 +47,7 @@ class MultiDbMigrator(object):
 
         for key, types in groupby(sorted(self.couch_types, key=db_key), key=db_key):
             slug = "%s-%s" % (self.slug, key)
-            yield mod.Migrator(slug, list(types), couch_migrator)
+            yield NoStateMigrator(slug, list(types), couch_migrator)
 
         for rex in self.sql_reindexers:
             slug = "%s-%s" % (self.slug, rex.model_class.__name__)
@@ -84,10 +78,7 @@ def make_migrators(mod):
             super(BlobMetaMigrator, self).__init__(*args, **kw)
             self.total_blobs = 0
 
-        def _backup_doc(self, doc):
-            pass
-
-        def _do_migration(self, doc):
+        def migrate(self, doc):
             if not doc.get("external_blobs"):
                 return True
             type_code = self.get_type_code(doc)
@@ -110,7 +101,7 @@ def make_migrators(mod):
                     "attachments": obj._attachments,
                 })
             with connections[db].cursor() as cursor:
-                for name, meta in six.iteritems(obj.external_blobs):
+                for name, meta in obj.external_blobs.items():
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
                         continue
@@ -140,13 +131,14 @@ def make_migrators(mod):
 
         def error(self, obj, doc):
             print("Error: %s %r" % (doc["error"], obj))
-            super(BlobMetaMigrator, self)._backup_doc(doc)
+            super(BlobMetaMigrator, self).write_backup(doc)
 
-        def processing_complete(self, skipped):
-            # fake skipped to prevent writing BlobMigrationState
-            super(BlobMetaMigrator, self).processing_complete(1)
+    class NoStateMigrator(mod.Migrator):
 
-    class SqlMigrator(mod.Migrator):
+        def write_migration_completed_state(self):
+            pass
+
+    class SqlMigrator(NoStateMigrator):
 
         def __init__(self, slug, reindexer, doc_migrator_class):
             types = [reindexer.model_class]
@@ -159,10 +151,10 @@ def make_migrators(mod):
             super(SqlMigrator, self).__init__(slug, types, doc_migrator)
             self.reindexer = reindexer
 
-        def _get_document_provider(self):
+        def get_document_provider(self):
             return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
-    return SqlMigrator, BlobMetaMigrator
+    return NoStateMigrator, SqlMigrator, BlobMetaMigrator
 
 
 class SqlBlobHelper(object):
@@ -319,7 +311,6 @@ DOMAIN_MAP = {
     "CommCareImage": get_shared_domain,
     "CommCareVideo": get_shared_domain,
     "CommCareMultimedia": get_shared_domain,
-    "SavedBasicExport": (lambda doc: UNKNOWN_DOMAIN),
 }
 
 
@@ -332,7 +323,6 @@ migrate_metadata = MultiDbMigrator("migrate_metadata",
         ("RemoteApp-Deleted", apps.RemoteApp),
         apps.SavedAppBuild,
         CommCareBuild,
-        SavedBasicExport,
         Domain,
         acct.InvoicePdf,
         hqmedia.CommCareAudio,

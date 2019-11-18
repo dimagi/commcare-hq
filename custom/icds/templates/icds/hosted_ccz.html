@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style type="text/css">
+      body {
+        padding-top: 50px;
+      }
+      .starter-template {
+        padding: 40px 15px;
+        text-align: center;
+      }
+      .underlined {
+          text-decoration: underline;
+      }
+      #supporting-doc-row {
+          margin-top:60px;
+      }
+      #footer {
+          margin-top:20px;
+      }
+      .mb-40 {
+          margin-bottom:40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-1">
+        </div>
+        <div class="col-sm-9">
+          <h3 class="text-center underlined mb-40">
+            <strong>{{ page_title }}</strong>
+          </h3>
+          {% if hosted_cczs %}
+            <div class="mb-40">
+              <p class="file-titles font-weight-bold underlined">
+                CCZ Files
+              </p>
+              {% for hosted_ccz in hosted_cczs %}
+                <p>
+                  <a href="{{ hosted_ccz.ccz_details.download_url }}">
+                    {{ hosted_ccz.ccz_details.name }}
+                  </a>
+                </p>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if supporting_list_files %}
+            <div class="mb-40">
+              <p class="file-titles font-weight-bold underlined">
+                Supporting Files
+              </p>
+              {% for name, download_url in supporting_list_files.items %}
+                <p>
+                  <a href="{{ download_url }}">
+                    {{ name }}
+                  </a>
+                </p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if supporting_footer_files %}
+        <div class="row" id="supporting-doc-row">
+          <div class="col-sm-1">
+          </div>
+          <div class="col-sm-9 text-center">
+            <ul class="list-inline">
+              {% for name, download_url in supporting_footer_files.items %}
+                <li class="col-sm-3 list-inline-item">
+                  <a href="{{ download_url }}">
+                    {{ name }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+      <div class="row" id="footer">
+        <div class="col-sm-1">
+        </div>
+        <div class="col-sm-9">
+          {% if icds_env %}
+            <h6 style="text-align: center;">
+              Content Managed by Ministry of Women and Child Development, GOI
+            </h6>
+          {% endif %}
+          <hr style="background-color: black; height: 3px; border: 0;"/>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

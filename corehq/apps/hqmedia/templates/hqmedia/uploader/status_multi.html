@@ -1,7 +1,7 @@
 {% load i18n %}
 <p>
-<% if (num > 0) { %>
-    <span class="label label-success">
+  <% if (num > 0) { %>
+  <span class="label label-success">
         <i class="fa fa-check"></i>
         <% if (num == 1) { %>
             {% trans '1 Match Found' %}
@@ -9,7 +9,7 @@
             {% trans '<%= num %> Matches Found' %}
         <% } %>
     </span>
-<% } else { %>
-    <span class="label label-danger">{% trans 'No Matches Found' %}</span>
-<% } %>
+  <% } else { %>
+  <span class="label label-danger">{% trans 'No Matches Found' %}</span>
+  <% } %>
 </p>

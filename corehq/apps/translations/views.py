@@ -1,227 +1,153 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import openpyxl
-import polib
+import io
 
-from io import open
-from memoized import memoized
-from openpyxl import Workbook
-
-from django.http import HttpResponse
-from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
-from django.utils.decorators import method_decorator
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 
-from corehq import toggles
-from corehq.apps.hqwebapp.decorators import use_select2_v4
-from corehq.apps.translations.forms import (
-    ConvertTranslationsForm,
-    PullResourceForm,
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
 )
-from corehq.apps.app_manager.app_translations.generators import Translation, PoFileGenerator
-from corehq.util.files import safe_filename_header
-from corehq.apps.domain.views.base import BaseDomainView
-from custom.icds.translations.integrations.exceptions import ResourceMissing
-from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import get_file_content_from_workbook, \
-    transifex_details_available_for_domain
+from corehq.apps.app_manager.ui_translations import (
+    build_ui_translation_download_file,
+    process_ui_translation_upload,
+)
+from corehq.apps.translations.app_translations.download import (
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
+)
+from corehq.apps.translations.app_translations.upload_app import (
+    get_sheet_name_to_unique_id_map,
+    process_bulk_app_translation_upload,
+    validate_bulk_app_translation_upload,
+)
+from corehq.apps.translations.app_translations.utils import (
+    get_bulk_app_sheet_headers,
+)
+from corehq.apps.translations.utils import (
+    update_app_translations_from_trans_dict,
+)
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
-class BaseTranslationsView(BaseDomainView):
-    @property
-    def page_context(self):
-        context = {
-            'transifex_details_available': self.transifex_details_available,
-        }
-        return context
+@no_conflict_require_POST
+@require_can_edit_apps
+@get_file("bulk_upload_file")
+def upload_bulk_ui_translations(request, domain, app_id):
 
-    @property
-    @memoized
-    def transifex_details_available(self):
-        return transifex_details_available_for_domain(self.domain)
+    def _html_message(header_text, messages):
+        message = header_text + "<br>"
+        for prop in messages:
+            message += "<li>%s</li>" % prop
+        return message
 
-    def transifex_integration_enabled(self, request):
-        if not self.transifex_details_available:
-            messages.error(request, _('Transifex integration not set for this domain'))
-            return False
-        return True
-
-
-class ConvertTranslations(BaseTranslationsView):
-    page_title = _('Convert Translations')
-    urlname = 'convert_translations'
-    template_name = 'convert_translations.html'
-    section_name = ugettext_noop("Translations")
-
-    @property
-    @memoized
-    def convert_translation_form(self):
-        if self.request.POST:
-            return ConvertTranslationsForm(self.request.POST, self.request.FILES)
+    success = False
+    try:
+        app = get_app(domain, app_id)
+        trans_dict, error_properties, warnings = process_ui_translation_upload(
+            app, request.file
+        )
+        if error_properties:
+            message = _html_message(_("Upload failed. We found problems with the following translations:"),
+                                    error_properties)
+            messages.error(request, message, extra_tags='html')
         else:
-            return ConvertTranslationsForm()
+            # update translations only if there were no errors
+            update_app_translations_from_trans_dict(app, trans_dict)
+            app.save()
+            success = True
+            if warnings:
+                message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
+                                        warnings)
+                messages.warning(request, message, extra_tags='html')
+    except Exception:
+        notify_exception(request, 'Bulk Upload Translations Error')
+        messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
 
-    @property
-    @memoized
-    def _uploaded_file_name(self):
-        uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
-        return uploaded_file.name
+    if success:
+        messages.success(request, _("UI Translations Updated!"))
 
-    @staticmethod
-    def _parse_excel_sheet(worksheet):
-        """
-        :return: the rows and the index for expected columns
-        """
-        rows = [row for row in worksheet.iter_rows()]
-        headers = [cell.value for cell in rows[0]]
-        source = headers.index('source')
-        translation = headers.index('translation')
-        occurrence = headers.index('occurrence') if 'occurrence' in headers else None
-        context = headers.index('context') if 'context' in headers else None
-        return rows, source, translation, occurrence, context
-
-    def _generate_translations_for_po(self, worksheet):
-        """
-        :return: a list of Translation objects
-        """
-        rows, source, translation, occurrence, context = self._parse_excel_sheet(worksheet)
-        translations = {worksheet.title: []}
-        for row in rows[1:]:
-            _occurrence = row[occurrence].value if occurrence is not None else ''
-            _context = row[context].value if context is not None else ''
-            translations[worksheet.title].append(
-                Translation(
-                    row[source].value,
-                    row[translation].value,
-                    [(_occurrence, None)],
-                    _context)
-            )
-        return translations
-
-    def _generate_po_content(self, worksheet):
-        """
-        extract translations from worksheet and converts to a po file
-
-        :return: content of file generated
-        """
-        translations = self._generate_translations_for_po(worksheet)
-        with PoFileGenerator(translations, {}) as po_file_generator:
-            generated_files = po_file_generator.generate_translation_files()
-            with open(generated_files[0].path, 'r', encoding="utf-8") as f:
-                return f.read()
-
-    def _generate_excel_file(self):
-        """
-        extract translations from po file and converts to a xlsx file
-
-        :return: Workbook object
-        """
-        uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
-        po_file = polib.pofile(uploaded_file.read())
-        wb = openpyxl.Workbook()
-        ws = wb.worksheets[0]
-        ws.title = "Translations"
-        ws.append(['source', 'translation', 'context', 'occurrence'])
-        for po_entry in po_file:
-            ws.append([po_entry.msgid, po_entry.msgstr, po_entry.msgctxt,
-                       po_entry.occurrences[0][0] if po_entry.occurrences else ''])
-        return wb
-
-    def _po_file_response(self):
-        uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
-        worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
-        content = self._generate_po_content(worksheet)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
-        response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
-        return response
-
-    def _excel_file_response(self):
-        wb = self._generate_excel_file()
-        content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
-        response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
-        return response
-
-    def post(self, request, *args, **kwargs):
-        if self.convert_translation_form.is_valid():
-            uploaded_filename = self._uploaded_file_name
-            if uploaded_filename.endswith('.xls') or uploaded_filename.endswith('.xlsx'):
-                return self._po_file_response()
-            elif uploaded_filename.endswith('.po'):
-                return self._excel_file_response()
-        return self.get(request, *args, **kwargs)
-
-    def section_url(self):
-        return self.page_url
-
-    @property
-    def page_context(self):
-        context = super(ConvertTranslations, self).page_context
-        context['convert_translations_form'] = self.convert_translation_form
-        return context
+    # In v2, languages is the default tab on the settings page
+    view_name = 'app_settings'
+    return HttpResponseRedirect(reverse(view_name, args=[domain, app_id]))
 
 
-@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class PullResource(BaseTranslationsView):
-    page_title = _('Pull Resource')
-    urlname = 'pull_resource'
-    template_name = 'pull_resource.html'
-    section_name = ugettext_noop("Translations")
+@require_can_edit_apps
+def download_bulk_ui_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    temp = build_ui_translation_download_file(app)
+    filename = '{app_name} v.{app_version} - CommCare Translations'.format(
+        app_name=app.name,
+        app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(PullResource, self).dispatch(request, *args, **kwargs)
 
-    def section_url(self):
-        return self.page_url
+@require_can_edit_apps
+def download_bulk_app_translations(request, domain, app_id):
+    lang = request.GET.get('lang')
+    skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
+    app = get_app(domain, app_id)
+    # if there is a lang selected, assume that user wants a single sheet
+    is_single_sheet = bool(lang)
+    headers = get_bulk_app_sheet_headers(app, single_sheet=is_single_sheet,
+                                         lang=lang, eligible_for_transifex_only=skip_blacklisted)
+    if is_single_sheet:
+        sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
+    else:
+        sheets = get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=skip_blacklisted)
 
-    @property
-    @memoized
-    def pull_resource_form(self):
-        if self.request.POST:
-            return PullResourceForm(self.domain, self.request.POST)
+    temp = io.BytesIO()
+    data = [(k, v) for k, v in sheets.items()]
+    export_raw(headers, data, temp)
+    filename = '{app_name} v.{app_version} - App Translations{lang}{transifex_only}'.format(
+        app_name=app.name,
+        app_version=app.version,
+        lang=' ' + lang if is_single_sheet else '',
+        transifex_only=' (Transifex only)' if skip_blacklisted else '',
+    )
+    return export_response(temp, Format.XLS_2007, filename)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+@get_file("bulk_upload_file")
+def upload_bulk_app_translations(request, domain, app_id):
+    lang = request.POST.get('language')
+    validate = request.POST.get('validate')
+
+    app = get_app(domain, app_id)
+    try:
+        workbook = get_workbook(request.file)
+    except WorkbookJSONError as e:
+        messages.error(request, str(e))
+    else:
+        if validate:
+            if not lang:
+                msgs = [(messages.error, _("Please select language to validate."))]
+            else:
+                msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
         else:
-            return PullResourceForm(self.domain)
+            sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
+            msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
+            app.save()
+        _add_messages_to_request(request, msgs)
 
-    @property
-    def page_context(self):
-        context = super(PullResource, self).page_context
-        if context['transifex_details_available']:
-            context['pull_resource_form'] = self.pull_resource_form
-        return context
+    # In v2, languages is the default tab on the settings page
+    return HttpResponseRedirect(
+        reverse('app_settings', args=[domain, app_id])
+    )
 
-    def _generate_excel_file(self, domain, resource_slug):
-        """
-        extract translations from po file pulled from transifex and converts to a xlsx file
 
-        :return: Workbook object
-        """
-        target_lang = self.pull_resource_form.cleaned_data['target_lang']
-        transifex = Transifex(domain=domain, app_id=None,
-                              source_lang=target_lang,
-                              project_slug=self.pull_resource_form.cleaned_data['transifex_project_slug'],
-                              version=None)
-        wb = Workbook(write_only=True)
-        ws = wb.create_sheet(title='translations')
-        ws.append(['context', 'source', 'translation', 'occurrence'])
-        for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
-            ws.append([po_entry.msgctxt, po_entry.msgid, po_entry.msgstr,
-                       po_entry.occurrences[0][0] if po_entry.occurrences else ''])
-        return wb
-
-    def _pull_resource(self, request):
-        resource_slug = self.pull_resource_form.cleaned_data['resource_slug']
-        wb = self._generate_excel_file(request.domain, resource_slug)
-        content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
-        response['Content-Disposition'] = safe_filename_header(resource_slug, 'xlsx')
-        return response
-
-    def post(self, request, *args, **kwargs):
-        if self.transifex_integration_enabled(request):
-            if self.pull_resource_form.is_valid():
-                try:
-                    return self._pull_resource(request)
-                except ResourceMissing:
-                    messages.add_message(request, messages.ERROR, 'Resource not found')
-        return self.get(request, *args, **kwargs)
+def _add_messages_to_request(request, msgs):
+    for add_message_func, message in msgs:
+        # add_message_func is a function like django.contrib.messages.error
+        # message is a string
+        add_message_func(request, message)

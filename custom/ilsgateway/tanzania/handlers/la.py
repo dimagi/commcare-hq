@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA, SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction, StockReport

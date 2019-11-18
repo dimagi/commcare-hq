@@ -1,9 +1,6 @@
-from __future__ import absolute_import, unicode_literals
-
 from collections import OrderedDict
 from datetime import datetime
 
-import six
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
@@ -31,8 +28,13 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
-from corehq.toggles import CASE_LIST_EXPLORER
+from corehq.toggles import (
+    CASE_LIST_EXPLORER,
+    EXPLORE_CASE_DATA,
+    ECD_MIGRATED_DOMAINS,
+)
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import json_format_datetime
@@ -55,7 +57,10 @@ from pillowtop.reindexer.reindexer import (
 
 @quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
 def domains_needing_search_index():
-    return set(list(case_search_enabled_domains()) + CASE_LIST_EXPLORER.get_enabled_domains())
+    return set(list(case_search_enabled_domains())
+               + CASE_LIST_EXPLORER.get_enabled_domains()
+               + EXPLORE_CASE_DATA.get_enabled_domains()
+               + ECD_MIGRATED_DOMAINS.get_enabled_domains())
 
 
 def domain_needs_search_index(domain):
@@ -86,14 +91,14 @@ def _get_case_properties(doc_dict):
     else:
         dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    dynamic_mapping = [{'key': key, VALUE: value} for key, value in six.iteritems(dynamic_case_properties)]
+    dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
 
     return base_case_properties + dynamic_mapping
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         assert isinstance(change, Change)
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
@@ -103,29 +108,14 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             domain = change.get_document()['domain']
 
         if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
+            super(CaseSearchPillowProcessor, self).process_change(change)
 
 
-def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
-                                            process_num=0, **kwargs):
-    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
-    case_processor = CaseSearchPillowProcessor(
+def get_case_search_processor():
+    return CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
-    )
-    change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=case_processor,
-        change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
-        ),
     )
 
 
@@ -182,9 +172,33 @@ class CaseSearchReindexerFactory(ReindexerFactory):
             return _fail_gracefully_and_tell_admins()
         else:
             return PillowChangeProviderReindexer(
-                get_case_search_to_elasticsearch_pillow(),
+                get_case_search_processor(),
                 change_provider=change_provider,
             )
+
+
+def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
+                                            process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
+    case_processor = CaseSearchPillowProcessor(
+        elasticsearch=get_es_new(),
+        index_info=CASE_SEARCH_INDEX_INFO,
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    change_feed = KafkaChangeFeed(
+        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=case_processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
+    )
 
 
 class ResumableCaseSearchReindexerFactory(ReindexerFactory):
@@ -234,9 +248,12 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    query = {'query': CaseSearchES().domain(domain).raw_query['query']}
-    get_es_new().delete_by_query(
-        index=CASE_SEARCH_INDEX,
-        doc_type=CASE_ES_TYPE,
-        body=query,
-    )
+    get_es_new().indices.refresh(CASE_SEARCH_INDEX)
+    case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
+
+    ElasticsearchInterface(get_es_new()).bulk_ops([{
+        "_op_type": "delete",
+        "_index": CASE_SEARCH_INDEX,
+        "_type": CASE_ES_TYPE,
+        "_id": case_id,
+    } for case_id in case_ids])

@@ -1,6 +1,6 @@
 {% load i18n %}
 {% blocktrans %}
-Dear {{ domain }} administrator,
+Dear {{ domain_or_account }} administrator,
 
 Your billing account has unpaid CommCare Billing Statements which are more than 30 days overdue. The balance currently owed is: ${{ total }}.
 
@@ -12,7 +12,7 @@ Please make a payment as soon as possible for the amount due.
 If you are not able to make a payment, your account will be downgraded to our free Community edition on {{ date_60 }}.
 As of this date, you will lose access to all paid features and direct email support from CommCare support team.
 
-If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don't hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact {{ contact_email }}.
 
 Thanks,
 The CommCare HQ Team

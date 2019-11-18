@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-import six
 
 
-class PillowProcessor(six.with_metaclass(ABCMeta, object)):
+class PillowProcessor(metaclass=ABCMeta):
     supports_batch_processing = False
 
     @abstractmethod
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         pass
 
     def checkpoint_updated(self):
@@ -22,7 +19,7 @@ class BulkPillowProcessor(PillowProcessor):
     supports_batch_processing = True
 
     @abstractmethod
-    def process_changes_chunk(self, pillow_instance, changes_chunk):
+    def process_changes_chunk(self, changes_chunk):
         """
         Should process given changes_chunk.
 

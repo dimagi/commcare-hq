@@ -1,16 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import doctest
+
 from django.test import SimpleTestCase
-from mock import patch, MagicMock
-from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.app_manager.models import Module, AdvancedModule, FormSchedule, \
-    ScheduleVisit
+
+from mock import MagicMock, patch
+
+import corehq.apps.app_manager.app_schemas.case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    _CaseRelationshipManager,
+    _CaseTypeEquivalence,
+    _CaseTypeRef,
+    get_case_properties,
+)
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    FormSchedule,
+    Module,
+    ScheduleVisit,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-import doctest
-import corehq.apps.app_manager.app_schemas.case_properties
-from corehq.apps.app_manager.app_schemas.case_properties import _CaseTypeEquivalence, \
-    _CaseRelationshipManager, _CaseTypeRef
 
 
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
@@ -137,7 +145,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     def _add_scheduler_to_form(self, form, module, form_abreviation):
         # (this mimics the behavior in app_manager.views.schedules.edit_visit_schedule()
         # A Form.source is required to retreive scheduler properties
-        form.source = self.get_xml('very_simple_form')
+        form.source = self.get_xml('very_simple_form').decode('utf-8')
         phase, _ = module.get_or_create_schedule_phase(anchor='date-opened')
         form.schedule_form_id = form_abreviation
         form.schedule = FormSchedule(

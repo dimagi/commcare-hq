@@ -1,16 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
-from mock import patch
 
 from couchdbkit import ResourceNotFound
+from mock import patch
 
 from corehq.apps.app_manager.exceptions import PracticeUserException
 from corehq.apps.app_manager.models import Application, BuildProfile
-from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
-    get_practice_mode_configured_apps
+from corehq.apps.app_manager.views.utils import (
+    get_practice_mode_configured_apps,
+    unset_practice_mode_configured_apps,
+)
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.ota.utils import turn_on_demo_mode, turn_off_demo_mode
+from corehq.apps.ota.utils import turn_off_demo_mode, turn_on_demo_mode
 from corehq.apps.users.models import CommCareUser
 
 from .app_factory import AppFactory
@@ -32,7 +32,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory(build_version='2.30.0', domain=self.domain)
         module, form = self.factory.new_basic_module('register', 'case')
-        form.source = self.get_xml('very_simple_form')
+        form.source = self.get_xml('very_simple_form').decode('utf-8')
         self.factory.app.save()
 
     def tearDown(self):

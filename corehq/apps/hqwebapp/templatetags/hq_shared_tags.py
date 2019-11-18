@@ -1,36 +1,36 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import OrderedDict
-from datetime import datetime, timedelta
 import hashlib
 import json
+from collections import OrderedDict
+from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.template import loader_tags, NodeList, TemplateSyntaxError
-from django.template.base import Variable, VariableDoesNotExist, Token, TOKEN_TEXT
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
-from django.http import QueryDict
 from django import template
+from django.conf import settings
+from django.http import QueryDict
+from django.template import NodeList, TemplateSyntaxError, loader_tags
+from django.template.base import (
+    TOKEN_TEXT,
+    Token,
+    Variable,
+    VariableDoesNotExist,
+)
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from memoized import memoized
-from django_prbac.utils import has_privilege
+from django.utils.translation import ugettext as _
 
-from corehq.motech.utils import pformat_json
-from dimagi.utils.make_uuid import random_hex
-from corehq import privileges
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from dimagi.utils.web import json_handler
+
+from corehq import privileges, toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.motech.utils import pformat_json
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.web import json_handler
-from corehq.apps.hqwebapp.models import MaintenanceAlert
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
-from corehq import toggles
-import six
-from io import open
-
 
 register = template.Library()
 
@@ -45,7 +45,7 @@ def JSON(obj):
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
-               "{}".format(e.message))
+               "{}".format(str(e)))
         soft_assert(notify_admins=True)(False, msg)
         raise e
 
@@ -100,7 +100,8 @@ def concat(str1, str2):
     return "%s%s" % (str1, str2)
 
 try:
-    from resource_versions import resource_versions
+    from get_resource_versions import get_resource_versions
+    resource_versions = get_resource_versions()
 except (ImportError, SyntaxError):
     resource_versions = {}
 
@@ -134,9 +135,9 @@ def cachebuster(url):
 def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
     return [{
-        'url': reverse('domain_homepage', args=[domain.name]),
-        'name': domain.long_display_name(),
-    } for domain in domains]
+        'url': reverse('domain_homepage', args=[domain_obj.name]),
+        'name': domain_obj.long_display_name(),
+    } for domain_obj in domains]
 
 
 @register.simple_tag(takes_context=True)
@@ -212,7 +213,9 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
-    if isinstance(name_or_instance, six.string_types):
+    if isinstance(name_or_instance, bytes):
+        name_or_instance = name_or_instance.decode('utf-8')
+    if isinstance(name_or_instance, str):
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -253,36 +256,12 @@ def ui_notify_slug(ui_notify_instance_or_name):
 
 
 @register.filter
-def toggle_tag_info(request, toggle_or_toggle_name):
-    """Show Tag Information for feature flags / Toggles,
-    and if not enabled, show where the UI would be.
-    Useful for trying to find out if you have all the flags enabled in a
-    particular location or whether a feature on prod is part of a particular
-    flag. """
-    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
-        return ""
-    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
-    tag = flag.tag
-    is_enabled = flag.enabled_for_request(request)
-    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
-        css_class=tag.css_class,
-        tag_name=tag.name,
-        description=flag.label,
-        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
-        css_disabled=" label-flag-disabled" if not is_enabled else "",
-    ))
-
-
-@register.filter
 def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
 
     if request.couch_user.is_superuser:
         return True
-
-    if toggles.LOGIN_AS_ALWAYS_OFF.enabled(request.domain):
-        return False
 
     return (
         request.couch_user.can_edit_commcare_users() and
@@ -291,31 +270,21 @@ def can_use_restore_as(request):
 
 
 @register.simple_tag
-def toggle_js_url(domain, username):
-    return (
-        '{url}?username={username}'
-        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
-    ).format(
-        url=reverse('toggles_js', args=[domain]),
-        username=username,
-        domain_cb=toggle_js_domain_cachebuster(domain),
-        user_cb=toggle_js_user_cachebuster(username),
-        toggles_cb=toggles_cachebuster(),
-        previews_cb=previews_cachebuster(),
-    )
+def css_label_class():
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
+    return CSS_LABEL_CLASS
 
 
-@quickcache(['domain'], timeout=30 * 24 * 60 * 60)
-def toggle_js_domain_cachebuster(domain):
-    # to get fresh cachebusters on the next deploy
-    # change the date below (output from *nix `date` command)
-    #   Wed Apr 25 14:12:12 EDT 2018
-    return random_hex()[:3]
+@register.simple_tag
+def css_field_class():
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
+    return CSS_FIELD_CLASS
 
 
-@quickcache(['username'], timeout=30 * 24 * 60 * 60)
-def toggle_js_user_cachebuster(username):
-    return random_hex()[:3]
+@register.simple_tag
+def css_action_class():
+    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+    return CSS_ACTION_CLASS
 
 
 def _get_py_filename(module):
@@ -325,20 +294,6 @@ def _get_py_filename(module):
 
     """
     return module.__file__.rstrip('c')
-
-
-@memoized
-def toggles_cachebuster():
-    import corehq.toggles
-    with open(_get_py_filename(corehq.toggles)) as f:
-        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
-
-
-@memoized
-def previews_cachebuster():
-    import corehq.feature_previews
-    with open(_get_py_filename(corehq.feature_previews)) as f:
-        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @register.filter
@@ -490,13 +445,16 @@ def reverse_chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert():
+def maintenance_alert(request, dismissable=True):
     alert = MaintenanceAlert.get_latest_alert()
-    if alert:
+    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
+            ' hide' if dismissable else '',
             alert.id,
-            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
+            mark_safe('''
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            ''') if dismissable else '',
             mark_safe(alert.html),
         )
     else:
@@ -665,8 +623,19 @@ def registerurl(parser, token):
 
 
 @register.simple_tag
+def trans_html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    if not isinstance(value, str):
+        value = JSON(value)
+    return escape(_(value))
+
+
+@register.simple_tag
 def html_attr(value):
-    if not isinstance(value, six.string_types):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    if not isinstance(value, str):
         value = JSON(value)
     return escape(value)
 
@@ -769,3 +738,25 @@ def javascript_libraries(context, **kwargs):
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
     }
+
+
+@register.simple_tag
+def breadcrumbs(page, section, parents=None):
+    """
+    Generates breadcrumbs given a page, section,
+    and (optional) list of parent pages.
+
+    :param page: PageInfoContext or what is returned in
+                 `current_page` of `BasePageView`'s `main_context`
+    :param section: PageInfoContext or what is returned in
+                    `section` of `BaseSectionPageView`'s `main_context`
+    :param parents: list of PageInfoContext or what is returned in
+                    `parent_pages` of `BasePageView`'s `main_context`
+    :return:
+    """
+
+    return mark_safe(render_to_string('hqwebapp/partials/breadcrumbs.html', {
+        'page': page,
+        'section': section,
+        'parents': parents or [],
+    }))

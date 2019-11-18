@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.util.test_utils import unit_testing_only
 

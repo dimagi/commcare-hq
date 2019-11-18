@@ -1,51 +1,38 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
 import json
 import math
-import pytz
 import warnings
 
-from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from django.utils.translation import ugettext as _
 
-from corehq.apps.users.permissions import get_extra_permissions
-from corehq.util.log import send_HTML_email
-from corehq.util.quickcache import quickcache
-from corehq.apps.reports.const import USER_QUERY_LIMIT
-
-from couchexport.util import SerializableFunction
-from dimagi.utils.dates import DateSpan
+import pytz
 from memoized import memoized
+
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.web import json_request
 
-from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.log import send_HTML_email
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from .models import HQUserType, TempCommCareUser
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
-import six
-from six.moves import range
-from six.moves import map
-
-DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
-DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
-DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
-    'col-xs-8 col-md-8 col-lg-9 col-xs-offset-4 col-md-offset-3 col-lg-offset-2'
-)
+from .models import HQUserType, TempCommCareUser
 
 
 def make_form_couch_key(domain, user_id=Ellipsis):
@@ -170,7 +157,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, six.string_types):
+        if isinstance(item, str):
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -192,7 +179,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
+        namedtupledict('SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',
@@ -209,7 +196,7 @@ class SimplifiedUserInfo(
     def group_ids(self):
         if hasattr(self, '__group_ids'):
             return getattr(self, '__group_ids')
-        return Group.by_user(self.user_id, False)
+        return Group.by_user_id(self.user_id, False)
 
 
 def _report_user_dict(user):
@@ -328,51 +315,6 @@ def group_filter(doc, group):
         return True
 
 
-def users_matching_filter(domain, user_filters):
-    return [
-        user.user_id
-        for user in get_all_users_by_domain(
-            domain,
-            user_filter=user_filters,
-            simplified=True,
-            include_inactive=True
-        )
-    ]
-
-
-def create_export_filter(request, domain, export_type='form'):
-    request_obj = request.POST if request.method == 'POST' else request.GET
-    from corehq.apps.reports.filters.users import UserTypeFilter
-    app_id = request_obj.get('app_id', None)
-
-    user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
-    use_user_filters &= bool(user_filters)
-    group = None if use_user_filters else get_group(**json_request(request_obj))
-
-    if export_type == 'case':
-        if use_user_filters:
-            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
-            filtered_users = users_matching_filter(domain, user_filters)
-            filter = SerializableFunction(case_users_filter,
-                                          users=filtered_users,
-                                          groups=groups)
-        else:
-            filter = SerializableFunction(case_group_filter, group=group)
-    else:
-        filter = SerializableFunction(app_export_filter, app_id=app_id)
-        datespan = request.datespan
-        if datespan.is_valid():
-            datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
-            filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
-        if use_user_filters:
-            filtered_users = users_matching_filter(domain, user_filters)
-            filter &= SerializableFunction(users_filter,
-                                           users=filtered_users)
-        else:
-            filter &= SerializableFunction(group_filter, group=group)
-    return filter
-
-
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
@@ -380,7 +322,7 @@ def get_possible_reports(domain_name):
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
-    domain = Domain.get_by_name(domain_name)
+    domain_obj = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
             if getattr(model, 'parent_report_class', None):
@@ -388,15 +330,21 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain_obj):
+                path = model.__module__ + '.' + model.__name__
                 reports.append({
-                    'path': model.__module__ + '.' + model.__name__,
-                    'name': model.name
+                    'path': path,
+                    'name': model.name,
+                    'slug': path.replace('.', '_'),
                 })
 
     for slug, name, is_visible in get_extra_permissions():
-        if is_visible(domain):
-            reports.append({'path': slug, 'name': name})
+        if is_visible(domain_obj):
+            reports.append({
+                'path': slug,
+                'name': name,
+                'slug': slug.replace('.', '_'),
+            })
     return reports
 
 
@@ -416,8 +364,8 @@ def friendly_timedelta(td):
     return ", ".join(text)
 
 
-# Copied from http://djangosnippets.org/snippets/1170/
-def batch_qs(qs, batch_size=1000):
+# Copied/extended from http://djangosnippets.org/snippets/1170/
+def batch_qs(qs, num_batches=10, min_batch_size=100000):
     """
     Returns a (start, end, total, queryset) tuple for each batch in the given
     queryset.
@@ -431,15 +379,13 @@ def batch_qs(qs, batch_size=1000):
                 print article.body
     """
     total = qs.count()
+    if total < min_batch_size:
+        batch_size = total
+    else:
+        batch_size = int(total / num_batches) or total
     for start in range(0, total, batch_size):
         end = min(start + batch_size, total)
         yield (start, end, total, qs[start:end])
-
-
-def stream_qs(qs, batch_size=1000):
-    for _, _, _, qs in batch_qs(qs, batch_size):
-        for item in qs:
-            yield item
 
 
 def numcell(text, value=None, convert='int', raw=None):
@@ -484,6 +430,16 @@ def validate_xform_for_edit(xform):
     return None
 
 
+def get_report_timezone(request, domain):
+    if not domain:
+        return pytz.utc
+    else:
+        try:
+            return get_timezone_for_user(request.couch_user, domain)
+        except AttributeError:
+            return get_timezone_for_user(None, domain)
+
+
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
 def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -496,14 +452,15 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link):
-    subject = "%s: Requested export excel data"
+def send_report_download_email(title, recipient, link, subject=None):
+    if subject is None:
+        subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
     send_HTML_email(
-        _(subject) % title,
+        subject,
         recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
         email_from=settings.DEFAULT_FROM_EMAIL

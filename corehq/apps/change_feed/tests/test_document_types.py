@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.change_feed.document_types import (
-    get_doc_meta_object_from_document, change_meta_from_doc
+    change_meta_from_doc,
+    get_doc_meta_object_from_document,
 )
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.util.test_utils import generate_cases

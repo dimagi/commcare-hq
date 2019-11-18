@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf.urls import include, url
@@ -14,62 +12,51 @@ from corehq.apps.userreports.views import (
     ConfigureReport,
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
-    ReportBuilderPaywallPricing,
     ReportBuilderPaywallActivatingSubscription,
+    ReportBuilderPaywallPricing,
     ReportPreview,
 )
 
 from .dispatcher import (
-    BasicReportDispatcher,
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
 from .views import (
-    EditFormInstance,
     AddSavedReportConfigView,
-    FormDataView,
-    CaseDataView,
     CaseAttachmentsView,
+    CaseDataView,
+    EditFormInstance,
+    FormDataView,
     MySavedReportsView,
     ScheduledReportsView,
-    ReportNotificationUnsubscribeView,
+    archive_form,
+    case_form_data,
     case_forms,
     case_property_changes,
     case_property_names,
     case_xml,
-    edit_case_view,
-    rebuild_case_view,
-    resave_case_view,
     close_case_view,
-    undo_close_case_view,
-    export_case_transactions,
-    case_form_data,
-    download_form,
-    restore_edit,
-    form_multimedia_export,
-    archive_form,
-    edit_form,
-    resave_form_view,
-    unarchive_form,
-    project_health_user_details,
-    export_data,
-    export_default_or_custom_data,
-    hq_download_saved_export,
-    hq_deid_download_saved_export,
-    export_report,
-    email_report,
     delete_config,
     delete_scheduled_report,
+    download_case_history,
+    download_form,
+    edit_case_view,
+    edit_form,
+    email_report,
+    export_case_transactions,
+    export_report,
+    project_health_user_details,
+    rebuild_case_view,
+    resave_case_view,
+    resave_form_view,
+    restore_edit,
     send_test_scheduled_report,
+    unarchive_form,
+    undo_close_case_view,
     view_scheduled_report,
-    export_all_form_metadata,
-    export_all_form_metadata_async,
-    download_cases,
-    download_cases_internal,
 )
-
 
 custom_report_urls = [
     CustomProjectReportDispatcher.url_pattern(),
@@ -100,6 +87,7 @@ urlpatterns = [
         CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', case_xml, name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/properties/$', case_property_names, name="case_property_names"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/history/$', download_case_history, name="download_case_history"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/edit/$', edit_case_view, name="edit_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', rebuild_case_view, name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', resave_case_view, name="resave_case"),
@@ -117,8 +105,6 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', download_form, name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
-    url(r'^form_data/download/media/$',
-        form_multimedia_export, name='form_multimedia_export'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
@@ -127,25 +113,6 @@ urlpatterns = [
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
         name='project_health_user_details'),
-
-    # export API
-    url(r"^export/$", export_data, name='export_data'),
-
-    # Download Exports
-    # todo should eventually be moved to corehq.apps.export
-    # Custom
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", export_default_or_custom_data,
-        name="export_custom_data"),
-    # Default
-    url(r"^export/default/download/$", export_default_or_custom_data, name="export_default_data"),
-    # Bulk
-    url(r"^export/bulk/download/$", export_default_or_custom_data,
-        name="export_bulk_download", kwargs=dict(bulk_export=True)),
-    # saved
-    url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export,
-        name="hq_download_saved_export"),
-    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
-        name="hq_deid_download_saved_export"),
 
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),
@@ -174,20 +141,12 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     # Internal Use
-    url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),
-    url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
-    url(r'^download/cases/$', download_cases, name='download_cases'),
-    url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
         name=ReprocessXFormErrorView.urlname),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),
     ProjectReportDispatcher.url_pattern(),
-]
-
-report_urls = [
-    BasicReportDispatcher.url_pattern(),
 ]
 
 for module in get_installed_custom_modules():

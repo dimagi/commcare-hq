@@ -24,7 +24,8 @@ attribute set to the ID of its parent.
         </text>
         <command id="m1-f0"/>
     </menu>
-
+    
+HQ's app manager only allows users to configure one level of nesting; that is, it does not allow for "grandchild" modules. Although CommCare mobile supports multiple levels of nesting, beyond two levels it quickly gets prohibitively complex for the user to understand the implications of their app design and for for HQ to `determine a logical set of session variables <https://github.com/dimagi/commcare-hq/blob/765bb4030d0923a4ae887aabecf688e72045dd7b/corehq/apps/app_manager/suite_xml/sections/entries.py#L366>`_ for every case. The modules could have all different case types, all the same, or a mix, and for modules that use the same case type, that case type may have a different meanings (e.g., a "person" case type that is sometimes a mother and sometimes a child), which all makes it difficult for HQ to determine the user's intended application design. See below for more on how session variables are generated with child modules.
 
 Menu structure
 ~~~~~~~~~~~~~~

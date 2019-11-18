@@ -1,36 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from couchdbkit.exceptions import ResourceNotFound
 
-from corehq.form_processor.change_publishers import publish_ledger_v1_saved
-from dimagi.ext.couchdbkit import *
+from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
+from casexml.apps.stock.consumption import (
+    ConsumptionConfiguration,
+    ConsumptionHelper,
+)
 from casexml.apps.stock.models import DocDomainMapping
-from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext.couchdbkit import *
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
+
 from . import const
 from .const import StockActions
-import six
-from six.moves import filter
-
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -150,7 +149,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         self.for_domain.clear(self.__class__, self.domain)
 
     @classmethod
-    @quickcache(vary_on=['domain'])
+    @quickcache(vary_on=['domain'], skip_arg=lambda *args: settings.UNIT_TESTING)
     def for_domain(cls, domain):
         result = get_docs_in_domain_by_class(domain, cls)
         try:
@@ -189,8 +188,9 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
-        default_product_ids = Product.ids_by_domain(self.domain) \
-            if self.ota_restore_config.use_dynamic_product_list else []
+        default_product_ids = []
+        if self.ota_restore_config.use_dynamic_product_list:
+            default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
         case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
@@ -199,13 +199,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
-
-
-@receiver(commcare_domain_pre_delete)
-def clear_commtrack_config_cache(domain, **kwargs):
-    config = CommtrackConfig.for_domain(domain.name)
-    if config:
-        config.delete()
 
 
 def force_int(value):
@@ -365,49 +358,6 @@ class StockState(models.Model):
         unique_together = ('section_id', 'case_id', 'product_id')
 
 
-@register_column_type()
-class StockExportColumn(ComplexExportColumn):
-    """
-    A special column type for case exports. This will export a column
-    for each product/section combo on the provided domain.
-
-    See couchexport/models.
-    """
-    domain = StringProperty()
-
-    @property
-    @memoized
-    def _column_tuples(self):
-        product_ids = [p._id for p in Product.by_domain(self.domain)]
-        return sorted(list(
-            StockState.objects.filter(product_id__in=product_ids).values_list(
-                'product_id',
-                'section_id'
-            ).distinct()
-        ))
-
-    def get_headers(self):
-        for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
-                product=Product.get(product_id).name,
-                section=section
-            )
-
-    def get_data(self, value):
-        states = StockState.objects.filter(case_id=value)
-
-        # use a list to make sure the stock states end up
-        # in the same order as the headers
-        values = [None] * len(self._column_tuples)
-
-        for state in states:
-            column_tuple = (state.product_id, state.section_id)
-            if column_tuple in self._column_tuples:
-                state_index = self._column_tuples.index(column_tuple)
-                values[state_index] = state.stock_on_hand
-        return values
-
-
 def close_supply_point_case(domain, supply_point_id):
     if supply_point_id:
         close_case(
@@ -454,7 +404,7 @@ def sync_supply_point(location, is_deletion=False):
 
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
-    case_id = six.text_type(instance.case_id)
+    case_id = str(instance.case_id)
     try:
         domain_name = instance.__domain
         if not domain_name:

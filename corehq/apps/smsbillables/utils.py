@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf import settings
@@ -49,4 +47,4 @@ def get_twilio_message(backend_instance, backend_message_id):
     try:
         return _get_twilio_client(backend_instance).messages.get(backend_message_id).fetch()
     except TwilioRestException as e:
-        raise RetryBillableTaskException(e.message)
+        raise RetryBillableTaskException(str(e))

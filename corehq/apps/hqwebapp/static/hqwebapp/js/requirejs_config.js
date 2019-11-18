@@ -32,6 +32,11 @@ requirejs.config({
             exports: 'nv',
         },
     },
+    packages: [{
+        name: 'moment',
+        location: 'moment',
+        main: 'moment',
+    }],
     map: {
         "datatables.fixedColumns": {
             "datatables.net": "datatables",

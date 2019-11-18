@@ -1,37 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from abc import ABCMeta, abstractmethod
-import argparse
-from datetime import datetime
-import time
 
-from elasticsearch import TransportError
-import six
+from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.elasticsearch import bulk
+from corehq.util.es.interface import ElasticsearchInterface
 
-from corehq.apps.change_feed.document_types import is_deletion
-from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
-from pillowtop.es_utils import set_index_reindex_settings, \
-    set_index_normal_settings, initialize_mapping_if_necessary
+from pillowtop.es_utils import (
+    initialize_mapping_if_necessary,
+    set_index_normal_settings,
+    set_index_reindex_settings,
+)
 from pillowtop.feed.interface import Change
 from pillowtop.logger import pillow_logging
-from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorCollector
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.utils import ErrorCollector, build_bulk_payload
+
+from corehq.apps.change_feed.document_types import is_deletion
+from corehq.util.argparse_types import date_type
+from corehq.util.doc_processor.interface import (
+    BaseDocProcessor,
+    BulkDocProcessor,
+)
 
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
 MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
-DATE_FORMAT = "%Y-%m-%d"
 
 
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
-
-
-class Reindexer(six.with_metaclass(ABCMeta)):
+class Reindexer(metaclass=ABCMeta):
     def clean(self):
         """
             Cleans the index.
@@ -47,7 +42,7 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class ReindexerFactory(six.with_metaclass(ABCMeta)):
+class ReindexerFactory(metaclass=ABCMeta):
     slug = None
     arg_contributors = None
 
@@ -116,33 +111,29 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         parser.add_argument(
             '--startdate',
             dest='start_date',
-            type=valid_date,
+            type=date_type,
             help='The start date (inclusive). format YYYY-MM-DD'
         )
         parser.add_argument(
             '--enddate',
             dest='end_date',
-            type=valid_date,
+            type=date_type,
             help='The end date (exclusive). format YYYY-MM-DD'
         )
 
 
-class PillowReindexer(Reindexer):
-    def __init__(self, pillow):
-        self.pillow = pillow
-
-
-class PillowChangeProviderReindexer(PillowReindexer):
+class PillowChangeProviderReindexer(Reindexer):
     start_from = None
 
-    def __init__(self, pillow, change_provider):
-        super(PillowChangeProviderReindexer, self).__init__(pillow)
+    def __init__(self, pillow_or_processor, change_provider):
+        self.pillow_or_processor = pillow_or_processor
         self.change_provider = change_provider
 
     def reindex(self):
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
-                self.pillow.process_change(change)
+                # below works because signature is same for pillow and processor
+                self.pillow_or_processor.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
@@ -176,8 +167,8 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow, change_provider, elasticsearch, index_info, in_place=False):
-        super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
+    def __init__(self, pillow_or_processor, change_provider, elasticsearch, index_info, in_place=False):
+        super(ElasticPillowReindexer, self).__init__(pillow_or_processor, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
         self.in_place = in_place
@@ -188,7 +179,8 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def reindex(self):
         if not self.in_place and not self.start_from:
             _prepare_index_for_reindex(self.es, self.index_info)
-            _set_checkpoint(self.pillow)
+            if isinstance(self.pillow_or_processor, ConstructedPillow):
+                _set_checkpoint(self.pillow_or_processor)
 
         super(ElasticPillowReindexer, self).reindex()
 
@@ -221,42 +213,14 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         for change, exception in error_collector.errors:
             pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
 
-        payloads = prepare_bulk_payloads(bulk_changes, MAX_PAYLOAD_SIZE)
-        if len(payloads) > 1:
-            pillow_logging.info("Payload split into %s parts" % len(payloads))
-
-        for payload in payloads:
-            success = self._send_payload_with_retries(payload)
-            if not success:
-                # stop the reindexer if we're unable to send a payload to ES
-                return False
+        es_interface = ElasticsearchInterface(self.es)
+        try:
+            es_interface.bulk_ops(bulk_changes)
+        except Exception:
+            pillow_logging.exception("\tException sending payload to ES")
+            return False
 
         return True
-
-    def _send_payload_with_retries(self, payload):
-        pillow_logging.info("Sending payload to ES")
-
-        retries = 0
-        bulk_start = datetime.utcnow()
-        success = False
-        while retries < MAX_TRIES:
-            if retries:
-                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
-                pillow_logging.warning("\tRetrying in %s seconds" % retry_time)
-                time.sleep(retry_time)
-                pillow_logging.warning("\tRetrying now ...")
-                # reset timestamp when looping again
-                bulk_start = datetime.utcnow()
-
-            try:
-                self.es.bulk(payload)
-                success = True
-                break
-            except Exception:
-                retries += 1
-                pillow_logging.exception("\tException sending payload to ES")
-
-        return success
 
     @staticmethod
     def _doc_to_change(doc):

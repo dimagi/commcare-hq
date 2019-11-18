@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
-from datetime import datetime, time, date
+from datetime import date, datetime, time
 
-import six
 import xlrd
-from corehq.util.workbook_reading import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
-    SpreadsheetFileNotFound, SpreadsheetFileEncrypted
-from six.moves import range
+
+from corehq.util.workbook_reading import (
+    Cell,
+    CellValueError,
+    SpreadsheetFileEncrypted,
+    SpreadsheetFileInvalidError,
+    SpreadsheetFileNotFound,
+    Workbook,
+    Worksheet,
+)
 
 
 @contextmanager
@@ -16,14 +20,14 @@ def open_xls_workbook(filename):
         with xlrd.open_workbook(filename) as xlrd_workbook:
             yield _XLSWorkbookAdaptor(xlrd_workbook).to_workbook()
     except xlrd.XLRDError as e:
-        if six.text_type(e) == 'Workbook is encrypted':
-            raise SpreadsheetFileEncrypted(six.text_type(e))
+        if str(e) == 'Workbook is encrypted':
+            raise SpreadsheetFileEncrypted(str(e))
         else:
-            raise SpreadsheetFileInvalidError(six.text_type(e))
+            raise SpreadsheetFileInvalidError(str(e))
     except xlrd.compdoc.CompDocError as e:
-        raise SpreadsheetFileInvalidError(six.text_type(e))
+        raise SpreadsheetFileInvalidError(str(e))
     except IOError as e:
-        raise SpreadsheetFileNotFound(six.text_type(e))
+        raise SpreadsheetFileNotFound(str(e))
 
 
 class _XLSWorksheetAdaptor(object):
@@ -38,7 +42,12 @@ class _XLSWorksheetAdaptor(object):
             else:
                 return cell.value
         elif cell.ctype == xlrd.XL_CELL_DATE:
-            datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            try:
+                datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            except xlrd.XLDateError as e:
+                # https://xlrd.readthedocs.io/en/latest/dates.html
+                raise CellValueError("Error interpreting spreadsheet value '{}' as date: {}"
+                                     .format(cell.value, repr(e)))
             if datetime_tuple[:3] == (0, 0, 0):
                 return time(*datetime_tuple[3:])
             elif datetime_tuple[3:] == (0, 0, 0):

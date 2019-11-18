@@ -159,7 +159,7 @@ The form returned in `get_create_form()` should make use of
                 InlineField('dob'),
                 StrictButton(
                     mark_safe('<i class="icon-plus"></i> %s' % "Create Puppy"),
-                    css_class='btn-success',
+                    css_class='btn-primary',
                     type='submit'
                 )
             )

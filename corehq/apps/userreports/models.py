@@ -1,25 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from copy import copy, deepcopy
-from datetime import datetime
 import glob
 import json
 import os
 import re
+from collections import namedtuple
+from copy import copy, deepcopy
+from datetime import datetime
 from uuid import UUID
 
-from bulk_update.helper import bulk_update as bulk_update_helper
-from couchdbkit.exceptions import BadValueError
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import ugettext as _
-import yaml
 
-from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
-from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache
+import yaml
+from couchdbkit.exceptions import BadValueError
+from django_bulk_update.helper import bulk_update as bulk_update_helper
+from memoized import memoized
+
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -29,57 +27,98 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
-    SchemaProperty,
     SchemaListProperty,
-    StringProperty,
+    SchemaProperty,
     StringListProperty,
+    StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
+
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
+)
 from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_AGGREGATE,
+    DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
-    DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE)
-from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_datasources_for_domain
+)
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_number_of_report_configs_by_data_source,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
+    DuplicateColumnIdError,
+    InvalidDataSourceType,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
-    InvalidDataSourceType)
+    ValidationError,
+)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.reports.factory import (
+    ChartFactory,
+    ReportColumnFactory,
+    ReportOrderByFactory,
+)
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.factory import ChartFactory, \
-    ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.apps.userreports.sql.util import decode_column_name
+from corehq.apps.userreports.util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter,
+)
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.util.couch import get_document_or_not_found, DocumentNotFound
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.quickcache import quickcache
 
-from dimagi.utils.modules import to_function
-from io import open
-
-
-ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
+ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
 
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
         raise BadValueError("Invalid ID: '{}'".format(value))
+
+
+class DataSourceActionLog(models.Model):
+    BUILD = 'build'
+    MIGRATE = 'migrate'
+    REBUILD = 'rebuild'
+    DROP = 'drop'
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
+    initiated_by = models.CharField(max_length=126, null=True, blank=True)
+    action_source = models.CharField(max_length=126, null=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=32, choices=(
+        (BUILD, _('Build')),
+        (MIGRATE, _('Migrate')),
+        (REBUILD, _('Rebuild')),
+        (DROP, _('Drop')),
+    ), db_index=True, null=False)
+    migration_diffs = JSONField(null=True, blank=True)
+
+    # True for actions that were skipped because the data source
+    # was marked with ``disable_destructive_rebuild``
+    skip_destructive = models.BooleanField(default=False)
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -96,8 +135,15 @@ class SQLPartition(DocumentSchema):
     constraint = StringProperty()
 
 
+class CitusConfig(DocumentSchema):
+    distribution_type = StringProperty(choices=['reference', 'hash'])
+    distribution_column = StringProperty()
+
+
 class SQLSettings(DocumentSchema):
-    partition_config = SchemaListProperty(SQLPartition)
+    partition_config = SchemaListProperty(SQLPartition)  # no longer used
+    citus_config = SchemaProperty(CitusConfig)
+    primary_key = ListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -123,6 +169,12 @@ class DataSourceBuildInformation(DocumentSchema):
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
+
+
+class Validation(DocumentSchema):
+    name = StringProperty(required=True)
+    expression = DictProperty(required=True)
+    error_message = StringProperty(required=True)
 
 
 class AbstractUCRDataSource(object):
@@ -153,8 +205,17 @@ class AbstractUCRDataSource(object):
     def get_columns(self):
         raise NotImplementedError()
 
+    @property
+    def pk_columns(self):
+        raise NotImplementedError()
 
-class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
+
+class MirroredEngineIds(DocumentSchema):
+    server_environment = StringProperty()
+    engine_ids = StringListProperty()
+
+
+class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
@@ -175,15 +236,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
-    icds_rebuild_related_docs = BooleanProperty(default=False)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
+    validations = SchemaListProperty(Validation)
+    mirrored_engine_ids = ListProperty(default=[])
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} - {}'.format(self.domain, self.display_name)
 
     def save(self, **params):
@@ -194,13 +256,43 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     def data_source_id(self):
         return self._id
 
-    def filter(self, document):
+    def filter(self, document, eval_context=None):
+        if eval_context is None:
+            eval_context = EvaluationContext(document)
+
         filter_fn = self._get_main_filter()
-        return filter_fn(document, EvaluationContext(document, 0))
+        return filter_fn(document, eval_context)
 
     def deleted_filter(self, document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
+
+    @property
+    def has_validations(self):
+        return len(self.validations) > 0
+
+    def validate_document(self, document, eval_context=None):
+        if eval_context is None:
+            eval_context = EvaluationContext(document)
+
+        errors = []
+        for validation in self._validations():
+            if validation.validation_function(document, eval_context) is False:
+                errors.append((validation.name, validation.error_message))
+
+        if errors:
+            raise ValidationError(errors)
+
+    @memoized
+    def _validations(self):
+        return [
+            _Validation(
+                validation.name,
+                validation.error_message,
+                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+            )
+            for validation in self.validations
+        ]
 
     @memoized
     def _get_main_filter(self):
@@ -339,6 +431,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
+    @memoized
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -351,7 +444,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         return self.columns_by_id.get(column_id)
 
     def get_items(self, document, eval_context=None):
-        if self.filter(document):
+        if self.filter(document, eval_context):
             if not self.base_item_expression:
                 return [document]
             else:
@@ -369,6 +462,23 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         if not eval_context:
             eval_context = EvaluationContext(doc)
 
+        if self.has_validations:
+            try:
+                self.validate_document(doc, eval_context)
+            except ValidationError as e:
+                for error in e.errors:
+                    InvalidUCRData.objects.get_or_create(
+                        doc_id=doc['_id'],
+                        indicator_config_id=self._id,
+                        validation_name=error[0],
+                        defaults={
+                            'doc_type': doc['doc_type'],
+                            'domain': doc['domain'],
+                            'validation_text': error[1],
+                        }
+                    )
+                return []
+
         rows = []
         for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
@@ -383,6 +493,22 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def validate_db_config(self):
+        mirrored_engine_ids = self.mirrored_engine_ids
+        if not mirrored_engine_ids:
+            return
+        if self.engine_id in mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in mirrored_engine_ids:
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
+        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
+            raise BadSpecError("No two engine_ids should point to the same database")
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -395,13 +521,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         if len(columns) != len(unique_columns):
             for column in set(columns):
                 columns.remove(column)
-            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+            raise DuplicateColumnIdError(columns=columns)
 
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
         self.parsed_expression
+        self.pk_columns
 
     @classmethod
     def by_domain(cls, domain):
@@ -421,11 +548,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     def is_static(self):
         return id_is_static(self._id)
 
-    def deactivate(self):
+    def deactivate(self, initiated_by=None):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            get_indicator_adapter(self).drop_table()
+            get_indicator_adapter(self).drop_table(initiated_by=initiated_by, source='deactivate-data-source')
 
     def get_case_type_or_xmlns_filter(self):
         """Returns a list of case types or xmlns from the filter of this data source.
@@ -460,12 +587,29 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
             return [None]
 
         expression = config_filter['expression']
+
+        if not isinstance(expression, dict):
+            return [None]
+
         if expression['type'] == 'property_name' and expression['property_name'] == property_name:
             prop_value = config_filter['property_value']
             if not isinstance(prop_value, list):
                 prop_value = [prop_value]
             return prop_value
         return [None]
+
+    @property
+    def pk_columns(self):
+        columns = []
+        for col in self.get_columns():
+            if col.is_primary_key:
+                column_name = decode_column_name(col)
+                columns.append(column_name)
+        if self.sql_settings.primary_key:
+            if set(columns) != set(self.sql_settings.primary_key):
+                raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
+            columns = self.sql_settings.primary_key
+        return columns
 
 
 class ReportMeta(DocumentSchema):
@@ -479,7 +623,7 @@ class ReportMeta(DocumentSchema):
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
-class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
+class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
     """
@@ -500,7 +644,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     report_meta = SchemaProperty(ReportMeta)
     custom_query_provider = StringProperty(required=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} - {}'.format(self.domain, self.title)
 
     def save(self, *args, **kwargs):
@@ -525,7 +669,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
-        return [ReportColumnFactory.from_spec(c, self.is_static) for c in self.columns]
+        return [ReportColumnFactory.from_spec(c, self.is_static, self.domain) for c in self.columns]
 
     @property
     @memoized
@@ -657,6 +801,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -714,8 +859,8 @@ class StaticDataSourceConfiguration(JsonObject):
             domain, wrapped = cls.by_id_mapping()[config_id]
         except KeyError:
             raise StaticDataSourceConfigurationNotFoundError(_(
-                'The data source referenced by this report could not be found.'
-            ))
+                'The data source %(config_id)s referenced by this report could not be found.'
+            ) % {'config_id': config_id})
 
         return cls._get_datasource_config(wrapped, domain)
 
@@ -724,6 +869,13 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
+
+        def _get_mirrored_engine_ids():
+            for env in static_config.mirrored_engine_ids:
+                if env.server_environment == settings.SERVER_ENVIRONMENT:
+                    return env.engine_ids
+            return []
+        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 
@@ -814,8 +966,7 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def by_ids(cls, config_ids):
         mapping = cls.by_id_mapping()
-
-        return_configs = []
+        config_by_ids = {}
         for config_id in set(config_ids):
             try:
                 domain, wrapped = mapping[config_id]
@@ -823,8 +974,8 @@ class StaticReportConfiguration(JsonObject):
                 raise ReportConfigurationNotFoundError(_(
                     "The following report configuration could not be found: {}".format(config_id)
                 ))
-            return_configs.append(cls._get_report_config(wrapped, domain))
-        return return_configs
+            config_by_ids[config_id] = cls._get_report_config(wrapped, domain)
+        return config_by_ids
 
     @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
@@ -857,7 +1008,8 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
-    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
+    id = models.BigAutoField(primary_key=True)
+    doc_id = models.CharField(max_length=255, null=False, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
@@ -971,6 +1123,20 @@ class AsyncIndicator(models.Model):
         ])
 
 
+class InvalidUCRData(models.Model):
+    doc_id = models.CharField(max_length=255, null=False)
+    doc_type = models.CharField(max_length=126, null=False, db_index=True)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    validation_name = models.TextField()
+    validation_text = models.TextField()
+    notes = models.TextField(null=True)
+
+    class Meta(object):
+        unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
+
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1056,12 +1222,15 @@ def get_report_configs(config_ids, domain):
 
     static_report_config_ids = []
     dynamic_report_config_ids = []
-    for config_id in config_ids:
+    for config_id in set(config_ids):
         if report_config_id_is_static(config_id):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
-    static_report_configs = StaticReportConfiguration.by_ids(static_report_config_ids)
+    static_report_config_by_ids = StaticReportConfiguration.by_ids(static_report_config_ids)
+    static_report_configs = list(static_report_config_by_ids.values())
+    if len(static_report_configs) != len(static_report_config_ids):
+        raise ReportConfigurationNotFoundError
     for config in static_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
@@ -1078,7 +1247,6 @@ def get_report_configs(config_ids, domain):
     for config in dynamic_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
-
     return dynamic_report_configs + static_report_configs
 
 
@@ -1096,7 +1264,7 @@ def _get_wrapped_object_from_file(path, wrapper):
         if path.endswith('.json'):
             doc = json.load(f)
         else:
-            doc = yaml.load(f)
+            doc = yaml.safe_load(f)
 
     try:
         return wrapper.wrap(doc)
@@ -1111,3 +1279,45 @@ def _filter_by_server_env(configs):
         if wrapped.server_environment and settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
             continue
         yield wrapped
+
+
+_Validation = namedtuple('_Validation', 'name error_message validation_function')
+
+
+class FilterValueEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, DateSpan):
+            return str(obj)
+        return super(FilterValueEncoder, self).default(obj)
+
+
+class ReportComparisonException(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
+    exception = models.TextField()
+    notes = models.TextField(blank=True)
+
+
+class ReportComparisonDiff(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
+    control = JSONField()
+    candidate = JSONField()
+    diff = JSONField()
+    notes = models.TextField(blank=True)
+
+
+class ReportComparisonTiming(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
+    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
+    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

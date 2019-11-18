@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
@@ -12,7 +10,7 @@ from pillowtop.utils import get_all_pillows_json
 _assert = soft_assert("{}@{}".format('jemord', 'dimagi.com'))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
 def pillow_datadog_metrics():
     def _is_couch(pillow):
         # text is couch, json is kafka
@@ -20,10 +18,19 @@ def pillow_datadog_metrics():
 
     pillow_meta = get_all_pillows_json()
 
+    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
+    if active_pillows:
+        pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
+
     for pillow in pillow_meta:
+        # The host and group tags are added here to ensure they remain constant
+        # regardless of which celery worker the task get's executed on.
+        # Without this the sum of the metrics get's inflated.
         tags = [
             'pillow_name:{}'.format(pillow['name']),
-            'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka')
+            'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka'),
+            'host:celery',
+            'group:celery'
         ]
 
         datadog_gauge(

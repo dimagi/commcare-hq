@@ -1,9 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import test as unittest
+
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import EQFilter
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+
+from corehq.apps.reports.sqlreport import (
+    AggregateColumn,
+    DatabaseColumn,
+    SqlData,
+)
 from corehq.sql_db.connections import Session
 
 from .sql_fixture import load_data

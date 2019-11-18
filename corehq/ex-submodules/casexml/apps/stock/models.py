@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct
@@ -21,7 +19,7 @@ class StockReport(models.Model):
     # server_date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     # user_id = models.CharField(max_length=100, db_index=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
     class Meta(object):
@@ -62,7 +60,7 @@ class StockTransaction(models.Model, ConsumptionMixin):
     quantity = models.DecimalField(null=True, max_digits=20, decimal_places=5)
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{type} of {quantity} to {soh} (case: {case}, product: {product}, section id: {section_id})'.format(
             type=self.type, quantity=self.quantity, soh=self.stock_on_hand,
             case=self.case_id, product=self.product_id, section_id=self.section_id,

@@ -1,8 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 
-import six
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
 
@@ -20,7 +17,7 @@ def date(node):
     if isinstance(arg, int):
         return (datetime.date(1970, 1, 1) + datetime.timedelta(days=arg)).strftime("%Y-%m-%d")
 
-    if isinstance(arg, six.string_types):
+    if isinstance(arg, str):
         try:
             parsed_date = parse_date(arg)
         except ValueError:

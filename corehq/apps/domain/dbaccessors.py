@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
-from dimagi.utils.parsing import json_format_datetime
 
 
 def get_doc_count_in_domain_by_class(domain, doc_class):
@@ -69,7 +66,7 @@ def iterate_doc_ids_in_domain_by_type(domain, doc_type, chunk_size=10000,
         yield doc['id']
 
 
-def get_docs_in_domain_by_class(domain, doc_class):
+def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
     """
     Given a domain and doc class, get all docs matching that domain and type
 
@@ -91,22 +88,30 @@ def get_docs_in_domain_by_class(domain, doc_class):
     ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist
+
+    kwargs = {}
+    if limit is not None:
+        kwargs['limit'] = limit
+    if skip is not None:
+        kwargs['skip'] = skip
+
     return doc_class.view(
         'by_domain_doc_type_date/view',
         startkey=[domain, doc_type],
         endkey=[domain, doc_type, {}],
         reduce=False,
         include_docs=True,
+        **kwargs
     ).all()
 
 
 def get_domain_ids_by_names(names):
-    return [result['id'] for result in Domain.view(
+    return {result['key']: result['id'] for result in Domain.view(
         "domain/domains",
         keys=names,
         reduce=False,
         include_docs=False
-    )]
+    )}
 
 
 def iter_domains():
@@ -135,3 +140,23 @@ def count_downloads_for_all_snapshots(domain_id):
         ).one()["value"]
     except TypeError:
         return 0
+
+
+def deleted_domain_exists(domain):
+    row = Domain.get_db().view('domain/deleted_domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_exists(domain):
+    row = Domain.get_db().view('domain/domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_or_deleted_domain_exists(domain):
+    return domain_exists(domain) or deleted_domain_exists(domain)
+
+
+def iter_all_domains_and_deleted_domains_with_name(domain):
+    """There should only ever be one!"""
+    yield from Domain.view('domain/deleted_domains', key=domain, reduce=False, include_docs=True).all()
+    yield from Domain.view('domain/domains', key=domain, reduce=False, include_docs=True).all()

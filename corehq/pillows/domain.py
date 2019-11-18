@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
@@ -62,7 +60,7 @@ class DomainReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow=get_domain_kafka_to_elasticsearch_pillow(),
+            pillow_or_processor=get_domain_kafka_to_elasticsearch_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Domain.get_db(),
                 view_name='all_docs/by_doc_type',

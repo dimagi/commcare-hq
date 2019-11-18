@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import calendar
 import hashlib
 import json
@@ -17,7 +14,6 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 from django.db import models, transaction
-from six.moves import range
 
 
 class TimedSchedule(Schedule):
@@ -73,7 +69,7 @@ class TimedSchedule(Schedule):
         if self.use_utc_as_default_timezone:
             result.append('UTC_DEFAULT')
 
-        schedule_info = json.dumps(result)
+        schedule_info = json.dumps(result).encode('utf-8')
         return hashlib.md5(schedule_info).hexdigest()
 
     @property
@@ -631,7 +627,7 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
         default_time = time(12, 0)
         event_time = case.dynamic_case_properties().get(self.case_property_name, '').strip()
 
-        if not re.match('^\d?\d:\d\d', event_time):
+        if not re.match(r'^\d?\d:\d\d', event_time):
             event_time = default_time
         else:
             try:

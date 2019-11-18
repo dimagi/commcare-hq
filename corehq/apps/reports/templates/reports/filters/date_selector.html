@@ -2,10 +2,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <input type="text"
-           id="filter_date_selector"
-           name="date"
-           value="{{ date|date:'Y-m-d' }}"
-           data-init="{% if slug == 'date' %}1{% endif %}"
-           class="form-control" />
+  <input type="text"
+         id="filter_date_selector"
+         name="date"
+         value="{{ date|date:'Y-m-d' }}"
+         data-init="{% if slug == 'date' %}1{% endif %}"
+         class="form-control" />
 {% endblock %}

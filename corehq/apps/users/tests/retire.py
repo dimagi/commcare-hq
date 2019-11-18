@@ -1,24 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import TestCase
-import mock
-
 import uuid
 from xml.etree import cElementTree as ElementTree
 
+from django.test import TestCase
+
+import mock
+
+from casexml.apps.case.mock import (
+    CaseBlock,
+    CaseFactory,
+    CaseIndex,
+    CaseStructure,
+)
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
-from six.moves import range
 
 
 class RetireUserTestCase(TestCase):
@@ -28,6 +35,8 @@ class RetireUserTestCase(TestCase):
         super(RetireUserTestCase, cls).setUpClass()
         cls.domain = 'test'
         cls.domain_object = create_domain(cls.domain)
+        cls.domain_object.usercase_enabled = True
+        cls.domain_object.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -66,7 +75,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string())
+            ).as_text())
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire()
@@ -97,7 +106,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string())
+            ).as_text())
         submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         # submit a system form to update one, and another to update two
@@ -107,7 +116,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 user_id=SYSTEM_USER_ID,
                 update={'foo': 'bar'},
-            ).as_string()
+            ).as_text()
             for case_id in case_ids
         ]
         xform_1 = submit_case_blocks(caseblocks[:1], self.domain, user_id=SYSTEM_USER_ID)[0]
@@ -152,7 +161,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        parent.soft_delete()
+        CaseAccessors(self.domain).soft_delete_cases([parent_id])
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])
@@ -177,7 +186,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
@@ -197,7 +206,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.commcare_user._id)
 
         self.other_user.retire()
@@ -217,7 +226,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         ) for case_id in case_ids]
-        casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
+        casexmls = [ElementTree.tostring(caseblock.as_xml()).decode('utf-8') for caseblock in caseblocks]
         submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
@@ -248,7 +257,7 @@ class RetireUserTestCase(TestCase):
                 owner_id=owner_id,
                 user_id=self.commcare_user._id,
             )
-            submit_case_blocks(caseblock.as_string(), self.domain, user_id=self.other_user._id)
+            submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
 
@@ -260,8 +269,8 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):
-        from corehq.apps.callcenter.utils import sync_user_case
-        sync_user_case(self.commcare_user, USERCASE_TYPE, self.commcare_user.get_id)
+        from corehq.apps.callcenter.sync_user_case import sync_usercase
+        sync_usercase(self.commcare_user)
 
         user_case_id = self.commcare_user.get_usercase_id()
 
@@ -270,7 +279,7 @@ class RetireUserTestCase(TestCase):
             create=False,
             case_id=user_case_id,
         )
-        submit_case_blocks(caseblock.as_string(), self.domain, user_id=self.other_user._id)
+        submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
         case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
         self.assertEqual(1, len(case_ids))
@@ -297,7 +306,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        xform, _ = submit_case_blocks(caseblock.as_string(), self.domain)
+        xform, _ = submit_case_blocks(caseblock.as_text(), self.domain)
 
         # other user submits form against the case and another case not owned by the user
         # should NOT get deleted since this form touches a case that's still 'alive'
@@ -305,13 +314,13 @@ class RetireUserTestCase(TestCase):
             CaseBlock(
                 create=False,
                 case_id=case_id,
-            ).as_string(),
+            ).as_text(),
             CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=self.other_user._id,
                 user_id=self.other_user._id,
-            ).as_string()
+            ).as_text()
         ], self.domain, user_id=self.other_user._id)
 
         self.commcare_user.retire()

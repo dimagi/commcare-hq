@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import numbers
 from collections import OrderedDict
 
@@ -7,25 +5,29 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 
 from memoized import memoized
-
-from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.specs import CalculatedColumn
 from corehq.apps.userreports.reports.util import get_expanded_columns
-from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.sql_db.connections import connection_manager
 
 
 class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData):
     @property
     def engine_id(self):
-        return get_engine_id(self.config, allow_read_replicas=True)
+        if self._engine_id is not None:
+            return self._engine_id
+
+        self._engine_id = self.config.engine_id
+        return self._engine_id
+
+    def override_engine_id(self, engine_id):
+        self._engine_id = engine_id
 
     @property
     def filters(self):
@@ -55,16 +57,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         return []
 
     @property
-    def columns(self):
+    def _db_columns(self):
         # This explicitly only includes columns that resolve to database queries.
-        # The name is a bit confusing but is hard to change due to its dependency in SqlData
-        db_columns = [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
-        fields = {c.slug for c in db_columns}
-
-        return db_columns + [
-            DatabaseColumn('', SimpleColumn(field))
-            for field in self._defer_fields
-            if field not in fields]
+        return [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
@@ -83,11 +78,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         qc = self.query_context()
-        for c in self.columns:
-            # TODO - don't append columns that are not part of filters or group bys
-            qc.append_column(c.view)
-
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             return qc.count(session.connection(), self.filter_values)
 
@@ -122,10 +113,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
             return ''
 
         qc = self.query_context()
-        for c in self.columns:
-            qc.append_column(c.view)
-
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             totals = qc.totals(
                 session.connection(),

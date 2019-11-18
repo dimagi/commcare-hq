@@ -1,10 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, DATA_SOURCE_TYPE_STANDARD
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomDataSource
-from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
-import six
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_STANDARD,
+    UCR_SQL_BACKEND,
+)
+from corehq.apps.userreports.custom.data_source import (
+    ConfigurableReportCustomDataSource,
+)
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    get_datasource_config,
+)
+from corehq.apps.userreports.sql.data_source import (
+    ConfigurableReportSqlDataSource,
+)
+from corehq.util.datadog.utils import ucr_load_counter
 
 
 class ConfigurableReportDataSource(object):
@@ -24,7 +32,7 @@ class ConfigurableReportDataSource(object):
             self._config = config_or_config_id
             self._config_id = self._config._id
         else:
-            assert isinstance(config_or_config_id, six.string_types)
+            assert isinstance(config_or_config_id, str), type(config_or_config_id)
             self._config = None
             self._config_id = config_or_config_id
 
@@ -35,6 +43,7 @@ class ConfigurableReportDataSource(object):
         self._columns = columns
 
         self._custom_query_provider = custom_query_provider
+        self._track_load = None
 
     @classmethod
     def from_spec(cls, spec, include_prefilters=False):
@@ -50,6 +59,12 @@ class ConfigurableReportDataSource(object):
             order_by=order_by,
             custom_query_provider=spec.custom_query_provider
         )
+
+    def track_load(self, value):
+        if not self._track_load:
+            # make this lazy to avoid loading the config in __init__
+            self._track_load = ucr_load_counter(self.config.engine_id, 'ucr_report', self.config.domain)
+        self._track_load(value)
 
     @property
     def backend(self):
@@ -116,7 +131,9 @@ class ConfigurableReportDataSource(object):
         return self.data_source.column_warnings
 
     def get_data(self, start=None, limit=None):
-        return self.data_source.get_data(start, limit)
+        data = self.data_source.get_data(start, limit)
+        self.track_load(len(data))
+        return data
 
     @property
     def has_total_row(self):

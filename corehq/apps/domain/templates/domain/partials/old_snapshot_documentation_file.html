@@ -1,27 +1,27 @@
 {% load i18n %}
 {% if request.project.published_snapshot.documentation_file_path %}
-    <div class="control-group">
-        <div class="control-label">
-            <label for="id_old_documentation_file">
-                {% trans "Use current documentation" %}
-            </label>
-        </div>
-        <div class="controls">
-            <input
-                type="checkbox"
-                checked="checked"
-                id="id_old_documentation_file"
-                name="old_documentation_file"
-                value="true" />
-            <a href="{% url "appstore_project_documentation_file" request.project.get_id %}"
-                download="{{ request.project.published_snapshot.documentation_file_path }}">
-                {{ request.project.published_snapshot.documentation_file_path }}
-            </a>
-            <p class="help-block">
-                {% blocktrans %}
-                If you upload new documentation, it will automatically erase the current documentation and use that instead.
-                {% endblocktrans %}
-            </p>
-        </div>
+  <div class="control-group">
+    <div class="control-label">
+      <label for="id_old_documentation_file">
+        {% trans "Use current documentation" %}
+      </label>
     </div>
+    <div class="controls">
+      <input
+        type="checkbox"
+        checked="checked"
+        id="id_old_documentation_file"
+        name="old_documentation_file"
+        value="true" />
+      <a href="{% url "appstore_project_documentation_file" request.project.get_id %}"
+         download="{{ request.project.published_snapshot.documentation_file_path }}">
+        {{ request.project.published_snapshot.documentation_file_path }}
+      </a>
+      <p class="help-block">
+        {% blocktrans %}
+          If you upload new documentation, it will automatically erase the current documentation and use that instead.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
 {% endif %}

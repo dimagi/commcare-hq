@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import STOP_CONFIRM
 

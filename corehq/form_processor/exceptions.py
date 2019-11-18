@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
-from dimagi.utils.mixins import UnicodeMixIn
+
+class StockProcessingError(Exception):
+    pass
 
 
 class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
@@ -22,13 +22,14 @@ class LedgerValueNotFound(Exception):
     pass
 
 
-class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
+class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
 
-    def __init__(self, attachment_name):
+    def __init__(self, form_id, attachment_name):
+        self.form_id = form_id
         self.attachment_name = attachment_name
 
-    def __unicode__(self):
-        return "Attachment '{}' not found".format(self.attachment_name)
+    def __str__(self):
+        return "Attachment not found '{}:{}'".format(self.form_id, self.attachment_name)
 
 
 class CouchSaveAborted(Exception):
@@ -61,3 +62,24 @@ class PostSaveError(Exception):
 
 class KafkaPublishingError(Exception):
     pass
+
+
+class XFormLockError(Exception):
+    """Exception raised when a form lock cannot be acquired
+
+    The error message should identify the locked form.
+    """
+
+
+class MissingFormXml(Exception):
+    pass
+
+
+class NotAllowed(Exception):
+
+    @classmethod
+    def check(cls, domain):
+        from corehq.apps.couch_sql_migration.progress import \
+            couch_sql_migration_in_progress
+        if couch_sql_migration_in_progress(domain):
+            raise cls("couch-to-SQL migration in progress")

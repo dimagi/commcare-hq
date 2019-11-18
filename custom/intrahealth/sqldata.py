@@ -1,30 +1,32 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+import datetime
+from decimal import Decimal
+
 import sqlalchemy
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
+
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
-
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
 from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, \
-    OPERATEUR_COMBINED, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, RECOUVREMENT_COMBINED
+    OPERATEUR_COMBINED, OPERATEUR_COMBINED2, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, \
+    RECOUVREMENT_COMBINED, INDICATEURS_DE_BASE, YEKSI_NAA_REPORTS_CONSUMPTION
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, OR
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -32,9 +34,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
-import six
 from functools import reduce
-from six.moves import range
 
 PRODUCT_NAMES = {
     'diu': ["diu"],
@@ -52,6 +52,13 @@ PRODUCT_NAMES = {
 
 def _locations_filter(archived_locations, location_field_name='location_id'):
     return NOT(IN(location_field_name, get_INFilter_bindparams('archived_locations', archived_locations)))
+
+
+def normalize_decimal(element):
+    if isinstance(element, Decimal):
+        return round(float(element), 2) if element % 1 != 0 else int(element)
+    else:
+        return element
 
 
 class BaseSqlData(SqlData):
@@ -100,7 +107,7 @@ class BaseSqlData(SqlData):
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
                 columns = [r.get('sort_key') for r in colrows if
-                           isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                           isinstance(r.get('sort_key'), (int, float))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -593,7 +600,7 @@ class TauxConsommationData(BaseSqlData):
                     columns = [
                         r.get('sort_key')
                         for r in colrows
-                        if isinstance(r.get('sort_key'), six.integer_types)
+                        if isinstance(r.get('sort_key'), int)
                     ]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
@@ -661,7 +668,7 @@ class NombreData(BaseSqlData):
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
                     columns = [r.get('sort_key') for r in colrows if
-                               isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                               isinstance(r.get('sort_key'), (float, int))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
@@ -762,30 +769,28 @@ class IntraHealthQueryMeta(QueryMeta):
         assert len(filters) > 0
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
-    def execute(self, metadata, connection, filter_values):
-        try:
-            table = metadata.tables[self.table_name]
-        except KeyError:
-            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
-        return connection.execute(self._build_query(table, filter_values)).fetchall()
+    def execute(self, connection, filter_values):
+        return connection.execute(self._build_query(filter_values)).fetchall()
 
-    def _build_query(self, table, filter_values):
+    def _build_query(self, filter_values):
         raise NotImplementedError()
 
 
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
+        group_by_columns = [sqlalchemy.column(c) for c in self.group_by]
         sum_query = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
-            ), name='s')
+                group_by_columns + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
+            ).select_from(sqlalchemy.table(self.table_name)),
+            name='s')
 
         return select(
-            self.group_by + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
+            group_by_columns + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
             group_by=self.group_by,
             from_obj=sum_query
         ).params(filter_values)
@@ -793,18 +798,19 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
+        group_by_columns = [sqlalchemy.column(c) for c in self.group_by]
         subquery = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
-            ),
+                group_by_columns + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
+            ).select_from(sqlalchemy.table(self.table_name)),
             name='cq')
 
         return sqlalchemy.select(
-            self.group_by + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
+            group_by_columns + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
             group_by=self.group_by,
             from_obj=subquery
         ).params(filter_values)
@@ -2197,9 +2203,8 @@ class ContainsFilter(SqlFilter):
         self.column_name = column_name
         self.contains = contains
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.like("%{0}%".format(self.contains))
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).like("%{0}%".format(self.contains))
 
 
 class CustomEQFilter(SqlFilter):
@@ -2211,9 +2216,8 @@ class CustomEQFilter(SqlFilter):
         self.column_name = column_name
         self.parameter = parameter
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.match(self.parameter)
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).match(self.parameter)
 
 
 class YeksiSqlData(SqlData):
@@ -2470,8 +2474,56 @@ class ProgramData(ProgramsDataSource):
         records = self.get_data()
         rows = []
         for record in records:
-            rows.append([record['program_id'], record['program_name']])
+            program_name = record['program_name']
+            if program_name != 'PLANNIFICATION FAMILIALE':
+                rows.append([record['program_id'], record['program_name']])
         return sorted(rows, key=lambda x: x[0])
+
+
+class ProductsDataSource(YeksiSqlData):
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain,
+                                                          YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('ID'))
+        headers.add_column(DataTablesColumn('Name'))
+        return headers
+
+
+class ProductData(ProductsDataSource):
+    slug = 'product'
+    comment = 'Product names'
+    title = 'Product'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['product_id', 'product_name']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        return records
 
 
 class ProductsInProgramData(ProgramsDataSource):
@@ -2501,14 +2553,77 @@ class ProductsInProgramData(ProgramsDataSource):
         records = self.get_data()
         programs = defaultdict(set)
         for record in records:
-            products = record['product_ids'].split(' ')
-            for product in products:
-                programs[record['program_id']].add(product)
-
+            product_ids = record['product_ids']
+            program_id = record['program_id']
+            if product_ids is not None:
+                products = product_ids.split(' ')
+                for product in products:
+                    programs[program_id].add(product)
+            else:
+                programs[program_id].add(None)
         rows = []
         for program_id, products in programs.items():
-            rows.append([program_id, " ".join(products)])
-        return sorted(rows, key=lambda x: x[0])
+            try:
+                rows.append([program_id, " ".join(products)])
+            except TypeError:
+                rows.append([program_id, None])
+        rows = sorted(rows, key=lambda x: x[0])
+        return rows
+
+
+class ProductsInProgramWithNameData(ProgramsDataSource):
+    """
+    Returns list of all product ids used in program as string joined by spaces
+    """
+    slug = 'products_in_program'
+    comment = 'Products selected per program'
+    title = 'Products selected per program'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['program_id', 'program_name', 'product_ids']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Program Name", SimpleColumn('program_name')),
+            DatabaseColumn("Product IDs", SimpleColumn('product_ids')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        programs = defaultdict()
+        for record in records:
+            product_ids = record['product_ids']
+            program_id = record['program_id']
+            program_name = record['program_name']
+            programs[program_id] = {
+                'name': program_name,
+                'product_ids': [],
+            }
+            if product_ids is not None:
+                products = product_ids.split(' ')
+                for product in products:
+                    programs[program_id]['product_ids'].append(product)
+            else:
+                programs[program_id]['product_ids'].append(None)
+        rows = []
+        for program_id, program_data in programs.items():
+            program_name = program_data['name']
+            if program_name == 'PLANNIFICATION FAMILIALE':
+                program_name = 'PLANIFICATION FAMILIALE'
+                program_id = '6844ee891e29f2df8493fe6c0e2c1837'
+            rows.append({
+                'program_id': program_id,
+                'program_name': program_name,
+                'product_ids': program_data['product_ids'],
+            })
+        return rows
 
 
 class AvailabilityData(VisiteDeLOperateurDataSource):
@@ -2645,7 +2760,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             no_multiple_rows_per_pps_in_month = \
                 data[record[self.loc_id]][month_index].get(record['pps_id']) is None
             if no_multiple_rows_per_pps_in_month or \
-                    data[record[self.loc_id]][month_index][record['pps_id']] == 1:
+                data[record[self.loc_id]][month_index][record['pps_id']] == 1:
                 data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
                     record['pps_is_outstock']['html'] == 1 else 1
 
@@ -2710,7 +2825,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         rows = self.parse_availability_data_to_rows(loc_names, data)
         if self.loc_id == 'pps_id':
             self.total_row = self.calculate_total_row(rows)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -2870,7 +2985,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3036,7 +3151,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names, data = self.get_expiration_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_expiration_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3248,8 +3363,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_precise'])
             if record.get('delivery_amt_owed') is not None:
                 if data[record['pps_id']][month_index]['real_date_precise_first'] is None or \
-                        record['real_date_precise'] < \
-                        data[record['pps_id']][month_index]['real_date_precise_first']:
+                    record['real_date_precise'] < \
+                    data[record['pps_id']][month_index]['real_date_precise_first']:
                     data[record['pps_id']][month_index]['pps_total_amt_owed'] = record['pps_total_amt_owed']
                     data[record['pps_id']][month_index]['real_date_precise_first'] = \
                         record['real_date_precise']
@@ -3270,7 +3385,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
         rows, value_partials = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
         self.total_row = self.calculate_total_row(data, value_partials)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3421,7 +3536,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         district_names, data = self.get_recovery_rate_by_district_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_recovery_rate_by_district_to_rows(district_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3579,7 +3694,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         pps_names, data = self.get_rupture_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_rupture_rate_to_rows(pps_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @cached_property
     def loc_id(self):
@@ -3790,3 +3905,2422 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         for month in self.month_headers():
             headers.add_column(month)
         return headers
+
+
+class LocationLevelMixin:
+    config = {}
+
+    @cached_property
+    def selected_location(self):
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type in ['national', 'region']:
+            return 'region'
+        elif self.selected_location_type == 'district':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
+
+
+class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
+    slug = 'disponibilite'
+    comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
+    title = 'Disponibilité'
+
+    def __init__(self, config):
+        super(VisiteDeLOperateurPerProductV2DataSource, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_precise', 'product_is_outstock',
+            'product_id', 'product_name', 'program_id',
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn('Product ID', SimpleColumn('product_id')),
+            DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
+        return columns
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    @property
+    def rows(self):
+        rows_to_return = []
+        rows = self.get_data()
+
+        def clean_rows(data_to_clean):
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
+
+            stocks_list = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+            wanted_program = self.config.get('product_program', '')
+
+            for stock in stocks:
+                location_name = stock['{}'.format(self.loc_name_to_get)]
+                location_id = stock['{}'.format(self.loc_id_to_get)]
+                if location_id is None:
+                    location_id = location_name
+                product_name = stock['product_name']
+                product_id = stock['product_id']
+                program_id = stock['program_id'].split(' ')
+                if len(program_id) > 1:
+                    for program in program_id:
+                        if (program == wanted_program and product_id in self.program_and_products[program]) \
+                                or not wanted_program:
+                            stock['program_id'] = program
+                            stocks.append(stock.copy())
+                else:
+                    data_dict = {
+                        'location_name': location_name,
+                        'location_id': location_id,
+                        'program_id': program_id,
+                        'products': []
+                    }
+                    if location_id in added_locations and program_id in added_programs:
+                        amount_of_stocks = len(stocks_list)
+
+                        location_position = 0
+                        for r in range(0, amount_of_stocks):
+                            current_location = stocks_list[r]['location_id']
+                            if current_location == location_id:
+                                location_position = r
+                                break
+
+                        added_products_for_location = \
+                            [x['product_id'] for x in added_products_for_locations[location_id]]
+                        products_for_location = added_products_for_locations[location_id]
+                        if product_id not in added_products_for_location:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'in_ppses': 0,
+                                'all_ppses': 0,
+                            }
+                            added_products_for_locations[location_id].append(product_data)
+                            stocks_list[location_position]['products'].append(product_data)
+                        amount_of_products_for_location = len(added_products_for_locations[location_id])
+
+                        product_position = 0
+                        for s in range(0, amount_of_products_for_location):
+                            current_product = products_for_location[s]['product_id']
+                            if current_product == product_id:
+                                product_position = s
+                                break
+
+                        product_is_stock = True if stock['product_is_outstock'] == 0 else False
+                        overall_position = stocks_list[location_position]['products'][product_position]
+                        if product_is_stock:
+                            overall_position['in_ppses'] += 1
+                        overall_position['all_ppses'] += 1
+                    else:
+                        if isinstance(program_id, list):
+                            program_id = program_id[0]
+                        if location_id not in added_locations:
+                            added_locations.append(location_id)
+                        if program_id not in added_programs and \
+                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                                or not wanted_program):
+                            added_programs.append(program_id)
+                        if program_id == wanted_program or not wanted_program:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'in_ppses': 0,
+                                'all_ppses': 0,
+                            }
+                            product_is_stock = True if stock['product_is_outstock'] == 0 else False
+                            if product_is_stock:
+                                product_data['in_ppses'] += 1
+                            product_data['all_ppses'] += 1
+                            data_dict['products'].append(product_data)
+                            stocks_list.append(data_dict)
+                            added_products_for_locations[location_id] = [product_data]
+
+            stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
+
+            return stocks_list_to_return
+
+        fresh_records_dict = {}
+        for row in rows:
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
+            else:
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
+
+        clean_data = clean_rows(rows_to_return)
+
+        return clean_data
+
+
+class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
+    slug = 'taux_de_rupture_par_pps'
+    comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
+    title = 'Taux de Rupture par PPS'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(TauxDeRuptureRateData, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_precise', 'product_is_outstock',
+            'product_id', 'product_name', 'program_id'
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn('Product ID', SimpleColumn('product_id')),
+            DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
+        return columns
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    @property
+    def rows(self):
+        rows_to_return = []
+        rows = self.get_data()
+
+        def clean_rows(data_to_clean):
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
+
+            stocks_list = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+            wanted_program = self.config.get('product_program', '')
+
+            for stock in stocks:
+                location_name = stock['{}'.format(self.loc_name_to_get)]
+                location_id = stock['{}'.format(self.loc_id_to_get)]
+                if location_id is None:
+                    location_id = location_name
+                product_name = stock['product_name']
+                product_id = stock['product_id']
+                program_id = stock['program_id'].split(' ')
+                if len(program_id) > 1:
+                    for program in program_id:
+                        if (program == wanted_program and product_id in self.program_and_products[program]) \
+                                or not wanted_program:
+                            stock['program_id'] = program
+                            stocks.append(stock.copy())
+                else:
+                    data_dict = {
+                        'location_name': location_name,
+                        'location_id': location_id,
+                        'program_id': wanted_program if wanted_program else '',
+                        'products': []
+                    }
+                    if location_id in added_locations and program_id in added_programs:
+                        amount_of_stocks = len(stocks_list)
+
+                        location_position = 0
+                        for r in range(0, amount_of_stocks):
+                            current_location = stocks_list[r]['location_id']
+                            if current_location == location_id:
+                                location_position = r
+                                break
+
+                        added_products_for_location = \
+                            [x['product_id'] for x in added_products_for_locations[location_id]]
+                        products_for_location = added_products_for_locations[location_id]
+                        if product_id not in added_products_for_location:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'out_in_ppses': 0,
+                                'all_ppses': 0,
+                            }
+                            added_products_for_locations[location_id].append(product_data)
+                            stocks_list[location_position]['products'].append(product_data)
+                        amount_of_products_for_location = len(added_products_for_locations[location_id])
+
+                        product_position = 0
+                        for s in range(0, amount_of_products_for_location):
+                            current_product = products_for_location[s]['product_id']
+                            if current_product == product_id:
+                                product_position = s
+                                break
+
+                        product_is_outstock = True if stock['product_is_outstock'] == 1 else False
+                        overall_position = stocks_list[location_position]['products'][product_position]
+                        if product_is_outstock:
+                            overall_position['out_in_ppses'] += 1
+                        overall_position['all_ppses'] += 1
+                    else:
+                        if isinstance(program_id, list):
+                            program_id = program_id[0]
+                        if location_id not in added_locations:
+                            added_locations.append(location_id)
+                        if program_id not in added_programs and \
+                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                                or not wanted_program):
+                            added_programs.append(program_id)
+                        if program_id == wanted_program or not wanted_program:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'out_in_ppses': 0,
+                                'all_ppses': 0,
+                            }
+                            product_is_outstock = True if stock['product_is_outstock'] == 1 else False
+                            if product_is_outstock:
+                                product_data['out_in_ppses'] += 1
+                            product_data['all_ppses'] += 1
+                            data_dict['products'].append(product_data)
+                            stocks_list.append(data_dict)
+                            added_products_for_locations[location_id] = [product_data]
+
+            stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
+
+            return stocks_list_to_return
+
+        fresh_records_dict = {}
+        for row in rows:
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
+            else:
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
+
+        clean_data = clean_rows(rows_to_return)
+
+        return clean_data
+
+
+class ConsommationPerProductData(SqlData, LocationLevelMixin):
+    slug = 'consommation_per_product'
+    comment = ''
+    title = 'Consommation per product'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(ConsommationPerProductData, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_precise', 'actual_consumption',
+            'product_id', 'product_name', 'program_id'
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product name", SimpleColumn('product_name')),
+            DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
+        return columns
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+
+        def clean_rows(data_to_clean):
+            consumptions = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
+
+            consumptions_list = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+            wanted_program = self.config.get('product_program', '')
+
+            for consumption in consumptions:
+                location_name = consumption['{}'.format(self.loc_name_to_get)]
+                location_id = consumption['{}'.format(self.loc_id_to_get)]
+                if location_id is None:
+                    location_id = location_name
+                product_name = consumption['product_name']
+                product_id = consumption['product_id']
+                program_id = consumption['program_id'].split(' ')
+                actual_consumption = consumption['actual_consumption']
+                if len(program_id) > 1:
+                    for program in program_id:
+                        if (program == wanted_program and product_id in self.program_and_products[program]) \
+                                or not wanted_program:
+                            consumption['program_id'] = program
+                            consumptions.append(consumption.copy())
+                else:
+                    data_dict = {
+                        'location_name': location_name,
+                        'location_id': location_id,
+                        'program_id': program_id,
+                        'products': []
+                    }
+                    if location_id in added_locations and program_id in added_programs:
+                        amount_of_stocks = len(consumptions_list)
+
+                        location_position = 0
+                        for r in range(0, amount_of_stocks):
+                            current_location = consumptions_list[r]['location_id']
+                            if current_location == location_id:
+                                location_position = r
+                                break
+
+                        products = consumptions_list[location_position]['products']
+                        product_names = [x['product_name'] for x in products]
+                        if product_name in product_names:
+                            for product in products:
+                                if product['product_name'] == product_name:
+                                    product['actual_consumption'] += actual_consumption
+                        else:
+                            products.append({
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'actual_consumption': actual_consumption
+                            })
+                    else:
+                        if isinstance(program_id, list):
+                            program_id = program_id[0]
+                        if location_id not in added_locations:
+                            added_locations.append(location_id)
+                        if program_id not in added_programs and \
+                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                                or not wanted_program):
+                            added_programs.append(program_id)
+                        if program_id == wanted_program or not wanted_program:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'actual_consumption': 0,
+                            }
+                            product_data['actual_consumption'] += actual_consumption
+                            data_dict['products'].append(product_data)
+                            consumptions_list.append(data_dict)
+                            added_products_for_locations[location_id] = [product_data]
+
+            consumptions_list_to_return = sorted(consumptions_list, key=lambda x: x['location_id'])
+
+            return consumptions_list_to_return
+
+        clean_data = clean_rows(rows)
+
+        return clean_data
+
+
+class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
+    slug = 'taux_de_perte'
+    comment = 'Taux de Perte (hors péremption)'
+    title = 'Taux de Perte (hors péremption)'
+    show_total = True
+    custom_total_calculate = True
+
+    def calculate_total_row(self, data):
+        if 'region_id' in self.config and self.config['region_id']:
+            total_row = [{
+                'html': 'Taux par Région',
+            }]
+        elif 'district_id' in self.config and self.config['district_id']:
+            total_row = [{
+                'html': 'Taux par District',
+            }]
+        elif 'pps_id' in self.config and self.config['pps_id']:
+            total_row = [{
+                'html': '',
+            }]
+        else:
+            total_row = [{
+                'html': 'Taux par Pays',
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.products)):
+            numerator = sum(
+                data[loc_id][i]['loss_amt'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock']
+            )
+            denominator = sum(
+                data[loc_id][i]['final_pna_stock'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
+            total_value = self.percent_fn(
+                numerator,
+                denominator
+            )
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
+        return total_row
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', self.loc_id, self.loc_name, 'product_id', 'product_name']
+
+    @cached_property
+    def loc_id(self):
+        if 'pps_id' in self.config or 'district_id' in self.config:
+            return 'pps_id'
+        elif 'region_id' in self.config:
+            return 'district_id'
+        else:
+            return 'region_id'
+
+    @cached_property
+    def loc_name(self):
+        if 'pps_id' in self.config or 'district_id' in self.config:
+            return 'pps_name'
+        elif 'region_id' in self.config:
+            return 'district_name'
+        else:
+            return 'region_name'
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
+            DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
+        ]
+        if self.loc_id == 'pps_id':
+            columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
+        elif self.loc_id == 'district_id':
+            columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
+            columns.append(DatabaseColumn("District Name", SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn("Region ID", SimpleColumn('region_id')))
+            columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
+        return columns
+
+    def get_average_loss_rate_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['final_pna_stock']:
+                numerator += data_in_month['loss_amt']
+                denominator += data_in_month['final_pna_stock']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_loss_rate_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.products)):
+                if data[loc_id][i]['final_pna_stock']:
+                    product_value = self.percent_fn(
+                        data[loc_id][i]['loss_amt'],
+                        data[loc_id][i]['final_pna_stock']
+                    )
+                    row.append({
+                        'html': product_value,
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_average_loss_rate_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
+    def get_loss_rate_per_month(self, records):
+        data = defaultdict(list)
+        loc_names = {}
+
+        for record in records:
+            if record[self.loc_id] not in data:
+                for i in range(len(self.products)):
+                    data[record[self.loc_id]].append(defaultdict(int))
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            product = self.products.index(record['product_id'])
+
+            if self.denominator_exists(record['final_pna_stock']):
+                if record['loss_amt']:
+                    data[record[self.loc_id]][product]['loss_amt'] += record['loss_amt']['html']
+                data[record[self.loc_id]][product]['final_pna_stock'] += record['final_pna_stock']['html']
+
+        return loc_names, data
+
+    def flatten_records_by_date(self, records):
+        flatten_records = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            if record[self.loc_id]:
+                location = (record[self.loc_id]) + record['product_id']
+            else:
+                continue
+            final_stock = record['final_pna_stock']
+            loss_amt = record['loss_amt']
+            if not flatten_records.get(location):
+                flatten_records[location] = record
+                if not loss_amt:
+                    flatten_records[location]['loss_amt'] = {'html': 0}
+                if not final_stock:
+                    flatten_records[location]['final_pna_stock'] = {'html': 0}
+            else:
+                if final_stock:
+                    flatten_records[location]['final_pna_stock']['html'] += final_stock['html']
+                if loss_amt:
+                    flatten_records[location]['loss_amt']['html'] += loss_amt['html']
+
+        return flatten_records.values()
+
+    def rows(self, for_chart=False):
+        records = self.get_data()
+        records = self.flatten_records_by_date(records)
+
+        if not for_chart:
+            loc_names, data = self.get_loss_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_loss_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            loss_amt = record['loss_amt']['html']
+            final_pna_stock = record['final_pna_stock']['html']
+            if product_id not in added_products and final_pna_stock != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'loss_amt': loss_amt,
+                    'final_pna_stock': final_pna_stock,
+                    'percent': self.percent_fn(loss_amt, final_pna_stock)
+                }
+            elif product_id in added_products and final_pna_stock != 0:
+                products[product_name]['loss_amt'] += loss_amt
+                products[product_name]['final_pna_stock'] += final_pna_stock
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['loss_amt'], products[product_name]['final_pna_stock']
+                )
+
+        return products
+
+    @property
+    def headers(self):
+        if self.loc_id == 'pps_id':
+            first_row = 'PPS'
+        elif self.loc_id == 'district_id':
+            first_row = 'District'
+        else:
+            first_row = 'Région'
+
+        product_names = dict((product_id, "") for product_id in self.products)
+        for row in self.get_data():
+            id = row['product_id']
+
+            if product_names.get(id, None) == "":
+                product_names[id] = row['product_name']
+
+        headers = DataTablesHeader(DataTablesColumn(first_row))
+        pn = [name for name in product_names.values() if name]
+        pn.sort()
+        for product in pn:
+            headers.add_column(DataTablesColumn(product))
+        headers.add_column(DataTablesColumn('SYNTHESE'))
+
+        return headers
+
+    @property
+    def all_unsorted_products(self):
+        products = [self.config['product_product']]
+        if not self.config['product_product']:
+            selected_program = self.config['product_program']
+            program = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
+            products = []
+            for p in program:
+                if selected_program and p[0] != selected_program:
+                    continue
+                products.extend(p[1].split(' '))
+            products.sort()
+
+        products = list(set(products))
+        products.sort()
+        return products
+
+    @property
+    @memoized
+    def products(self):
+        product_names = dict((product_id, "") for product_id in self.all_unsorted_products)
+        for row in self.get_data():
+            id = row['product_id']
+            if product_names.get(id, None) == "":
+                product_names[id] = row['product_name']
+
+        pn = [key[0] for key in sorted(product_names.items(), key=lambda x: x[1]) if key[1]]
+        return pn
+
+
+class ExpirationRatePerProductData2(LossRatePerProductData2):
+    slug = 'taux_de_peremption'
+    comment = 'valeur péremption sur valeur totale'
+    title = 'Taux de Péremption'
+    show_total = True
+    custom_total_calculate = True
+
+    def calculate_total_row(self, data):
+        if 'region_id' in self.config and self.config['region_id']:
+            total_row = [{
+                'html': 'Taux par Région',
+            }]
+        elif 'district_id' in self.config and self.config['district_id']:
+            total_row = [{
+                'html': 'Taux par District',
+            }]
+        elif 'pps_id' in self.config and self.config['pps_id']:
+            total_row = [{
+                'html': '',
+            }]
+        else:
+            total_row = [{
+                'html': 'Taux par Pays',
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.products)):
+            numerator = sum(
+                data[loc_id][i]['expired_pna_valuation'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock_valuation']
+            )
+            denominator = sum(
+                data[loc_id][i]['final_pna_stock_valuation'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock_valuation']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
+            total_value = self.percent_fn(
+                numerator,
+                denominator
+            )
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
+        return total_row
+
+    @property
+    def columns(self):
+        columns = super(ExpirationRatePerProductData2, self).columns
+        columns.extend([
+            DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
+            DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation'))
+        ])
+        return columns
+
+    def get_average_expiration_rate_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['final_pna_stock_valuation']:
+                numerator += data_in_month['expired_pna_valuation']
+                denominator += data_in_month['final_pna_stock_valuation']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+                'style': 'color: red' if self.cell_value_bigger_than(value, 5) else '',
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_expiration_rate_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.products)):
+                if data[loc_id][i]['final_pna_stock_valuation']:
+                    product_value = self.percent_fn(
+                        data[loc_id][i]['expired_pna_valuation'],
+                        data[loc_id][i]['final_pna_stock_valuation']
+                    )
+                    row.append({
+                        'html': product_value,
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_average_expiration_rate_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
+    def get_expiration_rate_per_month(self, records):
+        data = defaultdict(list)
+        loc_names = {}
+        for record in records:
+            if record[self.loc_id] not in data:
+                for i in range(len(self.products)):
+                    data[record[self.loc_id]].append(defaultdict(int))
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            product = self.products.index(record['product_id'])
+            if self.denominator_exists(record['final_pna_stock_valuation']):
+                if record['expired_pna_valuation']:
+                    data[record[self.loc_id]][product]['expired_pna_valuation'] += \
+                        record['expired_pna_valuation']['html']
+                data[record[self.loc_id]][product]['final_pna_stock_valuation'] += \
+                    record['final_pna_stock_valuation']['html']
+        return loc_names, data
+
+    def rows(self, for_chart=False):
+        records = self.get_data()
+
+        if not for_chart:
+            loc_names, data = self.get_expiration_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_expiration_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            expired_pna_valuation = record['expired_pna_valuation']['html']
+            final_pna_stock_valuation = record['final_pna_stock_valuation']['html']
+            if product_id not in added_products and product_id in self.products and final_pna_stock_valuation != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'expired_pna_valuation': expired_pna_valuation,
+                    'final_pna_stock_valuation': final_pna_stock_valuation,
+                    'percent': self.percent_fn(expired_pna_valuation, final_pna_stock_valuation)
+                }
+            elif product_id in added_products and final_pna_stock_valuation != 0:
+                products[product_name]['expired_pna_valuation'] += expired_pna_valuation
+                products[product_name]['final_pna_stock_valuation'] += final_pna_stock_valuation
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['expired_pna_valuation'],
+                    products[product_name]['final_pna_stock_valuation']
+                )
+
+        return products
+
+
+class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLOperateurPerProductDataSource):
+    slug = 'taux_de_satisfaction_report'
+    comment = 'produits proposés sur produits livrés'
+    title = 'Taux de satisfaction (après livraison)'
+    show_total = True
+    custom_total_calculate = True
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_repeat', 'select_programs',
+            'product_id', 'product_name', 'ideal_topup',
+            'amt_delivered_convenience'
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Programs", SimpleColumn('select_programs')),
+            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Quantity of the product suggested", SumColumn('ideal_topup')),
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
+        return columns
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+
+        def clean_rows(data_to_clean):
+            quantities = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
+            quantities_list = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+            wanted_program = self.config.get('product_program', '')
+
+            for quantity in quantities:
+                location_id = quantity['{}'.format(self.loc_id_to_get)]
+                location_name = quantity['{}'.format(self.loc_name_to_get)]
+                if location_id is None:
+                    location_id = location_name
+                product_name = quantity['product_name']
+                product_id = quantity['product_id']
+                program_id = quantity['select_programs'].split(' ')
+                amt_delivered_convenience = quantity['amt_delivered_convenience']['sort_key']
+                ideal_topup = quantity['ideal_topup']['sort_key']
+                if len(program_id) > 1:
+                    for program in program_id:
+                        if (program == wanted_program and product_id in self.program_and_products[program]) \
+                                or not wanted_program:
+                            quantity['select_programs'] = program
+                            quantities.append(quantity.copy())
+                else:
+                    data_dict = {
+                        'location_name': location_name,
+                        'location_id': location_id,
+                        'program_id': program_id,
+                        'products': []
+                    }
+                    if location_id in added_locations and program_id in added_programs:
+                        amount_of_stocks = len(quantities_list)
+
+                        location_position = 0
+                        for r in range(0, amount_of_stocks):
+                            current_location = quantities_list[r]['location_id']
+                            if current_location == location_id:
+                                location_position = r
+                                break
+
+                        added_products_for_location = \
+                            [x['product_id'] for x in added_products_for_locations[location_id]]
+                        products_for_location = added_products_for_locations[location_id]
+                        if product_id not in added_products_for_location:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'amt_delivered_convenience': 0,
+                                'ideal_topup': 0,
+                            }
+                            added_products_for_locations[location_id].append(product_data)
+                            quantities_list[location_position]['products'].append(product_data)
+
+                        amount_of_products_for_location = len(added_products_for_locations[location_id])
+                        product_position = 0
+                        for s in range(0, amount_of_products_for_location):
+                            current_product = products_for_location[s]['product_id']
+                            if current_product == product_id:
+                                product_position = s
+                                break
+                        overall_position = quantities_list[location_position]['products'][product_position]
+                        overall_position['amt_delivered_convenience'] += amt_delivered_convenience
+                        overall_position['ideal_topup'] += ideal_topup
+                    else:
+                        if isinstance(program_id, list):
+                            program_id = program_id[0]
+                        if location_id not in added_locations:
+                            added_locations.append(location_id)
+                        if program_id not in added_programs and \
+                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                                or not wanted_program):
+                            added_programs.append(program_id)
+                        if program_id == wanted_program or not wanted_program:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'amt_delivered_convenience': 0,
+                                'ideal_topup': 0,
+                            }
+                            product_data['amt_delivered_convenience'] += amt_delivered_convenience
+                            product_data['ideal_topup'] += ideal_topup
+                            data_dict['products'].append(product_data)
+                            quantities_list.append(data_dict)
+                            added_products_for_locations[location_id] = [product_data]
+
+            quantities_list_to_return = sorted(quantities_list, key=lambda x: x['location_id'])
+
+            return quantities_list_to_return
+
+        clean_data = clean_rows(rows)
+
+        return clean_data
+
+
+class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateurPerProductDataSource):
+    slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    title = 'Valeur des stocks PNA disponible (chaque produit)'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(ValuationOfPNAStockPerProductV2Data, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(
+            config_domain,
+            YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT
+        )
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def group_by(self):
+        group_by = [
+            'real_date_repeat', 'product_id', 'product_name', 'select_programs',
+            self.loc_id_to_get, self.loc_name_to_get,
+            'final_pna_stock_valuation'
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Programs", SimpleColumn('select_programs')),
+            DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
+        ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
+        return columns
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        return filters
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+
+        def clean_rows(data_to_clean):
+            pnas = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
+            pnas_list = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+            wanted_program = self.config.get('product_program', '')
+
+            for pna in pnas:
+                location_name = pna['{}'.format(self.loc_name_to_get)]
+                location_id = pna['{}'.format(self.loc_id_to_get)]
+                product_name = pna['product_name']
+                product_id = pna['product_id']
+                program_id = pna['select_programs'].split(' ')
+                final_pna_stock_valuation = pna['final_pna_stock_valuation']
+                if not final_pna_stock_valuation:
+                    final_pna_stock_valuation = 0
+                else:
+                    final_pna_stock_valuation = final_pna_stock_valuation['sort_key']
+                if len(program_id) > 1:
+                    for program in program_id:
+                        if (program == wanted_program and product_id in self.program_and_products[program]) \
+                                or not wanted_program:
+                            pna['select_programs'] = program
+                            pnas.append(pna.copy())
+                else:
+                    data_dict = {
+                        'location_name': location_name,
+                        'location_id': location_id,
+                        'program_id': program_id,
+                        'products': []
+                    }
+                    if location_id in added_locations and program_id in added_programs:
+                        amount_of_stocks = len(pnas_list)
+
+                        location_position = 0
+                        for r in range(0, amount_of_stocks):
+                            current_location = pnas_list[r]['location_id']
+                            if current_location == location_id:
+                                location_position = r
+                                break
+
+                        added_products_for_location = \
+                            [x['product_id'] for x in added_products_for_locations[location_id]]
+                        products_for_location = added_products_for_locations[location_id]
+                        if product_id not in added_products_for_location:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'final_pna_stock_valuation': 0,
+                            }
+                            added_products_for_locations[location_id].append(product_data)
+                            pnas_list[location_position]['products'].append(product_data)
+
+                        amount_of_products_for_location = len(added_products_for_locations[location_id])
+                        product_position = 0
+                        for s in range(0, amount_of_products_for_location):
+                            current_product = products_for_location[s]['product_id']
+                            if current_product == product_id:
+                                product_position = s
+                                break
+                        overall_position = pnas_list[location_position]['products'][product_position]
+                        overall_position['final_pna_stock_valuation'] += final_pna_stock_valuation
+                    else:
+                        if isinstance(program_id, list):
+                            program_id = program_id[0]
+                        if location_id not in added_locations:
+                            added_locations.append(location_id)
+                        if program_id not in added_programs and \
+                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                                or not wanted_program):
+                            added_programs.append(program_id)
+                        if program_id == wanted_program or not wanted_program:
+                            product_data = {
+                                'product_name': product_name,
+                                'product_id': product_id,
+                                'final_pna_stock_valuation': 0,
+                            }
+                            product_data['final_pna_stock_valuation'] += final_pna_stock_valuation
+                            data_dict['products'].append(product_data)
+                            pnas_list.append(data_dict)
+                            added_products_for_locations[location_id] = [product_data]
+
+            pnas_list_to_return = sorted(pnas_list, key=lambda x: x['location_id'])
+
+            return pnas_list_to_return
+
+        clean_data = clean_rows(rows)
+
+        return clean_data
+
+
+class RecapPassageOneData(IntraHealthSqlData):
+    slug = 'recap_passage_1'
+    comment = 'recap passage 1'
+    title = 'Recap Passage 1'
+    show_total = False
+    total_row = []
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(RecapPassageOneData, self).__init__()
+        self.config = config
+        self.product_names = []
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, OPERATEUR_COMBINED2)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', 'product_id', 'pps_name', self.loc_id, 'product_name', 'visit']
+
+    @property
+    def program_products(self):
+        program_id = self.config.get('product_program', None)
+        program_products = []
+        if program_id:
+            programs = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
+            for program in programs:
+                if program[0] == program_id:
+                    list_of_program_ids = program[1].split(' ')
+                    program_products.extend(list_of_program_ids)
+            return list(set(program_products))
+        else:
+            return None
+
+    @property
+    def program_name(self):
+        program_id = self.config.get('product_program', None)
+        domain = self.config['domain']
+        if program_id:
+            rows = ProgramData(config={'domain': domain, 'program_id': program_id}).rows
+            name = next(row[1] for row in rows if row[0] == program_id)
+            return name
+        else:
+            return None
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn(_("Product name"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Product id"), SimpleColumn('product_id')),
+            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id', alias='visit')),
+            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Old stock total"), SumColumn('old_stock_total')),
+            DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
+            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock')),
+            DatabaseColumn(_("Outside AMT"), SumColumn('outside_receipts_amt')),
+            DatabaseColumn(_("Reelle"), SumColumn('actual_consumption')),
+            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
+            DatabaseColumn("Amount billed", SumColumn('amount_billed')),
+            DatabaseColumn("Delivery amt", SumColumn('delivery_amt_owed')),
+            DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
+            DatabaseColumn("Expired pna", SumColumn('expired_pna')),
+            DatabaseColumn("Ajustment", SumColumn('ajustment')),
+            DatabaseColumn("Nb days outsotck", SumColumn('nb_days_outstock')),
+            DatabaseColumn("Consommations non facturable", SumColumn('consommations_non_facturable')),
+            DatabaseColumn("Adjusted monthly consuptions", SumColumn('adjusted_monthly_consumption')),
+            DatabaseColumn("PPS stock new", SumColumn('pps_stock_new')),
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        if self.selected_location_type == 'region':
+            return 'region'
+        elif self.selected_location_type == 'district':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        return filters
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows_and_headers(self):
+        rows = self.get_data()
+        rows_by_visit = self.sort_rows_by_visit(rows)
+        valid_products = self.program_products
+        pps_visits = {}
+        for doc_id, rows in rows_by_visit.items():
+            data = {}
+            product_names = set()
+            location = rows[0]['pps_name']
+            date = rows[0]['real_date_repeat']
+            amount_billed_sum = 0
+
+            for row in rows:
+                product_name = row['product_name']
+                product_id = row['product_id']
+                if valid_products and product_id not in valid_products:
+                    continue
+                product_names.add(product_name)
+                if not data.get(product_name):
+                    data[product_name] = defaultdict(int)
+
+                product_data = data[product_name]
+                product_data['Stock ε PPS Précédent'] += self.get_value(row['old_stock_pps'])
+                product_data['Stock Total Précédent'] += self.get_value(row['old_stock_total'])
+                product_data['Stock Disponible Utilisable'] += self.get_value(row['total_stock'])
+                product_data['Stock Total Restant'] += self.get_value(row['display_total_stock'])
+                product_data['Réception Hors Entrepot'] += self.get_value(row['outside_receipts_amt'])
+                product_data['Consommations Réelle'] += self.get_value(row['actual_consumption'])
+                product_data['Consommations Facturable'] += self.get_value(row['billed_consumption'])
+                product_data['Pertes Facturables PNA'] += self.get_value(row['loss_amt'])
+                product_data['Facturation Produit'] += self.get_value(row['amount_billed'])
+                product_data['Livraison'] += self.get_value(row['amt_delivered_convenience'])
+                product_data['Pertes / Péremptions PPS'] += self.get_value(row['total_loss_amt'])
+                product_data['Péremptions PNA'] += self.get_value(row['expired_pna'])
+                product_data['Ajustements / Retraits PNA'] += self.get_value(row['ajustment'])
+                product_data['Nombre Jours de rupture'] += self.get_value(row['nb_days_outstock'])
+                product_data['Consommations Non Facturable'] += (
+                    self.get_value(row['actual_consumption']) - self.get_value(row['billed_consumption'])
+                )
+                product_data['CMM Ajustée'] += self.get_value(row['adjusted_monthly_consumption'])
+                product_data['Stock Restant ε PPS'] += self.get_value(row['pps_stock_new'])
+
+                amount_billed_sum += self.get_value(row['amount_billed'])
+
+            product_names = sorted(product_names)
+            self.product_names = product_names
+
+            rows = []
+            if product_names:
+                for key in data[product_names[0]]:
+                    next_row = [key]
+                    for product in product_names:
+                        next_row.append(data[product][key])
+
+                    rows.append(next_row)
+
+                facturation_fill = len(rows[0]) - 2
+                facturation_group = ['Facturation Groupe', amount_billed_sum]
+                facturation_group.extend([' ' for _ in range(facturation_fill)])
+                rows.append(facturation_group)
+
+                pps_visits[doc_id] = {
+                    'rows': rows,
+                    'title': location,
+                    'headers': self.get_headers(),
+                    'comment': date,
+                }
+
+        return pps_visits
+
+    @property
+    def aggregated_data(self):
+        rows = self.get_data()
+
+        data = {
+            'Total Facture': 0,
+            'Net à Payer': 0,
+        }
+        valid_products = self.program_products
+        delivery_amt_owed_dict = {}
+        for row in rows:
+            pps_name = row['pps_name']
+            if valid_products and \
+                    row['product_id'] not in valid_products:
+                continue
+
+            data['Total Facture'] += self.get_value(row['amount_billed'])
+            delivery_amt_owed = self.get_value(row['delivery_amt_owed'])
+            date = row['real_date_repeat'].strftime('%Y/%m/%d')
+            if delivery_amt_owed_dict.get(pps_name, None):
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
+            else:
+                delivery_amt_owed_dict[pps_name] = set()
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
+
+        # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
+        data['Total Facture'] = round(float(data['Total Facture']), 2)
+        net_a_payer = 0
+        for pps_values in delivery_amt_owed_dict.values():
+            for pps_value in pps_values:
+                net_a_payer += pps_value[0]
+
+        data['Net à Payer'] = round(float(net_a_payer), 2)
+        rows = []
+        headers = data.keys()
+        for header in headers:
+            value = data[header]
+            rows.append([dict(html=value)])
+
+        headers = [DataTablesColumn(header_name) for header_name in headers]
+        return rows, DataTablesHeader(*headers)
+
+    @property
+    def empty_table(self):
+        rows = [['Stock ε PPS Précédent', 'pas de données'],
+                ['Stock Total Précédent', 'pas de données'],
+                ['Stock Disponible Utilisable', 'pas de données'],
+                ['Stock Total Restant', 'pas de données'],
+                ['Réception Hors Entrepot', 'pas de données'],
+                ['Consommations Réelle', 'pas de données'],
+                ['Consommations Facturable', 'pas de données'],
+                ['Pertes Facturables PNA', 'pas de données'],
+                ['Facturation Produit', 'pas de données'],
+                ['Livraison', 'pas de données'],
+                ['Pertes / Péremptions PPS', 'pas de données'],
+                ['Péremptions PNA', 'pas de données'],
+                ['Ajustements / Retraits PNA', 'pas de données'],
+                ['Nombre Jours de rupture', 'pas de données'],
+                ['Consommations Non Facturable', 'pas de données'],
+                ['CMM Ajustée', 'pas de données'],
+                ['Stock Restant ε PPS', 'pas de données']]
+        empty_headers = DataTablesHeader(DataTablesColumn(''), DataTablesColumn('pas de produits'))
+        return rows, empty_headers
+
+    @property
+    def headers(self):
+        return self.get_headers()
+
+    def get_headers(self):
+        headers = DataTablesHeader(DataTablesColumn(''))
+
+        for name in self.product_names:
+            headers.add_column(DataTablesColumn(name))
+        return headers
+
+    def sort_rows_by_visit(self, rows):
+        rows_by_visit = defaultdict(list)
+        for row in rows:
+            rows_by_visit[row['visit']].append(row)
+
+        return rows_by_visit
+
+
+class RecapPassageTwoData(RecapPassageOneData):
+    slug = 'recap_passage_2'
+    comment = 'recap passage 2'
+    title = 'Recap Passage 2'
+    show_total = False
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(RecapPassageTwoData, self).__init__(config)
+        self.recap_rows = None
+        self.recap_headers = None
+        self.latest_pps_doc_ids = None
+
+    @property
+    def columns(self):
+        columns = super(RecapPassageTwoData, self).columns
+        if self.loc_id != 'pps_id':
+            columns.extend([
+                DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id'))
+            ])
+        columns.extend([
+            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
+            DatabaseColumn(_('Amount Owed'), SumColumn('amount_owed')),
+            DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
+        ])
+        return columns
+
+    @property
+    def group_by(self):
+        group = super(RecapPassageTwoData, self).group_by
+        if self.loc_id != 'pps_id':
+            group.extend(['pps_id'])
+
+        group.extend(['doc_id'])
+        return group
+
+    @property
+    def program_products(self):
+        program_id = self.config.get('product_program', None)
+        program_products = []
+        if program_id:
+            programs = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
+            for program in programs:
+                if program[0] == program_id:
+                    list_of_program_ids = program[1].split(' ')
+                    program_products.extend(list_of_program_ids)
+            return list(set(program_products))
+        else:
+            return None
+
+    @property
+    def program_name(self):
+        program_id = self.config.get('product_program', None)
+        domain = self.config['domain']
+        if program_id:
+            rows = ProgramData(config={'domain': domain, 'program_id': program_id}).rows
+            name = next(row[1] for row in rows if row[0] == program_id)
+            return name
+        else:
+            return None
+
+    def calculate_table_data(self):
+        rows = self.get_data()
+
+        product_names = set()
+        data = {}
+        valid_products = self.program_products
+
+        for row in rows:
+            product_name = row['product_name']
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+
+            if valid_products and product_id not in valid_products:
+                continue
+
+            product_names.add(product_name)
+
+            if not data.get(pps_id):
+                data[pps_id] = [row]
+            else:
+                data[pps_id].append(row)
+
+        product_names = sorted(product_names)
+        self.product_names = sorted(set(product_names))
+
+        self.recap_rows = data
+        self.recap_headers = self.get_headers()
+
+        return data, self.get_headers()
+
+    @property
+    def empty_table(self):
+        rows = [[name, 'pas de données'] for name in self.product_names]
+        empty_headers = DataTablesHeader(DataTablesColumn(''), DataTablesColumn('pas de produits'))
+        return rows, empty_headers
+
+    def get_headers(self):
+        headers = DataTablesHeader(DataTablesColumn('LISTE des PPS'))
+
+        for name in self.product_names:
+            headers.add_column(DataTablesColumn(name))
+
+        return headers
+
+
+class RecapPassageTwoTables(RecapPassageTwoData):
+
+    def __init__(self, config):
+        super(RecapPassageTwoTables, self).__init__(config)
+
+    def create_context(self, **kwargs):
+        context = dict(
+            title=kwargs.get('title', self.title),
+            slug=kwargs.get('slug', self.slug),
+            headers=kwargs.get('headers', []),
+            rows=kwargs.get('rows', []),
+            total_row=kwargs.get('total_row', self.total_row),
+            default_rows=kwargs.get('default_rows', None),
+            datatables=kwargs.get('datatables', self.datatables),
+            fix_column=kwargs.get('fix_left_col', self.fix_left_col))
+        return context
+
+    @property
+    def sumup_context(self):
+        if self.recap_rows is None:
+            self.calculate_table_data()
+
+        rows = {
+            'Total Versements PPS': dict(html=Decimal(0.0)),
+            'Frais Participation PPS': dict(html=Decimal(0.0)),
+            'Total Facturation District': dict(html=Decimal(0.0)),
+            'Frais Participation District': dict(html=Decimal(0.0)),
+            'Total Facturation PRA': dict(html=Decimal(0.0)),
+            'Total a Verser a La PRA': dict(html=Decimal(0.0)),
+        }
+        data = self.recap_rows
+
+        delivery_amt_owed_dict = {}
+        delivery_total_margin_dict = {}
+        for pps in data.keys():
+            pps_data = data[pps]
+
+            for element in pps_data:
+                if element['product_name'] not in self.product_names:
+                    continue
+                pps_name = element['pps_name']
+                date = element['real_date_repeat'].strftime('%Y/%m/%d')
+
+                delivery_amt_owed = element.get('delivery_amt_owed', None) or {'html': 0}
+                delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
+
+                self._save_value_if_unique(
+                    delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], date)
+                )
+                self._save_value_if_unique(
+                    delivery_total_margin_dict, pps_name, (delivery_total_margin['html'], date)
+                )
+
+        rows['Total Versements PPS']['html'] = self._sum_up(delivery_amt_owed_dict)
+        rows['Frais Participation PPS']['html'] = self._sum_up(delivery_total_margin_dict)
+
+
+        rows['Total Facturation District']['html'] = \
+            rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
+
+        rows['Frais Participation District']['html'] = \
+            rows['Total Facturation District']['html'] * Decimal(0.15 * 0.25)
+
+        rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / Decimal(1.15)
+
+        rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
+            rows['Frais Participation District']['html'] + rows['Frais Participation PPS']['html']
+
+        row = [["{0:.2f}".format(v['html']) for v in rows.values()]]
+        context = self.create_context(
+            rows=row, headers=[key for key in rows.keys()],
+            title='Recapitulatif Facturation')
+        return context
+
+    @property
+    def billed_consumption_context(self):
+        context = self.create_table_context(
+            'billed_consumption', 'Consommations Facturables', add_amount_owed_column=True
+        )
+
+        return context
+
+    @property
+    def actual_consumption_context(self):
+        context = self.create_table_context(
+            'actual_consumption', 'Consommation Réelle', add_latest_visit_column=True
+        )
+        return context
+
+    @property
+    def amt_delivered_convenience_context(self):
+        context = self.create_table_context(
+            'amt_delivered_convenience', 'Livraison Total Effectuées', add_sum_of_visits_column=True
+        )
+        rows = context['rows']
+        new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
+        if new_row:
+            new_row = new_row[:-1]
+        context['rows'].append(new_row)
+        return context
+
+    @property
+    def display_total_stock_context(self):
+        context = self.create_table_context(
+            'total_stock', 'Stock Disponible Utilisable', add_availability_column=True
+        )
+        rows = context['rows']
+        sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
+        if sum_row:
+            sum_row = sum_row[:-1]
+        display_stock_row = self.add_row_with_sum_value('SDU après Livraison', 'display_total_stock')
+        context['rows'].append(sum_row)
+        context['rows'].append(display_stock_row)
+        return context
+
+    def create_table_context(self, displayed_values, title, add_amount_owed_column=False,
+                             add_latest_visit_column=False, add_sum_of_visits_column=False,
+                             add_availability_column=False):
+        if self.recap_rows is None:
+            self.calculate_table_data()
+
+        headers = self.get_headers()
+        rows = self.create_table_rows(
+            displayed_values, add_amount_owed_column=add_amount_owed_column,
+            add_latest_visit_column=add_latest_visit_column, add_sum_of_visits_column=add_sum_of_visits_column,
+            add_availability_column=add_availability_column
+        )
+
+        if add_amount_owed_column:
+            headers.add_column(DataTablesColumn('Recouvrement PPS Net à Payer'))
+        if add_latest_visit_column:
+            headers.add_column(DataTablesColumn('Date Dernier Passage'))
+        if add_sum_of_visits_column:
+            headers.add_column(DataTablesColumn('Nombre de Passage'))
+        if add_availability_column:
+            headers.add_column(DataTablesColumn('Taux de Disponibilité de la gamme'))
+
+        context = self.create_context(
+            rows=rows, headers=headers, title=title
+        )
+
+        return context
+
+    def create_table_rows(self, displayed_values, add_amount_owed_column=False, add_latest_visit_column=False,
+                          add_sum_of_visits_column=False, add_availability_column=False):
+        rows = []
+        data = self.recap_rows
+
+        for pps in data.keys():
+            pps_data = data[pps]
+            pps_name = pps_data[0]['pps_name']
+            row = [pps_name]
+
+            most_recent_pps_data = self._get_most_recent_visits(pps_data)
+            pps_product_values = self.get_row_product_values(pps_data, displayed_values)
+            for name in self.product_names:
+                product_value = pps_product_values.get(name, {'html': 0})
+                row.append(product_value)
+
+            if add_amount_owed_column:
+                amount_sum = self._get_amount_owed(pps_data)
+
+                row.append(amount_sum)
+
+            if add_latest_visit_column:
+                latest_date = self._get_latest_date(most_recent_pps_data)
+
+                row.append(latest_date)
+
+            if add_sum_of_visits_column:
+                visits_for_pps = self._get_visits_for_pps(pps_data)
+
+                row.append(visits_for_pps)
+
+            if add_availability_column:
+                availability = self._get_availability(most_recent_pps_data)
+
+                row.append(availability)
+
+            rows.append(row)
+
+        return rows
+
+    def get_row_product_values(self, pps_data, column):
+        product_value = {}
+        for row in pps_data:
+            product_value[row['product_name']] = row.get(column, {'html': 0})
+        return product_value
+
+    def create_row_with_column_values_sum(self, row_name, rows, title_column=True):
+        if len(rows) == 0:
+            return None
+
+        new_row = [row_name]
+        rows = rows if not title_column else [row[1:] for row in rows]
+        number_of_columns = len(rows[0])
+
+        row_values = [0 for column in range(0, number_of_columns)]
+        for row in rows:
+            for index, column_value in enumerate(row):
+                row_values[index] += column_value['html'] if not column_value.get('percent', False) else 0
+
+        new_row.extend(row_values)
+        return new_row
+
+    def add_row_with_sum_value(self, row_name, value_name):
+        rows = self.create_table_rows(value_name, False)
+        sum_row = self.create_row_with_column_values_sum(row_name, rows)
+        return sum_row
+
+    @staticmethod
+    def _get_most_recent_visits(data):
+        data_to_return = []
+        fresh_records_dict = {}
+        for row in data:
+            pps_name = row['pps_name']
+            product_id = row['product_id']
+            if pps_name not in fresh_records_dict.keys():
+                fresh_records_dict[pps_name] = {
+                    product_id: row
+                }
+            else:
+                if product_id not in fresh_records_dict[pps_name].keys():
+                    fresh_records_dict[pps_name][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_name][product_id]['real_date_repeat']
+                    new_date = row['real_date_repeat']
+                    if new_date > date:
+                        fresh_records_dict[pps_name][product_id] = row
+
+        for pps_name, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                data_to_return.append(product_data)
+
+        return data_to_return
+
+    @staticmethod
+    def _get_latest_date(data):
+        return data[0]['real_date_repeat'].strftime('%Y/%m/%d')
+
+    @staticmethod
+    def _get_visits_for_pps(data):
+        visits = set()
+        for record in data:
+            visits.add(record['doc_id'])
+
+        return {'html': len(visits)}
+
+    def _get_availability(self, data):
+        products_available = 0
+        for record in data:
+            products_available += 1 if record['total_stock']['html'] else 0
+        availability = round((float(products_available / len(self.product_names)) * 100), 2)
+
+        return {
+            'html': f'{availability}%',
+            'percent': True,
+        }
+
+    @staticmethod
+    def _get_amount_owed(ppses_data):
+        to_return = 0
+        elements = []
+        for el in ppses_data:
+            el_name = el['pps_name']
+            amount = el.get('amount_owed', {'html': 0})['html']
+            date = el['real_date_repeat'].strftime('%Y/%m/%d')
+            product_name = el['product_name']
+            el_data = (amount, product_name, date, el_name)
+            if el_data not in elements:
+                elements.append(el_data)
+                to_return += amount
+
+        return {'html': to_return}
+
+    @staticmethod
+    def _save_value_if_unique(dictionary, dictionary_key, value):
+        if dictionary.get(dictionary_key, None):
+            dictionary[dictionary_key].add(value)
+        else:
+            dictionary[dictionary_key] = set()
+            dictionary[dictionary_key].add(value)
+
+    @staticmethod
+    def _sum_up(dictionary):
+        number = 0
+        for values in dictionary.values():
+            for value in values:
+                number += value[0]
+
+        return number
+
+
+class IndicateursDeBaseData(SqlData, LocationLevelMixin):
+    slug = 'indicateurs_de_base'
+    comment = ''
+    title = 'Indicateur de Base'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(IndicateursDeBaseData, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, INDICATEURS_DE_BASE)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def group_by(self):
+        return [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'date_prevue_livraison_debut',
+            'date_prevue_livraison_fin', 'nb_pps_enregistres',
+            'nb_pps_visites'
+        ]
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn('Date (Start)', SimpleColumn('date_prevue_livraison_debut')),
+            DatabaseColumn('Date (End)', SimpleColumn('date_prevue_livraison_fin')),
+            DatabaseColumn("NB PPS Enregistres", SimpleColumn('nb_pps_enregistres')),
+            DatabaseColumn("NB PPS Visites", SimpleColumn('nb_pps_visites')),
+        ]
+        return columns
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type in ['national', 'region']:
+            return 'region'
+        else:
+            return 'district'
+
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        else:
+            return 'district'
+
+    @property
+    def month(self):
+        if self.config['month']:
+            return int(self.config['month'])
+        return 1
+
+    @property
+    def year(self):
+        if self.config['year']:
+            return int(self.config['year'])
+        return 2008
+
+    @property
+    def min_date(self):
+        month = self.month
+        year = self.year
+        min_date = datetime.date(year, month, 1)
+
+        return min_date
+
+    @property
+    def max_date(self):
+
+        def last_day_of_month(any_day):
+            next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+            return next_month - datetime.timedelta(days=next_month.day)
+
+        max_date = last_day_of_month(self.min_date)
+
+        return max_date
+
+    def is_requested_location(self, location_name):
+        if self.config['location_id']:
+            try:
+                location = SQLLocation.objects.get(domain=self.config['domain'],
+                                                   location_id=self.config['location_id'])
+            except SQLLocation.DoesNotExist:
+                return False
+            if location.location_type.name != 'District':
+                location = SQLLocation.objects.filter(domain=self.config['domain'],
+                                                      parent=location.id)
+                location = [l.name for l in location]
+            else:
+                location = [location.name]
+
+            return location_name in location
+        else:
+            return True
+
+    @property
+    def filters(self):
+        filters = []
+
+        return filters
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+
+        rows_with_wanted_date = []
+        for row in rows:
+            min_date = row['date_prevue_livraison_debut']
+            max_date = row['date_prevue_livraison_fin']
+
+            location_name = row[self.loc_name_to_get]
+            if min_date >= self.min_date and max_date <= self.max_date \
+                    and self.is_requested_location(location_name):
+                rows_with_wanted_date.append(row)
+
+        for row in rows_with_wanted_date:
+            if row[self.loc_id_to_get] is None:
+                row[self.loc_id_to_get] = SQLLocation.objects.get(
+                    domain=self.config['domain'],
+                    name=row[self.loc_name_to_get]).location_id
+
+        def clean_rows(data_to_clean):
+            for data_row in data_to_clean:
+                data_row[self.loc_name_to_get] = data_row.get(self.loc_name_to_get, '')
+                data_row[self.loc_id_to_get] = data_row.get(self.loc_id_to_get, '')
+
+            sorted_rows = sorted(data_to_clean, key=lambda x: x.get(self.loc_name_to_get, ' '))
+            added_locations = []
+            data_for_locations = {}
+            data_to_return = []
+
+            for row in sorted_rows:
+                location_id = row[self.loc_id_to_get]
+                location_name = row[self.loc_name_to_get]
+                if location_id is None:
+                    location_id = location_name
+                nb_pps_enregistres = row['nb_pps_enregistres']
+                nb_pps_visites = row['nb_pps_visites']
+                tmp_min_date = row['date_prevue_livraison_debut']
+                tmp_max_date = row['date_prevue_livraison_fin']
+                if location_id not in added_locations:
+                    added_locations.append(location_id)
+                    data_for_locations[location_id] = {
+                        'location_name': location_name,
+                        'min_date': tmp_min_date,
+                        'max_date': tmp_max_date,
+                        'nb_pps_enregistres': nb_pps_enregistres,
+                        'nb_pps_visites': nb_pps_visites,
+                    }
+                else:
+                    data_for_locations[location_id]['nb_pps_enregistres'] += nb_pps_enregistres
+                    data_for_locations[location_id]['nb_pps_visites'] += nb_pps_visites
+                    current_min_date = data_for_locations[location_id]['min_date']
+                    current_max_date = data_for_locations[location_id]['max_date']
+                    if tmp_min_date < current_min_date:
+                        data_for_locations[location_id]['min_date'] = tmp_min_date
+                    if tmp_max_date < current_max_date:
+                        data_for_locations[location_id]['max_date'] = tmp_max_date
+
+            for location_id, location_info in data_for_locations.items():
+                data_to_return.append({
+                    'location_id': location_id,
+                    'location_name': location_info['location_name'],
+                    'min_date': location_info['min_date'],
+                    'max_date': location_info['max_date'],
+                    'nb_pps_enregistres': location_info['nb_pps_enregistres'],
+                    'nb_pps_visites': location_info['nb_pps_visites'],
+                })
+
+            return data_to_return
+
+        clean_data = clean_rows(rows_with_wanted_date)
+
+        return clean_data

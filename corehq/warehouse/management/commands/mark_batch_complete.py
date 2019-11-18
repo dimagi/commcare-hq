@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from django.core.management import BaseCommand
@@ -10,7 +8,7 @@ from corehq.warehouse.models import Batch
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py mark_batch_complete 222617b9-8cf0-40a2-8462-7f872e1f1344
+    Example: ./manage.py mark_batch_complete 22
     """
     help = "Usage: ./manage.py mark_batch_complete <batch_id>"
 

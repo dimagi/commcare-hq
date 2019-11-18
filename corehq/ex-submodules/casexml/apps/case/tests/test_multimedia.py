@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import uuid
 import os
@@ -15,6 +13,7 @@ from mock import patch
 
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
@@ -24,7 +23,6 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
-from io import open
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -82,8 +80,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
     def _attachmentFileStream(self, key):
         attachment_path = MEDIA_FILES[key]
         attachment = open(attachment_path, 'rb')
-        uf = UploadedFile(attachment, key)
-        return uf
+        return NoClose(UploadedFile(attachment, key))
 
     def _calc_file_hash(self, key):
         with open(MEDIA_FILES[key], 'rb') as attach:
@@ -91,15 +88,17 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
 
     def _do_submit(self, xml_data, dict_attachments, sync_token=None, date=None):
         """
-        RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
+        RequestFactory submitter - simulates direct submission to server
+        directly (no need to call process case after fact)
         """
-        result = submit_form_locally(
-            xml_data,
-            TEST_DOMAIN_NAME,
-            attachments=dict_attachments,
-            last_sync_token=sync_token,
-            received_on=date
-        )
+        with flag_enabled('MM_CASE_PROPERTIES'):
+            result = submit_form_locally(
+                xml_data,
+                TEST_DOMAIN_NAME,
+                attachments=dict_attachments,
+                last_sync_token=sync_token,
+                received_on=date
+            )
         attachments = result.xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
@@ -207,7 +206,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, case = self._doCreateCaseWithMultimedia()
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attachment_sql = case.case_attachments['fruity_file']
-            self.assertTrue(len(attachment_sql.read_content()) > 0)
+            with attachment_sql.open() as content:
+                self.assertTrue(content.read(1))
 
         new_attachments = []
         removes = ['fruity_file']
@@ -292,7 +292,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             )
 
     def test_sync_log_invalidation_bug(self):
-        sync_log = FormProcessorInterface().sync_log_model(
+        sync_log = SimplifiedSyncLog(
             user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
         )
         sync_log.save()
@@ -343,3 +343,19 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
 @use_sql_backend
 class CaseMultimediaS3DBTestSQL(CaseMultimediaS3DBTest):
     pass
+
+
+class NoClose(object):
+    """HACK file object with no-op `close()` to avoid close by S3Transfer
+
+    https://github.com/boto/s3transfer/issues/80
+    """
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def __getattr__(self, name):
+        return getattr(self.fileobj, name)
+
+    def close(self):
+        pass

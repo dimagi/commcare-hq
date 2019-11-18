@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from memoized import memoized
+
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     Document,
@@ -9,9 +8,10 @@ from dimagi.ext.couchdbkit import (
     SchemaListProperty,
     StringProperty,
 )
+
 from corehq.apps.app_manager.models import Application
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
-from memoized import memoized
 
 
 class AppGroup(DocumentSchema):

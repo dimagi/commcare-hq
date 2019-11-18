@@ -1,79 +1,88 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
+from contextlib import closing, contextmanager
 from io import BytesIO
-from contextlib import contextmanager, closing
 
-from django.http.response import HttpResponseServerError
-from django.shortcuts import redirect, render
-
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
-from corehq.apps.reports_core.filters import Choice, PreFilter
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_nvd3,
-    use_datatables,
-)
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-from corehq.apps.userreports.tasks import export_ucr_async
-
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
+from django.http.response import HttpResponseServerError
+from django.shortcuts import redirect, render
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
 from braces.views import JSONResponseMixin
-from corehq.apps.locations.permissions import conditionally_location_safe
-from corehq.apps.reports.dispatcher import (
-    ReportDispatcher,
-)
-from corehq.apps.reports.models import ReportConfig
-from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    UserReportsError,
-    TableNotFoundWarning,
-    UserReportsFilterError,
-    DataSourceConfigurationNotFoundError)
-from corehq.apps.userreports.models import (
-    CUSTOM_REPORT_PREFIX,
-    StaticReportConfiguration,
-    ReportConfiguration,
-    report_config_id_is_static,
-)
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.reports.util import (
-    ReportExport,
-    has_location_filter,
-)
-from corehq.apps.userreports.util import (
-    default_language,
-    has_report_builder_trial,
-    has_report_builder_access,
-    can_edit_report,
-    get_ucr_class_name)
-from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
-    DocumentNotFound
-from corehq.util.view_utils import reverse
-from couchexport.models import Format
 from memoized import memoized
 
+from couchexport.models import Format
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request
-from no_exceptions.exceptions import Http403
-
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
+from corehq.apps.domain.decorators import track_domain_request
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_daterangepicker,
+    use_jquery_ui,
+    use_nvd3,
+)
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
-import six
+from corehq.apps.reports.dispatcher import ReportDispatcher
+from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports_core.exceptions import FilterException
+from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    REPORT_BUILDER_EVENTS_KEY,
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    TableNotFoundWarning,
+    UserReportsError,
+    UserReportsFilterError,
+)
+from corehq.apps.userreports.models import (
+    CUSTOM_REPORT_PREFIX,
+    ReportConfiguration,
+    StaticReportConfiguration,
+    report_config_id_is_static,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.apps.userreports.reports.util import (
+    ReportExport,
+    has_location_filter,
+)
+from corehq.apps.userreports.tasks import export_ucr_async
+from corehq.apps.userreports.util import (
+    can_edit_report,
+    default_language,
+    get_ucr_class_name,
+    has_report_builder_access,
+    has_report_builder_trial,
+)
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
+from corehq.util.couch import (
+    DocumentNotFound,
+    get_document_or_404,
+    get_document_or_not_found,
+)
+from corehq.util.view_utils import reverse
+from no_exceptions.exceptions import Http403
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -90,7 +99,7 @@ def get_filter_values(filters, request_dict, user=None):
             for filter in filters
         }
     except FilterException as e:
-        raise UserReportsFilterError(six.text_type(e))
+        raise UserReportsFilterError(str(e))
 
 
 def query_dict_to_dict(query_dict, domain, string_type_params):
@@ -110,9 +119,12 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        u_key = six.text_type(key)  # QueryDict's key/values are unicode strings
-        if u_key in query_dict:
-            request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
+        if key in query_dict:
+            vals = query_dict.getlist(key)
+            if len(vals) > 1:
+                request_dict[key] = vals
+            else:
+                request_dict[key] = vals[0]
     return request_dict
 
 
@@ -140,11 +152,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super(ConfigurableReportView, self).domain
 
-    @use_select2
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -216,10 +228,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             for filter in self.filters
             if getattr(filter, 'datatype', 'string') == "string"
         ]
-        if self.request.method == 'GET':
-            return query_dict_to_dict(self.request.GET, self.domain, string_type_params)
-        elif self.request.method == 'POST':
-            return query_dict_to_dict(self.request.POST, self.domain, string_type_params)
+        query_dict = self.request.GET if self.request.method == 'GET' else self.request.POST
+        return query_dict_to_dict(query_dict, self.domain, string_type_params)
 
     @property
     @memoized
@@ -287,7 +297,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                         'You may need to delete and recreate the report. '
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
-                    details = six.text_type(e)
+                    details = str(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
                     'report_id': self.report_config_id,
@@ -329,7 +339,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
@@ -387,21 +397,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
     def get_ajax(self, params):
+        sort_column = params.get('iSortCol_0')
+        sort_order = params.get('sSortDir_0', 'ASC')
+        echo = int(params.get('sEcho', 1))
+        datatables_params = DatatablesParams.from_request_dict(params)
+
         try:
             data_source = self.data_source
             if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
-            sort_column = params.get('iSortCol_0')
-            sort_order = params.get('sSortDir_0', 'ASC')
-            echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
                     [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
-            datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
@@ -409,7 +420,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': e.message,
+                'error': str(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,
@@ -483,7 +494,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 if isinstance(value, Choice):
                     values.append(value.display)
                 else:
-                    values.append(six.text_type(value))
+                    values.append(str(value))
             return ', '.join(values)
         elif isinstance(filter_value, DateSpan):
             return filter_value.default_serialization()
@@ -491,23 +502,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if isinstance(filter_value, Choice):
                 return filter_value.display
             else:
-                return six.text_type(filter_value)
-
-    def _get_filter_values(self):
-        slug_to_filter = {
-            ui_filter.name: ui_filter
-            for ui_filter in self.filters
-        }
-
-        filters_without_prefilters = {
-            filter_slug: filter_value
-            for filter_slug, filter_value in six.iteritems(self.filter_values)
-            if not isinstance(slug_to_filter[filter_slug], PreFilter)
-        }
-
-        for filter_slug, filter_value in six.iteritems(filters_without_prefilters):
-            label = slug_to_filter[filter_slug].label
-            yield label, self._get_filter_export_format(filter_value)
+                return str(filter_value)
 
     @property
     @memoized
@@ -525,9 +520,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             try:
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
-                return self.render_json_response({'error': six.text_type(e)})
+                return self.render_json_response({'error': str(e)})
             return HttpResponse(json.dumps({
-                'report': temp.getvalue(),
+                'report': temp.getvalue().decode('utf-8'),
             }), content_type='application/json')
 
     @property

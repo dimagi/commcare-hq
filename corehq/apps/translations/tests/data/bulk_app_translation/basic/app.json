@@ -1,0 +1,747 @@
+{
+  "multimedia_map": {
+
+  },
+  "build_langs": [
+    "en",
+    "fra"
+  ],
+  "auto_gps_capture": false,
+  "deployment_date": null,
+  "user_type": null,
+  "text_input": "roman",
+  "secure_submissions": true,
+  "build_broken": false,
+  "phone_model": null,
+  "build_signed": true,
+  "recipients": "",
+  "copy_history": [
+
+  ],
+  "platform": "nokia\/s40",
+  "application_version": "2.0",
+  "is_released": false,
+  "admin_password": null,
+  "build_spec": {
+    "doc_type": "BuildSpec",
+    "version": "2.0.0",
+    "build_number": null,
+    "latest": true
+  },
+  "admin_password_charset": "n",
+  "logo_refs": {
+
+  },
+  "success_message": {
+
+  },
+  "profile": {
+    "features": {
+      "users": "true",
+      "sense": "false"
+    },
+    "properties": {
+      "cc-days-form-retain": "-1",
+      "cc-show-saved": "yes",
+      "restore-tolerance": "loose",
+      "cc-user-mode": "cc-u-normal",
+      "cc-autoup-freq": "freq-never",
+      "purge-freq": "0",
+      "server-tether": "push-only",
+      "user_reg_server": "required",
+      "extra_key_action": "audio",
+      "log_prop_daily": "log_never",
+      "ViewStyle": "v_chatterbox",
+      "cc-resize-images": "none",
+      "cc-entry-mode": "cc-entry-quick",
+      "cc-send-procedure": "cc-send-http",
+      "cc-login-images": "No",
+      "log_prop_weekly": "log_short",
+      "cc-show-incomplete": "yes",
+      "cc-send-unsent": "cc-su-auto",
+      "loose_media": "no",
+      "password_format": "n",
+      "unsent-number-limit": "5",
+      "cc-content-valid": "no",
+      "logenabled": "Enabled"
+    }
+  },
+  "amplifies_workers": "not_set",
+  "comment_from": null,
+  "cloudcare_enabled": true,
+  "description": null,
+  "user_registration": {
+    "doc_type": "UserRegistrationForm",
+    "xmlns": null,
+    "name": {
+
+    },
+    "password_path": "password",
+    "auto_gps_capture": false,
+    "schedule_form_id": null,
+    "show_count": false,
+    "version": null,
+    "no_vellum": false,
+    "form_links": [
+
+    ],
+    "post_form_workflow": "default",
+    "form_type": "user_registration",
+    "data_paths": {
+
+    },
+    "unique_id": "a42522b72cd4f6917b1506ff9f8634dd6ead736c",
+    "username_path": "username"
+  },
+  "translations": {
+
+  },
+  "built_on": null,
+  "built_with": {
+    "doc_type": "BuildRecord",
+    "build_number": null,
+    "signed": true,
+    "datetime": null,
+    "version": null,
+    "latest": null
+  },
+  "langs": [
+    "en",
+    "fra"
+  ],
+  "use_custom_suite": false,
+  "build_comment": null,
+  "build_broken_reason": null,
+  "doc_type": "Application",
+  "cached_properties": {
+
+  },
+  "name": "temp: bulk app translation test",
+  "amplifies_project": "not_set",
+  "modules": [
+    {
+      "case_label": {
+        "fra": "Cases",
+        "en": "Cases"
+      },
+      "name": {
+        "en": "My & awesome module",
+        "es": "Mi cosa increíble"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": {
+
+        },
+        "media_image": {
+
+        },
+        "label": {
+
+        }
+      },
+      "media_image": null,
+      "parent_select": {
+        "active": false,
+        "module_id": null,
+        "relationship": "parent",
+        "doc_type": "ParentSelect"
+      },
+      "case_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+
+          ],
+          "tabs": [
+
+          ],
+          "lookup_responses": [
+
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+
+              ],
+              "header": {
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "graph_configuration": {
+                "doc_type": "GraphConfiguration",
+                "series": [
+
+                ],
+                "locale_specific_config": {
+
+                },
+                "graph_type": null,
+                "config": {
+
+                },
+                "annotations": [
+
+                ]
+              },
+              "advanced": ""
+            }
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+
+          ],
+          "tabs": [
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Name in English",
+                    "fra": "Name in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 0
+            },
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Other in English",
+                    "fra": "Other in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 1
+            }
+          ],
+          "lookup_responses": [
+
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "isTab": false,
+              "enum": [
+
+              ],
+              "late_flag": 30,
+              "header": {
+                "fra": "",
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            },
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "enum",
+              "isTab": false,
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "value": {
+                    "en": "bar"
+                  },
+                  "key": "foo"
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "value": {
+                    "en": "quz"
+                  },
+                  "key": "baz"
+                }
+              ],
+              "late_flag": 30,
+              "header": {
+                "fra": "Autre Prop",
+                "en": "Other Prop"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "calc_xpath": ".",
+              "field": "other-prop",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". < 3",
+                  "value": {
+                    "en": ":(",
+                    "fra": ":-("
+                  }
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". >= 3",
+                  "value": {
+                    "en": ":)",
+                    "fra": ":-)"
+                  }
+                }
+              ],
+              "field": "mood",
+              "filter_xpath": "",
+              "format": "conditional-enum",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Mood"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". < 3",
+                  "value": {
+                    "en": "jr://file/commcare/image/module1_list_icon_energy_high.jpg",
+                    "fra": "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"
+                  }
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". >= 3",
+                  "value": {
+                    "en": "jr://file/commcare/image/module1_list_icon_energy_low.jpg",
+                    "fra": "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"
+                  }
+                }
+              ],
+              "field": "energy",
+              "filter_xpath": "",
+              "format": "enum-image",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Energy"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+
+              ],
+              "field": "line_graph",
+              "filter_xpath": "",
+              "format": "graph",
+              "graph_configuration": {
+                "annotations": [],
+                "config": {},
+                "doc_type": "GraphConfiguration",
+                "graph_name": "Velocity",
+                "graph_type": "xy",
+                "locale_specific_config": {
+                    "secondary-y-title": {},
+                    "x-title": {
+                      "en": "Time"
+                    },
+                    "y-title": {
+                      "en": "Speed"
+                    }
+                },
+                "series": [
+                  {
+                    "data_path": "instance('casedb')/casedb/case[@case_type='bird'][@status='open'][index/parent=current()/@case_id]",
+                    "doc_type": "GraphSeries",
+                    "locale_specific_config": {
+                      "name": {
+                        "en": "Bird"
+                      }
+                    },
+                    "radius_function": null,
+                    "x_function": "x",
+                    "y_function": "y"
+                  },
+                  {
+                    "data_path": "instance('casedb')/casedb/case[@case_type='cheetah'][@status='open'][index/parent=current()/@case_id]",
+                    "doc_type": "GraphSeries",
+                    "locale_specific_config": {
+                      "name": {
+                        "en": "Cheetah"
+                      }
+                    },
+                    "radius_function": null,
+                    "x_function": "x",
+                    "y_function": "y"
+                  }
+                ]
+              },
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Velocity"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
+            }
+          ]
+        }
+      },
+      "case_type": "",
+      "case_list": {
+        "doc_type": "CaseList",
+        "show": true,
+        "media_audio": {
+
+        },
+        "media_image": {
+
+        },
+        "label": {
+
+        }
+      },
+      "module_filter": null,
+      "doc_type": "Module",
+      "module_type": "basic",
+      "put_in_root": false,
+      "case_list_form": {
+        "doc_type": "CaseListForm",
+        "label": {
+          "en": "Register Mother"
+        },
+        "media_audio": {
+
+        },
+        "form_id": "6c6c6315b3c514c616b6c57d48f7cf7c963f1714",
+        "media_image": {
+
+        }
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": {
+
+        },
+        "media_image": {
+
+        },
+        "label": {
+
+        }
+      },
+      "fixture_select": {
+        "xpath": "",
+        "doc_type": "FixtureSelect",
+        "variable_column": null,
+        "fixture_type": null,
+        "active": false,
+        "localize": false,
+        "display_column": null
+      },
+      "forms": [
+        {
+          "doc_type": "Form",
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/A181BAB5-EDDF-4888-B703-FAD79F325398",
+          "name": {
+            "en": "My more & awesome form"
+          },
+          "auto_gps_capture": false,
+          "schedule_form_id": null,
+          "show_count": false,
+          "media_audio": null,
+          "post_form_workflow": "default",
+          "requires": "none",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [
+
+            ],
+            "usercase_preload": {
+              "preload": {
+
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+
+              },
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "open_case": {
+              "name_path": null,
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+
+              },
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
+            },
+            "referral_preload": {
+              "preload": {
+
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {
+
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "form_links": [
+
+          ],
+          "media_image": null,
+          "form_type": "module_form",
+          "form_filter": "",
+          "unique_id": "6c6c6315b3c514c616b6c57d48f7cf7c963f1714"
+        }
+      ],
+      "root_module_id": null,
+      "ref_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+
+          ],
+          "tabs": [
+
+          ],
+          "lookup_responses": [
+
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+
+          ],
+          "tabs": [
+
+          ],
+          "lookup_responses": [
+
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+
+          ]
+        }
+      },
+      "media_audio": null,
+      "unique_id": "8f4f7085a93506cba4295eab9beae8723c0cee2a",
+      "referral_label": {
+        "fra": "Referrals",
+        "en": "Referrals"
+      }
+    }
+  ],
+  "created_from_template": null,
+  "_attachments": {
+    "6c6c6315b3c514c616b6c57d48f7cf7c963f1714.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>My more &amp; awesome form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/A181BAB5-EDDF-4888-B703-FAD79F325398\" uiVersion=\"1\" version=\"1\" name=\"My more &amp; awesome form\">\n\t\t\t\t\t<question1 \/>\n\t\t\t\t\t<question2 \/>\n\t\t\t\t\t<question3>\n\t\t\t\t\t\t<question4 \/>\n\t\t\t\t\t\t<question5 \/>\n\t\t\t\t\t<\/question3>\n\t\t\t\t\t<question7 \/>\n\t\t\t\t\t<question6 \/>\n\t\t\t\t\t<add_markdown \/>\n\t\t\t\t\t<update_markdown \/>\n\t\t\t\t\t<remove_markdown \/>\n\t\t\t\t\t<vetoed_markdown \/>\n\t\t\t\t\t<blank_value_node \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/question1\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/question2\" \/>\n\t\t\t<bind nodeset=\"\/data\/question3\" \/>\n\t\t\t<bind nodeset=\"\/data\/question3\/question4\" type=\"xsd:int\" \/>\n\t\t\t<bind nodeset=\"\/data\/question3\/question5\" \/>\n\t\t\t<bind nodeset=\"\/data\/question7\" type=\"xsd:date\" \/>\n\t\t\t<bind nodeset=\"\/data\/question6\" \/>\n\t\t\t<bind nodeset=\"\/data\/add_markdown\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/update_markdown\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/remove_markdown\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/vetoed_markdown\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/blank_value_node\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-label\">\n\t\t\t\t\t\t<value>question2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-item1-label\">\n\t\t\t\t\t\t<value>item1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-item2-label\">\n\t\t\t\t\t\t<value>item2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3-label\">\n\t\t\t\t\t\t<value>question3<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3\/question4-label\">\n\t\t\t\t\t\t<value>question4<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3\/question5-label\">\n\t\t\t\t\t\t<value>question5<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question7-label\">\n\t\t\t\t\t\t<value>question7<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"add_markdown-label\">\n\t\t\t\t\t\t<value>add_markdown<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"update_markdown-label\">\n\t\t\t\t\t\t<value># update_markdown with हिन्दी<\/value>\n\t\t\t\t\t\t<value form=\"markdown\"># update_markdown with हिन्दी<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"remove_markdown-label\">\n\t\t\t\t\t\t<value># remove_markdown with हिन्दी<\/value>\n\t\t\t\t\t\t<value form=\"markdown\"># remove_markdown with हिन्दी<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"vetoed_markdown-label\">\n\t\t\t\t\t\t<value>*i just happen to like stars*<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"blank_value_node-label\">\n\t\t\t\t\t\t<value>blank_value_node<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t\t<translation lang=\"hin\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-label\">\n\t\t\t\t\t\t<value>question2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-item1-label\">\n\t\t\t\t\t\t<value>item1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question2-item2-label\">\n\t\t\t\t\t\t<value>item2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3-label\">\n\t\t\t\t\t\t<value>question3<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3\/question4-label\">\n\t\t\t\t\t\t<value>question4<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question3\/question5-label\">\n\t\t\t\t\t\t<value>question5<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"question7-label\">\n\t\t\t\t\t\t<value>question7<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"add_markdown-label\">\n\t\t\t\t\t\t<value>add_markdown<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"update_markdown-label\">\n\t\t\t\t\t\t<value># update_markdown with हिन्दी<\/value>\n\t\t\t\t\t\t<value form=\"markdown\"><\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"remove_markdown-label\">\n\t\t\t\t\t\t<value># remove_markdown with हिन्दी<\/value>\n\t\t\t\t\t\t<value form=\"markdown\"><\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"vetoed_markdown-label\">\n\t\t\t\t\t\t<value>*i just happen to like stars*<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"blank_value_node-label\">\n\t\t\t\t\t\t<value>blank_value_node<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" \/>\n\t\t<\/input>\n\t\t<select1 ref=\"\/data\/question2\">\n\t\t\t<label ref=\"jr:itext('question2-label')\" \/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question2-item1-label')\" \/>\n\t\t\t\t<value>item1<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question2-item2-label')\" \/>\n\t\t\t\t<value>item2<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<group ref=\"\/data\/question3\">\n\t\t\t<label ref=\"jr:itext('question3-label')\" \/>\n\t\t\t<input ref=\"\/data\/question3\/question4\">\n\t\t\t\t<label ref=\"jr:itext('question3\/question4-label')\" \/>\n\t\t\t<\/input>\n\t\t\t<trigger ref=\"\/data\/question3\/question5\" appearance=\"minimal\">\n\t\t\t\t<label ref=\"jr:itext('question3\/question5-label')\" \/>\n\t\t\t<\/trigger>\n\t\t<\/group>\n\t\t<input ref=\"\/data\/question7\">\n\t\t\t<label ref=\"jr:itext('question7-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/add_markdown\">\n\t\t\t<label ref=\"jr:itext('add_markdown-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/update_markdown\">\n\t\t\t<label ref=\"jr:itext('update_markdown-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/remove_markdown\">\n\t\t\t<label ref=\"jr:itext('remove_markdown-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/vetoed_markdown\">\n\t\t\t<label ref=\"jr:itext('vetoed_markdown-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/blank_value_node\">\n\t\t\t<label ref=\"jr:itext('blank_value_node-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
+  },
+  "attribution_notes": null,
+  "translation_strategy": "select-known",
+  "case_sharing": false,
+  "show_user_registration": false
+}

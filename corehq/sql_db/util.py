@@ -1,29 +1,30 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+import re
 import uuid
 from collections import defaultdict
-from numpy import random
-
-from django.conf import settings
-from django import db
-from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
-from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
-import six
+from random import choices
+
+from django import db
+from django.conf import settings
+from django.db import OperationalError
+from django.db.utils import DEFAULT_DB_ALIAS
+from django.db.utils import InterfaceError as DjangoInterfaceError
+
 from memoized import memoized
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 from corehq.sql_db.config import partition_config
+from corehq.util.datadog.utils import load_counter_for_model
 from corehq.util.quickcache import quickcache
-
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
 
 
-def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
+def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
+                                                values=None, load_source=None):
     """
-    Runs a query across all partitioned databases and produces a generator
+    Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
 
     :param model_class: A Django model class
@@ -31,40 +32,24 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
     :param q_expression: An instance of django.db.models.Q representing the
     filter to apply
 
-    :param values: (optional) If specified, should be a list of values to retrieve rather
-    than retrieving entire objects. If a list with a single value is given, the result will
-    be a generator of single values. If a list with multiple values is given, the result
-    will be a generator of tuples.
-
-    :param annotate: (optional) If specified, should by a dictionary of annotated fields
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
     and their calculations. The dictionary will be splatted into the `.annotate` function
+
+    :param values: (optional) If specified, should be a list of values to retrieve rather
+    than retrieving entire objects.
 
     :return: A generator with the results
     """
     db_names = get_db_aliases_for_partitioned_query()
-
-    if values and not isinstance(values, (list, tuple)):
-        raise ValueError("Expected a list or tuple")
-
     for db_name in db_names:
-        qs = model_class.objects.using(db_name)
-        if annotate:
-            qs = qs.annotate(**annotate)
-
-        qs = qs.filter(q_expression)
-        if values:
-            if len(values) == 1:
-                qs = qs.values_list(*values, flat=True)
-            else:
-                qs = qs.values_list(*values)
-
-        for result in qs.iterator():
-            yield result
+        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values, load_source):
+            yield row
 
 
-def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000):
+def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None,
+                   load_source=None):
     """
-    Runs a query across all partitioned databases in small chunks and produces a generator
+    Runs a query on the given database in small chunks and produces a generator
     with the results.
 
     Iteration logic adopted from https://djangosnippets.org/snippets/1949/
@@ -74,29 +59,85 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     :param q_expression: An instance of django.db.models.Q representing the
     filter to apply
 
-    :param annotate: (optional) If specified, should by a dictionary of annotated fields
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
     and their calculations. The dictionary will be splatted into the `.annotate` function
+
+    :param values: (optional) If specified, should be a list of values to retrieve rather
+    than retrieving entire objects.
 
     :return: A generator with the results
     """
+
+    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags=['db:{}'.format(db_name)])
+    sort_col = 'pk'
+
+    return_values = None
+    if values:
+        return_values = [sort_col] + values
+
+    qs = model_class.objects.using(db_name)
+    if annotate:
+        qs = qs.annotate(**annotate)
+
+    qs = qs.filter(q_expression).order_by(sort_col)
+
+    if return_values:
+        qs = qs.values_list(*return_values)
+
+    filter_expression = {}
+    while True:
+        results = qs.filter(**filter_expression)[:query_size]
+        for row in results:
+            track_load()
+            if return_values:
+                value = row[0]
+                yield row[1:]
+            else:
+                value = row.pk
+                yield row
+
+        if len(results) < query_size:
+            break
+
+        filter_expression = {'{}__gt'.format(sort_col): value}
+
+
+def estimate_partitioned_row_count(model_class, q_expression):
+    """Estimate query row count summed across all partitions"""
     db_names = get_db_aliases_for_partitioned_query()
+    query = model_class.objects.using(db_names[0]).filter(q_expression)
+    return estimate_row_count(query, db_names)
 
-    for db_name in db_names:
-        qs = model_class.objects.using(db_name)
-        if annotate:
-            qs = qs.annotate(**annotate)
 
-        qs = qs.filter(q_expression)
-        sort_col = 'pk'
-        value = 0
-        last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
-        if last_value is not None:
-            qs = qs.order_by(sort_col)
-            while value < last_value:
-                filter_expression = {'{}__gt'.format(sort_col): value}
-                for row in qs.filter(**filter_expression)[:query_size]:
-                    value = row.pk
-                    yield row
+def estimate_row_count(query, db_name="default"):
+    """Estimate query row count
+
+    Source:
+    https://www.citusdata.com/blog/2016/10/12/count-performance/#dup_counts_estimated_filtered
+
+    :param query: A queryset or two-tuple `(<SQL string>, <bind params>)`.
+    :param db_name: A database name (str) or sequence of database names
+    to query. The sum of counts from all databases will be returned.
+    """
+    def count(db_name):
+        with db.connections[db_name].cursor() as cursor:
+            cursor.execute(sql, params)
+            lines = [line for line, in cursor.fetchall()]
+            for line in lines:
+                match = rows_expr.search(line)
+                if match:
+                    return int(match.group(1))
+            return 0
+
+    rows_expr = re.compile(r" rows=(\d+) ")
+    if hasattr(query, "query"):
+        sql, params = query.query.sql_with_params()
+    else:
+        sql, params = query
+    sql = f"EXPLAIN {sql}"
+    if isinstance(db_name, str):
+        return count(db_name)
+    return sum(count(db_) for db_ in db_name)
 
 
 def split_list_by_db_partition(partition_values):
@@ -116,20 +157,20 @@ def get_db_alias_for_partitioned_doc(partition_value):
         from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
         db_name = ShardAccessor.get_database_for_doc(partition_value)
     else:
-        db_name = 'default'
+        db_name = DEFAULT_DB_ALIAS
     return db_name
 
 
 def get_db_aliases_for_partitioned_query():
     if settings.USE_PARTITIONED_DATABASE:
-        db_names = partition_config.get_form_processing_dbs()
+        db_names = partition_config.form_processing_dbs
     else:
-        db_names = ['default']
+        db_names = [DEFAULT_DB_ALIAS]
     return db_names
 
 
 def get_default_db_aliases():
-    return ['default']
+    return [DEFAULT_DB_ALIAS]
 
 
 def get_all_db_aliases():
@@ -149,7 +190,7 @@ def new_id_in_same_dbalias(partition_value):
     new_db_name = None
     while old_db_name != new_db_name:
         # todo; guard against infinite recursion
-        new_partition_value = six.text_type(uuid.uuid4())
+        new_partition_value = str(uuid.uuid4())
         new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
     return new_partition_value
 
@@ -204,13 +245,13 @@ def _get_all_nested_subclasses(cls):
 
 @memoized
 def get_standby_databases():
-    standby_dbs = []
+    standby_dbs = set()
     for db_alias in settings.DATABASES:
         with db.connections[db_alias].cursor() as cursor:
             cursor.execute("SELECT pg_is_in_recovery()")
             [(is_standby, )] = cursor.fetchall()
             if is_standby:
-                standby_dbs.append(db_alias)
+                standby_dbs.add(db_alias)
     return standby_dbs
 
 
@@ -219,55 +260,74 @@ def get_replication_delay_for_standby(db_alias):
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-    if db_alias not in get_standby_databases():
-        return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
-    sql = """
-    SELECT
-    CASE
-        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
-        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
-        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
-    END
-    AS replication_lag;
-    """.format(delay=VERY_LARGE_DELAY)
-    with db.connections[db_alias].cursor() as cursor:
-        cursor.execute(sql)
-        [(delay, )] = cursor.fetchall()
-        return delay
+    try:
+        sql = """
+        SELECT
+        CASE
+            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN %(delay)s
+            WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+            ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+        END
+        AS replication_lag;
+        """
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute(sql, {'delay': VERY_LARGE_DELAY})
+            [(delay, )] = cursor.fetchall()
+            return delay
+    except OperationalError:
+        return VERY_LARGE_DELAY
 
 
 @memoized
-def get_standby_delays_by_db():
+def get_acceptible_replication_delays():
+    """This returns a dict mapping DB alias to max replication delay.
+    Note: this assigns a default value to any DB that does not have
+    an explicit value set (including master databases)."""
     ret = {}
-    for _db, config in six.iteritems(settings.DATABASES):
-        delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
-        if delay:
-            ret[_db] = delay
+    for db_, config in settings.DATABASES.items():
+        delay = config.get('STANDBY', {}).get('ACCEPTABLE_REPLICATION_DELAY')
+        if delay is None:
+            # try legacy setting
+            delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
+            if delay is None:
+                delay = ACCEPTABLE_STANDBY_DELAY_SECONDS
+
+        ret[db_] = delay
     return ret
 
 
-@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
-def filter_out_stale_standbys(dbs):
-    # from given list of databases filters out those with more than
-    #   acceptable standby delay, if that database is a standby
-    delays_by_db = get_standby_delays_by_db()
-    return [
-        db
-        for db in dbs
-        if get_replication_delay_for_standby(db) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
-    ]
+@quickcache(
+    [], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING,
+    memoize_timeout=STALE_CHECK_FREQUENCY, session_function=None
+)
+def get_standbys_with_acceptible_delay():
+    """:returns: set of database aliases that are configured as standbys and have replication
+                 delay below the configured threshold
+    """
+    delays_by_db = get_acceptible_replication_delays()
+    return {
+        db_ for db_ in get_standby_databases()
+        if get_replication_delay_for_standby(db_) <= delays_by_db[db_]
+    }
+
+
+def get_databases_for_read_query(candidate_dbs):
+    all_standbys = get_standby_databases()
+    queryable_standbys = get_standbys_with_acceptible_delay()
+    masters = candidate_dbs - all_standbys
+    ok_standbys = candidate_dbs & queryable_standbys
+    return masters | ok_standbys
 
 
 def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
         a list of databases. If any database is standby and its replication has
-        more than accesptable delay, that db is dropped from selection
+        more than acceptable delay, that db is dropped from selection
 
     Args:
         weighted_dbs: a list of tuple of db and the weight.
@@ -277,20 +337,18 @@ def select_db_for_read(weighted_dbs):
             ]
 
     """
-    # convert to a db to weight dictionary
-    weights_by_db = {_db: weight for _db, weight in weighted_dbs}
+    if not weighted_dbs:
+        return
 
-    # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(weights_by_db)
+    weights_by_db = {db_: weight for db_, weight in weighted_dbs}
+    fresh_dbs = get_databases_for_read_query(set(weights_by_db))
+
     dbs = []
     weights = []
-    for _db, weight in six.iteritems(weights_by_db):
+    for _db, weight in weights_by_db.items():
         if _db in fresh_dbs:
             dbs.append(_db)
             weights.append(weight)
 
     if dbs:
-        # normalize weights of remaining dbs
-        total_weight = sum(weights)
-        normalized_weights = [float(weight) / total_weight for weight in weights]
-        return random.choice(dbs, p=normalized_weights)
+        return choices(dbs, weights=weights)[0]

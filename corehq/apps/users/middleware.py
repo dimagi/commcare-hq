@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.conf import settings
 import django.core.exceptions
+from django.conf import settings
 from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
-from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
+from corehq.apps.users.models import AnonymousCouchUser, CouchUser, InvalidUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 

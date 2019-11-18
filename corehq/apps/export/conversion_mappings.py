@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
-    USERNAME_TRANSFORM,
     OWNER_ID_TRANSFORM,
+    USERNAME_TRANSFORM,
 )
 from corehq.apps.export.models import PathNode
 

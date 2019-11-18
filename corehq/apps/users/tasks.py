@@ -1,61 +1,56 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
+from django.conf import settings
+from django.db import transaction
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
-from django.urls import reverse
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from couchdbkit import ResourceConflict, BulkSaveError
+from couchdbkit import BulkSaveError, ResourceConflict
+
 from casexml.apps.case.mock import CaseBlock
-
-from corehq import toggles
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.models import UserArchivedRebuild
+from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.exceptions import UnexpectedDeletedXForm
-from corehq.apps.domain.models import Domain
-from django.utils.html import format_html
-
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
-from casexml.apps.case.xform import get_case_ids_from_form
-from six.moves import map
+
+from corehq import toggles
+from corehq.apps.domain.models import Domain
+from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.models import UserArchivedRebuild
+from corehq.util.celery_utils import deserialize_run_every_setting
 
 logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle')
 def bulk_upload_async(domain, user_specs, group_specs):
-    from corehq.apps.users.bulkupload import create_or_update_users_and_groups
-    task = bulk_upload_async
-    DownloadBase.set_progress(task, 0, 100)
-    results = create_or_update_users_and_groups(
-        domain,
-        user_specs,
-        group_specs,
-        task=task,
-    )
-    DownloadBase.set_progress(task, 100, 100)
-    return {
-        'messages': results
-    }
+    # remove this after deploying `import_users_and_groups`
+    return import_users_and_groups(domain, user_specs, group_specs)
 
 
-@task(serializer='pickle', )
+@task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters):
-    from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
-    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
+    from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
     errors = []
     try:
         dump_users_and_groups(
             domain,
             download_id,
-            user_filters
+            user_filters,
+            bulk_download_users_async,
         )
     except GroupNameError as e:
         group_urls = [
@@ -84,7 +79,6 @@ def bulk_download_users_async(domain, download_id, user_filters):
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))
 
-    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
     return {
         'errors': errors
     }
@@ -94,6 +88,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -203,7 +198,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }
-        ).as_string()
+        ).as_text()
         for index_info in indexes_referencing_deleted_cases
         if index_info.case_id not in deleted_ids
     ]
@@ -231,7 +226,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             )
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour=23, minute=55),
     queue='background_queue',
 )
@@ -240,8 +235,8 @@ def resend_pending_invitations():
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
-    for domain in domains:
-        invitations = Invitation.by_domain(domain.name)
+    for domain_obj in domains:
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
@@ -276,7 +271,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=e.message)
+        notify_exception(None, message=str(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -289,3 +284,45 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task()
+def update_domain_date(user_id, domain):
+    from corehq.apps.users.models import WebUser
+    user = WebUser.get_by_user_id(user_id, domain)
+    domain_membership = user.get_domain_membership(domain)
+    today = datetime.today().date()
+    if (domain_membership and domain_membership.last_accessed
+            and today > domain_membership.last_accessed):
+        domain_membership.last_accessed = today
+        user.save()
+
+
+@periodic_task(
+    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    queue='background_queue',
+)
+def process_reporting_metadata_staging():
+    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.pillows.synclog import mark_last_synclog
+    from pillowtop.processors.form import mark_latest_submission
+
+    records = (
+        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+    )[:100]
+    with transaction.atomic():
+        for record in records:
+            if record.received_on:
+                mark_latest_submission(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.xform_version, record.form_meta, record.received_on
+                )
+            if record.device_id or record.sync_date:
+                mark_last_synclog(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.sync_date, record.device_id
+                )
+            record.delete()
+
+    if UserReportingMetadataStaging.objects.exists():
+        process_reporting_metadata_staging.delay()

@@ -1,16 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf import settings
 
-from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
 from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-import six
 
 logger = logging.getLogger('soft_asserts')
+
 
 def _send_message(info, backend):
     request = get_request()
@@ -22,15 +19,14 @@ def _send_message(info, backend):
                  'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
                  'Request:\n{request}\n'
-                 'Occurrences to date: {info.count}\n'
-                 'Breadcrumbs: {info.breadcrumbs}\n').format(
+                 'Occurrences to date: {info.count}\n').format(
                 info=info, request=request_repr)
     )
 
 
 def soft_assert(to=None, notify_admins=False,
                 fail_if_debug=False, exponential_backoff=True, skip_frames=0,
-                send_to_ops=True, log_to_file=False, include_breadcrumbs=False):
+                send_to_ops=True, log_to_file=False):
     """
     send an email with stack trace if assertion is not True
 
@@ -66,7 +62,8 @@ def soft_assert(to=None, notify_admins=False,
 
     """
 
-    if isinstance(to, six.string_types):
+    assert not isinstance(to, bytes)
+    if isinstance(to, str):
         to = [to]
 
     if to is None:
@@ -76,6 +73,8 @@ def soft_assert(to=None, notify_admins=False,
         to = to + [settings.SOFT_ASSERT_EMAIL]
 
     def send_to_recipients(subject, message):
+        from corehq.apps.hqwebapp.tasks import send_mail_async
+
         send_mail_async.delay(
             # this prefix is automatically added in mail_admins
             # but not send mail
@@ -86,6 +85,8 @@ def soft_assert(to=None, notify_admins=False,
         )
 
     def send_to_admins(subject, message):
+        from corehq.apps.hqwebapp.tasks import mail_admins_async
+
         if settings.DEBUG:
             return
 
@@ -120,5 +121,4 @@ def soft_assert(to=None, notify_admins=False,
         send=send,
         use_exponential_backoff=exponential_backoff,
         skip_frames=skip_frames,
-        include_breadcrumbs=include_breadcrumbs
     )

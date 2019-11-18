@@ -1,13 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
-from datetime import datetime
 from functools import reduce
-import six
-from six.moves import range
+
 
 def to_number(bytes):
-    return reduce(lambda a, b: a*256 + b, bytes)
+    return reduce(lambda a, b: a * 256 + b, bytes)
+
 
 def to_base(n, b):
     if not n:
@@ -17,6 +14,7 @@ def to_base(n, b):
         answer = to_base(rest, b)
         answer.append(digit)
         return answer
+
 
 class DeidGenerator(object):
 
@@ -31,13 +29,12 @@ class DeidGenerator(object):
 
     def _sha1_bytes(self):
         byte_list = hashlib.sha1(self.seed.encode('utf-8')).digest()
-        for b in byte_list[:self.bytes]:
-            yield ord(b)
+        yield from byte_list[:self.bytes]
 
     def digest(self, alphabet="0123456789"):
         b = len(alphabet)
         answer = [alphabet[i] for i in to_base(self.number, b)]
-        if isinstance(alphabet, six.string_types):
+        if isinstance(alphabet, str):
             answer = ''.join(answer)
         return answer
 

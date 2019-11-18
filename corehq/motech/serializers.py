@@ -13,10 +13,10 @@ Serializer functions accept a value in `from_data_type`, and return a
 value in `to_data_type`.
 
 """
-from __future__ import absolute_import
+import datetime
+import re
 
-from __future__ import unicode_literals
-import six
+from dateutil import parser as dateutil_parser
 
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -35,16 +35,32 @@ def to_decimal(value):
 def to_integer(value):
     try:
         return int(value)
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
 
 def to_text(value):
     if value is None:
         return ''
-    if not isinstance(value, six.string_types):
-        return six.text_type(value)
+    if not isinstance(value, str):
+        return str(value)
     return value
+
+
+def to_date_str(value):
+    """
+    Drop the time and timezone to export date-only values
+
+    >>> to_date_str('2017-06-27T12:00:00+0530')
+    '2017-06-27'
+
+    """
+    if isinstance(value, str):
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
+            raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
+        value = dateutil_parser.parse(value)
+    if isinstance(value, (datetime.date, datetime.datetime)):
+        return value.strftime('%Y-%m-%d')
 
 
 serializers = {

@@ -1,56 +1,91 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.http import Http404
+from collections import namedtuple
+from itertools import chain
+
+from django.conf.urls import url
+from django.contrib.auth.models import User
 from django.forms import ValidationError
-from tastypie import http
+from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.urls import reverse
+from memoized import memoized_property
+
+from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
+from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.paginator import Paginator
-from tastypie.resources import convert_post_to_patch, ModelResource, Resource
+from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from collections import namedtuple
+from casexml.apps.stock.models import StockTransaction
+from corehq.apps.export.views.utils import user_can_view_odata_feed
+from phonelog.models import DeviceReportEntry
 
-from django.contrib.auth.models import User
-from django.urls import reverse
-
-from tastypie import fields
-from tastypie.bundle import Bundle
-
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.odata.serializers import (
+    ODataCaseSerializer,
+    ODataFormSerializer,
+)
+from corehq.apps.api.odata.utils import record_feed_access_in_datadog
+from corehq.apps.api.odata.views import add_odata_headers
+from corehq.apps.api.resources.auth import (
+    AdminAuthentication,
+    ODataAuthentication,
+    RequirePermissionAuthentication,
+)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-
-from casexml.apps.stock.models import StockTransaction
+from corehq.apps.export.esaccessors import (
+    get_case_export_base_query,
+    get_form_export_base_query,
+)
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.userreports.models import ReportConfiguration, \
-    StaticReportConfiguration, report_config_id_is_static
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.reports.view import query_dict_to_dict, \
-    get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+    report_config_id_is_static,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.apps.userreports.reports.view import (
+    get_filter_values,
+    query_dict_to_dict,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_id_username_pairs_by_domain,
+)
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.util import raw_username
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
-from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.timer import TimingContext
 
-from . import v0_1, v0_4, CouchResourceMixin
-from . import HqBaseResource, DomainSpecificResourceMixin
-from phonelog.models import DeviceReportEntry
-from itertools import chain
-from six.moves import map
-
+from . import (
+    CouchResourceMixin,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+    v0_1,
+    v0_4,
+)
+from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
 
@@ -195,7 +230,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(e.message)
+                            bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
@@ -393,9 +428,9 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as ex:
+            except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = ex.message
+                bundle.data['_id'] = str(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -419,8 +454,8 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
-        except AssertionError as ex:
-            bundle.data['error_message'] = ex.message
+        except AssertionError as e:
+            bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -453,10 +488,22 @@ class GroupResource(v0_4.GroupResource):
             obj = bundle_or_obj.obj
         else:
             obj = bundle_or_obj
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=obj.domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
+        return self._get_resource_uri(obj)
+
+    def _get_resource_uri(self, obj):
+        # This function is called up to 1000 times per request
+        # so build url from a known string template
+        # to avoid calling the expensive `reverse` function each time
+        return self._get_resource_uri_template.format(domain=obj.domain, pk=obj._id)
+
+    @memoized_property
+    def _get_resource_uri_template(self):
+        """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
+        return reverse('api_dispatch_detail', kwargs=dict(
+            resource_name=self._meta.resource_name,
+            api_name=self._meta.api_name,
+            domain='__domain__',
+            pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
@@ -478,6 +525,10 @@ class GroupResource(v0_4.GroupResource):
             bundle.obj.save()
         return bundle
 
+    def obj_delete(self, bundle, **kwargs):
+        group = self.obj_get(bundle, **kwargs)
+        group.soft_delete()
+        return bundle
 
 class DomainAuthorization(ReadOnlyAuthorization):
 
@@ -486,38 +537,6 @@ class DomainAuthorization(ReadOnlyAuthorization):
 
     def read_list(self, object_list, bundle):
         return object_list.filter(**{self.domain_key: bundle.request.domain})
-
-
-class NoCountingPaginator(Paginator):
-    """
-    The default paginator contains the total_count value, which shows how
-    many objects are in the underlying object list. Obtaining this data from
-    the database is inefficient, especially with large datasets, and unfiltered API requests.
-
-    This class does not perform any counting and return 'null' as the value of total_count.
-
-    See:
-        * http://django-tastypie.readthedocs.org/en/latest/paginator.html
-        * http://wiki.postgresql.org/wiki/Slow_Counting
-    """
-
-    def get_previous(self, limit, offset):
-        if offset - limit < 0:
-            return None
-
-        return self._generate_uri(limit, offset-limit)
-
-    def get_next(self, limit, offset, count):
-        """
-        Always generate the next URL even if there may be no records.
-        """
-        return self._generate_uri(limit, offset+limit)
-
-    def get_count(self):
-        """
-        Don't do any counting.
-        """
-        return None
 
 
 class DeviceReportResource(HqBaseResource, ModelResource):
@@ -723,14 +742,6 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         detail_allowed_methods = ["get"]
 
 
-class DoesNothingPaginator(Paginator):
-    def page(self):
-        return {
-            self.collection_name: self.objects,
-            "meta": {'total_count': self.get_count()}
-        }
-
-
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     title = fields.CharField(readonly=True, attribute="title", null=True)
@@ -759,7 +770,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         try:
             report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
         except Http404 as e:
-            raise NotFound(e.message)
+            raise NotFound(str(e))
         return report_configuration
 
     def obj_get_list(self, bundle, **kwargs):
@@ -930,3 +941,99 @@ class DomainUsernames(Resource):
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
+
+
+class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
+    config_id = None
+    table_id = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not domain_has_privilege(request.domain, privileges.ODATA_FEED):
+            raise ImmediateHttpResponse(
+                response=HttpResponseNotFound('Feature flag not enabled.')
+            )
+        self.config_id = kwargs['config_id']
+        self.table_id = int(kwargs.get('table_id', 0))
+        with TimingContext() as timer:
+            response = super(BaseODataResource, self).dispatch(
+                request_type, request, **kwargs
+            )
+
+            # order REALLY matters for the following code. It should be called
+            # AFTER the super's dispatch or request.couch_user will not be present
+            if not user_can_view_odata_feed(request.domain, request.couch_user):
+                raise ImmediateHttpResponse(
+                    response=HttpResponseNotFound('No permission to view feed.')
+                )
+        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        return response
+
+    def create_response(self, request, data, response_class=HttpResponse,
+                        **response_kwargs):
+        data['domain'] = request.domain
+        data['config_id'] = self.config_id
+        data['api_path'] = request.path
+        data['table_id'] = self.table_id
+        response = super(BaseODataResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['_id']
+        }
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
+
+
+class ODataCaseResource(BaseODataResource):
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        query = get_case_export_base_query(domain, config.case_type)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
+
+    class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/cases'
+        serializer = ODataCaseSerializer()
+        limit = 2000
+        max_limit = 10000
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+        ]
+
+
+class ODataFormResource(BaseODataResource):
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
+
+    class Meta(v0_4.XFormInstanceResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/forms'
+        serializer = ODataFormSerializer()
+        limit = 2000
+        max_limit = 10000
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+        ]

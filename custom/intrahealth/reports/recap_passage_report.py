@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.standard import MonthYearMixin
 from custom.intrahealth.filters import RecapPassageLocationFilter, FRMonthFilter, FRYearFilter
 from custom.intrahealth.reports.tableu_de_board_report import MultiReport

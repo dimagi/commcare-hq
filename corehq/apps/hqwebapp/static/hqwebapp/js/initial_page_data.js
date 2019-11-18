@@ -34,9 +34,12 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     /*
      * Fetch a named value.
      */
-    var get = function (name) {
+    var get = function (name, strict) {
         if (_initData[name] === undefined) {
             _initData = gather(data_selector, _initData);
+        }
+        if (strict && !_.has(_initData, name)) {
+            throw new Error("Missing key in initial page data: " + name);
         }
         return _initData[name];
     };
@@ -86,7 +89,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         var args = arguments;
         var index = 1;
         if (!urls[name]) {
-            urls = gather(url_selector, urls);
+            _.extend(urls, gather(url_selector, urls));
             if (!urls[name]) {
                 throw new Error("URL '" + name + "' not found in registry");
             }
@@ -98,7 +101,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
 
     $(function () {
         _initData = gather(data_selector, _initData);
-        urls = gather(url_selector, urls);
+        _.extend(urls, gather(url_selector, urls));
     });
 
     return {

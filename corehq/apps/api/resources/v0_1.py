@@ -1,12 +1,12 @@
-# Standard library imports
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from corehq.apps.api.couch import UserQuerySetAdapter
+from corehq import toggles
+from dimagi.utils.parsing import string_to_boolean
+
+from corehq.apps.api.query_adapters import UserQuerySetAdapterCouch, UserQuerySetAdapterES
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -16,11 +16,9 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from dimagi.utils.parsing import string_to_boolean
-import six
+from corehq.apps.users.models import CommCareUser, Permissions, WebUser
 
-TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -95,7 +93,7 @@ class CommCareUserResource(UserResource):
         user_data = bundle.obj.user_data
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
-            user_data = {k: v for k, v in six.iteritems(user_data) if not k[0].isdigit()}
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
         return user_data
 
     def obj_get_list(self, bundle, **kwargs):
@@ -108,7 +106,10 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return UserQuerySetAdapter(domain, show_archived=show_archived)
+            if toggles.USER_API_USE_ES_BACKEND.enabled_for_request(bundle.request):
+                return UserQuerySetAdapterES(domain, show_archived=show_archived)
+            else:
+                return UserQuerySetAdapterCouch(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):

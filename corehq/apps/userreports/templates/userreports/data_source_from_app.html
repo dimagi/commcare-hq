@@ -4,10 +4,10 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "userreports/js/data_source_from_app.js" %}"></script>
+  <script src="{% static "userreports/js/data_source_from_app.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data "sources_map" sources_map %}
-    {% crispy form %}
+  {% initial_page_data "sources_map" sources_map %}
+  {% crispy form %}
 {% endblock %}

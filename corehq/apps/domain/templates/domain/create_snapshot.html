@@ -4,59 +4,59 @@
 {% load i18n %}
 
 {% block stylesheets %}
-    <style>
-        .form-actions {
-            margin-bottom: 60px;
-        }
+  <style>
+    .form-actions {
+      margin-bottom: 60px;
+    }
 
-        #hq-sidebar {
-           min-height: 1700px;
-        }
-    </style>
+    #hq-sidebar {
+      min-height: 1700px;
+    }
+  </style>
 
 {% endblock %}
 
 {% requirejs_main 'domain/js/create_snapshot' %}
 
 {% block page_content %}
-    {% initial_page_data 'app_ids' app_ids %}
-    {% initial_page_data 'fixture_ids' fixture_ids %}
+  {% initial_page_data 'app_ids' app_ids %}
+  {% initial_page_data 'fixture_ids' fixture_ids %}
 
-        {% bootstrap_form_errors form %}
-    <form
-        id="snapshot-form"
-        class="form-horizontal"
-        enctype="multipart/form-data"
-        method="post"
-        action="{% url "domain_create_snapshot" domain %}">
+  {% bootstrap_form_errors form %}
+  <form
+    id="snapshot-form"
+    class="form-horizontal"
+    enctype="multipart/form-data"
+    method="post"
+    action="{% url "domain_create_snapshot" domain %}">
 
-        {% crispy form %}
-        <div class="form-group{% if published_as_org %} hide{% endif %}" id="author-input">
-            <label class="control-label col-sm-3 col-md-4 col-lg-2">{% trans "Publishing on behalf of" %}</label>
-            <div class="controls col-sm-9 col-md-8 col-lg-6">
-                <input type="text" name="author" class="form-control" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
-            </div>
-        </div>
-        {% for app, app_form in app_forms %}
-        <h3>{% trans "Application" %}: {{ app.name }}</h3>
-            {% crispy app_form %}
-        {% endfor %}
-        {% for fixture, fixture_form in fixture_forms %}
-            <h3>{% trans "Lookup Table" %}: {{ fixture.tag }}</h3>
-            {% crispy fixture_form %}
-        {% endfor %}
-        <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
+    {% crispy form %}
+    <div class="form-group{% if published_as_org %} hide{% endif %}" id="author-input">
+      <label class="control-label col-sm-3 col-md-4 col-lg-2">{% trans "Publishing on behalf of" %}</label>
+      <div class="controls col-sm-9 col-md-8 col-lg-6">
+        <input type="text" name="author" class="form-control" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
+      </div>
+    </div>
+    {% for app, app_form in app_forms %}
+      <h3>{% trans "Application" %}: {{ app.name }}</h3>
+      {% crispy app_form %}
+    {% endfor %}
+    {% for fixture, fixture_form in fixture_forms %}
+      <h3>{% trans "Lookup Table" %}: {{ fixture.tag }}</h3>
+      {% crispy fixture_form %}
+    {% endfor %}
+    <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
 
-        <div class="form-actions">
-            <button type="button" id="save-button" class="btn btn-default disable-on-submit-no-spinner add-spinner-on-click">
-                {% trans "Save and Publish Later" %}
-            </button>
-            <button type="submit"
-                    class="btn btn-primary disable-on-submit-no-spinner add-spinner-on-click"
-                    id="publish-now-button"
-            >
-                {% trans "Publish Now" %}
-            </button>
-        </div>
-    </form>
+    <div class="form-actions">
+      <button type="button" id="save-button" class="btn btn-default disable-on-submit-no-spinner add-spinner-on-click">
+        {% trans "Save and Publish Later" %}
+      </button>
+      <button type="submit"
+              class="btn btn-primary disable-on-submit-no-spinner add-spinner-on-click"
+              id="publish-now-button"
+      >
+        {% trans "Publish Now" %}
+      </button>
+    </div>
+  </form>
 {% endblock %}>

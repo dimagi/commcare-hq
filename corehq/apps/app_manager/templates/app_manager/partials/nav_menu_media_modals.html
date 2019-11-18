@@ -1,81 +1,81 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div class="modal fade" id="{{ multimedia.upload_managers.icon.slug }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title">{% trans 'Upload Icon Image' %}</h4>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{% trans 'Upload Icon Image' %}</h4>
+      </div>
+      <div class="modal-body form form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-3">
+            {% trans 'Select Icon Image' %}
+          </label>
+          <div class="col-sm-9">
+            <div class="hqm-select-files-container">
+              <button class="hqm-select btn btn-primary" role="button">{% trans 'Select' %}</button>
             </div>
-            <div class="modal-body form form-horizontal">
-                <div class="form-group">
-                    <label class="control-label col-sm-3">
-                        {% trans 'Select Icon Image' %}
-                    </label>
-                    <div class="col-sm-9">
-                        <div class="hqm-select-files-container">
-                            <button class="hqm-select btn btn-primary" role="button">{% trans 'Select' %}</button>
-                        </div>
-                        <div class="hqm-queue"></div>
-                    </div>
-                </div>
-                <div class="form-group hqm-existing hide">
-                    <label class="control-label col-sm-3">
-                        {% trans 'Current Icon' %}
-                    </label>
-                    <div class="col-sm-9 hqm-existing-controls"></div>
-                </div>
-                <div class="hqm-upload-form">
-                    {% include 'hqmedia/partials/hqm_upload_form.html' %}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</a>
-                <a href="#" class="btn btn-default disabled hqm-upload hqm-upload-confirm">
-                    <i class="fa fa-cloud-upload"></i> {% trans "Begin Upload" %}
-                </a>
-            </div>
+            <div class="hqm-queue"></div>
+          </div>
         </div>
+        <div class="form-group hqm-existing hide">
+          <label class="control-label col-sm-3">
+            {% trans 'Current Icon' %}
+          </label>
+          <div class="col-sm-9 hqm-existing-controls"></div>
+        </div>
+        <div class="hqm-upload-form">
+          {% include 'hqmedia/partials/hqm_upload_form.html' %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</a>
+        <a href="#" class="btn btn-primary disabled hqm-upload hqm-upload-confirm">
+          <i class="fa fa-cloud-upload"></i> {% trans "Begin Upload" %}
+        </a>
+      </div>
     </div>
+  </div>
 </div>
 
 <div class="modal fade" id="{{ multimedia.upload_managers.audio.slug }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title">{% trans 'Upload Menu Audio' %}</h4>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{% trans 'Upload Menu Audio' %}</h4>
+      </div>
+      <div class="modal-body form form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-3">
+            {% trans 'Select Menu Audio' %}
+          </label>
+          <div class="col-sm-9">
+            <div class="hqm-select-files-container">
+              <button class="hqm-select btn btn-primary" role="button">{% trans 'Select' %}</button>
             </div>
-            <div class="modal-body form form-horizontal">
-                <div class="form-group">
-                    <label class="control-label col-sm-3">
-                        {% trans 'Select Menu Audio' %}
-                    </label>
-                    <div class="col-sm-9">
-                        <div class="hqm-select-files-container">
-                            <button class="hqm-select btn btn-primary" role="button">{% trans 'Select' %}</button>
-                        </div>
-                        <div class="hqm-queue">
+            <div class="hqm-queue">
 
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group hqm-existing hide">
-                    <label class="control-label col-sm-3">
-                        {% trans 'Current Audio' %}
-                    </label>
-                    <div class="col-sm-9 hqm-existing-controls"></div>
-                </div>
-                <div class="hqm-upload-form">
-                    {% include 'hqmedia/partials/hqm_upload_form.html' %}
-                </div>
             </div>
-            <div class="modal-footer">
-                <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</a>
-                <a href="#" class="btn btn-default disabled hqm-upload hqm-upload-confirm">
-                    <i class="fa fa-cloud-upload"></i> {% trans "Begin Upload" %}
-                </a>
-            </div>
+          </div>
         </div>
+        <div class="form-group hqm-existing hide">
+          <label class="control-label col-sm-3">
+            {% trans 'Current Audio' %}
+          </label>
+          <div class="col-sm-9 hqm-existing-controls"></div>
+        </div>
+        <div class="hqm-upload-form">
+          {% include 'hqmedia/partials/hqm_upload_form.html' %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</a>
+        <a href="#" class="btn btn-primary disabled hqm-upload hqm-upload-confirm">
+          <i class="fa fa-cloud-upload"></i> {% trans "Begin Upload" %}
+        </a>
+      </div>
     </div>
+  </div>
 </div>

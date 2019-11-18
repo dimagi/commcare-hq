@@ -1,9 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.smsforms.models import SQLXFormsSession
 from datetime import datetime
+
 from django.core.management.base import BaseCommand
+
+from corehq.apps.smsforms.models import SQLXFormsSession
 
 
 class Command(BaseCommand):

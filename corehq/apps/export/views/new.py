@@ -1,100 +1,62 @@
-from __future__ import absolute_import
+import json
 
-from __future__ import division
-from __future__ import unicode_literals
-
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
-
-from corehq.apps.export.views.utils import DailySavedExportMixin, DailySavedExportMixin, DashboardFeedMixin
-from corehq.apps.locations.permissions import location_safe
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
-import json
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT, SharingOption
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
-    ExportAppException,
     BadExportConfiguration,
-    ExportFormValidationException,
-    ExportAsyncException,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
+    ExportAppException,
+    ExportODataDuplicateLabelException,
 )
 from corehq.apps.export.models import (
-    FormExportDataSchema,
     CaseExportDataSchema,
-    SMSExportDataSchema,
-    FormExportInstance,
     CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
+    FormExportDataSchema,
+    FormExportInstance,
 )
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
+from corehq.apps.export.views.utils import (
+    DailySavedExportMixin,
+    DashboardFeedMixin,
+    ODataFeedMixin,
+    clean_odata_columns,
 )
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-    use_angular_js)
-from corehq.apps.users.permissions import (
-    can_download_data_files,
-    CASE_EXPORT_PERMISSION,
-    DEID_EXPORT_PERMISSION,
-    FORM_EXPORT_PERMISSION,
-    has_permission_to_view_report,
-)
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+from corehq.apps.users.models import WebUser
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 
 
-class BaseNewExportView(BaseProjectDataView):
+class BaseExportView(BaseProjectDataView):
+    """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
     is_async = True
 
-    @use_jquery_ui
+    @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
+        return super(BaseExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_helper(self):
@@ -119,20 +81,34 @@ class BaseNewExportView(BaseProjectDataView):
         return reverse(self.report_class.urlname, args=(self.domain,))
 
     @property
-    @memoized
-    def report_class(self):
-        from corehq.apps.export.views.list import CaseExportListView, FormExportListView
-        try:
-            base_views = {
-                'form': FormExportListView,
-                'case': CaseExportListView,
-            }
-            return base_views[self.export_type]
-        except KeyError:
-            raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
+    def terminology(self):
+        return {
+            'page_header': _("Export Settings"),
+            'help_text': mark_safe(_("""
+                Learn more about exports on our <a
+                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                target="_blank">Help Site</a>.
+            """)),
+            'name_label': _("Export Name"),
+            'choose_fields_label': _("Choose the fields you want to export."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the headers in the export file.
+            """),
+        }
 
     @property
     def page_context(self):
+        owner_id = self.export_instance.owner_id
+        schema = self.get_export_schema(
+            self.domain,
+            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+            self.export_instance.identifier,
+        )
+        if self.export_instance.owner_id or not self.export_instance._id:
+            sharing_options = SharingOption.CHOICES
+        else:
+            sharing_options = [SharingOption.EDIT_AND_EXPORT]
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -140,6 +116,12 @@ class BaseNewExportView(BaseProjectDataView):
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
+            'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
+            'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
+            'format_options': ["xls", "xlsx", "csv"],
+            'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
+            'sharing_options': sharing_options,
+            'terminology': self.terminology,
         }
 
     @property
@@ -150,7 +132,7 @@ class BaseNewExportView(BaseProjectDataView):
         }]
 
     def commit(self, request):
-        export = self.export_instance_cls.wrap(json.loads(request.body))
+        export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
@@ -163,6 +145,36 @@ class BaseNewExportView(BaseProjectDataView):
                 # default auto rebuild to False for enterprise clusters
                 # only do this on first save to prevent disabling on every edit
                 export.auto_rebuild_enabled = False
+
+        if export.is_odata_config:
+            for table_id, table in enumerate(export.tables):
+                labels = []
+                for column in table.columns:
+                    is_reserved_number = (
+                        column.label == 'number' and table_id > 0 and table.selected
+                    )
+                    if (column.label == 'formid'
+                            or column.label == 'caseid'
+                            or is_reserved_number):
+                        column.selected = True
+
+                    if column.label not in labels and column.selected:
+                        labels.append(column.label)
+                    elif column.selected:
+                        raise ExportODataDuplicateLabelException(
+                            _("Column labels must be unique. "
+                              "'{}' appears more than once.").format(column.label)
+                        )
+            num_nodes = sum([1 for table in export.tables[1:] if table.selected])
+            if hasattr(self, 'is_copy') and self.is_copy:
+                event_title = "[BI Integration] Clicked Save button for feed copy"
+            else:
+                event_title = "[BI Integration] Clicked Save button for feed creation"
+            track_workflow(request.user.username, event_title, {
+                "Feed Type": export.type,
+                "Number of additional nodes": num_nodes,
+            })
+
         export.save()
         messages.success(
             request,
@@ -179,21 +191,16 @@ class BaseNewExportView(BaseProjectDataView):
             export_id = self.commit(request)
         except Exception as e:
             if self.is_async:
-                # todo: this can probably be removed as soon as
-                # http://manage.dimagi.com/default.asp?157713 is resolved
-                notify_exception(request, 'problem saving an export! {}'.format(str(e)))
-                response = json_response({
+                return JsonResponse(data={
                     'error': str(e) or type(e).__name__
-                })
-                response.status_code = 500
-                return response
+                }, status=500)
             elif isinstance(e, ExportAppException):
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])
             else:
                 raise
         else:
             try:
-                post_data = json.loads(self.request.body)
+                post_data = json.loads(self.request.body.decode('utf-8'))
                 url = self.export_home_url
                 # short circuit to check if the submit is from a create or edit feed
                 # to redirect it to the list view
@@ -210,14 +217,6 @@ class BaseNewExportView(BaseProjectDataView):
                 })
             return HttpResponseRedirect(url)
 
-
-class BaseModifyNewCustomView(BaseNewExportView):
-
-    @use_ko_validation
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
-
     @memoized
     def get_export_schema(self, domain, app_id, identifier):
         return self.export_schema_cls.generate_schema_from_builds(
@@ -227,28 +226,18 @@ class BaseModifyNewCustomView(BaseNewExportView):
             only_process_current_builds=True,
         )
 
-    @property
-    def page_context(self):
-        result = super(BaseModifyNewCustomView, self).page_context
-        result['format_options'] = ["xls", "xlsx", "csv"]
-        if self.export_instance.owner_id or not self.export_instance._id:
-            result['sharing_options'] = SharingOption.CHOICES
-        else:
-            result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-            self.export_instance.identifier,
-        )
-        result['number_of_apps_to_process'] = schema.get_number_of_apps_to_process()
-        return result
-
 
 @location_safe
-class CreateNewCustomFormExportView(BaseModifyNewCustomView):
+class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
 
     def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
@@ -264,10 +253,16 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
 
 
 @location_safe
-class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
+class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
     def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
@@ -303,7 +298,29 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-class DeleteNewCustomExportView(BaseModifyNewCustomView):
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
+class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_odata_case_feed'
+    page_title = ugettext_lazy("Create OData Case Feed")
+
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+        clean_odata_columns(export_instance)
+        return export_instance
+
+
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
+class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
+    urlname = 'new_odata_form_feed'
+    page_title = ugettext_lazy("Create OData Form Feed")
+
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
+        clean_odata_columns(export_instance)
+        return export_instance
+
+
+class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
     is_async = False
@@ -343,8 +360,11 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
             FormExportListView,
             DashboardFeedListView,
             DailySavedExportListView,
+            ODataFeedListView,
         )
-        if self.export_instance.is_daily_saved_export:
+        if self.export_instance.is_odata_config:
+            return ODataFeedListView
+        elif self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView
@@ -377,5 +397,13 @@ class CopyExportView(View):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()
-        referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
-        return HttpResponseRedirect(referer)
+            messages.success(
+                request,
+                mark_safe(
+                    _("Export <strong>{}</strong> created.").format(
+                        new_export.name
+                    )
+                )
+            )
+        redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
+        return HttpResponseRedirect(redirect)

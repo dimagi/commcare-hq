@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.groups.models import Group
-from corehq.apps.users.cases import get_wrapped_owner, get_owning_users
-from corehq.apps.users.models import CommCareUser
-from six.moves import range
 
+from corehq.apps.groups.models import Group
+from corehq.apps.users.cases import get_owning_users, get_wrapped_owner
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.test_utils import generate_cases
 

@@ -1,11 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
+
 from django.test import TestCase
-from corehq.apps.toggle_ui.migration_helpers import move_toggles
+
 from couchdbkit import ResourceNotFound
+
 from toggle.models import Toggle
-from six.moves import range
+
+from corehq.apps.toggle_ui.migration_helpers import move_toggles
 
 
 class MigrationHelperTest(TestCase):

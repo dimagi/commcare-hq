@@ -1,31 +1,38 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import logging
-from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
-
-from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.products.models import Product
-from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from decimal import Decimal
+
+from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
-from casexml.apps.stock.const import SECTION_TYPE_STOCK, COMMTRACK_REPORT_XMLNS
+from memoized import memoized
+
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS, SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
-    get_consumption_helper_from_ledger_value, get_product_id_name_mapping, get_product_ids_for_program
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.loosechange import map_reduce
+
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import Product
+from corehq.apps.reports.analytics.couchaccessors import (
+    get_ledger_values_for_case_as_of,
+)
+from corehq.apps.reports.analytics.dbaccessors import (
+    get_aggregated_ledger_values,
+    get_wrapped_ledger_values,
+)
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.reports.commtrack.util import (
+    get_consumption_helper_from_ledger_value,
+    get_product_id_name_mapping,
+    get_product_ids_for_program,
+    get_relevant_supply_point_ids,
+)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
-from decimal import Decimal
-import six
 
 
 def format_decimal(d):
@@ -418,7 +425,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
         locs = _location_map(list(by_supply_point))
 
-        for loc_id, subcases in six.iteritems(by_supply_point):
+        for loc_id, subcases in by_supply_point.items():
             if loc_id not in locs:
                 continue  # it's archived, skip
             loc = locs[loc_id]
@@ -445,14 +452,14 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
     @property
     def converted_start_datetime(self):
         start_date = self.start_date
-        if isinstance(start_date, six.text_type):
+        if isinstance(start_date, str):
             start_date = parser.parse(start_date)
         return start_date
 
     @property
     def converted_end_datetime(self):
         end_date = self.end_date
-        if isinstance(end_date, six.text_type):
+        if isinstance(end_date, str):
             end_date = parser.parse(end_date)
         return end_date
 

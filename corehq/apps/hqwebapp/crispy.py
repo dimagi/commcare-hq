@@ -1,15 +1,41 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from contextlib import contextmanager
 
-from crispy_forms.bootstrap import AccordionGroup, InlineField, FormActions as OriginalFormActions
-from crispy_forms.layout import LayoutObject, MultiField, Field as OldField
-from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
+
+from crispy_forms.bootstrap import AccordionGroup
+from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.bootstrap import InlineField
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Field as OldField
+from crispy_forms.layout import LayoutObject, MultiField
+from crispy_forms.utils import flatatt, get_template_pack, render_field
+
+CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
+CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
+CSS_ACTION_CLASS = CSS_FIELD_CLASS + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
+
+
+class HQFormHelper(FormHelper):
+    form_class = 'form form-horizontal'
+    label_class = CSS_LABEL_CLASS
+    field_class = CSS_FIELD_CLASS
+
+    def __init__(self, *args, **kwargs):
+        super(HQFormHelper, self).__init__(*args, **kwargs)
+        if 'autocomplete' not in self.attrs:
+            self.attrs.update({
+                'autocomplete': 'off',
+            })
+
+
+class HQModalFormHelper(FormHelper):
+    form_class = 'form form-horizontal'
+    label_class = 'col-xs-12 col-sm-3 col-md-3 col-lg-2'
+    field_class = 'col-xs-12 col-sm-9 col-md-9 col-lg-6'
 
 
 class HiddenFieldWithErrors(OldField):
@@ -41,7 +67,7 @@ class ErrorsOnlyField(OldField):
 
 def _get_offsets(context):
     label_class = context.get('label_class', '')
-    return re.sub(r'(xs|sm|md|lg)-', '\g<1>-offset-', label_class)
+    return re.sub(r'(xs|sm|md|lg)-', r'\g<1>-offset-', label_class)
 
 
 class FormActions(OriginalFormActions):
@@ -158,6 +184,7 @@ class B3MultiField(LayoutObject):
         self.css_id = kwargs.pop('css_id', '')
         self.field_class = kwargs.pop('field_class', None)
         self.label_class = kwargs.pop('label_class', None)
+        self.required = kwargs.pop('required', False)
         self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 
@@ -301,3 +328,11 @@ class B3HiddenFieldWithErrors(Field):
 
 class RadioSelect(Field):
     template = "hqwebapp/crispy/radioselect.html"
+
+
+def make_form_readonly(form):
+    if form is None:
+        return
+
+    for field in form.fields.keys():
+        form.fields[field].widget.attrs['disabled'] = True

@@ -1,36 +1,36 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import io
+import json
 from datetime import date, timedelta
 
-import csv342 as csv
-import io
-import attr
-import requests
-import json
-
-from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.template import Context, Template
 from django.template.loader import render_to_string
 
+import attr
+import csv
+import requests
+from celery.schedules import crontab
+from celery.task import task
+from celery.task.base import periodic_task
+
+from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.logging import notify_error
+from dimagi.utils.web import get_site_domain
+from pillowtop.utils import get_couch_pillow_instances
+
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.logging import notify_error
-from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.web import get_site_domain
-from pillowtop.utils import get_couch_pillow_instances
+
 from .utils import check_for_rewind
 
 _soft_assert_superusers = soft_assert(notify_admins=True)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=0, minute=0), queue='background_queue')
+@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def check_pillows_for_rewind():
     for pillow in get_couch_pillow_instances():
         checkpoint = pillow.checkpoint
@@ -46,7 +46,7 @@ def check_pillows_for_rewind():
             )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=0, minute=0), queue='background_queue')
+@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def create_historical_checkpoints():
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
@@ -54,14 +54,15 @@ def create_historical_checkpoints():
     HistoricalPillowCheckpoint.objects.filter(date_updated__lt=thirty_days_ago).delete()
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0), queue='background_queue')
+@periodic_task(run_every=crontab(minute=0), queue='background_queue')
 def check_non_dimagi_superusers():
     non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
         (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
     ).values_list('username', flat=True)))
     if non_dimagis_superuser:
-        _soft_assert_superusers(
-            False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
+        message = "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser)
+        _soft_assert_superusers(False, message)
+        notify_error(message=message)
 
 
 @task(serializer='pickle', queue="email_queue")
@@ -124,10 +125,6 @@ class AbnormalUsageAlert(object):
     message = attr.ib()
 
 
-support_email = "support@dimagi.com"
-slack_channel = "#support-alerts"
-
-
 @task(serializer='pickle', queue="email_queue")
 def send_abnormal_usage_alert(alert):
     """ Sends an alert to #support and email to let support know when a domain is doing something weird
@@ -142,16 +139,9 @@ def send_abnormal_usage_alert(alert):
     )
     send_html_email_async(
         subject,
-        support_email,
+        settings.SUPPORT_EMAIL,
         alert.message
     )
-
-    if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-        requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
-            "channel": slack_channel,
-            "username": "Paranormal Usage Bot :ghost:",
-            "text": subject
-        }))
 
 
 def _mass_email_attachment(name, rows):

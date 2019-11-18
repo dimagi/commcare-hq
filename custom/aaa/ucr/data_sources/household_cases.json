@@ -1,0 +1,130 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-household_cases",
+    "display_name": "Cases - Household (REACH Dashboard Backend)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "household"
+    },
+    "validations": [
+      {
+        "name": "not_owned_by_same_district",
+        "error_message": "All cases must be owned by descendants from the same state and district",
+        "expression": {
+          "operator": "eq",
+          "expression": {
+            "location_id": {
+              "type": "icds_village_owner_id",
+              "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+              }
+            },
+            "location_property": "_id",
+            "type": "ancestor_location",
+            "location_type": "district"
+          },
+          "type": "boolean_expression",
+          "property_value": {
+            "location_id": {
+              "type": "icds_awc_owner_id",
+              "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+              }
+            },
+            "location_property": "_id",
+            "type": "ancestor_location",
+            "location_type": "district"
+          }
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "awc_owner_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "icds_awc_owner_id",
+          "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id"
+          }
+        }
+      },
+      {
+        "column_id": "village_owner_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "icds_village_owner_id",
+          "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id"
+          }
+        }
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
+      },
+      {
+        "column_id": "hh_address",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hh_address"
+      },
+      {
+        "column_id": "hh_religion",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hh_religion"
+      },
+      {
+        "column_id": "hh_bpl_apl",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hh_bpl_apl"
+      },
+      {
+        "column_id": "hh_caste",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hh_caste"
+      }
+    ],
+    "engine_id": "aaa-data"
+  }
+}

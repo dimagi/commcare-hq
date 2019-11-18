@@ -35,8 +35,8 @@ hqDefine("reports/js/aggregate_user_status", function () {
             setupCharts($("#submission-percentages").data("value"), 'submission_chart', aggregateTooltip);
             setupCharts($("#sync-percentages").data("value"), 'sync_chart', aggregateTooltip);
             $('.chart-toggle').click(function () {
-                $(this).parent().children().not(this).removeClass('btn-primary');  // deselect other buttons
-                $(this).addClass('btn-primary');  // select self
+                $(this).parent().children().not(this).removeClass('active');  // deselect other buttons
+                $(this).addClass('active');  // select self
                 // update data
                 var tooltipFunction = $(this).data('is-aggregate') ? aggregateTooltip : undefined;
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'), tooltipFunction);

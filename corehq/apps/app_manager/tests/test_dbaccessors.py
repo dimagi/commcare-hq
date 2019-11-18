@@ -1,25 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
+
+from couchdbkit.exceptions import NoResultFound
+
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
+    get_app_ids_in_domain,
+    get_apps_by_id,
     get_apps_in_domain,
+    get_brief_app,
     get_brief_apps_in_domain,
     get_build_doc_by_version,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
+    get_build_ids_after_version,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
-    get_latest_build_doc,
     get_latest_app_ids_and_versions,
+    get_latest_build_doc,
     get_latest_released_app_doc,
-    get_apps_by_id,
-    get_brief_app, get_latest_released_app_version)
-from corehq.apps.app_manager.models import Application, RemoteApp, Module
+    get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
+)
+from corehq.apps.app_manager.models import Application, Module, RemoteApp
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
 
@@ -137,11 +142,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(domain_has_apps(self.domain), True)
         self.assertEqual(domain_has_apps('somecrazydomainthathasnoapps'), False)
 
-    def test_get_built_app_ids_for_app_id(self):
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id)
+    def test_get_build_ids(self):
+        app_ids = get_build_ids(self.domain, self.apps[0].get_id)
         self.assertEqual(len(app_ids), 2)
 
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id, self.first_saved_version)
+    def test_get_build_ids_after_version(self):
+        app_ids = get_build_ids_after_version(self.domain, self.apps[0].get_id, self.first_saved_version)
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
 
@@ -157,14 +163,16 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
     def test_get_built_app_ids_with_submissions_for_app_ids_and_versions(self):
+        app_ids_in_domain = get_app_ids_in_domain(self.domain)
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
             self.domain,
+            app_ids_in_domain,
             {self.apps[0]._id: self.first_saved_version},
         )
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
-            self.domain,
+            self.domain, app_ids_in_domain
         )
         self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
 
@@ -218,15 +226,21 @@ class TestAppGetters(TestCase):
         ).to_json()
         app = Application.wrap(app_doc)  # app is v1
 
+        # Make builds v1 - v5. Builds v2 and v4 are released.
         app.save()  # app is v2
         cls.v2_build = app.make_build()
         cls.v2_build.is_released = True
-        cls.v2_build.save()  # There is a starred build at v2
+        cls.v2_build.save()
 
         app.save()  # app is v3
-        app.make_build().save()  # There is a build at v3
+        app.make_build().save()
 
         app.save()  # app is v4
+        cls.v4_build = app.make_build()
+        cls.v4_build.is_released = True
+        cls.v4_build.save()
+
+        app.save()  # app is v5
         cls.app_id = app._id
 
     @classmethod
@@ -236,31 +250,31 @@ class TestAppGetters(TestCase):
 
     def test_get_app_current(self):
         app = get_app(self.domain, self.app_id)
-        self.assertEqual(app.version, 4)
+        self.assertEqual(app.version, 5)
 
     def test_get_current_app(self):
         app_doc = get_current_app(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 4)
+        self.assertEqual(app_doc['version'], 5)
 
     def test_latest_saved_from_build(self):
         app_doc = get_app(self.domain, self.v2_build._id, latest=True, target='save')
-        self.assertEqual(app_doc['version'], 4)
+        self.assertEqual(app_doc['version'], 5)
 
     def test_get_app_latest_released_build(self):
         app = get_app(self.domain, self.app_id, latest=True)
-        self.assertEqual(app.version, 2)
+        self.assertEqual(app.version, 4)
 
     def test_get_latest_released_app_doc(self):
         app_doc = get_latest_released_app_doc(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 2)
+        self.assertEqual(app_doc['version'], 4)
 
     def test_get_app_latest_build(self):
         app = get_app(self.domain, self.app_id, latest=True, target='build')
-        self.assertEqual(app.version, 3)
+        self.assertEqual(app.version, 4)
 
     def test_get_latest_build_doc(self):
         app_doc = get_latest_build_doc(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 3)
+        self.assertEqual(app_doc['version'], 4)
 
     def test_get_specific_version(self):
         app_doc = get_build_doc_by_version(self.domain, self.app_id, version=2)
@@ -269,8 +283,14 @@ class TestAppGetters(TestCase):
     def test_get_apps_by_id(self):
         apps = get_apps_by_id(self.domain, [self.app_id])
         self.assertEqual(1, len(apps))
-        self.assertEqual(apps[0].version, 4)
+        self.assertEqual(apps[0].version, 5)
 
     def test_get_latest_released_app_version(self):
         version = get_latest_released_app_version(self.domain, self.app_id)
-        self.assertEqual(version, 2)
+        self.assertEqual(version, 4)
+
+    def test_get_latest_released_app_versions_by_app_id(self):
+        versions = get_latest_released_app_versions_by_app_id(self.domain)
+        self.assertEqual(versions, {
+            self.app_id: 4,
+        })

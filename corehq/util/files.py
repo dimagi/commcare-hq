@@ -1,11 +1,7 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import tempfile
 from unidecode import unidecode
 from six.moves.urllib.parse import quote
-import six
 
 
 def file_extention_from_filename(filename):
@@ -24,7 +20,7 @@ def safe_filename(filename, extension=None):
     >>> safe_filename(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     u'spam 𐍃𐍀𐌰𐌼-&.txt'
     """
-    filename = filename if isinstance(filename, six.text_type) else filename.decode('utf8')
+    filename = filename if isinstance(filename, str) else filename.decode('utf8')
     if extension is not None:
         filename = "{}.{}".format(filename, extension)
     unsafe_chars = ':*?"<>|/\\\r\n'
@@ -65,3 +61,10 @@ class TransientTempfile(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.remove(self.path)
+
+
+def read_workbook_content_as_file(wb):
+    with tempfile.TemporaryFile() as temp_file:
+        wb.save(temp_file)
+        temp_file.seek(0)
+        return temp_file.read()

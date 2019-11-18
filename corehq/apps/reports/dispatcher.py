@@ -1,29 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
-from corehq.apps.users.models import AnonymousCouchUser
-from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.modules import to_function
-
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
+
+from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from corehq.apps.domain.decorators import (
+    cls_to_view,
+    login_and_domain_required,
+    track_domain_request,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
-import six
-
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -52,7 +52,7 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        if not self.map_name or not isinstance(self.map_name, six.string_types):
+        if not self.map_name or not isinstance(self.map_name, str):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
@@ -76,13 +76,13 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         from corehq import reports
         if domain:
-            project = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
         else:
-            project = None
+            domain_obj = None
 
         def process(reports):
             if callable(reports):
-                reports = reports(project) if project else tuple()
+                reports = reports(domain_obj) if domain_obj else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
@@ -91,17 +91,12 @@ class ReportDispatcher(View):
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=[b'reports'])
+            module = __import__(module_name, fromlist=['reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))
             else:
                 custom_reports = ()
-
-            # soon to be removed
-            if not custom_reports:
-                domain_module = Domain.get_module_by_name(domain)
-                custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
 
@@ -219,7 +214,7 @@ class ReportDispatcher(View):
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
-                        'url': report.get_url(domain=domain, request=request),
+                        'url': report.get_url(domain=domain, request=request, relative=True),
                         'description': _(report.description),
                         'icon': report.icon,
                         'title': _(report.name),
@@ -255,6 +250,7 @@ class ProjectReportDispatcher(ReportDispatcher):
         }
 
     @cls_to_view_login_and_domain
+    @track_domain_request(calculated_prop='cp_n_viewed_non_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
@@ -293,11 +289,6 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
                     if report_class_name == report and report_class.is_public:
                         return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
-
-
-class BasicReportDispatcher(ReportDispatcher):
-    prefix = 'basic_report'
-    map_name = 'BASIC_REPORTS'
 
 
 class DomainReportDispatcher(ReportDispatcher):

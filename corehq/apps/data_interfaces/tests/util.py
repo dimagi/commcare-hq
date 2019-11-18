@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from casexml.apps.case.mock import CaseFactory
 from contextlib import contextmanager
+
+from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.utils.general import should_use_sql_backend

@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 DEFAULT_TAG = "1.1"
 PREVIEW_TAG = "1.2"
 

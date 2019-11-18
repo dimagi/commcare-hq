@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import tempfile
-import six
-from io import open
 
 
 def Temp(tmp):
-    cls = PathTemp if isinstance(tmp, six.string_types) else StringIOTemp
+    cls = PathTemp if isinstance(tmp, str) else StringIOTemp
     return cls(tmp)
 
 

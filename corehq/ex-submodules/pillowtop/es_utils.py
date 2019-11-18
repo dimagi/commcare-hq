@@ -1,29 +1,75 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
-from elasticsearch import TransportError
-from pillowtop import get_all_pillow_classes
+from corehq.util.es.elasticsearch import TransportError
 from pillowtop.logger import pillow_logging
 
-INDEX_REINDEX_SETTINGS = {
-    "index": {
-        "refresh_interval": "1800s",
-        "merge.policy.merge_factor": 20,
-        "store.throttle.max_bytes_per_sec": "1mb",
-        "store.throttle.type": "merge",
+
+def _get_analysis(*names):
+    return {
+        "analyzer": {name: ANALYZERS[name] for name in names}
     }
+
+
+ANALYZERS = {
+    "default": {
+        "type": "custom",
+        "tokenizer": "whitespace",
+        "filter": ["lowercase"]
+    },
+    "comma": {
+        "type": "pattern",
+        "pattern": r"\s*,\s*"
+    },
+    "sortable_exact": {
+        "type": "custom",
+        "tokenizer": "keyword",
+        "filter": ["lowercase"]
+    },
 }
 
-INDEX_STANDARD_SETTINGS = {
-    "index": {
-        "refresh_interval": "5s",
-        "merge.policy.merge_factor": 10,
-        "store.throttle.max_bytes_per_sec": "5mb",
-        "store.throttle.type": "node",
-    }
+REMOVE_SETTING = None
+
+ES_ENV_SETTINGS = {
+    'icds': {
+        'hqusers': {
+            "number_of_replicas": 1,
+        },
+    },
+}
+
+ES_META = {
+    # Default settings for all indexes on ElasticSearch
+    'default': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default', 'sortable_exact'),
+        },
+    },
+    # Default settings for aliases on all environments (overrides default settings)
+    'hqdomains': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default', 'comma'),
+        },
+    },
+
+    'hqapps': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default'),
+        },
+    },
+
+    'hqusers': {
+        "settings": {
+            "number_of_shards": 2,
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default'),
+        },
+    },
 }
 
 
@@ -33,18 +79,30 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     type = jsonobject.StringProperty()
     mapping = jsonobject.DictProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
 
     @property
     def meta(self):
-        meta_settings = deepcopy(settings.ES_META['default'])
+        meta_settings = deepcopy(ES_META['default'])
         meta_settings.update(
-            settings.ES_META.get(self.alias, {})
+            ES_META.get(self.alias, {})
         )
         meta_settings.update(
-            settings.ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
+
+        overrides = copy(ES_ENV_SETTINGS)
+        if settings.ES_SETTINGS is not None:
+            overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
+
+        for alias in ['default', self.alias]:
+            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
+                if value is REMOVE_SETTING:
+                    del meta_settings['settings'][key]
+                else:
+                    meta_settings['settings'][key] = value
+
         return meta_settings
 
     def to_json(self):
@@ -52,22 +110,21 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         json['meta'] = self.meta
         return json
 
-def update_settings(es, index, settings_dict):
-    return es.indices.put_settings(settings_dict, index=index)
-
 
 def set_index_reindex_settings(es, index):
     """
     Set a more optimized setting setup for fast reindexing
     """
-    return update_settings(es, index, INDEX_REINDEX_SETTINGS)
+    from pillowtop.index_settings import INDEX_REINDEX_SETTINGS
+    return ElasticsearchInterface(es).update_index_settings(index, INDEX_REINDEX_SETTINGS)
 
 
 def set_index_normal_settings(es, index):
     """
     Normal indexing configuration
     """
-    return update_settings(es, index, INDEX_STANDARD_SETTINGS)
+    from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
+    return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
 def create_index_and_set_settings_normal(es, index, metadata=None):

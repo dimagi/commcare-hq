@@ -1,31 +1,38 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from six.moves import map
+import re
+from datetime import datetime
 
 from django.conf import settings
 
-from dimagi.ext.couchdbkit import *
-import re
-from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    ListProperty,
+    SetProperty,
+    StringProperty,
+)
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import (
+    DELETED_SUFFIX,
+    DeleteDocRecord,
+    UndoableDocument,
+)
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
-from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
     get_group_ids_by_domain,
     group_by_domain,
     refresh_group_views,
     stale_group_by_name,
 )
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.quickcache import quickcache
-import six
-from six.moves import range
-from six.moves import filter
 
-dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
+dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
 class Group(QuickCachedDocumentMixin, UndoableDocument):
@@ -42,7 +49,6 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     # a list of user ids that have been removed from the Group.
     # This is recorded so that we can update the user at a later point
     removed_users = SetProperty()
-    path = ListProperty()
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
     last_modified = DateTimeProperty()
@@ -91,7 +97,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
-        if not isinstance(couch_user_id, six.string_types):
+        if not isinstance(couch_user_id, str):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
@@ -104,7 +110,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         '''
         Returns True if it removed a user, False otherwise
         '''
-        if not isinstance(couch_user_id, six.string_types):
+        if not isinstance(couch_user_id, str):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0, len(self.users)):
@@ -113,53 +119,6 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                     self.removed_users.add(couch_user_id)
                     return True
         return False
-
-    def add_group(self, group):
-        group.add_to_group(self)
-
-    def add_to_group(self, group):
-        """
-        food = Food(path=[food_id])
-        fruit = Fruit(path=[fruit_id])
-
-        If fruit.add_to_group(food._id):
-            then update fruit.path to be [food_id, fruit_id]
-        """
-        group_id = group._id
-        if group_id in self.path:
-            raise Exception("Group %s is already a member of %s" % (
-                self.get_id,
-                group_id,
-            ))
-        new_path = [group_id]
-        new_path.extend(self.path)
-        self.path = new_path
-        self.save()
-
-    def remove_group(self, group):
-        group.remove_from_group(self)
-
-    def remove_from_group(self, group):
-        """
-        food = Food(path=[food_id])
-        fruit = Fruit(path=[food_id, fruit_id])
-
-        If fruit.remove_from_group(food._id):
-            then update fruit.path to be [fruit_id]
-        """
-        group_id = group._id
-        if group_id not in self.path:
-            raise Exception("Group %s is not a member of %s" % (
-                self.get_id,
-                group_id
-            ))
-        index = 0
-        for i in range(0, len(self.path)):
-            if self.path[i] == group_id:
-                index = i
-                break
-        self.path = self.path[index:]
-        self.save()
 
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active=is_active)]
@@ -220,16 +179,10 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             return result
 
     @classmethod
-    def by_user(cls, user_or_user_id, wrap=True, include_names=False):
-        try:
-            user_id = user_or_user_id.user_id
-        except AttributeError:
-            user_id = user_or_user_id
+    def by_user_id(cls, user_id, wrap=True):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
-        if include_names:
-            return [dict(group_id=r['id'], name=r['value'][1]) for r in results]
         else:
             return [r['id'] for r in results]
 
@@ -279,7 +232,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     def user_in_group(cls, user_id, group_id):
         if not user_id or not group_id:
             return False
-        c = cls.get_db().view('groups/by_user',
+        c = cls.get_db().view(
+            'groups/by_user',
             key=user_id,
             startkey_docid=group_id,
             endkey_docid=group_id

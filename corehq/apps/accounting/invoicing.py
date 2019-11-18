@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import calendar
 import datetime
-from dateutil.relativedelta import relativedelta
+from collections import defaultdict
 from decimal import Decimal
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import F, Q, Min, Max, Sum
-from django.utils.translation import ugettext as _, ungettext
+from django.db.models import F, Max, Min, Q, Sum
+from django.utils.translation import ugettext as _
+from django.utils.translation import ungettext
 
+from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
-from corehq.util.dates import get_previous_month_date_range
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -21,22 +19,40 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    LineItem, FeatureType, Invoice, CustomerInvoice, DefaultProductPlan, Subscriber,
-    Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord, CustomerBillingRecord,
+    SMALL_INVOICE_THRESHOLD,
+    UNLIMITED_FEATURE_USAGE,
+    BillingAccount,
+    BillingRecord,
     CreditLine,
-    EntryPoint, WireInvoice, WireBillingRecord,
-    SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType, InvoicingPlan, DomainUserHistory
+    CustomerBillingRecord,
+    CustomerInvoice,
+    DefaultProductPlan,
+    DomainUserHistory,
+    EntryPoint,
+    FeatureType,
+    Invoice,
+    InvoicingPlan,
+    LineItem,
+    SoftwarePlanEdition,
+    Subscriber,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionType,
+    WireBillingRecord,
+    WireInvoice,
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
-    months_from_date
+    months_from_date,
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser
+from corehq.util.dates import (
+    get_first_last_days,
+    get_previous_month_date_range,
+)
 
 DEFAULT_DAYS_UNTIL_DUE = 30
 
@@ -163,7 +179,7 @@ class DomainInvoiceFactory(object):
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(str(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -264,7 +280,7 @@ class DomainWireInvoiceFactory(object):
             invoices = CustomerInvoice.objects.filter(account=self.account)
         else:
             invoices = Invoice.objects.filter(
-                subscription__subscriber__domain=self.domain,
+                subscription__subscriber__domain=self.domain.name,
                 is_hidden=False,
                 date_paid__exact=None
             ).order_by('-date_start')
@@ -308,7 +324,7 @@ class DomainWireInvoiceFactory(object):
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(str(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -320,8 +336,6 @@ class DomainWireInvoiceFactory(object):
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
-            account_created_by=self.__class__.__name__,
-            account_entry_point=EntryPoint.SELF_STARTED,
             amount=amount,
             invoice_items=items,
             contact_emails=self.contact_emails
@@ -344,15 +358,13 @@ class CustomerAccountInvoiceFactory(object):
         self.account = account
         self.recipients = recipients
         self.customer_invoice = None
-        self.subscriptions = {}
+        self.subscriptions = defaultdict(list)
 
     def create_invoice(self):
-        for subscription in self.account.subscription_set.all():
-            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                if subscription.plan_version in self.subscriptions:
-                    self.subscriptions[subscription.plan_version].append(subscription)
-                else:
-                    self.subscriptions[subscription.plan_version] = [subscription]
+        for sub in self.account.subscription_set.filter(do_not_invoice=False):
+            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+                self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
         try:
@@ -401,6 +413,9 @@ class CustomerAccountInvoiceFactory(object):
         try:
             if self.recipients:
                 for email in self.recipients:
+                    record.send_email(contact_email=email)
+            elif self.account.enterprise_admin_emails:
+                for email in self.account.enterprise_admin_emails:
                     record.send_email(contact_email=email)
             elif self.account.dimagi_contact:
                 record.send_email(contact_email=self.account.dimagi_contact,
@@ -481,12 +496,15 @@ class LineItemFactory(object):
     @property
     @memoized
     def subscribed_domains(self):
-        if self.subscription.subscriber.domain is None:
-            raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
-            return [sub.subscriber.domain for sub in
-                    self.subscription.account.subscription_set
-                        .filter(plan_version=self.subscription.plan_version)]
+            return list(self.subscription.account.subscription_set.filter(
+                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+                date_start__lte=self.invoice.date_end
+            ).filter(
+                plan_version=self.subscription.plan_version
+            ).values_list(
+                'subscriber__domain', flat=True
+            ))
         return [self.subscription.subscriber.domain]
 
     def create(self):
@@ -511,15 +529,66 @@ class LineItemFactory(object):
 
     @property
     @memoized
-    def is_prorated(self):
+    def _subscription_ends_before_invoice(self):
+        return (
+            self.subscription.date_end
+            and self.subscription.date_end < self.invoice.date_end
+        )
+
+    @property
+    @memoized
+    def _subscription_starts_after_invoice(self):
+        return (
+            self.subscription.date_start > self.invoice.date_start
+        )
+
+    @property
+    @memoized
+    def subscription_date_range(self):
+        if self._subscription_ends_before_invoice or self._subscription_starts_after_invoice:
+            date_start = (
+                self.subscription.date_start
+                if self._subscription_starts_after_invoice
+                else self.invoice.date_start
+            )
+            date_end = (
+                self.subscription.date_end - datetime.timedelta(days=1)
+                if self._subscription_ends_before_invoice
+                else self.invoice.date_end
+            )
+            return "{} - {}".format(
+                date_start.strftime("%b %-d"),
+                date_end.strftime("%b %-d")
+            )
+
+    @property
+    def _is_partial_invoice(self):
         return not (
             self.invoice.date_end.day == self._days_in_billing_period
             and self.invoice.date_start.day == 1
         )
 
     @property
+    @memoized
+    def is_prorated(self):
+        return (
+            self._subscription_ends_before_invoice
+            or self._subscription_starts_after_invoice
+            or self._is_partial_invoice
+        )
+
+    @property
     def num_prorated_days(self):
-        return self.invoice.date_end.day - self.invoice.date_start.day + 1
+        day_start = self.invoice.date_start.day
+        day_end = self.invoice.date_end.day
+
+        if self._subscription_starts_after_invoice:
+            day_start = self.subscription.date_start.day
+
+        if self._subscription_ends_before_invoice:
+            day_end = self.subscription.date_end.day - 1
+
+        return day_end - day_start + 1
 
     @property
     def _days_in_billing_period(self):
@@ -551,13 +620,19 @@ class ProductLineItemFactory(LineItemFactory):
     def unit_description(self):
         if self.is_prorated:
             return ungettext(
-                "%(num_days)s day of %(plan_name)s Software Plan.",
-                "%(num_days)s days of %(plan_name)s Software Plan.",
+                "{num_days} day of {plan_name} Software Plan."
+                "{subscription_date_range}",
+                "{num_days} days of {plan_name} Software Plan."
+                "{subscription_date_range}",
                 self.num_prorated_days
-            ) % {
-                'num_days': self.num_prorated_days,
-                'plan_name': self.plan_name,
-            }
+            ).format(
+                num_days=self.num_prorated_days,
+                plan_name=self.plan_name,
+                subscription_date_range=(
+                    " ({})".format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                ),
+            )
 
     @property
     def unit_cost(self):
@@ -631,13 +706,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return non_prorated_unit_cost
 
     @property
+    @memoized
     def quantity(self):
-        if self.invoice.is_customer_invoice and self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
-            return self.num_excess_users_over_period
-        return self.num_excess_users
-
-    @property
-    def num_excess_users_over_period(self):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -648,12 +718,12 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    total_users += 0
+                    raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
     def all_month_ends_in_invoice(self):
-        month_end = self.invoice.date_end
+        _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
         dates = []
         while month_end > self.invoice.date_start:
             dates.append(month_end)
@@ -661,35 +731,55 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return dates
 
     @property
-    def num_excess_users(self):
-        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return 0
-        else:
-            return max(self.num_users - self.rate.monthly_limit, 0)
-
-    @property
-    @memoized
-    def num_users(self):
-        total_users = 0
-        for domain in self.subscribed_domains:
-            total_users += CommCareUser.total_by_domain(domain, is_active=True)
-        return total_users
-
-    @property
     def unit_description(self):
-        non_monthly_invoice = self.invoice.is_customer_invoice and \
-            self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
-        if self.num_excess_users > 0 or (non_monthly_invoice and self.num_excess_users_over_period > 0):
+        prorated_notice = ""
+        if self.is_prorated:
+            prorated_notice = _(" (Prorated for {date_range})").format(
+                date_range=(
+                    self.subscription_date_range
+                    if self.subscription_date_range else ""
+                )
+            )
+        if self.quantity > 0:
             return ungettext(
-                "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
-                "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
+                "Per-user fee exceeding limit of {monthly_limit} user "
+                "with plan above.{prorated_notice}",
+                "Per-user fee exceeding limit of {monthly_limit} users "
+                "with plan above.{prorated_notice}",
                 self.rate.monthly_limit
-            ) % {
-                'monthly_limit': self.rate.monthly_limit,
-            }
+            ).format(
+                monthly_limit=self.rate.monthly_limit,
+                prorated_notice=prorated_notice,
+            )
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
+
+    @property
+    @memoized
+    def _start_date_count_sms(self):
+        """If there are multiple subscriptions in this invoice, only count the
+        sms billables that occur AFTER this date for this line item.
+        Otherwise, excess billables will be counted counted twice in both
+        subscription timeframes.
+        """
+        return (
+            self.subscription.date_start if self._subscription_starts_after_invoice
+            else None
+        )
+
+    @property
+    @memoized
+    def _end_date_count_sms(self):
+        """If there are multiple subscriptions in this invoice, only count the
+        sms billables that occur BEFORE this date for this line item.
+        Otherwise, excess billables will be counted counted twice in both
+        subscription timeframes.
+        """
+        return (
+            self.subscription.date_end if self._subscription_ends_before_invoice
+            else None
+        )
 
     @property
     @memoized
@@ -703,6 +793,14 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             sms_count += billable.multipart_count
             if sms_count <= self.rate.monthly_limit:
                 # don't count fees until the free monthly limit is exceeded
+                continue
+            elif self._start_date_count_sms and (
+                billable.date_sent.date() < self._start_date_count_sms
+            ):
+                # count the SMS billables sent before the start date toward
+                # the monthly total & limit for the line item, but don't include
+                # the usage charge in the total_excess for this line item
+                # (otherwise it will be counted twice)
                 continue
             else:
                 total_message_charge = billable.gateway_charge + billable.usage_charge
@@ -724,32 +822,42 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return ungettext(
-                "%(num_sms)d SMS Message",
-                "%(num_sms)d SMS Messages",
+                "{num_sms} SMS Message",
+                "{num_sms} SMS Messages",
                 self.num_sms
-            ) % {
-                'num_sms': self.num_sms,
-            }
+            ).format(
+                num_sms=self.num_sms,
+            )
         elif self.is_within_monthly_limit:
             return _(
-                "%(num_sms)d of %(monthly_limit)d included SMS messages"
-            ) % {
-                'num_sms': self.num_sms,
-                'monthly_limit': self.rate.monthly_limit,
-            }
+                "{num_sms} of {monthly_limit} included SMS{date_range}."
+            ).format(
+                num_sms=self.num_sms,
+                monthly_limit=self.rate.monthly_limit,
+                date_range=(
+                    _(" from {}").format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                )
+            )
         else:
             assert self.rate.monthly_limit != UNLIMITED_FEATURE_USAGE
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
             return ungettext(
-                "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included.",
-                "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included.",
+                "{num_extra_sms} SMS message beyond {monthly_limit} "
+                "messages included{date_range}.",
+                "{num_extra_sms} SMS messages beyond {monthly_limit} "
+                "messages included{date_range}.",
                 num_extra
-            ) % {
-                'num_extra_sms': num_extra,
-                'monthly_limit': self.rate.monthly_limit,
-            }
+            ).format(
+                num_extra_sms=num_extra,
+                monthly_limit=self.rate.monthly_limit,
+                date_range=(
+                    _(" from {}").format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                )
+            )
 
     @property
     @memoized
@@ -758,8 +866,17 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             domain__in=self.subscribed_domains,
             is_valid=True,
             date_sent__gte=self.invoice.date_start,
-            date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
-        ).order_by('-date_sent')
+
+            # Don't count any SMS billables towards the monthly total &
+            # limit if they were sent AFTER the end date of the current
+            # subscription related to this line item. Save it for the
+            # next subscription in the invoice.
+            date_sent__lt=(
+                self._end_date_count_sms if self._end_date_count_sms
+                else self.invoice.date_end + datetime.timedelta(days=1)
+            ),
+
+        ).order_by('date_sent')
 
     @property
     @memoized

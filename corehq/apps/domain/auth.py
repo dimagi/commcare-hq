@@ -1,16 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import re
 from functools import wraps
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.views.decorators.debug import sensitive_variables
+
 from tastypie.authentication import ApiKeyAuthentication
 
+from dimagi.utils.django.request import mutable_querydict
+
+from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser
 from corehq.util.hmac_request import validate_request_hmac
-from dimagi.utils.django.request import mutable_querydict
+from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
@@ -18,8 +22,22 @@ ANDROID = 'android'
 
 BASIC = 'basic'
 DIGEST = 'digest'
+NOAUTH = 'noauth'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
+
+
+def _is_api_key_authentication(request):
+    authorization_header = request.META.get('HTTP_AUTHORIZATION', '')
+
+    api_key_authentication = ApiKeyAuthentication()
+    try:
+        username, api_key = api_key_authentication.extract_credentials(request)
+    except ValueError:
+        raise Http400("Bad HTTP_AUTHORIZATION header {}"
+                      .format(authorization_header))
+    else:
+        return username and api_key
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -43,7 +61,7 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif all(ApiKeyAuthentication().extract_credentials(request)):
+    elif _is_api_key_authentication(request):
         return API_KEY
 
     if request.META.get('HTTP_X_MAC_DIGEST', None):
@@ -57,6 +75,13 @@ def determine_authtype_from_request(request, default=DIGEST):
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
     """
+
+    # Fixes behavior for mobile versions between 2.39.0 and
+    # 2.46.0, which did not explicitly request noauth when
+    # submitting in demo mode.
+    if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        return NOAUTH
+
     user_agent = request.META.get('HTTP_USER_AGENT')
     if is_probably_j2me(user_agent):
         return DIGEST
@@ -68,6 +93,7 @@ def is_probably_j2me(user_agent):
     return user_agent and re.search(j2me_pattern, user_agent)
 
 
+@sensitive_variables('auth', 'password')
 def get_username_and_password_from_request(request):
     """Returns tuple of (username, password). Tuple values
     may be null."""
@@ -76,6 +102,7 @@ def get_username_and_password_from_request(request):
     if 'HTTP_AUTHORIZATION' not in request.META:
         return None, None
 
+    @sensitive_variables()
     def _decode(string):
         try:
             return string.decode('utf-8')
@@ -88,14 +115,14 @@ def get_username_and_password_from_request(request):
     if auth[0].lower() == DIGEST:
         try:
             digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-            username = digest.username
+            username = digest.username.lower()
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(b':', 1)
+        username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        username = username.lower()
         # decode password submitted from mobile app login
         password = decode_password(password, username)
-        username, password = _decode(username), _decode(password)
     return username, password
 
 
@@ -113,6 +140,23 @@ def basicauth(realm=''):
             # Either they did not provide an authorization header or
             # something in the authorization attempt failed. Send a 401
             # back to them to ask them to authenticate.
+            response = HttpResponse(status=401)
+            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            return response
+        return wrapper
+    return real_decorator
+
+
+def basic_or_api_key(realm=''):
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            username, password = get_username_and_password_from_request(request)
+            if username and password:
+                request.check_for_password_as_api_key = True
+                user = authenticate(username=username, password=password, request=request)
+                if user is not None and user.is_active:
+                    request.user = user
+                    return view(request, *args, **kwargs)
             response = HttpResponse(status=401)
             response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
             return response
@@ -150,3 +194,18 @@ def formplayer_as_user_auth(view):
         return view(request, *args, **kwargs)
 
     return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)
+
+
+class ApiKeyFallbackBackend(object):
+
+    def authenticate(self, request, username, password):
+        if not getattr(request, 'check_for_password_as_api_key', False):
+            return None
+
+        try:
+            user = User.objects.get(username=username, api_key__key=password)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            return None
+        else:
+            request.skip_two_factor_check = True
+            return user

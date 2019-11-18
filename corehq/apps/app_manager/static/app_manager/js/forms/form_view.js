@@ -64,42 +64,59 @@ hqDefine("app_manager/js/forms/form_view", function () {
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // Analytics for renaming form
-        $(".appmanager-edit-title").on('click', '.btn-success', function () {
+        $(".appmanager-edit-title").on('click', '.btn-primary', function () {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
         });
 
         // Settings > Logic
+        var $nameEnumContainer = $('#name-enum-mapping');
+        if ($nameEnumContainer.length) {
+            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
+                lang: initialPageData('current_language'),
+                langs: initialPageData('langs'),
+                items: initialPageData('name_enum'),
+                property_name: 'name',
+                values_are_icons: false,
+                keys_are_conditions: true,
+            });
+            nameMapping.on("change", function () {
+                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
+                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
+            });
+            $nameEnumContainer.append(nameMapping.ui);
+        }
+
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initialPageData('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(formFilterModel());
         }
 
-        if (initialPageData('allow_form_workflow')) {
-            var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
-            var labels = {};
-            labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
-            labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
+        var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
+        var labels = {};
+        labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
+        labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
+        if (initialPageData('module_name')) {
             labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
-            if (initialPageData('root_module_name')) {
-                labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
-            }
-            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
-
-            var options = {
-                labels: labels,
-                workflow: initialPageData('post_form_workflow'),
-                workflow_fallback: initialPageData('post_form_workflow_fallback'),
-            };
-
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-                labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
-                options.forms = initialPageData('linkable_forms');
-                options.formLinks = initialPageData('form_links');
-                options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
-            }
-
-            $('#form-workflow').koApplyBindings(new FormWorkflow(options));
         }
+        if (initialPageData('root_module_name')) {
+            labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
+        }
+        labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
+
+        var options = {
+            labels: labels,
+            workflow: initialPageData('post_form_workflow'),
+            workflow_fallback: initialPageData('post_form_workflow_fallback'),
+        };
+
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
+            labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+            options.forms = initialPageData('linkable_forms');
+            options.formLinks = initialPageData('form_links');
+            options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
+        }
+
+        $('#form-workflow').koApplyBindings(new FormWorkflow(options));
 
         // Settings > Advanced
         $('#auto-gps-capture').koApplyBindings({

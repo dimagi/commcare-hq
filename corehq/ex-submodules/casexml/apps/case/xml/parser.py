@@ -2,8 +2,6 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import datetime
 
@@ -11,9 +9,6 @@ from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_utc_datetime
-import six
-from six.moves import filter
-
 
 XMLNS_ATTR = "@xmlns"
 KNOWN_PROPERTIES = {
@@ -73,6 +68,9 @@ class CaseActionBase(object):
     def get_known_properties(self):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
+
+    def __repr__(self):
+        return "CaseAction(block={})".format(self.raw_block)
 
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
@@ -210,7 +208,7 @@ class CaseAttachmentAction(CaseActionBase):
             return cls(block, attachments)
 
         for id, data in block.items():
-            if isinstance(data, six.string_types):
+            if isinstance(data, str):
                 attachment_src = None
                 attachment_from = None
                 attachment_name = None

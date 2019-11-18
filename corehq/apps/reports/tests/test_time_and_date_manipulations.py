@@ -1,7 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.reports.views import calculate_hour, recalculate_hour, calculate_day
+
+from corehq.apps.reports.views import (
+    calculate_day,
+    calculate_hour,
+    recalculate_hour,
+)
 
 
 class TimeAndDateManipulationTest(SimpleTestCase):
@@ -36,5 +39,3 @@ class TimeAndDateManipulationTest(SimpleTestCase):
         self.assertEqual(calculate_day('monthly', 1, -1), 31)
         self.assertEqual(calculate_day('weekly', 6, 1), 0)
         self.assertEqual(calculate_day('monthly', 31, 1), 1)
-
-

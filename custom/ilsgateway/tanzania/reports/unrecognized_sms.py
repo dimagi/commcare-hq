@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -84,6 +82,7 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
     def export_table(self):
         result = super(UnrecognizedSMSReport, self).export_table
         table = result[0][1]
+        table = list(table)
         table[0].append(_("Contact Type"))
         table[0].append(_("Contact Id"))
         for row in table[1:]:
@@ -91,6 +90,7 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
             row[1] = contact_info[0]
             row.append(contact_info[1])
             row.append(contact_info[2])
+        result[0][1] = table
         return result
 
     def get_location_filter(self):

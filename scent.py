@@ -6,8 +6,6 @@ Use the nose syntax for python tests
 When you save a .js file, the js tests run,
 When you save a .py file, the python tests run.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from subprocess import Popen
 from sniffer.api import runnable, select_runnable, file_validator
@@ -29,7 +27,7 @@ def python_test_files(filename):
 @select_runnable('javascript_tests')
 @file_validator
 def js_files(filename):
-     return filename.endswith('.js') and not os.path.basename(filename).startswith('.')
+    return filename.endswith('.js') and not os.path.basename(filename).startswith('.')
 
 
 def run_test(fn):

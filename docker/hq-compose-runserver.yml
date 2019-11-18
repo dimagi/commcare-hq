@@ -1,69 +1,72 @@
-web:
-  build: .
-  dockerfile: "${DOCKERFILE}"
-  environment:
-    COMMCAREHQ_BOOTSTRAP: "yes"
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
-    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-  privileged: true  # allows mount inside container
-  command: [runserver]
-  links:
-    - postgres
-    - couch
-    - redis
-    - elasticsearch
-    - kafka
-    - riakcs
-  expose:
-    - 8000
-  ports:
-    - "8000:8000"
-  volumes:
-    - ..:/mnt/commcare-hq-ro:ro
-    - hqservice-lib:/mnt/lib
+version: '2.3'
 
-formplayer:
-  extends:
-    file: hq-compose.yml
-    service: formplayer
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
-    WEB_HOST: "web"
-  links:
-    - postgres
-    - couch
-    - redis
-  expose:
-    - 8010
-  ports:
-    - "8010:8010"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: "${DOCKERFILE}"
+    environment:
+      COMMCAREHQ_BOOTSTRAP: "yes"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 kafka:9092 elasticsearch:9200 minio:9980"
+      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+    privileged: true  # allows mount inside container
+    command: [runserver]
+    links:
+      - postgres
+      - couch
+      - redis
+      - elasticsearch
+      - kafka
+      - minio
+    expose:
+      - 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/mnt/commcare-hq-ro:ro
+      - ${VOLUME_PREFIX}lib:/mnt/lib
 
-postgres:
-  extends:
-    file: hq-compose-services.yml
-    service: postgres
+  formplayer:
+    extends:
+      file: hq-compose.yml
+      service: formplayer
+    environment:
+      WEB_HOST: "web"
+    links:
+      - postgres
+      - couch
+      - redis
+    expose:
+      - 8010
+    ports:
+      - "8010:8010"
 
-couch:
-  extends:
-    file: hq-compose-services.yml
-    service: couch
+  postgres:
+    extends:
+      file: hq-compose-services.yml
+      service: postgres
 
-redis:
-  extends:
-    file: hq-compose-services.yml
-    service: redis
+  couch:
+    extends:
+      file: hq-compose-services.yml
+      service: couch
 
-elasticsearch:
-  extends:
-    file: hq-compose-services.yml
-    service: elasticsearch
+  redis:
+    extends:
+      file: hq-compose-services.yml
+      service: redis
 
-kafka:
-  extends:
-    file: hq-compose-services.yml
-    service: kafka
+  elasticsearch:
+    extends:
+      file: hq-compose-services.yml
+      service: elasticsearch
 
-riakcs:
-  extends:
-    file: hq-compose-services.yml
-    service: riakcs
+  kafka:
+    extends:
+      file: hq-compose-services.yml
+      service: kafka
+
+  minio:
+    extends:
+      file: hq-compose-services.yml
+      service: minio

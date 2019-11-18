@@ -15,7 +15,6 @@ hqDefine('app_manager/js/supported_languages',[
         self.show_error = ko.observable();
         self.languages = languages;
         self.message = ko.computed(function () {
-
             if (self.langcode()) {
                 var lang = self.langcode().toLowerCase();
                 $.getJSON('/langcodes/langs.json', {term: lang}, function (res) {
@@ -31,6 +30,15 @@ hqDefine('app_manager/js/supported_languages',[
             }
 
             return self.message_content();
+        });
+        self.originalLangcodeMessage = ko.computed(function () {
+            if (!self.originalLangcode()) {
+                return '';
+            }
+
+            return "(" + _.template("originally <%= originalLanguage %>")({
+                originalLanguage: self.originalLangcode(),
+            }) + ")";
         });
 
         self.isDefaultLang = ko.computed(function () {
@@ -125,6 +133,10 @@ hqDefine('app_manager/js/supported_languages',[
         self.removeLanguage = function (language) {
             self.languages.remove(language);
             self.removedLanguages.push(language);
+        };
+        self.setAsDefault = function (language) {
+            self.languages.remove(language);
+            self.languages.unshift(language);
         };
         self.unremoveLanguage = function (language) {
             self.removedLanguages.remove(language);

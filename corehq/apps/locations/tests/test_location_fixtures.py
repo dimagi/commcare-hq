@@ -1,40 +1,62 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from collections import namedtuple
-import uuid
-import mock
 import os
+import uuid
+from collections import namedtuple
+from datetime import datetime, timedelta
 from xml.etree import cElementTree as ElementTree
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
-from corehq.apps.locations.views import LocationFieldsView
 
+from django.test import TestCase
+
+import mock
+
+from casexml.apps.phone.models import SimplifiedSyncLog
+from casexml.apps.phone.restore import RestoreParams
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator,
+    create_restore_user,
+)
+
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    extract_xml_partial,
+)
+from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
-from datetime import datetime, timedelta
-from django.test import TestCase
-from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import CommCareUser
-
-from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-
+from ..fixtures import (
+    LocationSet,
+    _get_location_data_fields,
+    _location_to_fixture,
+    flat_location_fixture_generator,
+    get_location_fixture_queryset,
+    location_fixture_generator,
+    related_locations_fixture_generator,
+    should_sync_flat_fixture,
+    should_sync_hierarchical_fixture,
+    should_sync_locations,
+)
+from ..models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+    make_location,
+)
 from .util import (
-    setup_location_types_with_structure,
-    setup_locations_with_structure,
+    LocationHierarchyTestCase,
     LocationStructure,
     LocationTypeStructure,
-    LocationHierarchyTestCase
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
 )
-from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
-    _get_location_data_fields, get_location_fixture_queryset, related_locations_fixture_generator
-from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration, LocationRelation
-import six
 
 EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 <fixture id='commtrack:locations' user_id='{}'>
@@ -75,7 +97,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        return self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).decode('utf-8').format(
             user_id=self.user.user_id,
             **ids
         )
@@ -150,7 +172,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
-        self.assertEquals(location_data, {k: six.text_type(v) for k, v in location.metadata.items()})
+        self.assertEqual(location_data, {k: str(v) for k, v in location.metadata.items()})
 
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])
@@ -315,55 +337,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocationsMixin):
-    domain = "indexed_location_fixtures"
-    location_type_names = ['state', 'county', 'city']
-    location_structure = TEST_LOCATION_STRUCTURE
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestIndexedLocationsFixture, cls).setUpClass()
-        cls.user = create_restore_user(cls.domain, 'user', '123')
-        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.fields = [
-            CustomDataField(slug='is_test', index_in_fixture=True),
-            CustomDataField(slug='favorite_color'),
-        ]
-        cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
-        for location in cls.locations.values():
-            location.metadata = {
-                'is_test': 'no',
-                'favorite_color': 'blue',
-            }
-            location.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user._couch_user.delete()
-        super(TestIndexedLocationsFixture, cls).tearDownClass()
-
-    def test_index_location_fixtures(self):
-        self.user._couch_user.set_location(self.locations['Massachusetts'])
-        expected_result = self._assemble_expected_fixture(
-            'index_location_fixtures',
-            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
-        )
-        fixture_nodes = call_fixture_generator(flat_location_fixture_generator, self.user)
-        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
-
-        # check the fixture like usual
-        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
-        expected_fixture = extract_xml_partial(expected_result, './fixture')
-        self.assertXmlEqual(expected_fixture, fixture)
-
-        # check the schema
-        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
-        expected_schema = extract_xml_partial(expected_result, './schema')
-        self.assertXmlEqual(expected_schema, schema)
-
-
-@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
     def setUp(self):
         super(ForkedHierarchiesTest, self).setUp()
@@ -433,7 +406,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1]).decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -685,8 +658,27 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     def test_related_locations(self, *args):
         self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
         self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
+            related=True
+        )
+
+    def test_related_locations_parent_location(self, *args):
+        # verify that being assigned to a parent location pulls in sub location's relations
+        self.user._couch_user.add_to_assigned_locations(self.locations['Middlesex'])
+        self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
+            'related_location',
+            ['Boston', 'Cambridge'],
             related=True
         )
 
@@ -696,10 +688,41 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
         self.relation.save()
         self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
         self._assert_fixture_matches_file(
+            'related_location_with_distance_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location_with_distance',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
             related=True
         )
+
+    def test_should_sync_when_changed(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        last_sync_time = datetime.utcnow()
+        sync_log = SimplifiedSyncLog(date=last_sync_time)
+        locations_queryset = SQLLocation.objects.filter(pk=self.locations['Boston'].pk)
+
+        restore_state = MockRestoreState(self.user, RestoreParams())
+
+        self.assertFalse(should_sync_locations(sync_log, locations_queryset, restore_state))
+        self.assertEqual(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 0)
+
+        LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
+        self.assertTrue(should_sync_locations(SimplifiedSyncLog(date=last_sync_time), locations_queryset, restore_state))
+
+        # length 2 for index definition + data
+        self.assertEqual(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
+    def test_force_empty_when_user_has_no_locations(self, *args):
+        sync_log = SimplifiedSyncLog(date=datetime.utcnow())
+        # no relations have been touched since this SimplifiedSyncLog, but it still pushes down the empty list
+        self.assertEqual(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
 
 
 class ShouldSyncLocationFixturesTest(TestCase):
@@ -748,8 +771,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
         self.assertFalse(
-            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SimplifiedSyncLog(date=yesterday), locations_queryset, restore_state)
         )
 
         self.location_type.shares_cases = True
@@ -759,7 +783,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertTrue(
-            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SimplifiedSyncLog(date=yesterday), locations_queryset, restore_state)
         )
 
     def test_archiving_location_should_resync(self):
@@ -775,9 +799,10 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
         # Should not resync if last sync was after location save
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, restore_state)
         )
 
         # archive the location
@@ -788,15 +813,30 @@ class ShouldSyncLocationFixturesTest(TestCase):
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         # Should resync if last sync was after location was saved but before location was archived
         self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, restore_state)
         )
         # Should not resync if last sync was after location was deleted
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SimplifiedSyncLog(date=after_archive), locations_queryset, restore_state)
+        )
+
+    def test_changed_build_id(self):
+        app = MockApp('project_default', 'build_1')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=app))
+        sync_log_from_old_app = SimplifiedSyncLog(date=datetime.utcnow(), build_id=app.get_id)
+        self.assertFalse(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
+
+        new_build = MockApp('project_default', 'build_2')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=new_build))
+        self.assertTrue(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
         )
 
 
-MockApp = namedtuple("MockApp", ["location_fixture_restore"])
+MockApp = namedtuple("MockApp", ["location_fixture_restore", "get_id"])
+MockRestoreState = namedtuple("MockRestoreState", ["restore_user", "params"])
 
 
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
@@ -857,7 +897,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_sync_format_with_app_aware_project_default(self):
-        app = MockApp(location_fixture_restore='project_default')
+        app = MockApp(location_fixture_restore='project_default', get_id="build")
         conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
         conf.sync_hierarchical_fixture = True
         conf.sync_flat_fixture = False
@@ -875,7 +915,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 def test_sync_format(self, fixture_restore_type, sync_flat, sync_hierarchical):
-    app = MockApp(location_fixture_restore=fixture_restore_type)
+    app = MockApp(location_fixture_restore=fixture_restore_type, get_id="build")
     conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
     conf.sync_hierarchical_fixture = not sync_hierarchical
     conf.sync_flat_fixture = not sync_flat

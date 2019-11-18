@@ -2,8 +2,6 @@
 Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from collections import namedtuple
 
@@ -13,7 +11,7 @@ from psycopg2.extensions import adapt
 from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
+    XFormInstanceSQL_DB_TABLE,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperationSQL_DB_TABLE,
 )
@@ -64,22 +62,6 @@ def form_adapter(form):
         form.server_modified_on,
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
-
-
-def form_attachment_adapter(attachment):
-    fields = [
-        attachment.id,
-        attachment.attachment_id,
-        attachment.name,
-        attachment.content_type,
-        attachment.md5,
-        attachment.form_id,
-        attachment.blob_id,
-        attachment.content_length,
-        json.dumps(attachment.properties, cls=JSONEncoder),
-        attachment.blob_bucket,
-    ]
-    return ObjectAdapter(fields, XFormAttachmentSQL_DB_TABLE)
 
 
 def form_operation_adapter(operation):

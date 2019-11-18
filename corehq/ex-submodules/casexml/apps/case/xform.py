@@ -1,26 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
-import logging
 from itertools import groupby
 
 import itertools
-from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks
+from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
-from casexml.apps.case.exceptions import (
-    NoDomainProvided,
-    InvalidCaseIndex, IllegalCaseId)
+from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from django.conf import settings
 
 from casexml.apps.case import const
@@ -38,13 +32,10 @@ class CaseProcessingResult(object):
     Lightweight class used to collect results of case processing
     """
 
-    def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
+    def __init__(self, domain, cases, dirtiness_flags):
         self.domain = domain
         self.cases = cases
         self.dirtiness_flags = dirtiness_flags
-        if extensions_to_close is None:
-            extensions_to_close = set()
-        self.extensions_to_close = extensions_to_close
 
     def get_clean_owner_ids(self):
         dirty_flags = self.get_flags_to_save()
@@ -56,23 +47,11 @@ class CaseProcessingResult(object):
     def get_flags_to_save(self):
         return {f.owner_id: f.case_id for f in self.dirtiness_flags}
 
-    def close_extensions(self, case_db, device_id):
-        from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
-        if extensions_to_close:
-            return close_cases(
-                extensions_to_close,
-                self.domain,
-                SYSTEM_USER_ID,
-                device_id,
-                case_db,
-            )
-
     def commit_dirtiness_flags(self):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.domain:
+        if self.domain and not LIVEQUERY_SYNC.enabled(self.domain):
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
@@ -109,13 +88,12 @@ class CaseProcessingResult(object):
                     flag.save()
 
 
-def process_cases_with_casedb(xforms, case_db, config=None):
-    config = config or CaseProcessingConfig()
+def process_cases_with_casedb(xforms, case_db):
     case_processing_result = _get_or_update_cases(xforms, case_db)
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    _update_sync_logs(xform, case_db, config, cases)
+    _update_sync_logs(xform, cases)
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -135,27 +113,14 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     return case_processing_result
 
 
-def _update_sync_logs(xform, case_db, config, cases):
+def _update_sync_logs(xform, cases):
     # handle updating the sync records for apps that use sync mode
     relevant_log = xform.get_sync_token()
     if relevant_log:
-        # in reconciliation mode, things can be unexpected
-        relevant_log.strict = config.strict_asserts
-        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
-                                    case_id_blacklist=config.case_id_blacklist)
-
-
-class CaseProcessingConfig(object):
-
-    def __init__(self, strict_asserts=True, case_id_blacklist=None):
-        self.strict_asserts = strict_asserts
-        self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
-
-    def __repr__(self):
-        return 'strict: {strict}, ids: {ids}'.format(
-            strict=self.strict_asserts,
-            ids=", ".join(self.case_id_blacklist)
-        )
+        changed = relevant_log.update_phone_lists(xform, cases)
+        changed |= prune_previous_log(relevant_log)
+        if changed:
+            relevant_log.save()
 
 
 def _get_or_update_cases(xforms, case_db):
@@ -167,18 +132,19 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
-    dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
-    extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
+    dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
         dirtiness_flags,
-        extensions_to_close
     )
 
 
-def _get_all_dirtiness_flags_from_cases(case_db, touched_cases):
+def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    if LIVEQUERY_SYNC.enabled(domain):
+        return []
+
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
     for case_update_meta in touched_cases.values():
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_db, case_update_meta.case))
@@ -287,18 +253,25 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
     )
 
 
-def get_all_extensions_to_close(domain, case_updates):
-    extensions_to_close = set()
-    for case_update_meta in case_updates:
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
-    return extensions_to_close
+def close_extension_cases(case_db, cases, device_id):
+    from casexml.apps.case.cleanup import close_cases
+    extensions_to_close = get_all_extensions_to_close(case_db.domain, cases)
+    extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
+    if extensions_to_close:
+        return close_cases(
+            extensions_to_close,
+            case_db.domain,
+            SYSTEM_USER_ID,
+            device_id,
+            case_db,
+        )
 
 
-def get_extensions_to_close(case, domain):
-    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
-    else:
+def get_all_extensions_to_close(domain, cases):
+    if not EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return set()
+    case_ids = [case.case_id for case in cases if case.closed]
+    return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
 
 
 def is_device_report(doc):
@@ -330,12 +303,10 @@ def extract_case_blocks(doc, include_path=False):
     for that get_case_updates is better.
 
     if `include_path` is True then instead of returning just the case block it will
-    return a dict with the following structure:
+    return a namedtuple with the following attributes:
 
-    {
-       "caseblock": caseblock
-       "path": ["form", "path", "to", "block"]
-    }
+       caseblock: case block
+       path: ["form", "path", "to", "block"]
 
     Repeat nodes will all share the same path.
     """
@@ -418,16 +389,8 @@ def _update_order_index(update):
 
 
 def get_case_ids_from_form(xform):
-    return set(cu.id for cu in get_case_updates(xform))
-
-
-def cases_referenced_by_xform(xform):
-    """
-    Returns a list of CommCareCase or CommCareCaseSQL given a JSON
-    representation of an XFormInstance
-    """
-    assert xform.domain, "Form is missing 'domain'"
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-    case_ids = get_case_ids_from_form(xform)
-    case_accessor = CaseAccessors(xform.domain)
-    return list(case_accessor.get_cases(list(case_ids)))
+    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+    case_ids = set(cu.id for cu in get_case_updates(xform))
+    if xform:
+        case_ids.update(get_case_ids_from_stock_transactions(xform))
+    return case_ids

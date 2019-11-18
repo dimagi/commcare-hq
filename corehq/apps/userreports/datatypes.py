@@ -1,7 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-
 from jsonobject.properties import StringProperty
-
 
 DATA_TYPE_DATE = 'date'
 DATA_TYPE_DATETIME = 'datetime'

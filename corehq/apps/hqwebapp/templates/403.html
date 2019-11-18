@@ -4,9 +4,13 @@
 {% block tabs %}{% endblock tabs %}
 {% block page_name %}403 <small>{% trans "Sorry, you don't have permission to access that page!" %}</small>{% endblock %}
 {% block page_content %}
-    {% if message %}
-        <p>{{ message }}</p>
-    {% else %}
-        <p>{% trans "Contact your administrator if you believe this is a mistake." %}</p>
-    {% endif %}
+  {% if message %}
+    <p>
+      {{ message }}
+    </p>
+  {% else %}
+    <p>
+      {% trans "Contact your administrator if you believe this is a mistake." %}
+    </p>
+  {% endif %}
 {% endblock %}

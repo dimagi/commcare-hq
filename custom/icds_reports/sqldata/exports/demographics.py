@@ -1,19 +1,15 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
-from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent
+from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
+    phone_number_function
 
 
-class DemographicsChildHealth(ExportableMixin, SqlData):
-    engine_id = 'icds-test-ucr'
-
+class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
     table_name = 'agg_child_health_monthly'
 
     @property
@@ -32,6 +28,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns
@@ -50,6 +47,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -59,7 +57,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '0' OR age_tranche = '6'": 'valid_in_month'},
+                    whens=[["age_tranche = '0' OR age_tranche = '6'", 'valid_in_month']],
                     alias='num_children_0_6mo_enrolled_for_services'
                 ),
                 slug='num_children_0_6mo_enrolled_for_services'
@@ -67,7 +65,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             DatabaseColumn(
                 'num_children_6mo3yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'": 'valid_in_month'},
+                    whens=[["age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'", 'valid_in_month']],
                     alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
@@ -75,7 +73,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'": 'valid_in_month'},
+                    whens=[["age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'", 'valid_in_month']],
                     alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'
@@ -84,9 +82,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         return columns + agg_columns
 
 
-class DemographicsAWCMonthly(ExportableMixin, SqlData):
+class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
     table_name = 'agg_awc_monthly'
-    engine_id = 'icds-test-ucr'
 
     @property
     def get_columns_by_loc_level(self):
@@ -117,6 +114,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -288,7 +286,7 @@ class DemographicsExport(ExportableMixin):
             },
             {
                 'header': (
-                    'Total number of beneficiaries (Children under 6 years old,  pregnant women and lactating '
+                    'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating '
                     'women, alive and seeking services) who have an Aadhaar ID'
                 ),
                 'slug': 'person_has_aadhaar'

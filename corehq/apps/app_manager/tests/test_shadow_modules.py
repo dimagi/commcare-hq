@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -174,7 +173,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                   </menu>
                   <menu id="m0">
                     <text>
-                      <locale id="modules.m2"/>
+                      <locale id="modules.m0"/>
                     </text>
                     <command id="m2-f0"/>
                   </menu>
@@ -206,7 +205,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                   </menu>
                   <menu id="m0">
                     <text>
-                      <locale id="modules.m2"/>
+                      <locale id="modules.m0"/>
                     </text>
                     <command id="m2-f0"/>
                   </menu>

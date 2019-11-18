@@ -1,23 +1,19 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     level = config['aggregation_level']
 
@@ -64,7 +60,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['states'].append(states)
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         data_for_location['awcs'] = (
             sum(data_for_location['awcs']) if level <= 5 else max(data_for_location['awcs'])
         )
@@ -93,8 +89,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(data_for_map)])
-    total = sum([(x[prop] or 0) for x in six.itervalues(data_for_map)])
+    total_awcs = sum([(x['awcs'] or 0) for x in data_for_map.values()])
+    total = sum([(x[prop] or 0) for x in data_for_map.values()])
 
     fills = OrderedDict()
     fills.update({'Launched': MapColors.PINK})
@@ -131,7 +127,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -165,9 +161,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         'awcs': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         name = row['%s_name' % loc_level]
         awcs = row['awcs'] or 0
@@ -175,7 +168,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         blocks = row['blocks'] or 0
         districts = row['districts'] or 0
         states = row['states'] or 0
-        result_set.add(name)
 
         row_values = {
             'awcs': awcs,
@@ -184,15 +176,11 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
             'districts': districts,
             'states': states,
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += (value or 0)
 
-    for name, value_dict in six.iteritems(tooltips_data):
+    for name, value_dict in tooltips_data.items():
         chart_data['blue'].append([name, value_dict['awcs']])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
@@ -207,8 +195,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(tooltips_data)])
-    total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
+    total_awcs = sum([(x['awcs'] or 0) for x in tooltips_data.values()])
+    total = sum([(x[prop] or 0) for x in tooltips_data.values()])
 
     info = _(
         "{:s}<br /><br />"
@@ -237,7 +225,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -283,11 +271,16 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
 
         data['pink'][date_in_miliseconds]['y'] += awcs
 
-    top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['value'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'value': sum(value) / len(value)
+        }
+        for key, value in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_value_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['value'], reverse=True)
 
     return {
         "chart_data": [
@@ -297,7 +290,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in six.iteritems(data['pink'])
+                    } for key, value in data['pink'].items()
                 ],
                 "key": "Number of AWCs Launched",
                 "strokeWidth": 2,
@@ -305,8 +298,8 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                 "color": ChartColors.PINK
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_value_and_name,
+        "top_five": all_locations_sorted_by_value_and_name[:5],
+        "bottom_five": all_locations_sorted_by_value_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

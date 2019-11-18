@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 hierarchy_config = {
     'lvl_1': {
         'prop': 'district',

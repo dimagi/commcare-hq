@@ -1,11 +1,11 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import json
-
 import math
+
 from django.test import TestCase
-from elasticsearch import ConnectionError
+
+from corehq.util.es.elasticsearch import ConnectionError
+
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
@@ -21,8 +21,6 @@ from corehq.util import reverse
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from django_digest.test import Client
-from pillowtop.es_utils import initialize_index_and_mapping
-from six.moves import range
 
 TEST_DOMAIN = "cc-location-owner-test-domain"
 CASE_TYPE = "cc-case-type"
@@ -88,7 +86,6 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             user.delete()
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
-        cls.web_user.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)
         ensure_index_deleted(GROUP_INDEX_INFO.index)
 

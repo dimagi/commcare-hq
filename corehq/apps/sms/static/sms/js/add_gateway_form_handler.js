@@ -1,7 +1,7 @@
 hqDefine('sms/js/add_gateway_form_handler',[
     "knockout",
 ], function (ko) {
-    var AddGatewayFormHandler = function (initial) {
+    var addGatewayFormHandler = function (initial) {
         'use strict';
         var self = {};
 
@@ -21,7 +21,7 @@ hqDefine('sms/js/add_gateway_form_handler',[
             if (self.use_load_balancing()) {
                 var arr = initial.phone_numbers;
                 for (var i = 0; i < arr.length; i++) {
-                    self.phone_numbers.push(PhoneNumber(arr[i].phone_number));
+                    self.phone_numbers.push(phoneNumber(arr[i].phone_number));
                 }
                 if (self.phone_numbers().length === 0) {
                     self.addPhoneNumber();
@@ -30,7 +30,7 @@ hqDefine('sms/js/add_gateway_form_handler',[
         };
 
         self.addPhoneNumber = function () {
-            self.phone_numbers.push(PhoneNumber(""));
+            self.phone_numbers.push(phoneNumber(""));
         };
 
         self.removePhoneNumber = function () {
@@ -43,7 +43,7 @@ hqDefine('sms/js/add_gateway_form_handler',[
         return self;
     };
 
-    var PhoneNumber = function (phoneNumber) {
+    var phoneNumber = function (phoneNumber) {
         'use strict';
         var self = {};
         self.phone_number = ko.observable(phoneNumber);
@@ -51,6 +51,6 @@ hqDefine('sms/js/add_gateway_form_handler',[
     };
 
     return {
-        AddGatewayFormHandler: AddGatewayFormHandler,
+        addGatewayFormHandler: addGatewayFormHandler,
     };
 });

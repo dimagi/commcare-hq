@@ -14,8 +14,6 @@ Tips:
 - Plugin interface:
     https://nose.readthedocs.org/en/latest/plugins/interface.html
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import sys
 from nose.plugins import Plugin
 

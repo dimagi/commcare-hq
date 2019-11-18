@@ -1,32 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from couchdbkit.exceptions import ResourceNotFound
+from memoized import memoized
+
+from couchforms.analytics import (
+    get_all_xmlns_app_id_pairs_submitted_to_in_domain,
+)
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
-    get_form_details_for_xmlns,
-    get_form_details_for_app_and_xmlns,
-    get_form_details_for_app_and_module,
     get_form_details_for_app,
+    get_form_details_for_app_and_module,
+    get_form_details_for_app_and_xmlns,
+    get_form_details_for_xmlns,
 )
 from corehq.apps.reports.analytics.esaccessors import (
     guess_form_name_from_submissions_using_xmlns,
 )
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import (
+    BaseDrilldownOptionFilter,
+    BaseSingleOptionFilter,
+)
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import ESError
-from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
-from memoized import memoized
-
-# For translations
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
-import six
-from six.moves import range
-
+from corehq.util.context_processors import commcare_hq_names
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -135,15 +137,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'checked': self._hide_fuzzy_results,
             },
             'display_app_type': self.display_app_type,
-            'support_email': settings.SUPPORT_EMAIL,
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
-        if self.display_app_type and not context['selected']:
+        show_advanced = self.request.GET.get('show_advanced') == 'on'
+        
+        #set Default app type to active only when advanced option is not selected
+        if self.display_app_type and not context['selected'] and not show_advanced:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
 
         context["show_advanced"] = (
-            self.request.GET.get('show_advanced') == 'on'
+            show_advanced
             or context["unknown"]["show"]
             or context["hide_fuzzy"]["checked"]
             or (len(context['selected']) > 0
@@ -405,7 +409,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         If obj is a string, just output that string.
         """
-        if isinstance(obj, six.string_types):
+        if isinstance(obj, str):
             return obj
         if not obj:
             return _('Untitled')
@@ -436,8 +440,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
+            if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
+        if request.GET.get('show_advanced') == 'on':
+            return True
         return False
 
     def _get_filtered_data(self, filter_results):
@@ -606,7 +612,7 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
                         "<strong>Completion</strong> time is when the form is completed on the phone."),
                         ugettext_lazy(
                         "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
-                            hq_name=settings.COMMCARE_HQ_NAME))))
+                            hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))))
     default_text = ugettext_lazy("Completion Time")
 
     @property

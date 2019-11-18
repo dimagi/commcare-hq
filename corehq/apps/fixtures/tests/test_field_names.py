@@ -1,14 +1,16 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, \
-    FixtureTypeField, \
-    FixtureItemField, FieldList
+
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureItemField,
+    FixtureTypeField,
+)
 from corehq.apps.fixtures.utils import is_identifier_invalid
 
 
@@ -154,9 +156,17 @@ class FieldNameValidationTest(SimpleTestCase):
         bad_name = "0hello"
         self.assertTrue(is_identifier_invalid(bad_name))
 
-    def test_unicode(self):
+    def test_punctuation(self):
         bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
         self.assertTrue(is_identifier_invalid(bad_name))
+
+    def test_alphanumeric_nonascii(self):
+        good_name = "província"
+        self.assertFalse(is_identifier_invalid(good_name))
+
+    def test_alphanumeric_unicode(self):
+        good_name = "田纳西一二三"
+        self.assertFalse(is_identifier_invalid(good_name))
 
     def test_good(self):
         good_name = "fooxmlbar0123"

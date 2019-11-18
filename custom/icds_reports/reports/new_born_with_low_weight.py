@@ -1,24 +1,20 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number, get_child_locations
+    indian_formatted_number
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -97,7 +93,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -129,6 +125,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         data['blue'][miliseconds] = {'y': 0, 'in_month': 0, 'low_birth': 0, 'all': 0}
 
     best_worst = {}
+
     for row in chart_data:
         date = row['month']
         in_month = row['in_month'] or 0
@@ -144,12 +141,17 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         data_for_month['low_birth'] += low_birth
         data_for_month['in_month'] += in_month
         data_for_month['all'] += all_birth
-        data_for_month['y'] = low_birth / float(in_month or 1)
+        data_for_month['y'] = data_for_month['low_birth'] / float(data_for_month['in_month'] or 1)
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': val
+        }
+        for key, val in best_worst.items()
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
 
     return {
         "chart_data": [
@@ -161,7 +163,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                         'in_month': val['in_month'],
                         'low_birth': val['low_birth'],
                         'all': val['all']
-                    } for key, val in six.iteritems(data['blue'])
+                    } for key, val in data['blue'].items()
                 ],
                 "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,
@@ -169,14 +171,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -204,13 +206,10 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         in_month = row['in_month'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
+
         all_records = row['all'] or 0
         low_birth = row['low_birth'] or 0
 
@@ -223,10 +222,6 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         chart_data['blue'].append([
             name, value
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

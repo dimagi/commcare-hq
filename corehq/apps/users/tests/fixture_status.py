@@ -1,14 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.test import TestCase
+
 from mock import MagicMock
 
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
-from corehq.apps.users.models import get_fixture_statuses
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, get_fixture_statuses
 
 
 class TestFixtureStatus(TestCase):
@@ -28,6 +28,7 @@ class TestFixtureStatus(TestCase):
     def _delete_everything(self):
         delete_all_users()
         UserFixtureStatus.objects.all().delete()
+        clear_domain_names('my-domain')
 
     def test_get_statuses(self):
         no_status = {UserFixtureType.CHOICES[0][0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED}

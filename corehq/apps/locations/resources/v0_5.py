@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL
@@ -9,7 +7,7 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import DomainAdminAuthentication
 from corehq.util.view_utils import absolute_reverse
 
-from ..models import SQLLocation, LocationType
+from ..models import LocationType, SQLLocation
 
 
 class LocationTypeResource(ModelResource, HqBaseResource):

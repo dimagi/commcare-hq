@@ -3,9 +3,9 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/select2_handler_v3',
+    'hqwebapp/js/select2_handler',
     'hqwebapp/js/multiselect_utils',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -167,7 +167,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
             $('#roles form').submit(function () {
                 if (self.new.hasMatchingRole() && self.isRoleTypeNew()) {
                     self.existing.roleSlug(self.new.matchingRole().slug());
-                    $('#id_role_slug').select2('val', self.new.matchingRole().slug());
+                    $('#id_role_slug').val(self.new.matchingRole().slug()).trigger('change');
                 }
             });
         };
@@ -261,12 +261,10 @@ hqDefine("accounting/js/software_plan_version_handler", [
             };
         };
 
-        self.createNewChoice = function (term, selectedData) {
-            // override this if you want the search to return the option of creating whatever
-            // the user entered.
-            var matching = _(selectedData).map(function (item) {
-                return item.text;
-            });
+        self.createTags = true;
+        self.createNewChoice = function (params) {
+            var term = $.trim(params.term),
+                matching = _.pluck(this.$element.select2("data"), 'text');
             if (matching.indexOf(term) === -1 && term) {
                 return {
                     id: term,
@@ -276,7 +274,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
             }
         };
 
-        self.formatResult = function (result) {
+        self.templateResult = function (result) {
             if (result.isNew) {
                 return '<span class="label label-success">New</span> ' + result.text;
             }
@@ -288,7 +286,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
         };
 
-        self.formatSelection = function (result) {
+        self.templateSelection = function (result) {
             self.isNew(!!result.isNew);
             self.isExisting(!!result.isExisting);
             if (_.has(result, 'rate_type')) {

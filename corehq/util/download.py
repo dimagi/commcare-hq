@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import itertools
 from wsgiref.util import FileWrapper
 
@@ -10,7 +7,7 @@ from werkzeug.http import parse_range_header
 from corehq.util.files import safe_filename_header
 
 
-class RangedFileWrapper:
+class RangedFileWrapper(object):
     """
     Wraps a file like object with an iterator that runs over part (or all) of
     the file defined by start and stop. Blocks of block_size will be returned

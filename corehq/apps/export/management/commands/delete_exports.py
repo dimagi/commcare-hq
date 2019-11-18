@@ -1,13 +1,8 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from six.moves import input
-
 from django.core.management.base import BaseCommand
 
-from corehq.apps.export.models import ExportInstance
 from dimagi.utils.couch.database import iter_bulk_delete
+
+from corehq.apps.export.models import ExportInstance
 
 
 class Command(BaseCommand):

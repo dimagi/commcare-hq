@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import timedelta
 from django.db.models.aggregates import Count
@@ -10,7 +7,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.generic import GenericTabularReport
-from custom.ilsgateway.tanzania.reports.utils import link_format
+from custom.ewsghana.reports.utils import link_format
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
@@ -21,7 +18,6 @@ from custom.ewsghana.reports.stock_levels_report import InventoryManagementData,
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.utils import get_descendants, make_url, get_second_week, get_supply_points
-import six
 
 
 class ProductAvailabilityData(EWSData):
@@ -167,7 +163,7 @@ class MonthOfStockProduct(EWSData):
             get_supply_points(self.config['domain'], self.config['location_id']), all=(not self.config['export'])
         )
         if self.config['location_id']:
-            for case_id, products in six.iteritems(self.config['months_of_stock']):
+            for case_id, products in self.config['months_of_stock'].items():
 
                 sp = SQLLocation.objects.get(supply_point_id=case_id)
 
@@ -251,7 +247,7 @@ class StockoutsProduct(EWSData):
             chart.x_axis_uses_dates = True
             chart.tooltipFormat = True
             chart.is_rendered_as_email = self.config.get('is_rendered_as_email')
-            for key, value in six.iteritems(rows):
+            for key, value in rows.items():
                 chart.add_dataset(key, value)
             return [chart]
         return []
@@ -433,11 +429,11 @@ class StockStatus(MultiReport):
         return {
             'without_stock': {
                 product_id: len(case_list)
-                for product_id, case_list in six.iteritems(product_case_without_stock)
+                for product_id, case_list in product_case_without_stock.items()
             },
             'with_stock': {
                 product_id: len(case_list)
-                for product_id, case_list in six.iteritems(product_case_with_stock)
+                for product_id, case_list in product_case_with_stock.items()
             },
             'all': locations.count(),
             'months_of_stock': months_of_stock,

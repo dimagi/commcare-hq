@@ -1,17 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext
 
+from memoized import memoized
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.api import EmwfOptionsView
+from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
-from memoized import memoized
 
 
 class _CallCenterOwnerOptionsUtils(object):
@@ -43,33 +42,10 @@ class _CallCenterOwnerOptionsUtils(object):
         return []
 
 
-class CallCenterOwnerOptionsView(EmwfOptionsView):
-    url_name = "call_center_owner_options"
-
-    @property
-    @memoized
-    def utils(self):
-        return _CallCenterOwnerOptionsUtils(self.domain)
-
-    def get_locations_query(self, query):
-        return (SQLLocation.objects
-                .filter_path_by_user_input(self.domain, query)
-                .filter(location_type__shares_cases=True))
-
-    def group_es_query(self, query):
-        return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")
-
-    @property
-    def data_sources(self):
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_active_users_size, self.get_active_users),
-        ]
+class CallCenterOptionsController(EmwfOptionsController):
 
     def active_user_es_query(self, query):
-        q = super(CallCenterOwnerOptionsView, self).active_user_es_query(query)
+        q = super(CallCenterOptionsController, self).active_user_es_query(query)
         return q.mobile_users()
 
     @staticmethod
@@ -90,3 +66,34 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
             return None
         else:
             raise Exception("Unexpcted owner type")
+
+    @property
+    @memoized
+    def utils(self):
+        return _CallCenterOwnerOptionsUtils(self.domain)
+
+    def get_locations_query(self, query):
+        return (SQLLocation.objects
+                .filter_path_by_user_input(self.domain, query)
+                .filter(location_type__shares_cases=True))
+
+    def group_es_query(self, query):
+        return super(CallCenterOptionsController, self).group_es_query(query, "case_sharing")
+
+    @property
+    def data_sources(self):
+        return [
+            (self.get_static_options_size, self.get_static_options),
+            (self.get_groups_size, self.get_groups),
+            (self.get_locations_size, self.get_locations),
+            (self.get_active_users_size, self.get_active_users),
+        ]
+
+
+class CallCenterOwnerOptionsView(EmwfOptionsView):
+    url_name = "call_center_owner_options"
+
+    @property
+    @memoized
+    def options_controller(self):
+        return CallCenterOptionsController(self.request, self.domain, self.search)

@@ -1,109 +1,145 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import io
-from datetime import datetime, timedelta, time
-import re
 import json
-from django.urls import reverse
-from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
-from django.shortcuts import render
-from django.utils.decorators import method_decorator
-from corehq import privileges
-from corehq import toggles
-from corehq.apps.hqadmin.views.users import BaseAdminSectionView
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
-from corehq.apps.commtrack.models import AlertConfig
-from corehq.apps.sms.api import (
-    send_sms,
-    incoming,
-    send_sms_with_backend_name,
-    send_sms_to_verified_number,
-    MessageMetadata,
-)
-from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
-from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.hqwebapp.decorators import (
-    use_timepicker,
-    use_typeahead,
-    use_select2,
-    use_jquery_ui,
-    use_datatables,
-)
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
-from corehq.apps.users import models as user_models
-from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.reminders.util import get_two_way_number_for_recipient
-from corehq.apps.sms.models import (
-    SMS, INCOMING, OUTGOING, ForwardingRule,
-    MessagingEvent, SelfRegistrationInvitation,
-    SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
-    SQLLastReadMessage, PhoneNumber
-)
-from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-                                   InitiateAddSMSBackendForm, SubscribeSMSForm,
-                                   SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-                                   DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
-                                   WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
-                                   WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import (get_contact, get_sms_backend_classes, ContactNotFoundException,
-    get_or_create_translation_doc)
-from corehq.apps.sms.messages import _MESSAGES
-from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
-from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-    login_or_digest_ex,
-    domain_admin_required,
-    require_superuser,
-)
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.decorators import require_privilege_but_override_for_migrator
-from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-from corehq.messaging.util import show_messaging_dashboard
-from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.util.dates import iso_string_to_datetime
-from corehq.util.soft_assert import soft_assert
-from corehq.util.workbook_json.excel import WorkbookJSONReader
-from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.quickcache import quickcache
+import re
+from datetime import datetime, time, timedelta
+
+from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q
-from corehq.util.timezones.utils import get_timezone_for_user
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from corehq.apps.domain.models import Domain
-from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from memoized import memoized
-from dimagi.utils.decorators.view import get_file
-from django.utils.functional import cached_property
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.cache import cache_core
-from django.conf import settings
-from django_prbac.utils import has_privilege
-from couchdbkit import ResourceNotFound
-from couchexport.models import Format
-from couchexport.export import export_raw
-from couchexport.shortcuts import export_response
-import six
 
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.web import json_response
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege_plaintext_response,
+    requires_privilege_with_fallback,
+)
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
+from corehq.apps.commtrack.models import AlertConfig
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+    login_or_digest_ex,
+    require_superuser,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
+from corehq.apps.groups.models import Group
+from corehq.apps.hqadmin.views.users import BaseAdminSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_timepicker,
+    use_typeahead,
+)
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    incoming,
+    send_sms,
+    send_sms_to_verified_number,
+    send_sms_with_backend_name,
+)
+from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
+from corehq.apps.sms.forms import (
+    CUSTOM,
+    DEFAULT,
+    DISABLED,
+    ENABLED,
+    HIDE_ALL,
+    SHOW_ALL,
+    SHOW_INVALID,
+    WELCOME_RECIPIENT_ALL,
+    WELCOME_RECIPIENT_CASE,
+    WELCOME_RECIPIENT_MOBILE_WORKER,
+    WELCOME_RECIPIENT_NONE,
+    BackendMapForm,
+    ComposeMessageForm,
+    ForwardingRuleForm,
+    InitiateAddSMSBackendForm,
+    SendRegistrationInvitationsForm,
+    SettingsForm,
+    SubscribeSMSForm,
+)
+from corehq.apps.sms.messages import _MESSAGES
+from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    ForwardingRule,
+    MessagingEvent,
+    PhoneLoadBalancingMixin,
+    PhoneNumber,
+    SelfRegistrationInvitation,
+    SQLLastReadMessage,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
+from corehq.apps.sms.util import (
+    ContactNotFoundException,
+    get_contact,
+    get_or_create_translation_doc,
+    get_sms_backend_classes,
+)
+from corehq.apps.smsbillables.utils import \
+    country_name_from_isd_code_or_empty as country_name_from_code
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.users import models as user_models
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
+from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.util import show_messaging_dashboard
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -111,6 +147,7 @@ SMS_CHAT_HISTORY_CHOICES = (
     (ugettext_noop("1 Week"), 7),
     (ugettext_noop("30 Days"), 30),
 )
+
 
 @login_and_domain_required
 def default(request, domain):
@@ -125,14 +162,6 @@ class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
     @cached_property
-    def reminders_migration_in_progress(self):
-        return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
-
-    @cached_property
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
-
-    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
@@ -140,10 +169,21 @@ class BaseMessagingSectionView(BaseDomainView):
     def is_system_admin(self):
         return self.request.couch_user.is_superuser
 
-    @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
+    @cached_property
+    def is_granted_messaging_access(self):
+        if settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access:
+            return True
+        subscription = Subscription.get_active_subscription_by_domain(self.domain_object)
+        if subscription is not None:
+            return subscription.plan_version.plan.name == DefaultProductPlan.get_default_plan_version(
+                edition=SoftwarePlanEdition.ENTERPRISE
+            ).plan.name
+        return False
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
-        if not (settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access):
+        if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -1340,7 +1380,6 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
 
-    @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
@@ -1572,7 +1611,6 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(GlobalSmsGatewayListView.urlname))
 
-    @use_select2
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
@@ -1695,7 +1733,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     page_title = ugettext_noop("Languages")
 
     @use_jquery_ui
-    @use_select2
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
@@ -1782,8 +1819,7 @@ def download_sms_translations(request, domain):
 @get_file("bulk_upload_file")
 def upload_sms_translations(request, domain):
     try:
-        workbook = WorkbookJSONReader(request.file)
-        translations = workbook.get_worksheet(title='translations')
+        translations = get_single_worksheet(request.file, title='translations')
 
         with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
             msg_ids = sorted(_MESSAGES.keys())
@@ -1797,7 +1833,7 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, six.string_types):
+                            if not isinstance(val, str):
                                 val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val
@@ -1850,9 +1886,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == "POST":
             form = SettingsForm(
                 self.request.POST,
-                cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer,
-                new_reminders_migrator=self.new_reminders_migrator,
+                domain=self.domain,
+                is_previewer=self.previewer,
             )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
@@ -1915,9 +1950,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             }
             form = SettingsForm(
                 initial=initial,
-                cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer,
-                new_reminders_migrator=self.new_reminders_migrator,
+                domain=self.domain,
+                is_previewer=self.previewer,
             )
         return form
 
@@ -2001,7 +2035,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(domain_admin_required)
     @use_timepicker
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

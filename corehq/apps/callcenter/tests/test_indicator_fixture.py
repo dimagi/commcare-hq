@@ -1,17 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from xml.etree import cElementTree as ElementTree
-import six
+
+from django.test import SimpleTestCase
+
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
+from casexml.apps.phone.models import (
+    OTARestoreCommCareUser,
+    OTARestoreWebUser,
+    SimplifiedSyncLog,
+)
 from casexml.apps.phone.tests.utils import call_fixture_generator
-from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync, \
-    IndicatorsFixturesProvider
+
+from corehq.apps.callcenter.fixturegenerators import (
+    IndicatorsFixturesProvider,
+    gen_fixture,
+    should_sync,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from django.test import SimpleTestCase
 
 
 class MockIndicatorSet(object):
@@ -28,7 +35,7 @@ class MockIndicatorSet(object):
         return datetime(2014, 1, 1, 0, 0)
 
 
-mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake' if six.PY3 else b'IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
+mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
     '_should_return_no_fixtures': (lambda self, domain, last_sync: False),
 })()
 
@@ -64,7 +71,7 @@ class CallcenterFixtureTests(SimpleTestCase):
             ('user_case1', {'i1': 1, 'i2': 2}),
             ('user_case2', {'i1': 0, 'i2': 3})
         ]))
-        restore_user = type('OTARestoreCommCareUserFake' if six.PY3 else b'OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
+        restore_user = type('OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
             'get_call_center_indicators': lambda self, config: indicator_set,
         })('test', user)
@@ -76,7 +83,7 @@ class CallcenterFixtureTests(SimpleTestCase):
 
     def test_callcenter_fixture_web_user(self):
         user = WebUser(_id='123')
-        restore_user = type('OTARestoreWebUserFake' if six.PY3 else b'OTARestoreWebUserFake', (OTARestoreWebUser,), {
+        restore_user = type('OTARestoreWebUserFake', (OTARestoreWebUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
         })('test', user)
 
@@ -87,17 +94,17 @@ class CallcenterFixtureTests(SimpleTestCase):
         self.assertTrue(should_sync(None, None))
 
     def test_should_sync_no_date(self):
-        self.assertTrue(should_sync(None, SyncLog()))
+        self.assertTrue(should_sync(None, SimplifiedSyncLog()))
 
     def test_should_sync_false(self):
         domain = Domain(name='test', default_timezone='UTC')
         last_sync = datetime.combine(date.today(), time())  # today at 00:00:00
-        self.assertFalse(should_sync(domain, SyncLog(date=last_sync)))
+        self.assertFalse(should_sync(domain, SimplifiedSyncLog(date=last_sync)))
 
     def test_should_sync_true(self):
         domain = Domain(name='test', default_timezone='UTC')
         last_sync = datetime.combine(date.today() - timedelta(days=1), time(23, 59, 59))  # yesterday at 23:59:59
-        self.assertTrue(should_sync(domain, SyncLog(date=last_sync)))
+        self.assertTrue(should_sync(domain, SimplifiedSyncLog(date=last_sync)))
 
     def test_should_sync_timezone(self):
         domain = Domain(name='test', default_timezone='Africa/Johannesburg')
@@ -105,7 +112,7 @@ class CallcenterFixtureTests(SimpleTestCase):
         last_sync = datetime.combine(date.today() - timedelta(days=1), time(21, 59, 59))
         # yesterday at 21:59:59 = today at 00:00:00 locally
         utcnow = datetime.combine(date.today() - timedelta(days=1), time(22, 00, 00))
-        self.assertTrue(should_sync(domain, SyncLog(date=last_sync), utcnow=utcnow))
+        self.assertTrue(should_sync(domain, SimplifiedSyncLog(date=last_sync), utcnow=utcnow))
 
         domain = Domain(name='test', default_timezone='UTC')
-        self.assertFalse(should_sync(domain, SyncLog(date=last_sync), utcnow=utcnow))
+        self.assertFalse(should_sync(domain, SimplifiedSyncLog(date=last_sync), utcnow=utcnow))

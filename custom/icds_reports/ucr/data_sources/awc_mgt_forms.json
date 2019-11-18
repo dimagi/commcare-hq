@@ -1,7 +1,19 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,8 +22,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -30,6 +41,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551"
     },
+    "validations": [
+      {
+        "name": "submitted_by_supervisor",
+        "error_message": "Form not submitted by supervisor",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "supervisor"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "User ID",
@@ -67,6 +96,21 @@
         "column_id": "awc_id"
       },
       {
+        "display_name": "[DEPRECATED] TO BE REMOVED",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "column_id": "supervisor_id"
+      },
+      {
         "display_name": null,
         "datatype": "string",
         "expression": {
@@ -74,8 +118,8 @@
           "name": "user_location_id"
         },
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "location_id",
         "type": "expression"
       },
@@ -87,13 +131,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
+      },
+      {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        }
       },
       {
         "display_name": "Submission Date",
@@ -177,6 +241,20 @@
         "is_nullable": true,
         "column_id": "awc_location",
         "type": "expression"
+      },
+      {
+        "display_name": "Location Entered",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": ["form", "location_form_filled"]
+        },
+        "column_id": "location_entered"
       },
       {
         "display_name": null,
@@ -405,7 +483,14 @@
       }
     },
     "named_filters": {},
-    "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "engine_id": "icds-ucr-citus",
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "location_id"
+      },
+      "primary_key": ["location_id","doc_id"]
+    }
   }
 }

@@ -76,6 +76,12 @@ hqDefine("groups/js/group_members", function () {
                 if (gaEventLabel) {
                     hqImport('analytix/js/google').track.event('Editing Group', gaEventLabel, initial_page_data("group_id"));
                 }
+
+                if (initial_page_data('show_disable_case_sharing')) {
+                    setTimeout(function () {
+                        location.reload();
+                    }, 500);
+                }
             };
         }
 
@@ -98,7 +104,7 @@ hqDefine("groups/js/group_members", function () {
                 return false;
             });
             $('#edit-group-settings').submit(function () {
-                $(this).find(':button').disableButton();
+                $(this).find('.modal-footer :button').disableButton();
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
                     error: outcome(false, "Group settings", "#edit-group-settings"),

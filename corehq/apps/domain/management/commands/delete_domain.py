@@ -1,11 +1,7 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
+from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.models import Domain
-from six.moves import input
 
 
 class Command(BaseCommand):
@@ -24,10 +20,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain_name, **options):
-        domain = Domain.get_by_name(domain_name)
-        if not domain:
+        domain_objs = list(iter_all_domains_and_deleted_domains_with_name(domain_name))
+        if not domain_objs:
             print('domain with name "{}" not found'.format(domain_name))
             return
+        if len(domain_objs) > 1:
+            print("FYI: There are multiple domain objects for this domain"
+                  "and they will all be soft-deleted.")
         if not options['noinput']:
             confirm = input(
                 """
@@ -40,6 +39,11 @@ class Command(BaseCommand):
             if confirm != domain_name:
                 print("\n\t\tDomain deletion cancelled.")
                 return
-        print("Deleting domain {}".format(domain_name))
-        domain.delete()
+        print("Soft-Deleting domain {} "
+              "(i.e. switching its type to Domain-Deleted, "
+              "which will prevent anyone from reusing that domain)"
+              .format(domain_name))
+        for domain_obj in domain_objs:
+            assert domain_obj.name == domain_name  # Just to be really sure!
+            domain_obj.delete(leave_tombstone=True)
         print("Operation completed")

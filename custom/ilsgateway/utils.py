@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -13,7 +11,6 @@ from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig, GroupS
     DeliveryGroups
 from dimagi.utils.dates import get_business_day_of_month_before
 from django.db.models.aggregates import Max
-import six
 
 GROUPS = ('A', 'B', 'C')
 
@@ -88,7 +85,7 @@ def create_stock_report(location, products_quantities, date=None):
         date=date,
         server_date=date,
     )
-    for product_code, quantity in six.iteritems(products_quantities):
+    for product_code, quantity in products_quantities.items():
         StockTransaction(
             stock_on_hand=Decimal(quantity),
             report=report,

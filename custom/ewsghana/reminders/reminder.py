@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser

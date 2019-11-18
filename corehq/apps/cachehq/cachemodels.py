@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dimagi.utils.couch.cache.cache_core import GenerationCache
 
 
@@ -12,7 +10,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/not_snapshots",
         "domain/copied_from_snapshot",
         "domain/domains",
-        "domain/fields_by_prefix",
     ]
 
 
@@ -39,8 +36,6 @@ class GroupGenerationCache(GenerationCache):
     doc_types = ['Group']
     views = [
         "groups/by_user",
-        "groups/by_hierarchy_type",
-        "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
         "users/by_group",

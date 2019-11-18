@@ -1,12 +1,12 @@
 {% load hq_shared_tags %}
 
 {% if ANALYTICS_CONFIG.DEBUG %}
-    {# Developer is working on analytics #}
-    {% initial_analytics_data 'drift.apiId' ANALYTICS_IDS.DRIFT_ID %}
+  {# Developer is working on analytics #}
+  {% initial_analytics_data 'drift.apiId' ANALYTICS_IDS.DRIFT_ID %}
 {% elif not is_saas_environment %}
-    {# Don't include: this is an enterprise environment #}
+  {# Don't include: this is an enterprise environment #}
 {% elif request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-    {# Don't include: this is a user test and the Drift popup would be a distraction #}
+  {# Don't include: this is a user test and the Drift popup would be a distraction #}
 {% elif not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
-    {% initial_analytics_data 'drift.apiId' ANALYTICS_IDS.DRIFT_ID %}
+  {% initial_analytics_data 'drift.apiId' ANALYTICS_IDS.DRIFT_ID %}
 {% endif %}

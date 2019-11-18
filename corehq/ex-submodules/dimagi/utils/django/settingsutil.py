@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import logging.handlers
+
 
 def initialize_logging(loginitfunc):
     """call in settings.py after importing localsettings to initialize logging.
@@ -11,6 +10,7 @@ def initialize_logging(loginitfunc):
         loginitfunc()
         logging.info('logging initialized')
         logging._initialized = True
+
 
 def default_logging(logfile):
     """standard logging configuration useful for development. this should be

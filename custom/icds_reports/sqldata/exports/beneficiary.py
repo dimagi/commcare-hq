@@ -1,32 +1,26 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-import six
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData, ICDSDatabaseColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
-    current_month_wasting_column, ICDSDatabaseColumn
+    current_month_wasting_column, format_decimal, DATA_NOT_ENTERED, phone_number_function
 
 
-class BeneficiaryExport(ExportableMixin, SqlData):
+class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         config.update({
             '5_years': 60,
+            'true': 1
         })
-        self.config = config
-        self.loc_level = loc_level
-        self.show_test = show_test
-        self.beta = beta
+        super().__init__(config, loc_level, show_test, beta, use_excluded_states=False)
 
     @property
     def group_by(self):
@@ -62,9 +56,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def filters(self):
-        filters = [LTE('age_in_months', '5_years')]
-        for key, value in six.iteritems(self.config):
-            if key == 'domain' or key == '5_years':
+        filters = [LTE('age_in_months', '5_years'), EQ('valid_in_month', 'true')]
+        for key, value in self.config.items():
+            if key in ['domain', '5_years', 'true']:
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))
@@ -81,10 +75,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         selected_month = self.config['month']
 
         def test_fucntion(x):
-            return "%.2f" % x if x else "Data Not Entered"
-
-        def phone_number_fucntion(x):
-            return '"{}"'.format(x) if x else x
+            return format_decimal(x) if x else DATA_NOT_ENTERED
 
         columns = [
             DatabaseColumn(
@@ -109,9 +100,20 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'AWW Phone Number',
-                SimpleColumn('contact_phone_number'),
-                format_fn=phone_number_fucntion,
-                slug='contact_phone_number'
+                SimpleColumn('aww_phone_number'),
+                format_fn=phone_number_function,
+                slug='aww_phone_number'
+            ),
+            DatabaseColumn(
+                'Mother name',
+                SimpleColumn('mother_name'),
+                slug='mother_name'
+            ),
+            DatabaseColumn(
+                'Mother Phone Number',
+                SimpleColumn('mother_phone_number'),
+                format_fn=phone_number_function,
+                slug='mother_phone_number'
             ),
             DatabaseColumn(
                 'Child Name',

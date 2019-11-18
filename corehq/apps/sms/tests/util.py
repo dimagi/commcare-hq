@@ -1,33 +1,43 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
 import json
+import os
+import uuid
 from unittest import SkipTest
 
-from django.test import LiveServerTestCase
 from django.conf import settings
+from django.contrib.sites.models import Site
+from django.test import LiveServerTestCase
+
+from dateutil.parser import parse
 from nose.tools import nottest
 
-from casexml.apps.case.util import post_case_blocks
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
-    SQLMobileBackendMapping, PhoneNumber, Keyword, KeywordAction)
-from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.groups.models import Group
-from corehq.apps.app_manager.models import import_app
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.util.test_utils import unit_testing_only
-from django.contrib.sites.models import Site
-from dateutil.parser import parse
-import uuid
-from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
-from io import open
+from casexml.apps.case.util import post_case_blocks
+
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.app_manager.models import import_app
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.sms.api import process_username
+from corehq.apps.sms.models import (
+    OUTGOING,
+    SMS,
+    Keyword,
+    KeywordAction,
+    PhoneNumber,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.util.test_utils import unit_testing_only
 
 
 def time_parser(value):
@@ -65,6 +75,7 @@ class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
 
     def tearDown(self):
         self.teardown_subscription()
+        clear_plan_version_cache()
         super(BaseSMSTest, self).tearDown()
 
 
@@ -187,7 +198,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             message_content=reply_sms,
         )
 
-    def create_survey_keyword(self, keyword, form_unique_id, delimiter=None,
+    def create_survey_keyword(self, keyword, app_id, form_unique_id, delimiter=None,
             override_open_sessions=True, initiator_filter=None):
 
         k = Keyword(
@@ -203,10 +214,11 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_SMS_SURVEY,
+            app_id=app_id,
             form_unique_id=form_unique_id,
         )
 
-    def create_structured_sms_keyword(self, keyword, form_unique_id, reply_sms,
+    def create_structured_sms_keyword(self, keyword, app_id, form_unique_id, reply_sms,
             delimiter=None, named_args=None, named_args_separator=None,
             override_open_sessions=True, initiator_filter=None):
 
@@ -229,6 +241,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_STRUCTURED_SMS,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             use_named_args=(named_args is not None),
             named_args=(named_args or {}),
@@ -246,7 +259,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return case
 
     def assertCasePropertyEquals(self, case, prop, value):
-        self.assertEquals(case.get_case_property(prop), value)
+        self.assertEqual(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
         result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
@@ -254,14 +267,14 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()
-        self.assertEquals(last_submission.form_id, new_submission.form_id)
+        self.assertEqual(last_submission.form_id, new_submission.form_id)
 
     def assertFormQuestionEquals(self, form, question, value, cast=None):
         self.assertIn(question, form.form_data)
         form_value = form.form_data[question]
         if cast:
             form_value = cast(form_value)
-        self.assertEquals(form_value, value)
+        self.assertEqual(form_value, value)
 
     def get_last_outbound_sms(self, contact):
         return SMS.get_last_log_for_recipient(
@@ -321,6 +334,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.backend_mapping.delete()
         self.backend.delete()
         self.teardown_subscription()
+        clear_plan_version_cache()
 
 
 @unit_testing_only

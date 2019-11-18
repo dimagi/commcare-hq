@@ -1,19 +1,24 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import io
+import re
 from collections import defaultdict
 from distutils.version import StrictVersion
-import re
+
 from django.utils.translation import ugettext as _
+
+from couchexport.export import export_raw_to_writer
+
 from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
-from corehq.apps.app_manager.ui_translations.commcare_versioning import \
-    get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.util.workbook_json.excel import WorkbookJSONReader, WorksheetNotFound
-from couchexport.export import export_raw_to_writer
-import six
-from six.moves import range
+from corehq.apps.app_manager.ui_translations.commcare_versioning import (
+    get_commcare_version_from_workbook,
+    set_commcare_version_in_workbook,
+)
+from corehq.apps.translations.models import TransifexBlacklist
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    WorksheetNotFound,
+    get_workbook,
+)
 
 
 def process_ui_translation_upload(app, trans_file):
@@ -23,7 +28,12 @@ def process_ui_translation_upload(app, trans_file):
     # Use this to pass warnings without failing hard
     warnings = []
 
-    workbook = WorkbookJSONReader(trans_file)
+    try:
+        workbook = get_workbook(trans_file)
+    except WorkbookJSONError as e:
+        error_properties.append(str(e))
+        return trans_dict, error_properties, warnings
+
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
     try:
         translations = workbook.get_worksheet(title='translations')
@@ -35,16 +45,51 @@ def process_ui_translation_upload(app, trans_file):
     default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
+    # Find all of the ${0}-looking values in a translation.
+    # Returns list like ["${0}", "${1}", ...]
+    def _get_params(translation):
+        if not translation:
+            return []
+        return re.findall(r"\$.*?}", translation)
+
+    # Create a string version of all parameters in a translation, suitable both for
+    # comparison and for displaying in an error message.
+    def _get_params_text(params):
+        if not params:
+            return "no parameters"
+
+        # Reduce parameter list to the numbers alone, a set like {'0', '1', '2'}
+        numbers = {re.sub(r'\D', '', p) for p in params}
+
+        # Sort numbers, so that re-ordering parameters doesn't trigger error
+        numbers = sorted(numbers)
+
+        # Re-join numbers into a string for display
+        return ", ".join(["${{{}}}".format(num) for num in numbers])
+
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
-            warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
+            warnings.append("Property '" + row["property"] + "' is not a known CommCare UI string, "
+                            "but we added it anyway.")
+        default = default_trans.get(row["property"])
+        default_params_text = _get_params_text(_get_params(default)) if default else None
         for lang in app.langs:
             if row.get(lang):
-                all_parameters = re.findall("\$.*?}", row[lang])
-                for param in all_parameters:
-                    if not re.match("\$\{[0-9]+}", param):
-                        error_properties.append(row["property"] + ' - ' + row[lang])
+                params = _get_params(row[lang])
+                params_text = _get_params_text(params)
+                for param in params:
+                    if not re.match(r"\$\{[0-9]+}", param):
+                        error_properties.append(_("""
+                            Could not understand '{param}' in {lang} value of '{prop}'.
+                        """).format(param=param, lang=lang, prop=row["property"]))
+                if default_params_text and params_text != default_params_text:
+                    warnings.append(_("""
+                        Property '{prop}' should contain {expected} but {lang} value contains {actual}.
+                    """).format(prop=row["property"],
+                                expected=default_params_text,
+                                lang=lang,
+                                actual=params_text))
                 if not (lang_with_defaults == lang and
                         row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
@@ -52,8 +97,18 @@ def process_ui_translation_upload(app, trans_file):
     return trans_dict, error_properties, warnings
 
 
-def build_ui_translation_download_file(app):
+def _get_ui_blacklist(app):
+    blacklist = TransifexBlacklist.objects.filter(
+        domain=app.domain,
+        app_id=app._id,
+        module_id='',
+        field_type='ui',
+    ).all()
+    return {b.field_name for b in blacklist}
 
+
+def build_ui_translation_download_file(app):
+    blacklist = _get_ui_blacklist(app)
     properties = tuple(["property"] + app.langs)
     temp = io.BytesIO()
     headers = (("translations", properties),)
@@ -62,7 +117,9 @@ def build_ui_translation_download_file(app):
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in six.iteritems(trans_dict):
+        for prop, trans in trans_dict.items():
+            if prop in blacklist:
+                continue
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
@@ -76,7 +133,7 @@ def build_ui_translation_download_file(app):
         commcare_version = None
 
     all_prop_trans = get_default_translations_for_download(app, commcare_version)
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict and t not in blacklist])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)

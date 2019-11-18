@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import doctest
 import os
 import re
@@ -10,13 +8,12 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from custom.openclinica.management.commands.odm_to_app import Command, Item
 import custom.openclinica.management.commands.odm_to_app
-import six
 
 
 def replace_uuids(string):
-    fake_uuid = 'ba5eba11-babe-d0e5-c0de-affab1ec0b01'
-    return re.sub(r'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]{12,}',
-                  r'\1' + fake_uuid, string)
+    fake_uuid = b'ba5eba11-babe-d0e5-c0de-affab1ec0b01'
+    return re.sub(br'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]{12,}',
+                  br'\1' + fake_uuid, string)
 
 
 class OdmToAppTest(TestCase, TestXmlMixin):
@@ -25,8 +22,8 @@ class OdmToAppTest(TestCase, TestXmlMixin):
 
     def assertXmlEqual(self, expected, actual, normalize=True):
         super(OdmToAppTest, self).assertXmlEqual(
-            replace_uuids(expected).encode('utf-8'),
-            replace_uuids(actual).encode('utf-8'),
+            replace_uuids(expected),
+            replace_uuids(actual),
             normalize
         )
 
@@ -45,7 +42,7 @@ class OdmToAppTest(TestCase, TestXmlMixin):
 
     def test_odm_to_app_xform(self):
         def as_utf8(string):
-            return string.encode('utf-8') if isinstance(string, six.text_type) else string
+            return string.encode('utf-8') if isinstance(string, str) else string
         expected = self.get_xml('xform')
         actual = self.app.modules[2].forms[0].source
         self.assertXmlEqual(expected, as_utf8(actual))
