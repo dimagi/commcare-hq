@@ -1,20 +1,10 @@
 import csv
 
-from datetime import datetime
-
-import argparse
 from django.core.management.base import BaseCommand, CommandError
 
 from auditcare.utils.export import write_log_events, get_users_to_export
 from corehq.apps.domain.models import Domain
-
-
-def valid_date(s):
-    try:
-        return datetime.strptime(s, "%Y-%m-%d")
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
+from corehq.util.argparse_types import date_type
 
 
 class Command(BaseCommand):
@@ -38,14 +28,14 @@ class Command(BaseCommand):
             '-s',
             '--startdate',
             dest='start',
-            type=valid_date,
+            type=date_type,
             help="The start date - format YYYY-MM-DD",
         )
         parser.add_argument(
             '-e',
             '--enddate',
             dest='end',
-            type=valid_date,
+            type=date_type,
             help="The end date - format YYYY-MM-DD",
         )
         parser.add_argument(
@@ -75,7 +65,7 @@ class Command(BaseCommand):
 
         users, super_users = get_users_to_export(user, domain)
 
-        with open(filename, 'wb') as csvfile:
+        with open(filename, 'w') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:

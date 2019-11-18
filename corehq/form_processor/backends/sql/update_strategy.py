@@ -230,11 +230,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_delete(current_attachments[name])
             elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if form_attachment is None:
-                    # Probably an improperly configured form. We need a way to
-                    # convey errors like this to domain admins.
-                    raise AttachmentNotFound(
-                        "%s: %r" % (xform.form_id, att.attachment_src))
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]
                     existing_attachment.from_form_attachment(

@@ -4,7 +4,7 @@ from datetime import datetime
 from unittest import SkipTest
 
 from django.conf import settings
-from django.db import connections
+from django.db import connections, DEFAULT_DB_ALIAS
 from django.test import TestCase
 
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
@@ -53,7 +53,7 @@ class BaseReindexAccessorTest(object):
 
     @classmethod
     def _analyse(cls):
-        db_cursor = connections['default'].cursor()
+        db_cursor = connections[DEFAULT_DB_ALIAS].cursor()
         with db_cursor as cursor:
             cursor.execute('ANALYSE')  # the doc count query relies on this
 
@@ -114,10 +114,10 @@ class BaseReindexAccessorTest(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch_global[1:3])
 
     def test_get_doc_count(self):
-        self.assertEqual(16, self.accessor_class().get_approximate_doc_count('default'))
+        self.assertEqual(16, self.accessor_class().get_approximate_doc_count(DEFAULT_DB_ALIAS))
 
     def test_get_doc_count_domain(self):
-        self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count('default'))
+        self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count(DEFAULT_DB_ALIAS))
 
     def test_doc_store(self):
         doc_store = get_document_store_for_doc_type(self.domain, self.doc_type)

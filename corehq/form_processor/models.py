@@ -282,8 +282,6 @@ class AttachmentMixin(SaveStateMixin):
         memory at once.
         """
         attachment = self.get_attachment_meta(attachment_name)
-        if not attachment:
-            raise AttachmentNotFound(attachment_name)
         with attachment.open() as content:
             return content.read()
 
@@ -292,6 +290,7 @@ class AttachmentMixin(SaveStateMixin):
             for attachment in attachments:
                 if attachment.name == attachment_name:
                     return attachment
+            raise AttachmentNotFound(self.get_id, attachment_name)
 
         attachments = getattr(self, '_attachments_list', None)
         if attachments is not None:
@@ -451,10 +450,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
+        return state_to_doc_type.get(self.state, 'XFormInstance')
 
     @property
     @memoized
@@ -547,13 +546,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def get_xml(self):
         try:
             return self.get_attachment('form.xml')
-        except NotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
         try:
             return self.get_attachment_meta('form.xml').content_md5()
-        except NotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
@@ -1068,7 +1067,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
             bucket = self.blob_bucket
         else:
             if self.attachment_id is None:
-                raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
+                raise AttachmentNotFound(self.case_id, self.name)
             bucket = os.path.join('case', self.attachment_id.hex)
         return os.path.join(bucket, self.blob_id)
 
@@ -1120,7 +1119,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         try:
             return get_blob_db().get(key=self.key)
         except (KeyError, NotFound, BadName):
-            raise AttachmentNotFound(self.name)
+            raise AttachmentNotFound(self.case_id, self.name)
 
     @memoized
     def content_md5(self):
@@ -1519,7 +1518,7 @@ class FormEditRebuild(CaseTransactionDetail):
 
 
 class FormReprocessRebuild(CaseTransactionDetail):
-    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    _type = CaseTransaction.TYPE_REBUILD_FORM_REPROCESS
     form_id = StringProperty()
 
 

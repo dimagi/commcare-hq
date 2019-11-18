@@ -70,6 +70,8 @@ CASE_SHARING_GROUPS = 'case_sharing_groups'
 
 CHILD_CASES = 'child_cases'
 
+ODATA_FEED = 'odata_feeed'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -108,6 +110,7 @@ MAX_PRIVILEGES = [
     PRACTICE_MOBILE_WORKERS,
     CASE_SHARING_GROUPS,
     CHILD_CASES,
+    ODATA_FEED,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -158,4 +161,5 @@ class Titles(object):
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
+            ODATA_FEED: _('Power BI / Tableau Integration'),
         }.get(privilege, privilege)

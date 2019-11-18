@@ -3,7 +3,8 @@ Change Feeds
 ============
 
 The following describes our approach to change feeds on HQ.
-For related content see `Cory's brown bag on the topic <https://docs.google.com/presentation/d/1YPWUJbic87UYz3bqocJCsnYrnaEZkn8nCM2VZOXQRmg/edit>`_
+For related content see `this presentation on the topic <https://docs.google.com/presentation/d/1YPWUJbic87UYz3bqocJCsnYrnaEZkn8nCM2VZOXQRmg/edit>`_
+though be advised the presentation was last updated in 2015 and is somewhat out of date.
 
 What they are
 =============
@@ -38,7 +39,8 @@ Topics
 Topics are a kafka concept that are used to create logical groups (or "topics") of data.
 In the HQ codebase we use topics primarily as a 1:N mapping to HQ document classes (or ``doc_type`` s).
 Forms and cases currently have their own topics, while everything else is lumped in to a "meta" topic.
-This allows certain pillows to subscribe to the exact category of change/data they are interested in (e.g. a pillow that sends cases to elasticsearch would only subscribe to the "cases" topic).
+This allows certain pillows to subscribe to the exact category of change/data they are interested in
+(e.g. a pillow that sends cases to elasticsearch would only subscribe to the "cases" topic).
 
 Document Stores
 ~~~~~~~~~~~~~~~
@@ -47,7 +49,6 @@ Published changes are just "stubs" but do not contain the full data that was aff
 Each change should be associated with a "document store" which is an abstraction that represents a way to retrieve the document from its original database.
 This allows the subscribers to retrieve the full document while not needing to have the underlying source hard-coded (so that it can be changed).
 To add a new document store, you can use one of the existing subclasses of ``DocumentStore`` or roll your own.
-
 
 Publishing changes
 ==================
@@ -97,3 +98,41 @@ Depending on the data being published, some of these may be able to be skipped (
 2. Setup a subscriber, following the instructions above.
 3. For non-couch-based data sources, you must setup a ``DocumentStore`` class for the pillow, and include it in the published feed.
 4. For any pillows that require additional bootstrap logic (e.g. setting up UCR data tables or bootstrapping elasticsearch indexes) this must be hooked up manually.
+
+Mapping the above to CommCare-specific details
+==============================================
+
+Topics
+~~~~~~
+
+The list of topics used by CommCare can be found in `corehq.apps.change_feed.topics.py <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/change_feed/topics.py#L9>`_.
+For most data models there is a 1:1 relationship between the data model and the model in CommCare HQ, with the exceptions
+of forms and cases, which each have two topics - one for the legacy CouchDB-based forms/cases, and one for the SQL-based
+models (suffixed by ``-sql``).
+
+Contents of the feed
+~~~~~~~~~~~~~~~~~~~~
+
+Generally the contents of each change in the feed will documents that mirror the ``ChangeMeta`` class in
+`pillowtop.feed.interface <https://github.com/dimagi/commcare-hq/blob/master/corehq/ex-submodules/pillowtop/feed/interface.py#L9>`_,
+in the form of a serialized JSON dictionary. An example once deserialized might look something like this:
+
+.. code-block:: json
+
+    {
+      "document_id": "95dece4cd7c945ec83c6d2dd04d38673",
+      "data_source_type": "sql",
+      "data_source_name": "form-sql",
+      "document_type": "XFormInstance",
+      "document_subtype": "http://commcarehq.org/case",
+      "domain": "dimagi",
+      "is_deletion": false,
+      "document_rev": null,
+      "publish_timestamp": "2019-09-18T14:31:01.930921Z",
+      "attempts": 0
+    }
+
+Details on how to interpret these can be found in the comments of the linked class.
+
+The `document_id`, along with the `document_type` and `data_source_type` should be sufficient to retrieve the
+underlying raw document out from the feed from the Document Store (see above).

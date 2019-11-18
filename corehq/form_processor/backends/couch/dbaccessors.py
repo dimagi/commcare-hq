@@ -374,7 +374,7 @@ def _get_attachment_content(doc_class, doc_id, attachment_id):
         resp = doc.fetch_attachment(attachment_id, stream=True)
         content_type = doc.blobs[attachment_id].content_type
     except ResourceNotFound:
-        raise AttachmentNotFound(attachment_id)
+        raise AttachmentNotFound(doc_id, attachment_id)
 
     return AttachmentContent(content_type, resp)
 

@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from fluff.util import metadata as fluff_metadata
 
 logger = logging.getLogger('fluff')
@@ -72,7 +72,7 @@ def catch_signal(sender, **kwargs):
                 }
 
     print('\tchecking fluff SQL tables for schema changes')
-    engine = connection_manager.get_engine('default')
+    engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     with engine.begin() as connection:
         migration_context = get_migration_context(connection, list(table_pillow_map))

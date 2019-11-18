@@ -2,7 +2,6 @@ import json
 from collections import defaultdict
 from itertools import chain
 
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,13 +19,13 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
 from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
@@ -43,7 +42,7 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
 )
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -86,6 +85,8 @@ class OpenmrsRepeater(CaseRepeater):
     location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
 
+    _has_config = True
+
     # self.white_listed_case_types must have exactly one case type set
     # for Atom feed integration to add cases for OpenMRS patients.
     # self.location_id must be set to determine their case owner. The
@@ -102,6 +103,9 @@ class OpenmrsRepeater(CaseRepeater):
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
+
+    def __str__(self):
+        return Repeater.__str__(self)
 
     @classmethod
     def wrap(cls, data):
@@ -121,7 +125,8 @@ class OpenmrsRepeater(CaseRepeater):
             self.url,
             self.username,
             self.plaintext_password,
-            verify=self.verify
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
 
     @cached_property
@@ -129,9 +134,20 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
-                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                if (
+                    obs_mapping.value.check_direction(DIRECTION_IMPORT)
+                    and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
+                ):
+                    # It's possible that an OpenMRS concept appears more
+                    # than once in form_configs. We are using a
+                    # defaultdict(list) so that earlier definitions
+                    # don't get overwritten by later ones:
                     obs_mappings[obs_mapping.concept].append(obs_mapping)
         return obs_mappings
+
+    @cached_property
+    def first_user(self):
+        return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -147,11 +163,6 @@ class OpenmrsRepeater(CaseRepeater):
     @classmethod
     def available_for_domain(cls, domain):
         return OPENMRS_INTEGRATION.enabled(domain)
-
-    @classmethod
-    def get_custom_url(cls, domain):
-        from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
-        return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, payload):
         """
@@ -202,9 +213,9 @@ class OpenmrsRepeater(CaseRepeater):
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')]
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            form_question_values=get_form_question_values(payload),
         )
-        form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
             self.requests,
@@ -212,11 +223,10 @@ class OpenmrsRepeater(CaseRepeater):
             payload,
             self.openmrs_config,
             case_trigger_infos,
-            form_question_values
         )
 
 
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
+def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
     """
     Updates an OpenMRS patient and (optionally) creates visits.
 
@@ -269,7 +279,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
+                requests, domain, info, form_json, openmrs_config, patient['person']['uuid']
             ),
         )
 
@@ -278,7 +288,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         )
 
     if errors:
-        logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        requests.notify_error(f'Errors encountered sending OpenMRS data: {errors}')
         # If the form included multiple patients, some workflows may
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
@@ -286,7 +296,6 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        logger.warning("Warnings encountered sending OpenMRS data: %s", warnings)
         return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
     return OpenmrsResponse(200, "OK")

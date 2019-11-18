@@ -15,6 +15,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
@@ -27,6 +28,7 @@ from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
     BadExportConfiguration,
     ExportAppException,
+    ExportODataDuplicateLabelException,
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -43,7 +45,6 @@ from corehq.apps.export.views.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 
 
@@ -147,6 +148,7 @@ class BaseExportView(BaseProjectDataView):
 
         if export.is_odata_config:
             for table_id, table in enumerate(export.tables):
+                labels = []
                 for column in table.columns:
                     is_reserved_number = (
                         column.label == 'number' and table_id > 0 and table.selected
@@ -155,6 +157,14 @@ class BaseExportView(BaseProjectDataView):
                             or column.label == 'caseid'
                             or is_reserved_number):
                         column.selected = True
+
+                    if column.label not in labels and column.selected:
+                        labels.append(column.label)
+                    elif column.selected:
+                        raise ExportODataDuplicateLabelException(
+                            _("Column labels must be unique. "
+                              "'{}' appears more than once.").format(column.label)
+                        )
             num_nodes = sum([1 for table in export.tables[1:] if table.selected])
             if hasattr(self, 'is_copy') and self.is_copy:
                 event_title = "[BI Integration] Clicked Save button for feed copy"
@@ -288,7 +298,7 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
@@ -299,7 +309,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
         return export_instance
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")

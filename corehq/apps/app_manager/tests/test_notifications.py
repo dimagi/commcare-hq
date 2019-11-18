@@ -1,4 +1,3 @@
-# coding=utf-8
 from django.test import SimpleTestCase
 
 from mock import Mock, patch

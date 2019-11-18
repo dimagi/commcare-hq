@@ -18,20 +18,25 @@ import os
 
 class ChampTestCase(TestCase):
 
-    def setUp(self):
-        self.factory = RequestFactory()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        # gets created + removed in package level setup / teardown
         domain = Domain.get_or_create_with_name('champ-cameroon')
         domain.is_active = True
         domain.save()
-        self.domain = domain
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create(domain.name, 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        cls.domain = domain
+        cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
+        cls.user.is_authenticated = True
+        cls.user.is_superuser = True
+        cls.user.is_authenticated = True
+        cls.user.is_active = True
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        super().tearDownClass()
 
 
 class TestDataSourceExpressions(SimpleTestCase):

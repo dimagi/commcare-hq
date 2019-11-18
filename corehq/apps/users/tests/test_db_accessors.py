@@ -95,6 +95,8 @@ class AllCommCareUsersTest(TestCase):
     def tearDownClass(cls):
         delete_all_users()
         delete_all_locations()
+        cls.ccdomain.delete()
+        cls.other_domain.delete()
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_all_commcare_users_by_domain(self):

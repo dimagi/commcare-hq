@@ -59,9 +59,9 @@ class MessageLogReportTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(MessageLogReportTest, cls).tearDownClass()
         cls.couch_user.delete()
         cls.domain_obj.delete()
+        super(MessageLogReportTest, cls).tearDownClass()
 
     def get_report_column(self, column_header):
         return [row[column_header] for row in self.get_report_rows()]

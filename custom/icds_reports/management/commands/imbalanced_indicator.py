@@ -3,7 +3,7 @@ import dateutil
 from django.core.management.base import BaseCommand
 from django.db import connections
 
-from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
 class Command(BaseCommand):
@@ -28,7 +28,7 @@ class Command(BaseCommand):
             print("{0}: {1}".format(*indicator))
 
     def execute_query(self, query):
-        db_alias = get_icds_ucr_db_alias()
+        db_alias = get_icds_ucr_citus_db_alias()
         with connections[db_alias].cursor() as cursor:
             cursor.execute(query)
             return cursor.fetchall()[0]

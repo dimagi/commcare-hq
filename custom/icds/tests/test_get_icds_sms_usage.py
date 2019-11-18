@@ -114,12 +114,12 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         super(GetICDSSmsUsageTest, cls).tearDownClass()
 
     def test_sheet_names(self):
-        self.assertEquals(self.workbook.get_sheet_names(), ['icds-sms-usage', 'icds-sms-usage-by-district'])
+        self.assertEqual(self.workbook.get_sheet_names(), ['icds-sms-usage', 'icds-sms-usage-by-district'])
 
     def test_values_by_state(self):
         sheet = self.workbook.get_sheet_by_name('icds-sms-usage')
-        self.assertEquals(sheet.max_column, 4)
-        self.assertEquals(sheet.max_row, 4)
+        self.assertEqual(sheet.max_column, 4)
+        self.assertEqual(sheet.max_row, 4)
         data = []
         for row_number in range(1, sheet.max_row + 1):
             data.append([])
@@ -127,7 +127,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
                 data[row_number - 1].append(
                     sheet['{0}{1}'.format(get_column_letter(column_number), row_number)].value
                 )
-        self.assertEquals(
+        self.assertEqual(
             data,
             [
                 [
@@ -159,8 +159,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
     def test_values_by_district(self):
         sheet = self.workbook.get_sheet_by_name('icds-sms-usage-by-district')
-        self.assertEquals(sheet.max_column, 6)
-        self.assertEquals(sheet.max_row, 4)
+        self.assertEqual(sheet.max_column, 6)
+        self.assertEqual(sheet.max_row, 4)
         data = []
         for row_number in range(1, sheet.max_row + 1):
             data.append([])
@@ -168,7 +168,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
                 data[row_number - 1].append(
                     sheet['{0}{1}'.format(get_column_letter(column_number), row_number)].value
                 )
-        self.assertEquals(
+        self.assertEqual(
             data,
             [
                 [

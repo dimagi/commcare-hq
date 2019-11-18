@@ -291,11 +291,6 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
-class BasicReportDispatcher(ReportDispatcher):
-    prefix = 'basic_report'
-    map_name = 'BASIC_REPORTS'
-
-
 class DomainReportDispatcher(ReportDispatcher):
     prefix = 'domain_report'
     map_name = 'DOMAIN_REPORTS'

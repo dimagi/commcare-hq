@@ -5,7 +5,10 @@
  * Required parameters
  *  - options: Data to build select options. May be one of:
  *      - list of strings
- *      - list of objects with `id` and `text` properties.
+ *      - list of objects with properties:
+ *          - id (required)
+ *          - text (required)
+ *          - icon (optional)
  *      - observableArray, whose elements will be copied, so changes to the original array will not be reflected
  *
  * Optional parameters
@@ -30,22 +33,25 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';
+            self.disabled = params.disabled || false;
 
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
             var optionsData = ko.isObservable(params.options) ? params.options() : params.options;
             self.options = ko.observableArray(_.map(optionsData, function (o) {
                 var id = _.isString(o) ? o : o.id,
-                    text = _.isString(o) ? o : o.text;
+                    text = _.isString(o) ? o : o.text,
+                    icon = _.isString(o) ? '' : o.icon;
 
                 return {
                     id: id,
                     text: text,
+                    icon: icon,
                     selected: ko.computed(function () {
                         return id === self.value();
                     }),
                     click: function (model, e) {
-                        if (model.id !== self.value()) {
+                        if (model.id !== self.value() && !self.disabled) {
                             self.value(model.id);
                             $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
                         }

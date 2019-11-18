@@ -1,6 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -109,9 +113,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL": 1
-        }
+        "whens": [
+          ["closed_on IS NULL", 1]
+        ]
       },
       {
         "display": "F_st_count",
@@ -119,9 +123,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' and hh_caste = 'st'", 1]
+        ]
       },
       {
         "display": "F_sc_count",
@@ -129,9 +133,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'", 1]
+        ]
       },
       {
         "display": "F_other_count",
@@ -139,9 +143,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')", 1]
+        ]
       },
       {
         "display": "F_minority_count",
@@ -149,9 +153,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' and hh_minority = 1", 1]
+        ]
       },
       {
         "display": "F_disabled_count",
@@ -159,9 +163,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and disabled = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' and disabled = 1", 1]
+        ]
       },
       {
         "display": "M_st_count",
@@ -169,9 +173,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'", 1]
+        ]
       },
       {
         "display": "M_sc_count",
@@ -179,9 +183,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'", 1]
+        ]
       },
       {
         "display": "M_other_count",
@@ -189,9 +193,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc')": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc')", 1]
+        ]
       },
       {
         "display": "M_minority_count",
@@ -199,9 +203,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', '0') and hh_minority = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', '0') and hh_minority = 1", 1]
+        ]
       },
       {
         "display": "M_disabled_count",
@@ -209,9 +213,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', '0') and disabled = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', '0') and disabled = 1", 1]
+        ]
       },
       {
         "display": "disabled_movement_count",
@@ -219,9 +223,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y1\\y'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND disability_type ~ '\\y1\\y'", 1]
+        ]
       },
       {
         "display": "disabled_mental_count",
@@ -229,9 +233,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y2\\y'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND disability_type ~ '\\y2\\y'", 1]
+        ]
       },
       {
         "display": "disabled_seeing_count",
@@ -239,9 +243,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y3\\y'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND disability_type ~ '\\y3\\y'", 1]
+        ]
       },
       {
         "display": "disabled_hearing_count",
@@ -249,9 +253,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y4\\y'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND disability_type ~ '\\y4\\y'", 1]
+        ]
       },
       {
         "display": "disabled_speaking_count",
@@ -259,9 +263,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y5\\y'": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND disability_type ~ '\\y5\\y'", 1]
+        ]
       }
     ],
     "sort_expression": [],

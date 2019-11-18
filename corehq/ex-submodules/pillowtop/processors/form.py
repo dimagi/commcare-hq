@@ -3,16 +3,28 @@ from datetime import timedelta
 from django.conf import settings
 from django.http import Http404
 
-from corehq.apps.users.util import update_device_meta, update_latest_builds, filter_by_app
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
+from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.users.models import (
+    CouchUser,
+    DeviceAppMeta,
+    LastSubmission,
+    UserReportingMetadataStaging,
+)
+from corehq.apps.users.util import (
+    WEIRD_USER_IDS,
+    filter_by_app,
+    update_device_meta,
+    update_latest_builds,
+)
 from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
-from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
+
+ONE_DAY = 24 * 60 * 60
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
@@ -40,7 +52,14 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             mark_has_submission(domain, build_id)
 
         user_id = doc.get('form', {}).get('meta', {}).get('userID')
-        received_on = doc.get('received_on')
+        if user_id in WEIRD_USER_IDS:
+            return
+
+        try:
+            received_on = string_to_utc_datetime(doc.get('received_on'))
+        except ValueError:
+            return
+
         app_id = doc.get('app_id')
         version = doc.get('version')
 
@@ -50,10 +69,21 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             metadata = None
 
         if user_id and domain and received_on:
-            mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
+            if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+                UserReportingMetadataStaging.add_submission(
+                    domain, user_id, app_id, build_id, version, metadata, received_on
+                )
+            else:
+                user = CouchUser.get_by_user_id(user_id, domain)
+                if not user or user.is_deleted():
+                    return
+
+                mark_latest_submission(
+                    domain, user, app_id, build_id, version, metadata, received_on
+                )
 
 
-@quickcache(['domain', 'build_id'], timeout=60 * 60)
+@quickcache(['domain', 'build_id'], timeout=ONE_DAY, memoize_timeout=ONE_DAY)
 def mark_has_submission(domain, build_id):
     app = None
     try:
@@ -74,28 +104,27 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     # If debounce is false it updates if the submission is newer at all
     if not (last_submission and last_submission.submission_date):
         return True
+
     time_difference = received_on_datetime - last_submission.submission_date
-    debounce_delay = settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY
-    update_frequency = timedelta(minutes=debounce_delay) if debounce else timedelta(seconds=0)
-    if time_difference > update_frequency:
-        return True
+    if time_difference < timedelta(seconds=0):
+        return False
+
+    # Ignore debounce if the user has updated since the last submission
     if build_version != last_submission.build_version:
         return True
     if cc_version != last_submission.commcare_version:
         return True
-    return False
+
+    debounce_delay = settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY
+    update_frequency = timedelta(minutes=debounce_delay) if debounce else timedelta(seconds=0)
+    return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
-    user = CouchUser.get_by_user_id(user_id, domain)
-
-    if not user or user.is_deleted():
-        return
-
+def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on, save=True):
     try:
         received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:
-        return
+        return False
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
@@ -145,4 +174,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        user.save()
+        if save:
+            user.save()
+        return True
+    return False

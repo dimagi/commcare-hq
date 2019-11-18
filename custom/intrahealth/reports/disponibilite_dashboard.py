@@ -1,7 +1,6 @@
-# coding=utf-8
-
 import datetime
 
+from memoized import memoized
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -10,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource
 from dimagi.utils.dates import force_to_date
 
@@ -18,8 +18,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Disponibilité par Produit"
-    slug = 'disponibilite_par_produit__report'
-    comment = 'Taux de disponibilité de la gamme'
+    slug = 'disponibilite_par_produit_report'
+    comment = ' Nombre de PPS ayant au moins un produit ou plus disponible / Nombre de PPS visités'
     default_rows = 10
     exportable = True
 
@@ -115,12 +115,9 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             DataTablesColumn(self.selected_location_type),
         )
 
-        if self.selected_location_type != 'PPS':
-            products = self.products
-            for product in products:
-                headers.add_column(DataTablesColumn(product))
-        else:
-            headers.add_column(DataTablesColumn('Produits disponibles'))
+        products = self.products
+        for product in products:
+            headers.add_column(DataTablesColumn(product))
 
         return headers
 
@@ -162,18 +159,27 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                 location_name = stock['location_name']
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_id].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'in_ppses': product['in_ppses'],
+                                'all_ppses': product['all_ppses'],
+                            })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 in_ppses = product['in_ppses']
                                 all_ppses = product['all_ppses']
-                                locations_with_products[location_name][r]['in_ppses'] += in_ppses
-                                locations_with_products[location_name][r]['all_ppses'] += all_ppses
+                                locations_with_products[location_id][r]['in_ppses'] += in_ppses
+                                locations_with_products[location_id][r]['all_ppses'] += all_ppses
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -189,7 +195,9 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                             products_to_add[index]['all_ppses'] += all_ppses
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
@@ -202,34 +210,14 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                             'all_ppses': 0,
                         })
 
-            if self.selected_location_type != 'PPS':
-                for location, products in locations_with_products.items():
-                    stocks_to_return.append([
-                        location,
-                    ])
-                    products_list = sorted(products, key=lambda x: x['product_name'])
-                    for product_info in products_list:
-                        in_ppses = product_info['in_ppses']
-                        all_ppses = product_info['all_ppses']
-                        percent = (in_ppses / float(all_ppses) * 100) \
-                            if all_ppses != 0 else 'pas de données'
-                        if percent != 'pas de données':
-                            percent = '{:.2f} %'.format(percent)
-                        stocks_to_return[-1].append({
-                            'html': '{}'.format(percent),
-                            'sort_key': percent,
-                        })
-            else:
-                for location, products in locations_with_products.items():
-                    stocks_to_return.append([
-                        location,
-                    ])
-                    products_list = sorted(products, key=lambda x: x['product_name'])
-                    in_ppses = 0
-                    all_ppses = 0
-                    for product_info in products_list:
-                        in_ppses += product_info['in_ppses']
-                        all_ppses += product_info['all_ppses']
+            for location, products in locations_with_products.items():
+                stocks_to_return.append([
+                    location,
+                ])
+                products_list = sorted(products, key=lambda x: x['product_name'])
+                for product_info in products_list:
+                    in_ppses = product_info['in_ppses']
+                    all_ppses = product_info['all_ppses']
                     percent = (in_ppses / float(all_ppses) * 100) \
                         if all_ppses != 0 else 'pas de données'
                     if percent != 'pas de données':
@@ -263,19 +251,9 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                         data_for_total_row[r][0] += in_ppses
                         data_for_total_row[r][1] += all_ppses
 
-            if self.selected_location_type != 'PPS':
-                for data in data_for_total_row:
-                    in_ppses = data[0]
-                    all_ppses = data[1]
-                    percent = (in_ppses / float(all_ppses) * 100) \
-                        if all_ppses != 0 else 0
-                    total_row_to_return.append({
-                        'html': '<b>{:.2f} %</b>'.format(percent),
-                        'sort_key': percent,
-                    })
-            else:
-                in_ppses = sum(x[0] for x in data_for_total_row)
-                all_ppses = sum(x[1] for x in data_for_total_row)
+            for data in data_for_total_row:
+                in_ppses = data[0]
+                all_ppses = data[1]
                 percent = (in_ppses / float(all_ppses) * 100) \
                     if all_ppses != 0 else 0
                 total_row_to_return.append({
@@ -291,7 +269,8 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def charts(self):
-        chart = PNAMultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
+        x_axis = 'Product'
+        chart = PNAMultiBarChart(None, Axis(x_axis), Axis('Percent', format='.2f'))
         chart.height = 550
         chart.marginBottom = 150
         chart.forceY = [0, 100]
@@ -329,55 +308,24 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                                 product_data['all_ppses'] += all_ppses
 
             products = sorted(products_data, key=lambda x: x['product_name'])
-            if self.selected_location_type != 'PPS':
-                for product in products:
-                    product_name = product['product_name']
-                    in_ppses = product['in_ppses']
-                    all_ppses = product['all_ppses']
-                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
-                    stocks_to_return.append([
-                        product_name,
-                        {
-                            'html': '{}'.format(percent),
-                            'sort_key': percent
-                        }
-                    ])
-            else:
-                added_locations = []
-                availability_for_ppses = {}
-                for product in products:
-                    location_id = product['location_id']
-                    location_name = product['location_name']
-                    in_ppses = product['in_ppses']
-                    all_ppses = product['all_ppses']
-                    if location_id not in added_locations:
-                        added_locations.append(location_id)
-                        availability_for_ppses[location_id] = {
-                            'location_name': location_name,
-                            'in_ppses': in_ppses,
-                            'all_ppses': all_ppses,
-                        }
-                    else:
-                        availability_for_ppses[location_id]['in_ppses'] += in_ppses
-                        availability_for_ppses[location_id]['all_ppses'] += all_ppses
-
-                for location_id, location_info in availability_for_ppses.items():
-                    location_name = location_info['location_name']
-                    in_ppses = location_info['in_ppses']
-                    all_ppses = location_info['all_ppses']
-                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
-                    stocks_to_return.append([
-                        location_name,
-                        {
-                            'html': '{}'.format(percent),
-                            'sort_key': percent
-                        }
-                    ])
+            for product in products:
+                product_name = product['product_name']
+                in_ppses = product['in_ppses']
+                all_ppses = product['all_ppses']
+                percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
+                stocks_to_return.append([
+                    product_name,
+                    {
+                        'html': '{}'.format(percent),
+                        'sort_key': percent
+                    }
+                ])
 
             return stocks_to_return
 
         def get_data_for_graph():
             com = []
+
             rows = data_to_chart(self.clean_rows)
             for row in rows:
                 com.append({"x": row[0], "y": row[1]['sort_key']})
@@ -409,5 +357,5 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

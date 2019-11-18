@@ -198,7 +198,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             message_content=reply_sms,
         )
 
-    def create_survey_keyword(self, keyword, form_unique_id, delimiter=None,
+    def create_survey_keyword(self, keyword, app_id, form_unique_id, delimiter=None,
             override_open_sessions=True, initiator_filter=None):
 
         k = Keyword(
@@ -214,10 +214,11 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_SMS_SURVEY,
+            app_id=app_id,
             form_unique_id=form_unique_id,
         )
 
-    def create_structured_sms_keyword(self, keyword, form_unique_id, reply_sms,
+    def create_structured_sms_keyword(self, keyword, app_id, form_unique_id, reply_sms,
             delimiter=None, named_args=None, named_args_separator=None,
             override_open_sessions=True, initiator_filter=None):
 
@@ -240,6 +241,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_STRUCTURED_SMS,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             use_named_args=(named_args is not None),
             named_args=(named_args or {}),
@@ -257,7 +259,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return case
 
     def assertCasePropertyEquals(self, case, prop, value):
-        self.assertEquals(case.get_case_property(prop), value)
+        self.assertEqual(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
         result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
@@ -265,14 +267,14 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()
-        self.assertEquals(last_submission.form_id, new_submission.form_id)
+        self.assertEqual(last_submission.form_id, new_submission.form_id)
 
     def assertFormQuestionEquals(self, form, question, value, cast=None):
         self.assertIn(question, form.form_data)
         form_value = form.form_data[question]
         if cast:
             form_value = cast(form_value)
-        self.assertEquals(form_value, value)
+        self.assertEqual(form_value, value)
 
     def get_last_outbound_sms(self, contact):
         return SMS.get_last_log_for_recipient(

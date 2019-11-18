@@ -139,7 +139,6 @@ class TestZapierCreateCaseAction(TestCase):
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
         fake_user = WebUser.create('fake', 'faker2', '******')
         self.addCleanup(fake_domain.delete)
-        self.addCleanup(fake_user.delete)
         query_string = "?domain=fruit&case_type=fake&user_id=test_user&user=faker2&owner_id=test_user"
         response = self.client.post(reverse(ZapierCreateCase.urlname,
                                             kwargs={'domain': self.domain}) + query_string,

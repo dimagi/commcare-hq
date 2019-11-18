@@ -1,3 +1,0 @@
-{# Poor spacing in this file because this template is used in the middle of sentences #}{% load xforms_extras %}{% load i18n %}{% if not not_actual_build %}
-Menu "<a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>"
-{% else %}This menu{% endif %}

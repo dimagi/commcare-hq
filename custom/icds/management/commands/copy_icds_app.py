@@ -21,8 +21,9 @@ class Command(BaseCommand):
 
         old_to_new = get_old_to_new_config_ids(old_app, new_app)
         for form in new_app.get_forms():
-            for old_id, new_id in old_to_new:
-                form.source = form.source.replace(old_id, new_id)
+            if form.form_type != 'shadow_form':
+                for old_id, new_id in old_to_new:
+                    form.source = form.source.replace(old_id, new_id)
 
         new_app.save()
         print("App succesfully copied, you can view it at\n{}".format(

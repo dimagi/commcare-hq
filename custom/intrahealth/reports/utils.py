@@ -1,8 +1,7 @@
-# coding=utf-8
 import calendar
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.locations.models import get_location
+from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
@@ -17,6 +16,20 @@ def get_localized_months():
     #Returns chronological list of months in french language
     with localize('fr'):
         return [(_(calendar.month_name[i])).title() for i in range(1, 13)]
+
+
+def change_id_keys_to_names(domain, dict_with_id_keys):
+    dict_with_name_keys = {}
+    for id, data in dict_with_id_keys.items():
+        try:
+            name = SQLLocation.objects.get(domain=domain,
+                                           location_id=id).name
+        except SQLLocation.DoesNotExist:
+            name = id
+
+        dict_with_name_keys[name] = data
+
+    return dict_with_name_keys
 
 
 class YeksiNaaMonthYearMixin(MonthYearMixin):

@@ -27,7 +27,7 @@ class UtilTestCase(TestCase):
     def testCleanPhoneNumber(self):
         phone_number = "  324 23-23421241"
         cleaned = clean_phone_number(phone_number)
-        self.assertEquals(cleaned, "+3242323421241")
+        self.assertEqual(cleaned, "+3242323421241")
 
     @run_with_all_backends
     def test_get_contact_for_case(self):

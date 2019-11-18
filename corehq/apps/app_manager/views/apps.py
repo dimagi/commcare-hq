@@ -198,6 +198,8 @@ def get_app_view_context(request, app):
     app_view_options = {
         'permissions': {
             'cloudcare': has_privilege(request, privileges.CLOUDCARE),
+            'case_sharing_groups': has_privilege(request,
+                                                 privileges.CASE_SHARING_GROUPS),
         },
         'sections': settings_layout,
         'urls': {
@@ -299,15 +301,30 @@ def get_app_view_context(request, app):
         'is_remote_app': is_remote_app(app),
     })
     if is_linked_app(app):
-        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            context['master_version'] = app.get_master_version()
+            master_versions_by_id = app.get_latest_master_releases_versions()
+            master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
         except RemoteRequestError:
-            pass
+            messages.error(request, "Unable to reach remote master server. Please try again later.")
+            master_versions_by_id = {}
+            master_briefs = []
+        upstream_brief = {}
+        for b in master_briefs:
+            if b.id == app.upstream_app_id:
+                upstream_brief = b
+        context.update({
+            'master_briefs': master_briefs,
+            'master_versions_by_id': master_versions_by_id,
+            'multiple_masters': len(master_briefs) > 1 and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain),
+            'upstream_version': app.upstream_version,
+            'upstream_brief': upstream_brief,
+            'upstream_url': _get_upstream_url(app, request.couch_user),
+            'upstream_url_template': _get_upstream_url(app, request.couch_user, master_app_id='---'),
+        })
     return context
 
 
-def _get_upstream_url(app, request_user):
+def _get_upstream_url(app, request_user, master_app_id=None):
     """Get the upstream url if the user has access"""
     if (
             app.domain_link and (
@@ -317,7 +334,9 @@ def _get_upstream_url(app, request_user):
                 )
             )
     ):
-        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if master_app_id is None:
+            master_app_id = app.upstream_app_id
+        url = reverse('view_app', args=[app.domain_link.master_domain, master_app_id])
         if app.domain_link.is_remote:
             url = '{}{}'.format(app.domain_link.remote_base_url, url)
         return url
@@ -453,7 +472,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 
     linked_app = create_linked_app(from_domain, from_app.master_id, to_domain, link_app_name)
     try:
-        update_linked_app(linked_app, request.couch_user.get_id, master_build=from_app)
+        update_linked_app(linked_app, from_app, request.couch_user.get_id)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
@@ -622,42 +641,6 @@ def new_app(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def rename_language(request, domain, form_unique_id):
-    old_code = request.POST.get('oldCode')
-    new_code = request.POST.get('newCode')
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceConflict:
-        raise Http404()
-    if app.domain != domain:
-        raise Http404()
-    try:
-        form.rename_xform_language(old_code, new_code)
-        app.save()
-        return HttpResponse(json.dumps({"status": "ok"}))
-    except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': str(e)}), status=409)
-        return response
-
-
-@require_GET
-@login_and_domain_required
-def validate_language(request, domain, app_id):
-    app = get_app(domain, app_id)
-    term = request.GET.get('term', '').lower()
-    if term in [lang.lower() for lang in app.langs]:
-        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
-    else:
-        return HttpResponseRedirect(
-            "%s?%s" % (
-                reverse('langcodes.views.validate', args=[]),
-                django_urlencode({'term': term})
-            )
-        )
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
     """
     Called with post body:
@@ -754,6 +737,8 @@ def edit_app_attr(request, domain, app_id, attr):
     except ValueError:
         hq_settings = request.POST
 
+    can_use_case_sharing = has_privilege(request, privileges.CASE_SHARING_GROUPS)
+
     attributes = [
         'all',
         'recipients', 'name',
@@ -786,35 +771,40 @@ def edit_app_attr(request, domain, app_id, attr):
 
     resp = {"update": {}}
     # For either type of app
+
+    def _always_allowed(x):
+        return True
+
     easy_attrs = (
-        ('build_spec', BuildSpec.from_string),
-        ('practice_mobile_worker_id', None),
-        ('case_sharing', None),
-        ('cloudcare_enabled', None),
-        ('manage_urls', None),
-        ('name', None),
-        ('platform', None),
-        ('recipients', None),
-        ('text_input', None),
-        ('use_custom_suite', None),
-        ('secure_submissions', None),
-        ('translation_strategy', None),
-        ('auto_gps_capture', None),
-        ('use_grid_menus', None),
-        ('grid_form_menus', None),
-        ('target_commcare_flavor', None),
-        ('comment', None),
-        ('custom_base_url', None),
-        ('use_j2me_endpoint', None),
-        ('mobile_ucr_restore_version', None),
-        ('location_fixture_restore', None),
+        ('build_spec', BuildSpec.from_string, _always_allowed),
+        ('practice_mobile_worker_id', None, _always_allowed),
+        ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
+        ('cloudcare_enabled', None, _always_allowed),
+        ('manage_urls', None, _always_allowed),
+        ('name', None, _always_allowed),
+        ('platform', None, _always_allowed),
+        ('recipients', None, _always_allowed),
+        ('text_input', None, _always_allowed),
+        ('use_custom_suite', None, _always_allowed),
+        ('secure_submissions', None, _always_allowed),
+        ('translation_strategy', None, _always_allowed),
+        ('auto_gps_capture', None, _always_allowed),
+        ('use_grid_menus', None, _always_allowed),
+        ('grid_form_menus', None, _always_allowed),
+        ('target_commcare_flavor', None, _always_allowed),
+        ('comment', None, _always_allowed),
+        ('custom_base_url', None, _always_allowed),
+        ('use_j2me_endpoint', None, _always_allowed),
+        ('mobile_ucr_restore_version', None, _always_allowed),
+        ('location_fixture_restore', None, _always_allowed),
     )
-    for attribute, transformation in easy_attrs:
+    for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
-            setattr(app, attribute, value)
+            if can_set_attr(attribute):
+                setattr(app, attribute, value)
             if is_linked_app(app) and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
@@ -961,15 +951,21 @@ def drop_user_case(request, domain, app_id):
 
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
+    master_app_id = request.POST.get('master_app_id')
+    if not master_app_id:
+        messages.error(request, _("Please select a master app."))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, master_app_id,
+                                                request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
         app = get_current_app(domain, app_id)
         try:
-            update_linked_app(app, request.couch_user.get_id)
+            update_linked_app(app, master_app_id, request.couch_user.get_id)
         except AppLinkError as e:
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

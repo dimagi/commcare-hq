@@ -14,6 +14,8 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+
+from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
@@ -34,15 +36,15 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.sql_db.routers import forced_citus
 from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
-    THR_REPORT_EXPORT
+    GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
+    THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
 from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -111,13 +113,23 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView, MWCDReportView
+from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
+from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
+
+# checks required to view the dashboard
+DASHBOARD_CHECKS = [
+    toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
+    require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
+                       login_decorator=None),
+    login_and_domain_required,
+]
 
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
-class TableauView(RedirectView):
+class LegacyTableauRedirectView(RedirectView):
 
     permanent = True
     pattern_name = 'icds_dashboard'
@@ -197,13 +209,24 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
+    downtime_template_name = 'icds_reports/dashboard_down.html'
+
+    def get_template_names(self):
+        return [self.template_name] if not self.show_downtime else [self.downtime_template_name]
 
     @property
     def domain(self):
         return self.kwargs['domain']
+
+    @property
+    def show_downtime(self):
+        return (
+            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
+            and not self.request.GET.get('bypass-downtime')
+        )
 
     @property
     def couch_user(self):
@@ -221,36 +244,16 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
-        kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
-            self.kwargs['domain']
-        ).location_ids())
-        kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
-                self.kwargs['domain']
-            )]
-        )
-        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
-        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
-            self.domain, 'access_all_locations'
-        )
-
-        if kwargs['have_access_to_all_locations']:
-            kwargs['user_location_id'] = None
-
-        is_commcare_user = self.couch_user.is_commcare_user()
-
-        if self.couch_user.is_web_user():
-            kwargs['is_web_user'] = True
-        elif is_commcare_user and self._has_helpdesk_role():
+        kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
+        kwargs['is_mobile'] = False
+        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
             )
-        return super(DashboardView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)
 
 
 @location_safe
@@ -258,6 +261,13 @@ class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+
+
+@location_safe
+class IcdsDynamicMobileTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
 
 
 @location_safe
@@ -285,7 +295,7 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -307,7 +317,7 @@ class ProgramSummaryView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class LadySupervisorView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -327,7 +337,7 @@ class LadySupervisorView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ServiceDeliveryDashboardView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -356,7 +366,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class PrevalenceOfUndernutritionView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -557,7 +567,7 @@ class HaveAccessToLocation(View):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AwcReportsView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -709,7 +719,6 @@ class AwcReportsView(BaseReportView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
-        use_citus = forced_citus()
         include_test = request.GET.get('include_test', False)
         export_format = request.POST.get('format')
         month = int(request.POST.get('month'))
@@ -765,11 +774,11 @@ class ExportIndicatorView(View):
                 month,
                 year,
                 request.couch_user,
-                force_citus=use_citus
+                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
-        if indicator == BENEFICIARY_LIST_EXPORT:
+        if indicator == GROWTH_MONITORING_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             config = beneficiary_config
@@ -783,9 +792,11 @@ class ExportIndicatorView(View):
             latest_year, latest_month = add_months(today.year, today.month, -month_offset)
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
+        if indicator == DASHBOARD_USAGE_EXPORT:
+            config['couch_user'] = self.request.couch_user
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT):
+                         AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -795,13 +806,13 @@ class ExportIndicatorView(View):
                 self.kwargs['domain'],
                 export_format,
                 indicator,
-                force_citus=use_citus
+                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -836,7 +847,7 @@ class FactSheetsView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class PrevalenceOfSevereView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -882,7 +893,7 @@ class PrevalenceOfSevereView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class PrevalenceOfStuntingView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -931,7 +942,7 @@ class PrevalenceOfStuntingView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class NewbornsWithLowBirthWeightView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -969,7 +980,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class EarlyInitiationBreastfeeding(BaseReportView):
 
     def get(self, request, *args, **kwargs):
@@ -1007,7 +1018,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1044,7 +1055,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1081,7 +1092,7 @@ class ChildrenInitiatedView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1118,7 +1129,7 @@ class InstitutionalDeliveriesView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1155,7 +1166,7 @@ class ImmunizationCoverageView(BaseReportView):
 
 
 @location_safe
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
@@ -1193,7 +1204,7 @@ class AWCDailyStatusView(View):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1213,7 +1224,7 @@ class AWCsCoveredView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1245,7 +1256,7 @@ class RegisteredHouseholdView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1287,7 +1298,7 @@ class EnrolledChildrenView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1320,7 +1331,7 @@ class EnrolledWomenView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1352,7 +1363,7 @@ class LactatingEnrolledWomenView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1384,7 +1395,7 @@ class AdolescentGirlsView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1415,7 +1426,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1447,7 +1458,7 @@ class CleanWaterView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1479,7 +1490,7 @@ class FunctionalToiletView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1511,7 +1522,7 @@ class MedicineKitView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1543,7 +1554,7 @@ class InfantsWeightScaleView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1802,10 +1813,30 @@ class NICIndicatorAPIView(View):
 
 
 @location_safe
+@method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
+class APWebservice(View):
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'message': 'Connection Successful'})
+
+
+@method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
+class DailyIndicators(View):
+    def get(self, request, *args, **kwargs):
+
+        try:
+            filename, export_file = get_daily_indicators()
+        except AggAwcDailyView.DoesNotExist:
+            return JsonResponse({'message': 'No data for Yesterday'}, status=500)
+        response = HttpResponse(export_file.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
+
+
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
-        data_type = int(request.POST.get('indicator', None))
+        data_type = request.POST.get('indicator', None)
         state_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
@@ -1813,7 +1844,7 @@ class CasDataExport(View):
 
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
-            return JsonResponse({"message": "Export not exists."})
+            return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
             params = dict(
                 indicator=data_type,
@@ -1833,7 +1864,7 @@ class CasDataExport(View):
             )
 
     def get(self, request, *args, **kwargs):
-        data_type = int(request.GET.get('indicator', None))
+        data_type = request.GET.get('indicator', None)
         state_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
@@ -1906,16 +1937,37 @@ class CasDataExportAPIView(View):
     @property
     @icds_quickcache([])
     def valid_state_names(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+        return list(AwcLocation.objects.filter(
+            aggregation_level=AggregationLevels.STATE, state_is_test=0
+        ).values_list('state_name', flat=True))
 
     @property
     def valid_types(self):
         return ('woman', 'child', 'awc')
 
+    @staticmethod
     def get_type_code(self, data_type):
         type_map = {
-            "child": 1,
-            "woman": 2,
-            "awc": 3
+            "child": 'child_health_monthly',
+            "woman": 'ccs_record_monthly',
+            "awc": 'agg_awc',
         }
         return type_map[data_type]
+
+
+@location_safe
+@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
+class MWCDDataView(View):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data = get_mwcd_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
+        except Exception:
+            response = dict(isSuccess=False, message='Unknown Error occured')
+            return JsonResponse(response, status=500)

@@ -120,12 +120,11 @@ class SyncPatientIdentifiersTask(WorkflowTask):
 
 class CreateVisitsEncountersObsTask(WorkflowTask):
 
-    def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
+    def __init__(self, requests, domain, info, form_json, openmrs_config, person_uuid):
         self.requests = requests
         self.domain = domain
         self.info = info
         self.form_json = form_json
-        self.form_question_values = form_question_values
         self.openmrs_config = openmrs_config
         self.person_uuid = person_uuid
 
@@ -162,6 +161,13 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime
 
+    def _get_values_for_concept(self, form_config):
+        return {
+            obs.concept: [obs.value.get_value(self.info)]
+            for obs in form_config.openmrs_observations
+            if obs.value.check_direction(DIRECTION_EXPORT) and not is_blank(obs.value.get_value(self.info))
+        }
+
     def run(self):
         """
         Returns WorkflowTasks for creating visits, encounters and observations
@@ -169,13 +175,12 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
         location_uuid = (
-            get_ancestor_location_openmrs_uuid(self.domain, self.info.case_id) or
+            get_ancestor_location_openmrs_uuid(self.info) or
             get_unknown_location_uuid(self.requests)  # If we don't set
             # a location, OpenMRS sets it to NULL. That's OK for
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
             # Location". Use that, if it exists.
         )
-        self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
@@ -186,9 +191,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         provider_uuid=provider_uuid,
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
-                        values_for_concept={obs.concept: [obs.value.get_value(self.info)]
-                                            for obs in form_config.openmrs_observations
-                                            if obs.value.get_value(self.info)},
+                        values_for_concept=self._get_values_for_concept(form_config),
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
@@ -657,3 +660,17 @@ class UpdatePersonPropertiesTask(WorkflowTask):
                 json=properties,
                 raise_for_status=True,
             )
+
+
+# TODO: Refactor once https://github.com/dimagi/commcare-hq/pull/25732 is merged
+def is_blank(value):
+    """
+    Returns True if ``value`` is ``None`` or an empty string.
+    >>> is_blank("")
+    True
+    >>> is_blank(0)
+    False
+    >>> is_blank([])
+    False
+    """
+    return value is None or value == ""

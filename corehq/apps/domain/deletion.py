@@ -3,6 +3,7 @@ import logging
 from datetime import date
 
 from django.apps import apps
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Q
 
@@ -103,7 +104,10 @@ def _delete_web_user_membership(domain_name):
     inactive_web_users = WebUser.by_domain(domain_name, is_active=False)
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
-        web_user.save()
+        if settings.UNIT_TESTING and not web_user.domain_memberships:
+            web_user.delete()
+        else:
+            web_user.save()
 
 
 def _terminate_subscriptions(domain_name):
@@ -243,10 +247,8 @@ DOMAIN_DELETE_OPERATIONS = [
 ]
 
 
-def apply_deletion_operations(domain_name, dynamic_operations):
-    all_ops = dynamic_operations or []
-    all_ops.extend(DOMAIN_DELETE_OPERATIONS)
-    raw_ops, model_ops = _split_ops_by_type(all_ops)
+def apply_deletion_operations(domain_name):
+    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
 
     with connection.cursor() as cursor:
         for op in raw_ops:

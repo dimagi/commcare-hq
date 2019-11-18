@@ -7,6 +7,8 @@ from memoized import memoized
 
 import sys
 
+from sentry_sdk import configure_scope
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
@@ -36,6 +38,9 @@ class PillowRuntimeContext(object):
 
     def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
+
+    def reset(self):
+        self.changes_seen = 0
 
 
 class PillowBase(metaclass=ABCMeta):
@@ -98,6 +103,8 @@ class PillowBase(metaclass=ABCMeta):
         Main entry point for running pillows forever.
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
+        with configure_scope() as scope:
+            scope.set_tag("pillow_name", self.get_name())
         self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
@@ -197,7 +204,6 @@ class PillowBase(metaclass=ABCMeta):
                 return set(), 0
 
             changes_chunk = self._deduplicate_changes(changes_chunk)
-            retry_changes = set()
             timer = TimingContext()
             with timer:
                 try:
@@ -205,14 +211,14 @@ class PillowBase(metaclass=ABCMeta):
                 except Exception as ex:
                     notify_exception(
                         None,
-                        "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                        "{pillow_name} Error in processing changes chunk: {ex}".format(
                             pillow_name=self.get_name(),
-                            change_ids=[c.id for c in changes_chunk],
                             ex=ex
-                        ))
+                        ),
+                        details={
+                            'change_ids': [c.id for c in changes_chunk]
+                        })
                     self._record_batch_exception_in_datadog(processor)
-                    for change in set(changes_chunk) - set(retry_changes):
-                        self._record_change_success_in_datadog(change, processor)
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
                 else:
@@ -254,7 +260,7 @@ class PillowBase(metaclass=ABCMeta):
         return timer.duration
 
     @abstractmethod
-    def process_change(self, change):
+    def process_change(self, change, serial_only=False):
         pass
 
     @abstractmethod

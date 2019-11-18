@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.test import TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 import mock
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
@@ -143,7 +143,6 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
     ('domain', 'KafkaDomainPillow'),
     ('user', 'UserPillow'),
     ('group', 'GroupPillow'),
-    ('ledger-v1', 'LedgerToElasticsearchPillow'),
     ('sms', 'SqlSMSPillow'),
     ('report-case', 'ReportCaseToElasticsearchPillow'),
     ('report-xform', 'ReportXFormToElasticsearchPillow'),
@@ -176,7 +175,6 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
 @generate_cases([
     ('sql-case', 'case-pillow'),
     ('sql-form', 'xform-pillow'),
-    ('ledger-v2', 'LedgerToElasticsearchPillow'),
     ('groups-to-user', 'UserPillow'),
     ('case', 'case-pillow'),
     ('form', 'xform-pillow'),

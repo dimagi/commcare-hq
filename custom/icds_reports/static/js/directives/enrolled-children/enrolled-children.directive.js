@@ -23,7 +23,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         vm.genderLabel = genders[genderIndex].name;
     }
 
-    vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
+    vm.label = "Children enrolled for Anganwadi Services";
     vm.steps = {
         'map': {route: '/demographics/enrolled_children/map', label: 'Map View'},
         'chart': {route: '/demographics/enrolled_children/chart', label: 'Chart View'},

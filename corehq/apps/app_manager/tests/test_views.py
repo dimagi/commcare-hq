@@ -31,7 +31,7 @@ from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
-from .test_form_versioning import BLANK_TEMPLATE
+from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -195,6 +195,19 @@ class TestViews(TestCase):
 
         del kwargs['module_unique_id']
         kwargs['form_unique_id'] = form.unique_id
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
+
+        mock2.side_effect = XFormValidationError('')
+        bad_form = self.app.new_form(module.id, "Form1", "en",
+                                     attachment=INVALID_TEMPLATE.format(xmlns='xmlns-0.0'))
+        kwargs['form_unique_id'] = bad_form.unique_id
+        self.app.save()
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
+
+        bad_form = self.app.new_form(module.id, "Form1", "en",
+                                     attachment="this is not xml")
+        kwargs['form_unique_id'] = bad_form.unique_id
+        self.app.save()
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
     def test_advanced_module(self, mock):

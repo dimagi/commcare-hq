@@ -258,7 +258,7 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
                 'reference_id': 'case',
                 'relationship': r,
             } for i, r in enumerate(relationships)]})
-            self.assertEquals(autoset_owner_id_for_advanced_action(advanced_open_action), expected)
+            self.assertEqual(autoset_owner_id_for_advanced_action(advanced_open_action), expected)
 
         # Only extensions
         _test_relationships(['extension', 'extension'], False)

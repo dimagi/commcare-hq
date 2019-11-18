@@ -32,7 +32,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         cls.p2_uuid = uuid.UUID('8440dbd6-61b1-4b2f-a310-7e1768902d04')
 
     def tearDown(self):
-        for db in partition_config.get_form_processing_dbs():
+        for db in partition_config.form_processing_dbs:
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             XFormInstanceSQL.objects.using(db).filter(domain=self.domain).delete()
 

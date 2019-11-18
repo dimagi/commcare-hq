@@ -21,12 +21,12 @@ class DimagiUtilsTestCase(TestCase):
         def f(n=0):
             return n**2
 
-        self.assertEquals(f(), 0)
-        self.assertEquals(f.get_cache(), {(0,): 0})
-        self.assertEquals(f(0), 0)
-        self.assertEquals(f.get_cache(), {(0,): 0})
-        self.assertEquals(f(2), 4)
-        self.assertEquals(sorted(f.get_cache().items()), [((0,), 0), ((2,), 4)])
+        self.assertEqual(f(), 0)
+        self.assertEqual(f.get_cache(), {(0,): 0})
+        self.assertEqual(f(0), 0)
+        self.assertEqual(f.get_cache(), {(0,): 0})
+        self.assertEqual(f(2), 4)
+        self.assertEqual(sorted(f.get_cache().items()), [((0,), 0), ((2,), 4)])
 
     def test_memoized_class(self):
         calls = {'get_full_name': 0, 'full_name': 0, 'complicated_method': 0}
@@ -61,33 +61,33 @@ class DimagiUtilsTestCase(TestCase):
                 return a, b, args, kwargs
 
         p = Person("Danny", "Roberts")
-        self.assertEquals(p.get_full_name(), 'Danny Roberts')
-        self.assertEquals(calls['get_full_name'], 1)
-        self.assertEquals(p.get_full_name(), 'Danny Roberts')
-        self.assertEquals(calls['get_full_name'], 1)
+        self.assertEqual(p.get_full_name(), 'Danny Roberts')
+        self.assertEqual(calls['get_full_name'], 1)
+        self.assertEqual(p.get_full_name(), 'Danny Roberts')
+        self.assertEqual(calls['get_full_name'], 1)
 
-        self.assertEquals(p.full_name, 'Danny Roberts')
-        self.assertEquals(calls['full_name'], 1)
-        self.assertEquals(p.full_name, 'Danny Roberts')
-        self.assertEquals(calls['full_name'], 1)
+        self.assertEqual(p.full_name, 'Danny Roberts')
+        self.assertEqual(calls['full_name'], 1)
+        self.assertEqual(p.full_name, 'Danny Roberts')
+        self.assertEqual(calls['full_name'], 1)
 
-        self.assertEquals(Person("Danny", "Roberts")._full_name_cache, {(): 'Danny Roberts'})
-        self.assertEquals(Person.get_full_name.get_cache(p), {(): 'Danny Roberts'})
+        self.assertEqual(Person("Danny", "Roberts")._full_name_cache, {(): 'Danny Roberts'})
+        self.assertEqual(Person.get_full_name.get_cache(p), {(): 'Danny Roberts'})
 
-        self.assertEquals(p.complicated_method(5), (5, 10, (), {}))
-        self.assertEquals(calls['complicated_method'], 1)
-        self.assertEquals(p.complicated_method(5), (5, 10, (), {}))
-        self.assertEquals(calls['complicated_method'], 1)
+        self.assertEqual(p.complicated_method(5), (5, 10, (), {}))
+        self.assertEqual(calls['complicated_method'], 1)
+        self.assertEqual(p.complicated_method(5), (5, 10, (), {}))
+        self.assertEqual(calls['complicated_method'], 1)
 
-        self.assertEquals(p.complicated_method(1, 2, 3, 4, 5, foo='bar'), (1, 2, (3, 4, 5), {'foo': 'bar'}))
-        self.assertEquals(calls['complicated_method'], 2)
+        self.assertEqual(p.complicated_method(1, 2, 3, 4, 5, foo='bar'), (1, 2, (3, 4, 5), {'foo': 'bar'}))
+        self.assertEqual(calls['complicated_method'], 2)
 
         q = Person("Joe", "Schmoe")
-        self.assertEquals(q.get_full_name(), 'Joe Schmoe')
-        self.assertEquals(calls['get_full_name'], 2)
+        self.assertEqual(q.get_full_name(), 'Joe Schmoe')
+        self.assertEqual(calls['get_full_name'], 2)
 
     def test_chunked(self):
-        self.assertEquals(list(chunked(list(range(10)), 4)), [
+        self.assertEqual(list(chunked(list(range(10)), 4)), [
             (0, 1, 2, 3),
             (4, 5, 6, 7),
             (8, 9)
@@ -112,13 +112,13 @@ class DimagiUtilsTestCase(TestCase):
                     yield word + '!'
         thing = Thing(words=['danny', 'is', 'so', 'clever'])
         thing = ReadOnlyObject(thing)
-        self.assertEquals(thing.words, ['danny', 'is', 'so', 'clever'])
-        self.assertEquals(thing.words, ['danny', 'is', 'so', 'clever'])
+        self.assertEqual(thing.words, ['danny', 'is', 'so', 'clever'])
+        self.assertEqual(thing.words, ['danny', 'is', 'so', 'clever'])
         self.assertIs(thing.words, thing.words)
-        self.assertEquals(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
-        self.assertEquals(read_log(), [0, 1, 2, 3])
-        self.assertEquals(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
-        self.assertEquals(read_log(), [])
+        self.assertEqual(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
+        self.assertEqual(read_log(), [0, 1, 2, 3])
+        self.assertEqual(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
+        self.assertEqual(read_log(), [])
         self.assertIs(thing.calc, thing.calc)
 
     def test_sync_design_docs(self):
@@ -134,7 +134,7 @@ class DimagiUtilsTestCase(TestCase):
         with patch('dimagi.utils.couch.sync_docs.push', MagicMock()) as mock_push:
             sync_design_docs(db, 'design_dir', 'design_name', temp='tmp')
             mock_push.assert_called_with('design_dir', db, docid='_design/design_name-tmp', force=True)
-            self.assertEquals(len(db.mock_calls), 4)
+            self.assertEqual(len(db.mock_calls), 4)
 
     def test_copy_designs(self):
         db = MagicMock()

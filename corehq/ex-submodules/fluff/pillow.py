@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
@@ -29,7 +29,7 @@ class FluffPillowProcessor(PillowProcessor):
     def get_sql_engine(cls):
         engine = getattr(cls, '_engine', None)
         if not engine:
-            cls._engine = connection_manager.get_engine('default')
+            cls._engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
         return cls._engine
 
     def _assert_valid(self):

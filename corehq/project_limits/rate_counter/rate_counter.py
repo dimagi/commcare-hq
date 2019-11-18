@@ -1,11 +1,11 @@
 import hashlib
 import time
 
-from django.core.cache import caches
+from django.core.cache import caches, DEFAULT_CACHE_ALIAS
 
 from corehq.project_limits.rate_counter.interfaces import AbstractRateCounter
 
-REDIS = caches['default']
+REDIS = caches[DEFAULT_CACHE_ALIAS]
 LOCMEM = caches['locmem']
 
 

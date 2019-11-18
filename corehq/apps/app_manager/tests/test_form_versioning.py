@@ -41,6 +41,36 @@ BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 </h:html>
 """
 
+INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+    <h:head>
+        <h:title>New Form</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{xmlns}" uiVersion="1" version="1" name="New Form">
+                    <question1 />
+                    <question2 />
+                </data>
+            </instance>
+            <bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" calculate="if(1, 2, 3, 4, 5)" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="question1-label">
+                        <value>question1</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/question1">
+            <label ref="jr:itext('question1-label')" />
+        </input>
+    </h:body>
+</h:html>
+"""
+
 
 class FormVersioningTest(TestCase):
 

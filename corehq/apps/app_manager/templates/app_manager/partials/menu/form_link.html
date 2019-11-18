@@ -38,10 +38,11 @@
         {% else %}
             class="fa fa-file-o appnav-primary-icon"
         {% endif %}
-            title="{{ form.get_icon_help_text }}"
+            title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with form.id as index %}This is form {{ index }}<br>{% endblocktrans %} {% endif %}{{ form.get_icon_help_text }}"
             data-toggle="tooltip"
             data-placement="right"
             data-container="body"
+            data-html="true"
             >
         </i>
         <span {% if form == selected_form %}class="variable-form_name"{% endif %}>

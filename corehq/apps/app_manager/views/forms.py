@@ -898,17 +898,6 @@ def view_form(request, domain, app_id, form_unique_id):
     )
 
 
-@require_can_edit_apps
-def form_casexml(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    return HttpResponse(form.create_casexml())
-
-
 def _get_case_references(data):
     if "references" in data:
         # old/deprecated format

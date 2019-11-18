@@ -75,7 +75,7 @@ class TestLatestAppInfo(TestCase):
             app_config.apk_prompt = config
             app_config.save()
             latest_info = LatestAppInfo(self.app.master_id, self.domain)
-            self.assertEquals(
+            self.assertEqual(
                 latest_info.get_latest_apk_version(),
                 response
             )
@@ -95,7 +95,7 @@ class TestLatestAppInfo(TestCase):
             app_config.apk_prompt = config
             app_config.save()
             latest_info = LatestAppInfo(self.app.master_id, self.domain)
-            self.assertEquals(
+            self.assertEqual(
                 latest_info.get_latest_apk_version(),
                 response
             )
@@ -111,7 +111,7 @@ class TestLatestAppInfo(TestCase):
             app_config.app_prompt = config
             app_config.save()
             latest_info = LatestAppInfo(self.app.master_id, self.domain)
-            self.assertEquals(
+            self.assertEqual(
                 latest_info.get_latest_app_version(),
                 response
             )
@@ -131,7 +131,7 @@ class TestLatestAppInfo(TestCase):
             app_config.app_prompt = config
             app_config.save()
             latest_info = LatestAppInfo(self.app.master_id, self.domain)
-            self.assertEquals(
+            self.assertEqual(
                 latest_info.get_latest_app_version(),
                 response
             )

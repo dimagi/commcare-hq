@@ -9,7 +9,7 @@
 
 <script type="text/html" id="case-filters">
   {% if form.errors %}
-    <div class="alert alert-block alert-danger">
+    <div class="alert alert-danger">
       <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
       {% for field, errors in form.errors.items %}
         {% for error in errors %}

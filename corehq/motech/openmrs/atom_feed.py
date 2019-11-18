@@ -1,35 +1,44 @@
 import re
 import uuid
 from datetime import datetime
+from typing import Optional, Union
+
+from django.utils.translation import ugettext as _
 
 import pytz
 from dateutil import parser as dateutil_parser
 from dateutil.tz import tzutc
 from lxml import etree
+from requests import RequestException
 from urllib3.exceptions import HTTPError
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.const import DIRECTION_IMPORT
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
     ATOM_FEED_NAMES,
     OPENMRS_ATOM_FEED_DEVICE_ID,
     XMLNS_OPENMRS,
 )
-from corehq.motech.openmrs.exceptions import OpenmrsFeedDoesNotExist
+from corehq.motech.openmrs.exceptions import (
+    DuplicateCaseMatch,
+    OpenmrsException,
+    OpenmrsFeedDoesNotExist,
+)
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.openmrs.repeaters import AtomFeedStatus
-from corehq.util.soft_assert import soft_assert
-from requests import RequestException
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 
-_assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
+CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
 
 def get_feed_xml(requests, feed_name, page):
@@ -41,12 +50,23 @@ def get_feed_xml(requests, feed_name, page):
     assert feed_name in ATOM_FEED_NAMES
     feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
     resp = requests.get(feed_url)
-    if resp.status_code == 500 and 'AtomFeedRuntimeException: feed does not exist' in resp.content:
-        # This can happen if a Repeater IP address is changed to point
-        # to a different server, or if a server has been rebuilt.
-        _assert(False, 'Domain "{}": Page does not exist in Atom feed "{}". '
-                       'Resetting Atom feed status.'.format(requests.domain_name, resp.url))
-        raise OpenmrsFeedDoesNotExist()
+    if (
+        resp.status_code == 500
+        and 'AtomFeedRuntimeException: feed does not exist' in resp.text
+    ):
+        exception = OpenmrsFeedDoesNotExist(
+            f'Domain "{requests.domain_name}": Page does not exist in atom '
+            f'feed "{resp.url}". Resetting atom feed status.'
+        )
+        requests.notify_exception(
+            str(exception),
+            _("This can happen if the IP address of a Repeater is changed to "
+              "point to a different server, or if a server has been rebuilt. "
+              "It can signal more severe consequences, like attempts to "
+              "synchronize CommCare cases with OpenMRS patients that can no "
+              "longer be found.")
+        )
+        raise exception
     root = etree.fromstring(resp.content)
     return root
 
@@ -64,9 +84,9 @@ def get_timestamp(element, xpath='./atom:updated'):
     """
     timestamp_elems = element.xpath(xpath, namespaces={'atom': 'http://www.w3.org/2005/Atom'})
     if not timestamp_elems:
-        raise ValueError('XPath "{}" not found'.format(xpath))
+        raise ValueError(f'XPath "{xpath}" not found')
     if len(timestamp_elems) != 1:
-        raise ValueError('XPath "{}" matched multiple nodes'.format(xpath))
+        raise ValueError(f'XPath "{xpath}" matched multiple nodes')
     tzinfos = {'UTC': tzutc()}
     return dateutil_parser.parse(timestamp_elems[0].text, tzinfos=tzinfos)
 
@@ -80,8 +100,8 @@ def get_patient_uuid(element):
     ...         <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
     ...     </content>
     ... </entry>''')
-    >>> get_patient_uuid(element) == 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4'
-    True
+    >>> get_patient_uuid(element)
+    'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4'
 
     """
     # "./*[local-name()='content']" ignores namespaces and matches all
@@ -99,15 +119,16 @@ def get_patient_uuid(element):
 
 def get_encounter_uuid(element):
     """
-    Extracts the UUID of a patient from an entry's "content" node.
+    Extracts the UUID of an encounter from an entry's "content" node.
 
     >>> element = etree.XML('''<entry>
-    ...     <content type="application/vnd.atomfeed+xml">
-    ...         <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
-    ...     </content>
+    ...   <title>Encounter</title>
+    ...   <content type="application/vnd.atomfeed+xml">
+    ...     <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
+    ...   </content>
     ... </entry>''')
-    >>> get_encounter_uuid(element) == '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
-    True
+    >>> get_encounter_uuid(element)
+    '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
 
     """
     content = element.xpath("./*[local-name()='content']")
@@ -117,7 +138,11 @@ def get_encounter_uuid(element):
         matches = pattern.search(cdata)
         if matches:
             return matches.group(1)
-    raise ValueError('Encounter UUID not found')
+        # Not everything in the Encounter atom feed is an Encounter. It
+        # also includes bed assignments.
+        if 'bedPatientAssignment' in cdata:
+            return None
+    raise ValueError('Unrecognised Encounter atom feed entry')
 
 
 def get_feed_updates(repeater, feed_name):
@@ -146,7 +171,9 @@ def get_feed_updates(repeater, feed_name):
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
-                        yield get_uuid(entry)
+                        entry_uuid = get_uuid(entry)
+                        if entry_uuid:
+                            yield entry_uuid
             next_page = feed_xml.xpath(
                 './atom:link[@rel="next-archive"]',
                 namespaces={'atom': 'http://www.w3.org/2005/Atom'}
@@ -177,57 +204,68 @@ def get_feed_updates(repeater, feed_name):
         repeater.save()
 
 
-def get_addpatient_caseblock(case_type, owner, patient, repeater):
-    property_map = get_property_map(repeater.openmrs_config.case_config)
+def get_addpatient_caseblock(
+    case_type: str,
+    default_owner: Optional[CommCareUser],
+    patient: dict,
+    repeater: OpenmrsRepeater,
+) -> CaseBlock:
 
-    fields_to_update = {}
-    for prop, (jsonpath, value_source) in property_map.items():
-        if not value_source.check_direction(DIRECTION_IMPORT):
-            continue
-        matches = jsonpath.find(patient)
-        if matches:
-            patient_value = matches[0].value
-            new_value = value_source.deserialize(patient_value)
-            fields_to_update[prop] = new_value
-
-    if fields_to_update:
-        case_id = uuid.uuid4().hex
-        case_name = patient['person']['display']
-        return CaseBlock(
-            create=True,
-            case_id=case_id,
-            owner_id=owner.user_id,
-            user_id=owner.user_id,
-            case_type=case_type,
-            case_name=case_name,
-            external_id=patient['uuid'],
-            update=fields_to_update,
-        )
+    case_block_kwargs = get_case_block_kwargs(patient, repeater)
+    if default_owner:
+        case_block_kwargs.setdefault("owner_id", default_owner.user_id)
+    if not case_block_kwargs.get("owner_id"):
+        raise ConfigurationError(_(
+            f'No users found at location "{repeater.location_id}" to own '
+            'patients added from OpenMRS Atom feed.'
+        ))
+    case_id = uuid.uuid4().hex
+    return CaseBlock(
+        create=True,
+        case_id=case_id,
+        case_type=case_type,
+        external_id=patient['uuid'],
+        **case_block_kwargs
+    )
 
 
 def get_updatepatient_caseblock(case, patient, repeater):
-    property_map = get_property_map(repeater.openmrs_config.case_config)
+    case_block_kwargs = get_case_block_kwargs(patient, repeater, case)
+    return CaseBlock(
+        create=False,
+        case_id=case.case_id,
+        **case_block_kwargs
+    )
 
-    fields_to_update = {}
+
+def get_case_block_kwargs(patient, repeater, case=None):
+    property_map = get_property_map(repeater.openmrs_config.case_config)
+    case_block_kwargs = {
+        "case_name": patient['person']['display'],
+        "update": {}
+    }
     for prop, (jsonpath, value_source) in property_map.items():
         if not value_source.check_direction(DIRECTION_IMPORT):
             continue
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
-            case_value = case.get_case_property(prop)
             new_value = value_source.deserialize(patient_value)
-            if case_value != new_value:
-                fields_to_update[prop] = new_value
-
-    if fields_to_update:
-        case_name = patient['person']['display']
-        return CaseBlock(
-            create=False,
-            case_id=case.get_id,
-            case_name=case_name,
-            update=fields_to_update,
-        )
+            if case:
+                if prop in CASE_BLOCK_ARGS:
+                    case_value = case.name if prop == "case_name" else getattr(case, prop)
+                    if case_value != new_value:
+                        case_block_kwargs[prop] = new_value
+                else:
+                    case_value = case.get_case_property(prop)
+                    if case_value != new_value:
+                        case_block_kwargs["update"][prop] = new_value
+            else:
+                if prop in CASE_BLOCK_ARGS:
+                    case_block_kwargs[prop] = new_value
+                else:
+                    case_block_kwargs["update"][prop] = new_value
+    return case_block_kwargs
 
 
 def update_patient(repeater, patient_uuid):
@@ -238,15 +276,20 @@ def update_patient(repeater, patient_uuid):
     .. NOTE:: OpenMRS UUID must be saved to "external_id" case property
 
     """
-    _assert(
-        len(repeater.white_listed_case_types) == 1,
-        'Unable to update patients from OpenMRS unless a single case type is '
-        'specified. domain: "{}". repeater: "{}".'.format(
-            repeater.domain, repeater.get_id
-        )
-    )
+    if len(repeater.white_listed_case_types) != 1:
+        raise ConfigurationError(_(
+            f'{repeater.domain}: {repeater}: Error in settings: Unable to update '
+            f'patients from OpenMRS unless only one case type is specified.'
+        ))
     case_type = repeater.white_listed_case_types[0]
-    patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    try:
+        patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    except (RequestException, ValueError) as err:
+        raise OpenmrsException(_(
+            f'{repeater.domain}: {repeater}: Error fetching Patient '
+            f'{patient_uuid!r}: {err}'
+        )) from err
+
     case, error = importer_util.lookup_case(
         EXTERNAL_ID,
         patient_uuid,
@@ -254,32 +297,22 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
-        owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
-        _assert(
-            owner,
-            'No users found at location "{}" to own patients added from '
-            'OpenMRS atom feed. domain: "{}". repeater: "{}".'.format(
-                repeater.location_id, repeater.domain, repeater.get_id
-            )
-        )
-        case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
-
+        default_owner: Optional[CommCareUser] = repeater.first_user
+        case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
+    elif error == LookupErrors.MultipleResults:
+        # Multiple cases have been matched to the same patient.
+        # Could be caused by:
+        # * The cases were given the same identifier value. It could
+        #   be user error, or case config assumed identifier was
+        #   unique but it wasn't.
+        # * PatientFinder matched badly.
+        # * Race condition where a patient was previously added to
+        #   both CommCare and OpenMRS.
+        raise DuplicateCaseMatch(_(
+            f'{repeater.domain}: {repeater}: More than one case found '
+            f'matching unique OpenMRS UUID. case external_id: "{patient_uuid}"'
+        ))
     else:
-        _assert(
-            error != LookupErrors.MultipleResults,
-            # Multiple cases matched to the same patient.
-            # Could be caused by:
-            # * The cases were given the same identifier value. It could
-            #   be user error, or case config assumed identifier was
-            #   unique but it wasn't.
-            # * PatientFinder matched badly.
-            # * Race condition where a patient was previously added to
-            #   both CommCare and OpenMRS.
-            'More than one case found matching unique OpenMRS UUID. '
-            'domain: "{}". case external_id: "{}". repeater: "{}".'.format(
-                repeater.domain, patient_uuid, repeater.get_id
-            )
-        )
         case_block = get_updatepatient_caseblock(case, patient, repeater)
 
     if case_block:
@@ -292,72 +325,265 @@ def update_patient(repeater, patient_uuid):
 
 
 def import_encounter(repeater, encounter_uuid):
-    # It's possible that an OpenMRS concept appears more than once in
-    # form_configs. Use a defaultdict(list) so that earlier definitions
-    # don't get overwritten by later ones:
+    try:
+        encounter = get_encounter(repeater, encounter_uuid)
+    except (RequestException, ValueError) as err:
+        raise OpenmrsException(_(
+            f'{repeater.domain}: {repeater}: Error fetching Encounter '
+            f'"{encounter_uuid}": {err}'
+        )) from err
 
-    def fields_from_observations(observations, mappings):
-        """
-        Traverse a tree of observations, and return the ones mapped to
-        case properties.
-        """
-        fields = {}
-        for obs in observations:
-            if obs['concept']['uuid'] in mappings:
-                for mapping in mappings[obs['concept']['uuid']]:
-                    fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
-            if obs['groupMembers']:
-                fields.update(fields_from_observations(obs['groupMembers'], mappings))
-        return fields
+    case_block_kwargs = {"update": {}, "index": {}}
+    case_blocks = []
 
+    # NOTE: Atom Feed integration requires Patient UUID to be external_id
+    case = get_case(repeater, encounter['patientUuid'])
+    if case:
+        case_id = case.case_id
+        default_owner_id = case.owner_id
+    else:
+        case_block = create_case(repeater, encounter['patientUuid'])
+        case_blocks.append(case_block)
+        case_id = case_block.case_id
+        default_owner_id = case_block.owner_id
+
+    case_type = repeater.white_listed_case_types[0]
+    more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
+        encounter['observations'],
+        repeater.observation_mappings,
+        case_id,
+        case_type,
+        default_owner_id,
+    )
+    deep_update(case_block_kwargs, more_kwargs)
+    case_blocks.extend(more_case_blocks)
+
+    if 'bahmniDiagnoses' in encounter:
+        more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
+            encounter['bahmniDiagnoses'],
+            repeater.observation_mappings,
+            case_id,
+            case_type,
+            default_owner_id,
+        )
+        deep_update(case_block_kwargs, more_kwargs)
+        case_blocks.extend(more_case_blocks)
+
+    if has_case_updates(case_block_kwargs) or case_blocks:
+        update_case(repeater, case_id, case_block_kwargs, case_blocks)
+
+
+def get_encounter(repeater, encounter_uuid):
+    """
+    Fetches an Encounter by its UUID
+
+    :raises RequestException: If response status is not in the 200s
+    :raises ValueError: If the response body does not contain valid JSON.
+    :return: Encounter dict
+    """
     response = repeater.requests.get(
         '/ws/rest/v1/bahmnicore/bahmniencounter/' + encounter_uuid,
         {'includeAll': 'true'},
         raise_for_status=True
     )
-    encounter = response.json()
+    return response.json()
 
-    case_property_updates = fields_from_observations(encounter['observations'], repeater.observation_mappings)
 
-    if case_property_updates:
-        case_blocks = []
-        patient_uuid = encounter['patientUuid']
-        case_type = repeater.white_listed_case_types[0]
-        case, error = importer_util.lookup_case(
-            EXTERNAL_ID,
-            patient_uuid,
-            repeater.domain,
-            case_type=case_type,
-        )
-        if case:
-            case_id = case.get_id
+def get_case(
+    repeater: OpenmrsRepeater,
+    patient_uuid: str,
+) -> Union[CommCareCase, CommCareCaseSQL, None]:
 
-        elif error == LookupErrors.NotFound:
-            # The encounter is for a patient that has not yet been imported
-            patient = get_patient_by_uuid(repeater.requests, patient_uuid)
-            owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
-            case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
-            case_blocks.append(case_block)
-            case_id = case_block.case_id
-
-        else:
-            _assert(
-                error != LookupErrors.MultipleResults,
-                'More than one case found matching unique OpenMRS UUID. '
-                'domain: "{}". case external_id: "{}". repeater: "{}".'.format(
-                    repeater.domain, patient_uuid, repeater.get_id
-                )
-            )
-            return
-
-        case_blocks.append(CaseBlock(
-            case_id=case_id,
-            create=False,
-            update=case_property_updates,
+    case_type = repeater.white_listed_case_types[0]
+    case, error = importer_util.lookup_case(
+        EXTERNAL_ID,
+        patient_uuid,
+        repeater.domain,
+        case_type=case_type,
+    )
+    if error == LookupErrors.MultipleResults:
+        raise DuplicateCaseMatch(_(
+            f'{repeater.domain}: {repeater}: More than one case found '
+            'matching unique OpenMRS UUID. case external_id: '
+            f'"{patient_uuid}". '
         ))
-        submit_case_blocks(
-            [cb.as_text() for cb in case_blocks],
-            repeater.domain,
-            xmlns=XMLNS_OPENMRS,
-            device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
-        )
+    return case
+
+
+def create_case(
+    repeater: OpenmrsRepeater,
+    patient_uuid: str,
+) -> CaseBlock:
+
+    case_type = repeater.white_listed_case_types[0]
+    patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+    default_owner: Optional[CommCareUser] = repeater.first_user
+    case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
+    return case_block
+
+
+def update_case(repeater, case_id, case_block_kwargs, case_blocks):
+    case_blocks.append(CaseBlock(
+        case_id=case_id,
+        create=False,
+        **case_block_kwargs,
+    ))
+    submit_case_blocks(
+        [cb.as_text() for cb in case_blocks],
+        repeater.domain,
+        xmlns=XMLNS_OPENMRS,
+        device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
+    )
+
+
+def get_case_block_kwargs_from_observations(
+    observations, mappings, case_id, case_type, default_owner_id
+):
+    """
+    Traverse a tree of observations, and return the ones mapped to case
+    properties.
+    """
+    case_blocks = []
+    case_block_kwargs = {"update": {}}
+    for obs in observations:
+        concept_uuid = obs.get('concept', {}).get('uuid')
+        if concept_uuid and concept_uuid in mappings:
+            for mapping in mappings[concept_uuid]:
+                if mapping.case_property:
+                    more_kwargs = get_case_block_kwargs_for_case_property(
+                        mapping, obs.get('value')
+                    )
+                    deep_update(case_block_kwargs, more_kwargs)
+                if mapping.indexed_case_mapping:
+                    case_block = get_case_block_for_indexed_case(
+                        mapping, obs, case_id, case_type, default_owner_id
+                    )
+                    case_blocks.append(case_block)
+        if obs.get('groupMembers'):
+            more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
+                obs['groupMembers'],
+                mappings,
+                case_id,
+                case_type,
+                default_owner_id,
+            )
+            deep_update(case_block_kwargs, more_kwargs)
+            case_blocks.extend(more_case_blocks)
+    return case_block_kwargs, case_blocks
+
+
+def get_case_block_kwargs_from_bahmni_diagnoses(
+    diagnoses, mappings, case_id, case_type, default_owner_id
+):
+    """
+    Iterate a list of Bahmni diagnoses, and return the ones mapped to
+    case properties.
+    """
+    case_blocks = []
+    case_block_kwargs = {"update": {}}
+    for diag in diagnoses:
+        codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
+        if codedanswer_uuid and codedanswer_uuid in mappings:
+            for mapping in mappings[codedanswer_uuid]:
+                if mapping.case_property:
+                    more_kwargs = get_case_block_kwargs_for_case_property(
+                        mapping, diag['codedAnswer'].get('name')
+                    )
+                    deep_update(case_block_kwargs, more_kwargs)
+                if mapping.indexed_case_mapping:
+                    case_block = get_case_block_for_indexed_case(
+                        mapping, diag, case_id, case_type, default_owner_id
+                    )
+                    case_blocks.append(case_block)
+    return case_block_kwargs, case_blocks
+
+
+def get_case_block_kwargs_for_case_property(mapping, external_value):
+    case_block_kwargs = {"update": {}}
+    value = mapping.value.deserialize(external_value)
+    if mapping.case_property in CASE_BLOCK_ARGS:
+        case_block_kwargs[mapping.case_property] = value
+    else:
+        case_block_kwargs["update"][mapping.case_property] = value
+    return case_block_kwargs
+
+
+def get_case_block_for_indexed_case(
+    mapping, external_data, parent_case_id, parent_case_type, default_owner_id
+):
+    relationship = mapping.indexed_case_mapping.relationship
+    case_block_kwargs = {
+        "index": {
+            mapping.indexed_case_mapping.identifier: IndexAttrs(
+                parent_case_type,
+                parent_case_id,
+                relationship,
+            )
+        },
+        "update": {}
+    }
+    for value_source in mapping.indexed_case_mapping.case_properties:
+        value = value_source.get_import_value(external_data)
+        if value_source.case_property in CASE_BLOCK_ARGS:
+            case_block_kwargs[value_source.case_property] = value
+        else:
+            case_block_kwargs["update"][value_source.case_property] = value
+
+    case_id = uuid.uuid4().hex
+    case_type = mapping.indexed_case_mapping.case_type
+    case_block_kwargs.setdefault("owner_id", default_owner_id)
+    if not case_block_kwargs["owner_id"]:
+        raise ConfigurationError(_(
+            f'Unable to determine mobile worker to own new "{case_type}" '
+            f'{relationship} case or parent case "{parent_case_id}"'
+        ))
+    case_block = CaseBlock(
+        create=True,
+        case_id=case_id,
+        case_type=case_type,
+        **case_block_kwargs
+    )
+    return case_block
+
+
+def has_case_updates(case_block_kwargs):
+    """
+    Returns True if case_block_kwargs contains case changes.
+
+    >>> has_case_updates({"owner_id": "123456", "update": {}})
+    True
+    >>> has_case_updates({"update": {}})
+    False
+
+    """
+    if case_block_kwargs.get("update"):
+        return True
+    if case_block_kwargs.get("index"):
+        return True
+    return any(k for k in case_block_kwargs if k not in ("update", "index"))
+
+
+def deep_update(dict_by_ref: dict, other: dict):
+    """
+    Recursively update ``dict_by_ref`` with values from ``other``.
+
+    >>> nested = {"inner": {"ham": "spam"}}
+    >>> deep_update(nested, {"inner": {"eggs": "spam"}})
+    >>> nested == {"inner": {"ham": "spam", "eggs": "spam"}}
+    True
+
+    >>> nested = {"inner": {"ham": "spam"}}
+    >>> deep_update(nested, {"inner": "SPAM"})
+    >>> nested
+    {'inner': 'SPAM'}
+
+    """
+    for key, value in other.items():
+        if (
+            key in dict_by_ref
+            and isinstance(dict_by_ref[key], dict)
+            and isinstance(value, dict)
+        ):
+            deep_update(dict_by_ref[key], value)
+        else:
+            dict_by_ref[key] = value

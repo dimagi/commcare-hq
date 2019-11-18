@@ -1,11 +1,12 @@
 from couchdbkit.ext.django import syncdb
+from django.db import DEFAULT_DB_ALIAS
 from django.db.models import signals
 from corehq.preindex import get_preindex_plugin
 
 
 def catch_signal(sender, using=None, **kwargs):
     """Function used by syncdb signal"""
-    if using != 'default':
+    if using != DEFAULT_DB_ALIAS:
         # only sync for the default DB
         return
 

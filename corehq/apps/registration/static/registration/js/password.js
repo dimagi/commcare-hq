@@ -1,4 +1,16 @@
-(function () {
+hqDefine('registration/js/password', [
+    'jquery',
+    'knockout',
+    'zxcvbn/dist/zxcvbn',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    zxcvbn,
+    initialPageData
+) {
+    'use strict';
+
     var passwordModel = function () {
         var self = {};
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
@@ -36,7 +48,7 @@
     };
 
     var $checkPassword = $('.check-password');
-    if ($checkPassword.length) {
+    if ($checkPassword.length && !initialPageData.get('hide_password_feedback')) {
         $checkPassword.koApplyBindings(passwordModel());
     }
-})();
+});

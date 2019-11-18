@@ -16,9 +16,8 @@ hqDefine('userreports/js/expression_debugger', function () {
             documentId: initial_page_data('document_id'),
             dataSourceId: initial_page_data('data_source_id'),
         };
-        ko.applyBindings(
+        $('#expression-debugger').koApplyBindings(
             expressionModel(expressionEditor, submitUrl, initialData),
-            document.getElementById('expression-debugger')
         );
     });
 });

@@ -190,9 +190,8 @@ class StockExportColumnTest(SimpleTestCase):
         with patch(
                 'corehq.apps.export.models.new.get_ledger_section_entry_combinations',
                 return_value=[
-                    MockLedgerValue(section_id='abc', entry_id='def'),
-                    MockLedgerValue(section_id='abc', entry_id='def'),
                     MockLedgerValue(section_id='123', entry_id='456'),
+                    MockLedgerValue(section_id='abc', entry_id='def'),
                 ]):
 
             headers = list(column.get_headers())

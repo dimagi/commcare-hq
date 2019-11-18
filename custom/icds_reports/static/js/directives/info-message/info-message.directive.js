@@ -23,7 +23,7 @@ function InfoMessageController($location) {
 
         var displayInfoMessage = selectedMonth === currentMonth && selectedYear === currentYear && (currentDate >= start && currentDate <= end);
 
-        if (displayInfoMessage) {
+        if (displayInfoMessage && !$location.path().startsWith("/download")) {
             vm.previousMonth = moment().startOf('month').subtract(1, 'months').format('MMMM');
             vm.previousToPreviousMonth = moment().startOf('month').subtract(2, 'months').format('MMMM');
             vm.currentMonth = moment().format("MMMM");

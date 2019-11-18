@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import datetime
 
 from django.utils.functional import cached_property
@@ -17,8 +15,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_perte_par_produit_report'
-    comment = 'Taux de Perte (hors péremption)'
     name = 'Taux de Perte par Produit'
+    comment = 'Nombre Total de produits PNA perdus (*exclu produits expirés) / Stock Final PNA'
     default_rows = 10
     exportable = True
 
@@ -117,8 +115,8 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
         return context
 
-    def calculate_rows(self):
-        rows = LossRatePerProductData2(config=self.config).rows
+    def calculate_rows(self, for_chart=False):
+        rows = LossRatePerProductData2(config=self.config).rows(for_chart=for_chart)
         return rows
 
     @property
@@ -132,19 +130,16 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
         def get_data_for_graph():
             com = []
-            rows = self.calculate_rows()
-            for row in rows:
-                #-1 removes % symbol for cast to float
-                y = row[-1]['html'][:-1]
-                try:
-                    y = float(y)
-                except ValueError:
-                    y = 0
-                com.append({"x": row[0]['html'], "y": y})
+            sorted_products, rows = self.calculate_rows(for_chart=True)
+            for product in sorted_products:
+                y = float(rows[product]['percent'][:-1])
+                com.append({"x": product, "y": y})
 
             return [
                 {
-                    "key": "'Méthode de calcul: nbre de PPS avec le produit disponsible sur le nbre total de PPS visités de la période'",
+                    'key':
+                        'Méthode de calcul: Nombre total de produits PNA perdus '
+                        '(non compris les produits périmés) sur PNA stock final',
                     'values': com
                 },
             ]

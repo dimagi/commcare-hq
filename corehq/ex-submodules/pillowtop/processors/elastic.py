@@ -1,18 +1,39 @@
 import math
 import time
+import traceback
 
-from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
+from django.conf import settings
 
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-from pillowtop.exceptions import PillowtopIndexingError
+from corehq.util.es.elasticsearch import (
+    ConflictError,
+    ConnectionError,
+    NotFoundError,
+    RequestError,
+)
+from corehq.util.es.interface import ElasticsearchInterface
+
+from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
-from .interface import PillowProcessor
+from pillowtop.utils import (
+    ErrorCollector,
+    build_bulk_payload,
+    bulk_fetch_changes_docs,
+    ensure_document_exists,
+    ensure_matched_revisions,
+    get_errors_with_ids,
+)
 
 from corehq.util.datadog.gauges import datadog_bucket_timer
+
+from .interface import BulkPillowProcessor, PillowProcessor
 
 
 def identity(x):
     return x
+
+
+def noop_filter(x):
+    return False
 
 
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
@@ -22,8 +43,9 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 class ElasticProcessor(PillowProcessor):
 
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
-        self.doc_filter_fn = doc_filter_fn
+        self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
+        self.es_interface = ElasticsearchInterface(self.elasticsearch)
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
 
@@ -78,8 +100,40 @@ class ElasticProcessor(PillowProcessor):
         ], timing_buckets=(.03, .1, .3, 1, 3, 10))
 
 
-def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
-                          except_on_failure=False, update=False, delete=False, es_merge_update=False):
+class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
+    def process_changes_chunk(self, changes_chunk):
+        bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
+
+        changes_to_process = {
+            change.id: change
+            for change in changes_chunk
+            if change.document and not self.doc_filter_fn(change.document)
+        }
+        retry_changes = list(bad_changes)
+
+        error_collector = ErrorCollector()
+        es_actions = build_bulk_payload(
+            self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+        )
+        error_changes = error_collector.errors
+
+        try:
+            _, errors = self.es_interface.bulk_ops(
+                es_actions, raise_on_error=False, raise_on_exception=False)
+        except Exception as e:
+            pillow_logging.exception("[%s] ES bulk load error")
+            error_changes.extend([
+                (change, e) for change in changes_to_process.values()
+            ])
+        else:
+            for change_id, error_msg in get_errors_with_ids(errors):
+                error_changes.append((changes_to_process[change_id], BulkDocExeption(error_msg)))
+        return retry_changes, error_changes
+
+
+def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
+                          retries=MAX_RETRIES, propagate_failure=settings.UNIT_TESTING,
+                          update=False, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -89,40 +143,41 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
     """
     data = data if data is not None else {}
     current_tries = 0
+    es_interface = ElasticsearchInterface(es_getter())
     while current_tries < retries:
         try:
             if delete:
-                es_getter().delete(index, doc_type, doc_id)
+                es_interface.delete_doc(index, doc_type, doc_id)
             elif update:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
+                    es_interface.update_doc_fields(index, doc_type, doc_id, fields=data, params=params)
                 else:
-                    es_getter().index(index, doc_type, body=data, id=doc_id, params=params)
+                    es_interface.update_doc(index, doc_type, doc_id, doc=data, params=params)
             else:
-                es_getter().create(index, doc_type, body=data, id=doc_id)
+                es_interface.create_doc(index, doc_type, doc_id, doc=data)
             break
         except ConnectionError as ex:
             current_tries += 1
-            pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
+            pillow_logging.error("[{}] put_robust error {} attempt {}/{}".format(
                 name, ex, current_tries, retries))
 
             if current_tries == retries:
-                message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
-                if except_on_failure:
+                message = "[{}] Max retry error on {}/{}/{}:\n\n{}".format(
+                    name, index, doc_type, doc_id, traceback.format_exc())
+                if propagate_failure:
                     raise PillowtopIndexingError(message)
                 else:
                     pillow_logging.error(message)
 
             time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-        except RequestError as ex:
-            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
-                name,
-                ex.error or "No error message",
-                index, doc_type, doc_id,
-                list(data))
+        except RequestError:
+            error_message = (
+                "Pillowtop put_robust error [{}]:\n\n{}\n\tpath: {}/{}/{}\n\t{}".format(
+                    name, traceback.format_exc(), index, doc_type, doc_id, list(data))
+            )
 
-            if except_on_failure:
+            if propagate_failure:
                 raise PillowtopIndexingError(error_message)
             else:
                 pillow_logging.error(error_message)

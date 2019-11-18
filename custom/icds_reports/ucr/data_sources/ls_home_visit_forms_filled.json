@@ -1,6 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -20,16 +24,6 @@
   "server_environment": [
     "india",
     "icds"
-  ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
-    }
   ],
   "config": {
     "table_id": "static-ls_home_visit_forms_filled",

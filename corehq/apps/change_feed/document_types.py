@@ -11,7 +11,7 @@ WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')
 MOBILE_USER_DOC_TYPES = ('CommCareUser', 'CommCareUser-Deleted')
 DOMAIN_DOC_TYPES = ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE')
 CASE_DOC_TYPES = ('CommCareCase', 'CommCareCase-Deleted')
-SYNCLOG_DOC_TYPES = ('SyncLog', 'SimplifiedSyncLog')
+SYNCLOG_DOC_TYPES = ('SimplifiedSyncLog',)
 
 
 DocumentMetadata = namedtuple(

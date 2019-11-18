@@ -1,11 +1,15 @@
 import logging
 
+from django.conf import settings
+
 import requests
+
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
-
-logger = logging.getLogger('motech')
 
 
 def log_request(func):
@@ -48,12 +52,26 @@ class Requests(object):
     To maintain a session of authenticated non-API requests, use
     Requests as a context manager.
     """
-    def __init__(self, domain_name, base_url, username, password, verify=True):
+
+    def __init__(self, domain_name, base_url, username, password,
+                 verify=True, notify_addresses=None):
+        """
+        Initialise instance
+
+        :param domain_name: Domain to store logs under
+        :param base_url: Remote API base URL
+        :param username: Remote API username
+        :param password: Remote API plaintext password
+        :param verify: Verify SSL certificate?
+        :param notify_addresses: A list of email addresses to notify of
+            errors.
+        """
         self.domain_name = domain_name
         self.base_url = base_url
         self.username = username
         self.password = password
         self.verify = verify
+        self.notify_addresses = [] if notify_addresses is None else notify_addresses
         self._session = None
 
     def __enter__(self):
@@ -70,21 +88,14 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        try:
-            if self._session:
-                response = self._session.request(method, *args, **kwargs)
-            else:
-                # Mimics the behaviour of requests.api.request()
-                with requests.Session() as session:
-                    response = session.request(method, *args, **kwargs)
-            if raise_for_status:
-                response.raise_for_status()
-        except requests.RequestException:
-            # commented out since these are spamming Sentry
-            # err_request, err_response = parse_request_exception(err)
-            # logger.error('Request: %s', err_request)
-            # logger.error('Response: %s', err_response)
-            raise
+        if self._session:
+            response = self._session.request(method, *args, **kwargs)
+        else:
+            # Mimics the behaviour of requests.api.request()
+            with requests.Session() as session:
+                response = session.request(method, *args, **kwargs)
+        if raise_for_status:
+            response.raise_for_status()
         return response
 
     def get_url(self, uri):
@@ -109,6 +120,28 @@ class Requests(object):
         return self.send_request('POST', self.get_url(uri), *args,
                                  data=data, json=json,
                                  auth=(self.username, self.password), **kwargs)
+
+    def notify_exception(self, message=None, details=None):
+        self.notify_error(message, details)
+        notify_exception(None, message, details)
+
+    def notify_error(self, message, details=None):
+        if not self.notify_addresses:
+            return
+        message_body = '\r\n'.join((
+            message,
+            f'Project space: {self.domain_name}',
+            f'Remote API base URL: {self.base_url}',
+            f'Remote API username: {self.username}',
+        ))
+        if details:
+            message_body += f'\r\n\r\n{details}'
+        send_mail_async.delay(
+            'MOTECH Error',
+            message_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=self.notify_addresses,
+        )
 
 
 def parse_request_exception(err):

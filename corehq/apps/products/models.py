@@ -142,6 +142,13 @@ class Product(Document):
         self.code_ = val.lower() if val else None
 
     @classmethod
+    def clear_caches(cls, domain):
+        from casexml.apps.phone.utils import clear_fixture_cache
+        from corehq.apps.products.fixtures import ALL_CACHE_PREFIXES
+        for prefix in ALL_CACHE_PREFIXES:
+            clear_fixture_cache(domain, prefix)
+
+    @classmethod
     def by_domain(cls, domain, wrap=True, include_archived=False):
         queryset = SQLProduct.objects.filter(domain=domain)
         if not include_archived:

@@ -3,22 +3,22 @@ import json
 from django.utils.translation import ugettext_lazy as _
 
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
-from corehq.motech.dhis2.handler import send_data_to_dhis2
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.dhis2.events_helpers import send_dhis2_event
+from corehq.motech.repeaters.models import FormRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
 from corehq.toggles import DHIS2_INTEGRATION
-from corehq.util import reverse
 
 
 class Dhis2Repeater(FormRepeater):
@@ -30,6 +30,11 @@ class Dhis2Repeater(FormRepeater):
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
     dhis2_config = SchemaProperty(Dhis2Config)
+
+    _has_config = True
+
+    def __str__(self):
+        return Repeater.__str__(self)
 
     def __eq__(self, other):
         return (
@@ -55,10 +60,6 @@ class Dhis2Repeater(FormRepeater):
     def available_for_domain(cls, domain):
         return DHIS2_INTEGRATION.enabled(domain)
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        return reverse(AddDhis2RepeaterView.urlname, args=[domain])
-
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
         return json.loads(payload)
@@ -71,20 +72,25 @@ class Dhis2Repeater(FormRepeater):
         If ``payload`` is a form that isn't configured to be forwarded,
         returns True.
         """
+        requests = Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
+        )
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
-                requests = Requests(
-                    self.domain,
-                    self.url,
-                    self.username,
-                    self.plaintext_password,
-                    verify=self.verify,
-                )
-                return send_data_to_dhis2(
-                    requests,
-                    form_config,
-                    payload,
-                )
+                try:
+                    return send_dhis2_event(
+                        requests,
+                        form_config,
+                        payload,
+                    )
+                except (RequestException, HTTPError) as err:
+                    requests.notify_error(f"Error sending Events to {self}: {err}")
+                    raise
         return True
 
 

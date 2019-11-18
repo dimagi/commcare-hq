@@ -1,6 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -123,9 +127,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' AND resident = 1", 1]
+        ]
       },
       {
         "display": "M_resident_count",
@@ -133,9 +137,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1", 1]
+        ]
       },
       {
         "display": "F_migrant_count",
@@ -143,9 +147,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident != 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex = 'F' AND resident != 1", 1]
+        ]
       },
       {
         "display": "M_migrant_count",
@@ -153,9 +157,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1": 1
-        }
+        "whens": [
+          ["closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1", 1]
+        ]
       }
     ],
     "sort_expression": [],

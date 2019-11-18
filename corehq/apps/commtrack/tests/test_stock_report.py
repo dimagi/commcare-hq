@@ -106,10 +106,10 @@ class StockReportDomainTest(TestCase):
     def test_stock_report(self):
         self.create_report()
         filtered_stock_report = StockReport.objects.filter(domain=self.domain)
-        self.assertEquals(filtered_stock_report.count(), 1)
+        self.assertEqual(filtered_stock_report.count(), 1)
         stock_report = filtered_stock_report.get()
-        self.assertEquals(stock_report.form_id, self.form._id)
-        self.assertEquals(stock_report.domain, self.domain)
+        self.assertEqual(stock_report.form_id, self.form._id)
+        self.assertEqual(stock_report.domain, self.domain)
 
     @run_with_all_backends
     def test_get_case_ledger_state(self):

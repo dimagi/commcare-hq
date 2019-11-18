@@ -1,6 +1,5 @@
 from django.test import TestCase
 import os
-from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
 from casexml.apps.phone.utils import get_restore_config
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
@@ -14,7 +13,6 @@ from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 from corehq.apps.users.util import normalize_username
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -232,7 +230,9 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user, items=items)
 
-        sync_log_id = get_last_synclog_for_user(self.restore_user.user_id).get_id
+        sync_log_id = SyncLogSQL.objects.filter(
+            user_id=self.restore_user.user_id
+        ).order_by('date').last().synclog_id.hex
         expected_restore_payload = dummy_restore_xml(
             sync_log_id,
             const.CREATE_SHORT.format(user_id=self.restore_user.user_id),

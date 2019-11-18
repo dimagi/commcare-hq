@@ -826,12 +826,14 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
+        context = super().template_context
         event = self.messaging_event
         date = ServerTime(event.date).user_time(self.timezone).done()
-        return {
+        context.update({
             'messaging_event_date': date.strftime(SERVER_DATETIME_FORMAT),
             'messaging_event_type': self.get_source_display(event, display_only=True),
-        }
+        })
+        return context
 
     @property
     def headers(self):
@@ -967,12 +969,14 @@ class SurveyDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
-        return {
+        context = super().template_context
+        context.update({
             'xforms_session': self.xforms_session,
             'contact': get_doc_info_by_id(self.domain, self.xforms_session.connection_id),
             'start_time': (ServerTime(self.xforms_session.start_time)
                            .user_time(self.timezone).done().strftime(SERVER_DATETIME_FORMAT)),
-        }
+        })
+        return context
 
     @property
     def headers(self):

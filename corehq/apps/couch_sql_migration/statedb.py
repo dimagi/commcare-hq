@@ -1,5 +1,6 @@
 import errno
 import json
+import logging
 import os
 import os.path
 from collections import namedtuple
@@ -18,11 +19,14 @@ from sqlalchemy import (
     func,
     or_,
 )
+from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
 
 from .diff import filter_form_diffs
+
+log = logging.getLogger(__name__)
 
 
 def init_state_db(domain, state_dir):
@@ -34,8 +38,11 @@ def init_state_db(domain, state_dir):
 
 
 def open_state_db(domain, state_dir):
+    """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
-    return StateDB.open(db_filepath)
+    if not os.path.exists(db_filepath):
+        db_filepath = ":memory:"
+    return StateDB.open(db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -61,6 +68,10 @@ class StateDB(DiffDB):
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         return db
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.is_rebuild = False
+
     def __enter__(self):
         return self
 
@@ -69,8 +80,6 @@ class StateDB(DiffDB):
 
     def close(self):
         self.engine.dispose()
-        if self._connection is not None:
-            self._connection.close()
 
     @contextmanager
     def session(self, session=None):
@@ -171,11 +180,17 @@ class StateDB(DiffDB):
             return [make_result(case_id) for case_id in cases]
 
     def iter_cases_with_unprocessed_forms(self):
-        query = self.Session().query(CaseForms.case_id).filter(
-            CaseForms.total_forms > CaseForms.processed_forms
-        )
-        for case_id, in iter_large(query, CaseForms.case_id):
-            yield case_id
+        query = self.Session().query(
+            CaseForms.case_id,
+            CaseForms.total_forms,
+        ).filter(CaseForms.total_forms > CaseForms.processed_forms)
+        for case_id, total_forms in iter_large(query, CaseForms.case_id):
+            yield case_id, total_forms
+
+    def get_forms_count(self, case_id):
+        with self.session() as session:
+            query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
+            return query.scalar() or 0
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -191,9 +206,13 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        with self.session() as session:
-            session.add(NoActionCaseForm(id=form_id))
-        self.get_no_action_case_forms.reset_cache(self)
+        try:
+            with self.session() as session:
+                session.add(NoActionCaseForm(id=form_id))
+        except IntegrityError:
+            pass
+        else:
+            self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
     def get_no_action_case_forms(self):
@@ -204,22 +223,24 @@ class StateDB(DiffDB):
         resume_key = "resume-{}".format(key)
         self._upsert(KeyValue, KeyValue.key, resume_key, json.dumps(value))
 
+    @contextmanager
     def pop_resume_state(self, key, default):
         resume_key = "resume-{}".format(key)
         with self.session() as session:
             kv = self._get_kv(resume_key, session)
             if kv is None:
                 self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
-                value = default
+                yield default
+            elif self.is_rebuild:
+                yield default
             elif kv.value == RESUME_NOT_ALLOWED:
                 raise ResumeError("previous session did not save resume state")
             else:
-                value = json.loads(kv.value)
+                yield json.loads(kv.value)
                 kv.value = RESUME_NOT_ALLOWED
-        return value
 
     def _get_kv(self, key, session):
-        return session.query(KeyValue).filter_by(key=key).scalar()
+        return session.query(KeyValue).get(key)
 
     def _set_kv(self, key, value, session=None):
         with self.session(session) as session:
@@ -328,6 +349,7 @@ class StateDB(DiffDB):
             return column.key == "id" and isinstance(column.type, Integer)
 
         def copy(model, session, where_expr=None):
+            log.info("copying casediff data: %s", model.__name__)
             where = f"WHERE {where_expr}" if where_expr else ""
             fields = ", ".join(c.key for c in model.__table__.columns if not is_id(c))
             session.execute(f"DELETE FROM main.{model.__tablename__} {where}")
@@ -336,6 +358,7 @@ class StateDB(DiffDB):
                 SELECT {fields} FROM cddb.{model.__tablename__} {where}
             """)
 
+        log.info("checking casediff data preconditions...")
         casediff_db = type(self).open(casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {

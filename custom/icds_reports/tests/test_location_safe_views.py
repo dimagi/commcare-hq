@@ -13,7 +13,8 @@ NON_LOCATION_SAFE_VIEWS = [
     'TemplateView',
     'BugReportView',
     'RedirectView',
-    'ICDSBugReportView'
+    'ICDSBugReportView',
+    'DailyIndicators'
 ]
 
 

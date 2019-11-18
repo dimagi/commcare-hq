@@ -8,7 +8,7 @@ from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import (
     OTARestoreCommCareUser,
     OTARestoreWebUser,
-    SyncLog,
+    SimplifiedSyncLog,
 )
 from casexml.apps.phone.tests.utils import call_fixture_generator
 
@@ -94,17 +94,17 @@ class CallcenterFixtureTests(SimpleTestCase):
         self.assertTrue(should_sync(None, None))
 
     def test_should_sync_no_date(self):
-        self.assertTrue(should_sync(None, SyncLog()))
+        self.assertTrue(should_sync(None, SimplifiedSyncLog()))
 
     def test_should_sync_false(self):
         domain = Domain(name='test', default_timezone='UTC')
         last_sync = datetime.combine(date.today(), time())  # today at 00:00:00
-        self.assertFalse(should_sync(domain, SyncLog(date=last_sync)))
+        self.assertFalse(should_sync(domain, SimplifiedSyncLog(date=last_sync)))
 
     def test_should_sync_true(self):
         domain = Domain(name='test', default_timezone='UTC')
         last_sync = datetime.combine(date.today() - timedelta(days=1), time(23, 59, 59))  # yesterday at 23:59:59
-        self.assertTrue(should_sync(domain, SyncLog(date=last_sync)))
+        self.assertTrue(should_sync(domain, SimplifiedSyncLog(date=last_sync)))
 
     def test_should_sync_timezone(self):
         domain = Domain(name='test', default_timezone='Africa/Johannesburg')
@@ -112,7 +112,7 @@ class CallcenterFixtureTests(SimpleTestCase):
         last_sync = datetime.combine(date.today() - timedelta(days=1), time(21, 59, 59))
         # yesterday at 21:59:59 = today at 00:00:00 locally
         utcnow = datetime.combine(date.today() - timedelta(days=1), time(22, 00, 00))
-        self.assertTrue(should_sync(domain, SyncLog(date=last_sync), utcnow=utcnow))
+        self.assertTrue(should_sync(domain, SimplifiedSyncLog(date=last_sync), utcnow=utcnow))
 
         domain = Domain(name='test', default_timezone='UTC')
-        self.assertFalse(should_sync(domain, SyncLog(date=last_sync), utcnow=utcnow))
+        self.assertFalse(should_sync(domain, SimplifiedSyncLog(date=last_sync), utcnow=utcnow))

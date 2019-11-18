@@ -111,9 +111,9 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -125,7 +125,8 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.LoggingSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -225,7 +226,6 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
@@ -261,6 +261,7 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -307,7 +308,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
@@ -331,7 +331,6 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
-    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
@@ -343,7 +342,6 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.ilsgateway',
     'custom.zipline',
-    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -351,7 +349,6 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.up_nrhm',
 
-    'custom.care_pathways',
     'custom.common',
 
     'custom.icds',
@@ -389,10 +386,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/billing/statements/',
+    '/a/%(domain)s/settings/project/billing_information/',
+    '/a/%(domain)s/settings/project/flags/',
     '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/flags/'
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/project_limits/',
+    '/a/%(domain)s/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -458,6 +459,9 @@ UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+USER_REPORTING_METADATA_BATCH_ENABLED = False
+USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
+
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
@@ -502,7 +506,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
@@ -725,6 +728,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -818,7 +822,6 @@ DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
-WAREHOUSE_DATABASE_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines
@@ -892,6 +895,8 @@ UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+DEFAULT_ODATA_FEED_LIMIT = 25
+
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
@@ -900,6 +905,23 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1021,6 +1043,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1117,6 +1142,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1208,11 +1241,20 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1325,7 +1367,6 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
-    'ewsghana',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1371,8 +1412,6 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
-if 'icds-ucr' in DATABASES:
-    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1420,7 +1459,6 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
-    'custom.ewsghana.handler.handle',
 ]
 
 SMS_HANDLERS = [
@@ -1749,8 +1787,6 @@ PILLOWTOPS = {
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1766,20 +1802,6 @@ PILLOWTOPS = {
         },
     ]
 }
-
-REPEATERS = (
-    'corehq.motech.repeaters.models.FormRepeater',
-    'corehq.motech.repeaters.models.CaseRepeater',
-    'corehq.motech.repeaters.models.CreateCaseRepeater',
-    'corehq.motech.repeaters.models.UpdateCaseRepeater',
-    'corehq.motech.repeaters.models.ShortFormRepeater',
-    'corehq.motech.repeaters.models.AppStructureRepeater',
-    'corehq.motech.repeaters.models.UserRepeater',
-    'corehq.motech.repeaters.models.LocationRepeater',
-    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
-    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
-)
-
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
@@ -1836,6 +1858,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
@@ -1874,11 +1897,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
-
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1946,7 +1964,6 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
-    'custom.ewsghana',
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
@@ -1974,23 +1991,9 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'pathways-india-mis': 'custom.care_pathways',
-    'pathways-tanzania': 'custom.care_pathways',
-    'care-macf-malawi': 'custom.care_pathways',
-    'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'ews-ghana': 'custom.ewsghana',
-    'ews-ghana-1': 'custom.ewsghana',
-    'ewsghana-6': 'custom.ewsghana',
-    'ewsghana-september': 'custom.ewsghana',
-    'ewsghana-test-4': 'custom.ewsghana',
-    'ewsghana-test-5': 'custom.ewsghana',
-    'ewsghana-test3': 'custom.ewsghana',
-    # Used in tests.  TODO - use override_settings instead
-    'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
 
     #vectorlink domains
@@ -2041,6 +2044,7 @@ DATADOG_DOMAINS = {
     ("production", "rec"),
     ("production", "isth-production"),
     ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
@@ -2115,6 +2119,8 @@ if SENTRY_DSN:
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
     helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
     SENTRY_CONFIGURED = True
+else:
+    SENTRY_CONFIGURED = False
 
 
 CSRF_COOKIE_HTTPONLY = True

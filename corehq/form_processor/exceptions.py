@@ -24,11 +24,12 @@ class LedgerValueNotFound(Exception):
 
 class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
 
-    def __init__(self, attachment_name):
+    def __init__(self, form_id, attachment_name):
+        self.form_id = form_id
         self.attachment_name = attachment_name
 
     def __str__(self):
-        return "Attachment '{}' not found".format(self.attachment_name)
+        return "Attachment not found '{}:{}'".format(self.form_id, self.attachment_name)
 
 
 class CouchSaveAborted(Exception):

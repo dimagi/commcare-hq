@@ -1,9 +1,9 @@
 import time
+from contextlib import ContextDecorator
 from functools import wraps
 
 from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
-from corehq.util.decorators import ContextDecorator
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext

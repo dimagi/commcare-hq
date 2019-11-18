@@ -40,4 +40,4 @@ class TestStarfishBackend(SimpleTestCase):
     def test_500(self):
         with self.assertRaises(StarfishException) as err:
             self.mock_send(status_code=500)
-        self.assertRegexpMatches(str(err.exception), r"response 500 from starfish")
+        self.assertRegex(str(err.exception), r"response 500 from starfish")

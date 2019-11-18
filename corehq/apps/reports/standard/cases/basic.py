@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from elasticsearch import TransportError
+from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es

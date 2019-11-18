@@ -1,3 +1,4 @@
+import re
 import uuid
 from collections import defaultdict
 from functools import wraps
@@ -6,6 +7,7 @@ from random import choices
 from django import db
 from django.conf import settings
 from django.db import OperationalError
+from django.db.utils import DEFAULT_DB_ALIAS
 from django.db.utils import InterfaceError as DjangoInterfaceError
 
 from memoized import memoized
@@ -100,6 +102,44 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
         filter_expression = {'{}__gt'.format(sort_col): value}
 
 
+def estimate_partitioned_row_count(model_class, q_expression):
+    """Estimate query row count summed across all partitions"""
+    db_names = get_db_aliases_for_partitioned_query()
+    query = model_class.objects.using(db_names[0]).filter(q_expression)
+    return estimate_row_count(query, db_names)
+
+
+def estimate_row_count(query, db_name="default"):
+    """Estimate query row count
+
+    Source:
+    https://www.citusdata.com/blog/2016/10/12/count-performance/#dup_counts_estimated_filtered
+
+    :param query: A queryset or two-tuple `(<SQL string>, <bind params>)`.
+    :param db_name: A database name (str) or sequence of database names
+    to query. The sum of counts from all databases will be returned.
+    """
+    def count(db_name):
+        with db.connections[db_name].cursor() as cursor:
+            cursor.execute(sql, params)
+            lines = [line for line, in cursor.fetchall()]
+            for line in lines:
+                match = rows_expr.search(line)
+                if match:
+                    return int(match.group(1))
+            return 0
+
+    rows_expr = re.compile(r" rows=(\d+) ")
+    if hasattr(query, "query"):
+        sql, params = query.query.sql_with_params()
+    else:
+        sql, params = query
+    sql = f"EXPLAIN {sql}"
+    if isinstance(db_name, str):
+        return count(db_name)
+    return sum(count(db_) for db_ in db_name)
+
+
 def split_list_by_db_partition(partition_values):
     """
     :param partition_values: Iterable of partition values (e.g. case IDs)
@@ -117,20 +157,20 @@ def get_db_alias_for_partitioned_doc(partition_value):
         from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
         db_name = ShardAccessor.get_database_for_doc(partition_value)
     else:
-        db_name = 'default'
+        db_name = DEFAULT_DB_ALIAS
     return db_name
 
 
 def get_db_aliases_for_partitioned_query():
     if settings.USE_PARTITIONED_DATABASE:
-        db_names = partition_config.get_form_processing_dbs()
+        db_names = partition_config.form_processing_dbs
     else:
-        db_names = ['default']
+        db_names = [DEFAULT_DB_ALIAS]
     return db_names
 
 
 def get_default_db_aliases():
-    return ['default']
+    return [DEFAULT_DB_ALIAS]
 
 
 def get_all_db_aliases():
@@ -204,29 +244,24 @@ def _get_all_nested_subclasses(cls):
 
 
 @memoized
-def get_standby_databases(relevant_dbs=None):
-    standby_dbs = []
+def get_standby_databases():
+    standby_dbs = set()
     for db_alias in settings.DATABASES:
-        if relevant_dbs is None or db_alias in relevant_dbs:
-            with db.connections[db_alias].cursor() as cursor:
-                cursor.execute("SELECT pg_is_in_recovery()")
-                [(is_standby, )] = cursor.fetchall()
-                if is_standby:
-                    standby_dbs.append(db_alias)
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute("SELECT pg_is_in_recovery()")
+            [(is_standby, )] = cursor.fetchall()
+            if is_standby:
+                standby_dbs.add(db_alias)
     return standby_dbs
 
 
-def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
+def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-
-    if db_alias not in get_standby_databases(relevant_dbs):
-        return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
     try:
@@ -248,26 +283,44 @@ def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
 
 
 @memoized
-def get_standby_delays_by_db():
+def get_acceptible_replication_delays():
+    """This returns a dict mapping DB alias to max replication delay.
+    Note: this assigns a default value to any DB that does not have
+    an explicit value set (including master databases)."""
     ret = {}
-    for _db, config in settings.DATABASES.items():
-        delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
-        if delay:
-            ret[_db] = delay
+    for db_, config in settings.DATABASES.items():
+        delay = config.get('STANDBY', {}).get('ACCEPTABLE_REPLICATION_DELAY')
+        if delay is None:
+            # try legacy setting
+            delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
+            if delay is None:
+                delay = ACCEPTABLE_STANDBY_DELAY_SECONDS
+
+        ret[db_] = delay
     return ret
 
 
-@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
-def filter_out_stale_standbys(dbs):
-    # from given list of databases filters out those with more than
-    #   acceptable standby delay, if that database is a standby
-    delays_by_db = get_standby_delays_by_db()
-    relevant_dbs = tuple(dbs)
-    return [
-        db
-        for db in dbs
-        if get_replication_delay_for_standby(db, relevant_dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
-    ]
+@quickcache(
+    [], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING,
+    memoize_timeout=STALE_CHECK_FREQUENCY, session_function=None
+)
+def get_standbys_with_acceptible_delay():
+    """:returns: set of database aliases that are configured as standbys and have replication
+                 delay below the configured threshold
+    """
+    delays_by_db = get_acceptible_replication_delays()
+    return {
+        db_ for db_ in get_standby_databases()
+        if get_replication_delay_for_standby(db_) <= delays_by_db[db_]
+    }
+
+
+def get_databases_for_read_query(candidate_dbs):
+    all_standbys = get_standby_databases()
+    queryable_standbys = get_standbys_with_acceptible_delay()
+    masters = candidate_dbs - all_standbys
+    ok_standbys = candidate_dbs & queryable_standbys
+    return masters | ok_standbys
 
 
 def select_db_for_read(weighted_dbs):
@@ -284,11 +337,12 @@ def select_db_for_read(weighted_dbs):
             ]
 
     """
-    # convert to a db to weight dictionary
-    weights_by_db = {_db: weight for _db, weight in weighted_dbs}
+    if not weighted_dbs:
+        return
 
-    # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
+    weights_by_db = {db_: weight for db_, weight in weighted_dbs}
+    fresh_dbs = get_databases_for_read_query(set(weights_by_db))
+
     dbs = []
     weights = []
     for _db, weight in weights_by_db.items():

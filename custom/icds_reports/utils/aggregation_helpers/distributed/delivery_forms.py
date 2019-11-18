@@ -1,33 +1,19 @@
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    StateBasedAggregationDistributedHelper,
+)
 
 
-class DeliveryFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'delivery-forms'
     ucr_data_source_id = 'static-dashboard_delivery_forms'
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
-    aggregate_child_table_prefix = 'icds_db_delivery_form_'
-
-    def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
-        agg_query, agg_params = self.aggregation_query()
-
-        cursor.execute(drop_query, drop_params)
-        cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        return (
-            'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(
-                tablename=self.aggregate_parent_table
-            ),
-            {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}
-        )
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.aggregate_parent_table
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
@@ -65,5 +51,5 @@ class DeliveryFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHe
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=self.aggregate_parent_table
         ), query_params

@@ -4,6 +4,10 @@
     "icds-cas-sandbox",
     "cas-lab",
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -114,10 +118,15 @@
         "column_id": "use_salt",
         "type": "field",
         "field": "use_salt",
-        "aggregation": "sum"
+        "aggregation": "max"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

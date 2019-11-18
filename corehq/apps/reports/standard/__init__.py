@@ -39,7 +39,9 @@ class ProjectReport(GenericReportView):
 
     @property
     def template_context(self):
-        return {'user_types': HQUserType.human_readable}
+        context = super().template_context
+        context.update({'user_types': HQUserType.human_readable})
+        return context
 
 
 class CustomProjectReport(ProjectReport):

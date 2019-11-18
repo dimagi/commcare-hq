@@ -7,28 +7,17 @@ description here: https://github.com/dimagi/commcare-hq/pull/22477
 
 """
 
-import argparse
 import sys
-from datetime import datetime
 
 from django.core.management.base import BaseCommand
 from django.db.models import F, Q
 from django.db.models.functions import Greatest
 
+from corehq.util.argparse_types import date_type
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import FormES
 from corehq.form_processor.models import XFormInstanceSQL
-
-DATE_FORMAT = "%Y-%m-%d"
-
-
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
 
 
 class Command(BaseCommand):
@@ -39,14 +28,14 @@ class Command(BaseCommand):
             '-s',
             '--startdate',
             dest='start',
-            type=valid_date,
+            type=date_type,
             help="The start date. Only applicable to forms on SQL domains. - format YYYY-MM-DD",
         )
         parser.add_argument(
             '-e',
             '--enddate',
             dest='end',
-            type=valid_date,
+            type=date_type,
             help="The end date. Only applicable to forms on SQL domains. - format YYYY-MM-DD",
         )
 

@@ -1,8 +1,6 @@
-/* global locationModel */
-
 function IntrahealthLocModel(data, root, depth) {
     var loc = this;
-    locationModel.apply(this, [data, root, depth, IntrahealthLocModel, false]);
+    hqImport("locations/js/location_drilldown").locationModel.apply(this, [data, root, depth, IntrahealthLocModel, false]);
 
     this.load_children_async = function(callback) {
         if (this.depth < root.location_types.length) {

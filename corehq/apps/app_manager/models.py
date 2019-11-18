@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import calendar
 import datetime
 import hashlib
@@ -33,7 +31,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import qrcode
-from couchdbkit import MultipleResultsFound, ResourceNotFound
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
@@ -82,6 +80,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_build_by_version,
+    get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
@@ -96,7 +95,6 @@ from corehq.apps.app_manager.exceptions import (
     ScheduleError,
     VersioningError,
     XFormException,
-    XFormIdNotUnique,
     XFormValidationError,
     XFormValidationFailed,
 )
@@ -161,7 +159,8 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
-    get_master_app_version,
+    get_latest_master_releases_versions,
+    get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.locations.models import SQLLocation
@@ -1076,31 +1075,6 @@ class FormBase(DocumentSchema):
     @case_references.setter
     def case_references(self, case_references):
         self.case_references_data = case_references
-
-    @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = Application.get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
-
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
-        if and_app:
-            return form, app
-        else:
-            return form
 
     def pre_delete_hook(self):
         raise NotImplementedError()
@@ -3771,11 +3745,7 @@ class LazyBlobDoc(BlobMixin):
             # it has been fetched already during this request
             content = self._LAZY_ATTACHMENTS_CACHE[name]
         except KeyError:
-            try:
-                content = cache.get(self.__attachment_cache_key(name))
-            except TypeError:
-                # TODO - remove try/except sometime after Python 3 migration is complete
-                return None
+            content = cache.get(self.__attachment_cache_key(name))
             if content is not None:
                 if isinstance(content, str):
                     return None
@@ -3918,6 +3888,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
@@ -4096,6 +4067,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             limit=1,
             descending=True,
         ).first()
+
+    @memoized
+    def _get_version_comparison_build(self):
+        '''
+        Returns an earlier build to be used for comparing forms and multimedia
+        when making a new build and setting the versions of those items.
+        For normal applications, this is just the previous build.
+        '''
+        return self.get_latest_build()
 
     @memoized
     def get_latest_saved(self):
@@ -4490,7 +4470,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
         if increment_version is None:
-            increment_version = not self.copy_of and not is_linked_app(self)
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
@@ -4528,7 +4508,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
-        del self.uses_master_app_form_ids
 
     @property
     def commcare_flavor(self):
@@ -4604,6 +4583,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
+
+    family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -4726,7 +4707,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        latest_build = self.get_latest_build()
+        latest_build = self._get_version_comparison_build()
         if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
@@ -4762,8 +4743,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        latest_build = self.get_latest_build()
-        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
+        previous_version = self._get_version_comparison_build()
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5269,7 +5250,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         that should be shown in the
         application source, such as ids, etc.
         """
-        source = update_form_unique_ids(source)
+        source = update_form_unique_ids(source, ids_map={})
         return update_report_module_ids(source)
 
     def copy_form(self, from_module, form, to_module, rename=False):
@@ -5549,8 +5530,8 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5560,31 +5541,54 @@ class LinkedApplication(Application):
 
     SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
-    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
-    # from a bug years ago. These should be fixed when mobile can handle the change
-    # https://manage.dimagi.com/default.asp?283410
-    uses_master_app_form_ids = BooleanProperty(default=False)
-
     @property
     @memoized
     def domain_link(self):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
         return get_domain_master_link(self.domain)
 
-    def get_master_version(self):
+    @memoized
+    def get_master_app_briefs(self):
         if self.domain_link:
-            return get_master_app_version(self.domain_link, self.master)
+            return get_master_app_briefs(self.domain_link, self.family_id)
+        return []
 
     @property
     def master_is_remote(self):
         if self.domain_link:
             return self.domain_link.is_remote
 
-    def get_latest_master_release(self):
+    def get_latest_master_release(self, master_app_id):
         if self.domain_link:
-            return get_latest_master_app_release(self.domain_link, self.master)
-        else:
-            raise ActionNotPermitted
+            return get_latest_master_app_release(self.domain_link, master_app_id)
+        raise ActionNotPermitted
+
+    def get_latest_master_releases_versions(self):
+        if self.domain_link:
+            versions = get_latest_master_releases_versions(self.domain_link)
+            # Use self.get_master_app_briefs to limit return value by family_id
+            master_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in master_ids}
+        return {}
+
+    @memoized
+    def get_latest_build_from_upstream(self, upstream_app_id):
+        build_ids = get_build_ids(self.domain, self.master_id)
+        for build_id in build_ids:
+            build_doc = Application.get_db().get(build_id)
+            if build_doc.get('upstream_app_id') == upstream_app_id:
+                return self.wrap(build_doc)
+        return None
+
+    @memoized
+    def _get_version_comparison_build(self):
+        previous_version = self.get_latest_build_from_upstream(self.upstream_app_id)
+        if not previous_version:
+            # If there's no previous version, check for a previous version in the same family.
+            # This allows projects using multiple masters to copy a master app and start pulling
+            # from that copy without resetting the form and multimedia versions.
+            previous_version = self.get_latest_build_from_upstream(self.family_id)
+        return previous_version
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
@@ -5621,6 +5625,8 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    if source_domain == domain:
+        app.family_id = source_app.master_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:

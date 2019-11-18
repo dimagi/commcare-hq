@@ -16,6 +16,7 @@ from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
@@ -404,9 +405,9 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
-        error_message = exceptions.InvalidOwnerId.title
+        error_message = exceptions.InvalidOwner.title
         self.assertIn(error_message, res['errors'])
-        error_column_name = 'owner_id'
+        error_column_name = 'owner_name'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
 
     @run_with_all_backends
@@ -477,6 +478,21 @@ class ImporterTest(TestCase):
         error_message = exceptions.InvalidLocation.title
         error_col = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
+
+    @run_with_all_backends
+    def test_bad_owner_proper_column_name(self):
+        bad_group = Group(
+            domain=self.domain,
+            name="non_case_sharing_group",
+            case_sharing=False,
+        )
+        bad_group.save()
+        self.addCleanup(bad_group.delete)
+        res = self.import_mock_file([
+            ['case_id', 'name', '', 'favorite_color', 'owner_name'],
+            ['', 'Jeff', '', 'blue', bad_group.name],
+        ])
+        self.assertIn(exceptions.InvalidOwner.title, res['errors'])
 
 
 def make_worksheet_wrapper(*rows):

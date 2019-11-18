@@ -16,6 +16,7 @@ class TestMobileWorkerListView(TestCase):
     password = '***'
 
     def setUp(self):
+        super().setUp()
         self.project = create_domain(self.domain)
         self.web_user = WebUser.create(self.domain, self.web_username, self.password)
 
@@ -26,6 +27,7 @@ class TestMobileWorkerListView(TestCase):
     def tearDown(self):
         self.project.delete()
         delete_all_users()
+        super().tearDown()
 
     def _remote_invoke(self, route, data):
         self.client.login(username=self.web_username, password=self.password)

@@ -19,7 +19,7 @@ class RegimenPropertiesTests(TestCase):
                         key_type_string = CASE_ART_REGIMEN_PROP
                     elif drug_type == DOT_NONART:
                         key_type_string = CASE_NONART_REGIMEN_PROP
-                    self.assertEquals(ret[key_type_string], str(freq))
+                    self.assertEqual(ret[key_type_string], str(freq))
 
     def testStringToLabelValues(self):
         """
@@ -36,16 +36,16 @@ class RegimenPropertiesTests(TestCase):
         qd_eve = 'evening' #2
 
         qid_ret = regimen_dict_from_choice(DOT_ART, qid)
-        self.assertEquals(qid_ret, {'dot_a_one': '0', 'dot_a_four': '3', 'dot_a_two': '1', 'artregimen': '4', 'dot_a_three': '2'})
+        self.assertEqual(qid_ret, {'dot_a_one': '0', 'dot_a_four': '3', 'dot_a_two': '1', 'artregimen': '4', 'dot_a_three': '2'})
 
         tid_ret = regimen_dict_from_choice(DOT_ART, tid_shift)
-        self.assertEquals(tid_ret, {'dot_a_one': '1', 'dot_a_four': '', 'dot_a_two': '2', 'artregimen': '3', 'dot_a_three': '3'})
+        self.assertEqual(tid_ret, {'dot_a_one': '1', 'dot_a_four': '', 'dot_a_two': '2', 'artregimen': '3', 'dot_a_three': '3'})
 
         bd_ret = regimen_dict_from_choice(DOT_ART, bd_extremes)
-        self.assertEquals(bd_ret, {'dot_a_one': '0', 'dot_a_four': '', 'dot_a_two': '3', 'artregimen': '2', 'dot_a_three': ''})
+        self.assertEqual(bd_ret, {'dot_a_one': '0', 'dot_a_four': '', 'dot_a_two': '3', 'artregimen': '2', 'dot_a_three': ''})
 
         qd_ret = regimen_dict_from_choice(DOT_ART, qd_eve)
-        self.assertEquals(qd_ret, {'dot_a_one': '2', 'dot_a_four': '', 'dot_a_two': '', 'artregimen': '1', 'dot_a_three': ''})
+        self.assertEqual(qd_ret, {'dot_a_one': '2', 'dot_a_four': '', 'dot_a_two': '', 'artregimen': '1', 'dot_a_three': ''})
 
     def testStringFromRegimenProps(self):
         """
@@ -59,19 +59,19 @@ class RegimenPropertiesTests(TestCase):
         qd_evening = {'dot_n_one': '2', 'dot_n_four': '', 'dot_n_two': '', 'nonartregimen': '1', 'dot_n_three': ''} #evening
 
         qid_str = regimen_string_from_doc(DOT_NONART, qid)
-        self.assertEquals(qid_str, 'morning,noon,evening,bedtime')
+        self.assertEqual(qid_str, 'morning,noon,evening,bedtime')
 
         tid_str = regimen_string_from_doc(DOT_ART, tid)
-        self.assertEquals(tid_str, 'morning,noon,bedtime')
+        self.assertEqual(tid_str, 'morning,noon,bedtime')
 
         bd_str = regimen_string_from_doc(DOT_NONART, bd)
-        self.assertEquals(bd_str, 'noon,evening')
+        self.assertEqual(bd_str, 'noon,evening')
 
         qd_noon_str = regimen_string_from_doc(DOT_ART, qd_noon)
-        self.assertEquals(qd_noon_str, 'noon')
+        self.assertEqual(qd_noon_str, 'noon')
 
         qd_evening_str = regimen_string_from_doc(DOT_NONART, qd_evening)
-        self.assertEquals(qd_evening_str, 'evening')
+        self.assertEqual(qd_evening_str, 'evening')
 
 
 

@@ -1,4 +1,16 @@
-hqDefine("reports/js/tabular", function () {
+hqDefine("reports/js/tabular", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'reports/js/config.dataTables.bootstrap',
+    'reports/js/standard_hq_report',
+], function (
+    $,
+    _,
+    initialPageData,
+    datatablesConfig,
+    standardHQReportModule
+) {
     function renderPage(slug, tableOptions) {
         if (tableOptions && tableOptions.datatables) {
             var tableConfig = tableOptions,
@@ -38,8 +50,8 @@ hqDefine("reports/js/tabular", function () {
                     fixColsWidth: tableConfig.left_col.fixed.width,
                 });
             }
-            var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables(options);
-            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+            var reportTables = datatablesConfig.HQReportDataTables(options);
+            var standardHQReport = standardHQReportModule.getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
@@ -53,10 +65,9 @@ hqDefine("reports/js/tabular", function () {
         });
     }
 
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
     // Handle async reports
     $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
-        var jsOptions = initialPageData("js_options");
+        var jsOptions = initialPageData.get("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
         }
@@ -65,8 +76,8 @@ hqDefine("reports/js/tabular", function () {
 
     // Handle sync reports
     $(function () {
-        if (initialPageData("report_table_js_options")) {
-            renderPage(initialPageData("js_options").slug, initialPageData("report_table_js_options"));
+        if (initialPageData.get("report_table_js_options")) {
+            renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
         }
     });
 });

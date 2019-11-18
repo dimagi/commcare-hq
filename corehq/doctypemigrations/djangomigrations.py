@@ -34,6 +34,9 @@ following command (this command assumes a linux environment - for other platform
 you just need to run python manage.py migrate with a temporary environment
 variable CCHQ_IS_FRESH_INSTALL set to 1):
     env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate
+
+Or for mutiple database support:
+    env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate_multi
 """
 
 

@@ -49,7 +49,7 @@ class DbaccessorsTest(TestCase):
     def tearDownClass(cls):
         cls.case_upload_1.delete()
         cls.case_upload_2.delete()
-        cls.user.delete()
+        cls.domain_obj.delete()
         super(DbaccessorsTest, cls).tearDownClass()
 
     def assert_model_lists_equal(self, list_1, list_2):

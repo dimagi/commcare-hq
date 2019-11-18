@@ -10,7 +10,7 @@ from django.db.models import (
     PositiveSmallIntegerField,
 )
 from memoized import memoized
-from partial_index import PartialIndex
+from partial_index import PartialIndex, PQ
 
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
 
@@ -75,7 +75,12 @@ class BlobMeta(PartitionedModel, Model):
             PartialIndex(
                 fields=['expires_on'],
                 unique=False,
-                where='expires_on IS NOT NULL',
+                where=PQ(expires_on__isnull=False),
+            ),
+            PartialIndex(
+                fields=['type_code', 'created_on'],
+                unique=False,
+                where=PQ(domain='icds-cas'),
             ),
         ]
 
