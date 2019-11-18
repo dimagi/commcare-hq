@@ -352,23 +352,11 @@ def first_item(items, f):
             return item
 
 REPORT_MAPPING = {
-    'dashboard_report': 'custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport',
-    'stock_status': 'custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus',
-    'reporting_page': 'custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport',
-    'ews_mapreport': 'custom.ewsghana.reports.maps.EWSMapReport',
-    'cms_rms_summary_report': 'custom.ewsghana.reports.email_reports.CMSRMSReport',
-    'stock_summary_report': 'custom.ewsghana.reports.email_reports.StockSummaryReport'
 }
 
 
 def filter_slugs_by_role(couch_user, domain):
     slugs = [
-        ['dashboard_report', 'Dashboard'],
-        ['stock_status', 'Stock Status'],
-        ['reporting_page', 'Reporting'],
-        ['ews_mapreport', 'Maps'],
-        ['stock_summary_report', 'Stock Summary'],
-        ['cms_rms_summary_report', 'CMS and RMS Summary']
     ]
     if couch_user.is_domain_admin(domain) or couch_user.is_superuser:
         return slugs

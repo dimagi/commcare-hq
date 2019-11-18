@@ -343,7 +343,6 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.ilsgateway',
     'custom.zipline',
-    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -1375,7 +1374,6 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
-    'ewsghana',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1468,7 +1466,6 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
-    'custom.ewsghana.handler.handle',
 ]
 
 SMS_HANDLERS = [
@@ -1974,7 +1971,6 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
-    'custom.ewsghana',
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
@@ -2005,15 +2001,6 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'ews-ghana': 'custom.ewsghana',
-    'ews-ghana-1': 'custom.ewsghana',
-    'ewsghana-6': 'custom.ewsghana',
-    'ewsghana-september': 'custom.ewsghana',
-    'ewsghana-test-4': 'custom.ewsghana',
-    'ewsghana-test-5': 'custom.ewsghana',
-    'ewsghana-test3': 'custom.ewsghana',
-    # Used in tests.  TODO - use override_settings instead
-    'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
 
     #vectorlink domains
