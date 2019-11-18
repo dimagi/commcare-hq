@@ -15,6 +15,7 @@ describe('Program Summary Directive', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("isAlertActive", false);
+        $provide.constant("isMobile", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
