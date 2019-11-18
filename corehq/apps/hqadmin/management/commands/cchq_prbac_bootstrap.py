@@ -167,6 +167,7 @@ class Command(BaseCommand):
         Role(slug='paused_plan_v0', name='Paused Plan', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
+        Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
     ] + [
@@ -208,7 +209,20 @@ class Command(BaseCommand):
         privileges.PRACTICE_MOBILE_WORKERS,
     ]
 
-    pro_plan_features = standard_plan_features + [
+    pro_plan_v0_features = standard_plan_features + [
+        privileges.CLOUDCARE,
+        privileges.CUSTOM_REPORTS,
+        privileges.INBOUND_SMS,
+        privileges.HIPAA_COMPLIANCE_ASSURANCE,
+        privileges.DEIDENTIFIED_DATA,
+        privileges.REPORT_BUILDER,
+        privileges.DATA_CLEANUP,
+        privileges.TEMPLATED_INTENTS,
+        privileges.RESTRICT_ACCESS_BY_LOCATION,
+        privileges.REPORT_BUILDER_5,
+    ]
+
+    pro_plan_v1_features = standard_plan_features + [
         privileges.CUSTOM_REPORTS,
         privileges.HIPAA_COMPLIANCE_ASSURANCE,
         privileges.DEIDENTIFIED_DATA,
@@ -219,7 +233,7 @@ class Command(BaseCommand):
         privileges.REPORT_BUILDER_5,
     ]
 
-    advanced_plan_features = pro_plan_features + [
+    advanced_plan_features = pro_plan_v1_features + [
         privileges.INBOUND_SMS,
         privileges.CLOUDCARE,
         privileges.CUSTOM_BRANDING,
@@ -244,7 +258,8 @@ class Command(BaseCommand):
         'community_plan_v2': community_plan_v2_features,
         'paused_plan_v0': paused_plan_v0_features,
         'standard_plan_v0': standard_plan_features,
-        'pro_plan_v0': pro_plan_features,
+        'pro_plan_v0': pro_plan_v0_features,
+        'pro_plan_v1': pro_plan_v1_features,
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
     }
