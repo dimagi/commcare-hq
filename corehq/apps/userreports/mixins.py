@@ -5,7 +5,6 @@ from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.reports.filters.specs import create_filter_value
-from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.apps.userreports.util import get_table_name
 
 
@@ -142,6 +141,8 @@ class ConfigurableReportDataSourceMixin(object):
 
     @cached_property
     def final_column_ids(self):
+        from corehq.apps.userreports.reports.util import get_expanded_columns
+
         def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
             return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
 
