@@ -669,7 +669,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
-        return [ReportColumnFactory.from_spec(c, self.is_static) for c in self.columns]
+        return [ReportColumnFactory.from_spec(c, self.is_static, self.domain) for c in self.columns]
 
     @property
     @memoized

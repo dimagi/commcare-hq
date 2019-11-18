@@ -27,20 +27,18 @@ class LSBeneficiaryFormAggDistributedHelper(StateBasedAggregationPartitionedHelp
         return """
         CREATE TEMPORARY TABLE "{temp_table}" AS (
             SELECT
-            state_id,
-            location_id as supervisor_id,
-            %(start_date)s::DATE AS month,
-            count(*) as form_count,
-            count(*) FILTER (
-                        WHERE visit_type_entered is not null AND
-                        visit_type_entered <> '') as beneficiary_vists
+                state_id,
+                location_id as supervisor_id,
+                %(start_date)s::DATE AS month,
+                count(*) as beneficiary_vists
             FROM "{ucr_tablename}"
             WHERE  state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
-                   submitted_on < %(end_date)s
+                   submitted_on < %(end_date)s AND visit_type_entered IS NOT NULL AND
+                   visit_type_entered <> ''
             GROUP BY state_id,location_id
         );
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, form_count, beneficiary_vists
+        state_id, supervisor_id, month,beneficiary_vists
         ) (
              SELECT * FROM "{temp_table}"
         )

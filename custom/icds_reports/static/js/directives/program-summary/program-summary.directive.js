@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -126,14 +126,16 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive('systemUsage', function() {
+window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'system-usage.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('program-summary.directive');
+        },
         bindToController: true,
-        controller: SystemUsageController,
+        controller: ProgramSummaryController,
         controllerAs: '$ctrl',
     };
-});
+}]);

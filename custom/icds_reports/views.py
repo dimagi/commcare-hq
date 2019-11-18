@@ -44,6 +44,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
     THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
 from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -243,36 +244,16 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
-        kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
-            self.kwargs['domain']
-        ).location_ids())
-        kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
-                self.kwargs['domain']
-            )]
-        )
-        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
-        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
-            self.domain, 'access_all_locations'
-        )
-
-        if kwargs['have_access_to_all_locations']:
-            kwargs['user_location_id'] = None
-
-        is_commcare_user = self.couch_user.is_commcare_user()
-
-        if self.couch_user.is_web_user():
-            kwargs['is_web_user'] = True
-        elif is_commcare_user and self._has_helpdesk_role():
+        kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
+        kwargs['is_mobile'] = False
+        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
             )
-        return super(DashboardView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)
 
 
 @location_safe
@@ -280,6 +261,13 @@ class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+
+
+@location_safe
+class IcdsDynamicMobileTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
 
 
 @location_safe
@@ -1848,7 +1836,7 @@ class DailyIndicators(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
-        data_type = int(request.POST.get('indicator', None))
+        data_type = request.POST.get('indicator', None)
         state_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
@@ -1856,7 +1844,7 @@ class CasDataExport(View):
 
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
-            return JsonResponse({"message": "Export not exists."})
+            return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
             params = dict(
                 indicator=data_type,
@@ -1876,7 +1864,7 @@ class CasDataExport(View):
             )
 
     def get(self, request, *args, **kwargs):
-        data_type = int(request.GET.get('indicator', None))
+        data_type = request.GET.get('indicator', None)
         state_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
@@ -1949,17 +1937,20 @@ class CasDataExportAPIView(View):
     @property
     @icds_quickcache([])
     def valid_state_names(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+        return list(AwcLocation.objects.filter(
+            aggregation_level=AggregationLevels.STATE, state_is_test=0
+        ).values_list('state_name', flat=True))
 
     @property
     def valid_types(self):
         return ('woman', 'child', 'awc')
 
+    @staticmethod
     def get_type_code(self, data_type):
         type_map = {
-            "child": 1,
-            "woman": 2,
-            "awc": 3
+            "child": 'child_health_monthly',
+            "woman": 'ccs_record_monthly',
+            "awc": 'agg_awc',
         }
         return type_map[data_type]
 

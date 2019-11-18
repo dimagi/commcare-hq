@@ -57,7 +57,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '0' OR age_tranche = '6'": 'valid_in_month'},
+                    whens=[["age_tranche = '0' OR age_tranche = '6'", 'valid_in_month']],
                     alias='num_children_0_6mo_enrolled_for_services'
                 ),
                 slug='num_children_0_6mo_enrolled_for_services'
@@ -65,7 +65,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_6mo3yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'": 'valid_in_month'},
+                    whens=[["age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'", 'valid_in_month']],
                     alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
@@ -73,7 +73,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'": 'valid_in_month'},
+                    whens=[["age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'", 'valid_in_month']],
                     alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'

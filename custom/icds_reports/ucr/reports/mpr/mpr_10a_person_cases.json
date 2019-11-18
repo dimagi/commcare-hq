@@ -113,9 +113,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\ypremature\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\ypremature\\y'", 1]
+        ]
       },
       {
         "display": "referred_sepsis",
@@ -123,9 +123,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\ysepsis\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\ysepsis\\y'", 1]
+        ]
       },
       {
         "display": "referred_diarrhoea",
@@ -133,9 +133,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\ydiarrhoea\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\ydiarrhoea\\y'", 1]
+        ]
       },
       {
         "display": "referred_pneumonia",
@@ -143,9 +143,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\ypneumonia\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\ypneumonia\\y'", 1]
+        ]
       },
       {
         "display": "referred_fever_child",
@@ -153,9 +153,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yfever_child\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yfever_child\\y'", 1]
+        ]
       },
       {
         "display": "referred_severely_underweight",
@@ -163,9 +163,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yseverely_underweight\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yseverely_underweight\\y'", 1]
+        ]
       },
       {
         "display": "referred_other_child",
@@ -173,9 +173,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yother_child\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yother_child\\y'", 1]
+        ]
       },
       {
         "display": "premature_reached_count",
@@ -183,9 +183,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypremature\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\ypremature\\y'", 1]
+        ]
       },
       {
         "display": "sepsis_reached_count",
@@ -193,9 +193,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ysepsis\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\ysepsis\\y'", 1]
+        ]
       },
       {
         "display": "diarrhoea_reached_count",
@@ -203,9 +203,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ydiarrhoea\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\ydiarrhoea\\y'", 1]
+        ]
       },
       {
         "display": "pneumonia_reached_count",
@@ -213,9 +213,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypneumonia\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\ypneumonia\\y'", 1]
+        ]
       },
       {
         "display": "fever_child_reached_count",
@@ -223,9 +223,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yfever_child\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yfever_child\\y'", 1]
+        ]
       },
       {
         "display": "sev_underweight_reached_count",
@@ -233,9 +233,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yseverely_underweight\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yseverely_underweight\\y'", 1]
+        ]
       },
       {
         "display": "other_child_reached_count",
@@ -243,9 +243,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yother_child\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yother_child\\y'", 1]
+        ]
       }
     ],
     "sort_expression": [],

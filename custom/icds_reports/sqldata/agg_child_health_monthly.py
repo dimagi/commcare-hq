@@ -65,11 +65,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_weighed'},
+                        whens=[["age_tranche != :age_72", 'nutrition_status_weighed']],
                         alias='nutrition_status_weighed'
                     ),
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'wer_eligible'},
+                        whens=[["age_tranche != :age_72", 'wer_eligible']],
                         alias='wer_eligible'
                     )
                 ],
@@ -80,11 +80,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'height_measured_in_month'},
+                        whens=[["age_tranche != :age_72", 'height_measured_in_month']],
                         alias='height_measured_in_month_less_5'
                     ),
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'height_eligible'},
+                        whens=[["age_tranche != :age_72", 'height_eligible']],
                         alias='height_eligible'
                     )
                 ],
@@ -93,7 +93,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Total number Unweighed',
                 SumWhen(
-                    whens={"age_tranche != :age_72": 'nutrition_status_unweighed'},
+                    whens=[["age_tranche != :age_72", 'nutrition_status_unweighed']],
                     alias='nutrition_status_unweighed'
                 )
             ),
@@ -102,7 +102,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_severely_underweight'},
+                        whens=[["age_tranche != :age_72", 'nutrition_status_severely_underweight']],
                         alias='nutrition_status_severely_underweight'
                     ),
                     AliasColumn('nutrition_status_weighed')
@@ -114,7 +114,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_moderately_underweight'},
+                        whens=[["age_tranche != :age_72", 'nutrition_status_moderately_underweight']],
                         alias='nutrition_status_moderately_underweight'
                     ),
                     AliasColumn('nutrition_status_weighed')
@@ -126,7 +126,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_normal'},
+                        whens=[["age_tranche != :age_72", 'nutrition_status_normal']],
                         alias='nutrition_status_normal'
                     ),
                     AliasColumn('nutrition_status_weighed')
@@ -138,11 +138,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_severe_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_severe_column(self.beta)]],
                         alias='wasting_severe'
                     ),
                     SumWhen(
-                        whens={get_age_condition(self.beta): wfh_recorded_in_month_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wfh_recorded_in_month_column(self.beta)]],
                         alias='weighed_and_height_measured_in_month'
                     )
                 ],
@@ -153,7 +153,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_moderate_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_moderate_column(self.beta)]],
                         alias='wasting_moderate'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -165,7 +165,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_normal_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_normal_column(self.beta)]],
                         alias='wasting_normal'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -177,11 +177,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_severe_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_severe_column(self.beta)]],
                         alias='zscore_grading_hfa_severe'
                     ),
                     SumWhen(
-                        whens={get_age_condition(self.beta): hfa_recorded_in_month_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), hfa_recorded_in_month_column(self.beta)]],
                         alias='height_measured_in_month'
                     )
                 ],
@@ -192,7 +192,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_moderate_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_moderate_column(self.beta)]],
                         alias='zscore_grading_hfa_moderate'
                     ),
                     AliasColumn('height_measured_in_month')
@@ -204,7 +204,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 percent_num,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_normal_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_normal_column(self.beta)]],
                         alias='zscore_grading_hfa_normal'
                     ),
                     AliasColumn('height_measured_in_month')
@@ -287,7 +287,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Children (0 - 28 Days) Seeking Services',
                 SumWhen(
-                    whens={'age_tranche = :age_0': 'valid_in_month'},
+                    whens=[['age_tranche = :age_0', 'valid_in_month']],
                     alias='zero'
                 ),
                 slug='zero'
@@ -295,7 +295,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Children (28 Days - 6 mo) Seeking Services',
                 SumWhen(
-                    whens={'age_tranche = :age_6': 'valid_in_month'},
+                    whens=[['age_tranche = :age_6', 'valid_in_month']],
                     alias='one'
                 ),
                 slug='one'
@@ -303,7 +303,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Children (6 mo - 1 year) Seeking Services',
                 SumWhen(
-                    whens={'age_tranche = :age_12': 'valid_in_month'},
+                    whens=[['age_tranche = :age_12', 'valid_in_month']],
                     alias='two'
                 ),
                 slug='two'
@@ -311,7 +311,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Children (1 year - 3 years) Seeking Services',
                 SumWhen(
-                    whens={'age_tranche = :age_24 OR age_tranche = :age_36': 'valid_in_month'},
+                    whens=[['age_tranche = :age_24 OR age_tranche = :age_36', 'valid_in_month']],
                     alias='three'
                 ),
                 slug='three'
@@ -319,10 +319,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             DatabaseColumn(
                 'Children (3 years - 6 years) Seeking Services',
                 SumWhen(
-                    whens={
-                        'age_tranche = :age_48 OR age_tranche = :age_60 OR age_tranche = :age_72':
-                            'valid_in_month'
-                    },
+                    whens=[[
+                        'age_tranche = :age_48 OR age_tranche = :age_60 OR age_tranche = :age_72',
+                        'valid_in_month'
+                    ]],
                     alias='four'
                 ),
                 slug='four'
