@@ -12,10 +12,10 @@ from corehq.motech.dhis2.repeaters import (
 class IsDhis2VersionTests(SimpleTestCase):
 
     def test_minor_version(self):
-        self.assertTrue(is_dhis2_version('2.34'))
+        self.assertTrue(is_dhis2_version('2.33'))
 
     def test_point_version(self):
-        self.assertTrue(is_dhis2_version('2.34.5'))
+        self.assertTrue(is_dhis2_version('2.33.0'))
 
     def test_2(self):
         with self.assertRaises(BadValueError):
@@ -23,7 +23,7 @@ class IsDhis2VersionTests(SimpleTestCase):
 
     def test_api_version(self):
         with self.assertRaises(BadValueError):
-            is_dhis2_version('34')
+            is_dhis2_version('33')
 
     def test_nan(self):
         with self.assertRaises(BadValueError):
@@ -36,6 +36,10 @@ class IsDhis2VersionTests(SimpleTestCase):
     def test_blank(self):
         with self.assertRaises(BadValueError):
             is_dhis2_version("")
+
+    def test_max(self):
+        with self.assertRaises(BadValueError):
+            is_dhis2_version("2.34.5")
 
 
 class IsDhis2VersionOrBlankTests(SimpleTestCase):
@@ -50,12 +54,12 @@ class IsDhis2VersionOrBlankTests(SimpleTestCase):
 class ApiVersionTests(SimpleTestCase):
 
     def test_2_xy_z(self):
-        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34.5"})
-        self.assertEqual(repeater.api_version, 34)
+        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.33.0"})
+        self.assertEqual(repeater.api_version, 33)
 
     def test_2_xy(self):
-        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.34"})
-        self.assertEqual(repeater.api_version, 34)
+        repeater = Dhis2Repeater.wrap({"dhis2_version": "2.33"})
+        self.assertEqual(repeater.api_version, 33)
 
     def test_none(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": None})

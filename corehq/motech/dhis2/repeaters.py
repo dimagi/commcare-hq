@@ -12,6 +12,7 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.repeaters.models import FormRepeater, Repeater
@@ -25,7 +26,13 @@ from corehq.toggles import DHIS2_INTEGRATION
 
 def is_dhis2_version(value):
     try:
-        major, minor, *the_rest = Version(value).release
+        version = Version(value)
+        major, minor, *the_rest = version.release
+        if version > Version(DHIS2_MAX_VERSION):
+            raise BadValueError(_(
+                f"Versions of DHIS2 higher than {DHIS2_MAX_VERSION} are not "
+                "yet supported."
+            ))
         if major == 2:
             return True
     except (InvalidVersion, TypeError, ValueError):
