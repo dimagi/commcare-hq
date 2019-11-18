@@ -36,7 +36,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -230,16 +230,24 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            uuid.uuid4().hex, NAMESPACE_OTHER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
+
         rows_elem = E.rows()
         row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(data_source.final_column_ids),
                         list(map(str, total_row))
                     )
                 ),
@@ -409,27 +417,20 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_column_ids = data_source.total_column_ids
-        total_cols = {col_id: 0 for col_id in total_column_ids}
-
-        def _update_total_row(row):
-            for col_id in total_column_ids:
-                val = row[col_id]
-                if isinstance(val, numbers.Number):
-                    total_cols[col_id] += val
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            uuid.uuid4().hex, NAMESPACE_OTHER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
-            _update_total_row(row)
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = [
-                str(total_cols.get(col_id, ''))
-                for col_id in data_source.final_column_ids
-            ]
-            if total_row and total_row[0] == '':
-                total_row[0] = ugettext('Total')
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
@@ -439,7 +440,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                 ),
                 row_index + 1,
                 is_total_row=True,
-            ))
+                ))
         return rows_elem
 
     @staticmethod
@@ -462,3 +463,36 @@ def _last_sync_time(domain, user_id):
 
 report_fixture_generator = ReportFixturesProvider()
 report_fixture_v2_generator = ReportFixturesProviderV2()
+
+
+class SQLTotalRowCalculator(object):
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+    def update_totals(self, row):
+        pass
+
+    def get_total_row(self):
+        return self.data_source.get_total_row()
+
+
+class IterativeTotalRowCalculator(SQLTotalRowCalculator):
+    def __init__(self, data_source):
+        super(IterativeTotalRowCalculator, self).__init__(data_source)
+        self.total_column_ids = data_source.total_column_ids
+        self.total_cols = {col_id: 0 for col_id in self.total_column_ids}
+
+    def update_totals(self, row):
+        for col_id in self.total_column_ids:
+            val = row[col_id]
+            if isinstance(val, numbers.Number):
+                self.total_cols[col_id] += val
+
+    def get_total_row(self):
+        total_row = [
+            self.total_cols.get(col_id, '')
+            for col_id in self.data_source.final_column_ids
+        ]
+        if total_row and total_row[0] == '':
+            total_row[0] = ugettext('Total')
+        return total_row

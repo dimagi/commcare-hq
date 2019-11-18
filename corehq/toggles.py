@@ -1786,3 +1786,11 @@ mwcd_indicators = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )
+
+MOBILE_UCR_TOTAL_ROW_ITERATIVE = PredictablyRandomToggle(
+    'mobile_ucr_total_row_iterative_calculation',
+    'Calculate total rows for mobile UCR during iteration instead of using a DB query',
+    TAG_CUSTOM,
+    [NAMESPACE_OTHER],
+    0.0
+)
