@@ -128,12 +128,14 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive('programSummary', function() {
+window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'program-summary.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('program-summary.directive');
+        },
         bindToController: true,
         controller: ProgramSummaryController,
         controllerAs: '$ctrl',
     };
-});
+}]);
