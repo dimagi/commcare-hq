@@ -9,6 +9,7 @@ from datetime import datetime
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from django.conf import settings
 from jinja2 import Template
 from requests import RequestException
 
@@ -323,6 +324,8 @@ def poll_openmrs_atom_feeds(domain_name):
             repeater.requests.notify_error(
                 'Errors importing from Atom feed:\n' + '\n'.join(errors)
             )
+            if settings.UNIT_TESTING:
+                assert False, errors
 
 
 @periodic_task(
