@@ -182,4 +182,6 @@ class TestDhisConfigValidation(SimpleTestCase):
             'commcare_data_type': None,
             'external_data_type': None,
             'direction': None,
+            'value_map': None,
+            'jsonpath': None,
         })
