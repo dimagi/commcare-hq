@@ -12,6 +12,8 @@ from corehq.apps.accounting.bootstrap.config.paused_software_plan import \
     BOOTSTRAP_CONFIG as paused_config
 from corehq.apps.accounting.bootstrap.config.community_v2_software_plan import \
     BOOTSTRAP_CONFIG as new_community_config
+from corehq.apps.accounting.bootstrap.config.pro_v1_software_plan import \
+    BOOTSTRAP_CONFIG as new_pro_config
 
 
 @skip_on_fresh_install
@@ -28,6 +30,7 @@ def _grandfather_basic_privs(apps, schema_editor):
 def _ensure_new_software_plans(apps, schema_editor):
     ensure_plans(paused_config, verbose=True, apps=apps)
     ensure_plans(new_community_config, verbose=True, apps=apps)
+    ensure_plans(new_pro_config, verbose=True, apps=apps)
 
 
 class Migration(migrations.Migration):
