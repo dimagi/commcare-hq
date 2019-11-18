@@ -1473,7 +1473,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
         index_together = [
-            ('case', 'server_date', 'sync_log_id'),
             ('case', 'server_date'),
         ]
         indexes = [models.Index(['form_id'])]
