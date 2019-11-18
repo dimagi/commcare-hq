@@ -106,9 +106,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL": 1
-        }
+        "whens": [
+          ["closed_on IS NULL", 1]
+        ]
       }
     ],
     "sort_expression": [],

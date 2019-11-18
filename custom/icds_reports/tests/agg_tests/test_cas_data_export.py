@@ -9,10 +9,6 @@ from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 
 class TestLocationView(CSVTestCase):
     always_include_columns = {'awc_id', 'case_id'}
-    # indicator numbers:
-    # 1 - child_health_monthly
-    # 2 - ccs_record_monthly
-    # 3 - agg_awc
 
     def _get_data_from_blobdb(self, indicator, state_id, month):
         sync, _ = get_cas_data_blob_file(indicator, state_id, month)
@@ -26,7 +22,7 @@ class TestLocationView(CSVTestCase):
         return rows
 
     def test_child_health_monthly_cas_data(self):
-        indicator = 1
+        indicator = 'child_health_monthly'
         state_id = 'st1'
         month = '2017-05-01'
         csv_data = self._get_data_from_blobdb(indicator, state_id, month)
@@ -45,7 +41,7 @@ class TestLocationView(CSVTestCase):
         )
 
     def test_ccs_record_monthly_cas_data(self):
-        indicator = 2
+        indicator = 'ccs_record_monthly'
         state_id = 'st1'
         month = '2017-05-01'
         csv_data = self._get_data_from_blobdb(indicator, state_id, month)
@@ -64,7 +60,7 @@ class TestLocationView(CSVTestCase):
         )
 
     def test_agg_awc_cas_data(self):
-        indicator = 3
+        indicator = 'agg_awc'
         state_id = 'st1'
         month = '2017-05-01'
         csv_data = self._get_data_from_blobdb(indicator, state_id, month)

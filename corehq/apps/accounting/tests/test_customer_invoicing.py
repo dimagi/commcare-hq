@@ -161,7 +161,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1200.0000'))
+        self.assertEqual(invoice.balance, Decimal('851.6200'))
         self.assertEqual(invoice.account, self.account)
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
@@ -266,14 +266,18 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1200.0000'))
+        self.assertEqual(invoice.balance, Decimal('851.6200'))
         self.assertEqual(invoice.account, self.account)
 
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 1)
         self.assertEqual(
             product_line_items.first().base_description,
-            'One month of CommCare Advanced Edition Software Plan.'
+            None
+        )
+        self.assertEqual(
+            product_line_items.first().unit_description,
+            '22 days of CommCare Advanced Edition Software Plan. (Jul 1 - Jul 22)'
         )
 
         num_feature_line_items = invoice.lineitem_set.get_features().count()

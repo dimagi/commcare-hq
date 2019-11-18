@@ -5,6 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit import BadValueError
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
@@ -12,7 +14,7 @@ from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.repeaters.models import FormRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -56,6 +58,9 @@ class Dhis2Repeater(FormRepeater):
     dhis2_config = SchemaProperty(Dhis2Config)
 
     _has_config = True
+
+    def __str__(self):
+        return Repeater.__str__(self)
 
     def __eq__(self, other):
         return (
@@ -110,14 +115,19 @@ class Dhis2Repeater(FormRepeater):
             self.username,
             self.plaintext_password,
             verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
-                return send_dhis2_event(
-                    requests,
-                    form_config,
-                    payload,
-                )
+                try:
+                    return send_dhis2_event(
+                        requests,
+                        form_config,
+                        payload,
+                    )
+                except (RequestException, HTTPError) as err:
+                    requests.notify_error(f"Error sending Events to {self}: {err}")
+                    raise
         return True
 
 

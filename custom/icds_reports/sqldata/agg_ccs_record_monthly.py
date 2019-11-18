@@ -54,11 +54,11 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 [
 
                     SumWhen(
-                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        whens=[["ccs_status = 'pregnant'", 'anemic_moderate']],
                         alias='anemic_moderate'
                     ),
                     SumWhen(
-                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        whens=[["ccs_status = 'pregnant'", 'anemic_severe']],
                         alias='anemic_severe'
                     ),
                     SumColumn('pregnant', alias='pregnant')
