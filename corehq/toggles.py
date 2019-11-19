@@ -1779,3 +1779,18 @@ mwcd_indicators = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )
+
+RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_submissions',
+    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
+)
