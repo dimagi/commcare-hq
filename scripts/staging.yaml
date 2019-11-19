@@ -57,8 +57,6 @@ branches:
   - MC/SL-229  # Norman Oct 9
   - sr-session-audit  # Sravan Oct 15
   - nh/blank_row  # Norman Oct 28
-  - mk/compare-mm-size-1 # Nov 10
-  - mk/compare-mm-size-2 # Nov 11
   - jls/kill-exchange # Jenny Nov 13
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
