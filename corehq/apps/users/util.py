@@ -17,6 +17,8 @@ from casexml.apps.case.const import (
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
+from django.core.exceptions import ValidationError
+
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -52,7 +54,7 @@ def normalize_username(username, domain=None):
     from django.core.validators import validate_email
 
     if not username:
-        return username
+        raise ValidationError("Invalid username: {}".format(username))
 
     username = str(username)
     username = re.sub(r'\s+', '.', username).lower()
