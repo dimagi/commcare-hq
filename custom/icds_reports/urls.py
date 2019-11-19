@@ -13,8 +13,9 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, MWCDDataView
+    DailyIndicators, MWCDDataView, IcdsDynamicMobileTemplateView
 )
+
 
 dashboard_urls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -126,6 +127,7 @@ awc_infrastructure_urls = [
 
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
+    url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
 
@@ -135,6 +137,8 @@ urlpatterns = [
     url(r'^icds_dashboard/', include(dashboard_urls)),
     url(r'^icds_dashboard_mobile/', include(mobile_dashboard_urls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
+    url(r'^icds-ng-template-mobile/(?P<template>[\w-].+)', IcdsDynamicMobileTemplateView.as_view(),
+        name='icds-ng-template-mobile'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
     url(

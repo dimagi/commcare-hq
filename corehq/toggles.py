@@ -584,7 +584,6 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -609,6 +608,18 @@ REPORT_BUILDER = StaticToggle(
     'Activate Report Builder for a project without setting up a subscription.',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+UCR_SUM_WHEN_TEMPLATES = StaticToggle(
+    'ucr_sum_when_templates',
+    'Allow sum when template columns in dynamic UCRs',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+    ),
+    always_enabled={'icds-cas'},
+    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -1457,13 +1468,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-WAREHOUSE_APP_STATUS = StaticToggle(
-    'warehouse_app_status',
-    "User warehouse backend for the app status report. Currently only for sql domains",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 TRAINING_MODULE = StaticToggle(
