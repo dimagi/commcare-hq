@@ -260,7 +260,7 @@ class ExistingUserValidator(ImportValidator):
                 continue
 
             try:
-                usernames_without_ids.add(normalize_username(username, self.domain))
+                usernames_without_ids.add(normalize_username(str(username), self.domain))
             except ValidationError:
                 pass
 
@@ -272,7 +272,7 @@ class ExistingUserValidator(ImportValidator):
 
     def validate_spec(self, spec):
         try:
-            username = normalize_username(spec.get('username'), self.domain)
+            username = normalize_username(str(spec.get('username')), self.domain)
         except ValidationError:
             return
 
