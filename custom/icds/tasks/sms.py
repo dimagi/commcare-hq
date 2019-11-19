@@ -33,9 +33,8 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
                     f.read(), expiry=24 * 60 * 60, file_extension=file_extention_from_filename(filename),
                     mimetype=Format.from_format(Format.XLS_2007).mimetype,
                     content_disposition='attachment; filename="%s"' % filename)
-            link = "%s%s?%s" % (web.get_url_base(),
-                                reverse('retrieve_download', kwargs={'download_id': cached_download.download_id}),
-                                "get_file")
+            path = reverse('retrieve_download', kwargs={'download_id': cached_download.download_id})
+            link = f"{web.get_url_base()}{path}?get_file"
             message = _("""
             Hi,
             Please download the sms report for last month at {link}.
