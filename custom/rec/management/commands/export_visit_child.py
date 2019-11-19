@@ -67,6 +67,8 @@ def get_imci_visit_id(form_json, xmlns):
             case_type = form_json["subcase_0"]["case"]["create"]["case_type"]
             assert case_type == "imci_visit", "Bad visit case type"
         return form_json["subcase_0"]["case"]["@case_id"]
+    elif xmlns in TREATMENT_FORMS:
+        return form_json["case_case_visit"]["case"]["@case_id"]
     else:
         raise NotImplementedError
 
@@ -74,5 +76,7 @@ def get_imci_visit_id(form_json, xmlns):
 def get_rec_child_id_from_form(form_json, xmlns):
     if xmlns in CLASSIFICATION_FORMS:
         return form_json["case"]["@case_id"]
+    elif xmlns in TREATMENT_FORMS:
+        return form_json["case_case_child"]["case"]["@case_id"]
     else:
         raise NotImplementedError
