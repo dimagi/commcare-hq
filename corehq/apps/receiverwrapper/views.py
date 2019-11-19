@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
+from tastypie.http import HttpTooManyRequests
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -35,7 +36,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -66,7 +67,8 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
-    rate_limit_submission_by_delaying(domain, max_wait=15)
+    if rate_limit_submission(domain):
+        return HttpTooManyRequests()
 
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
