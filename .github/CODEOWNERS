@@ -60,6 +60,8 @@
 
 /custom/aaa/ @emord
 /custom/icds_reports/ @calellowitz @Rohit25negi
+/custom/icds_reports/templates/ @czue
+/custom/icds_reports/static/ @czue
 
 /docs/js-guide/ @orangejenny @millerdev
 

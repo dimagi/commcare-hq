@@ -41,6 +41,8 @@ DHIS2_EVENT_STATUSES = (
 
 LOCATION_DHIS_ID = 'dhis_id'
 
+DHIS2_MAX_VERSION = "2.33.0"
+
 # XMLNS to indicate that a case was updated with data from DHIS2.
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
