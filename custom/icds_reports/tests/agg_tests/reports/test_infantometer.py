@@ -209,10 +209,6 @@ class TestInfantometer(TestCase):
                         "color": MapColors.BLUE,
                         "values": [
                             [
-                                "s1",
-                                0
-                            ],
-                            [
                                 "s3",
                                 0.0
                             ],
