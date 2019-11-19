@@ -16,10 +16,10 @@ def create_update_pl_proxy_config():
     if not (settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE):
         return noop_migration()
 
-    drop_server_sql = get_drop_server_sql()
+    drop_server_sql = get_drop_server_sql(settings.PL_PROXY_CLUSTER_NAME)
     sql_statements = [
-        get_pl_proxy_server_config_sql(partition_config.get_shards()),
-        get_user_mapping_sql()
+        get_pl_proxy_server_config_sql(settings.PL_PROXY_CLUSTER_NAME, partition_config.get_shards()),
+        get_user_mapping_sql(partition_config)
     ]
 
     return migrations.RunSQL(

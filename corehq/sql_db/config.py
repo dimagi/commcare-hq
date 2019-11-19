@@ -68,6 +68,10 @@ class PlProxyConfig(object):
     shard_count = attr.ib()
 
     @property
+    def cluster_name(self):
+        return settings.PL_PROXY_CLUSTER_NAME
+
+    @property
     def form_processing_dbs(self):
         return list(self.shard_map)
 
