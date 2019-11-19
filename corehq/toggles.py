@@ -323,7 +323,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         label,
         tag,
         namespaces,
-        default_randomness=0,
+        default_randomness=0.0,
         help_link=None,
         description=None,
         always_disabled=None
