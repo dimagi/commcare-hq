@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 else:
                     logger.info("{}: Could not find app".format(log_prefix))
 
-            for action in doc['actions']:
+            for action in doc.get('actions', []):
                 if action.get('form_unique_id', None) and not action.get('app_id', None):
                     action['app_id'] = get_app_id_from_form_unique_id(doc['domain'], action['form_unique_id'])
                     if action['app_id']:
