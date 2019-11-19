@@ -95,6 +95,7 @@ markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
 openpyxl==2.6.4
+packaging==19.2
 pbr==5.4.3                # via mock
 pdfrw==0.4                # via weasyprint
 phonenumberslite==8.10.22
@@ -111,6 +112,7 @@ pygithub==1.35
 pygments==2.4.2
 pygooglechart==0.4.0
 pyjwt==1.7.1              # via pygithub, twilio
+pyparsing==2.4.5          # via packaging
 pyphen==0.9.5             # via weasyprint
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
