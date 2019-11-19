@@ -9,9 +9,11 @@ import sys
 
 from django.core.management import BaseCommand
 
+from casexml.apps.case.models import CommCareCase
 from couchforms.dbaccessors import get_forms_by_id, iter_form_ids_by_xmlns
-from custom.rec.collections import dicts_or
 from dimagi.utils.chunked import chunked
+
+from custom.rec.collections import dicts_or
 
 DOMAIN = "rec"
 CLASSIFICATION_FORMS = {
@@ -49,12 +51,17 @@ def main():
         form_ids = iter_form_ids_by_xmlns(DOMAIN, xmlns)
         for form_ids_chunk in chunked(form_ids, 500):
             couch_forms = get_forms_by_id(form_ids_chunk)
+            visit_id_to_child_id, visit_ids_missing_child_ids = map_visit_to_child_from_forms(couch_forms, xmlns)
+            visit_id_to_child_id.update(
+                map_visit_to_child_from_visit_cases(visit_ids_missing_child_ids)
+            )
             for couch_form in couch_forms:
+                imci_visit_id = get_imci_visit_id(couch_form.form, xmlns)
                 row = (
                     couch_form.form_id,
                     xmlns,
-                    get_imci_visit_id(couch_form.form, xmlns),
-                    get_rec_child_id_from_form(couch_form.form, xmlns),
+                    imci_visit_id,
+                    visit_id_to_child_id[imci_visit_id],
                     couch_form.received_on.isoformat(),
                 )
                 print(",".join(row))
@@ -73,10 +80,37 @@ def get_imci_visit_id(form_json, xmlns):
         raise NotImplementedError
 
 
+def map_visit_to_child_from_forms(couch_forms, xmlns):
+    visit_id_to_child_id = {}
+    visit_ids_without_child_ids = set()
+    for couch_form in couch_forms:
+        visit_id = get_imci_visit_id(couch_form.form, xmlns)
+        child_id = get_rec_child_id_from_form(couch_form.form, xmlns)
+        if child_id:
+            visit_id_to_child_id[visit_id] = child_id
+        else:
+            visit_ids_without_child_ids.add(visit_id)
+    return visit_id_to_child_id, list(visit_ids_without_child_ids)
+
+
 def get_rec_child_id_from_form(form_json, xmlns):
     if xmlns in CLASSIFICATION_FORMS:
         return form_json["case"]["@case_id"]
     elif xmlns in TREATMENT_FORMS:
-        return form_json["case_case_child"]["case"]["@case_id"]
+        if "case_case_child" in form_json:
+            return form_json["case_case_child"]["case"]["@case_id"]
     else:
         raise NotImplementedError
+
+
+def map_visit_to_child_from_visit_cases(visit_ids):
+    visits = CommCareCase.view('_all_docs', keys=visit_ids, include_docs=True)
+    return {v.case_id: get_rec_child_id_from_visit(v) for v in visits}
+
+
+def get_rec_child_id_from_visit(visit_case):
+    for index in visit_case.indices:
+        if index.identifier == "parent" and index.referenced_type == "rec_child":
+            return index.referenced_id
+    else:
+        raise ValueError(f'imci_visit {visit_case.case_id!r} missing rec_child index')
