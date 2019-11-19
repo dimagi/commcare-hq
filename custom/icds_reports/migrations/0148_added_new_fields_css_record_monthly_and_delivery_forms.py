@@ -23,36 +23,5 @@ class Migration(migrations.Migration):
             model_name='aggregateccsrecorddeliveryforms',
             name='still_live_birth',
             field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='husband_name',
-            field=models.TextField(null=True),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='lmp',
-            field=models.DateField(null=True),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='migration_status',
-            field=models.PositiveSmallIntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='where_born',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='num_children_del',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children born'),
-        ),
-        migrations.AddField(
-            model_name='ccsrecordmonthly',
-            name='still_live_birth',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
-        ),
-
+        )
     ]
