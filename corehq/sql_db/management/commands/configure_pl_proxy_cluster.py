@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.config import ShardMeta, partition_config
+from corehq.sql_db.config import ShardMeta, plproxy_config
 
 SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 
@@ -51,7 +51,6 @@ class Command(BaseCommand):
             print("System not configured to use a partitioned database")
 
         verbose = options['verbose']
-        plproxy_config = partition_config
         existing_config = _get_existing_cluster_config(plproxy_config)
         if existing_config:
             if options['create_only']:
@@ -85,9 +84,9 @@ def _is_shard_option(option):
     return SHARD_OPTION_RX.match(option)
 
 
-def _update_pl_proxy_cluster(plproxy_config, existing_config, verbose):
+def _update_pl_proxy_cluster(cluster_config, existing_config, verbose):
     existing_shards = _get_current_shards(existing_config)
-    new_shard_configs = plproxy_config.get_shards()
+    new_shard_configs = cluster_config.get_shards()
 
     if verbose:
         print('{0} Existing config {0}'.format('-' * 42))
@@ -107,11 +106,11 @@ def _update_pl_proxy_cluster(plproxy_config, existing_config, verbose):
                 new.get_server_option_string()
             ))
         if _confirm("Update these shards?"):
-            alter_sql = _get_alter_server_sql(plproxy_config.cluster_name, shards_to_update)
+            alter_sql = _get_alter_server_sql(cluster_config.cluster_name, shards_to_update)
             if verbose:
                 print(alter_sql)
 
-            with connections[plproxy_config.proxy_db].cursor() as cursor:
+            with connections[cluster_config.proxy_db].cursor() as cursor:
                 cursor.execute(alter_sql)
         else:
             print('Abort')
@@ -129,15 +128,15 @@ def _get_alter_server_sql(cluster_name, shards_to_update):
     )
 
 
-def create_pl_proxy_cluster(plproxy_config, verbose=False, drop_existing=False):
-    proxy_db = plproxy_config.proxy_db
+def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
+    proxy_db = cluster_config.proxy_db
 
     if drop_existing:
         with connections[proxy_db].cursor() as cursor:
-            cursor.execute(get_drop_server_sql(plproxy_config.cluster_name))
+            cursor.execute(get_drop_server_sql(cluster_config.cluster_name))
 
-    config_sql = get_pl_proxy_server_config_sql(plproxy_config.cluster_name, plproxy_config.get_shards())
-    user_mapping_sql = get_user_mapping_sql(plproxy_config)
+    config_sql = get_pl_proxy_server_config_sql(cluster_config.cluster_name, cluster_config.get_shards())
+    user_mapping_sql = get_user_mapping_sql(cluster_config)
 
     if verbose:
         print('Running SQL')
@@ -153,10 +152,10 @@ def get_drop_server_sql(cluster_name):
     return 'DROP SERVER IF EXISTS {} CASCADE;'.format(cluster_name)
 
 
-def _get_existing_cluster_config(plproxy_config):
-    proxy_db = plproxy_config.proxy_db
+def _get_existing_cluster_config(cluster_config):
+    proxy_db = cluster_config.proxy_db
     with connections[proxy_db].cursor() as cursor:
-        cursor.execute('SELECT * from pg_foreign_server where srvname = %s', [plproxy_config.cluster_name])
+        cursor.execute('SELECT * from pg_foreign_server where srvname = %s', [cluster_config.cluster_name])
         results = list(fetchall_as_namedtuple(cursor))
         if results:
             return results[0]
@@ -173,10 +172,10 @@ def get_pl_proxy_server_config_sql(cluster_name, shards):
     return server_sql
 
 
-def get_user_mapping_sql(plproxy_config):
-    proxy_db = plproxy_config.proxy_db
+def get_user_mapping_sql(cluster_config):
+    proxy_db = cluster_config.proxy_db
     proxy_db_config = settings.DATABASES[proxy_db].copy()
-    proxy_db_config['server_name'] = plproxy_config.cluster_name
+    proxy_db_config['server_name'] = cluster_config.cluster_name
     return USER_MAPPING_TEMPLATE.format(**proxy_db_config)
 
 

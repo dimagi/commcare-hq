@@ -220,6 +220,6 @@ def _get_shard_count(shard_ranges):
     return len(shards)
 
 
-partition_config = None
+plproxy_config = None
 if settings.USE_PARTITIONED_DATABASE:
-    partition_config = PlProxyConfig.from_settings()
+    plproxy_config = PlProxyConfig.from_settings()
