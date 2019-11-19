@@ -187,7 +187,7 @@ class AppTranslationsGenerator(object):
         :param module_index: index of module in the app
         :return: name like module_moduleUniqueId
         """
-        _module = self.app.get_module(module_index])
+        _module = self.app.get_module(module_index)
         sheet_name = "_".join(["module", _module.unique_id])
         self.slug_to_name[_module.unique_id] = _module.name
         return sheet_name
