@@ -14,57 +14,45 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='AggregateCcsRecordComplementaryFeedingForms',
-            fields=[
-                ('state_id', models.CharField(max_length=40)),
-                ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
-                ('case_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('latest_time_end_processed', models.DateTimeField(help_text='The latest form.meta.timeEnd that has been processed for this case')),
-                ('valid_visits', models.PositiveSmallIntegerField(default=0, help_text='number of qualified visits for the incentive report')),
-            ],
-            options={
-                'db_table': 'icds_dashboard_ccs_record_cf_forms',
-            },
-        ),
         migrations.AddField(
-            model_name='aggregatebirthpreparednesforms',
-            name='valid_visits',
-            field=models.PositiveSmallIntegerField(default=0, help_text='number of qualified visits for the incentive report'),
+            model_name='aggregateccsrecorddeliveryforms',
+            name='num_children_del',
+            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children born'),
         ),
         migrations.AddField(
             model_name='aggregateccsrecorddeliveryforms',
-            name='valid_visits',
-            field=models.PositiveSmallIntegerField(default=0, help_text='number of qualified visits for the incentive report'),
+            name='still_live_birth',
+            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
         ),
         migrations.AddField(
-            model_name='aggregateccsrecordpostnatalcareforms',
-            name='valid_visits',
-            field=models.PositiveSmallIntegerField(default=0, help_text='number of qualified visits for the incentive report'),
+            model_name='ccsrecordmonthly',
+            name='husband_name',
+            field=models.TextField(null=True),
         ),
-        migrations.CreateModel(
-            name='AWWIncentiveReport',
-            fields=[
-                ('state_id', models.CharField(max_length=40)),
-                ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
-                ('awc_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('block_id', models.CharField(max_length=40)),
-                ('state_name', models.TextField(null=True)),
-                ('district_name', models.TextField(null=True)),
-                ('block_name', models.TextField(null=True)),
-                ('supervisor_name', models.TextField(null=True)),
-                ('awc_name', models.TextField(null=True)),
-                ('aww_name', models.TextField(null=True)),
-                ('contact_phone_number', models.TextField(null=True)),
-                ('wer_weighed', models.SmallIntegerField(null=True)),
-                ('wer_eligible', models.SmallIntegerField(null=True)),
-                ('awc_num_open', models.SmallIntegerField(null=True)),
-                ('valid_visits', models.SmallIntegerField(null=True)),
-                ('expected_visits', models.SmallIntegerField(null=True)),
-            ],
-            options={
-                'db_table': 'icds_dashboard_aww_incentive',
-            },
+        migrations.AddField(
+            model_name='ccsrecordmonthly',
+            name='lmp',
+            field=models.DateField(null=True),
         ),
-        migrator.get_migration('update_tables29.sql')
+        migrations.AddField(
+            model_name='ccsrecordmonthly',
+            name='migration_status',
+            field=models.PositiveSmallIntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name='ccsrecordmonthly',
+            name='where_born',
+            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
+        ),
+        migrations.AddField(
+            model_name='ccsrecordmonthly',
+            name='num_children_del',
+            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children born'),
+        ),
+        migrations.AddField(
+            model_name='ccsrecordmonthly',
+            name='still_live_birth',
+            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
+        ),
+
     ]

@@ -179,7 +179,19 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     person_case_id = models.TextField(blank=True, null=True)
     husband_name = models.TextField(blank=True, null=True)
     lmp = models.DateField(blank=True, null=True)
-    migration_status = models.TextField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children alive"
+    )
 
     class Meta(object):
         managed = False
