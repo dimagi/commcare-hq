@@ -19,6 +19,14 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
+    (SoftwarePlanEdition.STANDARD, False, False): {
+        'role': 'standard_plan_v1',
+        'product_rate_monthly_fee': Decimal('300.00'),
+        'feature_rates': {
+            FeatureType.USER: dict(monthly_limit=125, per_excess_fee=Decimal('2.00')),
+            FeatureType.SMS: dict(monthly_limit=50),
+        },
+    },
     (SoftwarePlanEdition.PRO, False, False): {
         'role': 'pro_plan_v1',
         'product_rate_monthly_fee': Decimal('600.00'),
