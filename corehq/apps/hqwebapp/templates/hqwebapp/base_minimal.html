@@ -20,6 +20,11 @@
         {# do not override this block, use initial_page_data template tag to populate #}
       {% endblock %}
     </div>
+    <div class="initial-analytics-data hide">
+      {% block initial_analytics_data %}
+        {# do not override this block, use initial_analytics_data template tag to populate #}
+      {% endblock %}
+    </div>
     <div class="commcarehq-urls" class="hide">
       {% block registered_urls %}
         {# do not override this block, use registerurl template tag to populate #}
