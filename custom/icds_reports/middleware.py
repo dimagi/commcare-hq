@@ -8,7 +8,9 @@ from custom.icds_reports.urls import DASHBOARD_URL_GROUPS
 exclude_urls = (
     'have_access_to_location',
     'icds-ng-template',
-    'locations'
+    'locations',
+    'mwcd_indicators',
+    'data_export_api'
 )
 
 AUDIT_URLS = frozenset(

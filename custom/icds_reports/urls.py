@@ -20,7 +20,6 @@ from custom.icds_reports.views import (
 dashboard_urls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
-    url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
     url('^', DashboardView.as_view(), name='icds_dashboard'),
 ]
 
@@ -170,6 +169,7 @@ urlpatterns = [
     url(r'^ap_webservice', APWebservice.as_view(), name='ap_webservice'),
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
+    url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
 
 ]
 
