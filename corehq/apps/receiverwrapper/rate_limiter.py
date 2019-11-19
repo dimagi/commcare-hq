@@ -5,7 +5,7 @@ from corehq.project_limits.rate_limiter import (
     RateDefinition,
     RateLimiter,
 )
-from corehq.toggles import RATE_LIMIT_SUBMISSIONS
+from corehq.toggles import RATE_LIMIT_SUBMISSIONS, NAMESPACE_DOMAIN
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
@@ -48,7 +48,7 @@ SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UN
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission(domain):
-    if RATE_LIMIT_SUBMISSIONS.enabled(domain):
+    if RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
         return _rate_limit_submission(domain)
     else:
         _rate_limit_submission_by_delaying(domain, max_wait=15)
