@@ -1,6 +1,5 @@
 import uuid
 import warnings
-from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
@@ -9,17 +8,6 @@ from django.utils.translation import ugettext as _
 import jsonfield
 from couchdbkit.exceptions import ResourceNotFound
 
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    DecimalProperty,
-    DictProperty,
-    Document,
-    StringProperty,
-)
-from dimagi.utils.couch.database import iter_docs
-
-# move these too
 from corehq.apps.commtrack.exceptions import (
     DuplicateProductCodeException,
     InvalidProductException,
@@ -30,16 +18,6 @@ class ProductQueriesMixin(object):
 
     def product_ids(self):
         return self.values_list('product_id', flat=True)
-
-    def couch_products(self, wrapped=True):
-        """
-        Returns the couch products corresponding to this queryset.
-        """
-        ids = self.product_ids()
-        products = iter_docs(Product.get_db(), ids)
-        if wrapped:
-            return map(Product.wrap, products)
-        return products
 
 
 class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
