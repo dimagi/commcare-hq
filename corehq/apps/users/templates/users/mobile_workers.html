@@ -104,32 +104,46 @@
                 <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
               </div>
               <div class="modal-body">
-                <div class="alert alert-info">
-                  {% url 'domain_select_plan' domain as change_plan_url %}
+                <div class="alert alert-info text-center">
+                  <p class="lead">
+                    <i class="fa fa-warning"></i>
+                    {% blocktrans %}
+                      Mobile Worker Limit Reached
+                    {% endblocktrans %}
+                  </p>
                   <p>
                     {% blocktrans with request.plan.user_limit as u %}
-                      <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
-                      Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
-                      confirm your project's billing information.
+                      You have reached the limit of <strong>{{ u }}
+                      Mobile Workers</strong> included with your plan.
                     {% endblocktrans %}
                   </p>
-                  <p>
-                    {% blocktrans with request.plan.user_fee as u %}
-                      There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
-                    {% endblocktrans %}
-                  </p>
-                  <p>
-                    {% if not can_edit_billing_info %}
+                  {% if can_edit_billing_info %}
+                    <p>
                       {% blocktrans %}
-                        Note: You must be an admin web user to confirm your Billing Information.
+                        Please subscribe to a paid plan in order to add
+                        more Mobile Workers.
                       {% endblocktrans %}
-                    {% endif %}
-                  </p>
+                    </p>
+                  {% else %}
+                    <p>
+                      {% blocktrans %}
+                        Please ask your billing administrator to subscribe
+                        to a paid plan in order to add more Mobile Workers.
+                      {% endblocktrans %}
+                    </p>
+                  {% endif %}
                 </div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
+                <button type="button"
+                        class="btn btn-default"
+                        data-dismiss="modal">
+                  {% trans 'Cancel' %}
+                </button>
+                <a href="{% url 'domain_select_plan' domain %}"
+                   class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">
+                  {% trans 'Subscribe to Plan' %}
+                </a>
               </div>
             </div>
           </div>
