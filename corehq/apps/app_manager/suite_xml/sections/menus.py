@@ -157,24 +157,12 @@ class MenuContributor(SuiteContributorByModule):
                         })
                         menu = LocalizedMenu(**menu_kwargs)
                     else:
-                        if (module.put_in_root
-                                and module.root_module
-                                and not module.root_module.put_in_root):
-                            # Mobile will combine this module with its parent
-                            # Reference the parent's name to avoid ambiguity
-                            locale_kwargs = {
-                                'locale_id': get_module_locale_id(module.root_module),
-                                'enum_text': get_module_enum_text(module.root_module),
-                            }
-                        else:
-                            locale_kwargs = {
-                                'locale_id': get_module_locale_id(module),
-                                'enum_text': get_module_enum_text(module),
-                            }
                         menu_kwargs.update({
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
-                        }, **locale_kwargs)
+                            'locale_id': get_module_locale_id(module),
+                            'enum_text': get_module_enum_text(module),
+                        })
                         menu = Menu(**menu_kwargs)
 
                     excluded_form_ids = []

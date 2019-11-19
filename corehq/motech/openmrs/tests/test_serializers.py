@@ -4,7 +4,10 @@ import doctest
 from django.test import SimpleTestCase
 
 import corehq.motech.openmrs.serializers
-from corehq.motech.openmrs.serializers import to_omrs_datetime
+from corehq.motech.openmrs.serializers import (
+    omrs_timestamp_to_datetime,
+    to_omrs_datetime,
+)
 
 
 class SerializerTests(SimpleTestCase):
@@ -47,6 +50,10 @@ class SerializerTests(SimpleTestCase):
         day_int = 1
         openmrs_timestamp = to_omrs_datetime(day_int)
         self.assertIsNone(openmrs_timestamp)
+
+    def test_omrs_timestamp_to_date_none(self):
+        value = omrs_timestamp_to_datetime(None)
+        self.assertIsNone(value)
 
 
 def test_doctests():

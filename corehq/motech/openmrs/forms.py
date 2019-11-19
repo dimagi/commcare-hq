@@ -1,5 +1,3 @@
-import logging
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
@@ -15,9 +13,6 @@ from corehq.motech.openmrs.const import (
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
 )
-from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
-from corehq.motech.utils import b64_aes_encrypt
 
 
 class OpenmrsConfigForm(forms.Form):
@@ -76,9 +71,12 @@ class OpenmrsImporterForm(forms.Form):
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    notify_addresses_str = forms.CharField(label=_('Addresses to send notifications'), required=False,
+                                           help_text=_('A comma-separated list of email addresses to send error '
+                                                       'notifications'))
     location_id = forms.CharField(label=_('Location ID'), required=False,
-                                  help_text='If a project space has multiple OpenMRS servers to import from, for '
-                                            'which CommCare location is this OpenMRS server authoritative?')
+                                  help_text=_('If a project space has multiple OpenMRS servers to import from, '
+                                              'for which CommCare location is this OpenMRS server authoritative?'))
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
@@ -101,43 +99,3 @@ class OpenmrsImporterForm(forms.Form):
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
-
-    def clean(self):
-        cleaned_data = super(OpenmrsImporterForm, self).clean()
-        if bool(cleaned_data.get('owner_id')) == bool(cleaned_data.get('location_type_name')):
-            message = _(
-                'The owner of imported patient cases is determined using either "{owner_id}" or '
-                '"{location_type_name}". Please specify either one or the other.').format(
-                owner_id=_owner_id_label, location_type_name=_location_type_name_label)
-            self.add_error('owner_id', message)
-            self.add_error('location_type_name', message)
-        return self.cleaned_data
-
-    def save(self, domain_name):
-        try:
-            importers = get_openmrs_importers_by_domain(domain_name)
-            importer = importers[0] if importers else None  # TODO: Support multiple
-            if importer is None:
-                importer = OpenmrsImporter(domain=domain_name)
-            importer.server_url = self.cleaned_data['server_url']
-            importer.username = self.cleaned_data['username']
-            if self.cleaned_data['password']:
-                # Don't save it if it hasn't been changed.
-                importer.password = b64_aes_encrypt(self.cleaned_data['password'])
-            importer.location_id = self.cleaned_data['location_id']
-            importer.import_frequency = self.cleaned_data['import_frequency']
-            importer.log_level = self.cleaned_data['log_level']
-
-            importer.report_uuid = self.cleaned_data['report_uuid']
-            importer.report_params = self.cleaned_data['report_params']
-            importer.case_type = self.cleaned_data['case_type']
-            importer.owner_id = self.cleaned_data['owner_id']
-            importer.location_type_name = self.cleaned_data['location_type_name']
-            importer.external_id_column = self.cleaned_data['external_id_column']
-            importer.name_columns = self.cleaned_data['name_columns']
-            importer.column_map = list(map(ColumnMapping.wrap, self.cleaned_data['column_map']))
-            importer.save()
-            return True
-        except Exception as err:
-            logging.error('Unable to save OpenMRS Importer: %s' % err)
-            return False

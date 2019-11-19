@@ -30,6 +30,10 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'PROXY': True,
+                'PLPROXY_HOST': 'localhost'
+            }
         },
         'p1': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -41,6 +45,9 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'SHARDS': [0, 1],
+            }
         },
         'p2': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -52,36 +59,11 @@ if USE_PARTITIONED_DATABASE:
             'TEST': {
                 'SERIALIZE': False,
             },
+            'PLPROXY': {
+                'SHARDS': [2, 3],
+            }
         },
-        'warehouse': {
-             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-             'NAME': 'commcarehq_warehouse',
-             'USER': 'commcarehq',
-             'PASSWORD': 'commcarehq',
-             'HOST': 'postgres',
-             'PORT': '5432',
-             'TEST': {
-                 'SERIALIZE': False,
-             },
-         },
     })
-
-    PARTITION_DATABASE_CONFIG = {
-        'shards': {
-            'p1': [0, 1],
-            'p2': [2, 3]
-        },
-        'groups': {
-            'main': ['default'],
-            'proxy': ['proxy'],
-            'form_processing': ['p1', 'p2'],
-        },
-        'host_map': {
-            'postgres': 'localhost'
-        }
-    }
-
-    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
@@ -191,29 +173,30 @@ AUDIT_ADMIN_VIEWS = False
 SECRET_KEY = 'secrettravis'
 
 # No logging
-LOCAL_LOGGING_HANDLERS = {
-    'null': {
-        'level': 'DEBUG',
-        'class': 'logging.NullHandler',
+LOCAL_LOGGING_CONFIG = {
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        }
     },
-}
-
-LOCAL_LOGGING_LOGGERS = {
-    '': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
-    'pillowtop': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
-    'notify': {
-        'level': 'CRITICAL',
-        'handler': 'null',
-        'propagate': True,
-    },
+    'loggers': {
+        '': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+        'pillowtop': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+        'notify': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': True,
+        },
+    }
 }
 
 

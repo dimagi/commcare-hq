@@ -172,7 +172,7 @@ class SimpleScheduleTests(SimpleTestCase):
         self.assertEqual(len(schedules), 1)
 
         self.assertIsNone(schedules[0].ended)
-        self.assertEquals(schedules[0].started.isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
+        self.assertEqual(schedules[0].started.isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
         self.assertTrue(schedules[0].is_current)
         test_patient.rm_last_schedule()
         updated_schedules = test_patient.get_schedules()
@@ -193,10 +193,10 @@ class ScheduleTests(TestCase):
         # verify that tail is <date> - null
         api_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(api_schedules[-1]['ended'])
-        self.assertEquals(api_schedules[-1]['started'],
+        self.assertEqual(api_schedules[-1]['started'],
                           '2011-02-25T14:05:32Z')
 
-        self.assertEquals(len(api_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
+        self.assertEqual(len(api_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
 
         # add a new schedule, verify tail is <date>-present, and [-2] is <datex> - <datey>
 
@@ -204,9 +204,9 @@ class ScheduleTests(TestCase):
 
         updated_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(updated_schedules[-1]['ended'])
-        self.assertEquals(len(updated_schedules), len(WEEKLY_SCHEDULE_EXAMPLES)+1)
+        self.assertEqual(len(updated_schedules), len(WEEKLY_SCHEDULE_EXAMPLES)+1)
 
-        self.assertEquals(updated_schedules[-1]['started'][0:10], datetime.utcnow().isoformat()[0:10])
+        self.assertEqual(updated_schedules[-1]['started'][0:10], datetime.utcnow().isoformat()[0:10])
 
         self.assertIsNotNone(updated_schedules[-2]['ended'])
         self.assertLess(updated_schedules[-2]['ended'], datetime.utcnow().isoformat())
@@ -218,7 +218,7 @@ class ScheduleTests(TestCase):
         loaded_patient.rm_last_schedule()
 
         removed_schedules = loaded_patient.get_schedules(raw_json=True)
-        self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
+        self.assertEqual(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
         self.assertIsNone(removed_schedules[-1]['ended'])
-        self.assertEquals(removed_schedules[-1]['started'],
+        self.assertEqual(removed_schedules[-1]['started'],
                           '2011-02-25T14:05:32Z')

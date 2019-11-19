@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -21,6 +21,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_start_15yr = self.month_start - relativedelta(years=15)
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
+
+    @property
+    def child_temp_tablename(self):
+        return get_child_health_temp_tablename(self.month_start)
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -44,11 +48,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     def tablename(self):
         return self._tablename_func(5)
 
-    def _ucr_tablename(self, ucr_id):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
     def aggregation_query(self):
         return """
         INSERT INTO "{tablename}"
@@ -69,12 +68,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
-                THEN 1 ELSE 0 END,
-            CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
-                THEN 1 ELSE 0 END,
+            CASE WHEN vhnd_conducted is not null and vhnd_conducted>0 THEN 1 ELSE 0 END,
+            CASE WHEN cbe_conducted is not null and cbe_conducted>1 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
             0,
@@ -82,23 +77,30 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             0,
             0
             FROM awc_location_local awc_location
-            LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
-            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN (
+                        select awc_id,
+                               count(*) as cbe_conducted from
+                            "{cbe_table}"
+                                WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s
+                                GROUP BY awc_id
+                        ) cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN (
+                        SELECT awc_id,
+                               count(*) as vhnd_conducted from
+                                "{vhnd_table}"
+                                WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s
+                                GROUP BY awc_id
+                        ) vhnd_table on awc_location.doc_id = vhnd_table.awc_id
             LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
                                                 thr_v2.month = %(start_date)s
                                                 )
             WHERE awc_location.aggregation_level = 5
-            GROUP BY awc_location.state_id,
-            awc_location.district_id,
-            awc_location.block_id,
-            awc_location.supervisor_id,
-            awc_location.doc_id,
-            thr_distribution_image_count
         )
         """.format(
             tablename=self.tablename,
-            cbe_table=self._ucr_tablename('static-cbe_form'),
-            vhnd_table=self._ucr_tablename('static-vhnd_form'),
+            cbe_table=get_table_name(self.domain, 'static-cbe_form'),
+            vhnd_table=get_table_name(self.domain, 'static-vhnd_form'),
+
             thr_v2_table=AGG_THR_V2_TABLE
         ), {
             'start_date': self.month_start
@@ -163,7 +165,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             wer_eligible = ut.wer_eligible,
             wer_eligible_0_2 = ut.wer_eligible_0_2,
             wer_weighed_0_2 = ut.wer_weighed_0_2,
-            cases_person_beneficiary_v2 = ut.cases_child_health
+            cases_person_beneficiary_v2 = ut.cases_child_health,
+            thr_eligible_child = thr_eligible,
+            thr_rations_21_plus_distributed_child = rations_21_plus_distributed
         FROM (
             SELECT
                 awc_id,
@@ -173,7 +177,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(nutrition_status_weighed) AS wer_weighed,
                 sum(wer_eligible) AS wer_eligible,
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
-                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
+                sum(thr_eligible) as thr_eligible,
+                sum(rations_21_plus_distributed) as rations_21_plus_distributed
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -198,7 +204,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 agg_cf.supervisor_id=ucr.supervisor_id
             )
             WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
-                date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                date_trunc('month', ucr.closed_on)::DATE > %(start_date)s) AND
                 date_trunc('month', ucr.opened_on) <= %(start_date)s
             GROUP BY ucr.awc_id;
         UPDATE "{tablename}" agg_awc SET
@@ -238,7 +244,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_home_visit";
         """.format(
             tablename=self.tablename,
-            ccs_record_case_ucr=self._ucr_tablename('static-ccs_record_cases'),
+            ccs_record_case_ucr=get_table_name(self.domain, 'static-ccs_record_cases'),
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
@@ -266,7 +272,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_household";
         """.format(
             tablename=self.tablename,
-            household_cases=self._ucr_tablename('static-household_cases'),
+            household_cases=get_table_name(self.domain, 'static-household_cases'),
         ), {'end_date': self.month_end}
 
         yield """
@@ -312,7 +318,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_person";
         """.format(
             tablename=self.tablename,
-            ucr_tablename=self._ucr_tablename('static-person_cases_v3'),
+            ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
             seeking_services=(
                 "CASE WHEN "
                 "registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 "
@@ -344,7 +350,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_child";
         """.format(
             tablename=self.tablename,
-            child_health_monthly="child_health_monthly",
+            child_health_monthly=self.child_temp_tablename,
         ), {
             "month": self.month_start
         }
@@ -421,7 +427,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_usage";
         """.format(
             tablename=self.tablename,
-            usage_table=self._ucr_tablename('static-usage_forms'),
+            usage_table=get_table_name(self.domain, 'static-usage_forms'),
         ), {
             'start_date': self.month_start
         }
@@ -431,6 +437,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             infra_last_update_date = ut.infra_last_update_date,
             infra_type_of_building = ut.infra_type_of_building,
             infra_clean_water = ut.infra_clean_water,
+            toilet_facility = ut.toilet_facility,
+            type_toilet = ut.type_toilet,
+            preschool_kit_available = ut.preschool_kit_available,
+            preschool_kit_usable = ut.preschool_kit_usable,
             infra_functional_toilet = ut.infra_functional_toilet,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
@@ -440,7 +450,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             infra_adequate_space_pse = ut.infra_adequate_space_pse,
             electricity_awc = ut.electricity_awc,
             infantometer = ut.infantometer,
-            stadiometer = ut.stadiometer
+            stadiometer = ut.stadiometer,
+            awc_with_gm_devices = ut.awc_with_gm_devices
         FROM (
             SELECT
                 awc_id,
@@ -453,6 +464,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                   WHEN awc_building = 4 THEN 'partial_covered_space'
                 ELSE NULL END AS infra_type_of_building,
                 CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
+                toilet_facility,
+                type_toilet,
+                preschool_kit_available,
+                preschool_kit_usable,
                 toilet_functional AS infra_functional_toilet,
                 baby_scale_usable AS infra_baby_weighing_scale,
                 GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
@@ -464,7 +479,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse,
                 electricity_awc AS electricity_awc,
                 infantometer_usable AS infantometer,
-                stadiometer_usable AS stadiometer
+                stadiometer_usable AS stadiometer,
+                CASE WHEN GREATEST(adult_scale_available, adult_scale_usable, baby_scale_available,
+                              flat_scale_available, baby_scale_usable,
+                              infantometer_usable, stadiometer_usable, 0) > 0 THEN 1 ELSE 0 END as awc_with_gm_devices
             FROM icds_dashboard_infrastructure_forms
             WHERE month = %(start_date)s
         ) ut
@@ -579,6 +597,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('usage_awc_num_active',),
             ('infra_last_update_date', 'NULL'),
             ('infra_type_of_building', 'NULL'),
+            ('toilet_facility', 'NULL'),
+            ('type_toilet', 'NULL'),
+            ('preschool_kit_available',),
+            ('preschool_kit_usable',),
             ('infra_clean_water',),
             ('infra_functional_toilet',),
             ('infra_baby_weighing_scale',),
@@ -617,9 +639,12 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('thr_distribution_image_count',),
+            ('thr_eligible_child',),
+            ('thr_rations_21_plus_distributed_child',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
+            ('awc_with_gm_devices', 'COALESCE(sum(awc_with_gm_devices), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
             ('state_is_test', 'MAX(state_is_test)'),

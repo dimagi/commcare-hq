@@ -11,6 +11,8 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.toggles import NAMESPACE_DOMAIN
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
@@ -43,9 +45,9 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     can_download_data_files,
     has_permission_to_view_report,
+    ODATA_FEED_PERMISSION,
 )
 from corehq.blobs.exceptions import NotFound
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -67,6 +69,16 @@ def user_can_view_deid_exports(domain, couch_user):
                 domain,
                 get_permission_name(Permissions.view_report),
                 data=DEID_EXPORT_PERMISSION
+            ))
+
+
+def user_can_view_odata_feed(domain, couch_user):
+    domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
+    return (domain_can_view_odata
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data=ODATA_FEED_PERMISSION
             ))
 
 
@@ -93,7 +105,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_edit_permissions(self):
-        return self.couch_user.can_edit_data() and self.has_view_permissions
+        return self.couch_user.can_edit_data()
 
     @property
     def has_form_export_permissions(self):
@@ -118,9 +130,14 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False):
+    @property
+    def has_odata_permissions(self):
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
         if not (self.has_view_permissions
-                or (is_deid and self.has_deid_view_permissions)):
+                or (is_deid and self.has_deid_view_permissions)
+                or (is_odata and self.has_odata_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
@@ -189,7 +206,7 @@ class DashboardFeedMixin(DailySavedExportMixin):
 
 class ODataFeedMixin(object):
 
-    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
+    @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED))
     def dispatch(self, *args, **kwargs):
         return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
 
@@ -386,7 +403,8 @@ def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:
             column.label = column.label.replace('@', '').replace(
-                '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
-            # truncate labels for PowerBI limits
-            if len(column.label) >= 511:
-                column.label = column.label[:511]
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace(
+                '#', '').replace(',', '')
+            # truncate labels for PowerBI and Tableau limits
+            if len(column.label) >= 255:
+                column.label = column.label[:255]

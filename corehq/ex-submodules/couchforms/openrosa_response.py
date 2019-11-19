@@ -10,16 +10,11 @@ class ResponseNature(object):
     """
     A const holding class for different response natures
     """
-    # not super decoupled having stuff related to submissions and user reg
-    # here, but nice for this all to be in one place
+    # See https://confluence.dimagi.com/display/commcarepublic/Submission+API
     SUBMIT_SUCCESS = 'submit_success'
     SUBMIT_ERROR = 'submit_error'
     PROCESSING_FAILURE = 'processing_failure'
     POST_PROCESSING_FAILURE = 'post_processing_failure'
-
-    # users app
-    SUBMIT_USER_REGISTERED = 'submit_user_registered'
-    SUBMIT_USER_UPDATED = 'submit_user_updated'
 
     OTA_RESTORE_SUCCESS = 'ota_restore_success'
     OTA_RESTORE_PENDING = 'ota_restore_pending'

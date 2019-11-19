@@ -20,27 +20,15 @@ BASE_PATH = os.path.join(os.path.dirname(__file__), 'sql_output')
 @attr.s
 class SqlOutput(object):
     helper_key = attr.ib()
-    monolith_sql = attr.ib()
     distributed_sql = attr.ib()
-
-    @property
-    def monolith_path(self):
-        return os.path.join(BASE_PATH, '{}.monolith.txt'.format(self.helper_key))
 
     @property
     def distributed_path(self):
         return os.path.join(BASE_PATH, '{}.distributed.txt'.format(self.helper_key))
 
     def write(self):
-        with open(self.monolith_path, 'w') as f_monolith:
-            f_monolith.write(self.monolith_sql)
         with open(self.distributed_path, 'w') as f_distributed:
             f_distributed.write(self.distributed_sql)
-
-    @cached_property
-    def saved_monolith_sql(self):
-        with open(self.monolith_path, 'r') as f_monolith:
-            return f_monolith.read()
 
     @cached_property
     def saved_distributed_sql(self):
@@ -48,12 +36,10 @@ class SqlOutput(object):
             return f_distributed.read()
 
     def get_diffs(self):
-        monolith_diff, distributed_diff = None, None
-        if self.monolith_sql != self.saved_monolith_sql:
-            monolith_diff = get_diff(self.saved_monolith_sql, self.monolith_sql)
+        distributed_diff = None
         if self.distributed_sql != self.saved_distributed_sql:
             distributed_diff = get_diff(self.saved_distributed_sql, self.distributed_sql)
-        return monolith_diff, distributed_diff
+        return distributed_diff
 
 
 class TestQueryDiffs(SimpleTestCase):
@@ -61,14 +47,11 @@ class TestQueryDiffs(SimpleTestCase):
         outputs = get_agg_helper_outputs()
         diff_output = []
         for output in outputs:
-            monolith_diff, distributed_diff = output.get_diffs()
-            if monolith_diff or distributed_diff:
+            distributed_diff = output.get_diffs()
+            if distributed_diff:
                 diff_output.append("\n{0} Diffs detected for agg helper '{1}' {0}".format(
                     '-' * 20, output.helper_key
                 ))
-                if monolith_diff:
-                    diff_output.append("\nMONOLITH DIFF\n=================")
-                    diff_output.append(monolith_diff)
                 if distributed_diff:
                     diff_output.append("\nDISTRIBUTED DIFF\n=================")
                     diff_output.append(distributed_diff)
@@ -78,8 +61,7 @@ class TestQueryDiffs(SimpleTestCase):
                 inspect.cleandoc("""
 
                 To fix these diffs:
-                    1. Make sure you have applied changes to both the "monolith" and the "distributed"
-                       helper classes.
+                    1. Make sure you have applied changes to both the helper classes.
                     2. Run "python manage.py update_icds_aggregation_output" and commit the changes.
 
                 """)
@@ -129,13 +111,9 @@ def _get_helper(helper_cls):
 def _get_helper_sql(helper_cls):
     helper = _get_helper(helper_cls)
     mock_cursor = MockCursor()
-    monolith_patch = patch(
-        'custom.icds_reports.utils.aggregation_helpers.monolith.awc_location._get_all_locations_for_domain',
-        return_value=[])
     distributed_patch = patch(
         'custom.icds_reports.utils.aggregation_helpers.distributed.awc_location._get_all_locations_for_domain',
         return_value=[])
-    monolith_patch.start()
     distributed_patch.start()
 
     if hasattr(helper, 'aggregate'):
@@ -150,7 +128,6 @@ def _get_helper_sql(helper_cls):
     elif helper is not None:
         raise AssertionError("Unexepcted helper type: {}".format(helper_cls))
 
-    monolith_patch.stop()
     distributed_patch.stop()
 
     return mock_cursor.compile_output()
@@ -168,18 +145,15 @@ def _get_helper_weekly_sql(helper_cls):
 
 def get_agg_helper_outputs():
     with freeze_time(datetime(2019, 1, 11)):
-        for pair in HELPERS:
+        for helper in HELPERS:
             yield SqlOutput(
-                pair.monolith.helper_key,
-                _get_helper_sql(pair.monolith),
-                _get_helper_sql(pair.distributed)
+                helper.helper_key,
+                _get_helper_sql(helper)
             )
 
-            weekly_sql_monolith = _get_helper_weekly_sql(pair.monolith)
-            weekly_sql_disributed = _get_helper_weekly_sql(pair.distributed)
-            if weekly_sql_monolith or weekly_sql_disributed:
+            weekly_sql_disributed = _get_helper_weekly_sql(helper)
+            if weekly_sql_disributed:
                 yield SqlOutput(
-                    '{}_weekly'.format(pair.monolith.helper_key),
-                    weekly_sql_monolith,
+                    '{}_weekly'.format(helper.helper_key),
                     weekly_sql_disributed
                 )

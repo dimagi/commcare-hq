@@ -233,7 +233,7 @@ class PillowRetryTestCase(TestCase):
         process_pillow_retry(error)
 
         error = PillowError.objects.get(pk=error.id)
-        self.assertEquals(error.total_attempts, 1)
+        self.assertEqual(error.total_attempts, 1)
 
 
 class ExceptionA(Exception):

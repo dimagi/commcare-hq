@@ -21,11 +21,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_monthly_registered_household(self):
         data = get_demographics_data(
@@ -62,14 +62,14 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.049606069448492,
+            "percent": 10.045841136893584,
             "value": 346,
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "month",
-            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification "
                          "has been captured. "
         }
         self.assertDictEqual(expected, data['records'][0][1])
@@ -86,11 +86,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "month",
             "help_text": percent_children_enrolled_help_text()
@@ -176,11 +176,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_daily_registered_household(self):
         data = get_demographics_data(
@@ -217,7 +217,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -225,7 +225,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been "
                 "captured. "
             )
         }
@@ -243,11 +243,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
@@ -333,11 +333,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_daily_if_aggregation_script_fail_registered_household(self):
         data = get_demographics_data(
@@ -374,7 +374,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -382,7 +382,7 @@ class TestDemographics(TestCase):
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "day",
             "help_text": (
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has "
+                "Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has "
                 "been captured. "
             )
         }
@@ -400,11 +400,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()

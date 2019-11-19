@@ -35,7 +35,7 @@ def to_decimal(value):
 def to_integer(value):
     try:
         return int(value)
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
 

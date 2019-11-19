@@ -294,11 +294,13 @@ class XformsResponse(object):
 
 
 def formplayer_post_data_helper(d, content_type, url):
+    session_id = d.get('session-id')
     data = json.dumps(d).encode('utf-8')
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = str(len(data))
     headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
+    headers["X-FORMPLAYER-SESSION"] = session_id
     response = requests.post(
         url,
         data=data,
@@ -351,16 +353,6 @@ def get_response(data, auth=None):
         return XformsResponse(response_json)
     except Exception as e:
         raise e
-
-
-def sync_db(username, domain, auth):
-    data = {
-        "action":"sync-db",
-        "username": username,
-        "domain": domain
-    }
-
-    return post_data(json.dumps(data), auth)
 
 
 def get_raw_instance(session_id, domain=None, auth=None):

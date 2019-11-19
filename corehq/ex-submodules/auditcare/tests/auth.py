@@ -67,7 +67,7 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(start_count+1, login_count)
 
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(latest_audit.access_type, models.ACCESS_LOGIN)
+        self.assertEqual(latest_audit.access_type, models.ACCESS_LOGIN)
 
         #django test client doesn't seem to like logout for some reason
         #logout
@@ -83,12 +83,12 @@ class AuthenticationTestCase(TestCase):
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        self.assertEquals(start_count+1, login_count)
+        self.assertEqual(start_count+1, login_count)
         #got the basic count, now let's inspect this value to see what kind of result it is.
 
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(latest_audit.access_type, models.ACCESS_FAILED)
-        self.assertEquals(latest_audit.failures_since_start, 1)
+        self.assertEqual(latest_audit.access_type, models.ACCESS_FAILED)
+        self.assertEqual(latest_audit.failures_since_start, 1)
 
 
     def testRepeatedFailedLogin(self):
@@ -101,25 +101,25 @@ class AuthenticationTestCase(TestCase):
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         firstlogin_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        self.assertEquals(start_count+1, firstlogin_count)
+        self.assertEqual(start_count+1, firstlogin_count)
 
 
         first_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(first_audit.access_type, models.ACCESS_FAILED)
-        self.assertEquals(first_audit.failures_since_start, 1)
+        self.assertEqual(first_audit.access_type, models.ACCESS_FAILED)
+        self.assertEqual(first_audit.failures_since_start, 1)
         start_failures = first_audit.failures_since_start
 
         for n in range(1, 3):
             #we are logging in within the cooloff period, so let's check to see if it doesn't increment.
             response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
             next_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-            self.assertEquals(firstlogin_count, next_count)
+            self.assertEqual(firstlogin_count, next_count)
 
             next_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-            self.assertEquals(next_audit.access_type, models.ACCESS_FAILED)
-            self.assertEquals(next_audit.failures_since_start, n+start_failures)
+            self.assertEqual(next_audit.access_type, models.ACCESS_FAILED)
+            self.assertEqual(next_audit.failures_since_start, n+start_failures)
             time.sleep(1)
         time.sleep(3)
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(cooled_audit.failures_since_start, 1)
+        self.assertEqual(cooled_audit.failures_since_start, 1)

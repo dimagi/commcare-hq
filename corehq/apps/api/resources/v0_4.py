@@ -305,7 +305,6 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
     name = fields.CharField(attribute='name')
 
     users = fields.ListField(attribute='get_user_ids')
-    path = fields.ListField(attribute='path')
 
     case_sharing = fields.BooleanField(attribute='case_sharing', default=False)
     reporting = fields.BooleanField(default=True, attribute='reporting')
@@ -316,10 +315,10 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        if toggles.GROUP_API_USE_ES_BACKEND.enabled_for_request(bundle.request):
-            return GroupQuerySetAdapterES(domain)
-        else:
+        if toggles.GROUP_API_USE_COUCH_BACKEND.enabled_for_request(bundle.request):
             return GroupQuerySetAdapterCouch(domain)
+        else:
+            return GroupQuerySetAdapterES(domain)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)

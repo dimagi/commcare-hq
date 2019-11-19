@@ -72,8 +72,8 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
+from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
-from ..couchsqlmigration import MigrationRestricted, sql_form_to_json
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
     COMMIT,
@@ -133,7 +133,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
-        options.setdefault("diff_process", False)
+        options.setdefault("case_diff", "local")
+        assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
@@ -282,13 +283,13 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(MigrationRestricted):
+        with self.assertRaises(mod.MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
         with get_report_domain() as domain:
-            with self.assertRaises(MigrationRestricted):
+            with self.assertRaises(mod.MigrationRestricted):
                 self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
@@ -1077,6 +1078,49 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self._compare_diffs([])
 
+    def test_migrate_skipped_forms(self):
+        def skip_forms(form_ids):
+            def maybe_migrate_form(self, form):
+                if form.form_id in form_ids:
+                    log.info("skipping %s", form.form_id)
+                else:
+                    migrate(self, form)
+
+            migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
+            return mock.patch.object(
+                mod.CouchSqlDomainMigrator,
+                "_migrate_form_and_associated_models",
+                maybe_migrate_form,
+            )
+
+        self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("test-2"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("test-3"), timedelta(minutes=-85))
+        self.submit_form(make_test_form("test-4"))
+        self.assert_backend("couch")
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-1", "test-2"}):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-3"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        clear_local_domain_sql_backend_override(self.domain_name)
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
+            self._do_migration(live=True, skipped_forms=True)
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True, skipped_forms=True)
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
@@ -1117,7 +1161,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
         with self.patch_migration_chunk_size(1), \
                 self.on_doc("XFormInstance", "one", interrupt, **kw):
-            self._do_migration(live=True, diff_process=True)
+            self._do_migration(live=True, case_diff="process")
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
@@ -1230,7 +1274,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name, diff_process=True)
+        self._do_migration_and_assert_flags(self.domain_name, case_diff="process")
 
         # This may change in the future: it may be possible to rebuild the
         # XML using parsed form JSON from couch.
@@ -1271,6 +1315,11 @@ class MigrationTestCase(BaseMigrationTestCase):
             ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
         ])
+
+    def test_case_with_very_long_name(self):
+        self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -1349,7 +1398,7 @@ class TestHelperFunctions(TestCase):
         self.domain.use_sql_backend = True
         self.domain.save()
         form = self.get_form_with_missing_xml()
-        data = sql_form_to_json(form)
+        data = mod.sql_form_to_json(form)
         self.assertEqual(data["form"], {})
 
     def test_get_case_ids_with_missing_xml(self):
@@ -1377,13 +1426,15 @@ def create_form_with_missing_xml(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case"):
+def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
     form = TEST_FORM
     assert form.count(">test-form<") == 1
     assert form.count(">27<") == 2
     assert form.count('"test-case"') == 1
+    assert form.count('>Xeenax<') == 2
     form = form.replace(">27<", f">{age}<")
     form = form.replace('"test-case"', f'"{case_id}"')
+    form = form.replace('>Xeenax<', f'>{case_name}<')
     return form.replace(">test-form<", f">{form_id}<")
 
 

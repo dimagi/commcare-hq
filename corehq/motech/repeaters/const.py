@@ -23,4 +23,6 @@ REPEATER_CLASSES = (
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
+    'custom.icds.repeaters.phi.SearchByParamsRepeater',
+    'custom.icds.repeaters.phi.ValidatePHIDRepeater',
 )

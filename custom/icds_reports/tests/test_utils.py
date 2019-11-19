@@ -19,7 +19,7 @@ class TestUtils(SimpleTestCase):
             20,
             60
         )
-        self.assertEquals(average, 60.0)
+        self.assertEqual(average, 60.0)
 
     def test_calculate_average_if_one_location(self):
         data_mock = [{'all': 9, 'children': 9, 'state_name': 'State 1', 'state_map_location_name': 'test1'}]
@@ -31,7 +31,7 @@ class TestUtils(SimpleTestCase):
             20,
             60
         )
-        self.assertEquals(average, 100.0)
+        self.assertEqual(average, 100.0)
 
     def test_calculate_average_if_divide_by_zero(self):
         data_mock = [{'all': 0, 'children': 0, 'state_name': 'State 1', 'state_map_location_name': 'test1'}]
@@ -43,7 +43,7 @@ class TestUtils(SimpleTestCase):
             20,
             60
         )
-        self.assertEquals(average, 0.0)
+        self.assertEqual(average, 0.0)
 
     def test_calculate_average_if_data_are_none(self):
         data_mock = [{'all': None, 'children': None, 'state_name': None, 'state_map_location_name': None}]
@@ -55,4 +55,4 @@ class TestUtils(SimpleTestCase):
             20,
             60
         )
-        self.assertEquals(average, 0.0)
+        self.assertEqual(average, 0.0)

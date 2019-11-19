@@ -24,7 +24,7 @@ class DomainNameGenerationTest(TestCase):
     def test_conflict(self):
         name = "fandango"
         self.add_domain(name)
-        self.assertEquals(Domain.generate_name(name), name + "-1")
+        self.assertEqual(Domain.generate_name(name), name + "-1")
 
     def test_failure(self):
         self.add_domain("ab")
@@ -35,13 +35,13 @@ class DomainNameGenerationTest(TestCase):
         name = "abcd"
 
         self.add_domain(name)
-        self.assertEquals(Domain.generate_name(name, 4), "ab-1")
+        self.assertEqual(Domain.generate_name(name, 4), "ab-1")
 
         self.add_domain("ab-1")
-        self.assertEquals(Domain.generate_name(name, 4), "ab-2")
+        self.assertEqual(Domain.generate_name(name, 4), "ab-2")
 
         self.add_domain("ab-9")
-        self.assertEquals(Domain.generate_name(name, 4), "a-1")
+        self.assertEqual(Domain.generate_name(name, 4), "a-1")
 
         self.add_domain("name")
         self.assertEqual(Domain.generate_name('very long name', 5), 'nam-1')

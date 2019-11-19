@@ -34,7 +34,7 @@ class TestResourceStatic(SimpleTestCase):
 
     def get_resource_versions(self):
         resource_versions = get_resource_versions(path=self.resource_versions_filename)
-        self.assertEquals(resource_versions, {
+        self.assertEqual(resource_versions, {
             'somefile.js': '123abc',
             'otherfile.js': '456def',
         })
@@ -45,7 +45,7 @@ class TestResourceStatic(SimpleTestCase):
             'anotherfile.js': '890xyz',
         }, overwrite=False, path=self.resource_versions_filename)
         resource_versions = get_resource_versions(path=self.resource_versions_filename)
-        self.assertEquals(resource_versions, {
+        self.assertEqual(resource_versions, {
             'somefile.js': '123abc',
             'anotherfile.js': '890xyz',
             'otherfile.js': '567tuv',
@@ -57,7 +57,7 @@ class TestResourceStatic(SimpleTestCase):
             'anotherfile.js': '890xyz',
         }, overwrite=True, path=self.resource_versions_filename)
         resource_versions = get_resource_versions(path=self.resource_versions_filename)
-        self.assertEquals(resource_versions, {
+        self.assertEqual(resource_versions, {
             'otherfile.js': '567tuv',
             'anotherfile.js': '890xyz',
         })

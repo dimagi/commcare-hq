@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 import mock
-import sqlalchemy
 import csv
 
 from django.conf import settings
@@ -14,13 +13,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
 )
-from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data
+from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data, \
+    cleanup_misc_agg_tables
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -30,15 +29,10 @@ def setUpModule():
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
-    _call_center_domain_mock.start()
-
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
 
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds', STATIC_DATA_SOURCE_PROVIDERS=[]):
         setup_tables_and_fixtures(domain.name)
         aggregate_state_form_data()
         try:
@@ -49,8 +43,6 @@ def setUpModule():
             print(e)
             tearDownModule()
             raise
-        finally:
-            _call_center_domain_mock.stop()
 
 
 def tearDownModule():
@@ -71,14 +63,8 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
-        with engine.begin() as connection:
-            metadata = sqlalchemy.MetaData(bind=engine)
-            metadata.reflect(bind=engine, extend_existing=True)
-            for name in ('ucr_table_name_mapping', 'awc_location', 'awc_location_local'):
-                table = metadata.tables[name]
-                delete = table.delete()
-                connection.execute(delete)
+        cleanup_misc_agg_tables()
+
     LocationType.objects.filter(domain='icds-cas').delete()
     SQLLocation.objects.filter(domain='icds-cas').delete()
 

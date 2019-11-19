@@ -19,7 +19,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -35,7 +35,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -71,7 +71,7 @@ class TestAdultWeightScale(TestCase):
             loc_level='state'
         )
         expected = awcs_reported_weighing_scale_mother_and_child_help_text()
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_adult_weight_scale_data_map(
@@ -82,7 +82,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 30.0)
+        self.assertEqual(data['rightLegend']['average'], 30.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adult_weight_scale_data_map(
@@ -132,7 +132,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'adult_weight_scale')
+        self.assertEqual(data['slug'], 'adult_weight_scale')
 
     def test_map_data_label(self):
         data = get_adult_weight_scale_data_map(
@@ -143,7 +143,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'],
+        self.assertEqual(data['label'],
                           'Percentage of AWCs that reported having a weighing scale for mother and child')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
@@ -183,7 +183,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 29.41176470588235)
+        self.assertEqual(data['rightLegend']['average'], 29.41176470588235)
 
     def test_chart_data(self):
         self.assertDictEqual(

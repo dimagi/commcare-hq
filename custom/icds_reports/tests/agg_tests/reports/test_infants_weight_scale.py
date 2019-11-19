@@ -19,7 +19,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -35,7 +35,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -72,7 +72,7 @@ class TestInfantsWeightScale(TestCase):
             loc_level='state'
         )
         expected = awcs_reported_weighing_scale_infants_help_text()
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_infants_weight_scale_data_map(
@@ -83,7 +83,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 80.0)
+        self.assertEqual(data['rightLegend']['average'], 80.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_infants_weight_scale_data_map(
@@ -130,7 +130,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'infants_weight_scale')
+        self.assertEqual(data['slug'], 'infants_weight_scale')
 
     def test_map_data_label(self):
         data = get_infants_weight_scale_data_map(
@@ -141,7 +141,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percentage of AWCs that reported having a weighing scale for infants')
+        self.assertEqual(data['label'], 'Percentage of AWCs that reported having a weighing scale for infants')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_infants_weight_scale_data_map(
@@ -180,7 +180,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 76.47058823529412)
+        self.assertEqual(data['rightLegend']['average'], 76.47058823529412)
 
     def test_chart_data(self):
         data = get_infants_weight_scale_data_chart(
@@ -234,7 +234,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('top_five', data)
         self.assertIn('bottom_five', data)
         self.assertIn('all_locations', data)
@@ -290,7 +290,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], "State")
+        self.assertEqual(data['location_type'], "State")
 
     def test_chart_data_all_locations(self):
         data = get_infants_weight_scale_data_chart(
@@ -327,7 +327,7 @@ class TestInfantsWeightScale(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('tooltips_data', data)
         self.assertIn('chart_data', data)
@@ -380,7 +380,7 @@ class TestInfantsWeightScale(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             awcs_reported_weighing_scale_infants_help_text()
         )

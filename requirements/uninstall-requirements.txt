@@ -1,6 +1,4 @@
 # This file is for requirements that should be removed _before_ pip install
-# https://github.com/maxtepkeev/architect/pull/52
-architect
 # https://github.com/django-nose/django-nose/pull/228
 django-nose
 feedparser

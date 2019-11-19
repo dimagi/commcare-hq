@@ -3,7 +3,6 @@ from datetime import datetime
 
 import postgres_copy
 import sqlalchemy
-from django.conf import settings
 
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -40,6 +39,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
     'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
+    'ls_usage': get_table_name('icds-cas', 'static-ls_usage_forms'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
@@ -174,6 +174,7 @@ def setup_tables_and_fixtures(domain_name):
             pass
         adapter.build_table()
 
+    cleanup_misc_agg_tables()
     engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
     metadata = sqlalchemy.MetaData(bind=engine)
     metadata.reflect(bind=engine, extend_existing=True)
@@ -223,3 +224,14 @@ def aggregate_state_form_data():
         _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
         _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
         _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
+
+
+def cleanup_misc_agg_tables():
+    engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
+    with engine.begin() as connection:
+        metadata = sqlalchemy.MetaData(bind=engine)
+        metadata.reflect(bind=engine, extend_existing=True)
+        for name in ('ucr_table_name_mapping', 'awc_location', 'awc_location_local'):
+            table = metadata.tables[name]
+            delete = table.delete()
+            connection.execute(delete)

@@ -117,8 +117,8 @@ class TestICDSCASReach(TestCase):
                             'all': 22,
                             'format': 'number_and_percent',
                             'color': 'red',
-                            'percent': -100.0,
-                            'value': 0,
+                            'percent': -97.05882352941177,
+                            'value': 1,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',
                             'help_text': 'Total Number of Angwanwadi Centers that '
@@ -200,8 +200,8 @@ class TestICDSCASReach(TestCase):
                             'all': 22,
                             'format': 'number_and_percent',
                             'color': 'red',
-                            'percent': -100.0,
-                            'value': 0,
+                            'percent': -97.05882352941177,
+                            'value': 1,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',
                             'help_text': 'Total Number of Angwanwadi Centers that '

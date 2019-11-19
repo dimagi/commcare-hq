@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import ConsommationPerProductData
 from dimagi.utils.dates import force_to_date
 
@@ -18,7 +19,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Consommation par Produit"
     slug = 'consommation_par_produit_report'
-    comment = 'Consommation de la gamme par produit'
+    comment = 'Nombre de produit consommés'
     default_rows = 10
     exportable = True
 
@@ -121,7 +122,6 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return headers
 
     @property
-    @memoized
     def clean_rows(self):
         return ConsommationPerProductData(config=self.config).rows
 
@@ -159,24 +159,24 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                 location_name = consumption['location_name']
                 products = sorted(consumption['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
-                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:
                         if product['product_id'] not in product_ids:
-                            locations_with_products[location_name].append({
+                            locations_with_products[location_id].append({
                                 'product_name': product['product_name'],
                                 'product_id': product['product_id'],
                                 'actual_consumption': product['actual_consumption'],
                             })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 actual_consumption = product['actual_consumption']
-                                locations_with_products[location_name][r]['actual_consumption'] += actual_consumption
+                                locations_with_products[location_id][r]['actual_consumption'] += actual_consumption
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -190,7 +190,9 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                             products_to_add[index]['actual_consumption'] += actual_consumption
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]

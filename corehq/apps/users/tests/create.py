@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 
@@ -22,6 +23,7 @@ class CreateTestCase(TestCase):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, email)
+        self.addCleanup(couch_user.delete)
 
         self.assertEqual(couch_user.domains, [domain])
         self.assertEqual(couch_user.email, email)
@@ -44,6 +46,7 @@ class CreateTestCase(TestCase):
         self.addCleanup(domain2.delete)
         self.addCleanup(domain1.delete)
         couch_user = WebUser.create(None, username, password, email)
+        self.addCleanup(couch_user.delete)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
         couch_user.add_domain_membership('domain1')
@@ -62,12 +65,11 @@ class TestDomainMemberships(TestCase):
         cls.webuser.delete()
         cls.webuser2.delete()
         cls.project.delete()
-        cls.domain_obj.delete()
-        cls.nodomain_obj.delete()
         super(TestDomainMemberships, cls).tearDownClass()
 
     @classmethod
     def setUpClass(cls):
+        clear_domain_names(cls.domain, 'nodomain')
         super(TestDomainMemberships, cls).setUpClass()
         w_username = "joe"
         w_email = "joe@domain.com"
@@ -75,10 +77,9 @@ class TestDomainMemberships(TestCase):
         w2_email = "ben@domain.com"
         cc_username = "mobby"
         password = "password"
-        cls.domain_obj = create_domain(cls.domain)
-        cls.nodomain_obj = create_domain('nodomain')
         cls.project = Domain(name=cls.domain)
         cls.project.save()
+        create_domain('nodomain')
 
         cls.webuser = WebUser.create(cls.domain, w_username, password, w_email)
         cls.webuser2 = WebUser.create('nodomain', w2_username, password, w2_email)
@@ -95,8 +96,8 @@ class TestDomainMemberships(TestCase):
         self.assertTrue(self.ccuser.is_member_of('test-domain'))
 
     def testGetMemberships(self):
-        self.assertEquals(self.webuser.get_domain_membership(self.domain).domain, self.domain)
-        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.webuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
 
     def testDefaultPermissions(self):
         self.assertFalse(self.webuser.has_permission(self.domain, 'view_reports'))
@@ -109,9 +110,9 @@ class TestDomainMemberships(TestCase):
         self.ccuser.save()
         self.setUp()  # reload users to clear CouchUser.role
 
-        self.assertEquals(self.webuser.get_domain_membership(self.domain).role_id,
+        self.assertEqual(self.webuser.get_domain_membership(self.domain).role_id,
                           self.ccuser.get_domain_membership(self.domain).role_id)
-        self.assertEquals(self.webuser.role_label(), self.ccuser.role_label())
+        self.assertEqual(self.webuser.role_label(), self.ccuser.role_label())
 
         self.assertTrue(self.webuser.has_permission(self.domain, 'view_reports'))
         self.assertTrue(self.ccuser.has_permission(self.domain, 'view_reports'))
@@ -128,7 +129,7 @@ class TestDomainMemberships(TestCase):
         self.assertFalse(self.webuser.is_member_of(self.domain))
         self.assertFalse(self.webuser2.is_member_of(self.domain))
         self.assertTrue(self.ccuser.is_member_of(self.domain))
-        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
 
     def testTransferMembership(self):
         self.webuser.transfer_domain_membership(self.domain, self.webuser2)

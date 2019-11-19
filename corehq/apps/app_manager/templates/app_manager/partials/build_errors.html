@@ -160,13 +160,6 @@
                 This form is not a registration form. You need to select a form which opens a case and
                 does not update an existing case. Please select a different form.
               {% endblocktrans %}
-            {% case "case list form eof nav" %}
-              {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
-                as the case registration form for <a href="{{ module_url }}">{{ module_name }}</a>, but it uses
-                end of form navigation, which will override the case list registration workflow.
-                Please select a different form, or set the end of form navigation to the default option ('Home Screen').
-              {% endblocktrans %}
             {% case "case list form missing" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The form you have selected as the case registration form for

@@ -168,7 +168,7 @@ def _group_objects_by_db(objects):
         app_label = obj['model']
         model = apps.get_model(app_label)
         db_alias = router.db_for_write(model)
-        if settings.USE_PARTITIONED_DATABASE and db_alias == partition_config.get_proxy_db():
+        if settings.USE_PARTITIONED_DATABASE and db_alias == partition_config.proxy_db:
             doc_id = _get_doc_id(app_label, obj)
             db_alias = ShardAccessor.get_database_for_doc(doc_id)
 

@@ -218,10 +218,11 @@ class TestDumpLoadToggles(SimpleTestCase):
         output_stream = BytesIO()
 
         with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]):
-            dump_counter = dumper.dump(output_stream)
-        self.assertEqual(3, dump_counter['Toggle'])
+            dumper.dump(output_stream)
         output_stream.seek(0)
-        dumped = [json.loads(line.strip()) for line in output_stream.readlines()]
+        lines = output_stream.readlines()
+        dumped = [json.loads(line.strip()) for line in lines]
+        self.assertEqual(len(dumped), 3, ','.join([d['slug'] for d in dumped]))
         for dump in dumped:
             self.assertItemsEqual(self.expected_items[dump['slug']], dump['enabled_users'])
 

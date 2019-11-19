@@ -28,6 +28,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
     PracticeUserException,
     SuiteError,
     SuiteValidationError,
@@ -141,6 +142,10 @@ def first_elem(elem_list):
     return elem_list[0] if elem_list else None
 
 
+def generate_xmlns():
+    return str(uuid.uuid4()).upper()
+
+
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
@@ -156,10 +161,7 @@ def save_xform(app, form, xml):
         pass
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        # we assume form.get_unique_id() is unique across all of HQ and
-        # therefore is suitable to create an XMLNS that will not confict
-        # with any other form
-        uid = form.get_unique_id()
+        uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
         new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
@@ -369,9 +371,6 @@ def enable_usercase(domain_name):
             domain_obj.usercase_enabled = True
             domain_obj.save()
             create_user_cases.delay(domain_name)
-
-
-
 
 
 def prefix_usercase_properties(properties):
@@ -713,3 +712,25 @@ def get_latest_enabled_versions_per_profile(app_id):
         LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
             Max('version'))
     }
+
+
+def get_app_id_from_form_unique_id(domain, form_unique_id):
+    """
+    Do not use. This is here to support migrations and temporary cose for *removing*
+    the constraint that form ids be lgobally unique. It will stop working as more
+    duplicated form unique ids appear.
+    """
+    return _get_app_ids_by_form_unique_id(domain).get(form_unique_id)
+
+
+@quickcache(['domain'], timeout=1 * 60 * 60)
+def _get_app_ids_by_form_unique_id(domain):
+    apps = get_apps_in_domain(domain, include_remote=False)
+    app_ids = {}
+    for app in apps:
+        for module in app.modules:
+            for form in module.get_forms():
+                if form.unique_id in app_ids:
+                    raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
+                app_ids[form.unique_id] = app.get_id
+    return app_ids

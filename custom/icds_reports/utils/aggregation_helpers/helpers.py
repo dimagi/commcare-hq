@@ -1,11 +1,10 @@
-import attr
-
-
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
-    AggAwcDistributedHelper,
     AggAwcDailyAggregationDistributedHelper,
-    AggChildHealthAggregationDistributedHelper,
+    AggAwcDistributedHelper,
     AggCcsRecordAggregationDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
+    AggLsHelper,
+    AwcInfrastructureAggregationHelper,
     AwcMbtDistributedHelper,
     AwwIncentiveAggregationDistributedHelper,
     BirthPreparednessFormsAggregationDistributedHelper,
@@ -28,152 +27,37 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     PostnatalCareFormsChildHealthAggregationDistributedHelper,
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
-    THRFormV2AggDistributedHelper
+    THRFormV2AggDistributedHelper,
 )
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    AggAwcHelper,
-    AggAwcDailyAggregationHelper,
-    AggCcsRecordAggregationHelper,
-    AggChildHealthAggregationHelper,
-    AggLsHelper,
-    AwcInfrastructureAggregationHelper,
-    AwcMbtHelper,
-    AwwIncentiveAggregationHelper,
-    BirthPreparednessFormsAggregationHelper,
-    CcsMbtHelper,
-    CcsRecordMonthlyAggregationHelper,
-    ChildHealthMbtHelper,
-    ChildHealthMonthlyAggregationHelper,
-    ComplementaryFormsAggregationHelper,
-    ComplementaryFormsCcsRecordAggregationHelper,
-    DailyAttendanceAggregationHelper,
-    DailyFeedingFormsChildHealthAggregationHelper,
-    DeliveryFormsAggregationHelper,
-    GrowthMonitoringFormsAggregationHelper,
-    InactiveAwwsAggregationHelper,
-    LocationAggregationHelper,
-    LSAwcMgtFormAggHelper,
-    LSBeneficiaryFormAggHelper,
-    LSVhndFormAggHelper,
-    PostnatalCareFormsCcsRecordAggregationHelper,
-    PostnatalCareFormsChildHealthAggregationHelper,
-    THRFormsCcsRecordAggregationHelper,
-    THRFormsChildHealthAggregationHelper,
-    THRFormV2AggHelper
-)
-
-
-@attr.s
-class HelperPair(object):
-    monolith = attr.ib(default=None)
-    distributed = attr.ib(default=None)
-
-    def validate(self):
-        return not self.distributed or self.monolith.helper_key == self.distributed.helper_key
-
 
 HELPERS = [
-    HelperPair(
-        AggAwcHelper, AggAwcDistributedHelper
-    ),
-    HelperPair(
-        AggAwcDailyAggregationHelper, AggAwcDailyAggregationDistributedHelper
-    ),
-    HelperPair(
-        AggCcsRecordAggregationHelper, AggCcsRecordAggregationDistributedHelper
-    ),
-    HelperPair(
-        AggChildHealthAggregationHelper, AggChildHealthAggregationDistributedHelper
-    ),
-    HelperPair(
-        AggLsHelper, None
-    ),
-    HelperPair(
-        AwcInfrastructureAggregationHelper, None
-    ),
-    HelperPair(
-        AwwIncentiveAggregationHelper, AwwIncentiveAggregationDistributedHelper
-    ),
-    HelperPair(
-        AwcMbtHelper, AwcMbtDistributedHelper
-    ),
-    HelperPair(
-        BirthPreparednessFormsAggregationHelper, BirthPreparednessFormsAggregationDistributedHelper
-    ),
-    HelperPair(
-        ChildHealthMbtHelper, ChildHealthMbtDistributedHelper
-    ),
-    HelperPair(
-        ChildHealthMonthlyAggregationHelper, ChildHealthMonthlyAggregationDistributedHelper
-    ),
-    HelperPair(
-        CcsMbtHelper, CcsMbtDistributedHelper
-    ),
-    HelperPair(
-        CcsRecordMonthlyAggregationHelper, CcsRecordMonthlyAggregationDistributedHelper
-    ),
-    HelperPair(
-        ComplementaryFormsAggregationHelper, ComplementaryFormsAggregationDistributedHelper
-    ),
-    HelperPair(
-        ComplementaryFormsCcsRecordAggregationHelper, ComplementaryFormsCcsRecordAggregationDistributedHelper
-    ),
-    HelperPair(
-        DailyAttendanceAggregationHelper, DailyAttendanceAggregationDistributedHelper
-    ),
-    HelperPair(
-        DailyFeedingFormsChildHealthAggregationHelper, DailyFeedingFormsChildHealthAggregationDistributedHelper
-    ),
-    HelperPair(
-        DeliveryFormsAggregationHelper, DeliveryFormsAggregationDistributedHelper
-    ),
-    HelperPair(
-        GrowthMonitoringFormsAggregationHelper, GrowthMonitoringFormsAggregationDistributedHelper
-    ),
-    HelperPair(
-        InactiveAwwsAggregationHelper, InactiveAwwsAggregationDistributedHelper
-    ),
-    HelperPair(
-        LocationAggregationHelper, LocationAggregationDistributedHelper
-    ),
-    HelperPair(
-        LSAwcMgtFormAggHelper, LSAwcMgtFormAggDistributedHelper
-    ),
-    HelperPair(
-        LSBeneficiaryFormAggHelper, LSBeneficiaryFormAggDistributedHelper
-    ),
-    HelperPair(
-        LSVhndFormAggHelper, LSVhndFormAggDistributedHelper
-    ),
-    HelperPair(
-        PostnatalCareFormsCcsRecordAggregationHelper, PostnatalCareFormsCcsRecordAggregationDistributedHelper
-    ),
-    HelperPair(
-        PostnatalCareFormsChildHealthAggregationHelper, PostnatalCareFormsChildHealthAggregationDistributedHelper
-    ),
-    HelperPair(
-        THRFormsChildHealthAggregationHelper, THRFormsChildHealthAggregationDistributedHelper
-    ),
-    HelperPair(
-        THRFormsCcsRecordAggregationHelper, THRFormsCcsRecordAggregationDistributedHelper
-    ),
-    HelperPair(
-        THRFormV2AggHelper, THRFormV2AggDistributedHelper
-    )
+    AggAwcDistributedHelper,
+    AggAwcDailyAggregationDistributedHelper,
+    AggCcsRecordAggregationDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
+    AggLsHelper,
+    AwcInfrastructureAggregationHelper,
+    AwwIncentiveAggregationDistributedHelper,
+    AwcMbtDistributedHelper,
+    BirthPreparednessFormsAggregationDistributedHelper,
+    ChildHealthMbtDistributedHelper,
+    ChildHealthMonthlyAggregationDistributedHelper,
+    CcsMbtDistributedHelper,
+    CcsRecordMonthlyAggregationDistributedHelper,
+    ComplementaryFormsAggregationDistributedHelper,
+    ComplementaryFormsCcsRecordAggregationDistributedHelper,
+    DailyAttendanceAggregationDistributedHelper,
+    DailyFeedingFormsChildHealthAggregationDistributedHelper,
+    DeliveryFormsAggregationDistributedHelper,
+    GrowthMonitoringFormsAggregationDistributedHelper,
+    InactiveAwwsAggregationDistributedHelper,
+    LocationAggregationDistributedHelper,
+    LSAwcMgtFormAggDistributedHelper,
+    LSBeneficiaryFormAggDistributedHelper,
+    LSVhndFormAggDistributedHelper,
+    PostnatalCareFormsCcsRecordAggregationDistributedHelper,
+    PostnatalCareFormsChildHealthAggregationDistributedHelper,
+    THRFormsChildHealthAggregationDistributedHelper,
+    THRFormsCcsRecordAggregationDistributedHelper,
+    THRFormV2AggDistributedHelper,
 ]
-
-
-def all_helpers():
-    helpers = {}
-    for pair in HELPERS:
-        assert pair.validate(), pair
-        helpers[pair.monolith.helper_key] = pair
-    return helpers
-
-
-HELPERS_BY_KEY = all_helpers()
-
-
-def get_helper(key):
-    pair = HELPERS_BY_KEY[key]
-    return pair.distributed or pair.monolith

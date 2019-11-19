@@ -1,5 +1,6 @@
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
+import textwrap
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -87,7 +88,9 @@ class ConstantGetterSpec(JsonObject):
     @classmethod
     def wrap(self, obj):
         if 'constant' not in obj:
-            raise BadSpecError('"constant" property is required!')
+            raise BadSpecError('"constant" property is required in object beginning with <pre>{}</pre>'.format(
+                textwrap.shorten(str(obj), width=75, placeholder="...")
+            ))
         return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):

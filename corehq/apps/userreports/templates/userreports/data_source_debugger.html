@@ -11,7 +11,7 @@
     <div class="form-group">
       <label for="data_source_id" class="col-sm-2 control-label">{% trans "Data Source" %}</label>
       <div class="col-sm-6">
-        <select class="form-control" id="data_source_id" data-bind="value: dataSourceId">
+        <select class="form-control hqwebapp-select2" id="data_source_id" data-bind="value: dataSourceId">
           {% for data_source in data_sources %}
             <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
           {% endfor %}
@@ -19,10 +19,10 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="doc_id" class="col-sm-2 control-label">{% trans "Documents ID" %}</label>
+      <label for="doc_id" class="col-sm-2 control-label">{% trans "Document IDs" %}</label>
       <div class="col-sm-6">
         <input type="text" class="form-control" id="doc_id" data-bind="value: documentsId">
-        <p class="help-block">Comma separated</p>
+        <p class="help-block">{% trans "Comma separated" %}</p>
       </div>
     </div>
     <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>

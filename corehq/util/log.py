@@ -243,12 +243,13 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=None, step=None):
+                      stream=None, offset=0, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
+    :param offset: Number of items already/previously iterated.
     :param step: deprecated, not used
     """
     if stream is None:
@@ -266,18 +267,20 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     start = datetime.now()
 
     def draw(position, done=False):
-        percent = float(position) / length if length > 0 else 1
-        dots = int(round(min(percent, 1) * granularity))
+        overall_position = offset + position
+        overall_percent = overall_position / length if length > 0 else 1
+        dots = int(round(min(overall_percent, 1) * granularity))
         spaces = granularity - dots
         elapsed = (datetime.now() - start).total_seconds()
+        percent = position / (length - offset) if length - offset > 0 else 1
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
                      if position > 0 else "-:--:--")
 
         print(prefix, end=' ', file=stream)
         print("[{}{}]".format("." * dots, " " * spaces), end=' ', file=stream)
-        print("{}/{}".format(position, length), end=' ', file=stream)
-        print("{:.0%}".format(percent), end=' ', file=stream)
-        if position >= length or done:
+        print("{}/{}".format(overall_position, length), end=' ', file=stream)
+        print("{:.0%}".format(overall_percent), end=' ', file=stream)
+        if overall_position >= length or done:
             print("{} elapsed".format(datetime.now() - start), end='', file=stream)
         else:
             print("{} remaining".format(remaining), end='', file=stream)

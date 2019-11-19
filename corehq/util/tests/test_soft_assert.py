@@ -93,7 +93,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
     def test_send_message(self):
 
         def test1(subject, message):
-            self.assertRegexpMatches(subject,
+            self.assertRegex(subject,
                                      r"Soft Assert: \[\w+\] This should fail")
             things_that_should_show_up_in_message = [
                 r"Message: This should fail",
@@ -103,14 +103,14 @@ class SoftAssertHelpersTest(SimpleTestCase):
                 r"Occurrences to date: 1",
             ]
             for thing in things_that_should_show_up_in_message:
-                self.assertRegexpMatches(
+                self.assertRegex(
                     message,
                     thing,
                     '{!r}\ndoes not match\n---\n{}---\n'.format(thing, message)
                 )
 
         def test2(subject, message):
-            self.assertRegexpMatches(
+            self.assertRegex(
                 subject,
                 r'Soft Assert: \[\w+\] None',
             )
@@ -122,7 +122,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
                 r"Occurrences to date: 1",
             ]
             for thing in things_that_should_show_up_in_message:
-                self.assertRegexpMatches(
+                self.assertRegex(
                     message,
                     thing,
                     '{!r}\ndoes not match\n---\n{}---\n'.format(thing, message)

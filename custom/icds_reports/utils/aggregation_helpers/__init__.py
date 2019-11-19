@@ -1,5 +1,3 @@
-
-
 def transform_day_to_month(day):
     return day.replace(day=1)
 
@@ -12,12 +10,19 @@ def date_to_string(date):
     return date.strftime('%Y-%m-%d')
 
 
+def get_child_health_temp_tablename(month):
+    from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
+    base_tablename = ChildHealthMonthlyAggregationDistributedHelper.base_tablename
+    month_string = month.strftime("%Y-%m-%d")
+    return f"tmp_{base_tablename}_{month_string}"
+
+
 class AggregationHelper(object):
-    """Base class used to tag aggregation helpers for monolithic postgres
+    """Base class used to tag aggregation helpers
 
     Adding a new helper class:
-    1. Create the class, both monolith and distributed
-    2. Update the imports in ../monolith/__init__.py and ../distributed/__init__.py
+    1. Create the class
+    2. Update the imports in ../distributed/__init__.py
     3. Update helpers.py to add the new helper to the `HELPERS` list
     """
     helper_key = None  # must match the corresponding key on the distributed helper

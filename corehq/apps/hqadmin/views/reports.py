@@ -1,19 +1,13 @@
-import json
+import csv
 from collections import defaultdict
-from datetime import timedelta
 
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
-from django.views.generic import TemplateView
-
-import csv
-import six.moves.html_parser
 
 from dimagi.utils.dates import add_months
-from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.web import json_response
 
@@ -23,63 +17,7 @@ from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
-from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
-from corehq.apps.hqadmin.reporting.reports import (
-    HISTO_TYPE_TO_FUNC,
-    get_project_spaces,
-    get_stats_data,
-)
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.elastic import parse_args_for_es
-
-
-@require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
-def stats_data(request):
-    histo_type = request.GET.get('histogram_type')
-    interval = request.GET.get("interval", "week")
-    datefield = request.GET.get("datefield")
-    get_request_params_json = request.GET.get("get_request_params", None)
-    get_request_params = (
-        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
-        if get_request_params_json is not None else {}
-    )
-
-    stats_kwargs = {
-        k: get_request_params[k]
-        for k in get_request_params if k != "domain_params_es"
-    }
-    if datefield is not None:
-        stats_kwargs['datefield'] = datefield
-
-    domain_params_es = get_request_params.get("domain_params_es", {})
-
-    if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
-        request.datespan.enddate += timedelta(days=1)
-
-    domain_params, __ = parse_args_for_es(request, prefix='es_')
-    domain_params.update(domain_params_es)
-
-    domains = get_project_spaces(facets=domain_params)
-
-    try:
-        return json_response(get_stats_data(
-            histo_type,
-            domains,
-            request.datespan,
-            interval,
-            **stats_kwargs
-        ))
-    except HistoTypeNotFoundException:
-        return HttpResponseBadRequest(
-            'histogram_type param must be one of <ul><li>{}</li></ul>'
-            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC)))
-
-
-@require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
-def admin_reports_stats_data(request):
-    return stats_data(request)
 
 
 def top_five_projects_by_country(request):

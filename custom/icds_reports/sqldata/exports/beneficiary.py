@@ -18,6 +18,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         config.update({
             '5_years': 60,
+            'true': 1
         })
         super().__init__(config, loc_level, show_test, beta, use_excluded_states=False)
 
@@ -55,9 +56,9 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
 
     @property
     def filters(self):
-        filters = [LTE('age_in_months', '5_years')]
+        filters = [LTE('age_in_months', '5_years'), EQ('valid_in_month', 'true')]
         for key, value in self.config.items():
-            if key == 'domain' or key == '5_years':
+            if key in ['domain', '5_years', 'true']:
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))

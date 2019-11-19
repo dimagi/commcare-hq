@@ -107,10 +107,10 @@ class TestPrevalenceOfSevere(TestCase):
                     'normal': 16,
                     'total_measured': 20,
                     'original_name': ['st2'],
-                    'total_weighed': 379,
+                    'total_weighed': 378,
                     'severe': 0,
                     'moderate': 4,
-                    'total_height_eligible': 497,
+                    'total_height_eligible': 496,
                     'fillKey': '7%-100%'
                 },
                 'st3': {
@@ -136,7 +136,7 @@ class TestPrevalenceOfSevere(TestCase):
             loc_level='state'
         )
         expected = wasting_help_text("0 - 5 years")
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_severe_data_map(
@@ -161,7 +161,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '695'},
                 {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
                  'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
@@ -358,16 +358,16 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.6666666666666666,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.7037037037037037,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% normal"
@@ -407,16 +407,16 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.1111111111111111,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.2962962962962963,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -456,16 +456,16 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.2222222222222222,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
@@ -801,10 +801,10 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'normal': 16,
                     'total_measured': 20,
                     'original_name': ['st2'],
-                    'total_weighed': 379,
+                    'total_weighed': 378,
                     'severe': 0,
                     'moderate': 4,
-                    'total_height_eligible': 497,
+                    'total_height_eligible': 496,
                     'fillKey': '7%-100%'
                 },
                 'st3': {
@@ -832,7 +832,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             icds_feature_flag=True
         )
         expected = wasting_help_text("0 - 5 years")
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -845,7 +845,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "29.63")
+        self.assertEqual(data['rightLegend']['average'], "29.63")
 
     def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -861,7 +861,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '695'},
                 {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
                  'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
@@ -882,7 +882,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
+        self.assertEqual(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -926,7 +926,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "57.14")
+        self.assertEqual(data['rightLegend']['average'], "57.14")
 
     def test_chart_data_bottom_fiveicds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_chart(
@@ -1007,16 +1007,16 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     {
                         "y": 0.6666666666666666,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.7037037037037037,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% normal"
@@ -1058,16 +1058,16 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     {
                         "y": 0.1111111111111111,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.2962962962962963,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -1109,16 +1109,16 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     {
                         "y": 0.2222222222222222,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"

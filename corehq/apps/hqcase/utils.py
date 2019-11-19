@@ -6,11 +6,15 @@ from django.template.loader import render_to_string
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import property_changed_in_action
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import (
+    CaseNotFound,
+    MissingFormXml,
+)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
@@ -217,10 +221,7 @@ def bulk_update_cases(domain, case_changes, device_id):
     case_blocks = []
     for case_id, case_properties, close in case_changes:
         case_block = _get_update_or_close_case_block(case_id, case_properties, close)
-        # Ensure the XML is formatted properly
-        # An exception is raised if not
-        case_block = ElementTree.tostring(case_block.as_xml())
-        case_blocks.append(case_block)
+        case_blocks.append(case_block.as_text())
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
 
 
@@ -233,3 +234,19 @@ def resave_case(domain, case, send_post_save_signal=True):
             case.save()
         else:
             CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+def get_last_non_blank_value(case, case_property):
+    case_transactions = sorted(case.actions, key=lambda t: t.server_date, reverse=True)
+    for case_transaction in case_transactions:
+        try:
+            property_changed_info = property_changed_in_action(
+                case.domain,
+                case_transaction,
+                case.case_id,
+                case_property
+            )
+        except MissingFormXml:
+            property_changed_info = None
+        if property_changed_info and property_changed_info.new_value:
+            return property_changed_info.new_value

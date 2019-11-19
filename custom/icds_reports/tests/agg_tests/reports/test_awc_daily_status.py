@@ -22,12 +22,12 @@ class TestAWCDailyStatus(TestCase):
             {
                 "rightLegend": {
                     "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
-                    "average": 0.0,
+                    "average": 4.545454545454546,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "1"},
                         {'indicator': 'Total number of AWCs that have been launched:', 'value': "22"},
-                        {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
+                        {'indicator': '% of AWCs open yesterday:', 'value': '4.55%'}
                     ]
                 },
                 "fills": {
@@ -39,7 +39,7 @@ class TestAWCDailyStatus(TestCase):
                 "data": {
                     'st7': {'in_day': 0, 'all': 1, 'original_name': ['st7'], 'fillKey': '0%-50%'},
                     'st1': {'in_day': 0, 'all': 10, 'original_name': ['st1'], 'fillKey': '0%-50%'},
-                    'st2': {'in_day': 0, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
+                    'st2': {'in_day': 1, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
                 },
                 "slug": "awc_daily_statuses",
                 "label": "Percent AWCs Open Yesterday"
@@ -59,11 +59,11 @@ class TestAWCDailyStatus(TestCase):
             {
                 "rightLegend": {
                     "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
-                    "average": 0.0,
+                    "average": 4.545454545454546,
                     "extended_info": [
                         {
                             "indicator": "Total number of AWCs that were open yesterday:",
-                            "value": "0"
+                            "value": "1"
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
@@ -71,7 +71,7 @@ class TestAWCDailyStatus(TestCase):
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
-                            "value": "0.00%"
+                            "value": "4.55%"
                         }
                     ],
                     "period": "Daily"
@@ -80,7 +80,7 @@ class TestAWCDailyStatus(TestCase):
                 "data": {
                     'st7': {'in_day': 0, 'all': 1, 'original_name': ['st7'], 'fillKey': '0%-50%'},
                     'st1': {'in_day': 0, 'all': 10, 'original_name': ['st1'], 'fillKey': '0%-50%'},
-                    'st2': {'in_day': 0, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
+                    'st2': {'in_day': 1, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
                 },
                 "slug": "awc_daily_statuses",
                 "fills": {
@@ -466,7 +466,7 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 1,
                                 "x": 1495929600000,
                                 "all": 0
                             }
@@ -475,18 +475,18 @@ class TestAWCDailyStatus(TestCase):
                     }
                 ],
                 "top_five": [
+                    {'loc_name': 'st2', 'percent': 9.090909090909092},
                     {'loc_name': 'st1', 'percent': 0.0},
-                    {'loc_name': 'st2', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
                 ],
                 "all_locations": [
+                    {'loc_name': 'st2', 'percent': 9.090909090909092},
                     {'loc_name': 'st1', 'percent': 0.0},
-                    {'loc_name': 'st2', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
                 ],
                 "bottom_five": [
+                    {'loc_name': 'st2', 'percent': 9.090909090909092},
                     {'loc_name': 'st1', 'percent': 0.0},
-                    {'loc_name': 'st2', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
                 ]
             }

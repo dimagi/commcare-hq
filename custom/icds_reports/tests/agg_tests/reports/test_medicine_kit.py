@@ -19,7 +19,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -35,7 +35,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -72,7 +72,7 @@ class TestMedicineKit(TestCase):
             loc_level='state'
         )
         expected = awcs_reported_medicine_kit_help_text()
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_medicine_kit_data_map(
@@ -83,7 +83,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
+        self.assertEqual(data['rightLegend']['average'], 66.66666666666667)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_medicine_kit_data_map(
@@ -130,7 +130,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'medicine_kit')
+        self.assertEqual(data['slug'], 'medicine_kit')
 
     def test_map_data_label(self):
         data = get_medicine_kit_data_map(
@@ -141,7 +141,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percentage of AWCs that reported having a Medicine Kit')
+        self.assertEqual(data['label'], 'Percentage of AWCs that reported having a Medicine Kit')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_medicine_kit_data_map(
@@ -180,7 +180,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 52.94117647058823)
+        self.assertEqual(data['rightLegend']['average'], 52.94117647058823)
 
     def test_chart_data_keys(self):
         data = get_medicine_kit_data_chart(
@@ -191,7 +191,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('top_five', data)
         self.assertIn('bottom_five', data)
         self.assertIn('all_locations', data)
@@ -290,7 +290,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], "State")
+        self.assertEqual(data['location_type'], "State")
 
     def test_chart_data_all_locations(self):
         data = get_medicine_kit_data_chart(

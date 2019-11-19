@@ -7,10 +7,12 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 import mock
+from testil import eq
 
 from casexml.apps.case.models import CommCareCase
 
 import corehq.motech.openmrs.repeater_helpers
+from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
@@ -22,7 +24,9 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import DuplicateCaseMatch
 from corehq.motech.openmrs.openmrs_config import (
+    ObservationMapping,
     OpenmrsCaseConfig,
     OpenmrsConfig,
 )
@@ -39,6 +43,8 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    ConstantString,
+    FormQuestionMap,
     get_case_location,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -537,7 +543,8 @@ class FindPatientTest(SimpleTestCase):
         })
 
         with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
-                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids') as save_match_ids_patch:
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
             CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
@@ -554,6 +561,8 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.case = mock.Mock()
         self.case.domain = DOMAIN
         self.case.get_id = 'deadbeef'
+        self.case.case_id = 'deadbeef'
+        self.case.name = ''
         self.case_config = copy.deepcopy(CASE_CONFIG)
         self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
 
@@ -570,7 +579,9 @@ class SaveMatchIdsTests(SimpleTestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
-    def test_save_external_id(self, case_block_mock, _):
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_external_id(self, importer_util_mock, case_block_mock, _):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.NotFound)
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         save_match_ids(self.case, self.case_config, self.patient)
         case_block_mock.assert_called_with(
@@ -580,9 +591,86 @@ class SaveMatchIdsTests(SimpleTestCase):
             update={}
         )
 
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_duplicate_external_id(self, importer_util_mock, _):
+        another_case = mock.Mock()
+        importer_util_mock.lookup_case.return_value = (another_case, None)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
 
-class DocTests(SimpleTestCase):
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_multiple_external_id(self, importer_util_mock, _):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.MultipleResults)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
 
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
-        self.assertEqual(results.failed, 0)
+
+def test_observation_mappings():
+    repeater = OpenmrsRepeater.wrap({
+        "openmrs_config": {
+            "openmrs_provider": "",
+            "case_config": {},
+            "form_configs": [{
+                "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+                "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
+                "openmrs_observations": [
+                    {
+                        "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+                        "case_property": "abnormal_temperature",
+                        "value": {
+                            "doc_type": "FormQuestionMap",
+                            "form_question": "/data/abnormal_temperature",
+                            "value_map": {
+                                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+                            },
+                        },
+                    },
+                    {
+                        "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+                        "case_property": "bahmni_abnormal_temperature",
+                        "value": {
+                            "doc_type": "ConstantString",
+                            "value": "",
+                            "direction": "in",
+                        },
+                    },
+                ]
+            }]
+        }
+    })
+    observation_mappings = repeater.observation_mappings
+    eq(observation_mappings, {
+        '397b9631-2911-435a-bf8a-ae4468b9c1d4': [
+            ObservationMapping(
+                concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
+                case_property='abnormal_temperature',
+                value=FormQuestionMap(
+                    form_question='/data/abnormal_temperature',
+                    value_map={
+                        'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
+                        'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
+                    }
+                )
+            ),
+            ObservationMapping(
+                concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
+                case_property='bahmni_abnormal_temperature',
+                value=ConstantString(
+                    direction='in',
+                    doc_type='ConstantString',
+                    value=''
+                )
+            )
+        ]
+    })
+
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
+    assert results.failed == 0

@@ -21,7 +21,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -98,7 +98,7 @@ def get_case_pillow(
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    case_to_es_processor = ElasticProcessor(
+    case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch

@@ -23,8 +23,8 @@ CHANGED = 'changed'
 DIFF_STATES = (REMOVED, ADDED, CHANGED)
 
 QUESTION_ATTRIBUTES = (
-    'label', 'type', 'value', 'options', 'calculate', 'relevant',
-    'required', 'comment', 'setvalue', 'constraint',
+    'label', 'translations', 'type', 'value', 'options', 'calculate',
+    'relevant', 'required', 'comment', 'setvalue', 'constraint',
     'load_properties', 'save_properties'
 )
 
@@ -51,6 +51,7 @@ class _TranslationChange(_Change):
 class _QuestionDiff(JsonObject):
     question = ObjectProperty(_Change)
     label = ObjectProperty(_Change)
+    translations = ObjectProperty(_Change)
     type = ObjectProperty(_Change)
     value = ObjectProperty(_Change)
     calculate = ObjectProperty(_Change)
@@ -89,6 +90,7 @@ class _FormMetadataQuestion(FormQuestionResponse):
 
 class _FormMetadata(JsonObject):
     unique_id = StringProperty()
+    module_uid = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     action_type = StringProperty()
@@ -146,6 +148,7 @@ class _AppSummaryFormDataGenerator(object):
     def _compile_form(self, form):
         form_meta = _FormMetadata(**{
             'unique_id': form.unique_id,
+            'module_uid': form.get_module().unique_id,
             'name': form.name,
             'short_comment': form.short_comment,
             'action_type': form.get_action_type(),
@@ -238,9 +241,11 @@ class _AppDiffGenerator(object):
         self.first = get_app_summary_formdata(app1.domain, app1)[0]
         self.second = get_app_summary_formdata(app2.domain, app2)[0]
 
-        self._first_by_id = {}
+        self._first_modules_by_id = {}
+        self._first_forms_by_id = {}
         self._first_questions_by_form_id = defaultdict(dict)
-        self._second_by_id = {}
+        self._second_modules_by_id = {}
+        self._second_forms_by_id = {}
         self._second_questions_by_form_id = defaultdict(dict)
         self._populate_id_caches()
 
@@ -254,17 +259,17 @@ class _AppDiffGenerator(object):
             id_cache[form_id][question_path] = question
 
         for module in self.first:
-            self._first_by_id[module['unique_id']] = module
+            self._first_modules_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._first_by_id[form['unique_id']] = form
+                self._first_forms_by_id[form['unique_id']] = form
                 for question in form['questions']:
                     add_question_to_id_cache(self._first_questions_by_form_id,
                                              form['unique_id'], question['value'], question)
 
         for module in self.second:
-            self._second_by_id[module['unique_id']] = module
+            self._second_modules_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._second_by_id[form['unique_id']] = form
+                self._second_forms_by_id[form['unique_id']] = form
                 for question in form['questions']:
                     add_question_to_id_cache(self._second_questions_by_form_id,
                                              form['unique_id'], question['value'], question)
@@ -273,12 +278,14 @@ class _AppDiffGenerator(object):
         """Finds all removed modules, forms, and questions from the second app
         """
         for module in self.first:
-            if module['unique_id'] not in self._second_by_id:
+            if module['unique_id'] not in self._second_modules_by_id:
                 self._mark_item_removed(module, 'module')
                 continue
 
             for form in module['forms']:
-                if form['unique_id'] not in self._second_by_id:
+                second_form = self._second_forms_by_id.get(form['unique_id'])
+                if not second_form or form.module_uid != second_form.module_uid:
+                    # Also show moved form as deleted and re-added.
                     self._mark_item_removed(form, 'form')
                     continue
 
@@ -297,7 +304,7 @@ class _AppDiffGenerator(object):
         """
         for second_module in self.second:
             try:
-                first_module = self._first_by_id[second_module['unique_id']]
+                first_module = self._first_modules_by_id[second_module['unique_id']]
                 for attribute in MODULE_ATTRIBUTES:
                     self._mark_attribute(first_module, second_module, attribute)
                 self._mark_forms(second_module['forms'])
@@ -305,8 +312,10 @@ class _AppDiffGenerator(object):
                 self._mark_item_added(second_module, 'module')
 
     def _mark_attribute(self, first_item, second_item, attribute):
-        translation_changed = (self._is_translatable_property(first_item[attribute], second_item[attribute])
-                               and set(second_item[attribute].items()) - set(first_item[attribute].items()))
+        translation_changed = (self._is_translatable_property(first_item[attribute],
+                                                              second_item[attribute])
+                               and (set(second_item[attribute].items())
+                                    - set(first_item[attribute].items())))
         attribute_changed = first_item[attribute] != second_item[attribute]
         attribute_added = second_item[attribute] and not first_item[attribute]
         attribute_removed = first_item[attribute] and not second_item[attribute]
@@ -323,13 +332,15 @@ class _AppDiffGenerator(object):
 
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
-            try:
-                first_form = self._first_by_id[second_form['unique_id']]
+            first_form = self._first_forms_by_id.get(second_form['unique_id'])
+            if not first_form or first_form.module_uid != second_form.module_uid:
+                # Also show moved form as deleted and re-added.
+                self._mark_item_added(second_form, 'form')
+            else:
+                first_form = self._first_forms_by_id[second_form['unique_id']]
                 for attribute in FORM_ATTRIBUTES:
                     self._mark_attribute(first_form, second_form, attribute)
                 self._mark_questions(second_form['unique_id'], second_form['questions'])
-            except KeyError:
-                self._mark_item_added(second_form, 'form')
 
     def _mark_questions(self, form_id, second_questions):
         for second_question in second_questions:
@@ -438,25 +449,14 @@ class _AppDiffGenerator(object):
         This is used for the "View Changed Items" filter in the UI
         """
         try:
-            for form in self._get_form_ancestors(item):
-                form.changes.contains_changes = True
             item.changes.contains_changes = True
+            if isinstance(item, _FormMetadataQuestion):
+                for form in [self._first_forms_by_id.get(item['form_id']),
+                             self._second_forms_by_id.get(item['form_id'])]:
+                    if form:
+                        form.changes.contains_changes = True
         except AttributeError:
             pass
-
-    def _get_form_ancestors(self, question):
-        """Returns forms from both apps with the same form_id.
-        If something other than a question is passed in, it will be ignored
-
-        """
-        ancestors = []
-        for tree in [self._first_by_id, self._second_by_id]:
-            try:
-                form_id = question['form_id']
-                ancestors.append(tree[form_id])
-            except KeyError:
-                continue
-        return ancestors
 
 
 def get_app_diff(app1, app2):

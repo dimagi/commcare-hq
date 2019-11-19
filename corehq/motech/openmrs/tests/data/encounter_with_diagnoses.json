@@ -1,0 +1,115 @@
+{
+  "accessionNotes": [],
+  "associatedToPatientProgram": false,
+  "bahmniDiagnoses": [
+    {
+      "certainty": "CONFIRMED",
+      "codedAnswer": {
+        "conceptClass": "Diagnosis",
+        "dataType": "N/A",
+        "hiNormal": null,
+        "lowNormal": null,
+        "mappings": [
+          {
+            "code": "T68",
+            "name": "Hypothermia",
+            "source": "ICD 10 - WHO"
+          }
+        ],
+        "name": "Hypothermia",
+        "set": false,
+        "shortName": "Hypothermia",
+        "uuid": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0"
+      },
+      "comments": "",
+      "creatorName": "Eric Idle",
+      "diagnosisDateTime": "2019-10-18T16:04:04.000+0530",
+      "diagnosisStatusConcept": null,
+      "encounterUuid": "9759abd0-11b8-40d2-89ed-bb784e823423",
+      "existingObs": "30fe21d6-088c-42ce-af48-0df3d05d1ce2",
+      "firstDiagnosis": {
+        "certainty": "CONFIRMED",
+        "codedAnswer": {
+          "conceptClass": "Diagnosis",
+          "dataType": "N/A",
+          "hiNormal": null,
+          "lowNormal": null,
+          "mappings": [
+            {
+              "code": "T68",
+              "name": "Hypothermia",
+              "source": "ICD 10 - WHO"
+            }
+          ],
+          "name": "Hypothermia",
+          "set": false,
+          "shortName": "Hypothermia",
+          "uuid": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0"
+        },
+        "comments": "",
+        "creatorName": "Eric Idle",
+        "diagnosisDateTime": "2019-10-18T16:04:04.000+0530",
+        "diagnosisStatusConcept": null,
+        "encounterUuid": "9759abd0-11b8-40d2-89ed-bb784e823423",
+        "existingObs": "30fe21d6-088c-42ce-af48-0df3d05d1ce2",
+        "firstDiagnosis": null,
+        "freeTextAnswer": null,
+        "latestDiagnosis": null,
+        "order": "PRIMARY",
+        "previousObs": null,
+        "providers": [
+          {
+            "encounterRoleUuid": "a0b03050-c99b-11e0-9572-0800200c9a66",
+            "name": "Eric Idle",
+            "uuid": "9c4d72f8-a8ab-4921-9f44-2a026c3fb841"
+          }
+        ],
+        "revised": false,
+        "voidReason": null,
+        "voided": false
+      },
+      "freeTextAnswer": null,
+      "latestDiagnosis": null,
+      "order": "PRIMARY",
+      "previousObs": null,
+      "providers": [
+        {
+          "encounterRoleUuid": "a0b03050-c99b-11e0-9572-0800200c9a66",
+          "name": "Eric Idle",
+          "uuid": "9c4d72f8-a8ab-4921-9f44-2a026c3fb841"
+        }
+      ],
+      "revised": false,
+      "voidReason": null,
+      "voided": false
+    }
+  ],
+  "context": {},
+  "disposition": null,
+  "drugOrders": [],
+  "encounterDateTime": "2019-10-18T15:28:05.000+0530",
+  "encounterType": "Consultation",
+  "encounterTypeUuid": "81852aee-3f10-11e4-adec-0800271c1b75",
+  "encounterUuid": "9759abd0-11b8-40d2-89ed-bb784e823423",
+  "extensions": {
+    "mdrtbSpecimen": []
+  },
+  "locationName": "Hospital Registration Desk",
+  "locationUuid": "c5854fd7-3f12-11e4-adec-0800271c1b75",
+  "observations": [],
+  "orders": [],
+  "patientId": "NEHR123456",
+  "patientProgramUuid": null,
+  "patientUuid": "8b4a90d7-726e-4d3f-9457-11327af15cfd",
+  "providers": [
+    {
+      "encounterRoleUuid": "a0b03050-c99b-11e0-9572-0800200c9a66",
+      "name": "Eric Idle",
+      "uuid": "9c4d72f8-a8ab-4921-9f44-2a026c3fb841"
+    }
+  ],
+  "reason": null,
+  "visitType": null,
+  "visitTypeUuid": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
+  "visitUuid": "6fb1f0d3-187b-45c6-a819-10d32af78d8b"
+}

@@ -1,5 +1,5 @@
 import json
-import uuid
+from collections import defaultdict
 from functools import partial
 
 from django.contrib import messages
@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_app_cached,
     get_apps_in_domain,
     get_current_app,
     wrap_app,
@@ -28,7 +29,7 @@ from corehq.apps.app_manager.models import (
     CustomIcon,
     enable_usercase_if_necessary,
 )
-from corehq.apps.app_manager.util import update_form_unique_ids
+from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
@@ -148,14 +149,14 @@ def validate_langs(request, existing_langs):
 
 def get_blank_form_xml(form_name):
     return render_to_string("app_manager/blank_form.xml", context={
-        'xmlns': str(uuid.uuid4()).upper(),
+        'xmlns': generate_xmlns(),
         'name': form_name,
     })
 
 
 def get_default_followup_form_xml(context):
     """Update context and apply in XML file default_followup_form"""
-    context.update({'xmlns_uuid': str(uuid.uuid4()).upper()})
+    context.update({'xmlns_uuid': generate_xmlns()})
     return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 
@@ -412,3 +413,55 @@ def clear_xmlns_app_id_cache(domain):
 
 def form_has_submissions(domain, app_id, xmlns):
     return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0
+
+
+def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, build_profile_id=None):
+    def _get_mm_map_by_id(multimedia_map):
+        return {
+            media_map_item['multimedia_id']: media_map_item
+            for path, media_map_item in
+            multimedia_map.items()
+        }
+
+    source_build = get_app_cached(domain, source_build_id)
+    target_build = get_app_cached(domain, target_build_id)
+    assert source_build.copy_of, _("Size calculation available only for builds")
+    assert target_build.copy_of, _("Size calculation available only for builds")
+    build_profile = source_build.build_profiles[build_profile_id] if build_profile_id else None
+    source_mm_map = source_build.multimedia_map_for_build(build_profile=build_profile)
+    target_mm_map = target_build.multimedia_map_for_build(build_profile=build_profile)
+    source_mm_map_by_id = _get_mm_map_by_id(source_mm_map)
+    target_mm_map_by_id = _get_mm_map_by_id(target_mm_map)
+    added = set(target_mm_map_by_id.keys()).difference(set(source_mm_map_by_id.keys()))
+    media_objects = {
+        mm.get_id: mm
+        for path, mm in
+        target_build.get_media_objects(multimedia_map=target_mm_map)
+    }
+    total_size = defaultdict(lambda: 0)
+    for multimedia_id in added:
+        media_object = media_objects[multimedia_id]
+        total_size[media_object.doc_type] += media_object.content_length
+    return total_size
+
+
+def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
+    build = get_app_cached(domain, build_id)
+    assert build.copy_of, _("Size calculation available only for builds")
+    build_profile = build.build_profiles[build_profile_id] if build_profile_id else None
+    multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)
+    multimedia_map_for_build_by_id = {
+        media_map_item['multimedia_id']: media_map_item
+        for path, media_map_item in
+        multimedia_map_for_build.items()
+    }
+    media_objects = {
+        mm_object.get_id: mm_object
+        for path, mm_object in
+        build.get_media_objects(multimedia_map=multimedia_map_for_build)
+    }
+    total_size = defaultdict(lambda: 0)
+    for multimedia_id, media_item in multimedia_map_for_build_by_id.items():
+        media_object = media_objects[multimedia_id]
+        total_size[media_object.doc_type] += media_object.content_length
+    return total_size

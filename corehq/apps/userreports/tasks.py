@@ -15,7 +15,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
-from elasticsearch.exceptions import ConnectionTimeout
+from corehq.util.es.elasticsearch import ConnectionTimeout
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked

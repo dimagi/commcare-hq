@@ -38,6 +38,8 @@ class AggAwcDailyView(models.Model):
     cases_ccs_lactating_all = models.IntegerField(blank=True, null=True)
     cases_child_health_all = models.IntegerField(blank=True, null=True)
     daily_attendance_open = models.IntegerField(blank=True, null=True)
+    total_eligible_pse = models.IntegerField(null=True)
+    total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True)
@@ -1071,3 +1073,38 @@ class NICIndicatorsView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'nic_indicators'
+
+
+class DailyIndicatorsView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    pse_eligible = models.IntegerField(blank=True, null=True)
+    total_attended_pse = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    daily_attendance_open = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'daily_indicators'
+
+
+class MWCDReportView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    num_launched_districts = models.IntegerField(blank=True, null=True)
+    num_launched_states = models.IntegerField(blank=True, null=True)
+    awc_with_gm_devices = models.IntegerField(blank=True, null=True)
+    cases_household = models.IntegerField(blank=True, null=True)
+    cases_child_health = models.IntegerField(blank=True, null=True)
+    total_mothers = models.IntegerField(blank=True, null=True)
+    num_ls_launched = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'mwcd_report'

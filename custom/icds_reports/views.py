@@ -14,6 +14,8 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+
+from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
@@ -40,8 +42,9 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
     GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
-    THR_REPORT_EXPORT
+    THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
 from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -110,9 +113,10 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView, MWCDReportView
+from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
-
+from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -208,10 +212,21 @@ def get_tableau_access_token(tableau_user, client_ip):
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
+    downtime_template_name = 'icds_reports/dashboard_down.html'
+
+    def get_template_names(self):
+        return [self.template_name] if not self.show_downtime else [self.downtime_template_name]
 
     @property
     def domain(self):
         return self.kwargs['domain']
+
+    @property
+    def show_downtime(self):
+        return (
+            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
+            and not self.request.GET.get('bypass-downtime')
+        )
 
     @property
     def couch_user(self):
@@ -229,36 +244,16 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
-        kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
-            self.kwargs['domain']
-        ).location_ids())
-        kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
-                self.kwargs['domain']
-            )]
-        )
-        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
-        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
-            self.domain, 'access_all_locations'
-        )
-
-        if kwargs['have_access_to_all_locations']:
-            kwargs['user_location_id'] = None
-
-        is_commcare_user = self.couch_user.is_commcare_user()
-
-        if self.couch_user.is_web_user():
-            kwargs['is_web_user'] = True
-        elif is_commcare_user and self._has_helpdesk_role():
+        kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
+        kwargs['is_mobile'] = False
+        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
             )
-        return super(DashboardView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)
 
 
 @location_safe
@@ -266,6 +261,13 @@ class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+
+
+@location_safe
+class IcdsDynamicMobileTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
 
 
 @location_safe
@@ -790,9 +792,11 @@ class ExportIndicatorView(View):
             latest_year, latest_month = add_months(today.year, today.month, -month_offset)
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
+        if indicator == DASHBOARD_USAGE_EXPORT:
+            config['couch_user'] = self.request.couch_user
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -1815,11 +1819,24 @@ class APWebservice(View):
         return JsonResponse({'message': 'Connection Successful'})
 
 
+@method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
+class DailyIndicators(View):
+    def get(self, request, *args, **kwargs):
+
+        try:
+            filename, export_file = get_daily_indicators()
+        except AggAwcDailyView.DoesNotExist:
+            return JsonResponse({'message': 'No data for Yesterday'}, status=500)
+        response = HttpResponse(export_file.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
+
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
-        data_type = int(request.POST.get('indicator', None))
+        data_type = request.POST.get('indicator', None)
         state_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
@@ -1827,7 +1844,7 @@ class CasDataExport(View):
 
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
-            return JsonResponse({"message": "Export not exists."})
+            return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
             params = dict(
                 indicator=data_type,
@@ -1847,7 +1864,7 @@ class CasDataExport(View):
             )
 
     def get(self, request, *args, **kwargs):
-        data_type = int(request.GET.get('indicator', None))
+        data_type = request.GET.get('indicator', None)
         state_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
@@ -1908,7 +1925,7 @@ class CasDataExportAPIView(View):
         data_type = request.GET.get('type')
         if data_type not in self.valid_types:
             return JsonResponse(self.message('invalid_type'), status=400)
-        type_code = self.get_type_code(data_type)
+        type_code = CasDataExportAPIView.get_type_code(data_type)
 
         sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
 
@@ -1920,16 +1937,37 @@ class CasDataExportAPIView(View):
     @property
     @icds_quickcache([])
     def valid_state_names(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+        return list(AwcLocation.objects.filter(
+            aggregation_level=AggregationLevels.STATE, state_is_test=0
+        ).values_list('state_name', flat=True))
 
     @property
     def valid_types(self):
         return ('woman', 'child', 'awc')
 
-    def get_type_code(self, data_type):
+    @staticmethod
+    def get_type_code(data_type):
         type_map = {
-            "child": 1,
-            "woman": 2,
-            "awc": 3
+            "child": 'child_health_monthly',
+            "woman": 'ccs_record_monthly',
+            "awc": 'agg_awc',
         }
         return type_map[data_type]
+
+
+@location_safe
+@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
+class MWCDDataView(View):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data = get_mwcd_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
+        except Exception:
+            response = dict(isSuccess=False, message='Unknown Error occured')
+            return JsonResponse(response, status=500)

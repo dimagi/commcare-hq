@@ -77,6 +77,7 @@
       {
         "column_id": "timeend",
         "datatype": "datetime",
+        "create_index": true,
         "type": "expression",
         "expression": {
           "type": "root_doc",
@@ -376,27 +377,6 @@
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "sql_column_indexes": [
-      {
-        "column_ids": ["state_id", "weight_child"]
-      },
-      {
-        "column_ids": ["state_id", "height_child"]
-      },
-      {
-        "column_ids": ["state_id", "zscore_grading_wfa"]
-      },
-      {
-        "column_ids": ["state_id", "zscore_grading_hfa"]
-      },
-      {
-        "column_ids": ["state_id", "zscore_grading_wfh"]
-      },
-      {
-        "column_ids": ["state_id", "muac_grading"]
-      },
-      {
-        "column_ids": ["state_id", "timeend"]
-      },
       {
         "column_ids": ["doc_id"]
       }

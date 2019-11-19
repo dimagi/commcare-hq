@@ -4,39 +4,17 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.apps.es.aggregations import (
-    AggregationTerm,
-    NestedTermAggregationsHelper,
-)
-from corehq.apps.es.ledgers import LedgerES
-from corehq.apps.export.models.new import LedgerSectionEntry
-from corehq.util.django_migrations import skip_on_fresh_install
-
-
-@skip_on_fresh_install
-def initialize_ledger_combinations(apps, schema_editor):
-    terms = [
-        AggregationTerm('domain', 'domain'),
-        AggregationTerm('section_id', 'section_id'),
-        AggregationTerm('entry_id', 'entry_id'),
-    ]
-    combos = [
-        a for a in NestedTermAggregationsHelper(base_query=LedgerES(), terms=terms).get_data()
-    ]
-    for combo in combos:
-        LedgerSectionEntry.objects.get_or_create(
-            domain=combo.domain,
-            section_id=combo.section_id,
-            entry_id=combo.entry_id,
-        )
-
 
 class Migration(migrations.Migration):
+    """
+    This migration used to contain some initialization for LedgerSectionEntry.
+
+    At the time it was run, this model was only used by exports and only on Supply projects
+    """
 
     dependencies = [
         ('export', '0007_auto_20190906_0149'),
     ]
 
     operations = [
-        migrations.RunPython(initialize_ledger_combinations, elidable=True),
     ]

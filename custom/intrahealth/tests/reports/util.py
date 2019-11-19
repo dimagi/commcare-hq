@@ -5,7 +5,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.users.models import WebUser
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from custom.intrahealth.models import IntraHealthFluff, CouvertureFluff, TauxDeRuptureFluff, RecouvrementFluff, \
     TauxDeSatisfactionFluff, LivraisonFluff
 
@@ -65,7 +65,7 @@ class ReportTestCase(TestCase):
             location_type=district_location_type
         )
 
-        cls.engine = connection_manager.get_engine('default')
+        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
         cls.intra_table = IntraHealthFluff._table
         cls.couverture_table = CouvertureFluff._table
         cls.taux_table = TauxDeRuptureFluff._table

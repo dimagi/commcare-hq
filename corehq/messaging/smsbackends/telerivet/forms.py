@@ -30,7 +30,7 @@ class TelerivetBackendForm(BackendForm):
     def __init__(self, *args, **kwargs):
         super(TelerivetBackendForm, self).__init__(*args, **kwargs)
 
-        if self._cchq_backend_id:
+        if self.backend_id:
             # Don't allow editing the webhook secret.
             # Django ensures that posted values don't change the value here.
             self.fields['webhook_secret'].disabled = True
@@ -50,7 +50,7 @@ class TelerivetBackendForm(BackendForm):
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
         value = self.cleaned_data['webhook_secret']
         backend = SQLTelerivetBackend.by_webhook_secret(value)
-        if backend and backend.pk != self._cchq_backend_id:
+        if backend and backend.pk != self.backend_id:
             raise ValidationError(_("Already in use."))
         return value
 

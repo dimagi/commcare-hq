@@ -122,26 +122,33 @@ class DateSpan(object):
         self.inclusive = inclusive
         self.timezone = timezone
         self.max_days = max_days
+        # todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
+        self._pickle_standard = 2
 
-    def __getstate__(self):
-        """
-            For pickling the DateSpan object.
-        """
-        return dict(
-            startdate=self.startdate.isoformat() if self.startdate else None,
-            enddate=self.enddate.isoformat() if self.enddate else None,
-            format=self.format,
-            inclusive=self.inclusive,
-            is_default=self.is_default,
-            timezone=self.timezone.zone,
-            max_days=self.max_days,
+    def __eq__(self, other):
+        return (
+            self.startdate == other.startdate
+            and self.enddate == other.enddate
+            and self.format == other.format
+            and self.inclusive == other.inclusive
+            and self.timezone == other.timezone
+            and self.max_days == other.max_days
         )
 
     def __setstate__(self, state):
         """
             For un-pickling the DateSpan object.
+
+            This does the same thing as not definining __setstate__ at all,
+            unless it detects state pickled with our previous custom __getstate__ code.
+            todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
         """
-        logging = get_task_logger(__name__) # logging is likely to happen within celery
+        if state.get('_pickle_standard') == 2:
+            self.__dict__.update(state)
+            return
+
+        # unpickle from state pickled with our previous custom __getstate__ code
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery
         try:
             self.startdate = dateutil.parser.parse(state.get('startdate')) if state.get('startdate') else None
             self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
