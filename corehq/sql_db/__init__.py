@@ -15,7 +15,6 @@ default_app_config = 'corehq.sql_db.SQLDBAppConfig'
 def custom_db_checks(app_configs, **kwargs):
     errors = []
     custom_db_settings = [
-        'WAREHOUSE_DATABASE_ALIAS',
         'SYNCLOGS_SQL_DB_ALIAS'
     ]
     for setting in custom_db_settings:
@@ -99,10 +98,6 @@ def check_db_tables(app_configs, **kwargs):
         ICDS_REPORTS_APP: settings.ICDS_ENVS
     }
 
-    skip = (
-        'warehouse',  # remove this once the warehouse tables are created
-    )
-
     def _check_model(model_class, using=None):
         try:
             model_class._default_manager.using(using).all().exists()
@@ -116,9 +111,6 @@ def check_db_tables(app_configs, **kwargs):
 
     for model in apps.get_models():
         app_label = model._meta.app_label
-        if app_label in skip:
-            continue
-
         enabled_envs = env_specific_apps.get(app_label)
         if enabled_envs and settings.SERVER_ENVIRONMENT not in enabled_envs:
             continue

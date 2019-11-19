@@ -157,7 +157,8 @@ class OpenmrsRepeater(CaseRepeater):
                     diag_mappings[diag_mapping.concept].append(diag_mapping)
         return diag_mappings
 
-    def get_first_user(self):
+    @cached_property
+    def first_user(self):
         return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
