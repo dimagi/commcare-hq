@@ -184,11 +184,7 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        current_subscription = Subscription.get_active_subscription_by_domain(request.domain)
-        if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
-            return False
-    return True
+    return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
 
 
 def user_display_string(username, first_name="", last_name=""):

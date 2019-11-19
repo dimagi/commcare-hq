@@ -1,20 +1,20 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<fieldset style="margin-top: 20px;">
+<fieldset>
   <legend>{% trans 'Saved Credit Cards' %}</legend>
   <table class='table table-striped'>
     <tbody data-bind="template: {name: 'card-row', foreach: cards}"></tbody>
   </table>
-</fieldset>
 
-<!-- ko with: newCard -->
-<button type='button' class="btn btn-primary new-card" data-toggle="modal" href="#card-modal">
-  <i class='fa fa-plus'></i> {% trans 'Add Card' %}
-</button>
-<div data-bind="template: {name: 'new-stripe-card-template'}"></div>
-{% include 'accounting/partials/new_stripe_card_template.html' %}
-<!-- /ko -->
+  <!-- ko with: newCard -->
+    <button type='button' class="btn btn-primary new-card" data-toggle="modal" href="#card-modal">
+      <i class='fa fa-plus'></i> {% trans 'Add Card' %}
+    </button>
+    <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+    {% include 'accounting/partials/new_stripe_card_template.html' %}
+  <!-- /ko -->
+</fieldset>
 
 <div class="modal fade" id="success-modal">
   <div class="modal-dialog">
