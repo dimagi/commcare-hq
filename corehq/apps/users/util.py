@@ -51,6 +51,9 @@ def normalize_username(username, domain=None):
     """
     from django.core.validators import validate_email
 
+    if not username:
+        return username
+
     username = str(username)
     username = re.sub(r'\s+', '.', username).lower()
     if domain:
