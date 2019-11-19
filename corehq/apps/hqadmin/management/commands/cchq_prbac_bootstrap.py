@@ -162,10 +162,10 @@ class Command(BaseCommand):
     ]
 
     BOOTSTRAP_PLANS = [
+        Role(slug='paused_plan_v0', name='Paused Plan', description=''),
         Role(slug='community_plan_v0', name='Community Plan', description=''),
         Role(slug='community_plan_v1', name='Community Plan', description=''),
         Role(slug='community_plan_v2', name='Community Plan', description=''),
-        Role(slug='paused_plan_v0', name='Paused Plan', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='standard_plan_v1', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
@@ -184,10 +184,10 @@ class Command(BaseCommand):
     ]
 
     BOOTSTRAP_GRANTS = {
+        'paused_plan_v0': features.paused_v0,
         'community_plan_v0': features.community_v0,
         'community_plan_v1': features.community_v1,
         'community_plan_v2': features.community_v2,
-        'paused_plan_v0': features.paused_v0,
         'standard_plan_v0': features.standard_v0,
         'standard_plan_v1': features.standard_v1,
         'pro_plan_v0': features.pro_v0,

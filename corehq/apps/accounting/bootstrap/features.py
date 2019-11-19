@@ -1,31 +1,39 @@
+"""
+These are the feature allocations for all tiers of our Software Plan Editions
+available for self-service.
+"""
 from corehq import privileges
 
 paused_v0 = []
 
 # COMMUNITY PLANS
 
+# Grandfathered Community Plans created prior to August 2018
 community_v0 = [
     privileges.PROJECT_ACCESS,
-    privileges.CASE_SHARING_GROUPS,
-    privileges.CHILD_CASES,
     privileges.EXCEL_DASHBOARD,
     privileges.DAILY_SAVED_EXPORT,
+    privileges.CASE_SHARING_GROUPS,
+    privileges.CHILD_CASES,
 ]
 
+# Grandfathered Community Plans created prior to Dec 18, 2019
 community_v1 = [
     privileges.PROJECT_ACCESS,
     privileges.CASE_SHARING_GROUPS,
     privileges.CHILD_CASES,
 ]
 
-# V2 created in December 2019
+# Current Community Plan
 community_v2 = [
     privileges.PROJECT_ACCESS,
+    privileges.LOGIN_AS,
 ]
 
 
 # STANDARD PLANS
 
+# Grandfathered Standard Plans created prior to Dec 18, 2019
 standard_v0 = community_v0 + [
     privileges.API_ACCESS,
     privileges.LOOKUP_TABLES,
@@ -43,27 +51,27 @@ standard_v0 = community_v0 + [
     privileges.PRACTICE_MOBILE_WORKERS,
 ]
 
-# V1 created in December 2019
+# Current Standard Plan
 standard_v1 = community_v2 + [
-    privileges.API_ACCESS,
     privileges.LOOKUP_TABLES,
+    privileges.ROLE_BASED_ACCESS,
     privileges.OUTBOUND_SMS,
     privileges.REMINDERS_FRAMEWORK,
     privileges.CUSTOM_SMS_GATEWAY,
-    privileges.ROLE_BASED_ACCESS,
-    privileges.BULK_USER_MANAGEMENT,
     privileges.BULK_CASE_MANAGEMENT,
+    privileges.BULK_USER_MANAGEMENT,
     privileges.ALLOW_EXCESS_USERS,
-    privileges.LOCATIONS,
     privileges.USER_CASE,
+    privileges.EXCEL_DASHBOARD,
+    privileges.DAILY_SAVED_EXPORT,
     privileges.ZAPIER_INTEGRATION,
-    privileges.LOGIN_AS,
     privileges.PRACTICE_MOBILE_WORKERS,
 ]
 
 
 # PRO PLANS
 
+# Grandfathered Pro Plans created prior to Dec 18, 2019
 pro_v0 = standard_v0 + [
     privileges.CLOUDCARE,
     privileges.CUSTOM_REPORTS,
@@ -77,30 +85,35 @@ pro_v0 = standard_v0 + [
     privileges.REPORT_BUILDER_5,
 ]
 
-# V1 created in December 2019
+# Current Pro Plan
 pro_v1 = standard_v1 + [
-    privileges.CLOUDCARE,
+    privileges.API_ACCESS,
     privileges.CUSTOM_REPORTS,
-    privileges.INBOUND_SMS,
-    privileges.HIPAA_COMPLIANCE_ASSURANCE,
-    privileges.DEIDENTIFIED_DATA,
     privileges.REPORT_BUILDER,
+    privileges.REPORT_BUILDER_5,
     privileges.DATA_CLEANUP,
     privileges.TEMPLATED_INTENTS,
-    privileges.RESTRICT_ACCESS_BY_LOCATION,
-    privileges.REPORT_BUILDER_5,
+    privileges.CASE_SHARING_GROUPS,
+    privileges.CHILD_CASES,
 ]
 
 
 # ADVANCED PLANS
 
-advanced_v0 = pro_v0 + [
-    privileges.CUSTOM_BRANDING,
+# Current Advanced Plan
+advanced_v0 = pro_v1 + [
+    privileges.CLOUDCARE,
     privileges.ACTIVE_DATA_MANAGEMENT,
+    privileges.CUSTOM_BRANDING,
+    privileges.RESTRICT_ACCESS_BY_LOCATION,
+    privileges.INBOUND_SMS,
+    privileges.DEIDENTIFIED_DATA,
+    privileges.HIPAA_COMPLIANCE_ASSURANCE,
     privileges.COMMCARE_LOGO_UPLOADER,
+    privileges.LOCATIONS,
     privileges.CUSTOM_INTENTS,
-    privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.BUILD_PROFILES,
+    privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.ODATA_FEED,
 ]
 
