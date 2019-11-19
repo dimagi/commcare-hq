@@ -25,7 +25,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['DefaultConsumption']),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider(['MobileAuthKeyRecord']),
-    DocTypeIDProvider(['Product']),
     DocTypeIDProvider(['Program']),
     UserIDProvider(include_mobile_users=False),
     DocTypeIDProvider(['CommCareUser']),
