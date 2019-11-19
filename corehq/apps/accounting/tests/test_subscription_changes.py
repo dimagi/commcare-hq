@@ -321,6 +321,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
     def create_survey_content(self):
         return SMSSurveyContent(
+            app_id='456',
             form_unique_id='123',
             expire_after=60,
         )

@@ -1,3 +1,4 @@
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -23,8 +24,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     @property
     def child_temp_tablename(self):
-        from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
-        return ChildHealthMonthlyAggregationDistributedHelper([], self.month).temporary_tablename
+        return get_child_health_temp_tablename(self.month)
 
     def staging_queries(self):
         columns = (
@@ -362,12 +362,12 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         """
 
     def indexes(self):
-        tablename = self.monthly_tablename
+        staging_tablename = self.staging_tablename
         return [
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_1" ON "{tablename}" (aggregation_level, state_id)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_2" ON "{tablename}" (aggregation_level, gender)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_3" ON "{tablename}" (aggregation_level, age_tranche)',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_4" ON "{tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_5" ON "{tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
-            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_6" ON "{tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, state_id)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, gender)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, age_tranche)',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
+            f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
         ]

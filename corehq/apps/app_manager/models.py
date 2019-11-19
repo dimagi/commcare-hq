@@ -31,7 +31,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import qrcode
-from couchdbkit import MultipleResultsFound, ResourceNotFound
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
@@ -95,7 +95,6 @@ from corehq.apps.app_manager.exceptions import (
     ScheduleError,
     VersioningError,
     XFormException,
-    XFormIdNotUnique,
     XFormValidationError,
     XFormValidationFailed,
 )
@@ -1076,31 +1075,6 @@ class FormBase(DocumentSchema):
     @case_references.setter
     def case_references(self, case_references):
         self.case_references_data = case_references
-
-    @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = Application.get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
-
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
-        if and_app:
-            return form, app
-        else:
-            return form
 
     def pre_delete_hook(self):
         raise NotImplementedError()

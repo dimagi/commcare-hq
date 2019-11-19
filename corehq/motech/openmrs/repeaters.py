@@ -2,7 +2,6 @@ import json
 from collections import defaultdict
 from itertools import chain
 
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,6 +19,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -132,13 +132,20 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
-                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                if (
+                    obs_mapping.value.check_direction(DIRECTION_IMPORT)
+                    and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
+                ):
                     # It's possible that an OpenMRS concept appears more
                     # than once in form_configs. We are using a
                     # defaultdict(list) so that earlier definitions
                     # don't get overwritten by later ones:
                     obs_mappings[obs_mapping.concept].append(obs_mapping)
         return obs_mappings
+
+    @cached_property
+    def get_first_user(self):
+        return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
     def payload_doc(self, repeat_record):

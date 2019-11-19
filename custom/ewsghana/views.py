@@ -20,7 +20,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
-from custom.ewsghana.forms import InputStockForm, EWSUserSettings
+from custom.ewsghana.forms import InputStockForm
 from custom.ewsghana.handlers.web_submission_handler import WebSubmissionHandler
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
@@ -130,41 +130,6 @@ class InputStockView(BaseDomainView):
             )
         context['formset'] = InputStockFormSet(initial=initial_data)
         return context
-
-
-@location_safe
-class EWSUserExtensionView(BaseCommTrackManageView):
-    template_name = 'ewsghana/user_extension.html'
-
-    @property
-    def page_context(self):
-        page_context = super(EWSUserExtensionView, self).page_context
-        user_id = self.kwargs['user_id']
-
-        try:
-            extension = EWSExtension.objects.get(domain=self.domain, user_id=user_id)
-            sms_notifications = extension.sms_notifications
-            facility = extension.location_id
-        except EWSExtension.DoesNotExist:
-            sms_notifications = None
-            facility = None
-
-        page_context['form'] = EWSUserSettings(user_id=user_id, domain=self.domain, initial={
-            'sms_notifications': sms_notifications, 'facility': facility
-        })
-        page_context['couch_user'] = self.web_user
-        return page_context
-
-    @property
-    def web_user(self):
-        return WebUser.get(docid=self.kwargs['user_id'])
-
-    def post(self, request, *args, **kwargs):
-        form = EWSUserSettings(request.POST, user_id=kwargs['user_id'], domain=self.domain)
-        if form.is_valid():
-            form.save(self.web_user, self.domain)
-            messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
-        return self.get(request, *args, **kwargs)
 
 
 @require_GET

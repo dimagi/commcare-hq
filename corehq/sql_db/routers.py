@@ -2,14 +2,16 @@ import warnings
 from contextlib import contextmanager
 
 from django.conf import settings
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, connections
 
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
     ICDS_UCR_CITUS_ENGINE_ID,
     connection_manager,
     get_aaa_db_alias,
-    get_icds_ucr_citus_db_alias)
+    get_icds_ucr_citus_db_alias,
+)
+from corehq.sql_db.util import select_db_for_read
 
 from .config import partition_config
 
@@ -107,7 +109,7 @@ def db_for_read_write(model, write=True):
     elif app_label == AAA_APP:
         engine_id = AAA_DB_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
+            return connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
@@ -122,8 +124,13 @@ def db_for_read_write(model, write=True):
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
-            return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
+            return get_load_balanced_app_db(app_label, default_db)
         return default_db
+
+
+def get_load_balanced_app_db(app_name: str, default: str) -> str:
+    read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
+    return select_db_for_read(read_dbs) or default
 
 
 def get_cursor(model):

@@ -13,7 +13,6 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
-from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import (
     doc_to_change,
     get_sample_data_source,
@@ -86,9 +85,6 @@ class UCRMultiDBTest(TestCase):
         self.ds2_adapter.drop_table()
 
     def test_patches_and_setup(self):
-        self.assertEqual('engine-1', get_engine_id(self.ds_1))
-        self.assertEqual('engine-2', get_engine_id(self.ds_2))
-
         self.assertEqual(connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS),
                          connections.connection_manager.get_connection_string('engine-1'))
         self.assertEqual(self.db2_url,

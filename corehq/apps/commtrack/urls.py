@@ -5,7 +5,6 @@ from corehq.apps.commtrack.views import (
     DefaultConsumptionView,
     RebuildStockStateView,
     SMSSettingsView,
-    StockLevelsView,
     default,
 )
 
@@ -15,7 +14,6 @@ settings_urls = [
     url(r'^project_settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
     url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
     url(r'^sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
-    url(r'^stock_levels/$', StockLevelsView.as_view(), name=StockLevelsView.urlname),
     url(r'^rebuild_stock_state/$', RebuildStockStateView.as_view(),
         name=RebuildStockStateView.urlname),
 ]
