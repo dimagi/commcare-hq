@@ -241,7 +241,14 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
             ('date_death', 'person_cases.date_death'),
             ('person_case_id', 'case_list.person_case_id'),
-            ('child_name', 'case_list.child_name')
+            ('child_name', 'case_list.child_name'),
+            ('husband_name', 'person_cases.husband_name'),
+            ('lmp', 'case_list.lmp'),
+            ('migration_status', 'person_cases.migration_status'),
+            ('where_born', 'agg_delivery.where_born'),
+            ('num_children_del', 'agg_delivery.num_children_del'),
+            ('still_live_birth', 'agg_delivery.still_live_birth'),
+
         )
         return """
         INSERT INTO "{tablename}" (
