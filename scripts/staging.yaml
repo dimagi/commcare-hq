@@ -60,5 +60,4 @@ branches:
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
   - dmr/hard-rate-limit-restores  # Danny Nov 19
-  - jls/resource-overrides  # Jenny Nov 19
 submodules: {}
