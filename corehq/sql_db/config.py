@@ -1,4 +1,6 @@
+import copy
 import json
+from typing import Optional
 
 from django.conf import settings
 
@@ -140,7 +142,7 @@ class PlProxyConfig(object):
             has_config = True
             if plproxy_config.get('PROXY'):
                 if proxy_db:
-                    raise PartitionValidationError('Multiple plproxy databases specified')
+                    raise PartitionValidationError('Multiple plproxy databases specified', proxy_db, alias)
                 proxy_db = alias
 
             shards = plproxy_config.get('SHARDS')
@@ -220,6 +222,51 @@ def _get_shard_count(shard_ranges):
     return len(shards)
 
 
+def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlProxyConfig]:
+    """
+    Create plproxy config for querying standbys. This assumes that the main plproxy DB
+    will be the same as the primary DB.
+
+    :returns: PlProxyConfig object with details of all the standby databases
+              or None if no standby databases are configured
+
+    :raises: PartitionValidationError if a partial set of standby databases could be found.
+    """
+    standbys_by_primary = {
+        config['STANDBY']['MASTER']: db
+        for db, config in settings.DATABASES.items()
+        if config.get('STANDBY', {}).get('MASTER')
+    }
+    if not standbys_by_primary:
+        return
+
+    standby_db_config = {}
+
+    def _convert_primary_config(primary_db):
+        standby = standbys_by_primary.get(primary_db)
+        if standby:
+            config = copy.deepcopy(settings.DATABASES[standby])
+            if 'PLPROXY' in config:
+                raise PartitionValidationError('Standby databases should not have PLPROXY configuration')
+            config['PLPROXY'] = settings.DATABASES[primary_db]['PLPROXY']
+            standby_db_config[standby] = config
+            return True
+
+    standbys_found = [
+        _convert_primary_config(db)
+        for db in primary_config.form_processing_dbs
+    ]
+
+    if any(standbys_found) and not all(standbys_found):
+        missing = [db for found, db in zip(standbys_found, primary_config.form_processing_dbs) if not found]
+        raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
+
+    standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
+    return PlProxyConfig.from_dict(standby_db_config)
+
+
 plproxy_config = None
+plproxy_standby_config = None
 if settings.USE_PARTITIONED_DATABASE:
     plproxy_config = PlProxyConfig.from_settings()
+    plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
