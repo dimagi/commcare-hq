@@ -1,19 +1,9 @@
-{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE }}">
-  <head>
-    <title>
-      {% block title %}
-        Chat - {{ contact_name }}
-      {% endblock %}
-    </title>
-    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+{% extends "hqwebapp/base_minimal.html" %}
+{% block title %}Chat - {{ contact_name }}{% endblock %}
+{% block head %}
     {% compress css %}
       <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
     {% endcompress %}
-    {% javascript_libraries ko=True underscore=True %}
-    <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     <script src="{% static "sms/js/chat.js" %}"></script>
     <style>
       html, body {
@@ -101,8 +91,8 @@
         background-color: #FFF;
       }
     </style>
-  </head>
-  <body>
+{% endblock head %}
+{% block body %}
     <div id="chat_header">
       <table id="header_table">
         <tbody>
@@ -147,16 +137,4 @@
     {% registerurl 'api_last_read_message' domain %}
     {% registerurl 'api_send_sms' domain %}
     {% registerurl 'api_history' domain %}
-
-    <div class="initial-page-data" class="hide">
-      {% block initial_page_data %}
-        {# do not override this block, use initial_page_data template tag to populate #}
-      {% endblock %}
-    </div>
-    <div class="commcarehq-urls" class="hide">
-      {% block registered_urls %}
-        {# do not override this block, use registerurl template tag to populate #}
-      {% endblock %}
-    </div>
-  </body>
-</html>
+{% endblock body %}
