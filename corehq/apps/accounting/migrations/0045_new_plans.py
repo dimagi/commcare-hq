@@ -8,7 +8,7 @@ from django.core.management import call_command
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.privileges import PROJECT_ACCESS
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.apps.accounting.bootstrap.config.new_plans_dec2019 import \
+from corehq.apps.accounting.bootstrap.config.new_plans_dec_2019 import \
     BOOTSTRAP_CONFIG as new_plans_config
 
 
