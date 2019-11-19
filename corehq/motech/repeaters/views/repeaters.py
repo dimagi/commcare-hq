@@ -242,6 +242,13 @@ class AddDhis2RepeaterView(AddRepeaterView):
         return repeater
 
 
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
+    urlname = 'new_dhis2_entity_repeater$'
+    repeater_form_class = Dhis2RepeaterForm
+    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+
+
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'
@@ -324,6 +331,11 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
     page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
+
+
+class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
+    urlname = 'edit_dhis2_entity_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
 
 
 @require_POST
