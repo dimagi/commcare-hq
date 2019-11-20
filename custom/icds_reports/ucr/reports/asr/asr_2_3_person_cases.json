@@ -121,22 +121,24 @@
       {
         "display": "F_st_count",
         "column_id": "F_st_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex = 'F' and hh_caste = 'st'", 1]
-        ]
+        "whens": [{
+          "type": "open_female_hh_caste",
+          "binds": ["st"],
+          "then": 1
+        }]
       },
       {
         "display": "F_sc_count",
         "column_id": "F_sc_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'", 1]
-        ]
+        "whens": [{
+          "type": "open_female_hh_caste",
+          "binds": ["sc"],
+          "then": 1
+        }]
       },
       {
         "display": "F_other_count",

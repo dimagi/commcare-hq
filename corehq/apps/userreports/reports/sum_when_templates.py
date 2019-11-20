@@ -37,3 +37,8 @@ class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"
+
+
+class OpenFemaleHHCasteSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_female_hh_caste")
+    expression = "closed_on IS NULL AND sex = 'F' and hh_caste = ?"
