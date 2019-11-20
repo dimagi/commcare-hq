@@ -26,12 +26,16 @@ TREATMENT_FORMS = {
     "http://openrosa.org/formdesigner/2363c4595259f41930352fe574bc55ffd8f7fe22": "Infant Treatment",
     "http://openrosa.org/formdesigner/8a439e01cccb27cd0097f309bef1633263c20275": "Child Treatment",
 }
+ENROLLMENT_FORM = {
+    "http://openrosa.org/formdesigner/10753F54-3ABA-45BA-B2B4-3AFE7F558682": "Child Enrollment",
+}
 PRESCRIPTION_FORM = {
     "http://openrosa.org/formdesigner/796C928A-7451-486B-8346-3316DB3816E4": "Prescription/Ordonnance",
 },
 FORMS_XMLNS = dicts_or(
     CLASSIFICATION_FORMS,
     TREATMENT_FORMS,
+    ENROLLMENT_FORM,
     PRESCRIPTION_FORM,
 )
 
