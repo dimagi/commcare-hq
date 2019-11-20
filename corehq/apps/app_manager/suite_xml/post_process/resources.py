@@ -23,18 +23,20 @@ class ResourceOverride(models.Model):
 def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     overrides_by_pre_id = get_xform_resource_overrides(domain, app_id)
     dirty = False
-    for pre, post in pre_to_post_map.items():
-        if pre in overrides_by_pre_id:
-            if post != overrides_by_pre_id[pre].post_id:
-                raise ResourceOverrideError("Cannot change override of {}".format(pre))
+    for pre_id, post_id in pre_to_post_map.items():
+        if pre_id in overrides_by_pre_id:
+            if post_id != overrides_by_pre_id[pre_id].post_id:
+                raise ResourceOverrideError("""
+                    Cannot change override: domain {}, app {}, pre_id {}
+                """.strip().format(domain, app_id, pre_id))
         else:
             dirty = True
             override = ResourceOverride.objects.create(
                 domain=domain,
                 app_id=app_id,
                 root_name=XFormResource.ROOT_NAME,
-                pre_id=pre,
-                post_id=post,
+                pre_id=pre_id,
+                post_id=post_id,
             )
             override.save()
     if dirty:
