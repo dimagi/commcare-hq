@@ -41,7 +41,6 @@ class Command(BaseCommand):
         return rule
 
     def print_status(self, rule):
-        rule = AutomaticUpdateRule.objects.get(id=rule.id)
         schedule = rule.get_schedule()
         msg = MessagingRuleProgressHelper(rule.id)
         initiated = msg.rule_initiation_key_is_set()
@@ -75,7 +74,7 @@ class Command(BaseCommand):
                     if msg.is_canceled():
                         print("already canceled")
                     else:
-                        print("canceled rule", rule_id)
+                        print("canceling rule", rule_id)
                         msg.cancel()
         else:
             print("Currently locked rules:")
