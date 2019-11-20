@@ -1,0 +1,16 @@
+{% load i18n %}
+<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+    <div class="row no-margin">
+      <h1 ng-bind="$ctrl.label"></h1>
+    </div>
+    <div class="row">
+        <div class="dot-menu">
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+            </div>
+        </div>
+    </div>
+    <div class="report-content">
+        <kpi data="$ctrl.data"></kpi>
+    </div>
+</div>

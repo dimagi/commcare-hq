@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
-from django.db import IntegrityError
 
 from dateutil.relativedelta import relativedelta
 
@@ -23,19 +22,32 @@ class Command(BaseCommand):
         parser.add_argument('interval')
 
     def handle(self, agg_uuid, run_date, interval, **options):
-        self.agg_uuid = agg_uuid
         self.run_date = run_date
         self.interval = int(interval)
-        state_ids = list(SQLLocation.objects
-                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                     .values_list('location_id', flat=True))
+        state_ids = list(
+            SQLLocation.objects
+            .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+            .values_list('location_id', flat=True))
 
         agg_date = self.get_agg_date()
-        try:
-            AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
-        except IntegrityError:
+        agg_record, created = AggregationRecord.objects.get_or_create(
+            agg_uuid=agg_uuid,
+            defaults={
+                'agg_date': agg_date,
+                'run_date': run_date,
+                'state_ids': state_ids,
+                'interval': interval,
+            }
+        )
+        if created:
             logger.info(f'AggregationRecord {agg_uuid} already created')
-        setup_aggregation(agg_date)
+
+        # refresh from the db to force date parsing from string to date object
+        agg_record.refresh_from_db()
+
+        # if this is a previous month and the previous month should not run
+        if agg_record.run_aggregation_queries:
+            setup_aggregation(agg_date)
 
     def get_agg_date(self):
         if self.interval == 0:

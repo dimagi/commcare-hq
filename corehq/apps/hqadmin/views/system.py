@@ -73,7 +73,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
         context['redis'] = service_checks.check_redis()
-        context['rabbitmq'] = service_checks.check_rabbitmq(settings.BROKER_URL)
+        context['rabbitmq'] = service_checks.check_rabbitmq(settings.CELERY_BROKER_URL)
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
@@ -213,8 +213,8 @@ def pillow_operation_api(request):
 
 
 def get_rabbitmq_management_url():
-    if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
+    if settings.CELERY_BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.CELERY_BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:

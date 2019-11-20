@@ -101,7 +101,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.showWarning = function () {
         return (
             vm.now === vm.selectedMonth &&
-            new Date().getFullYear() === vm.selectedYear
+            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected()
         );
     };
     vm.levels = [
@@ -142,7 +142,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 11, name: 'Dashboard usage'});
+        vm.indicators.push({id: 11, name: 'Dashboard usage(Last 7 days)'});
     }
 
     var ALL_OPTION = {

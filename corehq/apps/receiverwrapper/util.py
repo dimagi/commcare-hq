@@ -1,21 +1,21 @@
+import json
 import re
 from collections import namedtuple
 
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 
-from couchdbkit import ResourceNotFound
-
 import couchforms
-from couchforms.models import DefaultAuthContext
-
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
+from couchforms.models import DefaultAuthContext
 
 
 def get_submit_url(domain, app_id=None):
@@ -220,6 +220,22 @@ def _submitted_by_demo_user(form_json, domain):
     return False
 
 
+def _notify_ignored_form_submission(request, form_meta):
+    message = """
+        Details:
+        Method: {}
+        URL: {}
+        GET Params: {}
+        Form Meta: {}
+    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), json.dumps(form_meta))
+    send_mail_async.delay(
+        "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        ['mkangia@dimagi.com']
+    )
+
+
 def should_ignore_submission(request):
     """
     If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
@@ -237,6 +253,9 @@ def should_ignore_submission(request):
             return False
         else:
             if _submitted_by_demo_user(form_json, request.domain):
+                if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+                    # notify the case where the form would have gotten processed
+                    _notify_ignored_form_submission(request, form_json['meta'])
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:

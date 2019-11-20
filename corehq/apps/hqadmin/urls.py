@@ -1,8 +1,8 @@
 from django.conf.urls import include, url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
 from corehq.apps.hqadmin.views.data import doc_in_es, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
@@ -48,6 +48,8 @@ urlpatterns = [
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
+    url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
+    url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),

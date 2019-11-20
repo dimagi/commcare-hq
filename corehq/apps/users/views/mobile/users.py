@@ -25,6 +25,7 @@ from django_prbac.utils import has_privilege
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from casexml.apps.phone.models import SyncLogSQL
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -92,6 +93,7 @@ from corehq.apps.users.views import (
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -150,9 +152,14 @@ class EditCommCareUserView(BaseEditUserView):
         context.update({
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'has_any_sync_logs': self.has_any_sync_logs,
         })
         return context
+
+    @property
+    def has_any_sync_logs(self):
+        return SyncLogSQL.objects.filter(user_id=self.editable_user_id).exists()
 
     @property
     @memoized
@@ -395,6 +402,26 @@ def delete_commcare_user(request, domain, user_id):
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
+
+
+@require_can_edit_commcare_users
+@location_safe
+@require_POST
+def force_user_412(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if not _can_edit_workers_location(request.couch_user, user):
+        raise PermissionDenied()
+
+    datadog_counter('commcare.force_user_412.count', tags=['domain:{}'.format(domain)])
+
+    SyncLogSQL.objects.filter(user_id=user_id).delete()
+
+    messages.success(
+        request,
+        "Mobile Worker {}'s device data will be hard refreshed the next time they sync."
+        .format(user.human_friendly_name)
+    )
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]) + '#user-permanent')
 
 
 @require_can_edit_commcare_users

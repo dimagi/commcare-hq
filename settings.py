@@ -113,8 +113,7 @@ SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
-LOCAL_LOGGING_HANDLERS = {}
-LOCAL_LOGGING_LOGGERS = {}
+LOCAL_LOGGING_CONFIG = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -332,7 +331,6 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
-    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
@@ -344,7 +342,6 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.ilsgateway',
     'custom.zipline',
-    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -352,7 +349,6 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.up_nrhm',
 
-    'custom.care_pathways',
     'custom.common',
 
     'custom.icds',
@@ -510,8 +506,7 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-# celery
-BROKER_URL = CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
@@ -827,7 +822,6 @@ DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
-WAREHOUSE_DATABASE_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines
@@ -1049,6 +1043,9 @@ LOGGING = {
         'ucr_exception': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
         },
+        'kafka_audit': {
+            'format': '%(asctime)s,%(message)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1244,11 +1241,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        'warehouse': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'session_access_log': {
             'handlers': ['session_access_log'],
             'level': 'DEBUG',
@@ -1257,8 +1249,12 @@ LOGGING = {
     }
 }
 
-LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
-LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
+if LOCAL_LOGGING_CONFIG:
+    for key, config in LOCAL_LOGGING_CONFIG.items():
+        if key in ('handlers', 'loggers', 'formatters', 'filters'):
+            LOGGING[key].update(config)
+        else:
+            LOGGING[key] = config
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1371,7 +1367,6 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
-    'ewsghana',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1464,7 +1459,6 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
-    'custom.ewsghana.handler.handle',
 ]
 
 SMS_HANDLERS = [
@@ -1793,8 +1787,6 @@ PILLOWTOPS = {
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1866,6 +1858,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
@@ -1971,7 +1964,6 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
-    'custom.ewsghana',
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
@@ -1999,23 +1991,9 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'pathways-india-mis': 'custom.care_pathways',
-    'pathways-tanzania': 'custom.care_pathways',
-    'care-macf-malawi': 'custom.care_pathways',
-    'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'ews-ghana': 'custom.ewsghana',
-    'ews-ghana-1': 'custom.ewsghana',
-    'ewsghana-6': 'custom.ewsghana',
-    'ewsghana-september': 'custom.ewsghana',
-    'ewsghana-test-4': 'custom.ewsghana',
-    'ewsghana-test-5': 'custom.ewsghana',
-    'ewsghana-test3': 'custom.ewsghana',
-    # Used in tests.  TODO - use override_settings instead
-    'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
 
     #vectorlink domains

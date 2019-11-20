@@ -9,7 +9,7 @@ Most pages will redirect to the current app if given the id of an older build,
 since saved builds are essentially read-only.
 
 In saved builds, `copy_of` contains the primary app's id, while it's `None` for the primary app itself.
-The property `master_id` gets the id of the primary app doc, whether it's called on a saved build or on the primary app.
+If you need to be flexible about finding primary app's id on an object that might be either an app or a build, use the property [master_id](https://github.com/dimagi/commcare-hq/blob/fd9f7aa24f25093683e17a69bb4a14f44d0e15b7/corehq/apps/app_manager/models.py#L4007).
 
 Within code, "build" should always refer to a saved build,
 but "app" is used for both the current app and saved builds.

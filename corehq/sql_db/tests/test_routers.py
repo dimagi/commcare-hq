@@ -2,29 +2,13 @@ from django.db import DEFAULT_DB_ALIAS
 from mock import patch, MagicMock
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from nose.tools import assert_equal
 
-from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP
-
-WAREHOUSE_DB = 'warehouse'
-db_dict = {'NAME': 'commcarehq_warehouse', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
-WAREHOUSE_DATABASE = {
-    DEFAULT_DB_ALIAS: {},
-    WAREHOUSE_DB: db_dict,
-}
+from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP, get_load_balanced_app_db
+from corehq.sql_db.tests.test_connections import _get_db_config
 
 
 class AllowMigrateTest(SimpleTestCase):
-
-    @override_settings(
-        WAREHOUSE_DATABASE_ALIAS=WAREHOUSE_DB,
-        DATABASES=WAREHOUSE_DATABASE,
-        USE_PARTITIONED_DATABASE=True,
-    )
-    def test_warehouse_migrate(self):
-        self.assertIs(True, allow_migrate(WAREHOUSE_DB, 'warehouse'))
-        with patch('corehq.sql_db.routers.partition_config', MagicMock()):
-            self.assertIs(False, allow_migrate(WAREHOUSE_DB, 'couchforms'))
-        self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, 'warehouse'))
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS=DEFAULT_DB_ALIAS,
@@ -70,3 +54,24 @@ class AllowMigrateTest(SimpleTestCase):
         self.assertIs(False, allow_migrate('synclogs', 'accounting'))
         self.assertIs(True, allow_migrate(None, 'accounting'))
         self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'accounting'))
+
+
+@patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+@patch('corehq.sql_db.util.get_standby_databases', return_value=set())
+def test_load_balanced_read_apps(_, __):
+    load_balanced_apps = {
+        'users': [
+            ('users_db1', 5),
+        ]
+    }
+
+    with override_settings(
+        LOAD_BALANCED_APPS=load_balanced_apps,
+        DATABASES={
+            DEFAULT_DB_ALIAS: _get_db_config('default'),
+            'users_db1': _get_db_config('users_db1')}):
+
+        assert_equal(get_load_balanced_app_db('users', default="default_option"), 'users_db1')
+
+    # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
+    assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')

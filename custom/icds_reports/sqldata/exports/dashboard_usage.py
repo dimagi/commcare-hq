@@ -1,3 +1,4 @@
+import copy
 import datetime
 import re
 from collections import defaultdict
@@ -88,8 +89,8 @@ class DashBoardUsage:
             sub_location_types = self.location_types
 
         for result in results_queryset:
-            row_data = [result['state_id'], result['district_id'], result['block_id'], result['supervisor_id'],
-                        result['doc_id']]
+            row_data = [result['state_id'], result['state_name'], result['district_id'],
+                        result['district_name'], result['block_id'], result['block_name']]
             location_matrix.append(row_data)
             # adding only descendants to the main location
             for sub_location in sub_location_types:
@@ -105,11 +106,11 @@ class DashBoardUsage:
 
     def check_if_date_in_last_week(self, date):
         if date is None:
-            return False
-        d = dateutil.parser.parse(date).strftime("%Y-%m-%d")
-        d = datetime.datetime.strptime(d, "%Y-%m-%d")
+            return 'N/A', False
+        date_formatted = dateutil.parser.parse(date).strftime("%d/%m/%Y, %I:%M %p")
+        d = datetime.datetime.strptime(date_formatted.split(',')[0], "%d/%m/%Y")
         now = datetime.datetime.now()
-        return (now - d).days < 7
+        return date_formatted, (now - d).days < 7
 
     def prepare_is_launched_agg_list(self, location_type=None, location_id=None):
         """
@@ -149,12 +150,15 @@ class DashBoardUsage:
     def get_excel_data(self):
         excel_rows = []
         filters = [['Generated at', india_now()]]
+
+        end_date = datetime.datetime.utcnow()
+        start_date = end_date - datetime.timedelta(days=7)
+
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
                    'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
                    'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
                    'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
                    'Take Home Ration']
-        excel_rows.append(headers)
         serial_count = 0
         logged_in_user_locations = list(self.user.get_sql_locations(self.domain))
         if not logged_in_user_locations:
@@ -172,7 +176,7 @@ class DashBoardUsage:
                 user_location = logged_in_user_locations[loop_counter]
                 user_location_type_name = \
                     self.get_location_id_string_from_location_type(user_location.location_type_name)
-                location_type_filter[user_location_type_name]: user_location.get_id
+                location_type_filter[user_location_type_name] = user_location.get_id
             else:
                 user_location_type_name = None
             for test_location in self.location_test_fields:
@@ -183,15 +187,17 @@ class DashBoardUsage:
             location_matrix, location_ids =\
                 self.convert_rs_to_matrix(all_awc_locations, user_location_type_name)
 
-
             users = self.get_users_by_location(location_ids)
 
             dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
 
             usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
 
-            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
-                                                               username__in=usernames)
+            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/{}/icds_export_indicator'
+                                                               .format(self.domain),
+                                                               username__in=usernames,
+                                                               time_of_use__gte=start_date,
+                                                               time_of_use__lt=end_date)
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
                                                                                                   'username')
                            .annotate(count=Count('indicator')).order_by('username', 'indicator'))
@@ -202,12 +208,17 @@ class DashBoardUsage:
                 self.prepare_is_launched_agg_list(user_location.location_type_name, user_location.get_id)
 
             user_counts = defaultdict(int)
-            user_indicators = defaultdict(list)
+            user_indicators = defaultdict(lambda: [0] * 10)
             for record in records:
-                user_counts[record['username']] += record['count']
-                user_indicators[record['username']].append(record['count'])
+                # ignoring the dashboard usage report
+                if int(record['indicator']) < 11:
+                    user_counts[record['username']] += record['count']
+                    # updating the counts as per the index which is the indicator number
+                    user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
             # accumulating the indicator counts
             for user in users:
+                if not dashboard_uname_rx.match(user['username']):
+                    continue
                 indicator_count = user_indicators[user['username']]
                 user_sql_location_ids = user['assigned_location_ids']
                 if isinstance(user_sql_location_ids, str):
@@ -215,35 +226,39 @@ class DashBoardUsage:
 
                 for user_sql_location in user_sql_location_ids:
                     # getting the location type to look up in matrix
+                    if user_sql_location not in self.sql_locations:
+                        continue
                     location_type_id = self.sql_locations[user_sql_location]
                     column_index = self.location_types.index(location_type_id)
                     user_location_row = None
                     # iterating and getting the db row from matrix
                     for row in location_matrix:
-                        if row[column_index] == user_sql_location:
-                            user_location_row = row
+                        if row[2 * column_index] == user_sql_location:
+                            user_location_row = copy.deepcopy(row)
                             break
                     user_location_type = self.get_location_type_string_from_location_id(location_type_id)
 
                     if user_location_row is not None:
                         if user_location_type == 'state':
-                            user_location_row[1] = 'All'
-                            user_location_row[2] = 'All'
+                            user_location_row[3] = ''
+                            user_location_row[5] = ''
                         if user_location_type == 'district':
-                            user_location_row[2] == 'All'
-                        serial_count += 1
+                            user_location_row[5] = ''
 
-                        excel = [serial_count, user_location_row[0], user_location_row[1],
-                                 user_location_row[2], user['username'], user_location_type,
+                        last_login, logged_in_last_week = self.check_if_date_in_last_week(user['last_login'])
+
+                        excel = [serial_count, user_location_row[1], user_location_row[3],
+                                 user_location_row[5], user['username'].split('@')[0], user_location_type,
                                  self.get_role_from_username(user['username']),
                                  self.convert_boolean_to_string(self.agg_list[user_sql_location]),
-                                 user['last_login'],
-                                 self.convert_boolean_to_string(self.check_if_date_in_last_week(
-                                     user['last_login'])), user_counts[user['username']]]
+                                 last_login,
+                                 self.convert_boolean_to_string(logged_in_last_week),
+                                 user_counts[user['username']]]
                         excel.extend(indicator_count)
                         excel_rows.append(excel)
             loop_counter += 1
-
+        excel_rows = sorted(excel_rows, key=lambda x: (x[1], x[2], x[3]))
+        excel_rows.insert(0, headers)
         return [
             [
                 self.title,

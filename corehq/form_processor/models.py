@@ -1518,7 +1518,7 @@ class FormEditRebuild(CaseTransactionDetail):
 
 
 class FormReprocessRebuild(CaseTransactionDetail):
-    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    _type = CaseTransaction.TYPE_REBUILD_FORM_REPROCESS
     form_id = StringProperty()
 
 

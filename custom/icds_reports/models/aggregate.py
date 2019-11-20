@@ -549,6 +549,7 @@ class AggLs(models.Model, AggregateMixin):
     block_id = models.TextField()
     supervisor_id = models.TextField()
     aggregation_level = models.SmallIntegerField()
+    num_supervisor_launched = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = 'agg_ls'

@@ -26,7 +26,6 @@ class ProdIndexManagementTest(SimpleTestCase):
         "hqdomains": {},
         "hqgroups": {},
         "hqusers": {},
-        "ledgers": {},
         "report_cases": {},
         "report_xforms": {},
         "smslogs": {},
@@ -196,34 +195,6 @@ EXPECTED_PROD_INDICES = [
                             "tokenizer": "whitespace",
                             "filter": ["lowercase"]
                         },
-                    }
-                }
-            }
-        }
-    },
-    {
-        "alias": "ledgers",
-        "index": "test_ledgers_2016-03-15",
-        "type": "ledger",
-        "meta": {
-            "settings": {
-                "number_of_replicas": 1,
-                "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
-                        }
                     }
                 }
             }
