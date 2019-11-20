@@ -8,7 +8,13 @@
     <meta charset="utf-8">
     <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% javascript_libraries ko=True underscore=True %}
+    {% block javascript_libraries %}
+      {% comment %}
+         Sub-templates that need more libraries you should override this block but
+         ensure underscore is kept in, because it is required for initial_page_data
+       {% endcomment %}
+      {% javascript_libraries underscore=True %}
+    {% endblock %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     {% block head %}{% endblock head %}
