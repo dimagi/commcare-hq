@@ -23,6 +23,7 @@ from corehq.apps.userreports.reports.specs import (
     SumWhenTemplateColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
+    ClosedOnNullTemplateSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
@@ -99,6 +100,7 @@ class ReportOrderByFactory(object):
 
 class SumWhenTemplateFactory(object):
     spec_map = {
+        'closed_on_null': ClosedOnNullTemplateSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
     }

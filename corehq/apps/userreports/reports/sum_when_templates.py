@@ -20,6 +20,8 @@ class SumWhenTemplateSpec(JsonObject):
         return len(re.sub(r'[^?]', '', self.expression))
 
 
+### Templates for testing
+
 class YearRangeTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty('year_range')
     expression = "year >= ? and year < ?"
@@ -27,4 +29,11 @@ class YearRangeTemplateSpec(SumWhenTemplateSpec):
 
 class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("under_x_months")
-    expression = "age_at_registration < ?" 
+    expression = "age_at_registration < ?"
+
+
+### Templates for ICDS
+
+class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty("closed_on_null")
+    expression = "closed_on IS NULL"
