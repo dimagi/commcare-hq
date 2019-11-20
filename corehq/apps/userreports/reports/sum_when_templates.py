@@ -59,6 +59,11 @@ class OpenFemaleHHCasteNotSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN (?, ?)"
 
 
+class OpenFemaleHHMinoritySpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_female_hh_minority")
+    expression = "closed_on IS NULL AND sex = 'F' and hh_minority = 1"
+
+
 class OpenMaleDisabledSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_disabled")
     expression = "closed_on IS NULL AND sex = IN ('M', 'O') and disabled = 1"
@@ -72,3 +77,8 @@ class OpenMaleHHCasteSpec(SumWhenTemplateSpec):
 class OpenMaleHHCasteNotSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_hh_caste_not")
     expression = "closed_on IS NULL AND sex in ('M', 'O') and hh_caste NOT IN (?, ?)"
+
+
+class OpenMaleHHMinoritySpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_male_hh_minority")
+    expression = "closed_on IS NULL AND sex in ('M', 'O') and hh_minority = 1"
