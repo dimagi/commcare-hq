@@ -33,6 +33,7 @@ from custom.icds.const import (
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
 )
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from lxml import etree
 
@@ -299,21 +300,13 @@ class AWWVHNDSurveyIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWVHNDSurveyIndicator, self).__init__(domain, user)
 
-        self.forms = get_last_form_submissions_by_user(
-            domain, [self.user.get_id], xmlns=VHND_SURVEY_XMLNS
-        )
+        self.should_send_sms = bool(get_awws_with_old_vhnd_date(domain, [self.user.get_id]))
 
     def get_messages(self, language_code=None):
-        now_date = self.now.date()
-        for forms in self.forms.values():
-            vhnd_date = forms[0]['form'].get('vhsnd_date_past_month')
-            if vhnd_date is None:
-                continue
-            if (now_date - string_to_datetime(vhnd_date).date()).days < 37:
-                # AWW has VHND form submission in last 37 days -> no message
-                return []
-
-        return [self.render_template({}, language_code=language_code)]
+        if self.should_send_sms:
+            return [self.render_template({}, language_code=language_code)]
+        else:
+            return []
 
 
 class LSSubmissionPerformanceIndicator(LSIndicator):
@@ -368,24 +361,17 @@ class LSVHNDSurveyIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSVHNDSurveyIndicator, self).__init__(domain, user)
 
+        self.user_ids_not_in_timeframe = set(get_awws_with_old_vhnd_date(domain, self.aww_user_ids))
+
         self.forms = get_last_form_submissions_by_user(
             domain, self.aww_user_ids, xmlns=VHND_SURVEY_XMLNS
         )
 
     def get_messages(self, language_code=None):
-        now_date = self.now.date()
-        user_ids_with_forms_in_time_frame = set()
-        for user_id, forms in self.forms.items():
-            vhnd_date = forms[0]['form'].get('vhsnd_date_past_month')
-            if vhnd_date is None:
-                continue
-            if (now_date - string_to_datetime(vhnd_date).date()).days < 37:
-                user_ids_with_forms_in_time_frame.add(user_id)
-
         awc_ids = {
             loc
             for loc, user_ids in self.user_ids_by_location_id.items()
-            if user_ids.isdisjoint(user_ids_with_forms_in_time_frame)
+            if user_ids.issubset(self.user_ids_not_in_timeframe)
         }
         messages = []
 
@@ -395,6 +381,34 @@ class LSVHNDSurveyIndicator(LSIndicator):
             messages.append(self.render_template(context, language_code=language_code))
 
         return messages
+
+
+def get_awws_with_old_vhnd_date(domain, user_ids):
+    return [_id for _id in user_ids if _id not in precompute_awws_in_vhnd_timeframe(domain)]
+
+
+@icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60)
+def precompute_awws_in_vhnd_timeframe(domain):
+    """
+    This computes awws with vhsnd_date_past_month less than 37 days.
+
+    Result is cached in local memory, so that indvidual reminder tasks
+    per AWW/LS dont hit the database each time
+    """
+    from corehq.apps.userreports.util import get_table_name
+    table = get_table_name(domain, 'static-vhnd_form')
+    query = """
+    SELECT awc_id
+    FROM "{table}"
+    GROUP BY awc_id
+    HAVING '{today}' - max(vhsnd_date_past_month) < 37
+    """.format(table=table, today=datetime.today().date())
+
+    from django.db import connections
+    from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+    with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
+        cursor.execute(query)
+        return [row[0] for row in cursor.fetchall()]
 
 
 class LSAggregatePerformanceIndicator(LSIndicator):
