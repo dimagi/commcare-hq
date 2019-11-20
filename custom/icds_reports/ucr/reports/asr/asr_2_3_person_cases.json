@@ -173,22 +173,24 @@
       {
         "display": "M_st_count",
         "column_id": "M_st_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'", 1]
-        ]
+        "whens": [{
+          "type": "open_male_hh_caste",
+          "bind": ["st"],
+          "then": 1
+        }]
       },
       {
         "display": "M_sc_count",
         "column_id": "M_sc_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'", 1]
-        ]
+        "whens": [{
+          "type": "open_male_hh_caste",
+          "bind": ["sc"],
+          "then": 1
+        }]
       },
       {
         "display": "M_other_count",
