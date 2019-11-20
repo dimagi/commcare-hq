@@ -5,7 +5,6 @@ import os
 import datetime
 import re
 import traceback
-import uuid
 from django.conf import settings
 from django.contrib.sessions.backends.cache import SessionStore
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -19,7 +18,6 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
-from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -259,26 +257,16 @@ class LoggingSessionMiddleware(SessionMiddleware):
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
-    def _bypass_sessions(self, request):
-        return (
-            any(rx.match(request.path_info) for rx in self.bypass_re) and
-            toggles.BYPASS_SESSIONS.enabled(uuid.uuid4().hex, toggles.NAMESPACE_OTHER)
-        )
-
-    def process_response(self, request, response):
-        datadog_counter(
-            'commcare.bypass_sessions.requests_count',
-            tags=['bypass_sessions:{}'.format(request.__bypass_sessions),
-            'response_code:{}'.format(response.status_code)])
-        return super().process_response(request, response)
+    def _bypass_sessions(self, request, domain):
+        return (toggles.BYPASS_SESSIONS.enabled(domain) and
+            any(rx.match(request.path_info) for rx in self.bypass_re))
 
     def process_request(self, request):
-        request.__bypass_sessions = self._bypass_sessions(request)
         try:
             match = re.search(r'/a/[0-9a-z-]+', request.path)
             if match:
                 domain = match.group(0).split('/')[-1]
-                if request.__bypass_sessions:
+                if self._bypass_sessions(request, domain):
                     session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
                     request.session = self.SessionStore(session_key)
                     request.session.save = lambda *x: None
