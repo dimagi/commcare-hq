@@ -11,6 +11,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
   {% endcompress %}
+  {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
 {% compress js %}
   <script src="{% static 'autotrack/autotrack.js' %}"></script>
