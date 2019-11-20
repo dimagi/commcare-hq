@@ -164,12 +164,13 @@
       {
         "display": "F_disabled_count",
         "column_id": "F_disabled_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex = 'F' and disabled = 1", 1]
-        ]
+        "whens": [{
+          "type": "open_female_disabled",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "M_st_count",
@@ -217,12 +218,13 @@
       {
         "display": "M_disabled_count",
         "column_id": "M_disabled_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex IN ('M', '0') and disabled = 1", 1]
-        ]
+        "whens": [{
+          "type": "open_male_disabled",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_movement_count",

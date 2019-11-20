@@ -25,8 +25,10 @@ from corehq.apps.userreports.reports.specs import (
 from corehq.apps.userreports.reports.sum_when_templates import (
     ClosedOnNullTemplateSpec,
     OpenDisabilityTypeSpec,
+    OpenFemaleDisabledSpec,
     OpenFemaleHHCasteSpec,
     OpenFemaleHHCasteNotSpec,
+    OpenMaleDisabledSpec,
     OpenMaleHHCasteSpec,
     OpenMaleHHCasteNotSpec,
     UnderXMonthsTemplateSpec,
@@ -107,8 +109,10 @@ class SumWhenTemplateFactory(object):
     spec_map = {
         'closed_on_null': ClosedOnNullTemplateSpec,
         'open_disability_type': OpenDisabilityTypeSpec,
+        'open_female_disabled': OpenFemaleDisabledSpec,
         'open_female_hh_caste': OpenFemaleHHCasteSpec,
         'open_female_hh_caste_not': OpenFemaleHHCasteNotSpec,
+        'open_male_disabled': OpenMaleDisabledSpec,
         'open_male_hh_caste': OpenMaleHHCasteSpec,
         'open_male_hh_caste_noot': OpenMaleHHCasteNotSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
