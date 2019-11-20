@@ -10,7 +10,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0147_mwcd_report_view')
+        ('icds_reports', '0149_auto_20191115_1142')
     ]
 
     operations = [
@@ -23,5 +23,11 @@ class Migration(migrations.Migration):
             model_name='aggregateccsrecorddeliveryforms',
             name='still_live_birth',
             field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
-        )
+        ),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN husband_name text"),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN lmp DATE"),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN migration_status SMALLINT"),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN where_born SMALLINT"),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN num_children_del SMALLINT"),
+        migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN still_live_birth SMALLINT"),
     ]
