@@ -127,3 +127,15 @@ def requires_privilege_for_commcare_user(slug, **assignment):
             )
         return wrapped
     return decorate
+
+
+def always_allow_project_access(view_func):
+    """
+    This bypasses the PROJECT_ACCESS permission when a domain no longer has it
+    (typically because the subscription was paused).
+    Remember: Order matters.
+    """
+    def shim(request, *args, **kwargs):
+        request.always_allow_project_access = True
+        return view_func(request, *args, **kwargs)
+    return shim
