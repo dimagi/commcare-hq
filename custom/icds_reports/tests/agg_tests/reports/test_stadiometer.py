@@ -99,14 +99,6 @@ class TestStadiometer(TestCase):
         )
 
     def test_chart_data(self):
-        print(get_stadiometer_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 4, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ))
         self.assertDictEqual(
             get_stadiometer_data_chart(
                 'icds-cas',

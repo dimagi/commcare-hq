@@ -167,18 +167,6 @@ class TestInfantometer(TestCase):
         )
 
     def test_sector_data(self):
-        print(get_infantometer_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b2',
-                    'aggregation_level': 4
-                },
-                location_id='b1',
-                loc_level='supervisor'
-            ))
         self.assertDictEqual(
             get_infantometer_sector_data(
                 'icds-cas',
