@@ -39,6 +39,11 @@ class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL"
 
 
+class OpenDisabilityTypeSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_disability_type")
+    expression = "closed_on IS NULL AND disability_type ~ ?"
+
+
 class OpenFemaleHHCasteSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_female_hh_caste")
     expression = "closed_on IS NULL AND sex = 'F' and hh_caste = ?"
