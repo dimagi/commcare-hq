@@ -1762,7 +1762,8 @@ BYPASS_SESSIONS = StaticToggle(
     'bypass_sessions',
     'Bypass sessions for select mobile URLS',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 DAILY_INDICATORS = StaticToggle(
