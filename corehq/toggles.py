@@ -323,7 +323,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         label,
         tag,
         namespaces,
-        default_randomness=0,
+        default_randomness=0.0,
         help_link=None,
         description=None,
         always_disabled=None
@@ -1778,4 +1778,34 @@ mwcd_indicators = StaticToggle(
     'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_submissions',
+    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
+)
+
+RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
+    'rate_limit_restores',
+    'Rate limit restores with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
 )

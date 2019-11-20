@@ -1925,7 +1925,7 @@ class CasDataExportAPIView(View):
         data_type = request.GET.get('type')
         if data_type not in self.valid_types:
             return JsonResponse(self.message('invalid_type'), status=400)
-        type_code = self.get_type_code(data_type)
+        type_code = CasDataExportAPIView.get_type_code(data_type)
 
         sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
 
@@ -1946,7 +1946,7 @@ class CasDataExportAPIView(View):
         return ('woman', 'child', 'awc')
 
     @staticmethod
-    def get_type_code(self, data_type):
+    def get_type_code(data_type):
         type_map = {
             "child": 'child_health_monthly',
             "woman": 'ccs_record_monthly',
