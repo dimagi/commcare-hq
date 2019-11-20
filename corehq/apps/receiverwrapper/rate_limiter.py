@@ -20,6 +20,8 @@ from corehq.util.timer import TimingContext
 #       per_minute=0.07,
 #       per_second=0.005,
 #   ) == get_standard_ratio_rate_definition(events_per_day=23)
+# If we as a team end up regretting this decision, we'll have to reset expectations
+# with the Dimagi NDoH team.
 
 SUBMISSIONS_PER_DAY = 46
 
