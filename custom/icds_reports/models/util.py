@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
@@ -69,10 +70,27 @@ class ICDSAuditEntryRecord(models.Model):
 
 class AggregationRecord(models.Model):
     agg_date = models.DateField()
-    run_date = models.DateField(auto_now_add=True)
+    run_date = models.DateField()
     state_ids = ArrayField(models.CharField(max_length=255), null=True)
     agg_uuid = models.UUIDField(unique=True, default=uuid.uuid4)
     interval = models.IntegerField(null=True)
+
+    @property
+    def run_aggregation_queries(self) -> bool:
+        # always run the current month
+        if self.interval == 0:
+            return True
+
+        if self.run_date.day in (1, 2, 3):
+            return True
+        if self.run_date.day == 11:  # for performance report
+            return True
+        if self.run_date.isoweekday() == 6:  # Saturday
+            return True
+        if self.run_date.month != (self.run_date + timedelta(days=1)).month:  # last day of month
+            return True
+
+        return False
 
 
 class UcrReconciliationStatus(models.Model):

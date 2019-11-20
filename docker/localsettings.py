@@ -63,20 +63,7 @@ if USE_PARTITIONED_DATABASE:
                 'SHARDS': [2, 3],
             }
         },
-        'warehouse': {
-             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-             'NAME': 'commcarehq_warehouse',
-             'USER': 'commcarehq',
-             'PASSWORD': 'commcarehq',
-             'HOST': 'postgres',
-             'PORT': '5432',
-             'TEST': {
-                 'SERIALIZE': False,
-             },
-         },
     })
-
-    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({

@@ -7,26 +7,8 @@ from nose.tools import assert_equal
 from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP, get_load_balanced_app_db
 from corehq.sql_db.tests.test_connections import _get_db_config
 
-WAREHOUSE_DB = 'warehouse'
-db_dict = {'NAME': 'commcarehq_warehouse', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
-WAREHOUSE_DATABASE = {
-    DEFAULT_DB_ALIAS: {},
-    WAREHOUSE_DB: db_dict,
-}
-
 
 class AllowMigrateTest(SimpleTestCase):
-
-    @override_settings(
-        WAREHOUSE_DATABASE_ALIAS=WAREHOUSE_DB,
-        DATABASES=WAREHOUSE_DATABASE,
-        USE_PARTITIONED_DATABASE=True,
-    )
-    def test_warehouse_migrate(self):
-        self.assertIs(True, allow_migrate(WAREHOUSE_DB, 'warehouse'))
-        with patch('corehq.sql_db.routers.partition_config', MagicMock()):
-            self.assertIs(False, allow_migrate(WAREHOUSE_DB, 'couchforms'))
-        self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, 'warehouse'))
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS=DEFAULT_DB_ALIAS,

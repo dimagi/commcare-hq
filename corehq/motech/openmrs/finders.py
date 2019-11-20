@@ -5,7 +5,7 @@ OpenmrsCaseConfig.match_on_ids have successfully matched a patient.
 
 See `README.md`__ for more context.
 """
-
+import logging
 from collections import namedtuple
 from functools import partial
 from operator import eq
@@ -40,6 +40,8 @@ MATCH_FUNCTIONS = {
 }
 MATCH_TYPES = tuple(MATCH_FUNCTIONS)
 MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
+
+logger = logging.getLogger(__name__)
 
 
 constant_false = ConstantString(
@@ -188,7 +190,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
         Matches cases to patients. Returns a list of patients, each
         with a confidence score >= self.threshold
         """
-        from corehq.motech.openmrs.logger import logger
         from corehq.motech.openmrs.openmrs_config import get_property_map
         from corehq.motech.openmrs.repeater_helpers import search_patients
 

@@ -5,6 +5,7 @@ from corehq.project_limits.rate_limiter import (
     RateDefinition,
     RateLimiter,
 )
+from corehq.toggles import RATE_LIMIT_SUBMISSIONS, NAMESPACE_DOMAIN
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
@@ -46,7 +47,29 @@ SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UN
 @run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
-def rate_limit_submission_by_delaying(domain, max_wait):
+def rate_limit_submission(domain):
+    if RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        return _rate_limit_submission(domain)
+    else:
+        _rate_limit_submission_by_delaying(domain, max_wait=15)
+        return False
+
+
+def _rate_limit_submission(domain):
+
+    allow_usage = submission_rate_limiter.allow_usage(domain)
+
+    if allow_usage:
+        submission_rate_limiter.report_usage(domain)
+    else:
+        datadog_counter('commcare.xform_submissions.rate_limited', tags=[
+            'domain:{}'.format(domain),
+        ])
+
+    return not allow_usage
+
+
+def _rate_limit_submission_by_delaying(domain, max_wait):
     if not submission_rate_limiter.allow_usage(domain):
         with TimingContext() as timer:
             acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
