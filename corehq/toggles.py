@@ -1758,12 +1758,12 @@ SESSION_MIDDLEWARE_LOGGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
-    'bypass_sessions_r',
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
     'Bypass sessions for select mobile URLS',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0
+    namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 DAILY_INDICATORS = StaticToggle(
