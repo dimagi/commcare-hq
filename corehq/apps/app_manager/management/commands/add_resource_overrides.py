@@ -72,7 +72,6 @@ class Command(BaseCommand):
             for m in app.get_modules() for f in app.get_forms() if f.form_type != 'shadow_form'
         }
 
-
     def add_arguments(self, parser):
         parser.add_argument(
             '--domain',
@@ -98,4 +97,7 @@ class Command(BaseCommand):
             app_ids.add(app_id)  # in case linked app has no builds yet
         else:
             app_ids = (get_doc_ids_by_class(LinkedApplication) + get_deleted_doc_ids_by_class(LinkedApplication))
-        iter_update(LinkedApplication.get_db(), self._add_overrides_for_build, with_progress_bar(app_ids), chunksize=1)
+        iter_update(LinkedApplication.get_db(),
+                    self._add_overrides_for_build,
+                    with_progress_bar(app_ids),
+                    chunksize=1)
