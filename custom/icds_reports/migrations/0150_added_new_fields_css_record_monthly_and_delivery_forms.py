@@ -15,31 +15,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='aggregateccsrecorddeliveryforms',
-            name='num_children_del',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children born'),
-        ),
-        migrations.AddField(
-            model_name='aggregateccsrecorddeliveryforms',
-            name='still_live_birth',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Number of children alive'),
-        ),
+        migrations.RunSQL("ALTER table icds_dashboard_ccs_record_delivery_forms ADD COLUMN num_children_del SMALLINT"),
+        migrations.RunSQL("ALTER table icds_dashboard_ccs_record_delivery_forms ADD COLUMN still_live_birth SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN husband_name text"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN lmp DATE"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN migration_status SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN where_born SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN num_children_del SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN still_live_birth SMALLINT"),
-        migrations.RunSQL(
-            sql='',
-            reverse_sql='\n        ALTER TABLE "icds_dashboard_ccs_record_delivery_forms" DROP CONSTRAINT IF EXISTS icds_dashboard_ccs_record_delivery_forms_supervisor_id_case_id_month_uniq,\n        DROP CONSTRAINT IF EXISTS icds_dashboard_ccs_record_delivery_forms_pkey;\n        ALTER TABLE "icds_dashboard_ccs_record_delivery_forms" ADD CONSTRAINT icds_dashboard_ccs_record_delivery_forms_pkey PRIMARY KEY (case_id);\n        DROP INDEX IF EXISTS icds_dashboard_ccs_record_delivery_forms_supervisor_id_case_id_month_uniq;\n    ',
-            state_operations=[migrations.AlterUniqueTogether(
-                name='aggregateccsrecorddeliveryforms',
-                unique_together=set([('supervisor_id', 'case_id', 'month')]),
-            )],
-        )
     ]
-    operations.extend(get_composite_primary_key_migrations([
-        'aggregateccsrecorddeliveryforms'
-    ]))
