@@ -6,7 +6,7 @@ STANDARD_RATIO = RateDefinition(
     per_hour=3,
     per_minute=0.07,
     per_second=0.005,
-).times(1/23)
+).times(1 / 23)
 
 
 def get_standard_ratio_rate_definition(events_per_day):
