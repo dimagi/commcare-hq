@@ -117,4 +117,6 @@ def get_rec_child_id_from_visit(visit_case):
         if index.identifier == "parent" and index.referenced_type == "rec_child":
             return index.referenced_id
     else:
-        raise ValueError(f'imci_visit {visit_case.case_id!r} missing rec_child index')
+        message = f"imci_visit {visit_case.case_id!r} missing rec_child index"
+        print(message, file=sys.stderr)
+        return f"[{message}]"
