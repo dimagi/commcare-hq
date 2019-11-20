@@ -74,8 +74,8 @@ class Command(BaseCommand):
                     if msg.is_canceled():
                         print("already canceled")
                     else:
-                        print("canceling rule", rule_id)
                         msg.cancel()
+                        print("canceled rule", rule_id)
         else:
             print("Currently locked rules:")
             rules = AutomaticUpdateRule.objects.filter(locked_for_editing=True)
