@@ -11,7 +11,7 @@ from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.decorators import run_only_when, silence_and_report_error
 
 
-RESTORES_PER_DAY = 1.15
+RESTORES_PER_DAY = 3
 
 restore_rate_limiter = RateLimiter(
     feature_key='restores',
