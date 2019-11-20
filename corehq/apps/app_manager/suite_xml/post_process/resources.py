@@ -5,6 +5,7 @@ from corehq.apps.app_manager.exceptions import ResourceOverrideError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.sections.resources import FormResourceContributor
 from corehq.apps.app_manager.suite_xml.xml_models import XFormResource
+from corehq.util.quickcache import quickcache
 
 
 class ResourceOverride(models.Model):
@@ -21,11 +22,13 @@ class ResourceOverride(models.Model):
 
 def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     overrides_by_pre_id = get_xform_resource_overrides(domain, app_id)
+    dirty = False
     for pre, post in pre_to_post_map.items():
         if pre in overrides_by_pre_id:
             if post != overrides_by_pre_id[pre].post_id:
                 raise ResourceOverrideError("Cannot change override of {}".format(pre))
         else:
+            dirty = True
             override = ResourceOverride.objects.create(
                 domain=domain,
                 app_id=app_id,
@@ -34,8 +37,11 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
                 post_id=post,
             )
             override.save()
+    if dirty:
+        get_xform_resource_overrides.clear(domain, app_id)
 
 
+@quickcache(['domain', 'app_id'], timeout=1 * 60 * 60)
 def get_xform_resource_overrides(domain, app_id):
     return {
         override.pre_id: override
