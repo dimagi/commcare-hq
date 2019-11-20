@@ -65,7 +65,6 @@ class Command(BaseCommand):
         else:
             logger.info("{}: Skipping, {} overrides already match".format(log_prefix, len(override_map)))
 
-
     def _get_xmlns_map(self, app):
         return {
             f.xmlns: f.unique_id
