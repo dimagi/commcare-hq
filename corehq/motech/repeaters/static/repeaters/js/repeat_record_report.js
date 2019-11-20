@@ -5,6 +5,7 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         cancelAll = document.getElementById('cancel-all'),
         requeueAll = document.getElementById('requeue-all'),
         $popUp = $('#are-you-sure');
+        $confirmButton = $('#confirm-button');
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -240,19 +241,19 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         }
 
         function setAction(action) {
-            window.action = action;
+            $confirmButton.attr('data-action', action);
         }
 
         function getAction() {
-            return window.action;
+            return $confirmButton.attr('data-action');
         }
 
         function setFlag(flag) {
-            window.flag_ = flag;
+            $confirmButton.attr('data-flag', flag);
         }
 
         function getFlag() {
-            return window.flag_;
+            return $confirmButton.attr('data-flag');
         }
     });
 });
