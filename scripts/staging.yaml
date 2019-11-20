@@ -59,5 +59,5 @@ branches:
   - jls/kill-exchange # Jenny Nov 13
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
-  - dmr/hard-rate-limit-restores  # Danny Nov 19
+  - dmr/refactor-rate-definitions  # Danny Nov 20
 submodules: {}
