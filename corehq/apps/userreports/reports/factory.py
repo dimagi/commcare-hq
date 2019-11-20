@@ -26,7 +26,9 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     ClosedOnNullTemplateSpec,
     OpenDisabilityTypeSpec,
     OpenFemaleHHCasteSpec,
+    OpenFemaleHHCasteNotSpec,
     OpenMaleHHCasteSpec,
+    OpenMaleHHCasteNotSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
@@ -106,7 +108,9 @@ class SumWhenTemplateFactory(object):
         'closed_on_null': ClosedOnNullTemplateSpec,
         'open_disability_type': OpenDisabilityTypeSpec,
         'open_female_hh_caste': OpenFemaleHHCasteSpec,
+        'open_female_hh_caste_not': OpenFemaleHHCasteNotSpec,
         'open_male_hh_caste': OpenMaleHHCasteSpec,
+        'open_male_hh_caste_noot': OpenMaleHHCasteNotSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
     }

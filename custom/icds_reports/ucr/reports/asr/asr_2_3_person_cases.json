@@ -143,12 +143,13 @@
       {
         "display": "F_other_count",
         "column_id": "F_other_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')", 1]
-        ]
+        "whens": [{
+          "type": "open_female_hh_caste_not",
+          "binds": ["st", "sc"],
+          "then": 1
+        }]
       },
       {
         "display": "F_minority_count",
@@ -195,12 +196,13 @@
       {
         "display": "M_other_count",
         "column_id": "M_other_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc')", 1]
-        ]
+        "whens": [{
+          "type": "open_male_hh_caste_not",
+          "binds" : ["st", "sc"],
+          "then": 1
+        }]
       },
       {
         "display": "M_minority_count",
