@@ -21,6 +21,8 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
+)
+from corehq.apps.userreports.reports.sum_when_templates import (
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
