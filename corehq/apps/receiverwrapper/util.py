@@ -220,14 +220,14 @@ def _submitted_by_demo_user(form_json, domain):
     return False
 
 
-def _notify_ignored_form_submission(request, user_id):
+def _notify_ignored_form_submission(request, form_meta):
     message = """
         Details:
         Method: {}
         URL: {}
         GET Params: {}
-        User ID: {}
-    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), user_id)
+        Form Meta: {}
+    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), json.dumps(form_meta))
     send_mail_async.delay(
         "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
         message,
