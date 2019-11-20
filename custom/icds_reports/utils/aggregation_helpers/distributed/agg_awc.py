@@ -204,7 +204,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 agg_cf.supervisor_id=ucr.supervisor_id
             )
             WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
-                date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                date_trunc('month', ucr.closed_on)::DATE > %(start_date)s) AND
                 date_trunc('month', ucr.opened_on) <= %(start_date)s
             GROUP BY ucr.awc_id;
         UPDATE "{tablename}" agg_awc SET

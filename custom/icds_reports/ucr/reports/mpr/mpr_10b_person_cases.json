@@ -113,9 +113,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\ybleeding\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\ybleeding\\y'", 1]
+        ]
       },
       {
         "display": "referred_convulsions",
@@ -123,9 +123,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yconvulsions\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yconvulsions\\y'", 1]
+        ]
       },
       {
         "display": "referred_prolonged_labor",
@@ -133,9 +133,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yprolonged_labor\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yprolonged_labor\\y'", 1]
+        ]
       },
       {
         "display": "referred_abortion_complications",
@@ -143,9 +143,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yabortion_complications\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yabortion_complications\\y'", 1]
+        ]
       },
       {
         "display": "referred_fever_discharge",
@@ -153,9 +153,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y'", 1]
+        ]
       },
       {
         "display": "referred_other",
@@ -163,9 +163,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y' OR referral_health_problem ~ '\\yother\\y'": 1
-        }
+        "whens": [
+          ["referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y' OR referral_health_problem ~ '\\yother\\y'", 1]
+        ]
       },
       {
         "display": "bleeding_reached_count",
@@ -173,9 +173,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ybleeding\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\ybleeding\\y'", 1]
+        ]
       },
       {
         "display": "convulsions_reached_count",
@@ -183,9 +183,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yconvulsions\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yconvulsions\\y'", 1]
+        ]
       },
       {
         "display": "prolonged_labor_reached_count",
@@ -193,9 +193,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yprolonged_labor\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yprolonged_labor\\y'", 1]
+        ]
       },
       {
         "display": "abort_comp_reached_count",
@@ -203,9 +203,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yabortion_complications\\y'": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND referral_health_problem ~ '\\yabortion_complications\\y'", 1]
+        ]
       },
       {
         "display": "fever_discharge_reached_count",
@@ -213,9 +213,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND (referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y')": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND (referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y')", 1]
+        ]
       },
       {
         "display": "other_reached_count",
@@ -223,9 +223,9 @@
         "type": "sum_when",
         "aggregation": "sum",
         "calculate_total": true,
-        "whens": {
-          "referral_reached_facility = 1 AND (referral_health_problem ~ '\\yother\\y' OR referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y')": 1
-        }
+        "whens": [
+          ["referral_reached_facility = 1 AND (referral_health_problem ~ '\\yother\\y' OR referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y')", 1]
+        ]
       }
     ],
     "sort_expression": [],

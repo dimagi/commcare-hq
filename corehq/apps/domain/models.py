@@ -53,7 +53,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.blobs import CODES as BLOB_CODES
@@ -976,22 +975,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         self.clear_caches()
 
     def _pre_delete(self):
-        from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
 
-        dynamic_deletion_operations = []
-        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
-        for result in results:
-            response = result[1]
-            if isinstance(response, Exception):
-                message = "Error occurred during domain pre_delete {}".format(self.name)
-                raise DomainDeleteException(message, response)
-            elif response:
-                assert isinstance(response, list)
-                dynamic_deletion_operations.extend(response)
-
         # delete SQL models first because UCR tables are indexed by configs in couch
-        apply_deletion_operations(self.name, dynamic_deletion_operations)
+        apply_deletion_operations(self.name)
 
         # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):

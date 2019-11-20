@@ -501,7 +501,7 @@ class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
-    form_count = models.IntegerField(blank=True, null=True)
+
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
@@ -514,7 +514,6 @@ class AggregateLsVhndForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
-    form_count = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
@@ -528,7 +527,6 @@ class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
-    form_count = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE

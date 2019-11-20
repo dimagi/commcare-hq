@@ -67,7 +67,7 @@ class WrappedUser(CommCareUser):
     @classmethod
     def wrap(cls, data):
         self = super().wrap(data)
-        self._group_ids = data['__group_ids']
+        self._group_ids = sorted(data['__group_ids'])
         return self
 
     def get_group_ids(self):

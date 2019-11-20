@@ -28,15 +28,17 @@ function KpiController($location, haveAccessToFeatures) {
 
 KpiController.$inject = ['$location', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("kpi", function() {
+window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
     return {
         restrict:'E',
         scope: {
             data: '=',
         },
         bindToController: true,
-        templateUrl: url('icds-ng-template', 'kpi.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('kpi.directive');
+        },
         controller: KpiController,
         controllerAs: "$ctrl",
     };
-});
+}]);

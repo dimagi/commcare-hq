@@ -4,6 +4,7 @@ import os
 import re
 from datetime import datetime
 
+import attr
 from django.test import SimpleTestCase
 
 from dateutil.tz import tzoffset, tzutc
@@ -23,11 +24,12 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.util.test_utils import TestFileMixin
 
 
-class CaseMock(dict):
-
-    @property
-    def get_id(self):
-        return self.get('_id')
+@attr.s
+class CaseMock:
+    case_id = attr.ib()
+    name = attr.ib()
+    type = attr.ib()
+    owner_id = attr.ib()
 
 
 class GetTimestampTests(SimpleTestCase):
@@ -132,9 +134,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.case = CaseMock(
+            case_id='abcdef',
             name='Randall',
             type='patient',
-            _id='abcdef',
+            owner_id='123456'
         )
 
     def setUpRepeater(self):
@@ -218,10 +221,19 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                             "case_property": "certainty",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
+                            "doc_type": "JsonPathCasePropertyMap",
                             "jsonpath": "order",
-                            "case_property": "primary_or_secondary",
+                            "case_property": "is_primary",
+                            "value_map": {
+                                "yes": "PRIMARY",
+                                "no": "SECONDARY"
+                            }
                         },
+                        {
+                            "doc_type": "CasePropertyConstantValue",
+                            "case_property": "code",
+                            "value": "T68 (ICD 10 - WHO)"
+                        }
                     ]
                 }
             }
@@ -312,7 +324,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.observation_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -347,7 +359,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.observation_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -365,7 +377,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
-                <primary_or_secondary>PRIMARY</primary_or_secondary>
+                <code>T68 (ICD 10 - WHO)</code>
+                <is_primary>yes</is_primary>
               </update>
               <index>
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
