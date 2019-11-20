@@ -14,7 +14,7 @@ def _add_overrides_for_all_builds(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_manager', '0007_add_linked_app_fields_to_es'),
+        ('app_manager', '0008_remove_uses_master_app_form_ids'),
     ]
 
     operations = [
