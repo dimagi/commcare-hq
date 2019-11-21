@@ -16,7 +16,6 @@ def get_view_migrations():
         'daily_attendance.sql',
         'child_health_monthly.sql',
         'disha_indicators.sql',
-        'ccs_record_monthly_view.sql',
         'agg_ls_monthly.sql',
         'service_delivery_monthly.sql',
         'aww_incentive_report_monthly.sql',
