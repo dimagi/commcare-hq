@@ -55,17 +55,22 @@ def main():
         form_ids = iter_form_ids_by_xmlns(DOMAIN, xmlns)
         for form_ids_chunk in chunked(form_ids, 500):
             couch_forms = get_forms_by_id(form_ids_chunk)
-            visit_id_to_child_id, visit_ids_missing_child_ids = map_visit_to_child_from_forms(couch_forms, xmlns)
-            visit_id_to_child_id.update(
-                map_visit_to_child_from_visit_cases(visit_ids_missing_child_ids)
-            )
+            if has_visit_case(xmlns):
+                visit_id_to_child_id, visit_ids_missing_child_ids = map_visit_to_child_from_forms(couch_forms, xmlns)
+                visit_id_to_child_id.update(
+                    map_visit_to_child_from_visit_cases(visit_ids_missing_child_ids)
+                )
             for couch_form in couch_forms:
                 imci_visit_id = get_imci_visit_id(couch_form.form, xmlns)
+                if has_visit_case(xmlns):
+                    rec_child_id = visit_id_to_child_id[imci_visit_id]
+                else:
+                    rec_child_id = get_rec_child_id(couch_form.form, xmlns)
                 row = (
                     couch_form.form_id,
                     xmlns,
                     imci_visit_id,
-                    visit_id_to_child_id[imci_visit_id],
+                    rec_child_id,
                     couch_form.received_on.isoformat(),
                 )
                 print(",".join(row))
@@ -83,6 +88,8 @@ def get_imci_visit_id(form_json, xmlns):
         + list(PRESCRIPTION_FORM)
     ):
         return form_json["case_case_visit"]["case"]["@case_id"]
+    elif xmlns in ENROLLMENT_FORM:
+        return "[n'est pas applicable]"
     else:
         raise NotImplementedError
 
@@ -126,3 +133,18 @@ def get_rec_child_id_from_visit(visit_case):
         message = f"imci_visit {visit_case.case_id!r} missing rec_child index"
         print(message, file=sys.stderr)
         return f"[{message}]"
+
+
+def has_visit_case(xmlns):
+    return xmlns in (
+        list(CLASSIFICATION_FORMS)
+        + list(TREATMENT_FORMS)
+        + list(PRESCRIPTION_FORM)
+    )
+
+
+def get_rec_child_id(form_json, xmlns):
+    if xmlns in ENROLLMENT_FORM:
+        return form_json["case_rec_child"]["case"]["@case_id"]
+    else:
+        raise NotImplementedError
