@@ -30,7 +30,9 @@ When documenting features, it is good practice to keep the documentation
 close to its code, so that it can easily be found. A good example of
 this is the documentation for User Configurable Reporting. The code is
 situated in the *corehq/apps/userreports/* directory, and its documentation
-is in *corehq/apps/userreports/README.rst*.
+is in *corehq/apps/userreports/README.rst*. In general,
+*corehq/apps/[myapp]/README.rst* is typically a good starting point for
+documentation.
 
 The User Configurable Reporting documentation also shows another good
 practice; it uses reStructuredText's autoclass_ directive to include the
@@ -49,7 +51,7 @@ to see how that works.
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
 .. _Code Contributions and Review: https://github.com/dimagi/code-review/blob/master/README.md
 .. _Developers category: https://forum.dimagi.com/c/developers
-.. _CommCare Forum: https://forum.dimagi.com/c/developers
+.. _CommCare Forum: https://forum.dimagi.com/
 .. _Read the Docs: https://commcare-hq.readthedocs.io/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _autoclass: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
