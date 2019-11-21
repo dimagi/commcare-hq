@@ -27,12 +27,14 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
+from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
     AsyncIndicator,
+    InvalidUCRData,
     get_datasource_config,
 )
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -1595,8 +1597,19 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
+    data_not_in_ucr = get_data_not_in_ucr(status_record)
+    doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
+    doc_ids_in_pillow_error = set(
+        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
+    invalid_doc_ids = set(
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id'), flat=True)
+    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
+
     # republish_kafka_changes
-    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+        if doc_id in known_bad_doc_ids:
+            # These docs will either get retried or are invalid
+            continue
         number_documents_missing += 1
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
