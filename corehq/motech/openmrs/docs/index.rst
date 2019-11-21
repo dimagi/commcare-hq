@@ -660,4 +660,4 @@ worker would be a supervisor who can pass the case to the appropriate
 person.
 
 
-.. include:: ../../docs/value_source.rst
+.. include:: ../corehq/motech/docs/value_source.rst
