@@ -382,7 +382,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
 
 def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
-    return [_id for _id in awc_location_ids if _id not in precompute_awws_in_vhnd_timeframe(domain)]
+    return set(awc_location_ids) - precompute_awws_in_vhnd_timeframe(domain)
 
 
 @icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
@@ -405,7 +405,7 @@ def precompute_awws_in_vhnd_timeframe(domain):
     from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         cursor.execute(query)
-        return [row[0] for row in cursor.fetchall()]
+        return {row[0] for row in cursor.fetchall()}
 
 
 class LSAggregatePerformanceIndicator(LSIndicator):
