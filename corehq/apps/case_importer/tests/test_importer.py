@@ -1,3 +1,4 @@
+import doctest
 from contextlib import contextmanager
 
 from django.test import TestCase
@@ -493,6 +494,13 @@ class ImporterTest(TestCase):
             ['', 'Jeff', '', 'blue', bad_group.name],
         ])
         self.assertIn(exceptions.InvalidOwner.title, res['errors'])
+
+
+def test_doctests():
+    import corehq.apps.case_importer.do_import
+
+    results = doctest.testmod(corehq.apps.case_importer.do_import)
+    assert results.failed == 0
 
 
 def make_worksheet_wrapper(*rows):
