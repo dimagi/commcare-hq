@@ -12,6 +12,7 @@ from django.db.utils import IntegrityError
 
 import gevent
 from gevent.pool import Pool
+from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
@@ -524,28 +525,62 @@ def _copy_form_properties(sql_form, couch_form):
 
 def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachment meta - includes form.xml"""
-    attachments = []
-    metadb = get_blob_db().metadb
+    @memoized
+    def get_blob_metadata(parent_id):
+        metas = defaultdict(list)
+        for meta in metadb.get_for_parent(parent_id):
+            metas[(meta.type_code, meta.name)].append(meta)
+        return metas
 
     def try_to_get_blob_meta(parent_id, type_code, name):
+        metas = get_blob_metadata(parent_id)[(type_code, name)]
+        assert all(m.domain == couch_form.domain for m in metas), metas
+        if len(metas) > 1:
+            # known issue: duplicate blob metadata with missing blob
+            missing = [m for m in metas if not m.blob_exists()]
+            if missing and len(missing) < len(metas):
+                for meta in missing:
+                    blobdb.delete(meta.key)
+                    metas.remove(meta)
+            # NOTE there is still a chance that len(metas) > 1
+            # Not resolving that issue here since it is not
+            # thought to be caused by this migration.
+        return metas[0] if metas else None
+
+    def get_form_xml_metadata(meta):
         try:
-            meta = metadb.get(
-                parent_id=parent_id,
-                type_code=type_code,
-                name=name
-            )
-            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+            couch_form.get_xml()
+            assert meta is not None, couch_form.form_id
             return meta
-        except BlobMeta.DoesNotExist:
-            return None
+        except MissingFormXml:
+            pass
+        log.warning("Rebuilding missing form XML: %s", couch_form.form_id)
+        metas = get_blob_metadata(couch_form.form_id)[(CODES.form_xml, "form.xml")]
+        if len(metas) == 1:
+            couch_meta = couch_form.blobs.get("form.xml")
+            if couch_meta is None:
+                assert not metas[0].blob_exists(), metas
+            else:
+                assert metas[0].key == couch_meta.key, (metas, couch_meta)
+            blobdb.delete(metas[0].key)
+            metas.remove(metas[0])
+        else:
+            assert not metas, metas  # protect against yet another duplicate
+        xml = convert_form_to_xml(couch_form.to_json()["form"])
+        att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
+        return att.write(blobdb, sql_form)
 
     if couch_form._attachments and any(
         name not in couch_form.blobs for name in couch_form._attachments
     ):
         _migrate_couch_attachments_to_blob_db(couch_form)
 
+    attachments = []
+    blobdb = get_blob_db()
+    metadb = blobdb.metadb
+
     xml_meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, "form.xml")
-    attachments.append(_get_form_xml_metadata(couch_form, xml_meta))
+    attachments.append(get_form_xml_metadata(xml_meta))
 
     for name, blob in couch_form.blobs.items():
         if name == "form.xml":
@@ -563,7 +598,7 @@ def _migrate_form_attachments(sql_form, couch_form):
 
         if not meta:
             meta = metadb.new(
-                domain=couch_form.domain,
+                domain=sql_form.domain,
                 name=name,
                 parent_id=sql_form.form_id,
                 type_code=CODES.form_attachment,
@@ -576,19 +611,6 @@ def _migrate_form_attachments(sql_form, couch_form):
         attachments.append(meta)
     sql_form.attachments_list = attachments
     sql_form.form_data  # should not raise MissingFormXML
-
-
-def _get_form_xml_metadata(couch_form, meta):
-    try:
-        couch_form.get_xml()
-        assert meta is not None, couch_form.form_id
-        return meta
-    except MissingFormXml:
-        pass
-    log.warn("Rebuilding missing form XML: %s", couch_form.form_id)
-    xml = convert_form_to_xml(couch_form.to_json()["form"])
-    att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
-    return att.write(get_blob_db(), couch_form)
 
 
 def _migrate_form_operations(sql_form, couch_form):

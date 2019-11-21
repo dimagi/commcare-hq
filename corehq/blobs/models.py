@@ -100,6 +100,10 @@ class BlobMeta(PartitionedModel, Model):
         from . import get_blob_db
         return get_blob_db().get(key=self.key)
 
+    def blob_exists(self):
+        from . import get_blob_db
+        return get_blob_db().exists(self.key)
+
     @memoized
     def content_md5(self):
         """Get RFC-1864-compliant Content-MD5 header value"""

@@ -1282,6 +1282,15 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
+    def test_form_with_extra_xml_blob_metadata(self):
+        form = create_form_with_extra_xml_blob_metadata(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        self.assertEqual(
+            [m.name for m in get_blob_db().metadb.get_for_parent(form.form_id)],
+            ["form.xml"],
+        )
+
     def test_unwrappable_form(self):
         def bad_wrap(doc):
             raise Exception(f"refusing to wrap {doc}")
@@ -1433,6 +1442,24 @@ def create_form_with_missing_xml(domain_name, couch_meta=False):
             assert False, "expected MissingFormXml exception"
         except MissingFormXml:
             pass
+    return form
+
+
+def create_form_with_extra_xml_blob_metadata(domain_name):
+    form = submit_form_locally(TEST_FORM, domain_name).xform
+    form = FormAccessors(domain_name).get_form(form.form_id)
+    meta = get_blob_db().metadb.get(
+        parent_id=form.form_id, key=form.blobs["form.xml"].key)
+    args = {n: getattr(meta, n) for n in [
+        "domain",
+        "parent_id",
+        "type_code",
+        "name",
+        "content_length",
+        "content_type",
+        "properties",
+    ]}
+    get_blob_db().metadb.new(key=uuid.uuid4().hex, **args).save()
     return form
 
 
