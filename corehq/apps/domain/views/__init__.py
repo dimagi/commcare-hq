@@ -60,7 +60,6 @@ from corehq.apps.domain.views.settings import (
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
-    ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
     logo,
