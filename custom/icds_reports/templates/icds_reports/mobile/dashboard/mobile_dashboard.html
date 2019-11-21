@@ -1,0 +1,69 @@
+{% extends "icds_reports/base_minimal.html" %}
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block title %}{% trans "ICDS-CAS Mobile Dashboard" %}{% endblock %}
+{% block head %}
+  {% compress css %}
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+  {% endcompress %}
+  {% include 'analytics/analytics_js.html' %}
+  {% include 'analytics/google.html' %}
+{% compress js %}
+  <script src="{% static 'autotrack/autotrack.js' %}"></script>
+  <script src="{% static 'angular/angular.js' %}"></script>
+  <script src="{% static 'angular-route/angular-route.js' %}"></script>
+  <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
+  <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+
+  <script src="{% static 'js/icds_app_mobile.js' %}"></script>
+  <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
+
+  <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
+
+  <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
+  <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
+
+  <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
+  <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
+  <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
+{% endcompress %}
+{% endblock head %}
+{% block body %}
+<div class="hidden">
+  {% include 'icds_reports/partials/register_dashboard_urls.html' %}
+  {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
+</div>
+<div id="app" ng-cloak>
+    <div ng-controller="MainMobileController" class="container-fluid">
+        <div class="row">
+          <div class="col-md-12 main-container">
+            <div class="row no-margin">
+              <div class="ng-view"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+</div>
+{% include 'analytics/initial/global.html' %}
+{% include 'analytics/initial/google.html' %}
+{% endblock body %}
+{% block body_end %}
+<script>
+  var appName = 'icdsApp';
+  hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
+  angular.module(appName).value('cgBusyDefaults', {
+    message:'Loading data',
+    backdrop: true,
+    templateUrl: url('icds-ng-template', 'busy'),
+    delay: 300,
+    minDuration: 700,
+    wrapperClass: 'my-class my-class2'
+  });
+  angular.bootstrap(document.getElementById('app'), [appName]);
+</script>
+{% endblock body_end %}

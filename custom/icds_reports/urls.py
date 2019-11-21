@@ -13,13 +13,13 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, MWCDDataView
+    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView
 )
+
 
 dashboard_urls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
-    url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
     url('^', DashboardView.as_view(), name='icds_dashboard'),
 ]
 
@@ -114,6 +114,14 @@ awc_infrastructure_urls = [
         MedicineKitView.as_view(),
         name='medicine_kit'),
     url(
+        r'^infantometer/(?P<step>[\w-]+)/',
+        InfantometerView.as_view(),
+        name='infantometer'),
+    url(
+        r'^stadiometer/(?P<step>[\w-]+)/',
+        StadiometerView.as_view(),
+        name='stadiometer'),
+    url(
         r'^infants_weight_scale/(?P<step>[\w-]+)/',
         InfantsWeightScaleView.as_view(),
         name='infants_weight_scale'),
@@ -126,6 +134,7 @@ awc_infrastructure_urls = [
 
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
+    url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
 
@@ -135,6 +144,8 @@ urlpatterns = [
     url(r'^icds_dashboard/', include(dashboard_urls)),
     url(r'^icds_dashboard_mobile/', include(mobile_dashboard_urls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
+    url(r'^icds-ng-template-mobile/(?P<template>[\w-].+)', IcdsDynamicMobileTemplateView.as_view(),
+        name='icds-ng-template-mobile'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
     url(
@@ -166,6 +177,7 @@ urlpatterns = [
     url(r'^ap_webservice', APWebservice.as_view(), name='ap_webservice'),
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
+    url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
 
 ]
 

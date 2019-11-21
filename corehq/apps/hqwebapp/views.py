@@ -364,8 +364,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, custom_login_page):
-
+def _login(req, domain_name, custom_login_page, extra_context=None):
+    extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -389,6 +389,7 @@ def _login(req, domain_name, custom_login_page):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -438,7 +439,7 @@ def login(req):
 
 
 @location_safe
-def domain_login(req, domain, custom_template_name=None):
+def domain_login(req, domain, custom_template_name=None, extra_context=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -449,7 +450,7 @@ def domain_login(req, domain, custom_template_name=None):
     req.project = project
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
-    return _login(req, domain, custom_template_name)
+    return _login(req, domain, custom_template_name, extra_context)
 
 
 class HQLoginView(LoginView):

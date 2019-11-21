@@ -31,6 +31,7 @@ from corehq.form_processor.exceptions import (
     CaseSaveError,
     LedgerSaveError,
     LedgerValueNotFound,
+    MissingFormXml,
     NotAllowed,
     XFormNotFound,
     XFormSaveError,
@@ -361,7 +362,10 @@ class FormReindexAccessor(ReindexAccessor):
             pass
 
     def doc_to_json(self, doc):
-        return doc.to_json(include_attachments=self.include_attachments)
+        try:
+            return doc.to_json(include_attachments=self.include_attachments)
+        except MissingFormXml:
+            return {}
 
     def extra_filters(self, for_count=False):
         filters = []

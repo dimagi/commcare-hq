@@ -6,11 +6,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
+from tastypie.http import HttpTooManyRequests
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from couchforms import openrosa_response
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
@@ -35,7 +36,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -66,12 +67,35 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
-    rate_limit_submission_by_delaying(domain, max_wait=15)
+    if rate_limit_submission(domain):
+        return HttpTooManyRequests()
 
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
     ]
+
+    try:
+        instance, attachments = couchforms.get_instance_and_attachment(request)
+    except MultimediaBug:
+        try:
+            instance = request.FILES[MAGIC_PROPERTY].read()
+            xform = convert_xform_to_json(instance)
+            meta = xform.get("meta", {})
+        except:
+            meta = {}
+
+        return _submission_error(
+            request, "Received a submission with POST.keys()",
+            MULTIMEDIA_SUBMISSION_ERROR_COUNT, metric_tags,
+            domain, app_id, user_id, authenticated, meta,
+        )
+
+    if isinstance(instance, BadRequest):
+        response = HttpResponseBadRequest(instance.message)
+        _record_metrics(metric_tags, 'known_failures', response)
+        return response
+
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
         response = openrosa_response.SUBMISSION_IGNORED_RESPONSE
@@ -84,22 +108,6 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         return response
 
     with TimingContext() as timer:
-        try:
-            instance, attachments = couchforms.get_instance_and_attachment(request)
-        except MultimediaBug as e:
-            try:
-                instance = request.FILES[MAGIC_PROPERTY].read()
-                xform = convert_xform_to_json(instance)
-                meta = xform.get("meta", {})
-            except:
-                meta = {}
-
-            return _submission_error(
-                request, "Received a submission with POST.keys()",
-                MULTIMEDIA_SUBMISSION_ERROR_COUNT, metric_tags,
-                domain, app_id, user_id, authenticated, meta,
-            )
-
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
             instance=instance,

@@ -3,6 +3,10 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
+{% comment %}
+  Despite inheriting from apps_base.html, this template does not necessarily have an app.
+{% endcomment %}
+
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
