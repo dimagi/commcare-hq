@@ -135,6 +135,12 @@ class Command(BaseCommand):
                 be a space-delimited list of form ids OR 'skipped' to
                 migrate forms skipped by previous migration.
             """)
+        parser.add_argument('-x', '--stop-on-error',
+            dest="stop_on_error", action='store_true', default=False,
+            help="""
+                Stop on form migration error rather than recording diffs
+                and continuing with next form.
+            """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
 
     def handle(self, domain, action, **options):
@@ -148,6 +154,7 @@ class Command(BaseCommand):
             "live_migrate",
             "case_diff",
             "rebuild_state",
+            "stop_on_error",
             "forms",
             "rewind",
         ]:
@@ -161,6 +168,8 @@ class Command(BaseCommand):
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != MIGRATE and self.forms:
             raise CommandError("--forms only allowed with `MIGRATE`")
+        if action != MIGRATE and self.stop_on_error:
+            raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
         if action != REWIND and self.rewind:
@@ -180,6 +189,7 @@ class Command(BaseCommand):
             live_migrate=self.live_migrate,
             diff_process=CASE_DIFF[self.case_diff],
             rebuild_state=self.rebuild_state,
+            stop_on_error=self.stop_on_error,
             forms=self.forms,
         )
 

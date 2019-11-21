@@ -81,6 +81,8 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
 )
 from ..statedb import init_state_db, open_state_db
+from ..util import UnhandledError
+
 
 log = logging.getLogger(__name__)
 
@@ -142,6 +144,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
+            except UnhandledError:
+                raise
             except SystemExit:
                 success = False
         self.migration_success = success

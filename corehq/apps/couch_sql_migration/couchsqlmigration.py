@@ -129,6 +129,7 @@ class CouchSqlDomainMigrator:
         live_migrate=False,
         diff_process=True,
         rebuild_state=False,
+        stop_on_error=False,
         forms=None,
     ):
         self._check_for_migration_restrictions(domain)
@@ -146,6 +147,7 @@ class CouchSqlDomainMigrator:
             diff_queue = CaseDiffProcess
         else:
             diff_queue = CaseDiffQueue
+        self.stop_on_error = stop_on_error
         self.forms = forms
         self.case_diff_queue = diff_queue(self.statedb)
 
@@ -217,22 +219,25 @@ class CouchSqlDomainMigrator:
             case_stock_result = (self._get_case_stock_result(sql_form, couch_form)
                 if form_is_processed else None)
             _save_migrated_models(sql_form, case_stock_result)
-        except IntegrityError:
+        except IntegrityError as err:
             exc_info = sys.exc_info()
             try:
                 sql_form = FormAccessorSQL.get_form(couch_form.form_id)
             except XFormNotFound:
-                sql_form = None
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
-        except Exception:
+            if self.stop_on_error:
+                raise err from None
+        except Exception as err:
             proc = "" if form_is_processed else " unprocessed"
             log.exception("Error migrating%s form %s", proc, couch_form.form_id)
             try:
                 sql_form = FormAccessorSQL.get_form(couch_form.form_id)
             except XFormNotFound:
-                sql_form = None
+                pass
+            if self.stop_on_error:
+                raise err from None
         finally:
             if couch_form.doc_type != 'SubmissionErrorLog':
                 self._save_diffs(couch_form, sql_form, replace_diffs)
