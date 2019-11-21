@@ -44,6 +44,7 @@ PyYAML~=5.1
 requests~=2.20
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
+typing-extensions  # Required for TypedDict until we upgrade to Python 3.8
 Unidecode==0.04.20
 xlrd==1.0.0
 simplejson~=3.11
