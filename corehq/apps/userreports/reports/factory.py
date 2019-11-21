@@ -38,6 +38,7 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     OpenMaleHHMinoritySpec,
     OpenMaleMigrantSpec,
     OpenMaleResidentSpec,
+    ReferralHealthProblemSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
@@ -129,6 +130,7 @@ class SumWhenTemplateFactory(object):
         'open_male_hh_minority': OpenMaleHHMinoritySpec,
         'open_male_migrant': OpenMaleMigrantSpec,
         'open_male_resident': OpenMaleResidentSpec,
+        'referral_health_problem': ReferralHealthProblemSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
     }
