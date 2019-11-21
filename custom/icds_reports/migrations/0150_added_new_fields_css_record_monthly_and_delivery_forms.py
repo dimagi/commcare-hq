@@ -5,7 +5,7 @@ from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
 from custom.icds_reports.utils.migrations import get_composite_primary_key_migrations
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
@@ -23,5 +23,5 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN where_born SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN num_children_del SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN still_live_birth SMALLINT"),
+        migrator.get_migration('ccs_record_monthly_view.sql')
     ]
-    operations = [migrator.get_migration('ccs_record_monthly_view.sql')]
