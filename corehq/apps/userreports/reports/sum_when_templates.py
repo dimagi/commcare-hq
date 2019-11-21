@@ -109,6 +109,11 @@ class OpenMaleResidentSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1"
 
 
+class ReachedReferralHealthProblemSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem")
+    expression = "referral_reached_facility = ? AND referral_health_problem ~ ?"
+
+
 class ReferralHealthProblemSpec(SumWhenTemplateSpec):
     type = TypeProperty("referral_health_problem")
     expression = "referral_health_problem ~ ?"
