@@ -385,7 +385,7 @@ def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
     return [_id for _id in awc_location_ids if _id not in precompute_awws_in_vhnd_timeframe(domain)]
 
 
-@icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60)
+@icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
 def precompute_awws_in_vhnd_timeframe(domain):
     """
     This computes awws with vhsnd_date_past_month less than 37 days.
