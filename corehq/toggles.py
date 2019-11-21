@@ -1758,14 +1758,6 @@ SESSION_MIDDLEWARE_LOGGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BYPASS_SESSIONS = StaticToggle(
-    'bypass_sessions',
-    'Bypass sessions for select mobile URLS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',

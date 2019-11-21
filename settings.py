@@ -912,6 +912,8 @@ STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
+BYPASS_SESSIONS_FOR_MOBILE = False
+
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
     r'^/a/{domain}/phone/restore/',

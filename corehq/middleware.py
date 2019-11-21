@@ -257,8 +257,8 @@ class LoggingSessionMiddleware(SessionMiddleware):
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
-    def _bypass_sessions(self, request, domain):
-        return (toggles.BYPASS_SESSIONS.enabled(domain) and
+    def _bypass_sessions(self, request):
+        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
             any(rx.match(request.path_info) for rx in self.bypass_re))
 
     def process_request(self, request):
@@ -266,7 +266,7 @@ class LoggingSessionMiddleware(SessionMiddleware):
             match = re.search(r'/a/[0-9a-z-]+', request.path)
             if match:
                 domain = match.group(0).split('/')[-1]
-                if self._bypass_sessions(request, domain):
+                if self._bypass_sessions(request):
                     session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
                     request.session = self.SessionStore(session_key)
                     request.session.save = lambda *x: None
