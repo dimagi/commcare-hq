@@ -52,13 +52,13 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
-  - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   #- nh/dhis2/te  # Norman Oct 2
   - MC/SL-229  # Norman Oct 9
   - sr-session-audit  # Sravan Oct 15
   - nh/blank_row  # Norman Oct 28
-  - mk/compare-mm-size-1 # Nov 10
-  - mk/compare-mm-size-2 # Nov 11
   - jls/kill-exchange # Jenny Nov 13
   - bmb/saas-q4-qa # Biyeun Nov 13
+  - dm/select-toggle # Daniel Nov 19
+  - dmr/refactor-rate-definitions  # Danny Nov 20
+  - bmb/update-requirejs  # Biyeun Nov 21
 submodules: {}

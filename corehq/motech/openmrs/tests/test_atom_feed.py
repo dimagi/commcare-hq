@@ -150,7 +150,9 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "form_question": "/data/height"
                 },
                 "case_property": "height"
-            },
+            }
+        ]
+        diagnoses = [
             {
                 "doc_type": "ObservationMapping",
                 "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
@@ -165,7 +167,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 "case_property": "owner_id"
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -193,7 +195,9 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                         }
                     ]
                 }
-            },
+            }
+        ]
+        diagnoses = [
             {
                 "doc_type": "ObservationMapping",
                 "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
@@ -238,9 +242,9 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 }
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
-    def get_repeater_dict(self, observations):
+    def get_repeater_dict(self, observations, diagnoses):
         return {
             "_id": "123456",
             "domain": "test_domain",
@@ -253,7 +257,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_observations": observations
+                    "openmrs_observations": observations,
+                    "bahmni_diagnoses": diagnoses
                 }]
             }
         }
@@ -309,7 +314,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings,
+            self.repeater.diagnosis_mappings,
             None, None, None
         )
         self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
@@ -356,7 +361,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings,
+            self.repeater.diagnosis_mappings,
             'test-case-id',
             'patient',
             'default-owner-id'
