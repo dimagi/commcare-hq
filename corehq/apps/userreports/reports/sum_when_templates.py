@@ -39,6 +39,11 @@ class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL"
 
 
+class FemaleAgeAtDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_age_at_death")
+    expression = "female_death_type IS NOT NULL AND age_at_death_yrs >= ?"
+
+
 class OpenDisabilityTypeSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_disability_type")
     expression = "closed_on IS NULL AND disability_type ~ ?"

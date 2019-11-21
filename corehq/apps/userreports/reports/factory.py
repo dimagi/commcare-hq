@@ -24,6 +24,7 @@ from corehq.apps.userreports.reports.specs import (
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
     ClosedOnNullTemplateSpec,
+    FemaleAgeAtDeathSpec,
     OpenDisabilityTypeSpec,
     OpenFemaleDisabledSpec,
     OpenFemaleHHCasteSpec,
@@ -114,6 +115,7 @@ class ReportOrderByFactory(object):
 class SumWhenTemplateFactory(object):
     spec_map = {
         'closed_on_null': ClosedOnNullTemplateSpec,
+        'female_age_at_death': FemaleAgeAtDeathSpec,
         'open_disability_type': OpenDisabilityTypeSpec,
         'open_female_disabled': OpenFemaleDisabledSpec,
         'open_female_hh_caste': OpenFemaleHHCasteSpec,
