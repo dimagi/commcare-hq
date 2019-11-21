@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.config import ShardMeta, plproxy_config
+from corehq.sql_db.config import ShardMeta, plproxy_config, plproxy_standby_config
 
 SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 
@@ -51,14 +51,20 @@ class Command(BaseCommand):
             print("System not configured to use a partitioned database")
 
         verbose = options['verbose']
-        existing_config = _get_existing_cluster_config(plproxy_config)
-        if existing_config:
-            if options['create_only']:
-                return
-            if _confirm("Cluster configuration already exists. Are you sure you want to change it?"):
-                _update_pl_proxy_cluster(plproxy_config, existing_config, verbose)
-        else:
-            create_pl_proxy_cluster(plproxy_config, verbose)
+        create_or_update_cluster(plproxy_config, verbose, options['create_only'])
+        create_or_update_cluster(plproxy_standby_config, verbose, options['create_only'])
+
+
+def create_or_update_cluster(cluster_config, verbose, create_only):
+    existing_config = _get_existing_cluster_config(cluster_config)
+    if existing_config:
+        if create_only:
+            return
+        if _confirm(f"Cluster configuration already exists on '{cluster_config.proxy_db}'."
+                    f" Are you sure you want to change it?"):
+            _update_pl_proxy_cluster(cluster_config, existing_config, verbose)
+    else:
+        create_pl_proxy_cluster(cluster_config, verbose)
 
 
 def parse_existing_shard(shard_option):
