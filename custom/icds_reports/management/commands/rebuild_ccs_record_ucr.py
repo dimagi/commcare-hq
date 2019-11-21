@@ -11,7 +11,7 @@ from pillowtop.dao.couch import ID_CHUNK_SIZE
 class Command(BaseCommand):
     help = "Rebuild open ccs record cases and their corresponding person cases "
 
-    def get_asdfsd(self, indicator_config_id, case_type_of_xmlns):
+    def get_ucr_config_and_document_store(self, indicator_config_id, case_type_of_xmlns):
         config = _get_config_by_id(indicator_config_id)
         document_store = get_document_store_for_doc_type(
             config.domain, config.referenced_doc_type,
@@ -21,8 +21,8 @@ class Command(BaseCommand):
         return config, document_store
 
     def handle(self):
-        ccs_record_config, ccs_record_document_store = self.get_asdfsd('static-ccs_record_cases', 'ccs_record')
-        person_config, person_document_store = self.get_asdfsd('static-person_cases_v3', 'person')
+        ccs_record_config, ccs_record_document_store = self.get_ucr_config_and_document_store('static-ccs_record_cases', 'ccs_record')
+        person_config, person_document_store = self.get_ucr_config_and_document_store('static-person_cases_v3', 'person')
 
         current_month_start = datetime.date.today().replace(day=1)
         last_month_start = (current_month_start - datetime.timedelta(days=1)).replace(day=1)
