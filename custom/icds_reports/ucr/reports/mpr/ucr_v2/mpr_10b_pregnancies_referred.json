@@ -116,42 +116,46 @@
       {
         "display": "referred_bleeding",
         "column_id": "referred_bleeding",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_health_problem ~ '\\ybleeding\\y'", 1]
-        ]
+        "whens": [{
+          "type": "referral_health_problem",
+          "binds": ["\\ybleeding\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "referred_convulsions",
         "column_id": "referred_convulsions",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_health_problem ~ '\\yconvulsions\\y'", 1]
-        ]
+        "whens": [{
+          "type": "referral_health_problem",
+          "binds": ["\\yconvulsions\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "referred_prolonged_labor",
         "column_id": "referred_prolonged_labor",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_health_problem ~ '\\yprolonged_labor\\y'", 1]
-        ]
+        "whens": [{
+          "type": "referral_health_problem",
+          "binds": ["\\yprolonged_labor\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "referred_abortion_complications",
         "column_id": "referred_abortion_complications",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_health_problem ~ '\\yabortion_complications\\y'", 1]
-        ]
+        "whens": [{
+          "type": "referral_health_problem",
+          "binds": ["\\yabortion_complications\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "referred_fever_discharge",
@@ -176,42 +180,46 @@
       {
         "display": "bleeding_reached_count",
         "column_id": "bleeding_reached_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ybleeding\\y'", 1]
-        ]
+        "whens": [{
+          "type": "reached_referral_health_problem",
+          "binds": ["yes", "\\ybleeding\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "convulsions_reached_count",
         "column_id": "convulsions_reached_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yconvulsions\\y'", 1]
-        ]
+        "whens": [{
+          "type": "reached_referral_health_problem",
+          "binds": ["yes", "\\yconvulsions\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "prolonged_labor_reached_count",
         "column_id": "prolonged_labor_reached_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yprolonged_labor\\y'", 1]
-        ]
+        "whens": [{
+          "type": "reached_referral_health_problem",
+          "binds": ["yes", "\\yprolonged_labor\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "abort_comp_reached_count",
         "column_id": "abort_comp_reached_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [
-          ["referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yabortion_complications\\y'", 1]
-        ]
+        "whens": [{
+          "type": "reached_referral_health_problem",
+          "binds": ["yes", "\\yabortion_complications\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "fever_discharge_reached_count",
