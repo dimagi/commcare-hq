@@ -15,6 +15,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
+from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -270,16 +271,17 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
-            'project_limits': {
-                'submissions': self._get_submission_rate_limits()
-            }
+            'project_limits': [
+                ('Submission Rate Limits', self._get_rate_limits(submission_rate_limiter)),
+                ('Restore Rate Limits', self._get_rate_limits(restore_rate_limiter)),
+            ]
         }
 
-    def _get_submission_rate_limits(self):
+    def _get_rate_limits(self, rate_limiter):
         return [
             {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
              'percent_usage': round(100 * current_usage / limit, 1)}
-            for key, current_usage, limit in submission_rate_limiter.iter_rates(self.domain)
+            for key, current_usage, limit in rate_limiter.iter_rates(self.domain)
         ]
 
 
