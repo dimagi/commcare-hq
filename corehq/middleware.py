@@ -215,7 +215,7 @@ class SentryContextMiddleware(MiddlewareMixin):
                 scope.set_tag('domain', request.domain)
 
 
-class BypassSessionMiddleware(SessionMiddleware):
+class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
