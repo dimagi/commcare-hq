@@ -721,7 +721,7 @@ def recalculate_stagnant_ccs_record_cases(latest_datetime='1970-01-01'):
     if latest_datetime == last_processed_datetime:
         notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
         return
-    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
+    recalculate_stagnant_ccs_record_cases.delay(last_processed_datetime)
 
 
 def _recalculate_stagnant_cases(config_id, latest_datetime):
