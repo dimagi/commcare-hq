@@ -148,6 +148,7 @@ class TestPartitionConfig(SimpleTestCase):
         primary_config = PlProxyConfig.from_dict(PARTITION_CONGIF_WITH_STANDBYS)
         with override_settings(DATABASES=PARTITION_CONGIF_WITH_STANDBYS):
             standby_config = _get_standby_plproxy_config(primary_config)
+        self.assertEqual('commcarehq_standby', standby_config.cluster_name)
         self.assertEqual('proxy', standby_config.proxy_db)
         self.assertEqual({'db1_standby', 'db2_standby'}, set(standby_config.form_processing_dbs))
         self.assertEqual(primary_config.shard_count, standby_config.shard_count)

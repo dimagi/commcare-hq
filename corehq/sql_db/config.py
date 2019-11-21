@@ -62,16 +62,13 @@ class DbShard(object):
 
 @attr.s
 class PlProxyConfig(object):
+    cluster_name = attr.ib()
     proxy_db = attr.ib()
     shard_map = attr.ib()
     # 'host_map' is use to support Docker where external connections are via the docker name
     # but internal connections are to 'localhost'. See docker/localsettings.py
     host_map = attr.ib()
     shard_count = attr.ib()
-
-    @property
-    def cluster_name(self):
-        return settings.PL_PROXY_CLUSTER_NAME
 
     @property
     def form_processing_dbs(self):
@@ -116,7 +113,7 @@ class PlProxyConfig(object):
         )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict, cluster_name=None):
         """Get config from Django DATABASES dict. Custom porperties in DATABASE config:
 
         DATABASES = {
@@ -158,7 +155,10 @@ class PlProxyConfig(object):
         if not has_config:
             return
 
-        config = PlProxyConfig(proxy_db, shard_map, host_map, _get_shard_count(shard_map.values()))
+        config = PlProxyConfig(
+            cluster_name or settings.PL_PROXY_CLUSTER_NAME,
+            proxy_db, shard_map, host_map, _get_shard_count(shard_map.values())
+        )
         config.validate()
         return config
 
@@ -185,7 +185,10 @@ class PlProxyConfig(object):
         shard_map = legacy_config['shards']
         host_map = legacy_config.get('host_map', {})
 
-        config = PlProxyConfig(proxy_db, shard_map, host_map, _get_shard_count(shard_map.values()))
+        config = PlProxyConfig(
+            settings.PL_PROXY_CLUSTER_NAME,
+            proxy_db, shard_map, host_map, _get_shard_count(shard_map.values())
+        )
         config.validate()
         return config
 
@@ -262,7 +265,8 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
 
     standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
-    return PlProxyConfig.from_dict(standby_db_config)
+    cluster_name = f'{settings.PL_PROXY_CLUSTER_NAME}_standby'
+    return PlProxyConfig.from_dict(standby_db_config, cluster_name=cluster_name)
 
 
 plproxy_config = None
