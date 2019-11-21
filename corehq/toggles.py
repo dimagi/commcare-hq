@@ -1751,13 +1751,6 @@ PHI_CAS_INTEGRATION = StaticToggle(
 )
 
 
-SESSION_MIDDLEWARE_LOGGING = StaticToggle(
-    'session_middleware_logging',
-    'Log all session object method calls on this domain',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
