@@ -300,7 +300,7 @@ class AWWVHNDSurveyIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWVHNDSurveyIndicator, self).__init__(domain, user)
 
-        self.should_send_sms = bool(get_awws_with_old_vhnd_date(domain, [self.user.get_id]))
+        self.should_send_sms = bool(get_awcs_with_old_vhnd_date(domain, [self.user.location_id]))
 
     def get_messages(self, language_code=None):
         if self.should_send_sms:
@@ -361,30 +361,28 @@ class LSVHNDSurveyIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSVHNDSurveyIndicator, self).__init__(domain, user)
 
-        self.user_ids_not_in_timeframe = set(get_awws_with_old_vhnd_date(domain, self.aww_user_ids))
+        self.awc_ids_not_in_timeframe = get_awcs_with_old_vhnd_date(
+            domain,
+            [l.location_id for l in self.awc_locations]
+        )
 
         self.forms = get_last_form_submissions_by_user(
             domain, self.aww_user_ids, xmlns=VHND_SURVEY_XMLNS
         )
 
     def get_messages(self, language_code=None):
-        awc_ids = {
-            loc
-            for loc, user_ids in self.user_ids_by_location_id.items()
-            if user_ids.issubset(self.user_ids_not_in_timeframe)
-        }
         messages = []
 
-        if awc_ids:
-            awc_names = {self.awc_locations[awc] for awc in awc_ids}
+        if self.awc_ids_not_in_timeframe:
+            awc_names = {self.awc_locations[awc] for awc in self.awc_ids_not_in_timeframe}
             context = {'location_names': ', '.join(awc_names)}
             messages.append(self.render_template(context, language_code=language_code))
 
         return messages
 
 
-def get_awws_with_old_vhnd_date(domain, user_ids):
-    return [_id for _id in user_ids if _id not in precompute_awws_in_vhnd_timeframe(domain)]
+def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
+    return [_id for _id in awc_location_ids if _id not in precompute_awws_in_vhnd_timeframe(domain)]
 
 
 @icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60)
