@@ -2,7 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
+                                  haveAccessToAllLocations, isAlertActive, navMetadata) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -58,11 +59,19 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         return newValue;
     }, true);
 
+    function _getStep(stepId) {
+        return {
+            "id": stepId,
+            "route": "/program_summary/" + stepId,
+            "label": navMetadata[stepId]["label"],
+            "image": navMetadata[stepId]["image"],
+        };
+    }
     vm.steps = {
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
-        "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
-        "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+        "maternal_child": _getStep("maternal_child"),
+        "icds_cas_reach": _getStep("icds_cas_reach"),
+        "demographics": _getStep("demographics"),
+        "awc_infrastructure": _getStep("awc_infrastructure"),
     };
 
     vm.getDisableIndex = function () {
@@ -126,7 +135,8 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.getDataForStep(vm.step);
 }
 
-ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
+    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
 window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
     return {
