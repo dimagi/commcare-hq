@@ -748,7 +748,7 @@ def _find_stagnant_cases(adapter, latest_datetime):
     return (
         query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
             table.c.inserted_at >= latest_datetime
-        ).distinct().order_by(table.c.inserted_at, table.c.doc_id)[:BATCH_SIZE]
+        ).distinct().order_by(table.c.inserted_at)[:BATCH_SIZE]
     )
 
 
