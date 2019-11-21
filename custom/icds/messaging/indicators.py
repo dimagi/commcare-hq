@@ -396,10 +396,9 @@ def precompute_awws_in_vhnd_timeframe(domain):
     from corehq.apps.userreports.util import get_table_name
     table = get_table_name(domain, 'static-vhnd_form')
     query = """
-    SELECT awc_id
+    SELECT DISTINCT awc_id
     FROM "{table}"
-    GROUP BY awc_id
-    HAVING '{today}' - max(vhsnd_date_past_month) < 37
+    WHERE '{today}' - max(vhsnd_date_past_month) < 37
     """.format(table=table, today=datetime.today().date())
 
     from django.db import connections
