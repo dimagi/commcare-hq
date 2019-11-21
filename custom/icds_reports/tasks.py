@@ -747,7 +747,8 @@ def _find_stagnant_cases(adapter, latest_datetime):
     query_object = adapter.get_query_object()
     return (
         query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
-            table.c.inserted_at >= latest_datetime
+            table.c.inserted_at >= latest_datetime,
+            table.c.inserted_at <= datetime.utcnow()  # This filter is used to force postgres to use the index
         ).distinct().order_by(table.c.inserted_at)[:BATCH_SIZE]
     )
 
