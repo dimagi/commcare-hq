@@ -60,4 +60,5 @@ branches:
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
   - dmr/refactor-rate-definitions  # Danny Nov 20
+  - bmb/update-requirejs  # Biyeun Nov 21
 submodules: {}
