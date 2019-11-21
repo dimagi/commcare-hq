@@ -2,4 +2,4 @@
 <div class="options shadow yellow-gradient d-flex justify-content-center {% verbatim %}{{ $ctrl.id }}{% endverbatim %}" ng-click="$ctrl.onClick()">
     <img src="{% verbatim %}{{ $ctrl.image }}{% endverbatim %}">
 </div>
-<img src="{% static "icds_reports/mobile/images/active-play-button.png" %}" class="active-play-button" ng-if="currentOption==1">
+<img src="{% static "icds_reports/mobile/images/active-play-button.png" %}" class="active-play-button" ng-if="$ctrl.isActive()">
