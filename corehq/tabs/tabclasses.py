@@ -1681,14 +1681,6 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE:
-        administration.extend([
-            {
-                'title': _('Multimedia Sharing'),
-                'url': reverse('domain_manage_multimedia', args=[domain])
-            }
-        ])
-
     if (toggles.MOBILE_RECOVERY_MEASURES.enabled(domain)
             and MobileRecoveryMeasure.objects.filter(domain=domain).exists()):
         administration.append({
