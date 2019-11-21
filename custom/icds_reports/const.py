@@ -18,6 +18,13 @@ UCR_PILLOWS = ['kafka-ucr-static', 'kafka-ucr-static-cases',
                'kafka-ucr-main']
 
 
+class NavigationSections:
+    MATERNAL_CHILD = 'maternal_child'
+    ICDS_CAS_REACH = 'icds_cas_reach'
+    DEMOGRAPHICS = 'demographics'
+    AWC_INFRASTRUCTURE = 'awc_infrastructure'
+
+
 class LocationTypes(object):
     STATE = 'state'
     DISTRICT = 'district'
