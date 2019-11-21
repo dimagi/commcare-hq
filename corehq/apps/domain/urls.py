@@ -67,7 +67,6 @@ from corehq.apps.domain.views.settings import (
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
-    ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
 )
@@ -169,7 +168,6 @@ domain_settings = [
         name='generate_repeater_payloads'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
-    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
