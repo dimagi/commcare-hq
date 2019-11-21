@@ -31,7 +31,7 @@ ENROLLMENT_FORM = {
 }
 PRESCRIPTION_FORM = {
     "http://openrosa.org/formdesigner/796C928A-7451-486B-8346-3316DB3816E4": "Prescription/Ordonnance",
-},
+}
 FORMS_XMLNS = dicts_or(
     CLASSIFICATION_FORMS,
     TREATMENT_FORMS,
