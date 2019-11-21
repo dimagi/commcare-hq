@@ -13,6 +13,8 @@ describe('Kpi Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("isMobile", false);
+        $provide.constant("haveAccessToFeatures", false);
+
     }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_) {
