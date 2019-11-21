@@ -575,6 +575,7 @@ def _migrate_form_attachments(sql_form, couch_form):
 
         attachments.append(meta)
     sql_form.attachments_list = attachments
+    sql_form.form_data  # should not raise MissingFormXML
 
 
 def _get_form_xml_metadata(couch_form, meta):
