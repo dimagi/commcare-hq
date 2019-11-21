@@ -46,6 +46,7 @@ Welcome to CommCareHQ's documentation!
    couchdb
    celery
    ucr
+   openmrs
    js-guide/README
    databases
 
