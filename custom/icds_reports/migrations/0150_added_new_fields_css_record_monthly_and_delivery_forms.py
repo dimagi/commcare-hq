@@ -24,3 +24,4 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN num_children_del SMALLINT"),
         migrations.RunSQL("ALTER table ccs_record_monthly ADD COLUMN still_live_birth SMALLINT"),
     ]
+    operations = [migrator.get_migration('ccs_record_monthly_view.sql')]
