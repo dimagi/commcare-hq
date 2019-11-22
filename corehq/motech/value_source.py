@@ -1,4 +1,3 @@
-from functools import singledispatch
 from typing import Any
 from warnings import warn
 

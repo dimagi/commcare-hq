@@ -15,7 +15,7 @@ from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     get_property_map,
 )
-from corehq.motech.value_source import as_jsonobject, get_value, CaseTriggerInfo
+from corehq.motech.value_source import get_value, CaseTriggerInfo
 
 PATIENT = {
     'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',

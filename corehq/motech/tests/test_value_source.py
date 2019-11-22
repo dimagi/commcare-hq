@@ -113,11 +113,11 @@ class CasePropertyValidationTests(SimpleTestCase):
 
     def test_missing_case_property(self):
         with self.assertRaisesRegex(TypeError, "Unable to determine class for {}"):
-            case_property = as_jsonobject({})
+            as_jsonobject({})
 
     def test_null_case_property(self):
         with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': None}"):
-            case_property = as_jsonobject({"case_property": None})
+            as_jsonobject({"case_property": None})
 
     def test_doc_type(self):
         case_property = as_jsonobject({
