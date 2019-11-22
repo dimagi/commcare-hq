@@ -36,7 +36,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -205,7 +205,8 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         rows_elem = ReportFixturesProvider._get_v1_report_elem(
             data_source,
             {ui_filter.field for ui_filter in defer_filters},
-            filter_options_by_field
+            filter_options_by_field,
+            restore_user
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -220,7 +221,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         return report_elem
 
     @staticmethod
-    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field):
+    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -232,7 +233,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
 
         total_row_calculator = SQLTotalRowCalculator(data_source)
         if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            uuid.uuid4().hex, NAMESPACE_OTHER
+            restore_user.username, NAMESPACE_USER
         ):
             total_row_calculator = IterativeTotalRowCalculator(data_source)
 
@@ -389,6 +390,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             {f.field for f in defer_filters},
             filter_options_by_field,
             _last_sync_time(domain, restore_user.user_id),
+            restore_user
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -407,7 +409,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         return [report_filter_elem, report_elem]
 
     @staticmethod
-    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync):
+    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -419,7 +421,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
         total_row_calculator = SQLTotalRowCalculator(data_source)
         if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            uuid.uuid4().hex, NAMESPACE_OTHER
+            restore_user.username, NAMESPACE_USER
         ):
             total_row_calculator = IterativeTotalRowCalculator(data_source)
 
