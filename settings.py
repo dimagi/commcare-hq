@@ -111,7 +111,6 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
-SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -125,8 +124,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    'corehq.middleware.LoggingSessionMiddleware',
+    'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -912,6 +910,8 @@ STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
+BYPASS_SESSIONS_FOR_MOBILE = False
+
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
     r'^/a/{domain}/phone/restore/',
@@ -1142,14 +1142,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
-        'session_access_log': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': SESSION_ACCESS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,
-            'backupCount': 20
-        },
     },
     'root': {
         'level': 'INFO',
@@ -1239,11 +1231,6 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': False,
-        },
-        'session_access_log': {
-            'handlers': ['session_access_log'],
-            'level': 'DEBUG',
             'propagate': False,
         },
     }

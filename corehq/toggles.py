@@ -1751,21 +1751,6 @@ PHI_CAS_INTEGRATION = StaticToggle(
 )
 
 
-SESSION_MIDDLEWARE_LOGGING = StaticToggle(
-    'session_middleware_logging',
-    'Log all session object method calls on this domain',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
-    'bypass_sessions_r',
-    'Bypass sessions for select mobile URLS',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0
-)
-
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
