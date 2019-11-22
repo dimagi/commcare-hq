@@ -200,60 +200,6 @@ class ConstantValueTests(SimpleTestCase):
         self.assertEqual(deserialize(one, "foo"), '1')
 
 
-class WrapTests(SimpleTestCase):
-
-    def test_wrap_subclass(self):
-        doc = {
-            "doc_type": "FormQuestionMap",
-            "form_question": "/data/abnormal_temperature",
-            "value_map": {
-                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
-                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
-            },
-        }
-        form_question_map = ValueSource.wrap(doc)
-        self.assertIsInstance(form_question_map, ValueSource)
-        self.assertIsInstance(form_question_map, FormQuestionMap)
-
-    def test_subclass_wrap(self):
-        doc = {
-            "doc_type": "FormQuestionMap",
-            "form_question": "/data/abnormal_temperature",
-            "value_map": {
-                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
-                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
-            },
-        }
-        form_question_map = FormQuestionMap.wrap(doc)
-        self.assertIsInstance(form_question_map, ValueSource)
-        self.assertIsInstance(form_question_map, FormQuestionMap)
-
-    def test_wrap_no_doc_type(self):
-        """
-        Wrapping a ValueSource instance should return None.
-
-        ValueSource must be subclassed because ValueSource.get_value
-        raises NotImplementedError.
-        """
-        doc = {
-            "form_question": "/data/abnormal_temperature",
-            "value_map": {
-                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
-                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
-            },
-        }
-        value_source = ValueSource.wrap(doc)
-        self.assertIsInstance(value_source, ValueSource)
-
-    def test_wrap_something_else(self):
-        doc = {
-            "doc_type": "Foo",
-            "foo": "bar"
-        }
-        foo = ValueSource.wrap(doc)
-        self.assertIsNone(foo)
-
-
 class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_blank_path(self):

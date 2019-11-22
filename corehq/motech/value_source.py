@@ -6,10 +6,10 @@ from couchdbkit import BadValueError
 from jsonpath_rw import parse as parse_jsonpath
 
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import (
+from dimagi.ext.jsonobject import (
     DictProperty,
-    DocumentSchema,
-    Property,
+    JsonObject,
+    ObjectProperty,
     StringProperty,
 )
 
@@ -61,7 +61,7 @@ def recurse_subclasses(cls):
     )
 
 
-class ValueSource(DocumentSchema):
+class ValueSource(JsonObject):
     """
     Subclasses model a reference to a value, like a case property or a
     form question.
@@ -96,8 +96,7 @@ class ValueSource(DocumentSchema):
         if not isinstance(other, self.__class__):
             return NotImplemented
         return (
-            self.doc_type == other.doc_type
-            and self.external_data_type == other.external_data_type
+            self.external_data_type == other.external_data_type
             and self.commcare_data_type == other.commcare_data_type
             and self.direction == other.direction
             and self.value_map == other.value_map
@@ -105,16 +104,6 @@ class ValueSource(DocumentSchema):
         )
 
     @classmethod
-    def wrap(cls, data):
-        if cls is ValueSource:
-            if 'doc_type' not in data or data['doc_type'] == 'ValueSource':
-                return super(ValueSource, cls).wrap(data)
-            subclass = {
-                sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }.get(data['doc_type'])
-            return subclass.wrap(data) if subclass else None
-        else:
-            return super(ValueSource, cls).wrap(data)
 
     @property
     def can_import(self):
@@ -183,7 +172,7 @@ class ConstantValue(ValueSource):
        outside the class.
 
     """
-    value = Property()
+    value = ObjectProperty()
     value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
 
     def __eq__(self, other):
