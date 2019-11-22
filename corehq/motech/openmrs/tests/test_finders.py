@@ -15,7 +15,7 @@ from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     get_property_map,
 )
-from corehq.motech.value_source import as_jsonobject, get_value
+from corehq.motech.value_source import as_jsonobject, get_value, CaseTriggerInfo
 
 PATIENT = {
     'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
@@ -121,9 +121,8 @@ class PatientFinderTests(SimpleTestCase):
 
 
 def test_constant_false():
-    info = {}
-    value_source = as_jsonobject(constant_false)
-    assert_false(get_value(value_source, info))
+    info = CaseTriggerInfo('test-domain', '123456')
+    assert_false(get_value(constant_false, info))
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):

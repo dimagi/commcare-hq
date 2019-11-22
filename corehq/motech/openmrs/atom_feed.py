@@ -21,7 +21,6 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
@@ -37,11 +36,7 @@ from corehq.motech.openmrs.exceptions import (
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
-from corehq.motech.value_source import (
-    as_jsonobject,
-    deserialize,
-    get_import_value,
-)
+from corehq.motech.value_source import as_jsonobject, deserialize
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -256,7 +251,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
-            new_value = deserialize(value_source, patient_value)
+            new_value = value_source.deserialize(patient_value)
             if case:
                 if prop in CASE_BLOCK_ARGS:
                     case_value = case.name if prop == "case_name" else getattr(case, prop)
@@ -519,8 +514,7 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
 
 def get_case_block_kwargs_for_case_property(mapping, external_value):
     case_block_kwargs = {"update": {}}
-    value_source = as_jsonobject(dict(mapping.value))
-    value = deserialize(value_source, external_value)
+    value = deserialize(mapping.value, external_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
     else:
@@ -544,7 +538,7 @@ def get_case_block_for_indexed_case(
     }
     for value_source_dict in mapping.indexed_case_mapping.case_properties:
         value_source = as_jsonobject(dict(value_source_dict))
-        value = get_import_value(value_source, external_data)
+        value = value_source.get_import_value(external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
             case_block_kwargs[value_source.case_property] = value
         else:
