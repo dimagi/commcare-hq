@@ -2,8 +2,7 @@ import doctest
 import warnings
 
 from django.test import SimpleTestCase
-
-from couchdbkit import BadValueError
+from jsonobject.exceptions import BadValueError
 
 import corehq.motech.value_source
 from corehq.motech.const import (
@@ -23,6 +22,7 @@ from corehq.motech.value_source import (
     FormQuestionMap,
     JsonPathCaseProperty,
     ValueSource,
+    as_jsonobject,
     deserialize,
     get_commcare_value,
     get_form_question_values,
@@ -111,51 +111,19 @@ class CaseTriggerInfoTests(SimpleTestCase):
 class CasePropertyValidationTests(SimpleTestCase):
 
     def test_valid_case_property(self):
-        CaseProperty.wrap({"case_property": "foo"})
+        as_jsonobject({"case_property": "foo"})
 
     def test_blank_case_property(self):
         with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
-            CaseProperty.wrap({"case_property": ""})
+            as_jsonobject({"case_property": ""})
 
     def test_missing_case_property(self):
-        case_property = CaseProperty.wrap({})
-        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
-            case_property.validate()
+        with self.assertRaisesRegex(TypeError, "Unable to determine class for {}"):
+            case_property = as_jsonobject({})
 
     def test_null_case_property(self):
-        case_property = CaseProperty.wrap({"case_property": None})
-        with self.assertRaisesRegex(BadValueError, "Property case_property is required."):
-            case_property.validate()
-
-
-class ConstantStringTests(SimpleTestCase):
-
-    def test_get_value(self):
-        constant = ConstantString.wrap({"value": "foo"})
-        info = CaseTriggerInfo("test-domain", None)
-        value = get_value(constant, info)
-        self.assertEqual(value, "foo")
-
-    def test_default_get_value(self):
-        constant = ConstantString.wrap({})
-        info = CaseTriggerInfo("test-domain", None)
-        value = get_value(constant, info)
-        self.assertIsNone(value)
-
-    def test_casting_value(self):
-        constant = ConstantString.wrap({
-            "value": "1",
-            "external_data_type": COMMCARE_DATA_TYPE_DECIMAL,
-        })
-        info = CaseTriggerInfo("test-domain", None)
-        value = get_value(constant, info)
-        self.assertEqual(value, 1.0)
-
-    def test_deserialize(self):
-        constant = ConstantString.wrap({"value": "foo"})
-        external_value = "bar"
-        value = deserialize(constant, external_value)
-        self.assertIsNone(value)
+        with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': None}"):
+            case_property = as_jsonobject({"case_property": None})
 
 
 class ConstantValueTests(SimpleTestCase):
@@ -165,7 +133,7 @@ class ConstantValueTests(SimpleTestCase):
         get_commcare_value() should convert from value data type to
         CommCare data type
         """
-        one = ConstantValue.wrap({
+        one = as_jsonobject({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
@@ -178,7 +146,7 @@ class ConstantValueTests(SimpleTestCase):
         serialize() should convert from CommCare data type to external
         data type
         """
-        one = ConstantValue.wrap({
+        one = as_jsonobject({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
@@ -191,7 +159,7 @@ class ConstantValueTests(SimpleTestCase):
         deserialize() should convert from external data type to CommCare
         data type
         """
-        one = ConstantValue.wrap({
+        one = as_jsonobject({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
@@ -204,7 +172,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_blank_path(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = JsonPathCaseProperty.wrap({
+        value_source = as_jsonobject({
             "case_property": "bar",
             "jsonpath": "",
         })
@@ -213,7 +181,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_no_values(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = JsonPathCaseProperty.wrap({
+        value_source = as_jsonobject({
             "case_property": "bar",
             "jsonpath": "foo.qux",
         })
@@ -222,7 +190,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_one_value(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = JsonPathCaseProperty.wrap({
+        value_source = as_jsonobject({
             "case_property": "bar",
             "jsonpath": "foo.bar",
         })
@@ -231,7 +199,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_many_values(self):
         json_doc = {"foo": [{"bar": "baz"}, {"bar": "qux"}]}
-        value_source = JsonPathCaseProperty.wrap({
+        value_source = as_jsonobject({
             "case_property": "bar",
             "jsonpath": "foo[*].bar",
         })
@@ -243,7 +211,8 @@ class CasePropertyConstantValueTests(SimpleTestCase):
 
     def test_one_value(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = CasePropertyConstantValue.wrap({
+        value_source = as_jsonobject({
+            "case_property": "baz",
             "value": "qux",
             "jsonpath": "foo.bar",
         })
@@ -273,6 +242,20 @@ class DirectionTests(SimpleTestCase):
         value_source = ValueSource(direction=DIRECTION_BOTH)
         self.assertTrue(value_source.can_import)
         self.assertTrue(value_source.can_export)
+
+
+class AsJsonObjectTests(SimpleTestCase):
+
+    def test_constant_value_schema_validates_constant_string(self):
+        json_object = as_jsonobject({"value": "spam"})
+        self.assertIsInstance(json_object, ConstantValue)
+
+    def test_case_property_constant_value(self):
+        json_object = as_jsonobject({
+            "case_property": "spam",
+            "value": "spam",
+        })
+        self.assertIsInstance(json_object, CasePropertyConstantValue)
 
 
 def test_doctests():

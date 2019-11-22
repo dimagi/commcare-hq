@@ -3,15 +3,14 @@ from warnings import warn
 
 import attr
 from couchdbkit import BadValueError
+from jsonobject.api import JsonObject
+from jsonobject.base_properties import DefaultProperty
 from jsonpath_rw import parse as parse_jsonpath
+from schema import Optional as SchemaOptional
+from schema import Or, Schema
 
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.jsonobject import (
-    DictProperty,
-    JsonObject,
-    ObjectProperty,
-    StringProperty,
-)
+from dimagi.ext.jsonobject import DictProperty, StringProperty
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
@@ -70,6 +69,8 @@ class ValueSource(JsonObject):
     and serialize it, if necessary, for the external system that it is
     being sent to.
     """
+    _allow_dynamic_properties = False
+
     external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
     commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
                                         choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
@@ -104,6 +105,15 @@ class ValueSource(JsonObject):
         )
 
     @classmethod
+    def get_schema_dict(cls) -> dict:
+        data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
+        return {
+            SchemaOptional("external_data_type"): str,
+            SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
+            SchemaOptional("direction"): Or(*DIRECTIONS),
+            SchemaOptional("value_map"): dict,
+            SchemaOptional("jsonpath"): str,
+        }
 
     @property
     def can_import(self):
@@ -128,6 +138,12 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty(required=True, validators=not_blank)
 
+    @classmethod
+    def get_schema_dict(cls) -> dict:
+        schema = super().get_schema_dict().copy()
+        schema.update({"case_property": str})
+        return schema
+
 
 class FormQuestion(ValueSource):
     """
@@ -135,6 +151,11 @@ class FormQuestion(ValueSource):
     """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
+    @classmethod
+    def get_schema_dict(cls) -> dict:
+        schema = super().get_schema_dict().copy()
+        schema.update({"form_question": str})
+        return schema
 
 
 class ConstantValue(ValueSource):
@@ -172,7 +193,7 @@ class ConstantValue(ValueSource):
        outside the class.
 
     """
-    value = ObjectProperty()
+    value = DefaultProperty()
     value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
 
     def __eq__(self, other):
@@ -181,6 +202,15 @@ class ConstantValue(ValueSource):
             and self.value == other.value
             and self.value_data_type == other.value_data_type
         )
+
+    @classmethod
+    def get_schema_dict(cls) -> dict:
+        schema = super().get_schema_dict().copy()
+        schema.update({
+            "value": object,
+            SchemaOptional("value_data_type"): str,
+        })
+        return schema
 
 
 class CasePropertyMap(CaseProperty):
@@ -224,6 +254,12 @@ class CaseOwnerAncestorLocationField(ValueSource):
             data["case_owner_ancestor_location_field"] = data.pop("location_field")
         return super().wrap(data)
 
+    @classmethod
+    def get_schema_dict(cls) -> dict:
+        schema = super().get_schema_dict().copy()
+        schema.update({"case_owner_ancestor_location_field": str})
+        return schema
+
 
 class FormUserAncestorLocationField(ValueSource):
     """
@@ -238,6 +274,12 @@ class FormUserAncestorLocationField(ValueSource):
         if "location_field" in data:
             data["form_user_ancestor_location_field"] = data.pop("location_field")
         return super().wrap(data)
+
+    @classmethod
+    def get_schema_dict(cls) -> dict:
+        schema = super().get_schema_dict().copy()
+        schema.update({"form_user_ancestor_location_field": str})
+        return schema
 
 
 class JsonPathCaseProperty(CaseProperty):
@@ -258,6 +300,14 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
+def as_jsonobject(data):
+    for subclass in recurse_subclasses(ValueSource):
+        if Schema(subclass.get_schema_dict()).is_valid(data):
+            return subclass.wrap(data)
+    else:
+        raise TypeError(f"Unable to determine class for {data!r}")
+
+
 def get_value(value_source, case_trigger_info):
     """
     Returns the value referred to by the ValueSource, serialized for
@@ -274,21 +324,8 @@ def get_import_value(value_source, external_data):
 
 @singledispatch
 def get_commcare_value(value_source, case_trigger_info):
-    if hasattr(value_source, "value"):
-        if hasattr(value_source, "value_data_type"):
-            return get_constant_value(value_source, case_trigger_info)
-        else:
-            return get_constant_string(value_source, case_trigger_info)
-    if hasattr(value_source, "form_question"):
-        return get_form_question_value(value_source, case_trigger_info)
-    if hasattr(value_source, "case_property"):
-        return get_case_property_value(value_source, case_trigger_info)
-    if hasattr(value_source, "case_owner_ancestor_location_field"):
-        return get_case_owner_ancestor_location_field(value_source, case_trigger_info)
-    if hasattr(value_source, "form_user_ancestor_location_field"):
-        get_form_user_ancestor_location_field(value_source, case_trigger_info)
     raise TypeError(
-        f'Unrecognised value source type: {value_source.__class__.__name__}'
+        f'Unrecognised value source type: {type(value_source)}'
     )
 
 
@@ -299,11 +336,6 @@ def get_constant_value(value_source, case_trigger_info):
         or serializers.get((None, value_source.commcare_data_type))
     )
     return serializer(value_source.value) if serializer else value_source.value
-
-
-@get_commcare_value.register(ConstantString)
-def get_constant_string(value_source, case_trigger_info):
-    return value_source.value
 
 
 @get_commcare_value.register(FormQuestion)
