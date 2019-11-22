@@ -111,7 +111,6 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
-SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -125,8 +124,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    'corehq.middleware.LoggingSessionMiddleware',
+    'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -331,7 +329,6 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
-    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
@@ -343,7 +340,6 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.ilsgateway',
     'custom.zipline',
-    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -351,7 +347,6 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.up_nrhm',
 
-    'custom.care_pathways',
     'custom.common',
 
     'custom.icds',
@@ -825,7 +820,6 @@ DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
-WAREHOUSE_DATABASE_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines
@@ -916,6 +910,8 @@ STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
+BYPASS_SESSIONS_FOR_MOBILE = False
+
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
     r'^/a/{domain}/phone/restore/',
@@ -944,7 +940,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if str(error) != 'No module named localsettings':
+    if str(error) != "No module named 'localsettings'":
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1146,14 +1142,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
-        'session_access_log': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': SESSION_ACCESS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,
-            'backupCount': 20
-        },
     },
     'root': {
         'level': 'INFO',
@@ -1243,16 +1231,6 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': False,
-        },
-        'warehouse': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'session_access_log': {
-            'handlers': ['session_access_log'],
-            'level': 'DEBUG',
             'propagate': False,
         },
     }
@@ -1376,7 +1354,6 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
-    'ewsghana',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1469,7 +1446,6 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
-    'custom.ewsghana.handler.handle',
 ]
 
 SMS_HANDLERS = [
@@ -1798,8 +1774,6 @@ PILLOWTOPS = {
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1977,7 +1951,6 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
-    'custom.ewsghana',
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
@@ -2005,23 +1978,9 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'pathways-india-mis': 'custom.care_pathways',
-    'pathways-tanzania': 'custom.care_pathways',
-    'care-macf-malawi': 'custom.care_pathways',
-    'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'ews-ghana': 'custom.ewsghana',
-    'ews-ghana-1': 'custom.ewsghana',
-    'ewsghana-6': 'custom.ewsghana',
-    'ewsghana-september': 'custom.ewsghana',
-    'ewsghana-test-4': 'custom.ewsghana',
-    'ewsghana-test-5': 'custom.ewsghana',
-    'ewsghana-test3': 'custom.ewsghana',
-    # Used in tests.  TODO - use override_settings instead
-    'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
 
     #vectorlink domains

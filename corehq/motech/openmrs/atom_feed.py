@@ -57,7 +57,7 @@ def get_feed_xml(requests, feed_name, page):
     resp = requests.get(feed_url)
     if (
         resp.status_code == 500
-        and 'AtomFeedRuntimeException: feed does not exist' in resp.content
+        and 'AtomFeedRuntimeException: feed does not exist' in resp.text
     ):
         exception = OpenmrsFeedDoesNotExist(
             f'Domain "{requests.domain_name}": Page does not exist in atom '
@@ -219,7 +219,7 @@ def get_addpatient_caseblock(
     case_block_kwargs = get_case_block_kwargs(patient, repeater)
     if default_owner:
         case_block_kwargs.setdefault("owner_id", default_owner.user_id)
-    if not case_block_kwargs["owner_id"]:
+    if not case_block_kwargs.get("owner_id"):
         raise ConfigurationError(_(
             f'No users found at location "{repeater.location_id}" to own '
             'patients added from OpenMRS Atom feed.'
@@ -303,7 +303,7 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
-        default_owner: Optional[CommCareUser] = repeater.get_first_user()
+        default_owner: Optional[CommCareUser] = repeater.first_user
         case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     elif error == LookupErrors.MultipleResults:
         # Multiple cases have been matched to the same patient.
@@ -367,6 +367,18 @@ def import_encounter(repeater, encounter_uuid):
     if 'bahmniDiagnoses' in encounter:
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
+            repeater.diagnosis_mappings,
+            case_id,
+            case_type,
+            default_owner_id,
+        )
+        deep_update(case_block_kwargs, more_kwargs)
+        case_blocks.extend(more_case_blocks)
+        # O/ ... ... ... start snip
+        # TODO: Remove this after deploy, once existing configs have
+        #       been moved to repeater.bahmni_diagnoses
+        more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
+            encounter['bahmniDiagnoses'],
             repeater.observation_mappings,
             case_id,
             case_type,
@@ -374,6 +386,7 @@ def import_encounter(repeater, encounter_uuid):
         )
         deep_update(case_block_kwargs, more_kwargs)
         case_blocks.extend(more_case_blocks)
+        #  O\ ˙˙˙ ˙˙˙ ˙˙˙ end snip
 
     if has_case_updates(case_block_kwargs) or case_blocks:
         update_case(repeater, case_id, case_block_kwargs, case_blocks)
@@ -423,7 +436,7 @@ def create_case(
 
     case_type = repeater.white_listed_case_types[0]
     patient = get_patient_by_uuid(repeater.requests, patient_uuid)
-    default_owner: Optional[CommCareUser] = repeater.get_first_user()
+    default_owner: Optional[CommCareUser] = repeater.first_user
     case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     return case_block
 

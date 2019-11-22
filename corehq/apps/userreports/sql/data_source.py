@@ -2,7 +2,6 @@ import numbers
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
-
 from memoized import memoized
 from sqlagg.sorting import OrderBy
 
@@ -12,7 +11,6 @@ from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.specs import CalculatedColumn
-from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.sql_db.connections import connection_manager
 
 
@@ -90,31 +88,19 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
                 return 0
             return ''
 
-        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
-            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
-
-        expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
-
         qc = self.query_context()
         session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             totals = qc.totals(
                 session.connection(),
-                [
-                    column_id
-                    for col in self.top_level_columns
-                    for column_id in _get_relevant_column_ids(col, expanded_columns)
-                    if col.calculate_total
-                ],
+                self.total_column_ids,
                 self.filter_values
             )
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)
-            for col in self.top_level_columns for column_id in _get_relevant_column_ids(
-                col, expanded_columns
-            )
+            for column_id, col in self.final_column_ids.items()
         ]
-        if total_row and total_row[0] is '':
+        if total_row and total_row[0] == '':
             total_row[0] = ugettext('Total')
         return total_row

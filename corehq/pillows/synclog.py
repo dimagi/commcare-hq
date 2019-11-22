@@ -82,30 +82,30 @@ class UserSyncHistoryProcessor(PillowProcessor):
         if app_id and settings.USER_REPORTING_METADATA_BATCH_ENABLED:
             UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
         else:
-            mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)
+            user = CouchUser.get_by_user_id(user_id)
+            if not user:
+                return
+            mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id)
 
 
-def mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id):
-    user = CouchUser.get_by_user_id(user_id)
-    if not user:
-        return
-
+def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, save=True):
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
 
-    save = update_last_sync(user, app_id, sync_date, version)
+    local_save = update_last_sync(user, app_id, sync_date, version)
     if version:
-        save |= update_latest_builds(user, app_id, sync_date, version)
+        local_save |= update_latest_builds(user, app_id, sync_date, version)
 
     app_meta = None
     if device_id:
         if app_id:
             app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
-        save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
+        local_save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
 
-    if save:
+    if local_save and save:
         user.save(fire_signals=False)
+    return local_save
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):

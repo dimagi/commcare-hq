@@ -16,7 +16,7 @@ from corehq.apps.dump_reload.sql.filters import (
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 
 # order is important here for foreign key constraints
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, iterator) for iterator in [
@@ -172,8 +172,8 @@ def get_model_iterator_builders_to_dump(domain, excludes):
 
 def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
     using = router.db_for_read(model_class)
-    if settings.USE_PARTITIONED_DATABASE and using == partition_config.proxy_db:
-        using = partition_config.form_processing_dbs
+    if settings.USE_PARTITIONED_DATABASE and using == plproxy_config.proxy_db:
+        using = plproxy_config.form_processing_dbs
     else:
         using = [using]
 

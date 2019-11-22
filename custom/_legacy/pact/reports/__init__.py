@@ -36,7 +36,6 @@ class PactDrilldownReportMixin(object):
     hide_filters = True
     filters = []
     flush_layout = True
-    #    mobile_enabled = True
     fields = []
     es_results=None
 
