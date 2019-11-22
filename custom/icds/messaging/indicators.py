@@ -24,6 +24,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
     get_last_form_submissions_by_user,
 )
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.quickcache import quickcache
@@ -415,8 +416,8 @@ def compute_awws_in_vhnd_timeframe(domain):
     WHERE vhsnd_date_past_month > '{{old}}'
     """.format(table=table, old=datetime.today().date() - timedelta(days=37))
 
-    ds = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain 'static-vhnd_form'))
-    django_db = connections.get_django_db_alias(ds.engine_id)
+    data_source = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form'))
+    django_db = connections.get_django_db_alias(data_source.engine_id)
     with connections[django_db].cursor() as cursor:
         cursor.execute(query)
         return {row[0] for row in cursor.fetchall()}
