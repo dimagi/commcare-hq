@@ -116,16 +116,13 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
     def aggregation_query(self):
         month = self.month.replace(day=1)
 
-        ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
             "previous_month": month_formatter(month - relativedelta(months=1)),
             "state_id": self.state_id
         }
-        query_params.update(ucr_query_params)
 
-        # The '1970-01-01' is a fallback, this should never happen,
-        # but an unexpected NULL should not block other data
+        # Copies the data from the previous month
         return """
         INSERT INTO "{tablename}" (
             state_id, supervisor_id, month, case_id, latest_time_end_processed,
@@ -137,10 +134,48 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
             muac_grading, muac_grading_last_recorded
         ) (
           SELECT
-            %(state_id)s AS state_id,
-            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
+            state_id, supervisor_id, %(month)s, case_id, latest_time_end_processed,
+            weight_child, weight_child_last_recorded,
+            height_child, height_child_last_recorded,
+            zscore_grading_wfa, zscore_grading_wfa_last_recorded,
+            zscore_grading_hfa, zscore_grading_hfa_last_recorded,
+            zscore_grading_wfh, zscore_grading_wfh_last_recorded,
+            muac_grading, muac_grading_last_recorded
+          FROM "{tablename}"
+          WHERE month = %(previous_month)s AND state_id = %(state_id)s
+      )
+        """.format(
+            tablename=self.aggregate_parent_table
+        ), query_params
+
+    def update_queries(self):
+        month = self.month.replace(day=1)
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "previous_month": month_formatter(month - relativedelta(months=1)),
+            "state_id": self.state_id
+        }
+        query_params.update(ucr_query_params)
+
+        # The '1970-01-01' is a fallback, this should never happen,
+        # but an unexpected NULL should not block other data
+        yield """
+        INSERT INTO "{tablename}" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            weight_child, weight_child_last_recorded,
+            height_child, height_child_last_recorded,
+            zscore_grading_wfa, zscore_grading_wfa_last_recorded,
+            zscore_grading_hfa, zscore_grading_hfa_last_recorded,
+            zscore_grading_wfh, zscore_grading_wfh_last_recorded,
+            muac_grading, muac_grading_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
             %(month)s AS month,
-            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            ucr.case_id AS case_id,
             GREATEST(
                 ucr.weight_child_last_recorded,
                 ucr.height_child_last_recorded,
@@ -148,36 +183,46 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
                 ucr.zscore_grading_hfa_last_recorded,
                 ucr.zscore_grading_wfh_last_recorded,
                 ucr.muac_grading_last_recorded,
-                prev_month.latest_time_end_processed,
                 '1970-01-01'
             ) AS latest_time_end_processed,
-            COALESCE(ucr.weight_child, prev_month.weight_child) AS weight_child,
-            GREATEST(ucr.weight_child_last_recorded, prev_month.weight_child_last_recorded)
-                AS weight_child_last_recorded,
-            COALESCE(ucr.height_child, prev_month.height_child) AS height_child,
-            GREATEST(ucr.height_child_last_recorded, prev_month.height_child_last_recorded)
-                AS height_child_last_recorded,
-            COALESCE(ucr.zscore_grading_wfa, prev_month.zscore_grading_wfa) AS zscore_grading_wfa,
-            GREATEST(ucr.zscore_grading_wfa_last_recorded, prev_month.zscore_grading_wfa_last_recorded)
-                AS zscore_grading_wfa_last_recorded,
-            COALESCE(ucr.zscore_grading_hfa, prev_month.zscore_grading_hfa) AS zscore_grading_hfa,
-            GREATEST(ucr.zscore_grading_hfa_last_recorded, prev_month.zscore_grading_hfa_last_recorded)
-                AS zscore_grading_hfa_last_recorded,
-            COALESCE(ucr.zscore_grading_wfh, prev_month.zscore_grading_wfh) AS zscore_grading_wfh,
-            GREATEST(ucr.zscore_grading_wfh_last_recorded, prev_month.zscore_grading_wfh_last_recorded)
-                AS zscore_grading_wfh_last_recorded,
-            COALESCE(ucr.muac_grading, prev_month.muac_grading) AS muac_grading,
-            GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded)
-                AS muac_grading_last_recorded
+            ucr.weight_child,
+            ucr.weight_child_last_recorded,
+            ucr.height_child,
+            ucr.height_child_last_recorded,
+            ucr.zscore_grading_wfa,
+            ucr.zscore_grading_wfa_last_recorded,
+            ucr.zscore_grading_hfa,
+            ucr.zscore_grading_hfa_last_recorded,
+            ucr.zscore_grading_wfh,
+            ucr.zscore_grading_wfh_last_recorded,
+            ucr.muac_grading,
+            ucr.muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN (
-             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
-          ) prev_month
-          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
+            weight_child = COALESCE(EXCLUDED.weight_child, gm_forms.weight_child),
+            weight_child_last_recorded = GREATEST(
+                EXCLUDED.weight_child_last_recorded, gm_forms.weight_child_last_recorded),
+            height_child = COALESCE(EXCLUDED.height_child, gm_forms.height_child),
+            height_child_last_recorded = GREATEST(
+                EXCLUDED.height_child_last_recorded, gm_forms.height_child_last_recorded),
+            zscore_grading_wfa= COALESCE(
+                EXCLUDED.zscore_grading_wfa, gm_forms.zscore_grading_wfa),
+            zscore_grading_wfa_last_recorded = GREATEST(
+                EXCLUDED.zscore_grading_wfa_last_recorded, gm_forms.zscore_grading_wfa_last_recorded),
+            zscore_grading_hfa = COALESCE(
+                EXCLUDED.zscore_grading_hfa, gm_forms.zscore_grading_hfa),
+            zscore_grading_hfa_last_recorded = GREATEST(
+                EXCLUDED.zscore_grading_hfa_last_recorded, gm_forms.zscore_grading_hfa_last_recorded),
+            zscore_grading_wfh = COALESCE(
+                EXCLUDED.zscore_grading_wfh, gm_forms.zscore_grading_wfh),
+            zscore_grading_wfh_last_recorded = GREATEST(
+                EXCLUDED.zscore_grading_wfh_last_recorded, gm_forms.zscore_grading_wfh_last_recorded),
+            muac_grading = COALESCE(EXCLUDED.muac_grading, gm_forms.muac_grading),
+            muac_grading_last_recorded = GREATEST(
+                EXCLUDED.muac_grading_last_recorded, gm_forms.muac_grading_last_recorded)
         """.format(
             ucr_table_query=ucr_query,
             tablename=self.aggregate_parent_table
