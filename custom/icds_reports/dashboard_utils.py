@@ -52,7 +52,7 @@ def _get_nav_metadatada():
             'image': static('icds_reports/mobile/images/threegroup.png')
         },
         NavigationSections.AWC_INFRASTRUCTURE: {
-            'label': _('ICDS-CAS Reach'),
+            'label': _('AWC Infrastructure'),
             'image': static('icds_reports/mobile/images/bulb.png')
         },
     }
