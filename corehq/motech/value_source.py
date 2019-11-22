@@ -1,5 +1,4 @@
 from typing import Any, Dict, Tuple
-from warnings import warn
 
 import attr
 from couchdbkit import BadValueError
@@ -237,31 +236,7 @@ class FormQuestion(ValueSource):
             self.form_question
         )
 
-class ConstantString(ValueSource):
-    """
-    A constant value.
-
-    Use the model's data types for the `serialize()` method to convert
-    the value for the external system, if necessary.
-    """
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "value": "Sep 7, 3761 BC"
-    #       }
-    #     }
-    #
-    value = StringProperty()
-
-    def __eq__(self, other):
-        return (
-            super(ConstantString, self).__eq__(other) and
-            self.value == other.value
-        )
-
-
-class ConstantValue(ConstantString):
+class ConstantValue(ValueSource):
     """
     ConstantValue provides a ValueSource for constant values.
 
@@ -302,6 +277,7 @@ class ConstantValue(ConstantString):
     def __eq__(self, other):
         return (
             super().__eq__(other)
+            and self.value == other.value
             and self.value_data_type == other.value_data_type
         )
 
@@ -340,24 +316,6 @@ class ConstantValue(ConstantString):
         )
         external_value = serializer(self.value) if serializer else self.value
         return super().deserialize(external_value)
-
-
-class CasePropertyMap(CaseProperty):
-    """
-    Maps case property values to OpenMRS values or concept UUIDs
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
-
-
-class FormQuestionMap(FormQuestion):
-    """
-    Maps form question values to OpenMRS values or concept UUIDs
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use FormQuestion", DeprecationWarning)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
@@ -415,20 +373,6 @@ class FormUserAncestorLocationField(ValueSource):
             return get_ancestor_location_metadata_value(
                 location, self.form_user_ancestor_location_field
             )
-
-
-class JsonPathCaseProperty(CaseProperty):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
-
-
-class JsonPathCasePropertyMap(CaseProperty):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
 
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):

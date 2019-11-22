@@ -43,8 +43,6 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
-    ConstantString,
-    FormQuestionMap,
     get_case_location,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
