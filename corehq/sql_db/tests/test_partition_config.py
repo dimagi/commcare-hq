@@ -90,11 +90,11 @@ INVALID_SHARD_RANGE_POWER_2 = _get_partition_config({
     'db2': [5, 9],
 })
 
-PARTITION_CONGIF_WITH_STANDBYS = databases = _get_partition_config({
+PARTITION_CONFIG_WITH_STANDBYS = databases = _get_partition_config({
     'db1': [0, 1],
     'db2': [2, 3],
 })
-PARTITION_CONGIF_WITH_STANDBYS.update({
+PARTITION_CONFIG_WITH_STANDBYS.update({
     'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
     'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
 })
@@ -145,8 +145,8 @@ class TestPartitionConfig(SimpleTestCase):
         self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
 
     def test_get_standby_plproxy_config(self):
-        primary_config = PlProxyConfig.from_dict(PARTITION_CONGIF_WITH_STANDBYS)
-        with override_settings(DATABASES=PARTITION_CONGIF_WITH_STANDBYS):
+        primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
+        with override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS):
             standby_config = _get_standby_plproxy_config(primary_config)
         self.assertEqual('commcarehq_standby', standby_config.cluster_name)
         self.assertEqual('proxy', standby_config.proxy_db)
@@ -154,7 +154,7 @@ class TestPartitionConfig(SimpleTestCase):
         self.assertEqual(primary_config.shard_count, standby_config.shard_count)
 
     def test_get_standby_plproxy_config_missing_standby(self):
-        databases = copy.deepcopy(PARTITION_CONGIF_WITH_STANDBYS)
+        databases = copy.deepcopy(PARTITION_CONFIG_WITH_STANDBYS)
         del databases['db1_standby']  # remove one standby
 
         primary_config = PlProxyConfig.from_dict(databases)
@@ -162,7 +162,7 @@ class TestPartitionConfig(SimpleTestCase):
             _get_standby_plproxy_config(primary_config)
 
     def test_get_standby_plproxy_config_misconfigured(self):
-        databases = copy.deepcopy(PARTITION_CONGIF_WITH_STANDBYS)
+        databases = copy.deepcopy(PARTITION_CONFIG_WITH_STANDBYS)
         databases['db1_standby']['PLPROXY'] = {}  # add plproxy config to a standby
 
         primary_config = PlProxyConfig.from_dict(databases)
