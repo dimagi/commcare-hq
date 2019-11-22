@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from django.db.models import Max
+from django.db import connections
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
@@ -23,6 +24,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
     get_last_form_submissions_by_user,
 )
+from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from custom.icds.const import (
@@ -35,6 +38,8 @@ from custom.icds.const import (
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
+from dimagi.utils.couch import CriticalSection
+
 from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
@@ -382,27 +387,34 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
 
 def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
-    return set(awc_location_ids) - precompute_awws_in_vhnd_timeframe(domain)
+    return set(awc_location_ids) - get_awws_in_vhnd_timeframe(domain)
 
 
 @icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
-def precompute_awws_in_vhnd_timeframe(domain):
+def get_awws_in_vhnd_timeframe(domain):
+    # This function is called concurrently by many tasks.
+    # The CriticalSection ensures that the expensive operation is not triggered
+    #   by each task again, the compute_awws_in_vhnd_timeframe itself is cached separately,
+    #   so that other waiting tasks could lookup the value from cache.
+    with CriticalSection(['compute_awws_in_vhnd_timeframe']):
+        return compute_awws_in_vhnd_timeframe(domain)
+
+
+@icds_quickcache(timeout=60 * 60, memoize_timeout=60 * 60, session_function=None)
+def compute_awws_in_vhnd_timeframe(domain):
     """
     This computes awws with vhsnd_date_past_month less than 37 days.
 
     Result is cached in local memory, so that indvidual reminder tasks
     per AWW/LS dont hit the database each time
     """
-    from corehq.apps.userreports.util import get_table_name
     table = get_table_name(domain, 'static-vhnd_form')
     query = """
     SELECT DISTINCT awc_id
     FROM "{table}"
-    WHERE '{today}' - max(vhsnd_date_past_month) < 37
-    """.format(table=table, today=datetime.today().date())
+    WHERE vhsnd_date_past_month > '{{old}}'
+    """.format(table=table, old=datetime.today().date() - timedelta(days=37))
 
-    from django.db import connections
-    from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         cursor.execute(query)
         return {row[0] for row in cursor.fetchall()}
