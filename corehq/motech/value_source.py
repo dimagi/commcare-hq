@@ -147,31 +147,8 @@ class FormQuestion(ValueSource):
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
 
-class ConstantString(ValueSource):
-    """
-    A constant value.
 
-    Use the model's data types for the `serialize()` method to convert
-    the value for the external system, if necessary.
-    """
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "value": "Sep 7, 3761 BC"
-    #       }
-    #     }
-    #
-    value = StringProperty()
-
-    def __eq__(self, other):
-        return (
-            super(ConstantString, self).__eq__(other) and
-            self.value == other.value
-        )
-
-
-class ConstantValue(ConstantString):
+class ConstantValue(ValueSource):
     """
     ConstantValue provides a ValueSource for constant values.
 
@@ -212,6 +189,7 @@ class ConstantValue(ConstantString):
     def __eq__(self, other):
         return (
             super().__eq__(other)
+            and self.value == other.value
             and self.value_data_type == other.value_data_type
         )
 
@@ -232,6 +210,15 @@ class FormQuestionMap(FormQuestion):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warn("Use FormQuestion", DeprecationWarning)
+
+
+class ConstantString(ConstantValue):
+    """
+    A constant string value.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warn("Use ConstantValue", DeprecationWarning)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
