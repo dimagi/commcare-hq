@@ -151,8 +151,9 @@ class OpenmrsRepeater(CaseRepeater):
         diag_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for diag_mapping in form_config.bahmni_diagnoses:
+                value_source = as_jsonobject(dict(diag_mapping.value))
                 if (
-                    diag_mapping.value.check_direction(DIRECTION_IMPORT)
+                    value_source.can_import
                     and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
                 ):
                     diag_mappings[diag_mapping.concept].append(diag_mapping)
