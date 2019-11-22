@@ -26,7 +26,6 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from custom.icds.const import (
