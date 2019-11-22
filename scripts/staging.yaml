@@ -61,4 +61,5 @@ branches:
   - dm/select-toggle # Daniel Nov 19
   - dmr/refactor-rate-definitions  # Danny Nov 20
   - bmb/update-requirejs  # Biyeun Nov 21
+  - bmb/js-load-fix  # Biyeun Nov 22
 submodules: {}
