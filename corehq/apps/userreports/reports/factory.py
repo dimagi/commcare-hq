@@ -23,8 +23,14 @@ from corehq.apps.userreports.reports.specs import (
     SumWhenTemplateColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
+    AdultFemaleMigrantDeathSpec,
+    AdultFemaleResidentDeathSpec,
+    AgeAtDeathRangeMigrantSpec,
+    AgeAtDeathRangeResidentSpec,
     ClosedOnNullTemplateSpec,
     FemaleAgeAtDeathSpec,
+    FemaleDeathTypeMigrantSpec,
+    FemaleDeathTypeResidentSpec,
     OpenDisabilityTypeSpec,
     OpenFemaleDisabledSpec,
     OpenFemaleHHCasteSpec,
@@ -124,8 +130,14 @@ class ReportOrderByFactory(object):
 
 class SumWhenTemplateFactory(object):
     spec_map = {
+        'adult_female_migrant_death': AdultFemaleMigrantDeathSpec,
+        'adult_female_resident_death': AdultFemaleResidentDeathSpec,
+        'age_at_death_range_migrant': AgeAtDeathRangeMigrantSpec,
+        'age_at_death_range_resident': AgeAtDeathRangeResidentSpec,
         'closed_on_null': ClosedOnNullTemplateSpec,
         'female_age_at_death': FemaleAgeAtDeathSpec,
+        'female_death_type_migrant': FemaleDeathTypeMigrantSpec,
+        'female_death_type_resident': FemaleDeathTypeResidentSpec,
         'open_disability_type': OpenDisabilityTypeSpec,
         'open_female_disabled': OpenFemaleDisabledSpec,
         'open_female_hh_caste': OpenFemaleHHCasteSpec,

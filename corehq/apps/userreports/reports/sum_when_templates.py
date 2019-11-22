@@ -34,6 +34,26 @@ class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
 
 ### Templates for ICDS
 
+class AdultFemaleMigrantDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("adult_female_migrant_death")
+    expression = "sex = 'F' AND resident IS DISTINCT FROM 1 AND age_at_death_yrs >= 11"
+
+
+class AdultFemaleResidentDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("adult_female_resident_death")
+    expression = "sex = 'F' AND resident = 1 AND age_at_death_yrs >= 11"
+
+
+class AgeAtDeathRangeMigrantSpec(SumWhenTemplateSpec):
+    type = TypeProperty("age_at_death_range_migrant")
+    expression = "sex = ? AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN ? AND ?"
+
+
+class AgeAtDeathRangeResidentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("age_at_death_range_resident")
+    expression = "sex = ? AND resident = 1 AND date_death - dob BETWEEN ? AND ?"
+
+
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"
@@ -42,6 +62,16 @@ class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
 class FemaleAgeAtDeathSpec(SumWhenTemplateSpec):
     type = TypeProperty("female_age_at_death")
     expression = "female_death_type IS NOT NULL AND age_at_death_yrs >= ?"
+
+
+class FemaleDeathTypeMigrantSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_death_type_migrant")
+    expression = "female_death_type = ? AND resident IS DISTINCT FROM 1"
+
+
+class FemaleDeathTypeResidentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_death_type_resident")
+    expression = "female_death_type = ? AND resident = 1"
 
 
 class OpenDisabilityTypeSpec(SumWhenTemplateSpec):
