@@ -415,7 +415,9 @@ def compute_awws_in_vhnd_timeframe(domain):
     WHERE vhsnd_date_past_month > '{{old}}'
     """.format(table=table, old=datetime.today().date() - timedelta(days=37))
 
-    with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
+    ds = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain 'static-vhnd_form'))
+    django_db = connections.get_django_db_alias(ds.engine_id)
+    with connections[django_db].cursor() as cursor:
         cursor.execute(query)
         return {row[0] for row in cursor.fetchall()}
 
