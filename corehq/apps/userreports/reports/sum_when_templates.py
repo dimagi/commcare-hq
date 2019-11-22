@@ -74,6 +74,11 @@ class OpenFemaleMigrantSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL AND sex = 'F' AND resident != 1"
 
 
+class OpenFemaleMigrantDistinctFromSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_female_migrant_distinct_from")
+    expression = "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 1"
+
+
 class OpenFemaleResidentSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_female_resident")
     expression = "closed_on IS NULL AND sex = 'F' AND resident = 1"
@@ -102,6 +107,11 @@ class OpenMaleHHMinoritySpec(SumWhenTemplateSpec):
 class OpenMaleMigrantSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_migrant")
     expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1"
+
+
+class OpenMaleMigrantDistinctFromSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_male_migrant_distinct_from")
+    expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 1"
 
 
 class OpenMaleResidentSpec(SumWhenTemplateSpec):
