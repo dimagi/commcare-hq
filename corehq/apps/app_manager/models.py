@@ -5714,12 +5714,14 @@ class DeleteFormRecord(DeleteRecord):
 
 
 class SQLGlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    app_prompt = models.CharField(max_length=32, choices=[(c, c) for c in ("on", "off", "forced")], default="off")
-    apk_prompt = models.CharField(max_length=32, choices=[(c, c) for c in ("on", "off", "forced")], default="off")
-    apk_version = models.CharField(max_length=32)   # TODO: on save, default to LATEST_APK_VALUE
-    app_version = models.CharField(max_length=32)   # TODO: on save, default to LATEST_APP_VALUE
+    app_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(max_length=32, null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
@@ -5769,7 +5771,7 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
 
         # Save to SQL
-        model, created = SQLGlobalAppConfig.get_or_create(
+        model, created = SQLGlobalAppConfig.objects.get_or_create(
             domain=self.domain,
             app_id=self.app_id,
             defaults={
