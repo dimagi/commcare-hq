@@ -5733,10 +5733,6 @@ class SQLGlobalAppConfig(models.Model):
         )
 
 
-class GlobalAppConfig(Document):
-    pass
-
-
 class AppReleaseByLocation(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
