@@ -309,13 +309,14 @@ def heartbeat(request, domain, app_build_id):
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     else:
-        couch_user = request.couch_user
-        try:
-            update_user_reporting_data(app_build_id, app_id, couch_user, request)
-        except ResourceConflict:
-            # https://sentry.io/dimagi/commcarehq/issues/521967014/
-            couch_user = CouchUser.get(couch_user.user_id)
-            update_user_reporting_data(app_build_id, app_id, couch_user, request)
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+            couch_user = request.couch_user
+            try:
+                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+            except ResourceConflict:
+                # https://sentry.io/dimagi/commcarehq/issues/521967014/
+                couch_user = CouchUser.get(couch_user.user_id)
+                update_user_reporting_data(app_build_id, app_id, couch_user, request)
 
     if _should_force_log_submission(request):
         info['force_logs'] = True

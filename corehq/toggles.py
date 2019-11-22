@@ -1809,3 +1809,10 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     To turn it off, set to 0.
     """
 )
+
+SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
+    'skip_updating_user_reporting_metadata',
+    'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
