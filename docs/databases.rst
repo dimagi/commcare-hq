@@ -9,7 +9,7 @@ By default CommCare will use the `default` Django database for all SQL data.
 .. image:: images/django_db_monolith.png
 
 Synclog Data
-~~~~~~~~~~~
+~~~~~~~~~~~~
 Synclog data may be stored in a separate database specified by the
 `SYNCLOGS_SQL_DB_ALIAS` setting. The value of this setting must be a DB
 alias in the Django `DATABASES` setting.
@@ -53,21 +53,31 @@ as follows:
 
     USE_PARTITIONED_DATABASE = True
 
-    PARTITION_DATABASE_CONFIG = {
-        'shards': {
-            'p1': [0, 511],  # shard range for p1 database
-            'p2': [512, 1023],
+    DATABASES = {
+        'proxy': {
+            ...
+            'PLPROXY': {
+                'PROXY': True
+            }
         },
-        'proxy': 'proxydb'
+        'p1': {
+            ...
+            'PLPROXY': {
+                'SHARDS': [0, 511]
+            }
+        },
+        'p2': {
+            ...
+            'PLPROXY': {
+                'SHARDS': [512, 1023]
+            }
+        }
     }
-
-The keys in `PARTITION_DATABASE_CONFIG['shards']` as well as the value of `PARTITION_DATABASE_CONFIG['proxy']
- must be databases defined in the `DATABASES` setting.
 
 Rules for shards
 ................
 
-* There can only be one proxy DB
+* There can only DB with `PROXY=True`
 * The total number of shards must be a power of 2 i.e. 2, 4, 8, 16, 32 etc
 * The number of shards cannot be changed once you have data in them so
   it is wise to start with a large enough number e.g. 1024
