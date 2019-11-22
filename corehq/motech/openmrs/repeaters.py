@@ -24,7 +24,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
@@ -51,6 +50,7 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    as_jsonobject,
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
@@ -134,8 +134,9 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
+                value_source = as_jsonobject(dict(obs_mapping.value))
                 if (
-                    obs_mapping.value.can_import
+                    value_source.can_import
                     and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
                 ):
                     # It's possible that an OpenMRS concept appears more
