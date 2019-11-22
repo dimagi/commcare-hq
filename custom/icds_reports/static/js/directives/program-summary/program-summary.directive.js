@@ -73,7 +73,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         "demographics": _getStep("demographics"),
         "awc_infrastructure": _getStep("awc_infrastructure"),
     };
-
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -133,6 +132,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     }
 
     vm.getDataForStep(vm.step);
+    vm.currentStepMeta = vm.steps[vm.step];
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
