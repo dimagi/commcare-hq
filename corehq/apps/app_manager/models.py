@@ -5713,6 +5713,18 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
+class SQLGlobalAppConfig(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=[(c, c) for c in ("on", "off", "forced")], default="off")
+    apk_prompt = models.CharField(max_length=32, choices=[(c, c) for c in ("on", "off", "forced")], default="off")
+    apk_version = models.CharField(max_length=32)   # TODO: on save, default to LATEST_APK_VALUE
+    app_version = models.CharField(max_length=32)   # TODO: on save, default to LATEST_APP_VALUE
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
 class GlobalAppConfig(Document):
     # this should be the unique id of the app (not of a versioned copy)
     app_id = StringProperty()
