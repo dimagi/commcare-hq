@@ -22,25 +22,31 @@ class ResourceOverride(models.Model):
 
 def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     overrides_by_pre_id = get_xform_resource_overrides(domain, app_id)
-    dirty = False
+    errors = []
+    new_overrides = []
+
     for pre_id, post_id in pre_to_post_map.items():
         if pre_id in overrides_by_pre_id:
             if post_id != overrides_by_pre_id[pre_id].post_id:
-                raise ResourceOverrideError("""
-                    Cannot change override: domain {}, app {}, pre_id {}
-                """.strip().format(domain, app_id, pre_id))
+                errors.append(pre_id)
         else:
-            dirty = True
-            override = ResourceOverride.objects.create(
+            new_overrides.append(ResourceOverride.objects.create(
                 domain=domain,
                 app_id=app_id,
                 root_name=XFormResource.ROOT_NAME,
                 pre_id=pre_id,
                 post_id=post_id,
-            )
+            ))
+
+    if new_overrides and not errors:
+        for override in new_overrides:
             override.save()
-    if dirty:
         get_xform_resource_overrides.clear(domain, app_id)
+
+    if errors:
+        raise ResourceOverrideError("""
+            Cannot change override: domain {}, app {}, pre_ids {}
+        """.strip().format(domain, app_id, ", ".join(errors)))
 
 
 @quickcache(['domain', 'app_id'], timeout=1 * 60 * 60)
