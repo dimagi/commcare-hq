@@ -169,7 +169,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
             for property_weight in self.property_weights:
                 prop = property_weight['case_property']
                 jsonpath, value_source_dict = self._property_map[prop]
-                value_source = as_jsonobject(dict(value_source_dict))
                 weight = property_weight['weight']
 
                 matches = jsonpath.find(patient)
@@ -179,7 +178,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                     match_type = property_weight['match_type']
                     match_params = property_weight['match_params']
                     match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
-                    is_equivalent = match_function(deserialize(value_source, patient_value), case_value)
+                    is_equivalent = match_function(deserialize(value_source_dict, patient_value), case_value)
                     yield weight if is_equivalent else 0
 
         return sum(weights())

@@ -14,7 +14,6 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -203,7 +202,7 @@ def create_patient(requests, info, case_config):
                 and value_source.can_export
             ):
                 identifier = (
-                    get_value(value_source, info)
+                    value_source.get_value(info)
                     or generate_identifier(requests, patient_identifier_type)
                 )
                 if identifier:
@@ -360,10 +359,9 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
     if patient_finder is None:
         return
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
-    create_missing = as_jsonobject(dict(patient_finder.create_missing))
     if len(patients) == 1:
         patient, = patients
-    elif not patients and get_value(create_missing, info):
+    elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
     else:
         # If PatientFinder can't narrow down the number of candidate
@@ -435,9 +433,9 @@ def get_export_data(config, properties, case_trigger_info):
         if (
             property_ in properties
             and value_source.can_export
-            and get_value(value_source, case_trigger_info)
+            and value_source.get_value(case_trigger_info)
         ):
-            export_data[property_] = get_value(value_source, case_trigger_info)
+            export_data[property_] = value_source.get_value(case_trigger_info)
     return export_data
 
 
