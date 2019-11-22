@@ -12,18 +12,24 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.dateChanged = false;
 
     angular.element(document).ready(function () {
-       $scope.updateCssClasses();
+        $scope.adjustUIComponentsIfAlertIsActive();
     });
 
-    var locationParams = $location.search();
-    var newKey;
-    for (var key in locationParams) {
-        newKey = key;
-        if (newKey.startsWith('amp;')) {
-            newKey = newKey.slice(4);
-            $location.search(newKey, locationParams[key]).search(key, null);
+    function fixEscapedURLAmpersands() {
+        // if the URL has replaced any "&" characters with "&amp;" then this will fix the
+        // associated parameter keys.
+        var locationParams = $location.search();
+        var newKey;
+        for (var key in locationParams) {
+            newKey = key;
+            if (newKey.startsWith('amp;')) {
+                newKey = newKey.slice(4);
+                $location.search(newKey, locationParams[key]).search(key, null);
+            }
         }
+
     }
+    fixEscapedURLAmpersands();
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
@@ -37,7 +43,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         });
     };
 
-    $scope.updateCssClasses = function () {
+    $scope.adjustUIComponentsIfAlertIsActive = function () {
         // 'fixes-filters'
         if (isAlertActive) {
             var elementsToUpdate = ['left-menu', 'fixed-title', 'main-container'];
@@ -127,7 +133,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
-                template: "<system-usage></system-usage>",
+                template: "<program-summary></program-summary>",
             }).when("/awc_opened", {
                 redirectTo: "/awc_opened/map",
             })
@@ -283,6 +289,18 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/awc_infrastructure/medicine_kit/:step", {
                 template: "<medicine-kit></medicine-kit>",
+            })
+            .when("/awc_infrastructure/infantometer", {
+                redirectTo: "/awc_infrastructure/infantometer/map",
+            })
+            .when("/awc_infrastructure/infantometer/:step", {
+                template: "<infantometer></infantometer>",
+            })
+            .when("/awc_infrastructure/stadiometer", {
+                redirectTo: "/awc_infrastructure/stadiometer/map",
+            })
+            .when("/awc_infrastructure/stadiometer/:step", {
+                template: "<stadiometer></stadiometer>",
             })
             .when("/awc_infrastructure/infants_weight_scale", {
                 redirectTo: "/awc_infrastructure/infants_weight_scale/map",

@@ -53,7 +53,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.blobs import CODES as BLOB_CODES
@@ -808,13 +807,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
-            def convert_form_unique_id_function(form_unique_id):
-                from corehq.apps.app_manager.models import FormBase
-                form = FormBase.get_form(form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                return form_copy.unique_id
+            def convert_form_unique_id_function(app_id, form_unique_id):
+                app = get_app(self.name, app_id)
+                form = app.get_form(form_unique_id)
+                m_index, f_index = app.get_form_location(form.unique_id)
+                app_copy = new_app_components[app._id]
+                form_copy = new_app_components[app._id].get_module(m_index).get_form(f_index)
+                return app_copy.get_id, form_copy.unique_id
 
             if share_reminders:
                 for rule in AutomaticUpdateRule.by_domain(
@@ -976,22 +975,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         self.clear_caches()
 
     def _pre_delete(self):
-        from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
 
-        dynamic_deletion_operations = []
-        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
-        for result in results:
-            response = result[1]
-            if isinstance(response, Exception):
-                message = "Error occurred during domain pre_delete {}".format(self.name)
-                raise DomainDeleteException(message, response)
-            elif response:
-                assert isinstance(response, list)
-                dynamic_deletion_operations.extend(response)
-
         # delete SQL models first because UCR tables are indexed by configs in couch
-        apply_deletion_operations(self.name, dynamic_deletion_operations)
+        apply_deletion_operations(self.name)
 
         # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):

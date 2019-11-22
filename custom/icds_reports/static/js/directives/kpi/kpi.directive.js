@@ -1,8 +1,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
-function KpiController($location) {
-
+function KpiController($location, haveAccessToFeatures) {
+    this.haveAccessToFeatures = haveAccessToFeatures;
     this.goToStep = function(path) {
         var page_path = "#/" + path;
         if (Object.keys($location.search()).length > 0) {
@@ -26,17 +26,19 @@ function KpiController($location) {
     this.isNumber = window.angular.isNumber;
 }
 
-KpiController.$inject = ['$location'];
+KpiController.$inject = ['$location', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("kpi", function() {
+window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
     return {
         restrict:'E',
         scope: {
             data: '=',
         },
         bindToController: true,
-        templateUrl: url('icds-ng-template', 'kpi.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('kpi.directive');
+        },
         controller: KpiController,
         controllerAs: "$ctrl",
     };
-});
+}]);

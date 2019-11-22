@@ -152,17 +152,6 @@ class Product(Document):
             clear_fixture_cache(domain, prefix)
 
     @classmethod
-    def get_by_code(cls, domain, code):
-        if not code:
-            return None
-        try:
-            sql_product = SQLProduct.objects.get(domain=domain, code__iexact=code)
-        except SQLProduct.DoesNotExist:
-            return None
-        else:
-            return cls.get(sql_product.product_id)
-
-    @classmethod
     def by_domain(cls, domain, wrap=True, include_archived=False):
         queryset = SQLProduct.objects.filter(domain=domain)
         if not include_archived:

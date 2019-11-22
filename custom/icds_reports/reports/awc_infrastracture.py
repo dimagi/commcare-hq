@@ -5,7 +5,8 @@ from django.utils.translation import ugettext as _
 
 from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text, \
     awcs_reported_functional_toilet_help_text, awcs_reported_weighing_scale_infants_help_text, \
-    awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text
+    awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text,\
+    awcs_reported_infantometer_text, awcs_reported_stadiometer_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, get_color_with_green_positive
 
@@ -22,7 +23,9 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             medicine_kits=Sum('infra_medicine_kits'),
             infant_scale=Sum('infra_infant_weighing_scale'),
             adult_scale=Sum('infra_adult_weighing_scale'),
-            sum_last_update=Sum('num_awc_infra_last_update')
+            sum_last_update=Sum('num_awc_infra_last_update'),
+            infantometer=Sum('infantometer'),
+            stadiometer=Sum('stadiometer')
         )
 
         if not show_test:
@@ -157,8 +160,52 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'awc_infrastructure/medicine_kit'
-                }
+                },
+                {
+                    'label': _('AWCs Reported Infantometer'),
+                    'help_text': awcs_reported_infantometer_text(),
+                    'percent': percent_diff(
+                        'infantometer',
+                        this_month_data,
+                        prev_month_data,
+                        'sum_last_update'
+                    ),
+                    'color': get_color_with_green_positive(percent_diff(
+                        'infantometer',
+                        this_month_data,
+                        prev_month_data,
+                        'sum_last_update'
+                    )),
+                    'value': get_value(this_month_data, 'infantometer'),
+                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': 'awc_infrastructure/infantometer'
+                },
             ],
+            [
+                {
+                    'label': _('AWCs Reported Stadiometer'),
+                    'help_text': awcs_reported_stadiometer_text(),
+                    'percent': percent_diff(
+                        'stadiometer',
+                        this_month_data,
+                        prev_month_data,
+                        'sum_last_update'
+                    ),
+                    'color': get_color_with_green_positive(percent_diff(
+                        'stadiometer',
+                        this_month_data,
+                        prev_month_data,
+                        'sum_last_update'
+                    )),
+                    'value': get_value(this_month_data, 'stadiometer'),
+                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': 'awc_infrastructure/stadiometer'
+                }
+            ]
             # [
             #     {
             #         'label': _('AWCs with infantometer'),

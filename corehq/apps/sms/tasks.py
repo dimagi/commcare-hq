@@ -40,7 +40,6 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     DailyOutboundSMSLimitReached,
-    MigrationStatus,
     PhoneLoadBalancingMixin,
     PhoneNumber,
     QueuedSMS,
@@ -49,9 +48,7 @@ from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
-from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from corehq.util.timezones.conversions import ServerTime
@@ -566,10 +563,7 @@ def _sync_user_phone_numbers(couch_user_id):
     with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
 
-        if (
-            couch_user.is_deleted() or
-            (not couch_user.is_active and not USE_SMS_WITH_INACTIVE_CONTACTS.enabled(couch_user.domain))
-        ):
+        if couch_user.is_deleted() or not couch_user.is_active:
             for phone_number in phone_entries.values():
                 phone_number.delete()
             return

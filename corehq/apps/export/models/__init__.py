@@ -1,4 +1,3 @@
-from .deprecated import FormQuestionSchema, QuestionMeta
 from .new import (
     CASE_HISTORY_TABLE,
     MAIN_TABLE,

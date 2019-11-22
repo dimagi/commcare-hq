@@ -323,7 +323,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         label,
         tag,
         namespaces,
-        default_randomness=0,
+        default_randomness=0.0,
         help_link=None,
         description=None,
         always_disabled=None
@@ -584,7 +584,6 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -609,6 +608,18 @@ REPORT_BUILDER = StaticToggle(
     'Activate Report Builder for a project without setting up a subscription.',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+UCR_SUM_WHEN_TEMPLATES = StaticToggle(
+    'ucr_sum_when_templates',
+    'Allow sum when template columns in dynamic UCRs',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+    ),
+    always_enabled={'icds-cas'},
+    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -783,13 +794,6 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-LOCATION_TYPE_STOCK_RATES = StaticToggle(
-    'location_type_stock_rates',
-    "Specify stock rates per location type.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
 )
 
 TRANSFER_DOMAIN = StaticToggle(
@@ -991,14 +995,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CUSTOM_MENU_BAR = StaticToggle(
-    'custom_menu_bar',
-    "Hide Dashboard and Applications from top menu bar "
-    "for non-admin users",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -1028,14 +1024,6 @@ OPENMRS_INTEGRATION = StaticToggle(
     'Enable OpenMRS integration',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-)
-
-MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
-    'multiple_choice_custom_field',
-    'EWS: Allow project to use multiple choice field in custom fields',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
 SUPPORT = StaticToggle(
@@ -1080,20 +1068,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EWS_INVALID_REPORT_RESPONSE = StaticToggle(
-    'ews_invalid_report_response',
-    'EWS: Send response about invalid stock on hand',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
-    'use_sms_with_inactive_contacts',
-    'Use SMS with inactive contacts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
@@ -1133,24 +1107,10 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     always_disabled={'icds-cas'}
 )
 
-EWS_BROADCAST_BY_ROLE = StaticToggle(
-    'ews_broadcast_by_role',
-    'EWS: Filter broadcast recipients by role',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
-EWS_WEB_USER_EXTENSION = StaticToggle(
-    'ews_web_user_extension',
-    'EWS: Enable EWSGhana web user extension',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1329,22 +1289,6 @@ DATA_DICTIONARY = StaticToggle(
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
 
-LOCATION_SAFETY_EXEMPTION = StaticToggle(
-    'location_safety_exemption',
-    'Exemption from location restrictions for EWS and ILS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "ewsghana and ilsgateway do some custom location permissions stuff. "
-        "This feature flag grants them access to the web user pages, but it does "
-        "not actually restrict their access at all. This is implemented strictly "
-        "for backwards compatibility and should not be enabled for any other "
-        "project."
-    ),
-    relevant_environments={'production'},
-    always_enabled={'ews-ghana', 'ils-gateway'},
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1374,13 +1318,6 @@ PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
-)
-
-LOGIN_AS_ALWAYS_OFF = StaticToggle(
-    'always_turn_login_as_off',
-    'Always turn login as off',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1531,13 +1468,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-WAREHOUSE_APP_STATUS = StaticToggle(
-    'warehouse_app_status',
-    "User warehouse backend for the app status report. Currently only for sql domains",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 TRAINING_MODULE = StaticToggle(
@@ -1805,6 +1735,14 @@ GROUP_API_USE_COUCH_BACKEND = StaticToggle(
 )
 
 
+USER_API_USE_ES_BACKEND = StaticToggle(
+    'user_api_use_es_backend',
+    'Use new ES backend for User API.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1833,4 +1771,41 @@ DAILY_INDICATORS = StaticToggle(
     'Enable daily indicators api',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+mwcd_indicators = StaticToggle(
+    'mwcd_indicators',
+    'Enable MWCD indicators API',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_submissions',
+    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
+)
+
+RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
+    'rate_limit_restores',
+    'Rate limit restores with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
 )

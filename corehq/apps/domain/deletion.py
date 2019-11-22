@@ -247,10 +247,8 @@ DOMAIN_DELETE_OPERATIONS = [
 ]
 
 
-def apply_deletion_operations(domain_name, dynamic_operations):
-    all_ops = dynamic_operations or []
-    all_ops.extend(DOMAIN_DELETE_OPERATIONS)
-    raw_ops, model_ops = _split_ops_by_type(all_ops)
+def apply_deletion_operations(domain_name):
+    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
 
     with connection.cursor() as cursor:
         for op in raw_ops:
