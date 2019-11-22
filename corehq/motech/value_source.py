@@ -312,9 +312,13 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
-def as_jsonobject(data):
+def as_jsonobject(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
-        if Schema(subclass.get_schema_dict()).is_valid(data):
+        try:
+            data = Schema(subclass.get_schema_dict()).validate(data)
+        except SchemaError:
+            pass
+        else:
             return subclass.wrap(data)
     else:
         raise TypeError(f"Unable to determine class for {data!r}")
