@@ -134,6 +134,26 @@ class ReachedReferralHealthProblemSpec(SumWhenTemplateSpec):
     expression = "referral_reached_facility = ? AND referral_health_problem ~ ?"
 
 
+class ReachedReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem_2_problems")
+    expression = "referral_reached_facility = ? AND (referral_health_problem ~ ? OR referral_health_problem ~ ?)"
+
+
+class ReachedReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem_3_problems")
+    expression = "referral_reached_facility = ? AND (referral_health_problem ~ ? OR referral_health_problem ~ ? OR referral_health_problem ~ ?)"
+
+
 class ReferralHealthProblemSpec(SumWhenTemplateSpec):
     type = TypeProperty("referral_health_problem")
     expression = "referral_health_problem ~ ?"
+
+
+class ReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("referral_health_problem_2_problems")
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ?"
+
+
+class ReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("referral_health_problem_3_problems")
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR OR referral_health_problem ~ ?"

@@ -43,7 +43,11 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     OpenPregnantMigrantSpec,
     OpenPregnantResidentSpec,
     ReachedReferralHealthProblemSpec,
+    ReachedReferralHealthProblem2ProblemsSpec,
+    ReachedReferralHealthProblem3ProblemsSpec,
     ReferralHealthProblemSpec,
+    ReferralHealthProblem2ProblemsSpec,
+    ReferralHealthProblem3ProblemsSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
@@ -140,7 +144,11 @@ class SumWhenTemplateFactory(object):
         'open_pregnant_migrant': OpenPregnantMigrantSpec,
         'open_pregnant_resident': OpenPregnantResidentSpec,
         'reached_referral_health_problem': ReachedReferralHealthProblemSpec,
+        'reached_referral_health_problem_2_problems': ReachedReferralHealthProblem2ProblemsSpec,
+        'reached_referral_health_problem_3_problems': ReachedReferralHealthProblem3ProblemsSpec,
         'referral_health_problem': ReferralHealthProblemSpec,
+        'referral_health_problem_2_problems': ReferralHealthProblem2ProblemsSpec,
+        'referral_health_problem_3_problems': ReferralHealthProblem3ProblemsSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
     }
