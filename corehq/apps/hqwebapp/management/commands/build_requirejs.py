@@ -41,7 +41,8 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
-        no_optimize = options['no_optimize']
+        # no_optimize = options['no_optimize']
+        no_optimize = True
 
         if local:
             _confirm_or_exit()
