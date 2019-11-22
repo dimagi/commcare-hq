@@ -4050,7 +4050,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return GlobalAppConfig.for_app(self)
+        return SQLGlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -5717,76 +5717,28 @@ class SQLGlobalAppConfig(models.Model):
     choices = [(c, c) for c in ("on", "off", "forced")]
 
     domain = models.CharField(max_length=255, null=False)
+
+    # this should be the unique id of the app (not of a versioned copy)
     app_id = models.CharField(max_length=255, null=False)
+
+    # these let mobile prompt updates for application and APK
     app_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
     apk_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
+
+    # corresponding versions to which user should be prompted to update to
     apk_version = models.CharField(max_length=32, null=True)
     app_version = models.IntegerField(max_length=32, null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
 
-
-class GlobalAppConfig(Document):
-    # this should be the unique id of the app (not of a versioned copy)
-    app_id = StringProperty()
-    domain = StringProperty()
-
-    # these let mobile prompt updates for application and APK
-    app_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-    apk_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-
-    # corresponding versions to which user should be prompted to update to
-    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
-    app_version = IntegerProperty(default=LATEST_APP_VALUE)
-
     @classmethod
     def for_app(cls, app):
-        """
-        Returns the actual config object for the app or an unsaved
-            default object
-        """
-        app_id = app.master_id
-
-        res = cls.get_db().view(
-            "global_app_config_by_app_id/view",
-            key=[app_id, app.domain],
-            reduce=False,
-            include_docs=True,
-        ).one()
-
-        if res:
-            return cls(res['doc'])
-        else:
-            # return default config
-            return cls(app_id=app_id, domain=app.domain)
-
-    def save(self, *args, **kwargs):
-        LatestAppInfo(self.app_id, self.domain).clear_caches()
-
-        # Save to SQL
-        model, created = SQLGlobalAppConfig.objects.get_or_create(
-            domain=self.domain,
-            app_id=self.app_id,
-            defaults={
-                'apk_version': LATEST_APK_VALUE,
-                'app_version': LATEST_APP_VALUE,
-            }
-        )
-        model.app_prompt = self.app_prompt
-        model.apk_prompt = self.apk_prompt
-        model.app_version = self.app_version
-        model.apk_version = self.apk_version
-        model.save()
-
-        # Save to couch
-        super(GlobalAppConfig, self).save(*args, **kwargs)
+        model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
+            'apk_version': LATEST_APK_VALUE,
+            'app_version': LATEST_APP_VALUE,
+        })
+        return model
 
 
 class AppReleaseByLocation(models.Model):
