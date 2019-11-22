@@ -323,7 +323,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         label,
         tag,
         namespaces,
-        default_randomness=0,
+        default_randomness=0.0,
         help_link=None,
         description=None,
         always_disabled=None
@@ -1470,13 +1470,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-WAREHOUSE_APP_STATUS = StaticToggle(
-    'warehouse_app_status',
-    "User warehouse backend for the app status report. Currently only for sql domains",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 TRAINING_MODULE = StaticToggle(
     'training-module',
     'Training Modules',
@@ -1787,10 +1780,39 @@ mwcd_indicators = StaticToggle(
     [NAMESPACE_USER],
 )
 
-MOBILE_UCR_TOTAL_ROW_ITERATIVE = PredictablyRandomToggle(
+MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
     'mobile_ucr_total_row_iterative_calculation',
     'Calculate total rows for mobile UCR during iteration instead of using a DB query',
     TAG_CUSTOM,
     [NAMESPACE_OTHER],
-    0.0
+)
+
+RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_submissions',
+    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
+)
+
+RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
+    'rate_limit_restores',
+    'Rate limit restores with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
 )

@@ -1,5 +1,4 @@
 import json
-import re
 from collections import namedtuple
 from datetime import date
 
@@ -396,26 +395,6 @@ class SumWhenTemplateColumn(SumWhenColumn):
             template = SumWhenTemplateFactory.make_template(spec)
             whens.append([template.expression] + template.binds + [template.then])
         return whens
-
-
-class SumWhenTemplateSpec(JsonObject):
-    type = StringProperty(required=True)
-    expression = StringProperty(required=True)
-    binds = ListProperty()
-    then = IntegerProperty()
-
-    def bind_count(self):
-        return len(re.sub(r'[^?]', '', self.expression))
-
-
-class YearRangeTemplateSpec(SumWhenTemplateSpec):
-    type = TypeProperty('year_range')
-    expression = "year >= ? and year < ?"
-
-
-class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
-    type = TypeProperty("under_x_months")
-    expression = "age_at_registration < ?"
 
 
 class PercentageColumn(ReportColumn):

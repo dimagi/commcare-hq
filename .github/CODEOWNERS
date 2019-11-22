@@ -59,7 +59,9 @@
 /corehq/apps/users/templates/ @esoergel @orangejenny
 
 /custom/aaa/ @emord
-/custom/icds_reports/ @calellowitz @czue @Rohit25negi
+/custom/icds_reports/ @calellowitz @Rohit25negi
+/custom/icds_reports/templates/ @czue @calellowitz @Rohit25negi
+/custom/icds_reports/static/ @czue @calellowitz @Rohit25negi
 
 /docs/js-guide/ @orangejenny @millerdev
 

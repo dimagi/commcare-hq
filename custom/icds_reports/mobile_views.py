@@ -1,3 +1,4 @@
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
@@ -9,6 +10,8 @@ from custom.icds_reports.views import DASHBOARD_CHECKS
 
 
 def login(request, domain):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('cas_mobile_dashboard', args=[domain]))
     return hqwebapp_views.domain_login(
         request, domain,
         custom_template_name='icds_reports/mobile_login.html',
