@@ -313,10 +313,10 @@ def process_reporting_metadata_staging():
     from corehq.pillows.synclog import mark_last_synclog
     from pillowtop.processors.form import mark_latest_submission
 
-    records = (
-        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-    )[:100]
     with transaction.atomic():
+        records = (
+            UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+        )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
             if not user or user.is_deleted():
