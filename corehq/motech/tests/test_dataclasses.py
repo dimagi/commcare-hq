@@ -110,9 +110,9 @@ class ConstantValue(ValueSource):
 
 
 def asdataclass(data):
-    for dataclass in recurse_subclasses(ValueSource):
-        if Schema(dataclass.get_schema_dict()).is_valid(data):
-            return dataclass(**data)
+    for dataclass_ in recurse_subclasses(ValueSource):
+        if Schema(dataclass_.get_schema_dict()).is_valid(data):
+            return dataclass_(**data)
     else:
         raise TypeError(f"Unable to determine dataclass for {data!r}")
 
