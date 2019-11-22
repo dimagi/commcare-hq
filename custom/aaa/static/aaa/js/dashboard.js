@@ -1,4 +1,4 @@
-hqDefine("aaa/js/dashboard", [
+define("aaa/js/dashboard", [
     'jquery',
     'knockout',
     'underscore',
