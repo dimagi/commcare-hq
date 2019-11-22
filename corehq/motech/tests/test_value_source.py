@@ -111,7 +111,9 @@ class CaseTriggerInfoTests(SimpleTestCase):
 class CasePropertyValidationTests(SimpleTestCase):
 
     def test_valid_case_property(self):
-        as_jsonobject({"case_property": "foo"})
+        case_property = as_jsonobject({"case_property": "foo"})
+        self.assertIsInstance(case_property, CaseProperty)
+        self.assertEqual(case_property.case_property, "foo")
 
     def test_blank_case_property(self):
         with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
@@ -124,6 +126,16 @@ class CasePropertyValidationTests(SimpleTestCase):
     def test_null_case_property(self):
         with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': None}"):
             case_property = as_jsonobject({"case_property": None})
+
+    def test_doc_type(self):
+        case_property = as_jsonobject({
+            "doc_type": "CaseProperty",
+            "case_property": "foo",
+        })
+        self.assertIsInstance(case_property, CaseProperty)
+        self.assertEqual(case_property.case_property, "foo")
+        with self.assertRaises(AttributeError):
+            case_property.doc_type
 
 
 class ConstantValueTests(SimpleTestCase):

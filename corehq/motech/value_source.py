@@ -6,8 +6,9 @@ from couchdbkit import BadValueError
 from jsonobject.api import JsonObject
 from jsonobject.base_properties import DefaultProperty
 from jsonpath_rw import parse as parse_jsonpath
+from schema import Hook
 from schema import Optional as SchemaOptional
-from schema import Or, Schema
+from schema import Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
 from dimagi.ext.jsonobject import DictProperty, StringProperty
@@ -58,6 +59,16 @@ def recurse_subclasses(cls):
         cls.__subclasses__() +
         [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
     )
+
+
+class Ignore(Hook):
+    def __init__(self, *args, **kwargs):
+        kwargs["handler"] = self._handler
+        super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def _handler(nkey, data, error):
+        data.pop(nkey, None)
 
 
 class ValueSource(JsonObject):
@@ -113,6 +124,7 @@ class ValueSource(JsonObject):
             SchemaOptional("direction"): Or(*DIRECTIONS),
             SchemaOptional("value_map"): dict,
             SchemaOptional("jsonpath"): str,
+            Ignore("doc_type"): str,
         }
 
     @property
