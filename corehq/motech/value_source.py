@@ -209,7 +209,7 @@ class CaseProperty(ValueSource):
 
     @classmethod
     def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict().copy()
+        schema = super().get_schema_dict()
         schema.update({"case_property": str})
         return schema
 
@@ -227,7 +227,7 @@ class FormQuestion(ValueSource):
 
     @classmethod
     def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict().copy()
+        schema = super().get_schema_dict()
         schema.update({"form_question": str})
         return schema
 
@@ -284,7 +284,7 @@ class ConstantValue(ValueSource):
 
     @classmethod
     def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict().copy()
+        schema = super().get_schema_dict()
         schema.update({
             "value": object,
             SchemaOptional("value_data_type"): str,
@@ -362,7 +362,7 @@ class CaseOwnerAncestorLocationField(ValueSource):
 
     @classmethod
     def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict().copy()
+        schema = super().get_schema_dict()
         schema.update({"case_owner_ancestor_location_field": str})
         return schema
 
@@ -390,7 +390,7 @@ class FormUserAncestorLocationField(ValueSource):
 
     @classmethod
     def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict().copy()
+        schema = super().get_schema_dict()
         schema.update({"form_user_ancestor_location_field": str})
         return schema
 
