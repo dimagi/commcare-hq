@@ -6,7 +6,6 @@ from jsonobject.api import JsonObject
 from jsonobject.base_properties import DefaultProperty
 from jsonobject.containers import JsonDict
 from jsonpath_rw import parse as parse_jsonpath
-from schema import Hook
 from schema import Optional as SchemaOptional
 from schema import Or, Schema, SchemaError
 
@@ -61,16 +60,6 @@ def recurse_subclasses(cls):
     )
 
 
-class Ignore(Hook):
-    def __init__(self, *args, **kwargs):
-        kwargs["handler"] = self._handler
-        super().__init__(*args, **kwargs)
-
-    @staticmethod
-    def _handler(nkey, data, error):
-        data.pop(nkey, None)
-
-
 class ValueSource(JsonObject):
     """
     Subclasses model a reference to a value, like a case property or a
@@ -116,15 +105,20 @@ class ValueSource(JsonObject):
         )
 
     @classmethod
+    def wrap(cls, data):
+        data.pop("doc_type", None)
+        return super().wrap(data)
+
+    @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
         args = ({
+            SchemaOptional("doc_type"): str,
             SchemaOptional("external_data_type"): str,
             SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
             SchemaOptional("direction"): Or(*DIRECTIONS),
             SchemaOptional("value_map"): dict,
             SchemaOptional("jsonpath"): str,
-            Ignore("doc_type"): str,
         },)
         return args, {}
 
@@ -335,7 +329,18 @@ class CaseOwnerAncestorLocationField(ValueSource):
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"case_owner_ancestor_location_field": str})
+        schema.pop(SchemaOptional("doc_type"))
+        old_style = schema.copy()
+        old_style.update({
+            "doc_type": "CaseOwnerAncestorLocationField",
+            "location_field": str,
+        })
+        new_style = schema.copy()
+        new_style.update({
+            SchemaOptional("doc_type"): "CaseOwnerAncestorLocationField",
+            "case_owner_ancestor_location_field": str,
+        })
+        schema = Or(old_style, new_style)
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
@@ -363,7 +368,18 @@ class FormUserAncestorLocationField(ValueSource):
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"form_user_ancestor_location_field": str})
+        schema.pop(SchemaOptional("doc_type"))
+        old_style = schema.copy()
+        old_style.update({
+            "doc_type": "FormUserAncestorLocationField",
+            "location_field": str,
+        })
+        new_style = schema.copy()
+        new_style.update({
+            SchemaOptional("doc_type"): "FormUserAncestorLocationField",
+            "form_user_ancestor_location_field": str,
+        })
+        schema = Or(old_style, new_style)
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
@@ -383,11 +399,16 @@ def as_jsonobject(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
-            data = Schema(*args, **kwargs).validate(data)
+            # .. WARNING::
+            #    ``validate()`` can modify ``data``. This can break
+            #    validation for other subclasses! If it is ever
+            #    necessary to modify ``data``, it should be deep-copied
+            #    (ouch) to preserve its state for the next iteration).
+            valid_data = Schema(*args, **kwargs).validate(data)
         except SchemaError:
             pass
         else:
-            return subclass.wrap(data)
+            return subclass.wrap(valid_data)
     else:
         raise TypeError(f"Unable to determine class for {data!r}")
 
