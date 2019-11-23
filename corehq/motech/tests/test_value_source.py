@@ -2,6 +2,7 @@ import doctest
 import warnings
 
 from django.test import SimpleTestCase
+
 from jsonobject.exceptions import BadValueError
 
 import corehq.motech.value_source
@@ -14,10 +15,12 @@ from corehq.motech.const import (
     DIRECTION_IMPORT,
 )
 from corehq.motech.value_source import (
+    CaseOwnerAncestorLocationField,
     CaseProperty,
     CasePropertyConstantValue,
     CaseTriggerInfo,
     ConstantValue,
+    FormUserAncestorLocationField,
     ValueSource,
     as_jsonobject,
     get_form_question_values,
@@ -262,6 +265,62 @@ class AsJsonObjectTests(SimpleTestCase):
         self.assertIsInstance(json_object, CasePropertyConstantValue)
 
 
+class FormUserAncestorLocationFieldTests(SimpleTestCase):
+
+    def test_with_form_user_ancestor_location_field(self):
+        json_object = as_jsonobject({"form_user_ancestor_location_field": "dhis_id"})
+        self.assertIsInstance(json_object, FormUserAncestorLocationField)
+        self.assertEqual(json_object.form_user_ancestor_location_field, "dhis_id")
+
+    def test_with_form_user_ancestor_location_field_doc_type(self):
+        json_object = as_jsonobject({
+            "doc_type": "FormUserAncestorLocationField",
+            "form_user_ancestor_location_field": "dhis_id",
+        })
+        self.assertIsInstance(json_object, FormUserAncestorLocationField)
+        self.assertEqual(json_object.form_user_ancestor_location_field, "dhis_id")
+
+    def test_with_location_field_doc_type(self):
+        json_object = as_jsonobject({
+            "doc_type": "FormUserAncestorLocationField",
+            "location_field": "dhis_id",
+        })
+        self.assertIsInstance(json_object, FormUserAncestorLocationField)
+        self.assertEqual(json_object.form_user_ancestor_location_field, "dhis_id")
+
+    def test_with_location(self):
+        with self.assertRaises(TypeError):
+            as_jsonobject({"location_field": "dhis_id"})
+
+
+class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
+
+    def test_with_form_user_ancestor_location_field(self):
+        json_object = as_jsonobject({"case_owner_ancestor_location_field": "dhis_id"})
+        self.assertIsInstance(json_object, CaseOwnerAncestorLocationField)
+        self.assertEqual(json_object.case_owner_ancestor_location_field, "dhis_id")
+
+    def test_with_form_user_ancestor_location_field_doc_type(self):
+        json_object = as_jsonobject({
+            "doc_type": "CaseOwnerAncestorLocationField",
+            "case_owner_ancestor_location_field": "dhis_id",
+        })
+        self.assertIsInstance(json_object, CaseOwnerAncestorLocationField)
+        self.assertEqual(json_object.case_owner_ancestor_location_field, "dhis_id")
+
+    def test_with_location_field_doc_type(self):
+        json_object = as_jsonobject({
+            "doc_type": "CaseOwnerAncestorLocationField",
+            "location_field": "dhis_id",
+        })
+        self.assertIsInstance(json_object, CaseOwnerAncestorLocationField)
+        self.assertEqual(json_object.case_owner_ancestor_location_field, "dhis_id")
+
+    def test_with_location(self):
+        with self.assertRaises(TypeError):
+            as_jsonobject({"location_field": "dhis_id"})
+
+
 def test_doctests():
-    results = doctest.testmod(corehq.motech.value_source)
+    results = doctest.testmod(corehq.motech.value_source, optionflags=doctest.ELLIPSIS)
     assert results.failed == 0
