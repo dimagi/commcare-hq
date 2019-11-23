@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Tuple, Dict
 from warnings import warn
 
 import attr
@@ -117,16 +117,17 @@ class ValueSource(JsonObject):
         )
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
-        return {
+        args = ({
             SchemaOptional("external_data_type"): str,
             SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
             SchemaOptional("direction"): Or(*DIRECTIONS),
             SchemaOptional("value_map"): dict,
             SchemaOptional("jsonpath"): str,
             Ignore("doc_type"): str,
-        }
+        },)
+        return args, {}
 
     @property
     def can_import(self):
@@ -208,10 +209,10 @@ class CaseProperty(ValueSource):
     case_property = StringProperty(required=True, validators=not_blank)
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict()
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"case_property": str})
-        return schema
+        return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         if self.case_property in case_trigger_info.updates:
@@ -226,10 +227,10 @@ class FormQuestion(ValueSource):
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict()
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"form_question": str})
-        return schema
+        return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         return case_trigger_info.form_question_values.get(
@@ -283,13 +284,13 @@ class ConstantValue(ValueSource):
         )
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict()
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({
             "value": object,
             SchemaOptional("value_data_type"): str,
         })
-        return schema
+        return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         serializer = (
@@ -361,10 +362,10 @@ class CaseOwnerAncestorLocationField(ValueSource):
         return super().wrap(data)
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict()
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"case_owner_ancestor_location_field": str})
-        return schema
+        return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         location = get_case_location(case_trigger_info)
@@ -389,10 +390,10 @@ class FormUserAncestorLocationField(ValueSource):
         return super().wrap(data)
 
     @classmethod
-    def get_schema_dict(cls) -> dict:
-        schema = super().get_schema_dict()
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"form_user_ancestor_location_field": str})
-        return schema
+        return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         user_id = case_trigger_info.form_question_values.get('/metadata/userID')
@@ -424,7 +425,8 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
 def as_jsonobject(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
         try:
-            data = Schema(subclass.get_schema_dict()).validate(data)
+            args, kwargs = subclass.get_schema_params()
+            data = Schema(*args, **kwargs).validate(data)
         except SchemaError:
             pass
         else:
