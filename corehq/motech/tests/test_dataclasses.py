@@ -49,11 +49,11 @@ class ValueSource:
 
     @classmethod
     def get_schema_dict(cls) -> dict:
+        data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
         return {
             SchemaOptional("external_data_type"): str,
-            SchemaOptional("commcare_data_type"): Or(
-                COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)),
-            SchemaOptional("direction"): Or(DIRECTIONS),
+            SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
+            SchemaOptional("direction"): Or(*DIRECTIONS),
             SchemaOptional("value_map"): dict,
             SchemaOptional("jsonpath"): str,
         }
