@@ -9,7 +9,7 @@ in [CommCare HQ](http://github.com/dimagi/commcare-hq).
 ![](http://i.imgur.com/PvrL8Rr.jpg)
 
 Image courtesy of the [ReMIND
-project](https://www.commcarehq.org/exchange/325775003aa58cfcefbc75cfdf132e4d/info/).
+project](https://www.crs.org/our-work-overseas/research-publications/remind-project).
 
 Vocabulary
 ----------
