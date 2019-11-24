@@ -135,7 +135,6 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     module_offers_search,
     save_xform,
-    update_form_unique_ids,
     update_report_module_ids,
 )
 from corehq.apps.app_manager.xform import XForm
@@ -5250,7 +5249,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         that should be shown in the
         application source, such as ids, etc.
         """
-        source = update_form_unique_ids(source, ids_map={})
         return update_report_module_ids(source)
 
     def copy_form(self, from_module, form, to_module, rename=False):
