@@ -430,8 +430,8 @@ def update_form_unique_ids(app_source, ids_map, update_all=True):
     new_ids_by_old = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
+            old_id = form['unique_id']
             if update_all or old_id in ids_map:
-                old_id = form['unique_id']
                 new_id = ids_map.get(old_id, uuid.uuid4().hex)
                 new_ids_by_old[old_id] = new_id
                 change_form_unique_id(form, old_id, new_id)
