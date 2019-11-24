@@ -40,7 +40,7 @@ hqDefine('app_manager/js/source_files', [
             multimediaSizesDiff.load();
             $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
             if ($('#build-profile-select-for-multimedia').length) {
-                $('#build-profile-select-for-multimedia').on('change', function() {
+                $('#build-profile-select-for-multimedia').on('change', function () {
                     var buildProfileId = $(this).val();
                     multimediaSizes1.url = initialPageData.reverse("get_multimedia_sizes", firstAppID,
                         buildProfileId);

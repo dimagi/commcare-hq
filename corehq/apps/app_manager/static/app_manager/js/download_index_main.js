@@ -22,7 +22,7 @@ hqDefine('app_manager/js/download_index_main',[
             multimediaSizes.load();
             $("#multimedia-sizes-container").koApplyBindings(multimediaSizes);
             if ($('#build-profile-select-for-multimedia').length) {
-                $('#build-profile-select-for-multimedia').on('change', function() {
+                $('#build-profile-select-for-multimedia').on('change', function () {
                     var buildProfileId = $(this).val();
                     multimediaSizes.url = initialPageData.reverse("get_multimedia_sizes", appID, buildProfileId);
                     multimediaSizes.load();
