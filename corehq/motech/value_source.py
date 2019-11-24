@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 import attr
 from couchdbkit import BadValueError
@@ -57,7 +57,7 @@ def recurse_subclasses(cls):
     )
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class ValueSource:
     """
     Subclasses model a reference to a value, like a case property or a
@@ -67,11 +67,11 @@ class ValueSource:
     and serialize it, if necessary, for the external system that it is
     being sent to.
     """
-    external_data_type = attr.ib(default=DATA_TYPE_UNKNOWN)
-    commcare_data_type = attr.ib(default=DATA_TYPE_UNKNOWN)
+    external_data_type: Optional[str] = DATA_TYPE_UNKNOWN
+    commcare_data_type: Optional[str] = DATA_TYPE_UNKNOWN
     # Whether the ValueSource is import-only ("in"), export-only ("out"), or
     # for both import and export (the default, None)
-    direction = attr.ib(default=DIRECTION_BOTH)
+    direction: Optional[str] = DIRECTION_BOTH
 
     # Map CommCare values to remote system values or IDs. e.g.::
     #
@@ -82,10 +82,10 @@ class ValueSource:
     #         "blue": "000000ff",
     #       }
     #     }
-    value_map = attr.ib(factory=dict)
+    value_map: Optional[dict] = None
 
     # Used for importing a value from a JSON document.
-    jsonpath = attr.ib(default=None)
+    jsonpath: Optional[str] = None
 
     @classmethod
     def wrap(cls, data: dict):
@@ -173,7 +173,7 @@ class ValueSource:
         return serializer(external_value) if serializer else external_value
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class CaseProperty(ValueSource):
     """
     A reference to a case property
@@ -186,7 +186,7 @@ class CaseProperty(ValueSource):
     #       }
     #     }
     #
-    case_property = attr.ib()
+    case_property: str
 
     class IsNotBlank:
         def validate(self, data):
@@ -206,12 +206,12 @@ class CaseProperty(ValueSource):
         return case_trigger_info.extra_fields.get(self.case_property)
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class FormQuestion(ValueSource):
     """
     A reference to a form question
     """
-    form_question = attr.ib()
+    form_question: str
 
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
@@ -225,7 +225,7 @@ class FormQuestion(ValueSource):
         )
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class ConstantValue(ValueSource):
     """
     ConstantValue provides a ValueSource for constant values.
@@ -261,8 +261,8 @@ class ConstantValue(ValueSource):
        outside the class.
 
     """
-    value = attr.ib()
-    value_data_type = attr.ib(default=COMMCARE_DATA_TYPE_TEXT)
+    value: str
+    value_data_type: str = COMMCARE_DATA_TYPE_TEXT
 
     def __eq__(self, other):
         return (
@@ -308,14 +308,14 @@ class ConstantValue(ValueSource):
         return super().deserialize(external_value)
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class CaseOwnerAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location may be the
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
     """
-    case_owner_ancestor_location_field = attr.ib()
+    case_owner_ancestor_location_field: str
 
     @classmethod
     def wrap(cls, data):
@@ -348,14 +348,14 @@ class CaseOwnerAncestorLocationField(ValueSource):
             )
 
 
-@attr.s(kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class FormUserAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location is the form
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
-    form_user_ancestor_location_field = attr.ib()
+    form_user_ancestor_location_field: str
 
     @classmethod
     def wrap(cls, data):
