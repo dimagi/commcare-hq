@@ -1,11 +1,13 @@
+from dataclasses import asdict, dataclass
 from functools import singledispatch
-from typing import Optional, Any
+from typing import Any, Optional
 
-from dataclasses import dataclass, asdict
-
-from dimagi.ext.couchdbkit import Document, DictProperty
 from django.test import SimpleTestCase
-from schema import Schema, Optional as SchemaOptional, Or
+
+from schema import Optional as SchemaOptional
+from schema import Or, Schema
+
+from dimagi.ext.couchdbkit import DictProperty, Document
 
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_TEXT,
@@ -15,10 +17,7 @@ from corehq.motech.const import (
     DIRECTIONS,
 )
 from corehq.motech.serializers import serializers
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    recurse_subclasses,
-)
+from corehq.motech.value_source import CaseTriggerInfo, recurse_subclasses
 
 DOMAIN = "test-domain"
 
