@@ -1,8 +1,8 @@
 {% load i18n %}
 <div class="row">
   <div class="col-sm-3">
-    {% trans 'Build Profile' %}:
-    <select id="build-profile-select-for-multimedia" class="form-control">
+    <b>{% trans 'Build Profile' %}:</b>
+    <select id="build-profile-select-for-multimedia">
       <option value="default">{% trans "Default" %}</option>
       {% for build_profile_id, build_profile_name in build_profiles.items %}
         <option value="{{build_profile_id}}">
