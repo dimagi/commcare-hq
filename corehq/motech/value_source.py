@@ -188,15 +188,16 @@ class CaseProperty(ValueSource):
     #
     case_property = attr.ib()
 
-    @case_property.validator
-    def is_not_blank(self, attribute, value):
-        if value is None or not str(value):
-            raise ValueError(f"Attribute {attribute.name!r} cannot be None or blank.")
+    class IsNotBlank:
+        def validate(self, data):
+            if isinstance(data, str) and len(data):
+                return data
+            raise SchemaError(f"Value cannot be blank.")
 
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"case_property": str})
+        schema.update({"case_property": cls.IsNotBlank()})
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:

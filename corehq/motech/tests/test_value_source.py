@@ -3,8 +3,6 @@ import warnings
 
 from django.test import SimpleTestCase
 
-from jsonobject.exceptions import BadValueError
-
 import corehq.motech.value_source
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -111,7 +109,7 @@ class CasePropertyValidationTests(SimpleTestCase):
         self.assertEqual(case_property.case_property, "foo")
 
     def test_blank_case_property(self):
-        with self.assertRaisesRegex(ValueError, "Attribute 'case_property' cannot be None or blank."):
+        with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': ''}"):
             as_value_source({"case_property": ""})
 
     def test_missing_case_property(self):
