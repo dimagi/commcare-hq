@@ -1,5 +1,4 @@
 from typing import Any, Dict, Tuple
-from warnings import warn
 
 import attr
 from couchdbkit import BadValueError
@@ -314,33 +313,6 @@ class ConstantValue(ValueSource):
         return super().deserialize(external_value)
 
 
-class CasePropertyMap(CaseProperty):
-    """
-    Maps case property values to OpenMRS values or concept UUIDs
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
-
-
-class FormQuestionMap(FormQuestion):
-    """
-    Maps form question values to OpenMRS values or concept UUIDs
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use FormQuestion", DeprecationWarning)
-
-
-class ConstantString(ConstantValue):
-    """
-    A constant string value.
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use ConstantValue", DeprecationWarning)
-
-
 class CaseOwnerAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location may be the
@@ -418,20 +390,6 @@ class FormUserAncestorLocationField(ValueSource):
             return get_ancestor_location_metadata_value(
                 location, self.form_user_ancestor_location_field
             )
-
-
-class JsonPathCaseProperty(CaseProperty):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
-
-
-class JsonPathCasePropertyMap(CaseProperty):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn("Use CaseProperty", DeprecationWarning)
 
 
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
