@@ -12,13 +12,14 @@ hqDefine('app_manager/js/multimedia_size_util',[
     };
     var multimediaSizesView = function (url) {
         var self = {};
+        self.url = url;
         self.sizes = ko.observableArray();
         self.loadState = ko.observable(null);
         self.showSpinner = ko.observable(false);
         self.load = function () {
             self.loadState('loading');
             $.ajax({
-                url: url,
+                url: self.url,
                 success: function (content) {
                     self.sizes(_.map(content, function (mmsize, mmType) {
                         return multimediaSize(mmType, mmsize);
