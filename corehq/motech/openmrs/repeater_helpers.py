@@ -32,10 +32,11 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    as_value_source,
     get_ancestor_location_metadata_value,
     get_case_location,
     get_value,
-    as_jsonobject)
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -196,7 +197,7 @@ def create_patient(requests, info, case_config):
     def get_identifiers():
         identifiers = []
         for patient_identifier_type, value_source_dict in case_config.patient_identifiers.items():
-            value_source = as_jsonobject(dict(value_source_dict))
+            value_source = as_value_source(dict(value_source_dict))
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
                 and value_source.can_export
@@ -429,7 +430,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
 def get_export_data(config, properties, case_trigger_info):
     export_data = {}
     for property_, value_source_dict in config.items():
-        value_source = as_jsonobject(dict(value_source_dict))
+        value_source = as_value_source(dict(value_source_dict))
         if (
             property_ in properties
             and value_source.can_export

@@ -25,7 +25,7 @@ from corehq.motech.openmrs.finders_utils import (
     le_levenshtein_percent,
 )
 from corehq.motech.value_source import (
-    as_jsonobject,
+    as_value_source,
     deserialize,
     recurse_subclasses,
 )

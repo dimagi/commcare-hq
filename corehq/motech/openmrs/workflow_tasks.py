@@ -17,7 +17,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
-from corehq.motech.value_source import as_jsonobject
+from corehq.motech.value_source import as_value_source
 
 
 class SyncPersonAttributesTask(WorkflowTask):
@@ -39,7 +39,7 @@ class SyncPersonAttributesTask(WorkflowTask):
             for attribute in self.attributes
         }
         for person_attribute_type, value_source_dict in self.openmrs_config.case_config.person_attributes.items():
-            value_source = as_jsonobject(value_source_dict)
+            value_source = as_value_source(value_source_dict)
             if not value_source.can_export:
                 continue
             value = value_source.get_value(self.info)
@@ -85,7 +85,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, dict_ in self.openmrs_config.case_config.patient_identifiers.items():
-            value_source = as_jsonobject(dict_)
+            value_source = as_value_source(dict_)
             if not value_source.can_export:
                 continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
@@ -137,7 +137,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime for the Visit
         """
         if form_config.openmrs_start_datetime:
-            value_source = as_jsonobject(dict(form_config.openmrs_start_datetime))
+            value_source = as_value_source(dict(form_config.openmrs_start_datetime))
             cc_start_datetime_str = value_source.get_commcare_value(self.info)
             if cc_start_datetime_str is None:
                 raise ConfigurationError(
@@ -168,7 +168,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
     def _get_values_for_concept(self, form_config):
         values_for_concept = {}
         for obs in form_config.openmrs_observations:
-            value_source = as_jsonobject(dict(obs.value))
+            value_source = as_value_source(dict(obs.value))
             if value_source.can_export and not is_blank(value_source.get_value(self.info)):
                 values_for_concept[obs.concept] = [value_source.get_value(self.info)]
         return values_for_concept

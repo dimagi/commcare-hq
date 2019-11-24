@@ -1,16 +1,12 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 import attr
-from couchdbkit import BadValueError
-from jsonobject.api import JsonObject
-from jsonobject.base_properties import DefaultProperty
 from jsonobject.containers import JsonDict
 from jsonpath_rw import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
 from schema import Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.jsonobject import DictProperty, StringProperty
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
@@ -18,7 +14,7 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
-    COMMCARE_DATA_TYPES,
+    COMMCARE_DATA_TYPES_AND_UNKNOWN,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
     DIRECTION_EXPORT,
@@ -48,11 +44,6 @@ class CaseTriggerInfo:
         return f"<CaseTriggerInfo {self.case_id}>"
 
 
-def not_blank(value):
-    if not str(value):
-        raise BadValueError("Value cannot be blank.")
-
-
 def recurse_subclasses(cls):
     return (
         cls.__subclasses__() +
@@ -60,7 +51,8 @@ def recurse_subclasses(cls):
     )
 
 
-class ValueSource(JsonObject):
+@attr.s(auto_attribs=True, kw_only=True)
+class ValueSource:
     """
     Subclasses model a reference to a value, like a case property or a
     form question.
@@ -69,15 +61,11 @@ class ValueSource(JsonObject):
     and serialize it, if necessary, for the external system that it is
     being sent to.
     """
-    _allow_dynamic_properties = False
-
-    external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
-    commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
-                                        choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
+    external_data_type: Optional[str] = DATA_TYPE_UNKNOWN
+    commcare_data_type: Optional[str] = DATA_TYPE_UNKNOWN
     # Whether the ValueSource is import-only ("in"), export-only ("out"), or
     # for both import and export (the default, None)
-    direction = StringProperty(required=False, default=DIRECTION_BOTH, exclude_if_none=True,
-                               choices=DIRECTIONS)
+    direction: Optional[str] = DIRECTION_BOTH
 
     # Map CommCare values to remote system values or IDs. e.g.::
     #
@@ -88,34 +76,26 @@ class ValueSource(JsonObject):
     #         "blue": "000000ff",
     #       }
     #     }
-    value_map = DictProperty(required=False, default=None, exclude_if_none=True)
+    value_map: Optional[dict] = None
 
     # Used for importing a value from a JSON document.
-    jsonpath = StringProperty(required=False, default=None, exclude_if_none=True)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return (
-            self.external_data_type == other.external_data_type
-            and self.commcare_data_type == other.commcare_data_type
-            and self.direction == other.direction
-            and self.value_map == other.value_map
-            and self.jsonpath == other.jsonpath
-        )
+    jsonpath: Optional[str] = None
 
     @classmethod
-    def wrap(cls, data):
+    def wrap(cls, data: dict):
+        """
+        Allows us to duck-type JsonObject, and useful for doing
+        pre-instantiation transforms / dropping unwanted attributes.
+        """
         data.pop("doc_type", None)
-        return super().wrap(data)
+        return cls(**data)
 
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
-        data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
         args = ({
             SchemaOptional("doc_type"): str,
             SchemaOptional("external_data_type"): str,
-            SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
+            SchemaOptional("commcare_data_type"): Or(*COMMCARE_DATA_TYPES_AND_UNKNOWN),
             SchemaOptional("direction"): Or(*DIRECTIONS),
             SchemaOptional("value_map"): dict,
             SchemaOptional("jsonpath"): str,
@@ -187,6 +167,7 @@ class ValueSource(JsonObject):
         return serializer(external_value) if serializer else external_value
 
 
+@attr.s(auto_attribs=True, kw_only=True)
 class CaseProperty(ValueSource):
     """
     A reference to a case property
@@ -199,12 +180,18 @@ class CaseProperty(ValueSource):
     #       }
     #     }
     #
-    case_property = StringProperty(required=True, validators=not_blank)
+    case_property: str
+
+    class IsNotBlank:
+        def validate(self, data):
+            if isinstance(data, str) and len(data):
+                return data
+            raise SchemaError(f"Value cannot be blank.")
 
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"case_property": str})
+        schema.update({"case_property": cls.IsNotBlank()})
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
@@ -213,11 +200,12 @@ class CaseProperty(ValueSource):
         return case_trigger_info.extra_fields.get(self.case_property)
 
 
+@attr.s(auto_attribs=True, kw_only=True)
 class FormQuestion(ValueSource):
     """
     A reference to a form question
     """
-    form_question = StringProperty()  # e.g. "/data/foo/bar"
+    form_question: str
 
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
@@ -230,6 +218,8 @@ class FormQuestion(ValueSource):
             self.form_question
         )
 
+
+@attr.s(auto_attribs=True, kw_only=True)
 class ConstantValue(ValueSource):
     """
     ConstantValue provides a ValueSource for constant values.
@@ -265,8 +255,8 @@ class ConstantValue(ValueSource):
        outside the class.
 
     """
-    value = DefaultProperty()
-    value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
+    value: str
+    value_data_type: str = COMMCARE_DATA_TYPE_TEXT
 
     def __eq__(self, other):
         return (
@@ -312,13 +302,14 @@ class ConstantValue(ValueSource):
         return super().deserialize(external_value)
 
 
+@attr.s(auto_attribs=True, kw_only=True)
 class CaseOwnerAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location may be the
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
     """
-    case_owner_ancestor_location_field = StringProperty()
+    case_owner_ancestor_location_field: str
 
     @classmethod
     def wrap(cls, data):
@@ -351,13 +342,14 @@ class CaseOwnerAncestorLocationField(ValueSource):
             )
 
 
+@attr.s(auto_attribs=True, kw_only=True)
 class FormUserAncestorLocationField(ValueSource):
     """
     A reference to a location metadata value. The location is the form
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
-    form_user_ancestor_location_field = StringProperty()
+    form_user_ancestor_location_field: str
 
     @classmethod
     def wrap(cls, data):
@@ -391,11 +383,12 @@ class FormUserAncestorLocationField(ValueSource):
             )
 
 
+@attr.s
 class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
-def as_jsonobject(data: dict) -> ValueSource:
+def as_value_source(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
@@ -421,7 +414,7 @@ def get_value(
     Returns the value referred to by the value source definition,
     serialized for the external system.
     """
-    value_source = as_jsonobject(dict(value_source_config))
+    value_source = as_value_source(dict(value_source_config))
     return value_source.get_value(case_trigger_info)
 
 
@@ -431,7 +424,7 @@ def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:
     type or format for CommCare, if necessary, otherwise returns the
     value unchanged.
     """
-    value_source = as_jsonobject(dict(value_source_config))
+    value_source = as_value_source(dict(value_source_config))
     return value_source.deserialize(external_value)
 
 

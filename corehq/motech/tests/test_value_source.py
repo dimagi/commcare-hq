@@ -3,8 +3,6 @@ import warnings
 
 from django.test import SimpleTestCase
 
-from jsonobject.exceptions import BadValueError
-
 import corehq.motech.value_source
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -22,7 +20,7 @@ from corehq.motech.value_source import (
     ConstantValue,
     FormUserAncestorLocationField,
     ValueSource,
-    as_jsonobject,
+    as_value_source,
     get_form_question_values,
 )
 
@@ -106,24 +104,24 @@ class CaseTriggerInfoTests(SimpleTestCase):
 class CasePropertyValidationTests(SimpleTestCase):
 
     def test_valid_case_property(self):
-        case_property = as_jsonobject({"case_property": "foo"})
+        case_property = as_value_source({"case_property": "foo"})
         self.assertIsInstance(case_property, CaseProperty)
         self.assertEqual(case_property.case_property, "foo")
 
     def test_blank_case_property(self):
-        with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
-            as_jsonobject({"case_property": ""})
+        with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': ''}"):
+            as_value_source({"case_property": ""})
 
     def test_missing_case_property(self):
         with self.assertRaisesRegex(TypeError, "Unable to determine class for {}"):
-            as_jsonobject({})
+            as_value_source({})
 
     def test_null_case_property(self):
         with self.assertRaisesRegex(TypeError, "Unable to determine class for {'case_property': None}"):
-            as_jsonobject({"case_property": None})
+            as_value_source({"case_property": None})
 
     def test_doc_type(self):
-        case_property = as_jsonobject({
+        case_property = as_value_source({
             "doc_type": "CaseProperty",
             "case_property": "foo",
         })
@@ -140,7 +138,7 @@ class ConstantValueTests(SimpleTestCase):
         get_commcare_value() should convert from value data type to
         CommCare data type
         """
-        one = as_jsonobject({
+        one = as_value_source({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
@@ -153,7 +151,7 @@ class ConstantValueTests(SimpleTestCase):
         serialize() should convert from CommCare data type to external
         data type
         """
-        one = as_jsonobject({
+        one = as_value_source({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
@@ -166,7 +164,7 @@ class ConstantValueTests(SimpleTestCase):
         deserialize() should convert from external data type to CommCare
         data type
         """
-        one = as_jsonobject({
+        one = as_value_source({
             "value": 1.0,
             "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
             "commcare_data_type": COMMCARE_DATA_TYPE_TEXT,
@@ -179,7 +177,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_blank_path(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = as_jsonobject({
+        value_source = as_value_source({
             "case_property": "bar",
             "jsonpath": "",
         })
@@ -188,7 +186,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_no_values(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = as_jsonobject({
+        value_source = as_value_source({
             "case_property": "bar",
             "jsonpath": "foo.qux",
         })
@@ -197,7 +195,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_one_value(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = as_jsonobject({
+        value_source = as_value_source({
             "case_property": "bar",
             "jsonpath": "foo.bar",
         })
@@ -206,7 +204,7 @@ class JsonPathCasePropertyTests(SimpleTestCase):
 
     def test_many_values(self):
         json_doc = {"foo": [{"bar": "baz"}, {"bar": "qux"}]}
-        value_source = as_jsonobject({
+        value_source = as_value_source({
             "case_property": "bar",
             "jsonpath": "foo[*].bar",
         })
@@ -218,7 +216,7 @@ class CasePropertyConstantValueTests(SimpleTestCase):
 
     def test_one_value(self):
         json_doc = {"foo": {"bar": "baz"}}
-        value_source = as_jsonobject({
+        value_source = as_value_source({
             "case_property": "baz",
             "value": "qux",
             "jsonpath": "foo.bar",
@@ -254,11 +252,11 @@ class DirectionTests(SimpleTestCase):
 class AsJsonObjectTests(SimpleTestCase):
 
     def test_constant_value_schema_validates_constant_string(self):
-        json_object = as_jsonobject({"value": "spam"})
+        json_object = as_value_source({"value": "spam"})
         self.assertIsInstance(json_object, ConstantValue)
 
     def test_case_property_constant_value(self):
-        json_object = as_jsonobject({
+        json_object = as_value_source({
             "case_property": "spam",
             "value": "spam",
         })
@@ -268,12 +266,12 @@ class AsJsonObjectTests(SimpleTestCase):
 class FormUserAncestorLocationFieldTests(SimpleTestCase):
 
     def test_with_form_user_ancestor_location_field(self):
-        json_object = as_jsonobject({"form_user_ancestor_location_field": "dhis_id"})
+        json_object = as_value_source({"form_user_ancestor_location_field": "dhis_id"})
         self.assertIsInstance(json_object, FormUserAncestorLocationField)
         self.assertEqual(json_object.form_user_ancestor_location_field, "dhis_id")
 
     def test_with_form_user_ancestor_location_field_doc_type(self):
-        json_object = as_jsonobject({
+        json_object = as_value_source({
             "doc_type": "FormUserAncestorLocationField",
             "form_user_ancestor_location_field": "dhis_id",
         })
@@ -281,7 +279,7 @@ class FormUserAncestorLocationFieldTests(SimpleTestCase):
         self.assertEqual(json_object.form_user_ancestor_location_field, "dhis_id")
 
     def test_with_location_field_doc_type(self):
-        json_object = as_jsonobject({
+        json_object = as_value_source({
             "doc_type": "FormUserAncestorLocationField",
             "location_field": "dhis_id",
         })
@@ -290,18 +288,18 @@ class FormUserAncestorLocationFieldTests(SimpleTestCase):
 
     def test_with_location(self):
         with self.assertRaises(TypeError):
-            as_jsonobject({"location_field": "dhis_id"})
+            as_value_source({"location_field": "dhis_id"})
 
 
 class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
 
     def test_with_form_user_ancestor_location_field(self):
-        json_object = as_jsonobject({"case_owner_ancestor_location_field": "dhis_id"})
+        json_object = as_value_source({"case_owner_ancestor_location_field": "dhis_id"})
         self.assertIsInstance(json_object, CaseOwnerAncestorLocationField)
         self.assertEqual(json_object.case_owner_ancestor_location_field, "dhis_id")
 
     def test_with_form_user_ancestor_location_field_doc_type(self):
-        json_object = as_jsonobject({
+        json_object = as_value_source({
             "doc_type": "CaseOwnerAncestorLocationField",
             "case_owner_ancestor_location_field": "dhis_id",
         })
@@ -309,7 +307,7 @@ class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
         self.assertEqual(json_object.case_owner_ancestor_location_field, "dhis_id")
 
     def test_with_location_field_doc_type(self):
-        json_object = as_jsonobject({
+        json_object = as_value_source({
             "doc_type": "CaseOwnerAncestorLocationField",
             "location_field": "dhis_id",
         })
@@ -318,7 +316,7 @@ class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
 
     def test_with_location(self):
         with self.assertRaises(TypeError):
-            as_jsonobject({"location_field": "dhis_id"})
+            as_value_source({"location_field": "dhis_id"})
 
 
 def test_doctests():
