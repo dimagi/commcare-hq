@@ -1,7 +1,6 @@
 from typing import Any, Dict, Tuple, Optional
 
 import attr
-from couchdbkit import BadValueError
 from jsonobject.containers import JsonDict
 from jsonpath_rw import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
@@ -43,11 +42,6 @@ class CaseTriggerInfo:
         if self.name:
             return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
         return f"<CaseTriggerInfo {self.case_id}>"
-
-
-def not_blank(value):
-    if not str(value):
-        raise BadValueError("Value cannot be blank.")
 
 
 def recurse_subclasses(cls):
