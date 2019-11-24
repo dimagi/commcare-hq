@@ -28,15 +28,15 @@ hqDefine('app_manager/js/source_files', [
             var firstAppID = initialPageData.get('first_app_id');
             var secondAppID = initialPageData.get('second_app_id');
             var multimediaSizes1 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", firstAppID));
+                initialPageData.reverse("get_multimedia_sizes", firstAppID, 'default'));
             multimediaSizes1.load();
             $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizes1);
             var multimediaSizes2 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", secondAppID));
+                initialPageData.reverse("get_multimedia_sizes", secondAppID, 'default'));
             multimediaSizes2.load();
             $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizes2);
             var multimediaSizesDiff = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("compare_multimedia_sizes"));
+                initialPageData.reverse("compare_multimedia_sizes", 'default'));
             multimediaSizesDiff.load();
             $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
         }

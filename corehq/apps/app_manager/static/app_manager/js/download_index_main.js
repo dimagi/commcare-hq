@@ -18,7 +18,7 @@ hqDefine('app_manager/js/download_index_main',[
         if ($('#multimedia-sizes-container').length) {
             var appID = initialPageData.get('app_id');
             var multimediaSizes = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", appID));
+                initialPageData.reverse("get_multimedia_sizes", appID, 'default'));
             multimediaSizes.load();
             $("#multimedia-sizes-container").koApplyBindings(multimediaSizes);
         }
