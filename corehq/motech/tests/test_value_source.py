@@ -111,7 +111,7 @@ class CasePropertyValidationTests(SimpleTestCase):
         self.assertEqual(case_property.case_property, "foo")
 
     def test_blank_case_property(self):
-        with self.assertRaisesRegex(BadValueError, "Value cannot be blank."):
+        with self.assertRaisesRegex(ValueError, "Attribute 'case_property' cannot be None or blank."):
             as_jsonobject({"case_property": ""})
 
     def test_missing_case_property(self):
