@@ -50,7 +50,7 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
-    as_jsonobject,
+    as_value_source,
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
@@ -134,7 +134,7 @@ class OpenmrsRepeater(CaseRepeater):
         obs_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
-                value_source = as_jsonobject(dict(obs_mapping.value))
+                value_source = as_value_source(dict(obs_mapping.value))
                 if (
                     value_source.can_import
                     and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
@@ -151,7 +151,7 @@ class OpenmrsRepeater(CaseRepeater):
         diag_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
             for diag_mapping in form_config.bahmni_diagnoses:
-                value_source = as_jsonobject(dict(diag_mapping.value))
+                value_source = as_value_source(dict(diag_mapping.value))
                 if (
                     value_source.can_import
                     and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)

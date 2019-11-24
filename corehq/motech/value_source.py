@@ -393,7 +393,7 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
-def as_jsonobject(data: dict) -> ValueSource:
+def as_value_source(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
@@ -419,7 +419,7 @@ def get_value(
     Returns the value referred to by the value source definition,
     serialized for the external system.
     """
-    value_source = as_jsonobject(dict(value_source_config))
+    value_source = as_value_source(dict(value_source_config))
     return value_source.get_value(case_trigger_info)
 
 
@@ -429,7 +429,7 @@ def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:
     type or format for CommCare, if necessary, otherwise returns the
     value unchanged.
     """
-    value_source = as_jsonobject(dict(value_source_config))
+    value_source = as_value_source(dict(value_source_config))
     return value_source.deserialize(external_value)
 
 
