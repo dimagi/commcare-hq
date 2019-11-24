@@ -37,6 +37,14 @@ def get_brief_apps(domain_link):
     return [wrap_app(app) for app in apps]
 
 
+def get_app_by_version(domain_link, upstream_app_id, upstream_version):
+    url = reverse('linked_domain:app_by_version', args=[domain_link.master_domain,
+                                                        upstream_app_id,
+                                                        upstream_version])
+    response = _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
+    return response['app']
+
+
 def get_case_search_config(domain_link):
     return _do_simple_request('linked_domain:case_search_config', domain_link)
 
