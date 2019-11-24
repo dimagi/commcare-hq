@@ -211,7 +211,7 @@ def _update_form_ids(app, master_app, ids_map):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    updated_source = update_form_unique_ids(app_source, ids_map)
+    updated_source = update_form_unique_ids(app_source, ids_map, update_all=False)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)
