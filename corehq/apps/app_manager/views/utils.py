@@ -29,7 +29,7 @@ from corehq.apps.app_manager.models import (
     CustomIcon,
     enable_usercase_if_necessary,
 )
-from corehq.apps.app_manager.util import generate_xmlns
+from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
@@ -186,6 +186,14 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
+    # Legacy linked apps have different form unique ids than their master app(s). These mappings
+    # are stored as ResourceOverride objects. Look up to see if this app has any.
+    from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
+    overrides = get_xform_resource_overrides(domain=wrapped_app.domain, app_id=wrapped_app.get_id)
+    if overrides:
+       ids_map =  {pre_id: override.post_id for pre_id, override in overrides.items()}
+       wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
+
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
     for path in wrapped_app.multimedia_map.keys():
         wrapped_app.multimedia_map[path].version = None
@@ -193,6 +201,22 @@ def overwrite_app(app, master_build, report_map=None):
 
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
+
+
+def _update_form_ids(app, master_app, ids_map):
+
+    _attachments = master_app.get_attachments()
+
+    app_source = app.to_json()
+    app_source.pop('external_blobs')
+    app_source['_attachments'] = _attachments
+
+    updated_source = update_form_unique_ids(app_source, ids_map)
+
+    attachments = app_source.pop('_attachments')
+    new_wrapped_app = wrap_app(updated_source)
+    save = partial(new_wrapped_app.save, increment_version=False)
+    return new_wrapped_app.save_attachments(attachments, save)
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
