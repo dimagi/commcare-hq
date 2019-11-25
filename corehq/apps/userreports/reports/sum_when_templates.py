@@ -116,7 +116,7 @@ class OpenFemaleResidentSpec(SumWhenTemplateSpec):
 
 class OpenMaleDisabledSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_disabled")
-    expression = "closed_on IS NULL AND sex = IN ('M', 'O') and disabled = 1"
+    expression = "closed_on IS NULL AND sex IN ('M', 'O') and disabled = 1"
 
 
 class OpenMaleHHCasteSpec(SumWhenTemplateSpec):
