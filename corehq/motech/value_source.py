@@ -1,17 +1,18 @@
 from functools import singledispatch
+from typing import Tuple, Dict
 from warnings import warn
 
 import attr
 from couchdbkit import BadValueError
+from jsonobject.api import JsonObject
+from jsonobject.base_properties import DefaultProperty
 from jsonpath_rw import parse as parse_jsonpath
+from schema import Hook
+from schema import Optional as SchemaOptional
+from schema import Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import (
-    DictProperty,
-    DocumentSchema,
-    Property,
-    StringProperty,
-)
+from dimagi.ext.jsonobject import DictProperty, StringProperty
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
@@ -61,7 +62,17 @@ def recurse_subclasses(cls):
     )
 
 
-class ValueSource(DocumentSchema):
+class Ignore(Hook):
+    def __init__(self, *args, **kwargs):
+        kwargs["handler"] = self._handler
+        super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def _handler(nkey, data, error):
+        data.pop(nkey, None)
+
+
+class ValueSource(JsonObject):
     """
     Subclasses model a reference to a value, like a case property or a
     form question.
@@ -70,6 +81,8 @@ class ValueSource(DocumentSchema):
     and serialize it, if necessary, for the external system that it is
     being sent to.
     """
+    _allow_dynamic_properties = False
+
     external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
     commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
                                         choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
@@ -96,8 +109,7 @@ class ValueSource(DocumentSchema):
         if not isinstance(other, self.__class__):
             return NotImplemented
         return (
-            self.doc_type == other.doc_type
-            and self.external_data_type == other.external_data_type
+            self.external_data_type == other.external_data_type
             and self.commcare_data_type == other.commcare_data_type
             and self.direction == other.direction
             and self.value_map == other.value_map
@@ -105,16 +117,17 @@ class ValueSource(DocumentSchema):
         )
 
     @classmethod
-    def wrap(cls, data):
-        if cls is ValueSource:
-            if 'doc_type' not in data or data['doc_type'] == 'ValueSource':
-                return super(ValueSource, cls).wrap(data)
-            subclass = {
-                sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }.get(data['doc_type'])
-            return subclass.wrap(data) if subclass else None
-        else:
-            return super(ValueSource, cls).wrap(data)
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        data_types_and_unknown = COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,)
+        args = ({
+            SchemaOptional("external_data_type"): str,
+            SchemaOptional("commcare_data_type"): Or(*data_types_and_unknown),
+            SchemaOptional("direction"): Or(*DIRECTIONS),
+            SchemaOptional("value_map"): dict,
+            SchemaOptional("jsonpath"): str,
+            Ignore("doc_type"): str,
+        },)
+        return args, {}
 
     @property
     def can_import(self):
@@ -139,6 +152,12 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty(required=True, validators=not_blank)
 
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({"case_property": str})
+        return (schema, *other_args), kwargs
+
 
 class FormQuestion(ValueSource):
     """
@@ -146,6 +165,11 @@ class FormQuestion(ValueSource):
     """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({"form_question": str})
+        return (schema, *other_args), kwargs
 
 class ConstantString(ValueSource):
     """
@@ -206,7 +230,7 @@ class ConstantValue(ConstantString):
        outside the class.
 
     """
-    value = Property()
+    value = DefaultProperty()
     value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
 
     def __eq__(self, other):
@@ -214,6 +238,15 @@ class ConstantValue(ConstantString):
             super().__eq__(other)
             and self.value_data_type == other.value_data_type
         )
+
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({
+            "value": object,
+            SchemaOptional("value_data_type"): str,
+        })
+        return (schema, *other_args), kwargs
 
 
 class CasePropertyMap(CaseProperty):
@@ -248,6 +281,12 @@ class CaseOwnerAncestorLocationField(ValueSource):
             data["case_owner_ancestor_location_field"] = data.pop("location_field")
         return super().wrap(data)
 
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({"case_owner_ancestor_location_field": str})
+        return (schema, *other_args), kwargs
+
 
 class FormUserAncestorLocationField(ValueSource):
     """
@@ -262,6 +301,12 @@ class FormUserAncestorLocationField(ValueSource):
         if "location_field" in data:
             data["form_user_ancestor_location_field"] = data.pop("location_field")
         return super().wrap(data)
+
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({"form_user_ancestor_location_field": str})
+        return (schema, *other_args), kwargs
 
 
 class JsonPathCaseProperty(CaseProperty):
@@ -282,6 +327,19 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
+def as_jsonobject(data: dict) -> ValueSource:
+    for subclass in recurse_subclasses(ValueSource):
+        try:
+            args, kwargs = subclass.get_schema_params()
+            data = Schema(*args, **kwargs).validate(data)
+        except SchemaError:
+            pass
+        else:
+            return subclass.wrap(data)
+    else:
+        raise TypeError(f"Unable to determine class for {data!r}")
+
+
 def get_value(value_source, case_trigger_info):
     """
     Returns the value referred to by the ValueSource, serialized for
@@ -298,21 +356,8 @@ def get_import_value(value_source, external_data):
 
 @singledispatch
 def get_commcare_value(value_source, case_trigger_info):
-    if hasattr(value_source, "value"):
-        if hasattr(value_source, "value_data_type"):
-            return get_constant_value(value_source, case_trigger_info)
-        else:
-            return get_constant_string(value_source, case_trigger_info)
-    if hasattr(value_source, "form_question"):
-        return get_form_question_value(value_source, case_trigger_info)
-    if hasattr(value_source, "case_property"):
-        return get_case_property_value(value_source, case_trigger_info)
-    if hasattr(value_source, "case_owner_ancestor_location_field"):
-        return get_case_owner_ancestor_location_field(value_source, case_trigger_info)
-    if hasattr(value_source, "form_user_ancestor_location_field"):
-        get_form_user_ancestor_location_field(value_source, case_trigger_info)
     raise TypeError(
-        f'Unrecognised value source type: {value_source.__class__.__name__}'
+        f'Unrecognised value source type: {type(value_source)}'
     )
 
 
@@ -323,11 +368,6 @@ def get_constant_value(value_source, case_trigger_info):
         or serializers.get((None, value_source.commcare_data_type))
     )
     return serializer(value_source.value) if serializer else value_source.value
-
-
-@get_commcare_value.register(ConstantString)
-def get_constant_string(value_source, case_trigger_info):
-    return value_source.value
 
 
 @get_commcare_value.register(FormQuestion)

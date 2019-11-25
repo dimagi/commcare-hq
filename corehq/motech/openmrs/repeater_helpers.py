@@ -36,7 +36,7 @@ from corehq.motech.value_source import (
     get_ancestor_location_metadata_value,
     get_case_location,
     get_value,
-)
+    as_jsonobject)
 from corehq.util.quickcache import quickcache
 
 
@@ -194,42 +194,10 @@ def check_duplicate_case_match(case, external_id):
 
 def create_patient(requests, info, case_config):
 
-    def get_name():
-        return {
-            property_: get_value(value_source, info)
-            for property_, value_source in case_config.person_preferred_name.items()
-            if (
-                property_ in NAME_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, info)
-            )
-        }
-
-    def get_address():
-        return {
-            property_: get_value(value_source, info)
-            for property_, value_source in case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, info)
-            )
-        }
-
-    def get_properties():
-        return {
-            property_: get_value(value_source, info)
-            for property_, value_source in case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, info)
-            )
-        }
-
     def get_identifiers():
         identifiers = []
-        for patient_identifier_type, value_source in case_config.patient_identifiers.items():
+        for patient_identifier_type, value_source_dict in case_config.patient_identifiers.items():
+            value_source = as_jsonobject(dict(value_source_dict))
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
                 and value_source.can_export
@@ -246,13 +214,25 @@ def create_patient(requests, info, case_config):
         return identifiers
 
     person = {}
-    name = get_name()
+    name = get_export_data(
+        case_config.person_preferred_name,
+        NAME_PROPERTIES,
+        info,
+    )
     if name:
         person['names'] = [name]
-    address = get_address()
+    address = get_export_data(
+        case_config.person_preferred_address,
+        ADDRESS_PROPERTIES,
+        info,
+    )
     if address:
         person['addresses'] = [address]
-    properties = get_properties()
+    properties = get_export_data(
+        case_config.person_properties,
+        PERSON_PROPERTIES,
+        info,
+    )
     if properties:
         person.update(properties)
     if person:
@@ -380,9 +360,10 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
     if patient_finder is None:
         return
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
+    create_missing = as_jsonobject(dict(patient_finder.create_missing))
     if len(patients) == 1:
         patient, = patients
-    elif not patients and get_value(patient_finder.create_missing, info):
+    elif not patients and get_value(create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
     else:
         # If PatientFinder can't narrow down the number of candidate
@@ -445,6 +426,19 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values=form_question_values or {},
             ))
     return result
+
+
+def get_export_data(config, properties, case_trigger_info):
+    export_data = {}
+    for property_, value_source_dict in config.items():
+        value_source = as_jsonobject(dict(value_source_dict))
+        if (
+            property_ in properties
+            and value_source.can_export
+            and get_value(value_source, case_trigger_info)
+        ):
+            export_data[property_] = get_value(value_source, case_trigger_info)
+    return export_data
 
 
 @quickcache(['requests.base_url'])

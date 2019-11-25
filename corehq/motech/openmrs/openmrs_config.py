@@ -10,6 +10,7 @@ from casexml.apps.case.models import (
 )
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import (
+    DictProperty,
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
@@ -21,7 +22,6 @@ from dimagi.ext.couchdbkit import (
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
-from corehq.motech.value_source import ValueSource
 
 INDEX_RELATIONSHIPS = (
     INDEX_RELATIONSHIP_CHILD,
@@ -32,15 +32,13 @@ class OpenmrsCaseConfig(DocumentSchema):
 
     # "patient_identifiers": {
     #     "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "nid"
     #     },
     #     "uuid": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "openmrs_uuid",
     #     }
     # }
-    patient_identifiers = SchemaDictProperty(ValueSource)
+    patient_identifiers = DictProperty()
 
     # The patient_identifiers that are considered reliable
     # "match_on_ids": ["uuid", "e2b966d0-1d5f-11e0-b929-000c29ad1d07",
@@ -48,15 +46,13 @@ class OpenmrsCaseConfig(DocumentSchema):
 
     # "person_properties": {
     #     "gender": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "gender"
     #     },
     #     "birthdate": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "dob"
     #     }
     # }
-    person_properties = SchemaDictProperty(ValueSource)
+    person_properties = DictProperty()
 
     # "patient_finder": {
     #     "doc_type": "WeightedPropertyPatientFinder",
@@ -88,43 +84,35 @@ class OpenmrsCaseConfig(DocumentSchema):
 
     # "person_preferred_name": {
     #     "givenName": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "given_name"
     #     },
     #     "middleName": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "middle_name"
     #     },
     #     "familyName": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "family_name"
     #     }
     # }
-    person_preferred_name = SchemaDictProperty(ValueSource)
+    person_preferred_name = DictProperty()
 
     # "person_preferred_address": {
     #     "address1": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "address_1"
     #     },
     #     "address2": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "address_2"
     #     },
     #     "cityVillage": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "city"
     #     }
     # }
-    person_preferred_address = SchemaDictProperty(ValueSource)
+    person_preferred_address = DictProperty()
 
     # "person_attributes": {
     #     "c1f4239f-3f10-11e4-adec-0800271c1b75": {
-    #         "doc_type": "CaseProperty",
     #         "case_property": "caste"
     #     },
     #     "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-    #         "doc_type": "CasePropertyMap",
     #         "case_property": "class",
     #         "value_map": {
     #             "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
@@ -135,7 +123,7 @@ class OpenmrsCaseConfig(DocumentSchema):
     #         }
     #     }
     # }
-    person_attributes = SchemaDictProperty(ValueSource)
+    person_attributes = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -173,12 +161,31 @@ class IndexedCaseMapping(DocumentSchema):
                                   default=INDEX_RELATIONSHIP_EXTENSION)
 
     # Sets case property values of a new extension case or child case.
-    case_properties = SchemaListProperty(ValueSource, required=True)
+    case_properties = ListProperty(required=True)
 
 
 class ObservationMapping(DocumentSchema):
+    """
+    Maps OpenMRS Observations to value sources.
+
+    e.g.::
+
+        {
+          "concept": "123456":
+          "value": {
+            "form_question": "/data/trimester"
+            "value_map": {
+              "first": "123456",
+              "second": "123456",
+              "third": "123456"
+            },
+            "direction": "out"
+          }
+        }
+
+    """
     concept = StringProperty()
-    value = SchemaProperty(ValueSource)
+    value = DictProperty()
 
     # Import Observations as case updates from Atom feed. (Case type is
     # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
@@ -207,7 +214,7 @@ class OpenmrsFormConfig(DocumentSchema):
     # of a visit is set to one day (specifically 23:59:59) later. If not
     # given, the value defaults to when the form was completed according
     # to the device, /meta/timeEnd.
-    openmrs_start_datetime = SchemaProperty(ValueSource, required=False)
+    openmrs_start_datetime = DictProperty(required=False)
 
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
@@ -225,16 +232,16 @@ class OpenmrsConfig(DocumentSchema):
 def get_property_map(case_config):
     """
     Returns a map of case properties to OpenMRS patient properties and
-    attributes, and a ValueSource instance to deserialize them.
+    attributes, and a value source dict to deserialize them.
     """
     property_map = {}
 
-    for person_prop, value_source in case_config['person_properties'].items():
-        if 'case_property' in value_source:
+    for person_prop, value_source_dict in case_config['person_properties'].items():
+        if 'case_property' in value_source_dict:
             jsonpath = parse_jsonpath('person.' + person_prop)
-            property_map[value_source['case_property']] = (jsonpath, value_source)
+            property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
-    for attr_type_uuid, value_source in case_config['person_attributes'].items():
+    for attr_type_uuid, value_source_dict in case_config['person_attributes'].items():
         # jsonpath_rw offers programmatic JSONPath expressions. For details on how to create JSONPath
         # expressions programmatically see the
         # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
@@ -250,7 +257,7 @@ def get_property_map(case_config):
         #
         # Person attributes with Concept values have UUIDs. The following JSONPath uses Union to match both simple
         # values and Concept values.
-        if 'case_property' in value_source:
+        if 'case_property' in value_source_dict:
             jsonpath = Union(
                 # Simple values: Return value if it has no children.
                 # (person.attributes[*] where attributeType.uuid eq attr_type_uuid).(value where not *)
@@ -271,20 +278,20 @@ def get_property_map(case_config):
                     Child(Fields('value'), Fields('uuid'))
                 )
             )
-            property_map[value_source['case_property']] = (jsonpath, value_source)
+            property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
-    for name_prop, value_source in case_config['person_preferred_name'].items():
-        if 'case_property' in value_source:
+    for name_prop, value_source_dict in case_config['person_preferred_name'].items():
+        if 'case_property' in value_source_dict:
             jsonpath = parse_jsonpath('person.preferredName.' + name_prop)
-            property_map[value_source['case_property']] = (jsonpath, value_source)
+            property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
-    for addr_prop, value_source in case_config['person_preferred_address'].items():
-        if 'case_property' in value_source:
+    for addr_prop, value_source_dict in case_config['person_preferred_address'].items():
+        if 'case_property' in value_source_dict:
             jsonpath = parse_jsonpath('person.preferredAddress.' + addr_prop)
-            property_map[value_source['case_property']] = (jsonpath, value_source)
+            property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
-    for id_type_uuid, value_source in case_config['patient_identifiers'].items():
-        if 'case_property' in value_source:
+    for id_type_uuid, value_source_dict in case_config['patient_identifiers'].items():
+        if 'case_property' in value_source_dict:
             if id_type_uuid == 'uuid':
                 jsonpath = parse_jsonpath('uuid')
             else:
@@ -301,6 +308,6 @@ def get_property_map(case_config):
                     ),
                     Fields('identifier')
                 )
-            property_map[value_source['case_property']] = (jsonpath, value_source)
+            property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
     return property_map

@@ -81,7 +81,7 @@ class TestDhisHandler(TestCase):
                 },
                 'org_unit_id': {
                     'doc_type': 'FormUserAncestorLocationField',
-                    'location_field': LOCATION_DHIS_ID
+                    'form_user_ancestor_location_field': LOCATION_DHIS_ID
                 },
                 'datavalue_maps': [
                     {

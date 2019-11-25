@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
@@ -12,12 +11,18 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
+    get_export_data,
     get_unknown_encounter_role,
     get_unknown_location_uuid,
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
-from corehq.motech.value_source import get_commcare_value, get_value, serialize
+from corehq.motech.value_source import (
+    as_jsonobject,
+    get_commcare_value,
+    get_value,
+    serialize,
+)
 
 
 class SyncPersonAttributesTask(WorkflowTask):
@@ -38,7 +43,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
             for attribute in self.attributes
         }
-        for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
+        for person_attribute_type, value_source_dict in self.openmrs_config.case_config.person_attributes.items():
+            value_source = as_jsonobject(value_source_dict)
             if not value_source.can_export:
                 continue
             value = get_value(value_source, self.info)
@@ -83,7 +89,8 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             identifier['identifierType']['uuid']: (identifier['uuid'], identifier['identifier'])
             for identifier in self.patient['identifiers']
         }
-        for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+        for patient_identifier_type, dict_ in self.openmrs_config.case_config.patient_identifiers.items():
+            value_source = as_jsonobject(dict_)
             if not value_source.can_export:
                 continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
@@ -163,11 +170,12 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         return start_datetime, stop_datetime
 
     def _get_values_for_concept(self, form_config):
-        return {
-            obs.concept: [get_value(obs.value, self.info)]
-            for obs in form_config.openmrs_observations
-            if obs.value.can_export and not is_blank(get_value(obs.value, self.info))
-        }
+        values_for_concept = {}
+        for obs in form_config.openmrs_observations:
+            value_source = as_jsonobject(dict(obs.value))
+            if value_source.can_export and not is_blank(get_value(value_source, self.info)):
+                values_for_concept[obs.concept] = [get_value(value_source, self.info)]
+        return values_for_concept
 
     def run(self):
         """
@@ -492,22 +500,18 @@ class UpdatePersonNameTask(WorkflowTask):
         self.name_uuid = person['preferredName']['uuid']
 
     def run(self):
-        properties = {
-            property_: get_value(value_source, self.info)
-            for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
-            if (
-                property_ in NAME_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, self.info)
-            )
-        }
-        if properties:
+        export_data = get_export_data(
+            self.openmrs_config.case_config.person_preferred_name,
+            NAME_PROPERTIES,
+            self.info,
+        )
+        if export_data:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=properties,
+                json=export_data,
                 raise_for_status=True,
             )
 
@@ -544,19 +548,15 @@ class CreatePersonAddressTask(WorkflowTask):
         self.address_uuid = None
 
     def run(self):
-        properties = {
-            property_: get_value(value_source, self.info)
-            for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, self.info)
-            )
-        }
-        if properties:
+        export_data = get_export_data(
+            self.openmrs_config.case_config.person_preferred_address,
+            ADDRESS_PROPERTIES,
+            self.info,
+        )
+        if export_data:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=properties,
+                json=export_data,
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -583,22 +583,18 @@ class UpdatePersonAddressTask(WorkflowTask):
         self.address_uuid = person['preferredAddress']['uuid']
 
     def run(self):
-        properties = {
-            property_: get_value(value_source, self.info)
-            for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, self.info)
-            )
-        }
-        if properties:
+        export_data = get_export_data(
+            self.openmrs_config.case_config.person_preferred_address,
+            ADDRESS_PROPERTIES,
+            self.info,
+        )
+        if export_data:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=properties,
+                json=export_data,
                 raise_for_status=True,
             )
 
@@ -628,19 +624,15 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         self.person = person
 
     def run(self):
-        properties = {
-            property_: get_value(value_source, self.info)
-            for property_, value_source in self.openmrs_config.case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES
-                and value_source.can_export
-                and get_value(value_source, self.info)
-            )
-        }
-        if properties:
+        export_data = get_export_data(
+            self.openmrs_config.case_config.person_properties,
+            PERSON_PROPERTIES,
+            self.info,
+        )
+        if export_data:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties,
+                json=export_data,
                 raise_for_status=True,
             )
 

@@ -37,7 +37,11 @@ from corehq.motech.openmrs.exceptions import (
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
-from corehq.motech.value_source import deserialize, get_import_value
+from corehq.motech.value_source import (
+    as_jsonobject,
+    deserialize,
+    get_import_value,
+)
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -245,7 +249,8 @@ def get_case_block_kwargs(patient, repeater, case=None):
         "case_name": patient['person']['display'],
         "update": {}
     }
-    for prop, (jsonpath, value_source) in property_map.items():
+    for prop, (jsonpath, value_source_dict) in property_map.items():
+        value_source = as_jsonobject(value_source_dict)
         if not value_source.can_import:
             continue
         matches = jsonpath.find(patient)
@@ -514,7 +519,8 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
 
 def get_case_block_kwargs_for_case_property(mapping, external_value):
     case_block_kwargs = {"update": {}}
-    value = deserialize(mapping.value, external_value)
+    value_source = as_jsonobject(dict(mapping.value))
+    value = deserialize(value_source, external_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
     else:
@@ -536,7 +542,8 @@ def get_case_block_for_indexed_case(
         },
         "update": {}
     }
-    for value_source in mapping.indexed_case_mapping.case_properties:
+    for value_source_dict in mapping.indexed_case_mapping.case_properties:
+        value_source = as_jsonobject(dict(value_source_dict))
         value = get_import_value(value_source, external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
             case_block_kwargs[value_source.case_property] = value

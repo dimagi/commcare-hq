@@ -13,9 +13,9 @@ from pprint import pformat
 
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
+    DictProperty,
     DocumentSchema,
     ListProperty,
-    SchemaProperty,
     StringProperty,
 )
 
@@ -25,8 +25,7 @@ from corehq.motech.openmrs.finders_utils import (
     le_levenshtein_percent,
 )
 from corehq.motech.value_source import (
-    ConstantString,
-    ValueSource,
+    as_jsonobject,
     deserialize,
     recurse_subclasses,
 )
@@ -45,17 +44,16 @@ MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
 logger = logging.getLogger(__name__)
 
 
-constant_false = ConstantString(
-    doc_type='ConstantString',
-    value='False',
+constant_false = {
+    "value": 'False',
     # We are fetching from a case property or a form question value, and
     # we want `get_value()` to return False (bool). `get_value()`
     # serialises case properties and form question values as external
     # data types. OPENMRS_DATA_TYPE_BOOLEAN is useful because it is a
     # bool, not a string, so `constant_false.get_value()` will return
     # False (not 'False')
-    external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
-)
+    "external_data_type": OPENMRS_DATA_TYPE_BOOLEAN,
+}
 
 
 class PatientFinder(DocumentSchema):
@@ -70,13 +68,12 @@ class PatientFinder(DocumentSchema):
     """
 
     # Whether to create a new patient if no patients are found
-    create_missing = SchemaProperty(ValueSource, default=constant_false)
+    create_missing = DictProperty(default=constant_false)
 
     @classmethod
     def wrap(cls, data):
         if 'create_missing' in data and isinstance(data['create_missing'], bool):
             data['create_missing'] = {
-                'doc_type': 'ConstantString',
                 'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
                 'value': str(data['create_missing'])
             }
@@ -171,7 +168,8 @@ class WeightedPropertyPatientFinder(PatientFinder):
         def weights():
             for property_weight in self.property_weights:
                 prop = property_weight['case_property']
-                jsonpath, value_source = self._property_map[prop]
+                jsonpath, value_source_dict = self._property_map[prop]
+                value_source = as_jsonobject(dict(value_source_dict))
                 weight = property_weight['weight']
 
                 matches = jsonpath.find(patient)
