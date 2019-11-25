@@ -104,6 +104,10 @@ class MediaResourceError(SuiteError):
     pass
 
 
+class ResourceOverrideError(SuiteError):
+    pass
+
+
 class ParentModuleReferenceError(SuiteError):
     pass
 
