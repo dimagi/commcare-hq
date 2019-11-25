@@ -12,7 +12,6 @@ from django.http import Http404
 
 import requests
 from requests import HTTPError
-from corehq.apps.formplayer_api.smsforms.exceptions import BadDataError
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
 
@@ -94,7 +93,7 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
 
-        return _get_response(json.dumps(self.get_touchforms_dict()))
+        return _get_response(self.get_touchforms_dict())
 
 
 class XformsEvent(object):
@@ -215,18 +214,30 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def formplayer_post_data_helper(d, content_type, url):
-    session_id = d.get('session-id')
-    data = json.dumps(d).encode('utf-8')
-    headers = {}
-    headers["Content-Type"] = content_type
-    headers["content-length"] = str(len(data))
-    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
-    headers["X-FORMPLAYER-SESSION"] = session_id
+def _get_response(data):
+    try:
+        response_json = _post_data(data)
+    except socket.error:
+        return XformsResponse.server_down()
+    else:
+        return XformsResponse(response_json)
+
+
+def _post_data(data):
+    if not data.get("domain"):
+        raise ValueError("Expected domain")
+
+    data = _get_formplayer_session_data(data)
+    data_bytes = json.dumps(data).encode('utf-8')
     response = requests.post(
-        url,
-        data=data,
-        headers=headers
+        url="{}/{}".format(get_formplayer_url(), data["action"]),
+        data=data_bytes,
+        headers={
+            "Content-Type": "application/json",
+            "content-length": str(len(data_bytes)),
+            "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
+            "X-FORMPLAYER-SESSION": data.get('session-id'),
+        }
     )
     if response.status_code == 404:
         raise Http404(response.reason)
@@ -237,23 +248,7 @@ def formplayer_post_data_helper(d, content_type, url):
     return response.json()
 
 
-def _post_data(data, content_type="application/json"):
-    try:
-        d = json.loads(data)
-    except TypeError:
-        raise BadDataError('unhandleable touchforms query: {}'.format(data))
-
-    domain = d.get("domain")
-
-    if not domain:
-        raise ValueError("Expected domain")
-
-    d = get_formplayer_session_data(d)
-    return formplayer_post_data_helper(
-        d, content_type, "{}/{}".format(get_formplayer_url(), d["action"]))
-
-
-def get_formplayer_session_data(data):
+def _get_formplayer_session_data(data):
     data['oneQuestionPerScreen'] = True
     data['nav_mode'] = 'prompt'
     if "session_id" in data:
@@ -266,17 +261,6 @@ def get_formplayer_session_data(data):
     data["session_id"] = session_id
     data["session-id"] = session_id
     return data
-
-
-def _get_response(data):
-    try:
-        response_json = _post_data(data)
-    except socket.error:
-        return XformsResponse.server_down()
-    try:
-        return XformsResponse(response_json)
-    except Exception as e:
-        raise e
 
 
 class FormplayerInterface:
@@ -296,7 +280,7 @@ class FormplayerInterface:
             "domain": self.domain
         }
 
-        response = _post_data(json.dumps(data))
+        response = _post_data(data)
         if "error" in response:
             error = response["error"]
             if error == "Form session not found":
@@ -313,7 +297,7 @@ class FormplayerInterface:
                 "session-id": self.session_id,
                 "answer": answer,
                 "domain": self.domain}
-        return _get_response(json.dumps(data))
+        return _get_response(data)
 
     def current_question(self):
         """
@@ -322,7 +306,7 @@ class FormplayerInterface:
         data = {"action": "current",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return _get_response(json.dumps(data))
+        return _get_response(data)
 
     def next(self):
         """
@@ -331,4 +315,4 @@ class FormplayerInterface:
         data = {"action": "next",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return _get_response(json.dumps(data))
+        return _get_response(data)
