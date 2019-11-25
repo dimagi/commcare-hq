@@ -7,10 +7,10 @@ from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.formplayer_api.smsforms import sms as tfsms
 from corehq.apps.formplayer_api.smsforms.api import (
+    FormplayerInterface,
     InvalidSessionIdException,
     TouchformsError,
     XFormsConfig,
-    get_raw_instance,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CouchUser
@@ -115,7 +115,7 @@ def submit_unfinished_form(session):
     """
     # Get and clean the raw xml
     try:
-        response = get_raw_instance(session.session_id, session.domain)
+        response = FormplayerInterface(session.session_id, session.domain).get_raw_instance()
         xml = response['output']
     except InvalidSessionIdException:
         return

@@ -289,54 +289,56 @@ def get_response(data):
         raise e
 
 
-def get_raw_instance(session_id, domain=None):
-    """
-    Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
-    forms to couch when errors happen).
-    """
+class FormplayerInterface:
+    def __init__(self, session_id, domain):
+        self.session_id = session_id
+        self.domain = domain
 
-    data = {
-        "action":"get-instance",
-        "session-id": session_id,
-        "domain": domain
-    }
+    def get_raw_instance(self):
+        """
+        Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
+        forms to couch when errors happen).
+        """
 
-    response = post_data(json.dumps(data))
-    if "error" in response:
-        error = response["error"]
-        if error == "Form session not found":
-            raise InvalidSessionIdException("Invalid Session Id")
-        else:
-            raise TouchformsError(error)
-    return response
+        data = {
+            "action":"get-instance",
+            "session-id": self.session_id,
+            "domain": self.domain
+        }
 
+        response = post_data(json.dumps(data))
+        if "error" in response:
+            error = response["error"]
+            if error == "Form session not found":
+                raise InvalidSessionIdException("Invalid Session Id")
+            else:
+                raise TouchformsError(error)
+        return response
 
-def answer_question(session_id, answer, domain):
-    """
-    Answer a question. 
-    """
-    data = {"action": "answer",
-            "session-id": session_id,
-            "answer": answer,
-            "domain": domain}
-    return get_response(json.dumps(data))
+    def answer_question(self, answer):
+        """
+        Answer a question.
+        """
+        data = {"action": "answer",
+                "session-id": self.session_id,
+                "answer": answer,
+                "domain": self.domain}
+        return get_response(json.dumps(data))
 
+    def current_question(self):
+        """
+        Retrieves information about the current question.
+        """
+        data = {"action": "current",
+                "session-id": self.session_id,
+                "domain": self.domain}
+        return get_response(json.dumps(data))
 
-def current_question(session_id, domain):
-    """
-    Retrieves information about the current question.
-    """
-    data = {"action": "current",
-            "session-id": session_id,
-            "domain": domain}
-    return get_response(json.dumps(data))
-
-
-def next(session_id, domain):
-    """
-    Moves to the next question.
-    """
-    data = {"action": "next",
-            "session-id": session_id,
-            "domain": domain}
-    return get_response(json.dumps(data))
+    def next(self):
+        """
+        Moves to the next question.
+        """
+        data = {"action": "next",
+                "session-id": self.session_id,
+                "domain": self.domain}
+        return get_response(json.dumps(data))
