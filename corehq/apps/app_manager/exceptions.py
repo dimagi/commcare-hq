@@ -112,10 +112,6 @@ class SuiteValidationError(SuiteError):
     pass
 
 
-class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
-    pass
-
-
 class LocationXpathValidationError(AppManagerException):
     pass
 

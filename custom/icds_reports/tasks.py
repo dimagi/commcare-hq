@@ -24,14 +24,19 @@ from gevent.pool import Pool
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
+from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.userreports.models import get_datasource_config
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    InvalidUCRData,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
@@ -166,6 +171,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'child_list', 'name': 'static-child_health_cases'},
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
+    {'type': 'ls_usage','name':'static-ls_usage_forms'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
     {'type': 'cbe_form', 'name': 'static-cbe_form'},
@@ -683,51 +689,70 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
 )
-def recalculate_stagnant_cases():
-    domain = 'icds-cas'
-    config_ids = [
-        'static-icds-cas-static-ccs_record_cases_monthly_v2',
-        'static-icds-cas-static-child_cases_monthly_v2',
-    ]
-
-    track_case_load = case_load_counter("find_stagnant_cases", domain)
-    stagnant_cases = set()
-    for config_id in config_ids:
-        config, is_static = get_datasource_config(config_id, domain)
-        adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
-        case_ids = _find_stagnant_cases(adapter)
-        num_cases = len(case_ids)
-        adapter.track_load(num_cases)
-        celery_task_logger.info(
-            "Found {} stagnant cases in config {}".format(num_cases, config_id)
-        )
-        stagnant_cases = stagnant_cases.union(set(case_ids))
-        celery_task_logger.info(
-            "Total number of stagant cases is now {}".format(len(stagnant_cases))
-        )
-
-    case_accessor = CaseAccessors(domain)
-    num_stagnant_cases = len(stagnant_cases)
-    current_case_num = 0
-    for case_ids in chunked(stagnant_cases, 1000):
-        current_case_num += len(case_ids)
-        cases = case_accessor.get_cases(list(case_ids))
-        for case in cases:
-            track_case_load()
-            publish_case_saved(case, send_post_save_signal=False)
-        celery_task_logger.info(
-            "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
-        )
-
-
-def _find_stagnant_cases(adapter):
+def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
     stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
+        'static-icds-cas-static-child_cases_monthly_v2',
+        force_to_datetime(latest_datetime)
+    )
+
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
+
+
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    queue='background_queue',
+    run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
+    acks_late=True
+)
+def recalculate_stagnant_ccs_record_cases(latest_datetime='1970-01-01'):
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
+    last_processed_datetime = _recalculate_stagnant_cases(
+        'static-icds-cas-static-ccs_record_cases_monthly_v2',
+        force_to_datetime(latest_datetime)
+    )
+    if stagnant_date < last_processed_datetime:
+        # We've processed past the point of "stagnant"
+        return
+    if latest_datetime == last_processed_datetime:
+        notify_exception(None, message="BATCH_SIZE not large enough in stagnant case calculations")
+        return
+    recalculate_stagnant_ccs_record_cases.delay(last_processed_datetime)
+
+
+def _recalculate_stagnant_cases(config_id, latest_datetime):
+    config, is_static = get_datasource_config(config_id, DASHBOARD_DOMAIN)
+    adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
+    num_cases = 0
+    last_processed_datetime = latest_datetime
+    for case_id, inserted_at in _find_stagnant_cases(adapter, latest_datetime):
+        AsyncIndicator.update_record(case_id, 'CommCareCase', DASHBOARD_DOMAIN, [config_id])
+        num_cases += 1
+        last_processed_datetime = max(last_processed_datetime, inserted_at)
+    adapter.track_load(num_cases)
+    celery_task_logger.info(
+        f"Found {num_cases} stagnant cases in config {config_id}"
+        "between {latest_datetime} and {last_processed_datetime}"
+    )
+    return last_processed_datetime
+
+
+def _find_stagnant_cases(adapter, latest_datetime):
+    BATCH_SIZE = 10000
     table = adapter.get_table()
-    query = adapter.get_query_object()
-    query = query.with_entities(table.columns.doc_id).filter(
-        table.columns.inserted_at <= stagnant_date
-    ).distinct()
-    return query.all()
+    query_object = adapter.get_query_object()
+    return (
+        query_object.with_entities(table.c.doc_id, table.c.inserted_at).filter(
+            table.c.inserted_at >= latest_datetime,
+            table.c.inserted_at <= datetime.utcnow()  # This filter is used to force postgres to use the index
+        ).distinct().order_by(table.c.inserted_at)[:BATCH_SIZE]
+    )
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
@@ -1513,10 +1538,13 @@ def _child_health_monthly_aggregation(day, state_ids):
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
 
+    greenlets = []
     pool = Pool(10)
     for query, params in helper.pre_aggregation_queries():
-        pool.spawn(_child_health_helper, query, params)
-    pool.join()
+        greenlets.append(pool.spawn(_child_health_helper, query, params))
+    pool.join(raise_error=True)
+    for g in greenlets:
+        g.get()
 
 
 @task
@@ -1569,8 +1597,19 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
+    data_not_in_ucr = get_data_not_in_ucr(status_record)
+    doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
+    doc_ids_in_pillow_error = set(
+        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
+    invalid_doc_ids = set(
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id'), flat=True)
+    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
+
     # republish_kafka_changes
-    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+        if doc_id in known_bad_doc_ids:
+            # These docs will either get retried or are invalid
+            continue
         number_documents_missing += 1
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
@@ -1627,7 +1666,7 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return dict(cursor.fetchall())
+        return {row[0] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):

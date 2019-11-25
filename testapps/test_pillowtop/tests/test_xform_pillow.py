@@ -9,7 +9,6 @@ from mock import patch
 
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import FormES
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
@@ -24,9 +23,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.es.elasticsearch import ConnectionError
-from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from corehq.util.elastic import ensure_index_deleted, reset_es_index
+from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -54,10 +52,8 @@ class XFormPillowTest(TestCase):
     def setUp(self):
         super().setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
-            initialize_index_and_mapping(self.elasticsearch, XFORM_INDEX_INFO)
-        delete_es_index(XFORM_INDEX_INFO.index)
+        self.elasticsearch = get_es_new()
+        reset_es_index(XFORM_INDEX_INFO)
 
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
