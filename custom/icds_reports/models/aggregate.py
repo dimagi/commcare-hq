@@ -50,6 +50,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
+    DashboardActivityReportAggregate
 )
 
 
@@ -1492,3 +1493,5 @@ class DashboardUserActivityReport(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_DASHBOARD_ACTIVITY
+
+    _agg_helper_cls = DashboardActivityReportAggregate
