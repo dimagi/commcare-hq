@@ -28,7 +28,11 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     for pre_id, post_id in pre_to_post_map.items():
         if pre_id in overrides_by_pre_id:
             if post_id != overrides_by_pre_id[pre_id].post_id:
-                errors.append(pre_id)
+                errors.append("Attempt to change {} from {} to {}".format(
+                    pre_id,
+                    overrides_by_pre_id[pre_id].post_id,
+                    post_id
+                ))
         else:
             new_overrides.append(ResourceOverride(
                 domain=domain,
@@ -44,8 +48,8 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
 
     if errors:
         raise ResourceOverrideError("""
-            Cannot change override: domain {}, app {}, pre_ids {}
-        """.strip().format(domain, app_id, ", ".join(errors)))
+            Cannot update overrides for domain {}, app {}, errors:\n{}
+        """.strip().format(domain, app_id, "\n".join(errors)))
 
 
 @quickcache(['domain', 'app_id'], timeout=1 * 60 * 60)
