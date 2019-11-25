@@ -1,4 +1,5 @@
 import datetime
+import doctest
 import random
 import string
 from contextlib import contextmanager
@@ -430,3 +431,9 @@ def get_sql_products():
     finally:
         for p in products:
             p.delete()
+
+
+def test_doctests():
+    import corehq.apps.commtrack.fixtures
+    results = doctest.testmod(corehq.apps.commtrack.fixtures)
+    assert results.failed == 0
