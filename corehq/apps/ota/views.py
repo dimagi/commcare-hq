@@ -296,6 +296,7 @@ def heartbeat(request, domain, app_build_id):
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     app_id = request.GET.get('app_id', '')
+    build_profile_id = request.GET.get('build_profile_id', '')
 
     info = {"app_id": app_id}
     try:
@@ -312,18 +313,18 @@ def heartbeat(request, domain, app_build_id):
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             couch_user = request.couch_user
             try:
-                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+                update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request)
             except ResourceConflict:
                 # https://sentry.io/dimagi/commcarehq/issues/521967014/
                 couch_user = CouchUser.get(couch_user.user_id)
-                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+                update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request)
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)
 
 
-def update_user_reporting_data(app_build_id, app_id, couch_user, request):
+def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request):
     def _safe_int(val):
         try:
             return int(val)
@@ -339,7 +340,7 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     save_user = False
     # if mobile cannot determine app version it sends -1
     if app_version and app_version > 0:
-        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+        save_user = update_latest_builds(couch_user, app_id, build_profile_id, datetime.utcnow(), app_version)
     try:
         last_sync = adjust_text_to_datetime(last_sync_time)
     except iso8601.ParseError:
