@@ -148,7 +148,7 @@ class SumWhenTemplateFactory(object):
         'open_female_resident': OpenFemaleResidentSpec,
         'open_male_disabled': OpenMaleDisabledSpec,
         'open_male_hh_caste': OpenMaleHHCasteSpec,
-        'open_male_hh_caste_noot': OpenMaleHHCasteNotSpec,
+        'open_male_hh_caste_not': OpenMaleHHCasteNotSpec,
         'open_male_hh_minority': OpenMaleHHMinoritySpec,
         'open_male_migrant': OpenMaleMigrantSpec,
         'open_male_migrant_distinct_from': OpenMaleMigrantDistinctFromSpec,
