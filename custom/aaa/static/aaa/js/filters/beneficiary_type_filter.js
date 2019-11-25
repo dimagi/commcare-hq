@@ -1,10 +1,11 @@
-hqDefine('aaa/js/filters/beneficiary_type_filter', [
+define('aaa/js/filters/beneficiary_type_filter', [
     'jquery',
     'knockout',
 ], function (
     $,
     ko
 ) {
+    window.console.log("exec - beneficiary_type_filter");
     return {
         viewModel: function (params) {
             var self = {};

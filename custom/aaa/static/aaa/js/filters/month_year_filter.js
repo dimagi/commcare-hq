@@ -1,4 +1,4 @@
-hqDefine('aaa/js/filters/month_year_filter', [
+define('aaa/js/filters/month_year_filter', [
     'jquery',
     'knockout',
     'underscore',
@@ -9,6 +9,7 @@ hqDefine('aaa/js/filters/month_year_filter', [
     _,
     moment
 ) {
+    window.console.log("exec - month_year_filter");
     return {
         viewModel: function (params) {
             var self = {};
