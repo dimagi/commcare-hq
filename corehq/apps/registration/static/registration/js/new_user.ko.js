@@ -4,7 +4,6 @@ hqDefine('registration/js/new_user.ko', [
     'underscore',
     'jquery.rmi/jquery.rmi',
     'analytix/js/kissmetrix',
-    'analytix/js/appcues',
     'hqwebapp/js/initial_page_data',
     'nic_compliance/js/encoder',
     'jquery-ui/ui/effect',
@@ -17,7 +16,6 @@ hqDefine('registration/js/new_user.ko', [
     _,
     RMI,
     kissmetrics,
-    appcues,
     initialPageData,
     nicEncoder
 ) {
@@ -55,17 +53,17 @@ hqDefine('registration/js/new_user.ko', [
         module.submitSuccessAnalytics = function (data) {
             kissmetrics.track.event("Account Creation was Successful");
 
-            var appcuesEvent = "Assigned user to Appcues test",
-                appcuesData = {
-                    'Appcues test': data.appcuesAbTest,
-                };
-
-            appcues.identify(data.email, appcuesData);
-            appcues.trackEvent(appcuesEvent, appcuesData);
-
-            kissmetrics.identify(data.email);
-            kissmetrics.identifyTraits(appcuesData);
-            kissmetrics.track.event(appcuesEvent, appcuesData);
+            // var appcuesEvent = "Assigned user to Appcues test",
+            //     appcuesData = {
+            //         'Appcues test': data.appcuesAbTest,
+            //     };
+            //
+            // appcues.identify(data.email, appcuesData);
+            // appcues.trackEvent(appcuesEvent, appcuesData);
+            //
+            // kissmetrics.identify(data.email);
+            // kissmetrics.identifyTraits(appcuesData);
+            // kissmetrics.track.event(appcuesEvent, appcuesData);
 
             if (data.deniedEmail) {
                 kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
@@ -371,7 +369,7 @@ hqDefine('registration/js/new_user.ko', [
                             module.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
-                                appcuesAbTest: response.appcues_ab_test,
+                                // appcuesAbTest: response.appcues_ab_test,
                             }));
                         }
                     },
