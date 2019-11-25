@@ -29,39 +29,11 @@ This API is currently highly beta and could use some hardening.
 """
 
 
-class TouchformsAuth(object):
-    """
-    Used to authenticate with touchforms
-    """
-    def __init__(self, type, key):
-        self.type = type
-        self.key = key
-        
-    def to_dict(self):
-        return {'type': self.type, 'key': self.key}
-
-
-class DjangoAuth(TouchformsAuth):
-    
-    def __init__(self, key):
-        super(DjangoAuth, self).__init__("django-session", key)
-            
-
-class DigestAuth(TouchformsAuth):
-    
-    def __init__(self, username, password):
-        self.username = username
-        super(DigestAuth, self).__init__("http-digest", password)
-        
-    def to_dict(self):
-        return {'type': self.type, 'key': self.key, 'username': self.username}
-
-
 class TouchformsError(ValueError):
 
     def __init__(self, *args, **kwargs):
         self.response_data = kwargs.pop('response_data', {})
-        super(TouchformsError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class InvalidSessionIdException(TouchformsError):
@@ -170,20 +142,15 @@ class XformsEvent(object):
         
         Kept for backwards compatibility. Should use get_text_prompt, below.
         """
-        return self.get_text_prompt(None)
+        return self.get_text_prompt()
     
-    def get_text_prompt(self, select_display_func=None):
+    def get_text_prompt(self):
         """
         Get a text-only prompt for this. Used in pure text (or sms) mode.
         
-        Allows you to pass in a function to override how selects are displayed.
-        
-        The signature of that function should take in the prompt and choice list
-        and return a string. The default is select_to_text_compact
         """
-        display_func = select_display_func or select_to_text_compact
         if self.datatype == "select" or self.datatype == "multiselect":
-            return display_func(self.caption, self._dict["choices"])
+            return select_to_text_compact(self.caption, self._dict["choices"])
         else:
             return self.caption
 
@@ -198,38 +165,6 @@ def select_to_text_compact(caption, choices):
     return "%s %s." % (caption,
                       ", ".join(["%s:%s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
-
-
-def select_to_text_vals_only(caption, choices):
-    """
-    A function to convert a select item to text in a compact format.
-    Format is:
-    
-    [question], choices: [choice1], [choice2]...
-    """
-    return "%s, choices: %s" % (caption, ", ".join(choices)) 
-                  
-
-def select_to_text_readable(caption, choices):
-    """
-    A function to convert a select item to text in a more verbose, readable 
-    format.
-    Format is:
-    
-    [question] Send 1 for [choice1], 2 for [choice2]...
-    """
-    return "%s Send %s" % (caption,
-                      ", ".join(["%s for %s" % (i+1, val) for i, val in \
-                                 enumerate(choices)])) 
-
-
-def select_to_text_caption_only(caption, choices):
-    """
-    A select choices => text function that ignores choice captions entirely.
-    All presentation of choices must be included in the main question caption.
-    A DRY violation, for sure, but gives the maximum flexibility
-    """
-    return caption
 
 
 class XformsResponse(object):
@@ -375,18 +310,6 @@ def get_raw_instance(session_id, domain=None, auth=None):
         else:
             raise TouchformsError(error)
     return response
-
-
-def start_form_session(form_path, content=None, language="", session_data={}):
-    """
-    Start a new form session
-    """
-    # TODO: this method has been deprecated and the config object
-    # should just be used directly. Temporarily left to support legacy code.
-    return XFormsConfig(form_path=form_path,
-                        instance_content=content,
-                        session_data=session_data,
-                        language=language).start_session()
 
 
 def answer_question(session_id, answer, domain, auth=None):
