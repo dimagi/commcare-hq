@@ -1,8 +1,5 @@
 import re
-import uuid
 from xml.etree.cElementTree import XML, tostring
-
-from django.conf import settings
 
 from dimagi.utils.parsing import json_format_datetime
 
@@ -20,7 +17,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 
-from .models import XFORMS_SESSION_SMS, SQLXFormsSession
+from .models import SQLXFormsSession
 
 COMMCONNECT_DEVICE_ID = "commconnect"
 
