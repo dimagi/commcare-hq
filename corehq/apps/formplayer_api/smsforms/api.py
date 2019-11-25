@@ -14,6 +14,7 @@ import requests
 from requests import HTTPError
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
+from dimagi.utils.logging import notify_exception
 
 
 class TouchformsError(ValueError):
@@ -44,7 +45,8 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
 
-        return _get_response(self._get_start_session_data())
+        return _get_response(self._get_start_session_data(),
+                             user_id=self.session_data.get('user_id'))
 
     def _get_start_session_data(self):
         """
@@ -193,18 +195,27 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def _get_response(data):
+def _get_response(data, user_id):
     try:
-        response_json = _post_data(data)
+        response_json = _post_data(data, user_id)
     except socket.error:
         return XformsResponse.server_down()
     else:
         return XformsResponse(response_json)
 
 
-def _post_data(data):
+def _post_data(data, user_id):
     if not data.get("domain"):
         raise ValueError("Expected domain")
+
+    if not user_id:
+        notify_exception(
+            None,
+            "Making smsforms request w/o user_id. Will result in non-sticky session.",
+            details={
+                'session-id': data.get('session-id'),
+            }
+        )
 
     data = _get_formplayer_session_data(data)
     data_bytes = json.dumps(data).encode('utf-8')
@@ -215,7 +226,8 @@ def _post_data(data):
             "Content-Type": "application/json",
             "content-length": str(len(data_bytes)),
             "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
-            "X-FORMPLAYER-SESSION": data.get('session-id'),
+            # todo: stop defaulting to session-id
+            "X-FORMPLAYER-SESSION": user_id or data.get('session-id'),
         }
     )
     if response.status_code == 404:
@@ -243,9 +255,23 @@ def _get_formplayer_session_data(data):
 
 
 class FormplayerInterface:
-    def __init__(self, session_id, domain):
+    def __init__(self, session_id, domain, user_id=Ellipsis):
         self.session_id = session_id
         self.domain = domain
+        self._user_id = user_id
+
+    @property
+    def user_id(self):
+        from corehq.apps.smsforms.models import SQLXFormsSession
+
+        if self._user_id is Ellipsis:
+            session = SQLXFormsSession.by_session_id(self.session_id)
+            if session:
+                self._user_id = session.user_id
+            else:
+                self._user_id = None
+
+        return self._user_id
 
     def get_raw_instance(self):
         """
@@ -259,7 +285,7 @@ class FormplayerInterface:
             "domain": self.domain
         }
 
-        response = _post_data(data)
+        response = _post_data(data, self.user_id)
         if "error" in response:
             error = response["error"]
             if error == "Form session not found":
@@ -276,7 +302,7 @@ class FormplayerInterface:
                 "session-id": self.session_id,
                 "answer": answer,
                 "domain": self.domain}
-        return _get_response(data)
+        return _get_response(data, self.user_id)
 
     def current_question(self):
         """
@@ -285,7 +311,7 @@ class FormplayerInterface:
         data = {"action": "current",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return _get_response(data)
+        return _get_response(data, self.user_id)
 
     def next(self):
         """
@@ -294,4 +320,4 @@ class FormplayerInterface:
         data = {"action": "next",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return _get_response(data)
+        return _get_response(data, self.user_id)
