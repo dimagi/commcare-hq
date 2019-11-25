@@ -5,7 +5,7 @@ define('aaa/js/filters/beneficiary_type_filter', [
     $,
     ko
 ) {
-    window.console.log("exec - beneficiary_type_filter");
+    console.log("exec - beneficiary_type_filter");
     return {
         viewModel: function (params) {
             var self = {};

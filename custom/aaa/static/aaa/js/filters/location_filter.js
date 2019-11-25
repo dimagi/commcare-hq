@@ -16,7 +16,7 @@ define('aaa/js/filters/location_filter', [
     locationModel
 ) {
 
-    window.console.log("exec - location_filter");
+    console.log("exec - location_filter");
     return {
         viewModel: function (params) {
             var self = {};
