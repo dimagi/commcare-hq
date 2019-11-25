@@ -10,7 +10,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.haveAccessToAllLocations = haveAccessToAllLocations;
     $scope.haveAccessToFeatures = haveAccessToFeatures;
 
-    var checkCollapse = function(reports) {
+    var checkCollapse = function (reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
         return !path.length > 0;
     };

@@ -11,7 +11,7 @@ NavMenuOpenerController.$inject = ['$scope'];
 
 window.angular.module('icdsApp').directive("navMenuOpener",  ['templateProviderService', function (templateProviderService) {
     return {
-        restrict:'E',
+        restrict: 'E',
         bindToController: true,
         templateUrl: function () {
             return templateProviderService.getTemplate('nav-menu-opener.directive');
