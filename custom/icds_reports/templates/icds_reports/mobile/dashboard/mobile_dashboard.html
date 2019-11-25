@@ -9,8 +9,13 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.css' %}"/>
   {% endcompress %}
+
+  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
+
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
 {% compress js %}
