@@ -41,7 +41,7 @@ class XFormsConfig(object):
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException(
                 "Can specify file path or content but not both!\n"
-                "File Path: %s, Form Content: %s" % (form_path, form_content))
+                "File Path: {}, Form Content: {}".format(form_path, form_content))
 
         self.form_path = form_path
         self.form_content = form_content
@@ -149,7 +149,7 @@ def select_to_text_compact(caption, choices):
     [question] 1:[choice1], 2:[choice2]...
     """
     return "{} {}.".format(
-        caption, ", ".join(["%s:%s" % (i+1, val) for i, val in enumerate(choices)]))
+        caption, ", ".join(["{}:{}".format(i+1, val) for i, val in enumerate(choices)]))
 
 
 class XformsResponse(object):
@@ -203,8 +203,9 @@ class XformsResponse(object):
             self.args = datadict.get("args")
             self.url = datadict.get("url")
         elif self.event is None:
-            raise TouchformsError("unhandleable response: %s" % json.dumps(datadict),
-                response_data=datadict)
+            raise TouchformsError(
+                "unhandleable response: {}"
+                .format(json.dumps(datadict), response_data=datadict))
 
     @classmethod
     def server_down(cls):
@@ -230,7 +231,8 @@ def formplayer_post_data_helper(d, content_type, url):
     if response.status_code == 404:
         raise Http404(response.reason)
     if 500 <= response.status_code < 600:
-        http_error_msg = '%s Server Error: %s for url: %s' % (response.status_code, response.reason, response.url)
+        http_error_msg = '{} Server Error: {} for url: {}'.format(
+            response.status_code, response.reason, response.url)
         raise HTTPError(http_error_msg, response=response)
     return response.json()
 
@@ -239,7 +241,7 @@ def post_data(data, content_type="application/json"):
     try:
         d = json.loads(data)
     except TypeError:
-        raise BadDataError('unhandleable touchforms query: %s' % data)
+        raise BadDataError('unhandleable touchforms query: {}'.format(data))
 
     domain = d.get("domain")
 
@@ -247,7 +249,8 @@ def post_data(data, content_type="application/json"):
         raise ValueError("Expected domain")
 
     d = get_formplayer_session_data(d)
-    return formplayer_post_data_helper(d, content_type, get_formplayer_url() + "/" + d["action"])
+    return formplayer_post_data_helper(
+        d, content_type, "{}/{}".format(get_formplayer_url(), d["action"]))
 
 
 def get_formplayer_session_data(data):
