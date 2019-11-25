@@ -175,3 +175,34 @@ under `READ`:
 * There can only be one master database (not a standby database)
 * All standby databases must point to the same master database
 * If a master database is in this list, all standbys must point to this master
+
+Using standbys with the plproxy cluster
+.......................................
+The plproxy cluster needs some special attention since the queries are routed by plproxy and not by
+Django. In order to do this routing there are a number of additional pieces that are needed:
+
+1. Separate plproxy cluster configuration which points the shards to the appropriate standby node instead
+of the primary node.
+2. Duplicate SQL functions that make use of this new plproxy cluster.
+
+In order ot maintain the SQL function naming the new plproxy cluster must be in a separate database.
+
+Steps to setup:
+
+1. Add all the standby shard databases to the Django `DATABASES` setting as described above.
+
+2. Create a new database for the standby plproxy cluster configuration and functions and add it to `DATABASES`
+as shown below:
+
+.. code-block:: python
+
+    DATABASES = {
+        'proxy_standby': {
+            ...
+            'PLPROXY': {
+                'PROXY_FOR_STANDBYS': True
+            }
+        }
+    }
+
+3. Run the Django migrations to create the SQL functions in the new standby proxy database.

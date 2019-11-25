@@ -237,15 +237,25 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
 
     :raises: PartitionValidationError if a partial set of standby databases could be found.
     """
+
+    proxy_for_standbys = None
+    for db_alias, config in settings.DATABASES.items():
+        if config.get('PLPROXY', {}).get('PROXY_FOR_STANDBYS'):
+            proxy_for_standbys = db_alias
+            break
+
+    if not proxy_for_standbys:
+        return
+
     standbys_by_primary = {
         config['STANDBY']['MASTER']: db
         for db, config in settings.DATABASES.items()
         if config.get('STANDBY', {}).get('MASTER')
     }
-    if not standbys_by_primary:
-        return
 
-    standby_db_config = {}
+    standby_db_config = {
+        proxy_for_standbys: settings.DATABASES[proxy_for_standbys]
+    }
 
     def _convert_primary_config(primary_db):
         standby = standbys_by_primary.get(primary_db)
@@ -265,16 +275,9 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         for db in primary_config.form_processing_dbs
     ]
 
-    if any(standbys_found) and not all(standbys_found):
+    if not all(standbys_found):
         missing = [db for found, db in zip(standbys_found, primary_config.form_processing_dbs) if not found]
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
-
-    standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
-    standby_db_config[primary_config.proxy_db] = {
-        'PLPROXY': {
-            'PROXY': True
-        }
-    }
 
     return PlProxyConfig.from_dict(standby_db_config, cluster_name=settings.PL_PROXY_STANDBY_CLUSTER_NAME)
 

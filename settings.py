@@ -243,6 +243,7 @@ HQ_APPS = (
     'corehq.sql_db',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
+    'corehq.sql_proxy_standby_accessors',
     'couchforms',
     'couchexport',
     'dimagi.utils',

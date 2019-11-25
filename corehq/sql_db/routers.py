@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections
 
+from corehq.sql_db.config import plproxy_standby_config
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
     ICDS_UCR_CITUS_ENGINE_ID,
@@ -16,6 +17,7 @@ from corehq.sql_db.util import select_db_for_read
 from .config import plproxy_config
 
 PROXY_APP = 'sql_proxy_accessors'
+PROXY_STANDBY_APP = 'sql_proxy_standby_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
@@ -70,10 +72,12 @@ def allow_migrate(db, app_label, model_name=None):
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return app_label != PROXY_APP and db in (DEFAULT_DB_ALIAS, None)
+        return app_label not in (PROXY_APP, PROXY_STANDBY_APP) and db in (DEFAULT_DB_ALIAS, None)
 
     if app_label == PROXY_APP:
         return db == plproxy_config.proxy_db
+    if app_label == PROXY_STANDBY_APP:
+        return plproxy_standby_config and db == plproxy_standby_config.proxy_db
     elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
