@@ -185,7 +185,7 @@ Django. In order to do this routing there are a number of additional pieces that
 of the primary node.
 2. Duplicate SQL functions that make use of this new plproxy cluster.
 
-In order ot maintain the SQL function naming the new plproxy cluster must be in a separate database.
+In order to maintain the SQL function naming the new plproxy cluster must be in a separate database.
 
 Steps to setup:
 
