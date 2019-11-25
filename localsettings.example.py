@@ -96,7 +96,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@example.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@example.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@example.com']
-EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@example.com']
 
 SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
