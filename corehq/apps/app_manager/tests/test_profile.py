@@ -27,9 +27,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             name="TÉST ÁPP",
             domain="potter",
             langs=['en'],
-            build_profiles={
-                self.build_profile_id: BuildProfile(langs=['en'], name='en-profile'),
-            }
+            build_profiles={self.build_profile_id: BuildProfile(langs=['en'], name='en-profile')}
         )
 
     def _test_profile(self, app):
