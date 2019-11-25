@@ -105,7 +105,6 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def add_missing_users(self):
         return """
-        
         INSERT INTO "{tablename}" (
             username, state_id, district_id,block_id,
             user_level,date
@@ -121,17 +120,17 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         query_param = {'date': self.date,
                        'last_agg_date': self.last_agg_date}
         return """
-        UPDATE "{tablename}" user_activity SET 
-            location_launched = ut.location_launched, 
+        UPDATE "{tablename}" user_activity SET
+            location_launched = ut.location_launched,
             last_activity = ut.last_activity
         FROM  (
-        SELECT 
+        SELECT
             username,
             location_launched,
             last_activity
             FROM "{parent_tablename}" WHERE date = %(last_agg_date)s
             )ut
-        WHERE user_activity.username = ut.username 
+        WHERE user_activity.username = ut.username
         """.format(
             tablename=self.tablename,
             parent_tablename=self.aggregate_parent_table
@@ -142,7 +141,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         latest_month = (last_time_to_consider - timedelta(days=1)).replace(day=1)
 
         yield """
-        UPDATE "{tablename}" user_activity 
+        UPDATE "{tablename}" user_activity
             SET location_launched = CASE WHEN num_launched_blocks>0 THEN TRUE ELSE FALSE END
         FROM (
             SELECT
@@ -170,9 +169,12 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         # SET
         #     last_activity
         # from (
-        # SELECT audit.username, max(audit.time_of_use) from {tablename} user_activity left join icds_audit_entry_record audit
+        # SELECT audit.username, max(audit.time_of_use) from {tablename} user_activity left join
+        # icds_audit_entry_record audit
         # on user_activity.username = audit.username
-        # group by username where (user_activity.last_activity is not null time_of_use>user_activity.last_activity) or
+        # group by username where (user_activity.last_activity is not null AND
+        #                          time_of_use>user_activity.last_activity
+        #                           ) or
         #                         ( user_activity.last_activity is null)
         # )ut
         # where user_activity.username = ut.username
@@ -183,10 +185,10 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         SET
             last_activity = ut.last_used
         FROM (
-            SELECT 
+            SELECT
                 username,
                 max(time_of_use)  as last_used
-            FROM icds_audit_entry_record 
+            FROM icds_audit_entry_record
             WHERE username IN (
                 SELECT username FROM "{tablename}" WHERE last_activity IS NULL
                 ) AND time_of_use <= %(last_time_to_consider)s
@@ -195,7 +197,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         WHERE user_activity.username = ut.username
         """.format(
             tablename=self.tablename
-        ),{
+        ), {
             'last_time_to_consider': last_time_to_consider
         }
 
@@ -204,13 +206,13 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         SET
             last_activity = ut.last_used
         FROM (
-            SELECT 
+            SELECT
                 username,
                 max(time_of_use)  as last_used
-            FROM icds_audit_entry_record 
+            FROM icds_audit_entry_record
             WHERE username IN (
-                SELECT username FROM "{tablename}" WHERE last_activity IS NOT NULL)  AND 
-                time_of_use >= %(last_agg_date)s AND 
+                SELECT username FROM "{tablename}" WHERE last_activity IS NOT NULL)  AND
+                time_of_use >= %(last_agg_date)s AND
                 time_of_use <= %(last_time_to_consider)s
             GROUP BY username
         ) ut
@@ -221,12 +223,3 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             'last_agg_date': self.last_agg_date,
             'last_time_to_consider': last_time_to_consider
         }
-
-
-
-
-
-
-
-
-
