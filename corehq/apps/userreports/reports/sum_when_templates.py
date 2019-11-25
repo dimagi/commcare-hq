@@ -186,4 +186,4 @@ class ReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
 
 class ReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
     type = TypeProperty("referral_health_problem_3_problems")
-    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR OR referral_health_problem ~ ?"
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR referral_health_problem ~ ?"
