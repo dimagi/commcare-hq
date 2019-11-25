@@ -24,8 +24,10 @@ from django.views import View
 from django_otp import match_token
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
+from django_prbac.utils import has_privilege
 
 # External imports
+from corehq import privileges
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -84,6 +86,19 @@ def _page_is_whitelist(path, domain):
     ])
 
 
+def _can_access_project_page(request):
+    return has_privilege(request, privileges.PROJECT_ACCESS) or (
+        hasattr(request, 'always_allow_project_access') and request.always_allow_project_access
+    )
+
+
+def _redirect_to_project_access_upgrade(request):
+    from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
+    return SubscriptionUpgradeRequiredView().get(
+        request, request.domain, privileges.PROJECT_ACCESS
+    )
+
+
 def login_and_domain_required(view_func):
 
     @wraps(view_func)
@@ -115,6 +130,8 @@ def login_and_domain_required(view_func):
                         template='two_factor/core/otp_required.html',
                         status=403,
                     )
+                elif not _can_access_project_page(req):
+                    return _redirect_to_project_access_upgrade(req)
                 else:
                     return view_func(req, domain_name, *args, **kwargs)
 
@@ -123,6 +140,8 @@ def login_and_domain_required(view_func):
                 not domain.restrict_superusers
             ) and user.is_superuser:
                 # superusers can circumvent domain permissions.
+                if not _can_access_project_page(req):
+                    return _redirect_to_project_access_upgrade(req)
                 return view_func(req, domain_name, *args, **kwargs)
             elif domain.is_snapshot:
                 # snapshots are publicly viewable
