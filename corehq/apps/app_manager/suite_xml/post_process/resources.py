@@ -30,7 +30,7 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
             if post_id != overrides_by_pre_id[pre_id].post_id:
                 errors.append(pre_id)
         else:
-            new_overrides.append(ResourceOverride.objects.create(
+            new_overrides.append(ResourceOverride(
                 domain=domain,
                 app_id=app_id,
                 root_name=XFormResource.ROOT_NAME,
@@ -39,8 +39,7 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
             ))
 
     if new_overrides and not errors:
-        for override in new_overrides:
-            override.save()
+        ResourceOverride.objects.bulk_create(new_overrides)
         get_xform_resource_overrides.clear(domain, app_id)
 
     if errors:
