@@ -14,5 +14,6 @@ hqDefine("hqwebapp/js/base_main", [
     'analytix/js/kissmetrix',
     'hqwebapp/js/mobile_experience_warning',
 ], function() {
+    window.console.log("exec - base_main");
     // nothing to do, this is just to define the dependencies for hqwebapp/base.html
 });

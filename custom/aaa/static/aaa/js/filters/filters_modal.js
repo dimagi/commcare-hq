@@ -1,4 +1,4 @@
-hqDefine('aaa/js/filters/filters_modal', [
+define('aaa/js/filters/filters_modal', [
     'jquery',
     'knockout',
     'underscore',
@@ -7,6 +7,7 @@ hqDefine('aaa/js/filters/filters_modal', [
     ko,
     _
 ) {
+    window.console.log("exec - filters_modal");
     return {
         viewModel: function (params) {
             var self = {};

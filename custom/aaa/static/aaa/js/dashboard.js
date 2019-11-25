@@ -15,6 +15,7 @@ define("aaa/js/dashboard", [
     locationFilter,
     beneficiaryTypeFilter
 ) {
+    window.console.log("exec - dashboard");
     var components = {
         'filters-modal': filtersModal,
         'month-year-filter': monthYearFilter,

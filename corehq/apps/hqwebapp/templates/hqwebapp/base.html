@@ -421,9 +421,11 @@
         requirejs([
           'hqwebapp/js/common',
         ], function() {
+          console.log("Loaded common");
           requirejs([
             'hqwebapp/js/base_main',
           ], function () {
+            console.log("Loaded base_main");
             requirejs(['{{ requirejs_main }}'], function () {
               console.log("Loaded requirejs main module: {{ requirejs_main }}");
             });

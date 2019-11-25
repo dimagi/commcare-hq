@@ -1,4 +1,4 @@
-hqDefine('aaa/js/filters/location_filter', [
+define('aaa/js/filters/location_filter', [
     'jquery',
     'knockout',
     'underscore',
@@ -15,6 +15,8 @@ hqDefine('aaa/js/filters/location_filter', [
     reachUtils,
     locationModel
 ) {
+
+    window.console.log("exec - location_filter");
     return {
         viewModel: function (params) {
             var self = {};
