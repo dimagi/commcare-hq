@@ -95,8 +95,8 @@ PARTITION_CONFIG_WITH_STANDBYS = databases = _get_partition_config({
     'db2': [2, 3],
 })
 PARTITION_CONFIG_WITH_STANDBYS.update({
-    'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
-    'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+    'db1_standby': {'NAME': 'db1', 'STANDBY': {'MASTER': 'db1'}},
+    'db2_standby': {'NAME': 'db2', 'STANDBY': {'MASTER': 'db2'}},
 })
 
 

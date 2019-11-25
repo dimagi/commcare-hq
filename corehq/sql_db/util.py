@@ -13,7 +13,7 @@ from django.db.utils import InterfaceError as DjangoInterfaceError
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
-from corehq.sql_db.config import plproxy_config
+from corehq.sql_db.config import plproxy_config, plproxy_standby_config
 from corehq.util.datadog.utils import load_counter_for_model
 from corehq.util.quickcache import quickcache
 
@@ -281,6 +281,27 @@ def get_replication_delay_for_standby(db_alias):
         return -1
 
 
+def get_replication_delay_for_shard_standbys():
+    db_to_django_alias = {
+        settings.DATABASES[db_alias]['NAME']: db_alias
+        for db_alias in plproxy_standby_config.form_processing_dbs
+    }
+
+    return {
+        db_to_django_alias[row[0]]: row[1]
+        for row in _get_replication_delay_results_from_proxy()
+    }
+
+
+def _get_replication_delay_results_from_proxy():
+    try:
+        with db.connections[plproxy_standby_config.proxy_db].cursor() as cursor:
+            cursor.execute('select * from get_replication_delay()')
+            return cursor.fetchall()
+    except OperationalError:
+        return []
+
+
 @memoized
 def get_acceptible_replication_delays():
     """This returns a dict mapping DB alias to max replication delay.
@@ -307,10 +328,22 @@ def get_standbys_with_acceptible_delay():
     """:returns: set of database aliases that are configured as standbys and have replication
                  delay below the configured threshold
     """
-    delays_by_db = get_acceptible_replication_delays()
+    acceptable_delays_by_db = get_acceptible_replication_delays()
+    standbys = get_standby_databases()
+
+    delays_by_db = {}
+    if plproxy_standby_config:
+        standbys -= set(plproxy_standby_config.form_processing_dbs)
+        delays_by_db = get_replication_delay_for_shard_standbys()
+
+    delays_by_db.update({
+        db_: get_replication_delay_for_standby(db_)
+        for db_ in standbys
+    })
+
     return {
-        db_ for db_ in get_standby_databases()
-        if 0 <= get_replication_delay_for_standby(db_) <= delays_by_db[db_]
+        db_ for db_, delay in delays_by_db.items()
+        if 0 <= delay <= acceptable_delays_by_db[db_]
     }
 
 
