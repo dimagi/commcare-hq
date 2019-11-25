@@ -94,7 +94,7 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
 
-        return get_response(json.dumps(self.get_touchforms_dict()))
+        return _get_response(json.dumps(self.get_touchforms_dict()))
 
 
 class XformsEvent(object):
@@ -237,7 +237,7 @@ def formplayer_post_data_helper(d, content_type, url):
     return response.json()
 
 
-def post_data(data, content_type="application/json"):
+def _post_data(data, content_type="application/json"):
     try:
         d = json.loads(data)
     except TypeError:
@@ -268,9 +268,9 @@ def get_formplayer_session_data(data):
     return data
 
 
-def get_response(data):
+def _get_response(data):
     try:
-        response_json = post_data(data)
+        response_json = _post_data(data)
     except socket.error:
         return XformsResponse.server_down()
     try:
@@ -296,7 +296,7 @@ class FormplayerInterface:
             "domain": self.domain
         }
 
-        response = post_data(json.dumps(data))
+        response = _post_data(json.dumps(data))
         if "error" in response:
             error = response["error"]
             if error == "Form session not found":
@@ -313,7 +313,7 @@ class FormplayerInterface:
                 "session-id": self.session_id,
                 "answer": answer,
                 "domain": self.domain}
-        return get_response(json.dumps(data))
+        return _get_response(json.dumps(data))
 
     def current_question(self):
         """
@@ -322,7 +322,7 @@ class FormplayerInterface:
         data = {"action": "current",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return get_response(json.dumps(data))
+        return _get_response(json.dumps(data))
 
     def next(self):
         """
@@ -331,4 +331,4 @@ class FormplayerInterface:
         data = {"action": "next",
                 "session-id": self.session_id,
                 "domain": self.domain}
-        return get_response(json.dumps(data))
+        return _get_response(json.dumps(data))
