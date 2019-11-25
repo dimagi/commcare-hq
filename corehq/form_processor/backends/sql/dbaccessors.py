@@ -188,6 +188,7 @@ class ShardAccessor(object):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
+        # TODO SK: select standby db if necessary
         shard_map = plproxy_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         for chunk in chunked(doc_ids, 100):
@@ -210,6 +211,7 @@ class ShardAccessor(object):
     def get_shard_id_and_database_for_doc(doc_id):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
+        # TODO SK: select standby db if necessary
         shard_map = plproxy_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)

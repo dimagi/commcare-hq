@@ -119,6 +119,7 @@ def db_for_read_write(model, write=True):
             return plproxy_config.proxy_db
         return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
+        # TODO SK: select standby db if necessary
         return plproxy_config.proxy_db
     else:
         default_db = DEFAULT_DB_ALIAS
