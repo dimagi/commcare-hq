@@ -43,12 +43,14 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
 NavigationController.$inject = ['$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive('navigation', function() {
+window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {},
         controller: NavigationController,
         controllerAs: '$ctrl',
-        templateUrl: url('icds-ng-template', 'navigation.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('navigation.directive');
+        },
     };
-});
+}]);
