@@ -191,8 +191,8 @@ def overwrite_app(app, master_build, report_map=None):
     from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
     overrides = get_xform_resource_overrides(domain=wrapped_app.domain, app_id=wrapped_app.get_id)
     if overrides:
-       ids_map =  {pre_id: override.post_id for pre_id, override in overrides.items()}
-       wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
+        ids_map = {pre_id: override.post_id for pre_id, override in overrides.items()}
+        wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
     for path in wrapped_app.multimedia_map.keys():
