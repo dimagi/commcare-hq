@@ -52,25 +52,31 @@ class XFormsConfig(object):
         self.restore_as_case_id = restore_as_case_id
         self.domain = domain
 
-    def get_touchforms_dict(self):
+    def start_session(self):
         """
-        Translates this config into something touchforms wants to work with
+        Start a new session based on this configuration
         """
 
-        vals = (("action", "new-form"),
-                ("form-name", self.form_path),
-                ("form-content", self.form_content),
-                ("instance-content", self.instance_content),
-                ("preloader-data", self.preloader_data),
-                ("session-data", self.session_data),
-                ("lang", self.language),
-                ("form-url", self.form_path))
+        return _get_response(self._get_start_session_data())
 
-        # only include anything with a value, or touchforms gets mad
-        ret = dict([x for x in vals if x[1]])
-        self.add_key_helper('username', ret)
-        self.add_key_helper('domain', ret)
-        self.add_key_helper('app_id', ret)
+    def _get_start_session_data(self):
+        """
+        Translates this config into something formplayer wants to work with
+        """
+
+        ret = {
+            "action": "new-form",
+            "form-name": self.form_path,
+            "form-content": self.form_content,
+            "instance-content": self.instance_content,
+            "preloader-data": self.preloader_data,
+            "session-data": self.session_data,
+            "lang": self.language,
+            "form-url": self.form_path,
+            'username': self.session_data.get('username'),
+            'domain': self.session_data.get('domain'),
+            'app_id': self.session_data.get('app_id'),
+        }
 
         if self.restore_as_case_id:
             # The contact starting the survey is a case who will be
@@ -82,18 +88,8 @@ class XFormsConfig(object):
         else:
             raise ValueError("Unable to determine 'restore as' contact for formplayer")
 
-        return ret
-
-    def add_key_helper(self, key, ret):
-        if key in self.session_data:
-            ret[key] = self.session_data[key]
-
-    def start_session(self):
-        """
-        Start a new session based on this configuration
-        """
-
-        return _get_response(self.get_touchforms_dict())
+        # only include anything with a value, or touchforms gets mad
+        return {key: value for key, value in ret.items() if value}
 
 
 class XformsEvent(object):
