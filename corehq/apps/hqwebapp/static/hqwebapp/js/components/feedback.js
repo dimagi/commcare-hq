@@ -12,7 +12,7 @@
  *
  */
 
-hqDefine('hqwebapp/js/components/feedback', [
+define('hqwebapp/js/components/feedback', [
     'knockout',
     'jquery',
     'hqwebapp/js/initial_page_data',

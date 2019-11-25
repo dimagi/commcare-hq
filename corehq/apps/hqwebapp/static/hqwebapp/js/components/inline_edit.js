@@ -18,7 +18,7 @@
  *  - errorMessage: Message to display if server returns an error.
  */
 
-hqDefine('hqwebapp/js/components/inline_edit', [
+define('hqwebapp/js/components/inline_edit', [
     'jquery',
     'knockout',
     'underscore',
