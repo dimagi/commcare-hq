@@ -4,11 +4,11 @@ from django.db import migrations
 
 from corehq.sql_db.operations import RawSQLMigration
 
-
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('icds_reports', '0149_auto_20191115_1142'),
