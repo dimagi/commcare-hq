@@ -171,7 +171,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return {
             'name': app.name,
             'build_profiles': {
-                profile.id: profile.name for profile in app.build_profiles
+                profile_id: profile.name for profile_id, profile in app.build_profiles.items()
             }
         }
 
