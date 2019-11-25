@@ -27,27 +27,14 @@ class InvalidSessionIdException(TouchformsError):
     pass
 
 
-class XFormsConfigException(ValueError):
-    pass
-
-
 class XFormsConfig(object):
 
-    def __init__(self, form_path=None, form_content=None, language="",
-                 session_data=None, preloader_data={}, instance_content=None,
+    def __init__(self, form_content, language="", session_data=None,
                  domain=None, restore_as=None, restore_as_case_id=None):
 
-        if bool(form_path) == bool(form_content):
-            raise XFormsConfigException(
-                "Can specify file path or content but not both!\n"
-                "File Path: {}, Form Content: {}".format(form_path, form_content))
-
-        self.form_path = form_path
         self.form_content = form_content
         self.language = language
         self.session_data = session_data
-        self.preloader_data = preloader_data
-        self.instance_content = instance_content
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
         self.domain = domain
@@ -66,13 +53,9 @@ class XFormsConfig(object):
 
         ret = {
             "action": "new-form",
-            "form-name": self.form_path,
             "form-content": self.form_content,
-            "instance-content": self.instance_content,
-            "preloader-data": self.preloader_data,
             "session-data": self.session_data,
             "lang": self.language,
-            "form-url": self.form_path,
             'username': self.session_data.get('username'),
             'domain': self.session_data.get('domain'),
             'app_id': self.session_data.get('app_id'),
