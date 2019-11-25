@@ -412,13 +412,14 @@ def compute_awws_in_vhnd_timeframe(domain):
     query = """
     SELECT DISTINCT awc_id
     FROM "{table}"
-    WHERE vhsnd_date_past_month > '{{old}}'
-    """.format(table=table, old=datetime.today().date() - timedelta(days=37))
+    WHERE vhsnd_date_past_month > %(37_days_ago)s"
+    """.format(table=table)
+    query_params = {"37_days_ago": datetime.today().date() - timedelta(days=37)}
 
     data_source = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form'))
     django_db = connections.get_django_db_alias(data_source.engine_id)
     with connections[django_db].cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, query_params)
         return {row[0] for row in cursor.fetchall()}
 
 
