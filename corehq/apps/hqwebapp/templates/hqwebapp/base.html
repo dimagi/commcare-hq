@@ -421,12 +421,16 @@
             ko.mapping = mapping;
           },
         });
+        var hqDefine = define;
         requirejs([
           'hqwebapp/js/common',
         ], function() {
+          console.log('loaded common');
           requirejs([
             'hqwebapp/js/base_main',
           ], function () {
+            console.log('loaded base_main');
+            console.log('preparing to load {{ requirejs_main }}');
             requirejs(['{{ requirejs_main }}'], function () {
               console.log("Loaded requirejs main module: {{ requirejs_main }}");
             });
