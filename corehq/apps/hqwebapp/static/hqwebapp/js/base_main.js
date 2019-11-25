@@ -7,7 +7,6 @@ hqDefine("hqwebapp/js/base_main", [
     'hqwebapp/js/sticky_tabs',
     'hqwebapp/js/main',
     'notifications/js/notifications_service_main',
-    'analytix/js/appcues',
     'analytix/js/drift',
     'analytix/js/google',
     'analytix/js/hubspot',
