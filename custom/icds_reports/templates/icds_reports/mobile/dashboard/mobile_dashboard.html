@@ -33,6 +33,7 @@
   <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
   <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
 
+  <script src="{% static 'js/directives/mobile-navigation/mobile-navigation.directive.js' %}"></script>
   <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
   <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
   <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
@@ -44,15 +45,16 @@
   {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
 </div>
 <div id="app" ng-cloak>
-    <div ng-controller="MainMobileController" class="container-fluid">
-        <div class="row">
-          <div class="col-md-12 main-container">
-            <div class="row no-margin">
-              <div class="ng-view"></div>
-            </div>
+  <mobile-navigation ng-controller="MobileNavigationController"></mobile-navigation>
+  <div ng-controller="MainMobileController" class="container-fluid">
+      <div class="row">
+        <div class="col-md-12 main-container">
+          <div class="row no-margin">
+            <div class="ng-view"></div>
           </div>
         </div>
-    </div>
+      </div>
+  </div>
 </div>
 {% include 'analytics/initial/global.html' %}
 {% include 'analytics/initial/google.html' %}
