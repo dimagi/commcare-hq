@@ -5526,7 +5526,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
             DatabaseColumn("Amount billed", SumColumn('amount_billed')),
-            DatabaseColumn("Delivery amt", SumColumn('delivery_amt_owed')),
+            DatabaseColumn("Amt owed", SumColumn('amount_owed')),
             DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
             DatabaseColumn("Expired pna", SumColumn('expired_pna')),
@@ -5665,31 +5665,18 @@ class RecapPassageOneData(IntraHealthSqlData):
         delivery_amt_owed_dict = {}
         for row in rows:
             pps_name = row['pps_name']
+            product_name = row['product_name']
             if valid_products and \
                     row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
-            delivery_amt_owed = self.get_value(row['delivery_amt_owed'])
+            delivery_amt_owed = self.get_value(row['amount_owed'])
             date = row['real_date_repeat'].strftime('%Y/%m/%d')
-            if delivery_amt_owed_dict.get(pps_name, None):
-                delivery_amt_owed_dict[pps_name].add(
-                    (delivery_amt_owed, date)
-                )
-            else:
-                delivery_amt_owed_dict[pps_name] = set()
-                delivery_amt_owed_dict[pps_name].add(
-                    (delivery_amt_owed, date)
-                )
+            self._save_value_if_unique(delivery_amt_owed_dict, pps_name, (delivery_amt_owed, product_name, date))
 
-        # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         data['Total Facture'] = round(float(data['Total Facture']), 2)
-        net_a_payer = 0
-        for pps_values in delivery_amt_owed_dict.values():
-            for pps_value in pps_values:
-                net_a_payer += pps_value[0]
-
-        data['Net à Payer'] = round(float(net_a_payer), 2)
+        data['Net à Payer'] = round(float(self._sum_up(delivery_amt_owed_dict)), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5739,6 +5726,23 @@ class RecapPassageOneData(IntraHealthSqlData):
 
         return rows_by_visit
 
+    @staticmethod
+    def _save_value_if_unique(dictionary, dictionary_key, value):
+        if dictionary.get(dictionary_key, None):
+            dictionary[dictionary_key].add(value)
+        else:
+            dictionary[dictionary_key] = set()
+            dictionary[dictionary_key].add(value)
+
+    @staticmethod
+    def _sum_up(dictionary):
+        number = 0
+        for values in dictionary.values():
+            for value in values:
+                number += value[0]
+
+        return number
+
 
 class RecapPassageTwoData(RecapPassageOneData):
     slug = 'recap_passage_2'
@@ -5762,7 +5766,6 @@ class RecapPassageTwoData(RecapPassageOneData):
             ])
         columns.extend([
             DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
-            DatabaseColumn(_('Amount Owed'), SumColumn('amount_owed')),
             DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
         ])
         return columns
@@ -5879,37 +5882,31 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         data = self.recap_rows
 
         delivery_amt_owed_dict = {}
-        delivery_total_margin_dict = {}
         for pps in data.keys():
             pps_data = data[pps]
 
             for element in pps_data:
-                if element['product_name'] not in self.product_names:
+                product_name = element['product_name']
+                if product_name not in self.product_names:
                     continue
                 pps_name = element['pps_name']
                 date = element['real_date_repeat'].strftime('%Y/%m/%d')
 
-                delivery_amt_owed = element.get('delivery_amt_owed', None) or {'html': 0}
-                delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
+                delivery_amt_owed = element.get('amount_owed', None) or {'html': 0}
 
                 self._save_value_if_unique(
-                    delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], date)
-                )
-                self._save_value_if_unique(
-                    delivery_total_margin_dict, pps_name, (delivery_total_margin['html'], date)
+                    delivery_amt_owed_dict, pps_name, (delivery_amt_owed['html'], product_name, date)
                 )
 
         rows['Total Versements PPS']['html'] = self._sum_up(delivery_amt_owed_dict)
-        rows['Frais Participation PPS']['html'] = self._sum_up(delivery_total_margin_dict)
 
+        rows['Total Facturation District']['html'] = rows['Total Versements PPS']['html'] / Decimal(1.075)
 
-        rows['Total Facturation District']['html'] = \
-            rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
-
-        rows['Frais Participation District']['html'] = \
-            rows['Total Facturation District']['html'] * Decimal(0.15 * 0.25)
+        rows['Frais Participation PPS']['html'] = rows['Total Facturation District']['html'] * Decimal(0.075)
 
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / Decimal(1.15)
+
+        rows['Frais Participation District']['html'] = rows['Total Facturation PRA']['html'] * Decimal(0.15 * 0.25)
 
         rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
             rows['Frais Participation District']['html'] + rows['Frais Participation PPS']['html']
@@ -6120,23 +6117,6 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 to_return += amount
 
         return {'html': to_return}
-
-    @staticmethod
-    def _save_value_if_unique(dictionary, dictionary_key, value):
-        if dictionary.get(dictionary_key, None):
-            dictionary[dictionary_key].add(value)
-        else:
-            dictionary[dictionary_key] = set()
-            dictionary[dictionary_key].add(value)
-
-    @staticmethod
-    def _sum_up(dictionary):
-        number = 0
-        for values in dictionary.values():
-            for value in values:
-                number += value[0]
-
-        return number
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):

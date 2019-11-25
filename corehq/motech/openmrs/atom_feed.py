@@ -361,6 +361,18 @@ def import_encounter(repeater, encounter_uuid):
     if 'bahmniDiagnoses' in encounter:
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
+            repeater.diagnosis_mappings,
+            case_id,
+            case_type,
+            default_owner_id,
+        )
+        deep_update(case_block_kwargs, more_kwargs)
+        case_blocks.extend(more_case_blocks)
+        # O/ ... ... ... start snip
+        # TODO: Remove this after deploy, once existing configs have
+        #       been moved to repeater.bahmni_diagnoses
+        more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
+            encounter['bahmniDiagnoses'],
             repeater.observation_mappings,
             case_id,
             case_type,
@@ -368,6 +380,7 @@ def import_encounter(repeater, encounter_uuid):
         )
         deep_update(case_block_kwargs, more_kwargs)
         case_blocks.extend(more_case_blocks)
+        #  O\ ˙˙˙ ˙˙˙ ˙˙˙ end snip
 
     if has_case_updates(case_block_kwargs) or case_blocks:
         update_case(repeater, case_id, case_block_kwargs, case_blocks)

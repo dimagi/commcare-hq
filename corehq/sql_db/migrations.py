@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.conf import settings
 
-from .config import partition_config
+from .config import plproxy_config
 
 __all__ = ["partitioned"]
 
@@ -51,8 +51,8 @@ def partitioned(cls_or_op=None, apply_to_proxy=True):
 
 def is_partition_alias(db, apply_to_proxy):
     return not settings.USE_PARTITIONED_DATABASE or (
-        (db == partition_config.proxy_db and apply_to_proxy) or
-        db in partition_config.form_processing_dbs
+        (db == plproxy_config.proxy_db and apply_to_proxy) or
+        db in plproxy_config.form_processing_dbs
     )
 
 

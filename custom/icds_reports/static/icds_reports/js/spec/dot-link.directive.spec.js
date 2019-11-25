@@ -13,6 +13,10 @@ describe('Dot Link Directive', function () {
 
     beforeEach(module('icdsApp'));
 
+    beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("isMobile", false);
+    }));
+
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_) {
         $compile = _$compile_;
         $httpBackend = _$httpBackend_;

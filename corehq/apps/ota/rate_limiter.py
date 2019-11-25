@@ -5,34 +5,27 @@ from corehq.project_limits.rate_limiter import (
     RateDefinition,
     RateLimiter,
 )
+from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import RATE_LIMIT_RESTORES, NAMESPACE_DOMAIN
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.decorators import run_only_when, silence_and_report_error
 
-restores_per_user = RateDefinition(
-    per_week=5.75,
-    per_day=1.15,
-    per_hour=0.15,
-    per_minute=0.0035,
-    per_second=0.00025,
-)
 
-base_restores_per_domain = RateDefinition(
-    per_week=50,
-    per_day=25,
-    per_hour=15,
-    per_minute=5,
-    per_second=1,
-)
-
-restore_rates = PerUserRateDefinition(
-    per_user_rate_definition=restores_per_user,
-    constant_rate_definition=base_restores_per_domain,
-)
+RESTORES_PER_DAY = 3
 
 restore_rate_limiter = RateLimiter(
     feature_key='restores',
-    get_rate_limits=restore_rates.get_rate_limits
+    get_rate_limits=PerUserRateDefinition(
+        per_user_rate_definition=get_standard_ratio_rate_definition(
+            events_per_day=RESTORES_PER_DAY),
+        constant_rate_definition=RateDefinition(
+            per_week=50,
+            per_day=25,
+            per_hour=15,
+            per_minute=5,
+            per_second=1,
+        ),
+    ).get_rate_limits
 )
 
 

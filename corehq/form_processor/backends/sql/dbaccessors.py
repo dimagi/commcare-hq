@@ -31,6 +31,7 @@ from corehq.form_processor.exceptions import (
     CaseSaveError,
     LedgerSaveError,
     LedgerValueNotFound,
+    MissingFormXml,
     NotAllowed,
     XFormNotFound,
     XFormSaveError,
@@ -56,7 +57,7 @@ from corehq.form_processor.utils.sql import (
     fetchall_as_namedtuple,
     fetchone_as_namedtuple,
 )
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import (
     estimate_row_count,
@@ -187,7 +188,7 @@ class ShardAccessor(object):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
-        shard_map = partition_config.get_django_shard_map()
+        shard_map = plproxy_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         for chunk in chunked(doc_ids, 100):
             hashes = ShardAccessor.hash_doc_ids_python(chunk)
@@ -209,7 +210,7 @@ class ShardAccessor(object):
     def get_shard_id_and_database_for_doc(doc_id):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
-        shard_map = partition_config.get_django_shard_map()
+        shard_map = plproxy_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
         shard_id = hash_ & part_mask
@@ -361,7 +362,10 @@ class FormReindexAccessor(ReindexAccessor):
             pass
 
     def doc_to_json(self, doc):
-        return doc.to_json(include_attachments=self.include_attachments)
+        try:
+            return doc.to_json(include_attachments=self.include_attachments)
+        except MissingFormXml:
+            return {}
 
     def extra_filters(self, for_count=False):
         filters = []
