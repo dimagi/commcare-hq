@@ -39,6 +39,11 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
         });
         return page_path;
     };
+
+    // used by mobile only
+    $scope.closeMenu = function () {
+        document.getElementById('nav-menu').style.left = '-300px';
+    };
 }
 
 NavigationController.$inject = ['$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
