@@ -1050,7 +1050,7 @@ def child_locations_for_select2(request, domain):
     paginator = Paginator(locs, 10)
     return json_response({
         'results': list(map(loc_to_payload, paginator.page(page))),
-        'total_count': paginator.count,
+        'total': paginator.count,
     })
 
 

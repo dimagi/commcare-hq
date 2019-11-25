@@ -8,6 +8,16 @@ from django.utils.translation import ugettext as _
 import jsonfield
 from couchdbkit.exceptions import ResourceNotFound
 
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    StringProperty,
+)
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.commtrack.exceptions import (
     DuplicateProductCodeException,
     InvalidProductException,

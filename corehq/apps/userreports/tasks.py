@@ -441,6 +441,7 @@ def _build_async_indicators(indicator_doc_ids):
         failed_indicators = set()
 
         rows_to_save_by_adapter = defaultdict(list)
+        docs_to_delete_by_adapter = defaultdict(list)
         indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
         config_ids = set()
         with timer:
@@ -463,7 +464,11 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter = None
                     try:
                         adapter = get_indicator_adapter(config, load_source='build_async_indicators')
-                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        rows_to_save = adapter.get_all_values(doc, eval_context)
+                        if rows_to_save:
+                            rows_to_save_by_adapter[adapter].extend(rows_to_save)
+                        else:
+                            docs_to_delete_by_adapter[adapter].append(doc)
                         eval_context.reset_iteration()
                     except Exception as e:
                         failed_indicators.add(indicator)
@@ -485,6 +490,9 @@ def _build_async_indicators(indicator_doc_ids):
                         config_id,
                         [i.pk for i in indicators]
                     )
+
+            for adapter, docs in docs_to_delete_by_adapter.items():
+                adapter.bulk_delete(docs)
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators

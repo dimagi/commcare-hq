@@ -16,6 +16,12 @@ describe('Program Summary Directive', function () {
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("isAlertActive", false);
         $provide.constant("isMobile", false);
+        $provide.constant("navMetadata", {
+            maternal_child: { 'label': 'Maternal and Child Nutrition' },
+            icds_cas_reach: { 'label': 'ICDS-CAS Reach' },
+            demographics: { 'label': 'Demographics' },
+            awc_infrastructure: { 'label': 'AWC Infrastructure' },
+        });
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

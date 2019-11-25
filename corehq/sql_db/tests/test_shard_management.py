@@ -11,7 +11,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_
 from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_partitioned import \
     BaseSchedulingPartitionedDBAccessorsTest
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
@@ -32,7 +32,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         cls.p2_uuid = uuid.UUID('8440dbd6-61b1-4b2f-a310-7e1768902d04')
 
     def tearDown(self):
-        for db in partition_config.form_processing_dbs:
+        for db in plproxy_config.form_processing_dbs:
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             XFormInstanceSQL.objects.using(db).filter(domain=self.domain).delete()
 

@@ -194,3 +194,4 @@ class Command(BaseCommand):
                 ),
                 excel_file
             )
+        return filename
