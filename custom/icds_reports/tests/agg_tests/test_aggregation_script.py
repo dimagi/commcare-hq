@@ -92,8 +92,6 @@ class AggregationScriptTestBase(CSVTestCase):
     def _load_and_compare_data(self, table_name, path, sort_key=None, filter_by=None):
         # To speed up tests, we use a sort_key wherever possible
         #   to presort before comparing data
-        if 'css_record_monthly' in table_name:
-            print(list(self._load_data_from_db(table_name, sort_key, filter_by)))
         if sort_key:
             self._fasterAssertListEqual(
                 list(self._load_data_from_db(table_name, sort_key, filter_by)),
