@@ -26,6 +26,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import ConnectionManager
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from custom.icds.const import (
@@ -368,11 +369,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
         self.awc_ids_not_in_timeframe = get_awcs_with_old_vhnd_date(
             domain,
-            [l.location_id for l in self.awc_locations]
-        )
-
-        self.forms = get_last_form_submissions_by_user(
-            domain, self.aww_user_ids, xmlns=VHND_SURVEY_XMLNS
+            self.awc_locations.keys()
         )
 
     def get_messages(self, language_code=None):
@@ -390,7 +387,7 @@ def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
     return set(awc_location_ids) - get_awws_in_vhnd_timeframe(domain)
 
 
-@icds_quickcache(timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
+@icds_quickcache(['domain'], timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
 def get_awws_in_vhnd_timeframe(domain):
     # This function is called concurrently by many tasks.
     # The CriticalSection ensures that the expensive operation is not triggered
@@ -400,7 +397,7 @@ def get_awws_in_vhnd_timeframe(domain):
         return compute_awws_in_vhnd_timeframe(domain)
 
 
-@icds_quickcache(timeout=60 * 60, memoize_timeout=60 * 60, session_function=None)
+@icds_quickcache(['domain'], timeout=60 * 60, memoize_timeout=60 * 60, session_function=None)
 def compute_awws_in_vhnd_timeframe(domain):
     """
     This computes awws with vhsnd_date_past_month less than 37 days.
@@ -412,12 +409,12 @@ def compute_awws_in_vhnd_timeframe(domain):
     query = """
     SELECT DISTINCT awc_id
     FROM "{table}"
-    WHERE vhsnd_date_past_month > %(37_days_ago)s"
+    WHERE vhsnd_date_past_month > %(37_days_ago)s
     """.format(table=table)
     query_params = {"37_days_ago": datetime.today().date() - timedelta(days=37)}
 
     data_source = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form'))
-    django_db = connections.get_django_db_alias(data_source.engine_id)
+    django_db = ConnectionManager().get_django_db_alias(data_source.engine_id)
     with connections[django_db].cursor() as cursor:
         cursor.execute(query, query_params)
         return {row[0] for row in cursor.fetchall()}

@@ -598,10 +598,10 @@
     "sql_column_indexes": [
       {
         "column_ids": [
-          "vhsnd_date_past_month",
+          "vhsnd_date_past_month"
         ]
       }
-    ]
+    ],
     "disable_destructive_rebuild": true
   }
 }
