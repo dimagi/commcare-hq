@@ -265,8 +265,7 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
 
     standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
-    cluster_name = f'{settings.PL_PROXY_CLUSTER_NAME}_standby'
-    return PlProxyConfig.from_dict(standby_db_config, cluster_name=cluster_name)
+    return PlProxyConfig.from_dict(standby_db_config, cluster_name=settings.PL_PROXY_STANDBY_CLUSTER_NAME)
 
 
 plproxy_config = None
