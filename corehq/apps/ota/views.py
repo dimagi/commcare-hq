@@ -24,7 +24,6 @@ from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
 )
-from corehq.apps.ota.rate_limiter import rate_limit_restore
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -46,6 +45,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.users.util import (
     update_device_meta,
