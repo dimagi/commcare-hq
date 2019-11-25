@@ -10,7 +10,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0149_auto_20191115_1142')
+        ('icds_reports', '0150_update_agg_awc_monthly_view')
     ]
 
     operations = [
