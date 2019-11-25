@@ -1679,10 +1679,10 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
     return matching_cases.values_list('case_id', 'type', 'server_modified_on')
 
 
-#To on 6AM IST
+
 @periodic_task_on_envs(
     settings.ICDS_ENVS,
-    run_every=crontab(minute=30, hour=12),
+    run_every=crontab(minute=30, hour=12), #To on 6AM IST
     acks_late=True,
     queue='icds_aggregation_queue'
 )

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='DashboardUserActivityReport',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('username', models.TextField(null=True)),
+                ('username', models.TextField()),
                 ('state_id', models.TextField(null=True)),
                 ('district_id', models.TextField(null=True)),
                 ('block_id', models.TextField(null=True)),

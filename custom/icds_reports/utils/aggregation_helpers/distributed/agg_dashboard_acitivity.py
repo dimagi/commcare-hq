@@ -21,8 +21,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         cursor.execute(self.drop_table_query())
         cursor.execute(*self.create_table_query())
         add_query, add_params = self.add_missing_users()
+        args_str = ','.join(cursor.mogrify("(%s,%s,%s,%s,%s,%s)", x).decode('utf-8') for x in add_params['values'])
 
-        cursor.executemany(add_query, add_params['values'])
+        cursor.execute(add_query + args_str)
 
         cursor.execute(*self.rollover_previous_data())
 
@@ -109,7 +110,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             username, state_id, district_id,block_id,
             user_level,date
         )
-        VALUES (%s,%s,%s,%s,%s, %s)
+        VALUES
         """.format(
             tablename=self.tablename
         ), {
