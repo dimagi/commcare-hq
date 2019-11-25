@@ -63,5 +63,5 @@ branches:
   - bmb/update-requirejs  # Biyeun Nov 21
   - jls/resource-overrides  # Jenny Nov 22
   #- jls/non-unique-form-ids  # Jenny Nov 24
-  - bmb/js-003  # Biyeun Nov 25
+  - bmb/js-remove-appcues  # Biyeun Nov 25
 submodules: {}
