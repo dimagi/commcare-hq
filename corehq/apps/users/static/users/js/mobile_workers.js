@@ -357,10 +357,14 @@ hqDefine("users/js/mobile_workers",[
                     data: function (params) {
                         return {
                             name: params.term,
+                            page_limit: 10,
+                            page: params.page,
                         };
                     },
                     dataType: 'json',
-                    processResults: function (data) {
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+                        var more = data.more || (params.page * 10) < data.total;
                         return {
                             results: _.map(data.results, function (r) {
                                 return {
@@ -368,6 +372,7 @@ hqDefine("users/js/mobile_workers",[
                                     id: r.id,
                                 };
                             }),
+                            pagination: { more: more },
                         };
                     },
                 },

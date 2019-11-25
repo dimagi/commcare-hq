@@ -13,7 +13,7 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, MWCDDataView, IcdsDynamicMobileTemplateView
+    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView
 )
 
 
@@ -113,6 +113,14 @@ awc_infrastructure_urls = [
         r'^medicine_kit/(?P<step>[\w-]+)/',
         MedicineKitView.as_view(),
         name='medicine_kit'),
+    url(
+        r'^infantometer/(?P<step>[\w-]+)/',
+        InfantometerView.as_view(),
+        name='infantometer'),
+    url(
+        r'^stadiometer/(?P<step>[\w-]+)/',
+        StadiometerView.as_view(),
+        name='stadiometer'),
     url(
         r'^infants_weight_scale/(?P<step>[\w-]+)/',
         InfantsWeightScaleView.as_view(),

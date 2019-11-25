@@ -21,6 +21,22 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
+)
+from corehq.apps.userreports.reports.sum_when_templates import (
+    ClosedOnNullTemplateSpec,
+    OpenDisabilityTypeSpec,
+    OpenFemaleDisabledSpec,
+    OpenFemaleHHCasteSpec,
+    OpenFemaleHHCasteNotSpec,
+    OpenFemaleHHMinoritySpec,
+    OpenFemaleMigrantSpec,
+    OpenFemaleResidentSpec,
+    OpenMaleDisabledSpec,
+    OpenMaleHHCasteSpec,
+    OpenMaleHHCasteNotSpec,
+    OpenMaleHHMinoritySpec,
+    OpenMaleMigrantSpec,
+    OpenMaleResidentSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
@@ -97,6 +113,20 @@ class ReportOrderByFactory(object):
 
 class SumWhenTemplateFactory(object):
     spec_map = {
+        'closed_on_null': ClosedOnNullTemplateSpec,
+        'open_disability_type': OpenDisabilityTypeSpec,
+        'open_female_disabled': OpenFemaleDisabledSpec,
+        'open_female_hh_caste': OpenFemaleHHCasteSpec,
+        'open_female_hh_caste_not': OpenFemaleHHCasteNotSpec,
+        'open_female_hh_minority': OpenFemaleHHMinoritySpec,
+        'open_female_migrant': OpenFemaleMigrantSpec,
+        'open_female_resident': OpenFemaleResidentSpec,
+        'open_male_disabled': OpenMaleDisabledSpec,
+        'open_male_hh_caste': OpenMaleHHCasteSpec,
+        'open_male_hh_caste_noot': OpenMaleHHCasteNotSpec,
+        'open_male_hh_minority': OpenMaleHHMinoritySpec,
+        'open_male_migrant': OpenMaleMigrantSpec,
+        'open_male_resident': OpenMaleResidentSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
     }

@@ -581,6 +581,8 @@ class AggAwcMonthly(models.Model):
         blank=True, null=True,
         help_text="last date an infrastrucutre form was submitted"
     )
+    infantometer = models.IntegerField(blank=True, null=True)
+    stadiometer = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

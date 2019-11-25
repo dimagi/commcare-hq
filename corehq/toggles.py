@@ -1751,21 +1751,6 @@ PHI_CAS_INTEGRATION = StaticToggle(
 )
 
 
-SESSION_MIDDLEWARE_LOGGING = StaticToggle(
-    'session_middleware_logging',
-    'Log all session object method calls on this domain',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BYPASS_SESSIONS = DynamicallyPredictablyRandomToggle(
-    'bypass_sessions_r',
-    'Bypass sessions for select mobile URLS',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0
-)
-
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
@@ -1776,6 +1761,13 @@ DAILY_INDICATORS = StaticToggle(
 mwcd_indicators = StaticToggle(
     'mwcd_indicators',
     'Enable MWCD indicators API',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
+    'mobile_ucr_total_row_iterative_calculation',
+    'Calculate total rows for mobile UCR during iteration instead of using a DB query',
     TAG_CUSTOM,
     [NAMESPACE_USER],
 )
@@ -1808,4 +1800,11 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     To turn on global rate limiting, set Randomness Level to 1.
     To turn it off, set to 0.
     """
+)
+
+SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
+    'skip_updating_user_reporting_metadata',
+    'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
