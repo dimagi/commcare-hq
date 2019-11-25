@@ -48,7 +48,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None, domain=None, restore_as=None, restore_as_case_id=None):
+                 domain=None, restore_as=None, restore_as_case_id=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -61,7 +61,6 @@ class XFormsConfig(object):
         self.session_data = session_data
         self.preloader_data = preloader_data        
         self.instance_content = instance_content
-        self.auth = auth
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
         self.domain = domain
@@ -108,7 +107,7 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
 
-        return get_response(json.dumps(self.get_touchforms_dict()), auth=self.auth)
+        return get_response(json.dumps(self.get_touchforms_dict()))
     
 
 class XformsEvent(object):
@@ -249,7 +248,7 @@ def formplayer_post_data_helper(d, content_type, url):
     return response.json()
 
 
-def post_data(data, auth=None, content_type="application/json"):
+def post_data(data, content_type="application/json"):
     try:
         d = json.loads(data)
     except TypeError:
@@ -279,10 +278,10 @@ def get_formplayer_session_data(data):
     return data
 
 
-def get_response(data, auth=None):
+def get_response(data):
     try:
-        response_json = post_data(data, auth=auth)
-    except socket.error as e:
+        response_json = post_data(data)
+    except socket.error:
         return XformsResponse.server_down()
     try:
         return XformsResponse(response_json)
@@ -290,7 +289,7 @@ def get_response(data, auth=None):
         raise e
 
 
-def get_raw_instance(session_id, domain=None, auth=None):
+def get_raw_instance(session_id, domain=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
     forms to couch when errors happen).
@@ -302,7 +301,7 @@ def get_raw_instance(session_id, domain=None, auth=None):
         "domain": domain
     }
 
-    response = post_data(json.dumps(data), auth)
+    response = post_data(json.dumps(data))
     if "error" in response:
         error = response["error"]
         if error == "Form session not found":
@@ -312,7 +311,7 @@ def get_raw_instance(session_id, domain=None, auth=None):
     return response
 
 
-def answer_question(session_id, answer, domain, auth=None):
+def answer_question(session_id, answer, domain):
     """
     Answer a question. 
     """
@@ -320,24 +319,24 @@ def answer_question(session_id, answer, domain, auth=None):
             "session-id": session_id,
             "answer": answer,
             "domain": domain}
-    return get_response(json.dumps(data), auth)
+    return get_response(json.dumps(data))
 
 
-def current_question(session_id, domain, auth=None):
+def current_question(session_id, domain):
     """
     Retrieves information about the current question.
     """
     data = {"action": "current",
             "session-id": session_id,
             "domain": domain}
-    return get_response(json.dumps(data), auth)
+    return get_response(json.dumps(data))
 
 
-def next(session_id, domain, auth=None):
+def next(session_id, domain):
     """
     Moves to the next question.
     """
     data = {"action": "next",
             "session-id": session_id,
             "domain": domain}
-    return get_response(json.dumps(data), auth)
+    return get_response(json.dumps(data))

@@ -30,21 +30,21 @@ def start_session(config):
     return SessionStartInfo(xformsresponse, config.domain)
 
 
-def next_responses(session_id, answer, domain, auth=None):
+def next_responses(session_id, answer, domain):
     if answer:
-        xformsresponse = answer_question(session_id, _tf_format(answer), domain, auth)
+        xformsresponse = answer_question(session_id, _tf_format(answer), domain)
     else:
-        xformsresponse = next(session_id, domain, auth)
-    for resp in _next_responses(xformsresponse, session_id, domain, auth):
+        xformsresponse = next(session_id, domain)
+    for resp in _next_responses(xformsresponse, session_id, domain):
         yield resp
 
 
-def _next_responses(xformsresponse, session_id, domain, auth=None):
+def _next_responses(xformsresponse, session_id, domain):
     if xformsresponse.is_error:
         yield xformsresponse
     elif xformsresponse.event.type == "sub-group":
-        response = next(session_id, domain, auth)
-        for additional_resp in _next_responses(response, session_id, domain, auth):
+        response = next(session_id, domain)
+        for additional_resp in _next_responses(response, session_id, domain):
             yield additional_resp
     elif xformsresponse.event.type == "question":
         yield xformsresponse
@@ -52,8 +52,8 @@ def _next_responses(xformsresponse, session_id, domain, auth=None):
             # We have to deal with Trigger/Label type messages 
             # expecting an 'ok' type response. So auto-send that 
             # and move on to the next question.
-            response = answer_question(session_id, 'ok', domain, auth)
-            for additional_resp in _next_responses(response, session_id, domain, auth):
+            response = answer_question(session_id, 'ok', domain)
+            for additional_resp in _next_responses(response, session_id, domain):
                 yield additional_resp
     elif xformsresponse.event.type == "form-complete":
         sms_form_complete.send(sender="touchforms", session_id=session_id,
