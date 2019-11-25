@@ -260,26 +260,25 @@ def get_replication_delay_for_standby(db_alias):
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
+    If standby process (wal_receiver) is not running on standby -1 is returned
     """
     # used to indicate that the wal_receiver process on standby is not running
-    VERY_LARGE_DELAY = 100000
     try:
         sql = """
         SELECT
         CASE
-            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN %(delay)s
+            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
             WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
             ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
         END
         AS replication_lag;
         """
         with db.connections[db_alias].cursor() as cursor:
-            cursor.execute(sql, {'delay': VERY_LARGE_DELAY})
+            cursor.execute(sql)
             [(delay, )] = cursor.fetchall()
             return delay
     except OperationalError:
-        return VERY_LARGE_DELAY
+        return -1
 
 
 @memoized
@@ -311,7 +310,7 @@ def get_standbys_with_acceptible_delay():
     delays_by_db = get_acceptible_replication_delays()
     return {
         db_ for db_ in get_standby_databases()
-        if get_replication_delay_for_standby(db_) <= delays_by_db[db_]
+        if 0 <= get_replication_delay_for_standby(db_) <= delays_by_db[db_]
     }
 
 
