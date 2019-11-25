@@ -27,17 +27,7 @@
     "display_name": "Forms - Primary private school (Static) (Dashboard)",
     "referenced_doc_type": "XFormInstance",
     "description": "Primary private form used by dashboard to exclude children from pse eligible",
-    "base_item_expression": {
-      "type": "coalesce",
-      "expression": {
-        "type": "property_path",
-        "property_path": ["form", "case_load_person_0", "case", "@case_id"]
-      },
-      "default_expression": {
-        "type": "constant",
-        "constant": [0]
-      }
-    },
+    "base_item_expression": {},
     "configured_filter": {
       "operator": "eq",
       "type": "boolean_expression",
@@ -96,8 +86,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "display_name": "Supervisor ID",
