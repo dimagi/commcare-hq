@@ -11,6 +11,7 @@ hqDefine("dashboard/js/dashboard", [
     _,
     initialPageData
 ) {
+    console.log('exec - dashboard');
     var tileModel = function (options) {
         var self = {};
         self.title = options.title;
