@@ -87,6 +87,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
                              sql_col='last_form_app_build_version'),
+            DataTablesColumn(_("Build Profile"),
+                             help_text=_("The build profile from the user's last hearbeat request."),
+                             sortable=False),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
@@ -282,6 +285,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
+            last_build_profile_name = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -316,13 +320,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
+                last_build_profile_id = last_build.get('build_profile_id')
+                if last_build_profile_id:
+                    last_build_profile_name = _("Unknown")
+                    build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
+                    if last_build_profile_id in build_profiles:
+                        last_build_profile_name = build_profiles[last_build_profile_id].name
 
             row_data = [
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, commcare_version or '---'
+                app_name or "---", build_version, last_build_profile_name, commcare_version or '---'
             ]
 
             if self.include_location_data():
