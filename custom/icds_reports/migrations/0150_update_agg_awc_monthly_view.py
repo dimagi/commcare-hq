@@ -8,7 +8,6 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 
 
 class Migration(migrations.Migration):
-    atomic = False
 
     dependencies = [
         ('icds_reports', '0149_auto_20191115_1142'),
