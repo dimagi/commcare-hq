@@ -11,6 +11,7 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.repeaters.models import FormRepeater, Repeater
@@ -65,6 +66,11 @@ class Dhis2Repeater(FormRepeater):
             requests = self.get_requests()
             metadata = fetch_metadata(requests)
             self.dhis2_version = metadata["system"]["version"]
+            if Version.coerce(self.dhis2_version) > Version(DHIS2_MAX_VERSION):
+                requests.notify_error(
+                    "Integration has not yet been tested for DHIS2 version "
+                    f"{self.dhis2_version}. Its API may not be supported."
+                )
             self.save()
         version = Version.coerce(self.dhis2_version)
         return version.minor
@@ -102,6 +108,7 @@ class Dhis2Repeater(FormRepeater):
                 try:
                     return send_dhis2_event(
                         requests,
+                        self.api_version,
                         form_config,
                         payload,
                     )
