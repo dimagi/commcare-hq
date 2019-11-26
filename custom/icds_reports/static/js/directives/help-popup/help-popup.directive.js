@@ -16,7 +16,7 @@ function HelpPopupController($scope) {
         document.getElementById('summary-info').style.paddingTop = '0px';
     }
     $scope.hideHelp = hideHelp;
-    $scope.$on('showHelp', function(event, heading, help) {
+    $scope.$on('showHelp', function (event, heading, help) {
         showHelp(heading, help);
     });
 }
