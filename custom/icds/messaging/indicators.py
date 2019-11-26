@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
+from django.conf import settings
 from django.db.models import Max
 from django.db import connections
 from django.template import TemplateDoesNotExist
@@ -26,7 +27,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.connections import connection_manager
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from custom.icds.const import (
@@ -387,7 +388,9 @@ def get_awcs_with_old_vhnd_date(domain, awc_location_ids):
     return set(awc_location_ids) - get_awws_in_vhnd_timeframe(domain)
 
 
-@icds_quickcache(['domain'], timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None)
+@icds_quickcache(
+    ['domain'], timeout=12 * 60 * 60, memoize_timeout=12 * 60 * 60, session_function=None,
+    skip_arg=lambda *args: settings.UNIT_TESTING)
 def get_awws_in_vhnd_timeframe(domain):
     # This function is called concurrently by many tasks.
     # The CriticalSection ensures that the expensive operation is not triggered
@@ -397,7 +400,9 @@ def get_awws_in_vhnd_timeframe(domain):
         return compute_awws_in_vhnd_timeframe(domain)
 
 
-@icds_quickcache(['domain'], timeout=60 * 60, memoize_timeout=60 * 60, session_function=None)
+@icds_quickcache(
+    ['domain'], timeout=60 * 60, memoize_timeout=60 * 60, session_function=None,
+    skip_arg=lambda *args: settings.UNIT_TESTING)
 def compute_awws_in_vhnd_timeframe(domain):
     """
     This computes awws with vhsnd_date_past_month less than 37 days.
@@ -413,8 +418,9 @@ def compute_awws_in_vhnd_timeframe(domain):
     """.format(table=table)
     query_params = {"37_days_ago": datetime.today().date() - timedelta(days=37)}
 
-    data_source = StaticDataSourceConfiguration.by_id(StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form'))
-    django_db = ConnectionManager().get_django_db_alias(data_source.engine_id)
+    datasource_id = StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form')
+    data_source = StaticDataSourceConfiguration.by_id(datasource_id)
+    django_db = connection_manager.get_django_db_alias(data_source.engine_id)
     with connections[django_db].cursor() as cursor:
         cursor.execute(query, query_params)
         return {row[0] for row in cursor.fetchall()}
