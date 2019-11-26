@@ -1,4 +1,5 @@
 {% load i18n %}
+{% if build_profiles %}
 <div class="row">
   <div class="col-sm-3">
     <b>{% trans 'Build Profile' %}:</b>
@@ -12,3 +13,4 @@
     </select>
   </div>
 </div>
+{% endif %}
