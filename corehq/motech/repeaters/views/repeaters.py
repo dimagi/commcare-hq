@@ -238,7 +238,7 @@ class AddDhis2RepeaterView(AddRepeaterView):
 
 class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
     urlname = 'new_dhis2_entity_repeater$'
-    repeater_form_class = Dhis2RepeaterForm
+    repeater_form_class = GenericRepeaterForm
     page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
     page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
 
