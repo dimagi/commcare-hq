@@ -28,29 +28,30 @@ hqDefine('app_manager/js/source_files', [
             var firstAppID = initialPageData.get('first_app_id');
             var secondAppID = initialPageData.get('second_app_id');
             var multimediaSizes1 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", firstAppID, 'default'));
-            multimediaSizes1.load();
+                initialPageData.reverse("get_multimedia_sizes", firstAppID));
             $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizes1);
             var multimediaSizes2 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", secondAppID, 'default'));
-            multimediaSizes2.load();
+                initialPageData.reverse("get_multimedia_sizes", secondAppID));
             $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizes2);
             var multimediaSizesDiff = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("compare_multimedia_sizes", 'default'));
-            multimediaSizesDiff.load();
+                initialPageData.reverse("compare_multimedia_sizes"));
             $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
             if ($('#build-profile-select-for-multimedia').length) {
                 $('#build-profile-select-for-multimedia').on('change', function () {
                     var buildProfileId = $(this).val();
-                    multimediaSizes1.url = initialPageData.reverse("get_multimedia_sizes", firstAppID,
-                        buildProfileId);
-                    multimediaSizes1.load();
-                    multimediaSizes2.url = initialPageData.reverse("get_multimedia_sizes", secondAppID,
-                        buildProfileId);
-                    multimediaSizes2.load();
-                    multimediaSizesDiff.url = initialPageData.reverse("compare_multimedia_sizes",
-                        buildProfileId);
-                    multimediaSizesDiff.load();
+                    if (buildProfileId) {
+                        multimediaSizes1.url(initialPageData.reverse("get_multimedia_sizes_for_build_profile",
+                            firstAppID, buildProfileId));
+                        multimediaSizes2.url(initialPageData.reverse("get_multimedia_sizes_for_build_profile",
+                            secondAppID, buildProfileId));
+                        multimediaSizesDiff.url(initialPageData.reverse("compare_multimedia_sizes_for_build_profile",
+                            buildProfileId));
+
+                    } else {
+                        multimediaSizes1.url(initialPageData.reverse("get_multimedia_sizes", firstAppID));
+                        multimediaSizes2.url(initialPageData.reverse("get_multimedia_sizes", secondAppID));
+                        multimediaSizesDiff.url(initialPageData.reverse("compare_multimedia_sizes"));
+                    }
                 });
             }
         }

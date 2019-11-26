@@ -12,14 +12,14 @@ hqDefine('app_manager/js/multimedia_size_util',[
     };
     var multimediaSizesView = function (url) {
         var self = {};
-        self.url = url;
+        self.url = ko.observable(url);
         self.sizes = ko.observableArray();
         self.loadState = ko.observable(null);
         self.showSpinner = ko.observable(false);
         self.load = function () {
             self.loadState('loading');
             $.ajax({
-                url: self.url,
+                url: self.url(),
                 success: function (content) {
                     self.sizes(_.map(content, function (mmsize, mmType) {
                         return multimediaSize(mmType, mmsize);
@@ -37,6 +37,10 @@ hqDefine('app_manager/js/multimedia_size_util',[
                 },
             });
         };
+        self.url.subscribe(function (newUrl) {
+            self.load();
+        });
+        self.load();
         return self;
     };
     return {

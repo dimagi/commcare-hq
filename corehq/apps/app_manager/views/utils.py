@@ -423,8 +423,6 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
             multimedia_map.items()
         }
 
-    if build_profile_id == "default":
-        build_profile_id = None
     source_build = get_app_cached(domain, source_build_id)
     target_build = get_app_cached(domain, target_build_id)
     assert source_build.copy_of, _("Size calculation available only for builds")
@@ -449,8 +447,6 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
 
 def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     build = get_app_cached(domain, build_id)
-    if build_profile_id == "default":
-        build_profile_id = None
     assert build.copy_of, _("Size calculation available only for builds")
     build_profile = build.build_profiles.get(build_profile_id) if build_profile_id else None
     multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)

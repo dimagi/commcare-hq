@@ -47,12 +47,10 @@ def _update_mm_sizes(mm_sizes):
 
 @require_deploy_apps
 @quickcache(['domain', 'app_id', 'build_profile_id'], timeout=60 * 60)
-def get_multimedia_sizes(request, domain, app_id, build_profile_id):
+def get_multimedia_sizes(request, domain, app_id, build_profile_id=None):
     """
     return size for different multimedia types and total for an app, directly presentable to the user
     """
-    if build_profile_id and build_profile_id == "default":
-        build_profile_id = None
     mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id, build_profile_id=build_profile_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
@@ -61,7 +59,7 @@ def get_multimedia_sizes(request, domain, app_id, build_profile_id):
 
 @require_deploy_apps
 @quickcache(['domain', 'app_id', 'other_build_id', 'build_profile_id'], timeout=60 * 60)
-def compare_multimedia_sizes(request, domain, app_id, other_build_id, build_profile_id):
+def compare_multimedia_sizes(request, domain, app_id, other_build_id, build_profile_id=None):
     mm_sizes = get_new_multimedia_between_builds(domain, app_id, other_build_id, build_profile_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
