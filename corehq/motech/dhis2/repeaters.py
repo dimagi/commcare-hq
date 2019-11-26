@@ -4,9 +4,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from memoized import memoized
 from requests import RequestException
-from semantic_version import Version
 from urllib3.exceptions import HTTPError
 
+from corehq.motech.dhis2.version import Version
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
