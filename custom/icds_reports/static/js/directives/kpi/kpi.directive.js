@@ -24,6 +24,10 @@ function KpiController($location, haveAccessToFeatures) {
     };
 
     this.isNumber = window.angular.isNumber;
+
+    this.toShowInKpi = function (cellLabel) {
+        return !cellLabel.includes('Infantometer') && !cellLabel.includes('Stadiometer');
+    }
 }
 
 KpiController.$inject = ['$location', 'haveAccessToFeatures'];

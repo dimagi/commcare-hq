@@ -12,7 +12,7 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
     } else {
         storageService.setKey('search', $location.search());
     }
-    vm.label = "AWCs that reported having an Stadiometer";
+    vm.label = "AWCs that reported having a Stadiometer";
     vm.steps = {
         'map': {route: '/awc_infrastructure/stadiometer/map', label: 'Map View'},
         'chart': {route: '/awc_infrastructure/stadiometer/chart', label: 'Chart View'},
@@ -22,7 +22,7 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having an Stadiometer. ',
+        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Stadiometer. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -31,11 +31,11 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
         return vm.createTemplatePopup(
             loc.properties.name,
             [{
-                indicator_name: 'Number of AWCs that reported having an Stadiometer: ',
+                indicator_name: 'Number of AWCs that reported having a Stadiometer: ',
                 indicator_value: total,
             },
             {
-                indicator_name: '% of AWCs that reported having an Stadiometer: ',
+                indicator_name: '% of AWCs that reported having a Stadiometer: ',
                 indicator_value: percent,
             }]
         );
@@ -55,7 +55,7 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having an Stadiometer. ',
+        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Stadiometer. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();
@@ -64,11 +64,11 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
         return vm.createTooltipContent(
             monthName,
             [{
-                indicator_name: 'Number of AWCs that reported having an Stadiometer: ',
+                indicator_name: 'Number of AWCs that reported having a Stadiometer: ',
                 indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
             },
             {
-                indicator_name: '% of AWCs that reported having an Stadiometer: ',
+                indicator_name: '% of AWCs that reported having a Stadiometer: ',
                 indicator_value: d3.format('.2%')(dataInMonth.y),
             }]
         );
