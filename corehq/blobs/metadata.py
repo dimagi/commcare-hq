@@ -196,7 +196,7 @@ class MetaDB(object):
         :param type_code: `BlobMeta.type_code` (optional).
         :returns: A list of `BlobMeta` objects sorted by `parent_id`.
         """
-        return list(BlobMeta.objects.raw(
+        return list(BlobMeta.objects.plproxy_read(
             'SELECT * FROM get_blobmetas(%s, %s::SMALLINT)',
             [parent_ids, type_code],
         ))

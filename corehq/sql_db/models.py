@@ -61,7 +61,7 @@ class RequireDBManager(models.Manager):
     def using(self, alias):
         return self.db_manager(hints={'using': alias})
 
-    def raw(self, raw_query, params=None):
+    def plproxy_read(self, raw_query, params=None):
         return RawQuerySet(raw_query, model=self.model, params=params, hints={'plproxy_read': True})
 
 
