@@ -4,10 +4,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from memoized import memoized
 from requests import RequestException
+from semantic_version import Version
 from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import SchemaProperty
+from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
@@ -30,6 +31,7 @@ class Dhis2Repeater(FormRepeater):
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
     dhis2_config = SchemaProperty(Dhis2Config)
+    dhis2_version = StringProperty(default=None)
 
     _has_config = True
 
@@ -44,6 +46,28 @@ class Dhis2Repeater(FormRepeater):
 
     def __hash__(self):
         return hash(self.get_id)
+
+    @property
+    def api_version(self) -> int:
+        """
+        Returns the API version supported by the DHIS2 instance.
+
+        `DHIS 2 Developer guide`_:
+
+            The Web API is versioned starting from DHIS 2.25. The API
+            versioning follows the DHIS 2 major version numbering. As an
+            example, the API version for DHIS 2.25 is 25.
+
+
+        .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
+        """
+        if self.dhis2_version is None:
+            requests = self.get_requests()
+            metadata = fetch_metadata(requests)
+            self.dhis2_version = metadata["system"]["version"]
+            self.save()
+        version = Version.coerce(self.dhis2_version)
+        return version.minor
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -72,14 +96,7 @@ class Dhis2Repeater(FormRepeater):
         If ``payload`` is a form that isn't configured to be forwarded,
         returns True.
         """
-        requests = Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-        )
+        requests = self.get_requests()
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:
@@ -92,6 +109,32 @@ class Dhis2Repeater(FormRepeater):
                     requests.notify_error(f"Error sending Events to {self}: {err}")
                     raise
         return True
+
+    def get_requests(self):
+        return Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
+        )
+
+
+def fetch_metadata(requests):
+    """
+    Fetch metadata about a DHIS2 instance.
+
+    Currently only used for determining what API version it supports.
+
+    .. NOTE::
+       Metadata is large (like a 100MB JSON document), and contains the
+       IDs one would need to compile a human-readable configuration into
+       one that maps to DHIS2 IDs.
+
+    """
+    response = requests.get('/api/metadata', raise_for_status=True)
+    return response.json()
 
 
 def create_dhis_repeat_records(sender, xform, **kwargs):
