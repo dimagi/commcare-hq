@@ -1,11 +1,10 @@
 {% load staticfiles %}
 <div ng-repeat="section in $ctrl.data track by $index">
   <div ng-repeat="cell in section track by $index">
-    <div class="shadow rounded-border bg-white p-3 col-xs-11 mx-auto float-unset mb-3"
-         ng-click="setInformation(summary.name, summary.info)">
+    <div class="shadow rounded-border bg-white p-3 col-xs-11 mx-auto float-unset mb-3">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <p class="font-14 font-weight-600 font-montserrat mb-0" ng-bind="cell.label"></p>
-            <img src="{% static "icds_reports/mobile/images/dark-info.png" %}">
+            <img src="{% static "icds_reports/mobile/images/dark-info.png" %}" ng-click="$ctrl.showMobileInfo(cell.label, cell.help_text)">
         </div>
         <div class="col-xs-11 d-flex justify-content-between align-items-center mb-3 no-gutters float-unset">
             <p class="mb-0 font-30 font-montserrat text-blue font-weight-500" ><span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</p>
