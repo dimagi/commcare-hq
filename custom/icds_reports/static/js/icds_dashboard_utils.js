@@ -7,6 +7,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('isMobile', initialPageData.get("is_mobile"));
         angular.module(appName).constant('locationHierarchy', initialPageData.get("location_hierarchy"));
         angular.module(appName).constant('userLocationId', initialPageData.get("user_location_id"));
+        angular.module(appName).constant('userLocationType', initialPageData.get("user_location_type"));
         angular.module(appName).constant('allUserLocationId', initialPageData.get("all_user_location_id"));
         angular.module(appName).constant('reportAnIssueUrl', initialPageData.get("report_an_issue_url"));
         angular.module(appName).constant('isWebUser', initialPageData.get("is_web_user"));
