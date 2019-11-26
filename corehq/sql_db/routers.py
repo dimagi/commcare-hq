@@ -113,17 +113,10 @@ def db_for_read_write(model, write=True, hints=None):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return plproxy_config.proxy_db
+            return get_db_for_plproxy_cluster(app_label, hints)
         return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
-        if hints.get('plproxy_read'):
-            return plproxy_config.proxy_db
-        if 'using' in hints:
-            return hints['using']
-        if 'partition_value' in hints:
-            from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-            return get_db_alias_for_partitioned_doc(hints['partition_value'])
-        raise Exception(f'Unable to route query for {app_label} app')
+        return get_db_for_plproxy_cluster(app_label, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
@@ -131,13 +124,24 @@ def db_for_read_write(model, write=True, hints=None):
         return default_db
 
 
+def get_db_for_plproxy_cluster(app_label, hints):
+    if hints.get('plproxy_read'):
+        return plproxy_config.proxy_db
+    if 'using' in hints:
+        return hints['using']
+    if 'partition_value' in hints:
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        return get_db_alias_for_partitioned_doc(hints['partition_value'])
+    raise Exception(f'Unable to route query for {app_label} app')
+
+
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
     read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
     return select_db_for_read(read_dbs) or default
 
 
-def get_cursor(model):
-    db = db_for_read_write(model)
+def get_plproxy_cursor(model):
+    db = db_for_read_write(model, hints={'plproxy_read': True})
     return connections[db].cursor()
 
 

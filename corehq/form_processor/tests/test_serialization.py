@@ -18,6 +18,8 @@ class SerializationTests(TestCase):
         super(SerializationTests, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
 
+        cls.using = db_for_read_write(XFormInstanceSQL, hints={'plproxy_read': True})
+
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
@@ -40,7 +42,6 @@ class SerializationTests(TestCase):
             self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))
 
         # this query goes through pl_proxy
-        db = db_for_read_write(XFormInstanceSQL)
-        with self.assertNumQueries(1, using=db):
+        with self.assertNumQueries(1, using=self.using):
             # lazy evaluation of history
             self.assertEqual(0, len(form_json['history']))

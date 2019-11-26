@@ -34,6 +34,10 @@ DOMAIN = 'test-form-accessor'
 @use_sql_backend
 class FormAccessorTestsSQL(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.using = db_for_read_write(BlobMeta, hints={'plproxy_read': True})
+
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
@@ -166,7 +170,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         form = forms[0]
         self.assertEqual(form_with_pic.form_id, form.form_id)
-        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
+        with self.assertNumQueries(0, using=self.using):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -175,7 +179,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
+        with self.assertNumQueries(0, using=self.using):
             expected = {
                 'form.xml': 'text/xml',
             }

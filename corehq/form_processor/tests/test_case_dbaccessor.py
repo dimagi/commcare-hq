@@ -22,6 +22,10 @@ CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 @use_sql_backend
 class CaseAccessorTestsSQL(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.using = db_for_read_write(CaseAttachmentSQL, hints={'plproxy_read': True})
+
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
@@ -176,7 +180,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
+        with self.assertNumQueries(1, using=self.using):
             attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
@@ -204,7 +208,7 @@ class CaseAccessorTestsSQL(TestCase):
         ))
         CaseAccessorSQL.save_case(case)
 
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
+        with self.assertNumQueries(1, using=self.using):
             attachments = CaseAccessorSQL.get_attachments(case.case_id)
 
         self.assertEqual(2, len(attachments))

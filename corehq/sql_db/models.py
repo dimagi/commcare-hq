@@ -1,4 +1,3 @@
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.exceptions import AccessRestricted
 from django.db import models
 from django.db.models.query import RawQuerySet
