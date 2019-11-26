@@ -175,6 +175,6 @@ def mark_latest_submission(domain, user, app_id, build_id, version, metadata, re
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
         if save:
-            user.save()
+            user.save(fire_signals=False)
         return True
     return False
