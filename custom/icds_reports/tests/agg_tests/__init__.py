@@ -14,7 +14,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.locations.models import SQLLocation
+
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
@@ -48,7 +48,6 @@ def setUpModule():
                         '12.test@icds-cas.commcarehq.org',
                         '1234',
                         location=state_location)
-
 
     CommCareUser.create('icds-cas',
                         '23.test@icds-cas.commcarehq.org',

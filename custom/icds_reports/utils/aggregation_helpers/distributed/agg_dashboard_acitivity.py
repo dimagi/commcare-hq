@@ -56,7 +56,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                     }
         """
         from custom.icds_reports.models.aggregate import AwcLocation
-        locations = AwcLocation.objects.filter(aggregation_level=3).values('state_id','district_id','block_id')
+        locations = AwcLocation.objects.filter(aggregation_level=3).values('state_id', 'district_id', 'block_id')
 
         transformed_locations = dict()
 
@@ -79,7 +79,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                                                    'parents': {
                                                        'district_id': district_id,
                                                        'state_id': state_id
-                                                      }
+                                                   }
                                                    }
         return transformed_locations
 
@@ -161,7 +161,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         VALUES {param_keys}
         """.format(
             tablename=self.tablename,
-            param_keys = ','.join(param_keys)
+            param_keys=','.join(param_keys)
         ), parameters
 
     def rollover_previous_data(self):
@@ -210,9 +210,8 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             'latest_month': latest_month
         }
 
-
-        # This is query I prepare which could do what the last two queries are doing but the cost of this single query
-        # coming out to be very high
+        # This is query I prepare which could do what the last two queries are doing but
+        # the cost of this single query coming out to be very high
         # yield """
         # UPDATE {tablename} user_activity
         # SET
