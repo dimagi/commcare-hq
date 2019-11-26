@@ -169,7 +169,6 @@ requests-mock==1.7.0
 requests==2.22.0
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.2.1         # via boto3
-semantic-version==2.8.3
 sentry-sdk==0.11.1
 sh==1.09
 simpleeval==0.9.8

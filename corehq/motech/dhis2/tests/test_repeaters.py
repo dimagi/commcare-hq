@@ -12,6 +12,7 @@ from semantic_version import Version
 
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.version import Version
 from corehq.motech.requests import Requests
 
 dhis2_version = "2.32.2"
