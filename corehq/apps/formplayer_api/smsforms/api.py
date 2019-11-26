@@ -129,7 +129,7 @@ def select_to_text_compact(caption, choices):
     [question] 1:[choice1], 2:[choice2]...
     """
     return "{} {}.".format(
-        caption, ", ".join(["{}:{}".format(i+1, val) for i, val in enumerate(choices)]))
+        caption, ", ".join(["{}:{}".format(i + 1, val) for i, val in enumerate(choices)]))
 
 
 class XformsResponse(object):
