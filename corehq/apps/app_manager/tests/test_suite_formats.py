@@ -1,9 +1,10 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 
 
+@patch_get_xform_resource_overrides()
 class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
@@ -29,8 +30,8 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         """.format(template_form)
         self.assertXmlPartialEqual(expected, app.create_suite(), "./detail/field/template")
 
-    def test_audio_format(self):
+    def test_audio_format(self, *args):
         self._test_format('audio', 'audio')
 
-    def test_image_format(self):
+    def test_image_format(self, *args):
         self._test_format('picture', 'image')
