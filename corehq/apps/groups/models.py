@@ -32,7 +32,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.quickcache import quickcache
 
-dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
+dt_no_Z_re = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$')
 
 
 class Group(QuickCachedDocumentMixin, UndoableDocument):

@@ -12,7 +12,8 @@ or otherwise intended for a non-English-only audience, it should be translated.
 
   <div class="row">
     <div class="col-sm-10">
-      <h1>Submission Rate Limits</h1>
+      {% for header, rate_infos in project_limits %}
+      <h1>{{ header }}</h1>
       <table class="table table-striped">
         <thead>
           <tr>
@@ -23,21 +24,22 @@ or otherwise intended for a non-English-only audience, it should be translated.
           </tr>
         </thead>
         <tbody>
-          {% for rate_limiter in project_limits.submissions %}
+          {% for rate_info in rate_infos %}
           <tr>
-            <td>{{ rate_limiter.key }}</td>
+            <td>{{ rate_info.key }}</td>
             <td>
-              {{ rate_limiter.percent_usage }}%
+              {{ rate_info.percent_usage }}%
               <div class="progress">
-                <div class="progress-bar progress-bar-striped" style="width: {{ rate_limiter.percent_usage }}%"></div>
+                <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
               </div>
             </td>
-            <td>{{ rate_limiter.current_usage }}</td>
-            <td>{{ rate_limiter.limit }}</td>
+            <td>{{ rate_info.current_usage }}</td>
+            <td>{{ rate_info.limit }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+      {% endfor %}
     </div>
   </div>
 

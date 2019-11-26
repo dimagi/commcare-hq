@@ -1,3 +1,4 @@
+from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
@@ -6,7 +7,7 @@ from corehq.motech.value_source import (
 
 def send_dhis2_event(request, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
-    return request.post("/api/events", json=event,
+    return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event,
                         raise_for_status=True)
 
 

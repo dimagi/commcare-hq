@@ -120,10 +120,11 @@ class Command(BaseCommand):
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
-            call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
+            subject = 'Deploy Successful - {}'.format(options['environment'])
+            call_command('mail_admins', message_body, **{'subject': subject, 'html': True})
             if settings.DAILY_DEPLOY_EMAIL:
                 recipient = settings.DAILY_DEPLOY_EMAIL
-                subject = 'Deploy Successful - {}'.format(options['environment'])
+
                 send_HTML_email(subject=subject,
                                 recipient=recipient,
                                 html_content=message_body)

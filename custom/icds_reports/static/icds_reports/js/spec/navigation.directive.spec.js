@@ -16,6 +16,7 @@ describe('Navigation Directive', function () {
         $provide.constant("stateLevelAccess", false);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isMobile", false);
     }));
 
     beforeEach(inject(function (_$rootScope_, _$compile_, _$httpBackend_) {

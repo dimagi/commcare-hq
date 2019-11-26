@@ -220,14 +220,14 @@ def _submitted_by_demo_user(form_json, domain):
     return False
 
 
-def _notify_ignored_form_submission(request, user_id):
+def _notify_ignored_form_submission(request, form_meta):
     message = """
         Details:
         Method: {}
         URL: {}
         GET Params: {}
-        User ID: {}
-    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), user_id)
+        Form Meta: {}
+    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), json.dumps(form_meta))
     send_mail_async.delay(
         "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
         message,
@@ -255,7 +255,7 @@ def should_ignore_submission(request):
             if _submitted_by_demo_user(form_json, request.domain):
                 if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
                     # notify the case where the form would have gotten processed
-                    _notify_ignored_form_submission(request, form_json['meta']['userID'])
+                    _notify_ignored_form_submission(request, form_json['meta'])
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:

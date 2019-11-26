@@ -10,7 +10,7 @@
         <foo>1</foo>
       </row>
       <row index="1" is_total_row="False">
-        <eggs>3</eggs>
+        <baz>3</baz>
         <ham>1</ham>
         <spam>2</spam>
       </row>

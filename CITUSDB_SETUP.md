@@ -174,3 +174,32 @@ Now we can configure the databases in either of the following ways:
     ```sql
     CREATE EXTENSION citus;
     ```
+
+## Troubleshooting
+
+### Deadlock error on `migrate_multi`
+
+If you get deadlock errors running `migrate_multi` during initial setup, one workaround that has resolved this
+for at least two developers is to drop and recreate the databases.
+**This is a destructive operation so make sure you don't mind losing all your local data.**
+
+To drop the databases you may need to also kill all active sessions.
+
+First get a shell:
+
+```bash
+psql -h localhost -p 560[0,1,2] -U commcarehq postgres
+```
+
+And run:
+
+```sql
+-- drop active connections
+SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'commcare_ucr_citus'  AND pid <> pg_backend_pid();
+-- drop db
+DROP DATABASE commcare_ucr_citus;
+-- recreate db
+CREATE DATABASE commcare_ucr_citus;
+```
+
+Note that you'll have to repeat this process on all three DBs.

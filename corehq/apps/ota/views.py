@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.http import (
     Http404,
     HttpResponse,
@@ -15,6 +14,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
+from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -24,6 +24,7 @@ from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
 )
+from corehq.apps.ota.rate_limiter import rate_limit_restore
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -79,6 +80,9 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
+    if rate_limit_restore(domain):
+        return HttpTooManyRequests()
+
     response, timing_context = get_restore_response(
         domain, request.couch_user, app_id, **get_restore_params(request))
     return response
@@ -305,8 +309,7 @@ def heartbeat(request, domain, app_build_id):
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     else:
-        if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-            # disable on icds for now since couch still not happy
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             couch_user = request.couch_user
             try:
                 update_user_reporting_data(app_build_id, app_id, couch_user, request)

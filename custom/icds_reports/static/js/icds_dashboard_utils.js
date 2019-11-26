@@ -13,6 +13,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('haveAccessToFeatures', initialPageData.get("have_access_to_features"));
         angular.module(appName).constant('haveAccessToAllLocations', initialPageData.get("have_access_to_all_locations"));
         angular.module(appName).constant('stateLevelAccess', initialPageData.get("state_level_access"));
+        angular.module(appName).constant('navMetadata', initialPageData.get("nav_metadata"));
         angular.module(appName).constant('genders', [
             {id: '', name: 'All'},
             {id: 'M', name: 'Male'},

@@ -3,9 +3,16 @@ import copy
 from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+
 from testil import assert_raises
 
-from corehq.sql_db.config import ShardMeta, _get_shard_count, PlProxyConfig
+from corehq.sql_db.config import (
+    PlProxyConfig,
+    ShardMeta,
+    _get_shard_count,
+    _get_standby_plproxy_config,
+)
+from corehq.sql_db.exceptions import PartitionValidationError
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import (
     get_shards_to_update,
     parse_existing_shard,
@@ -83,6 +90,15 @@ INVALID_SHARD_RANGE_POWER_2 = _get_partition_config({
     'db2': [5, 9],
 })
 
+PARTITION_CONFIG_WITH_STANDBYS = databases = _get_partition_config({
+    'db1': [0, 1],
+    'db2': [2, 3],
+})
+PARTITION_CONFIG_WITH_STANDBYS.update({
+    'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
+    'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+})
+
 
 @override_settings(DATABASES=TEST_DATABASES, USE_PARTITIONED_DATABASE=True)
 class TestPartitionConfig(SimpleTestCase):
@@ -127,6 +143,45 @@ class TestPartitionConfig(SimpleTestCase):
         config = PlProxyConfig.from_legacy_dict(TEST_LEGACY_FORMAT)
         self.assertEqual('proxy', config.proxy_db)
         self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
+
+    def test_get_standby_plproxy_config(self):
+        primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
+        with override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS):
+            standby_config = _get_standby_plproxy_config(primary_config)
+        self.assertEqual('commcarehq_standby', standby_config.cluster_name)
+        self.assertEqual('proxy', standby_config.proxy_db)
+        self.assertEqual({'db1_standby', 'db2_standby'}, set(standby_config.form_processing_dbs))
+        self.assertEqual(primary_config.shard_count, standby_config.shard_count)
+
+    def test_get_standby_plproxy_config_missing_standby(self):
+        databases = copy.deepcopy(PARTITION_CONFIG_WITH_STANDBYS)
+        del databases['db1_standby']  # remove one standby
+
+        primary_config = PlProxyConfig.from_dict(databases)
+        with override_settings(DATABASES=databases), self.assertRaises(PartitionValidationError):
+            _get_standby_plproxy_config(primary_config)
+
+    def test_get_standby_plproxy_config_misconfigured(self):
+        databases = copy.deepcopy(PARTITION_CONFIG_WITH_STANDBYS)
+        databases['db1_standby']['PLPROXY'] = {}  # add plproxy config to a standby
+
+        primary_config = PlProxyConfig.from_dict(databases)
+        with override_settings(DATABASES=databases), self.assertRaises(PartitionValidationError):
+            _get_standby_plproxy_config(primary_config)
+
+    def test_get_standby_plproxy_config_legacy_format(self):
+        config = PlProxyConfig.from_legacy_dict(TEST_LEGACY_FORMAT)
+        self.assertEqual('proxy', config.proxy_db)
+        self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
+
+        databases = copy.deepcopy(TEST_DATABASES)
+        databases.update({
+            'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
+            'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+        })
+
+        with override_settings(DATABASES=databases):
+            _get_standby_plproxy_config(config)
 
 
 def test_partition_config_validation():
