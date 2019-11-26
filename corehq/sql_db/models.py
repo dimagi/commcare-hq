@@ -4,36 +4,11 @@ from django.db import models
 from django.db.models.query import RawQuerySet
 
 
-def raise_access_restricted():
-    raise AccessRestricted("This model can be partitioned. Please specify which"
-        "partitioned database with `using` or look for an appropriate dbaccessors "
-        "method.")
-
-
-class RequireDBQuerySet(object):
-    """
-    Takes a QuerySet when instantiated. If .using() is called on this object,
-    it will return the queryset with the given database selected. If anything
-    else is called on this object, it will raise AccessRestricted.
-    """
-
-    def __init__(self, queryset):
-        self.queryset = queryset
-
-    def using(self, db_name):
-        return self.queryset.using(db_name)
-
-    def __getattr__(self, item):
-        raise_access_restricted()
-
-    def __iter__(self):
-        raise_access_restricted()
-
-    def __len__(self):
-        raise_access_restricted()
-
-    def __getitem__(self, key):
-        raise_access_restricted()
+def raise_access_restricted(queryset):
+    if not queryset._db and 'partition_value' not in queryset._hints and 'using' not in queryset._hints:
+        raise AccessRestricted("This model can be partitioned. Please specify which"
+            "partitioned database with `using` or look for an appropriate dbaccessors "
+            "method.")
 
 
 class RequireDBManager(models.Manager):
@@ -44,7 +19,8 @@ class RequireDBManager(models.Manager):
 
     def get_queryset(self):
         queryset = super(RequireDBManager, self).get_queryset()
-        return RequireDBQuerySet(queryset)
+        raise_access_restricted(queryset)
+        return queryset
 
     @staticmethod
     def get_db(partition_value):
@@ -71,27 +47,22 @@ class RequireDBManager(models.Manager):
             kwargs = {
                 self.model.partition_attr: partition_value
             }
-        return self.using(self.get_db(partition_value)).get(**kwargs)
+        return self.partitioned_query(partition_value).get(**kwargs)
 
-    def partitioned_query(self, partition_value):
+    def partitioned_query(self, partition_value=None):
         """Shortcut to get a queryset for a partitioned database.
         Equivalent to:
 
             db = get_db_alias_for_partitioned_doc(partition_value)
             qs = Model.objects.using(db)
         """
-        return self.using(self.get_db(partition_value))
+        return self.db_manager(hints={'partition_value': partition_value})
 
+    def using(self, alias):
+        return self.db_manager(hints={'using': alias})
 
-class RestrictedManager(RequireDBManager):
-
-    def raw(self, raw_query, params=None, translations=None, using=None):
-        if not using:
-            using = db_for_read_write(self.model)
-        return RawQuerySet(
-            raw_query, model=self.model,
-            params=params, translations=translations, using=using
-        )
+    def raw(self, raw_query, params=None):
+        return RawQuerySet(raw_query, model=self.model, params=params, hints={'plproxy_read': True})
 
 
 class PartitionedModel(models.Model):

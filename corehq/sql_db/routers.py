@@ -28,10 +28,10 @@ AAA_APP = 'aaa'
 class MultiDBRouter(object):
 
     def db_for_read(self, model, **hints):
-        return db_for_read_write(model, write=False)
+        return db_for_read_write(model, write=False, hints=hints)
 
     def db_for_write(self, model, **hints):
-        return db_for_read_write(model, write=True)
+        return db_for_read_write(model, write=True, hints=hints)
 
     def allow_migrate(self, db, app_label, model=None, model_name=None, **hints):
         return allow_migrate(db, app_label, model_name)
@@ -89,12 +89,13 @@ def allow_migrate(db, app_label, model_name=None):
         return db == DEFAULT_DB_ALIAS
 
 
-def db_for_read_write(model, write=True):
+def db_for_read_write(model, write=True, hints=None):
     """
     :param model: Django model being queried
     :param write: Default to True since the DB for writes can also handle reads
     :return: Django DB alias to use for query
     """
+    hints = hints or {}
     app_label = model._meta.app_label
 
     if app_label == SYNCLOGS_APP:
@@ -115,7 +116,14 @@ def db_for_read_write(model, write=True):
             return plproxy_config.proxy_db
         return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
-        return plproxy_config.proxy_db
+        if hints.get('plproxy_read'):
+            return plproxy_config.proxy_db
+        if 'using' in hints:
+            return hints['using']
+        if 'partition_value' in hints:
+            from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+            return get_db_alias_for_partitioned_doc(hints['partition_value'])
+        raise Exception(f'Unable to route query for {app_label} app')
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
