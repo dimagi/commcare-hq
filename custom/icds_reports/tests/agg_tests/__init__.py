@@ -13,10 +13,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
+    update_dashboard_activity_report
 )
 from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data, \
     cleanup_misc_agg_tables
@@ -32,6 +34,28 @@ def setUpModule():
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
 
+    state_location = SQLLocation.by_location_id('st1')
+    district_location = SQLLocation.by_location_id('d1')
+    user = CommCareUser.get_by_username('23.test@icds-cas.commcarehq.org')
+    if user:
+        user.delete()
+
+    user = CommCareUser.get_by_username('12.test@icds-cas.commcarehq.org')
+    if user:
+        user.delete()
+
+    CommCareUser.create('icds-cas',
+                        '12.test@icds-cas.commcarehq.org',
+                        '1234',
+                        location=state_location)
+
+
+    CommCareUser.create('icds-cas',
+                        '23.test@icds-cas.commcarehq.org',
+                        '1234',
+                        location=district_location)
+
+
     with override_settings(SERVER_ENVIRONMENT='icds', STATIC_DATA_SOURCE_PROVIDERS=[]):
         setup_tables_and_fixtures(domain.name)
         aggregate_state_form_data()
@@ -39,6 +63,7 @@ def setUpModule():
             with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
                 move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
+            update_dashboard_activity_report(datetime(2017, 5, 28))
         except Exception as e:
             print(e)
             tearDownModule()
@@ -46,6 +71,10 @@ def setUpModule():
 
 
 def tearDownModule():
+
+    CommCareUser.get_by_username('12.test@icds-cas.commcarehq.org').delete()
+    CommCareUser.get_by_username('23.test@icds-cas.commcarehq.org').delete()
+
     if settings.USE_PARTITIONED_DATABASE:
         return
 

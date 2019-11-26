@@ -18,16 +18,16 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         self.last_agg_date = self.get_last_agg_date()
 
     def aggregate(self, cursor):
-        cursor.execute(self.drop_table_query())
-        cursor.execute(*self.create_table_query())
+        drop_query = self.drop_table_query()
+        create_table_query, create_table_param = self.create_table_query()
         add_query, add_params = self.add_missing_users()
-        args_str = ','.join(cursor.mogrify("(%s,%s,%s,%s,%s,%s)", x).decode('utf-8') for x in add_params['values'])
+        rollover_query, rollover_param = self.rollover_previous_data()
+        update_queries = self.update_queries()
 
-        cursor.execute(add_query + args_str)
-
-        cursor.execute(*self.rollover_previous_data())
-
-        update_queries = self.update_query()
+        cursor.execute(drop_query)
+        cursor.execute(create_table_query, create_table_param)
+        cursor.cursor.execute(add_query, add_params)
+        cursor.execute(rollover_query, rollover_param)
 
         for query, param in update_queries:
             cursor.execute(query, param)
@@ -44,29 +44,69 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             if dashboard_uname_rx.match(uname)
         }
 
+    @cached_property
+    def transformed_locations(self):
+        """
+        :return: Returns a dict containing location_id as key and its info(loc_level,parents) as value
+                eg: {block_loc_id1: {'loc_level':3, parents:{
+                                                    'district_id': district_loc_id1,
+                                                    'state_id': state_loc_id1
+                                                }
+                                    }
+                    }
+        """
+        from custom.icds_reports.models.aggregate import AwcLocation
+        locations = AwcLocation.objects.filter(aggregation_level=3).values('state_id','district_id','block_id')
+
+        transformed_locations = dict()
+
+        for loc in locations:
+            state_id = loc['state_id']
+            district_id = loc['district_id']
+            block_id = loc['block_id']
+
+            if state_id not in transformed_locations:
+                transformed_locations[state_id] = {'loc_level': 1}
+
+            if district_id not in transformed_locations:
+                transformed_locations[district_id] = {'loc_level': 2,
+                                                      'parents': {
+                                                          'state_id': state_id
+                                                      }
+                                                      }
+            if block_id not in transformed_locations:
+                transformed_locations[block_id] = {'loc_level': 3,
+                                                   'parents': {
+                                                       'district_id': district_id,
+                                                       'state_id': state_id
+                                                      }
+                                                   }
+        return transformed_locations
+
     def get_user_locations(self):
         user_locations = list()
+        print(self.get_dashboard_users)
         for username in self.get_dashboard_users:
             user = CommCareUser.get_by_username(username)
-            loc = user.sql_location
 
             state_id, district_id, block_id, user_level = None, None, None, None
 
-            if loc and loc.location_type.name == 'state':
-                state_id = loc.location_id
-                district_id = 'All'
-                block_id = 'All'
-                user_level = 1
-            elif loc and loc.location_type.name == 'district':
-                district_id = loc.location_id
-                state_id = loc.get_ancestor_of_type('state').location_id
-                block_id = 'All'
-                user_level = 2
-            elif loc and loc.location_type.name == 'block':
-                block_id = loc.location_id
-                district_id = loc.get_ancestor_of_type('district').location_id
-                state_id = loc.get_ancestor_of_type('state').location_id
-                user_level = 3
+            if user.location_id:
+                user_level = self.transformed_locations.get(user.location_id)['loc_level']
+
+                if user_level == 1:
+                    state_id = user.location_id
+                    district_id = 'All'
+                    block_id = 'All'
+                elif user_level == 2:
+                    state_id = self.transformed_locations.get(user.location_id)['parents']['state_id']
+                    district_id = user.location_id
+                    block_id = 'All'
+                elif user_level == 3:
+                    state_id = self.transformed_locations.get(user.location_id)['parents']['state_id']
+                    district_id = self.transformed_locations.get(user.location_id)['parents']['district_id']
+                    block_id = user.location_id
+
             user_locations.append((
                 username,
                 state_id,
@@ -99,27 +139,35 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def get_last_agg_date(self):
         from custom.icds_reports.models.aggregate import DashboardUserActivityReport
-        result = DashboardUserActivityReport.objects.filter(date__lt=self.date.strftime("%Y-%m-%d")).aggregate(Max('date'))
+        result = DashboardUserActivityReport.objects.\
+            filter(date__lt=self.date.strftime("%Y-%m-%d")).\
+            aggregate(Max('date'))
         if result:
             return result['date__max']
         return None
 
     def add_missing_users(self):
+
+        parameters = {'value{}'.format(index): tuple(list(loc) + [self.date])
+                      for index, loc in enumerate(self.get_user_locations())
+                      }
+        param_keys = ['%({})s'.format(param) for param in parameters.keys()]
+
         return """
         INSERT INTO "{tablename}" (
             username, state_id, district_id,block_id,
             user_level,date
         )
-        VALUES
+        VALUES {param_keys}
         """.format(
-            tablename=self.tablename
-        ), {
-            'values': [tuple(list(loc) + [self.date]) for loc in self.get_user_locations()],
-        }
+            tablename=self.tablename,
+            param_keys = ','.join(param_keys)
+        ), parameters
 
     def rollover_previous_data(self):
         query_param = {'date': self.date,
                        'last_agg_date': self.last_agg_date}
+
         return """
         UPDATE "{tablename}" user_activity SET
             location_launched = ut.location_launched,
@@ -137,7 +185,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             parent_tablename=self.aggregate_parent_table
         ), query_param
 
-    def update_query(self):
+    def update_queries(self):
         last_time_to_consider = self.date
         latest_month = (last_time_to_consider - timedelta(days=1)).replace(day=1)
 

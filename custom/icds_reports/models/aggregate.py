@@ -1479,7 +1479,7 @@ class DashboardUserActivityReport(models.Model, AggregateMixin):
     """
     Daily Update table to hold Dashboard users activity information
     """
-    username = models.TextField()
+    username = models.TextField(primary_key=True)
     state_id = models.TextField(null=True)
     district_id = models.TextField(null=True)
     block_id = models.TextField(null=True)
@@ -1493,5 +1493,6 @@ class DashboardUserActivityReport(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_DASHBOARD_ACTIVITY
+        unique_together = ('username', 'date')
 
     _agg_helper_cls = DashboardActivityReportAggregate
