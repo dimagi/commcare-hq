@@ -37,11 +37,16 @@ class Dhis2EntityRepeater(CaseRepeater):
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
     dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
+    dhis2_version = StringProperty(default=None)
 
     _has_config = True
 
     def __str__(self):
         return Repeater.__str__(self)
+
+    @property
+    def api_version(self) -> int:
+        return get_api_version(self)
 
     def allowed_to_forward(self, payload):
         return True
@@ -74,14 +79,7 @@ class Dhis2EntityRepeater(CaseRepeater):
             extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
             form_question_values=get_form_question_values(payload),
         )
-        requests = Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-        )
+        requests = get_requests(self)
         return send_dhis2_entities(requests, self, case_trigger_infos)
 
 
@@ -124,18 +122,7 @@ class Dhis2Repeater(FormRepeater):
 
         .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
         """
-        if self.dhis2_version is None:
-            requests = self.get_requests()
-            metadata = fetch_metadata(requests)
-            self.dhis2_version = metadata["system"]["version"]
-            if Version.coerce(self.dhis2_version) > Version(DHIS2_MAX_VERSION):
-                requests.notify_error(
-                    "Integration has not yet been tested for DHIS2 version "
-                    f"{self.dhis2_version}. Its API may not be supported."
-                )
-            self.save()
-        version = Version.coerce(self.dhis2_version)
-        return version.minor
+        return get_api_version(self)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -164,7 +151,7 @@ class Dhis2Repeater(FormRepeater):
         If ``payload`` is a form that isn't configured to be forwarded,
         returns True.
         """
-        requests = self.get_requests()
+        requests = get_requests(self)
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:
@@ -179,15 +166,31 @@ class Dhis2Repeater(FormRepeater):
                     raise
         return True
 
-    def get_requests(self):
-        return Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-        )
+
+def get_api_version(repeater):
+    if repeater.dhis2_version is None:
+        requests = get_requests(repeater)
+        metadata = fetch_metadata(requests)
+        repeater.dhis2_version = metadata["system"]["version"]
+        if Version.coerce(repeater.dhis2_version) > Version(DHIS2_MAX_VERSION):
+            requests.notify_error(
+                "Integration has not yet been tested for DHIS2 version "
+                f"{repeater.dhis2_version}. Its API may not be supported."
+            )
+        repeater.save()
+    version = Version.coerce(repeater.dhis2_version)
+    return version.minor
+
+
+def get_requests(repeater):
+    return Requests(
+        repeater.domain,
+        repeater.url,
+        repeater.username,
+        repeater.plaintext_password,
+        verify=repeater.verify,
+        notify_addresses=repeater.notify_addresses,
+    )
 
 
 def fetch_metadata(requests):
