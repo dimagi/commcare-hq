@@ -39,7 +39,7 @@ hqDefine('app_manager/js/source_files', [
             var multimediaSizesDiff = multimediaSizeUtil.multimediaSizeView(firstAppID, secondAppID);
             $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
 
-            multimediaSizesContainer.views = [multimediaSizeApp1, multimediaSizeApp2, multimediaSizesDiff]
+            multimediaSizesContainer.views = [multimediaSizeApp1, multimediaSizeApp2, multimediaSizesDiff];
         }
     });
 });

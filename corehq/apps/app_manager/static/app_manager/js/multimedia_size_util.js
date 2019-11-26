@@ -17,10 +17,12 @@ hqDefine('app_manager/js/multimedia_size_util',[
         self.buildProfiles = ko.observableArray(buildProfiles);
         self.buildProfileId = ko.observable();
         self.buildProfileId.subscribe(function (buildProfileId) {
-            _.each(self.views, function(view) { view.buildProfileId(buildProfileId) })
-        })
+            _.each(self.views, function (view) {
+                view.buildProfileId(buildProfileId);
+            });
+        });
         return self;
-    }
+    };
     var multimediaSizeView = function (firstAppID, secondAppID) {
         var self = {};
         self.firstAppID = firstAppID;
@@ -63,7 +65,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
                     self.url(initialPageData.reverse("compare_multimedia_sizes_for_build_profile", buildProfileId));
                 } else {
                     self.url(initialPageData.reverse("get_multimedia_sizes_for_build_profile",
-                             self.firstAppID, buildProfileId));
+                        self.firstAppID, buildProfileId));
                 }
             } else {
                 self.loadDefault();
