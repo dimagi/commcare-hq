@@ -3,10 +3,10 @@
     <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" class="close-icon" ng-click="closeMenu()">
     <p class="navigation-font" ng-bind="userFullName" ng-if="userFullName"></p>
     <p class="navigation-font mb-5" ng-bind="userUsername"></p>
-    <div class="menu-options">
+    <a class="menu-options" href="{$ goToStep('', $location.search()) $}" ng-click="closeMenu()">
         <img src="{% static "icds_reports/mobile/images/program-summary.png" %}" class="mr-3">
         <p class="navigation-font mb-0">Program Summary</p>
-    </div>
+    </a>
     <div class="menu-options">
         <img src="{% static "icds_reports/mobile/images/mother.png" %}" class="mr-3">
         <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
