@@ -370,7 +370,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
         self.awc_ids_not_in_timeframe = get_awcs_with_old_vhnd_date(
             domain,
-            self.awc_locations.keys()
+            self.user_ids_by_location_id.keys()
         )
 
     def get_messages(self, language_code=None):
