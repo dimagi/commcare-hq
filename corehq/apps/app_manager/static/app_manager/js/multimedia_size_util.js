@@ -37,7 +37,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
                 },
             });
         };
-        self.url.subscribe(function (newUrl) {
+        self.url.subscribe(function () {
             self.load();
         });
         self.load();
