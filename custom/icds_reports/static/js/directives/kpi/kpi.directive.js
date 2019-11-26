@@ -26,8 +26,8 @@ function KpiController($rootScope, $location, haveAccessToFeatures) {
     this.isNumber = window.angular.isNumber;
 
     // used by mobile dashboard only
-    this.showMobileInfo = function (heading, help) {
-        $rootScope.$broadcast('showMobileInfo', heading, help);
+    this.showHelp = function (heading, help) {
+        $rootScope.$broadcast('showHelp', heading, help);
     };
 }
 
