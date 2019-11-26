@@ -27,7 +27,7 @@ function KpiController($location, haveAccessToFeatures) {
 
     this.toShowInKpi = function (cellLabel) {
         return !cellLabel.includes('Infantometer') && !cellLabel.includes('Stadiometer');
-    }
+    };
 }
 
 KpiController.$inject = ['$location', 'haveAccessToFeatures'];
