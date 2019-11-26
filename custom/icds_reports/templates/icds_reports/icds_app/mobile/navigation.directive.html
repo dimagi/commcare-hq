@@ -1,8 +1,8 @@
 {% load staticfiles %}
 <div class="sideNavigation" id="nav-menu">
     <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" class="close-icon" ng-click="closeMenu()">
-    <p class="navigation-font">Abc Def</p>
-    <p class="navigation-font mb-5">abc@def.com</p>
+    <p class="navigation-font" ng-bind="userFullName" ng-if="userFullName"></p>
+    <p class="navigation-font mb-5" ng-bind="userUsername"></p>
     <div class="menu-options">
         <img src="{% static "icds_reports/mobile/images/program-summary.png" %}" class="mr-3">
         <p class="navigation-font mb-0">Program Summary</p>
