@@ -1,4 +1,4 @@
-from corehq.apps.formplayer_api.smsforms.api import answer_question, next
+from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.formplayer_api.smsforms.signals import sms_form_complete
 
 
@@ -15,9 +15,8 @@ class SessionStartInfo(object):
     @property
     def first_responses(self):
         if self._first_responses is None:
-            self._first_responses = list(_next_responses(self._first_response,
-                                                         self.session_id,
-                                                         self.domain))
+            self._first_responses = list(_next_responses(
+                self._first_response, FormplayerInterface(self.session_id, self.domain)))
         return self._first_responses
 
 
@@ -30,21 +29,22 @@ def start_session(config):
     return SessionStartInfo(xformsresponse, config.domain)
 
 
-def next_responses(session_id, answer, domain, auth=None):
+def next_responses(session_id, answer, domain):
+    formplayer_interface = FormplayerInterface(session_id, domain)
     if answer:
-        xformsresponse = answer_question(session_id, _tf_format(answer), domain, auth)
+        xformsresponse = formplayer_interface.answer_question(_tf_format(answer))
     else:
-        xformsresponse = next(session_id, domain, auth)
-    for resp in _next_responses(xformsresponse, session_id, domain, auth):
+        xformsresponse = formplayer_interface.next()
+    for resp in _next_responses(xformsresponse, formplayer_interface):
         yield resp
 
 
-def _next_responses(xformsresponse, session_id, domain, auth=None):
+def _next_responses(xformsresponse, formplayer_interface):
     if xformsresponse.is_error:
         yield xformsresponse
     elif xformsresponse.event.type == "sub-group":
-        response = next(session_id, domain, auth)
-        for additional_resp in _next_responses(response, session_id, domain, auth):
+        response = formplayer_interface.next()
+        for additional_resp in _next_responses(response, formplayer_interface):
             yield additional_resp
     elif xformsresponse.event.type == "question":
         yield xformsresponse
@@ -52,11 +52,11 @@ def _next_responses(xformsresponse, session_id, domain, auth=None):
             # We have to deal with Trigger/Label type messages 
             # expecting an 'ok' type response. So auto-send that 
             # and move on to the next question.
-            response = answer_question(session_id, 'ok', domain, auth)
-            for additional_resp in _next_responses(response, session_id, domain, auth):
+            response = formplayer_interface.answer_question('ok')
+            for additional_resp in _next_responses(response, formplayer_interface):
                 yield additional_resp
     elif xformsresponse.event.type == "form-complete":
-        sms_form_complete.send(sender="touchforms", session_id=session_id,
+        sms_form_complete.send(sender="touchforms", session_id=formplayer_interface.session_id,
                                form=xformsresponse.event.output)
         yield xformsresponse
 

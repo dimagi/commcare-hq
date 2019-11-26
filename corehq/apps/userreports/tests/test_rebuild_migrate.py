@@ -69,7 +69,8 @@ class RebuildTableTest(TestCase):
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         engine = adapter.engine
         insp = reflection.Inspector.from_engine(engine)
-        self.assertEqual(len(insp.get_indexes(table_name)), 1)
+        # note the index is not yet created
+        self.assertEqual(len(insp.get_indexes(table_name)), 0)
 
     def test_add_non_nullable_column(self):
         self._setup_data_source('add_non_nullable_col')

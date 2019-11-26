@@ -5,8 +5,8 @@ from dimagi.utils.logging import notify_exception
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.smsforms.api import (
+    FormplayerInterface,
     TouchformsError,
-    current_question,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
@@ -112,7 +112,8 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             xforms_session_couch_id=session._id,
         )
 
-        resp = current_question(session.session_id, v.domain)
+        resp = FormplayerInterface(session.session_id, v.domain).current_question()
+
         send_sms_to_verified_number(v, resp.event.text_prompt,
             metadata=outbound_metadata)
     return True

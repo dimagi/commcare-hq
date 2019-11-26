@@ -61,7 +61,7 @@ branches:
   - dm/select-toggle # Daniel Nov 19
   - dmr/refactor-rate-definitions  # Danny Nov 20
   - bmb/update-requirejs  # Biyeun Nov 21
-  - bmb/js-load-fix  # Biyeun Nov 22
   - jls/resource-overrides  # Jenny Nov 22
-  - jls/non-unique-form-ids  # Jenny Nov 24
+  #- jls/non-unique-form-ids  # Jenny Nov 24
+  - bmb/appcues-requirejs  # Biyeun Nov 25
 submodules: {}

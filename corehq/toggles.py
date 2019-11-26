@@ -1724,20 +1724,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Nov 15, 2019 if no one is using
-GROUP_API_USE_COUCH_BACKEND = StaticToggle(
-    'group_api_use_couch_backend',
-    'Use Old Couch backend for Group API. '
+# todo: remove after Dec 25, 2019 if no one is using
+USER_API_USE_COUCH_BACKEND = StaticToggle(
+    'user_api_use_couch_backend',
+    'Use Old Couch backend for User API. '
     'This is an escape hatch for support '
     'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
-USER_API_USE_ES_BACKEND = StaticToggle(
-    'user_api_use_es_backend',
-    'Use new ES backend for User API.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
