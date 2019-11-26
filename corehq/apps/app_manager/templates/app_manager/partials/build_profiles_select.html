@@ -1,16 +1,16 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 {% if build_profiles %}
-<div class="row">
+<div class="row" id="build-profile-select-for-multimedia">
   <div class="col-sm-3 form-inline">
     <div class="form-group">
       <label>{% trans 'Build Profile' %}:</label>
-      <select id="build-profile-select-for-multimedia" class="hqwebapp-select2">
-        <option value="">{% trans "Default" %}</option>
-        {% for build_profile_id, build_profile_name in build_profiles.items %}
-          <option value="{{build_profile_id}}">
-            {{build_profile_name}}
-          </option>
-        {% endfor %}
+      <select data-bind="options: buildProfiles,
+                         optionsText: 'name',
+                         optionsValue: 'id',
+                         value: buildProfileId,
+                         optionsCaption: '{% trans_html_attr 'Select Profile' %}'"
+                         class="hqwebapp-select2">
       </select>
     </div>
   </div>

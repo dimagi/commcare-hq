@@ -27,31 +27,19 @@ hqDefine('app_manager/js/source_files', [
         if ($('#multimedia-sizes-diff-container').length) {
             var firstAppID = initialPageData.get('first_app_id');
             var secondAppID = initialPageData.get('second_app_id');
-            var multimediaSizes1 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", firstAppID));
-            $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizes1);
-            var multimediaSizes2 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", secondAppID));
-            $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizes2);
-            var multimediaSizesDiff = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("compare_multimedia_sizes"));
-            $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
-            $('#build-profile-select-for-multimedia').on('change', function () {
-                var buildProfileId = $(this).val();
-                if (buildProfileId) {
-                    multimediaSizes1.url(initialPageData.reverse("get_multimedia_sizes_for_build_profile",
-                        firstAppID, buildProfileId));
-                    multimediaSizes2.url(initialPageData.reverse("get_multimedia_sizes_for_build_profile",
-                        secondAppID, buildProfileId));
-                    multimediaSizesDiff.url(initialPageData.reverse("compare_multimedia_sizes_for_build_profile",
-                        buildProfileId));
+            var multimediaSizesContainer = multimediaSizeUtil.multimediaSizesContainer(initialPageData.get('build_profiles'));
+            $("#build-profile-select-for-multimedia").koApplyBindings(multimediaSizesContainer);
 
-                } else {
-                    multimediaSizes1.url(initialPageData.reverse("get_multimedia_sizes", firstAppID));
-                    multimediaSizes2.url(initialPageData.reverse("get_multimedia_sizes", secondAppID));
-                    multimediaSizesDiff.url(initialPageData.reverse("compare_multimedia_sizes"));
-                }
-            });
+            var multimediaSizeApp1 = multimediaSizeUtil.multimediaSizeView(firstAppID);
+            $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizeApp1);
+
+            var multimediaSizeApp2 = multimediaSizeUtil.multimediaSizeView(secondAppID);
+            $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizeApp2);
+
+            var multimediaSizesDiff = multimediaSizeUtil.multimediaSizeView(firstAppID, secondAppID);
+            $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
+
+            multimediaSizesContainer.views = [multimediaSizeApp1, multimediaSizeApp2, multimediaSizesDiff]
         }
     });
 });
