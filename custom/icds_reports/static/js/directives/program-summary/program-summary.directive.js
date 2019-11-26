@@ -133,23 +133,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
-
-    // used by mobile dashboard only
-    // todo: these should be moved to a shared directive - will be done once needed on a second page
-    vm.activeInfoHeading = '';
-    vm.activeInfoHelp = '';
-    $scope.$on('showMobileInfo', function(event, heading, help) {
-        vm.activeInfoHeading = heading;
-        vm.activeInfoHelp = help;
-        document.getElementById('summary-info').style.height='90vh';
-        document.getElementById('summary-info').style.top='10vh';
-        document.getElementById('summary-info').style.paddingTop='30px';
-    });
-    vm.hideMobileInfo = function () {
-        document.getElementById('summary-info').style.height='0';
-        document.getElementById('summary-info').style.top='100vh';
-        document.getElementById('summary-info').style.paddingTop='0px';
-    };
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
