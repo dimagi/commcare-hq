@@ -427,8 +427,8 @@ def download_index(request, domain, app_id):
         )
     enabled_build_profiles = []
     latest_enabled_build_profiles = {}
-    build_profiles = {build_profile_id: build_profile.name
-                      for build_profile_id, build_profile in request.app.build_profiles.items()}
+    build_profiles = [{'id': build_profile_id, 'name': build_profile.name}
+                      for build_profile_id, build_profile in request.app.build_profiles.items()]
     if request.app.is_released and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
         enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
