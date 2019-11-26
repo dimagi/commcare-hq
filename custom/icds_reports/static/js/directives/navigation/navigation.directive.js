@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location,
-                              stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures, userFullName, userUsername) {
+                              stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
+                              userFullName, userUsername, isMobile) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -45,14 +46,16 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
     // used by mobile only
     $scope.closeMenu = function () {
-        document.getElementById('nav-menu').style.left = '-300px';
+        if (isMobile) {
+            document.getElementById('nav-menu').style.left = '-300px';
+        }
     };
 }
 
 NavigationController.$inject = [
     '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
-    'userFullName', 'userUsername',
+    'userFullName', 'userUsername', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
