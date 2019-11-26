@@ -77,7 +77,6 @@ class TestAWWVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
         self.assertTrue('VHSND could not happen at your centre' in messages[0])
 
     def test_no_form_submitted(self):
-        last_subs.return_value = {}
         messages = run_indicator_for_user(self.aww, AWWVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('VHSND could not happen at your centre' in messages[0])
