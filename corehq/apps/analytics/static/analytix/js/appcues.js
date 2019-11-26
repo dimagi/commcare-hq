@@ -28,7 +28,7 @@ hqDefine('analytix/js/appcues', [
 
     $(function () {
         window.AppcuesSettings = {
-            skipAMD: true
+            skipAMD: true,
         };
         var apiId = _get('apiId'),
             scriptUrl = "//fast.appcues.com/" + apiId + '.js';
