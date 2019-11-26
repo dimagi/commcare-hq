@@ -2,6 +2,7 @@ from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 
+from django.conf import settings
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
 )
@@ -9,6 +10,16 @@ from corehq.util.quickcache import quickcache
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
+
+
+def get_cache_decorator():
+    vary_on = ['cls.__name__', 'docid']
+    main_cache_timeout = 60 * 60 * 24
+    if settings.SERVER_ENVIRONMENT == 'icds':
+        return quickcache(vary_on, timeout=main_cache_timeout,
+            memoize_timeout=10 * 60, session_function=None)
+    else:
+        return quickcache(vary_on, timeout=main_cache_timeout)
 
 
 class Toggle(Document):
@@ -28,7 +39,7 @@ class Toggle(Document):
         self.bust_cache()
 
     @classmethod
-    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24)
+    @get_cache_decorator()
     def cached_get(cls, docid):
         try:
             return cls.get(docid)
