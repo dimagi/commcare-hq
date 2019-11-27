@@ -356,6 +356,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 if is_active is not None:
                     user.is_active = is_active
 
+                case_blocks_to_submit = []
                 if can_assign_locations:
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
@@ -372,12 +373,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     if primary_location_removed:
                         user.unset_location(commit=False)
                     if locations_updated:
-                        user.reset_locations(location_ids, commit=False)
+                        case_blocks_to_submit = [user.reset_locations(location_ids, commit=False, submit_blocks=False)]
 
                 if role:
                     user.set_role(domain, roles_by_name[role].get_qualified_id())
 
-                user.save()
+                user.save(case_blocks_to_submit=case_blocks_to_submit)
 
                 if is_password(password):
                     # Without this line, digest auth doesn't work.

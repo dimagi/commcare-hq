@@ -1690,7 +1690,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=False, **params):
+    def save(self, fire_signals=True, spawn_task=False, case_blocks_to_submit=[], **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
@@ -1700,7 +1700,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_user_cases_if_applicable(self, spawn_task)
+            sync_user_cases_if_applicable(self, spawn_task, case_blocks_to_submit=case_blocks_to_submit)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1969,7 +1969,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
-    def set_location(self, location, commit=True):
+    def set_location(self, location, commit=True, submit_blocks=True):
         """
         Set the primary location, and all important user data, for
         the user.
@@ -1992,7 +1992,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commtrack-supply-point': sp.case_id
             })
 
-        self.create_location_delegates([location])
+        case_block = self.create_location_delegates([location], submit_blocks=submit_blocks)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
@@ -2009,6 +2009,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.get_sql_location.reset_cache(self)
         if commit:
             self.save()
+        if not submit_blocks:
+            return case_block
 
     def unset_location(self, fall_back_to_next=False, commit=True):
         """
@@ -2082,7 +2084,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'location_id': location_id
             })
 
-    def reset_locations(self, location_ids, commit=True):
+    def reset_locations(self, location_ids, commit=True, submit_blocks=True):
         """
         Reset user's assigned_locations to given location_ids and update user data.
             This should be called after updating primary location via set_location/unset_location
@@ -2101,11 +2103,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.user_data.pop('commcare_location_ids', None)
 
         # try to set primary-location if not set already
+        case_block = None
         if not self.location_id and location_ids:
-            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]), commit=False)
+            case_block = self.set_location(SQLLocation.objects.get(location_id=location_ids[0]), commit=False, submit_blocks=submit_blocks)
 
         if commit:
             self.save()
+        if not submit_blocks:
+            return case_block
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
@@ -2177,7 +2182,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if mapping:
             safe_hard_delete(mapping)
 
-    def create_location_delegates(self, locations):
+    def create_location_delegates(self, locations, submit_blocks=True):
         """
         Submit the case blocks creating the delgate case access
         for the location(s).
@@ -2202,7 +2207,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             index=index
         )
 
-        self.submit_location_block(caseblock, "create_location_delegates")
+        if submit_blocks:
+            self.submit_location_block(caseblock, "create_location_delegates")
+        else:
+            return caseblock
 
     def get_location_map_case(self):
         """

@@ -19,13 +19,14 @@ class _UserCaseHelper(object):
 
     CASE_SOURCE_ID = __name__ + "._UserCaseHelper."
 
-    def __init__(self, domain, owner_id):
+    def __init__(self, domain, owner_id, case_blocks_to_submit=[]):
         self.domain = domain
         self.owner_id = owner_id
+        self.case_blocks_to_submit = case_blocks_to_submit
 
     def _submit_case_block(self, caseblock, source):
         device_id = self.CASE_SOURCE_ID + source
-        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
+        casexml = [caseblock.text()] + self.case_blocks_to_submit
         submit_case_blocks(casexml, self.domain, device_id=device_id)
 
     @staticmethod
@@ -82,7 +83,7 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def _sync_user_case(commcare_user, case_type, owner_id, case=None):
+def _sync_user_case(commcare_user, case_type, owner_id, case=None, case_blocks_to_submit=[]):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -95,7 +96,7 @@ def _sync_user_case(commcare_user, case_type, owner_id, case=None):
         fields = _get_user_case_fields(commcare_user, case_type, owner_id)
         case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
-        user_case_helper = _UserCaseHelper(domain, owner_id)
+        user_case_helper = _UserCaseHelper(domain, owner_id, case_blocks_to_submit=case_blocks_to_submit)
 
         def case_should_be_reopened(case, user_case_should_be_closed):
             return case and case.closed and not user_case_should_be_closed
@@ -213,10 +214,13 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def sync_usercase(user):
+def sync_usercase(user, case_blocks_to_submit=[]):
     if user.project.usercase_enabled:
         _sync_user_case(
             user,
             USERCASE_TYPE,
-            user.get_id
+            user.get_id,
+            case_blocks_to_submit=case_blocks_to_submit
         )
+    else:
+        submit_case_blocks(case_blocks_to_submit, user.domain, "create_location_delegates")
