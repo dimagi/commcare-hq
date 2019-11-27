@@ -232,7 +232,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, build_profile_id, date, version):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """

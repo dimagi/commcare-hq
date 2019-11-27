@@ -340,7 +340,7 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     save_user = False
     # if mobile cannot determine app version it sends -1
     if app_version and app_version > 0:
-        save_user = update_latest_builds(couch_user, app_id, build_profile_id, datetime.utcnow(), app_version)
+        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version, build_profile_id)
     try:
         last_sync = adjust_text_to_datetime(last_sync_time)
     except iso8601.ParseError:
