@@ -532,7 +532,7 @@ describe('Download Directive', function () {
         });
     });
 
-        describe('Download Directive have access to features', function () {
+    describe('Download Directive have access to features', function () {
         var $scope, $httpBackend, controller;
 
         pageData.registerUrl('icds-ng-template', 'template');
