@@ -170,8 +170,7 @@ class MetaDB(object):
             if not kw:
                 raise TypeError("Missing argument 'parent_id', 'type_code' and/or 'name'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
-        dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
+        meta = BlobMeta.objects.partitioned_query(kw["parent_id"]).filter(**kw).first()
         if meta is None:
             raise BlobMeta.DoesNotExist(repr(kw))
         return meta
@@ -183,11 +182,10 @@ class MetaDB(object):
         :param type_code: `BlobMeta.type_code` (optional).
         :returns: A list of `BlobMeta` objects.
         """
-        dbname = get_db_alias_for_partitioned_doc(parent_id)
         kw = {"parent_id": parent_id}
         if type_code is not None:
             kw["type_code"] = type_code
-        return list(BlobMeta.objects.using(dbname).filter(**kw))
+        return list(BlobMeta.objects.partitioned_query(parent_id).filter(**kw))
 
     def get_for_parents(self, parent_ids, type_code=None):
         """Get a list of `BlobMeta` objects for the given parent(s)
@@ -211,11 +209,8 @@ class MetaDB(object):
         new_db = get_db_alias_for_partitioned_doc(new_parent_id)
         assert dbname == new_db, ("Cannot reparent to new partition: %s -> %s" %
             (old_parent_id, new_parent_id))
-        with connections[dbname].cursor() as cursor:
-            cursor.execute(
-                "UPDATE blobs_blobmeta SET parent_id = %s WHERE parent_id = %s",
-                [new_parent_id, old_parent_id],
-            )
+        query = BlobMeta.objects.partitioned_query(old_parent_id)
+        query.filter(parent_id=old_parent_id).update(parent_id=new_parent_id)
 
 
 def _utcnow():

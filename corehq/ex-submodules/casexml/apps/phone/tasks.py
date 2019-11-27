@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
-from django.db.models import Min, connections
+from django.db.models import Min
+from django.db import connections
 
 from celery import current_task, current_app
 from celery.schedules import crontab
