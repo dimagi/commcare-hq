@@ -9,6 +9,12 @@ var transformLocationTypeName = function(locationTypeName) {
     }
 };
 
+function locationTypesToDisplay(locationTypes) {
+    return _.map(locationTypes, function(locationType) {
+        return transformLocationTypeName(locationType.name);
+    }).join(', ');
+}
+
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
     var vm = this;
 
@@ -36,9 +42,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.getPlaceholder = function(locationTypes) {
-        return _.map(locationTypes, function(locationType) {
-            return transformLocationTypeName(locationType.name);
-        }).join(', ');
+        return locationTypesToDisplay(locationTypes);
     };
 
     vm.getLocationsForLevel = function(level) {
