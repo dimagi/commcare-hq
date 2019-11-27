@@ -6,14 +6,24 @@ from custom.icds_reports.utils.aggregation_helpers import (
     transform_day_to_month,
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
-    StateBasedAggregationDistributedHelper,
+    BaseICDSAggregationDistributedHelper,
 )
 
 
-class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
+class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'daily-feeding-forms-child-health'
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
     aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
+
+    def __init__(self, month):
+        self.month = transform_day_to_month(month)
+
+    def aggregate(self, cursor):
+        delete_query, delete_params = self.delete_old_data_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(delete_query, delete_params)
+        cursor.execute(agg_query, agg_params)
 
     def aggregation_query(self):
         current_month_start = month_formatter(self.month)
@@ -23,7 +33,6 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
             "month": month_formatter(self.month),
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
-            "state_id": self.state_id,
         }
 
         return f"""
@@ -46,7 +55,12 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
           )
           WHERE ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s
               AND ucr.child_health_case_id IS NOT NULL
-              AND ucr.state_id = %(state_id)s
           WINDOW w AS (PARTITION BY ucr.supervisor_id, ucr.child_health_case_id)
         )
         """, query_params
+
+    def delete_old_data_query(self):
+        return (
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s',
+            {'month': month_formatter(self.month)}
+        )
