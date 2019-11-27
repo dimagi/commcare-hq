@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.http import (
     Http404,
     HttpResponse,
@@ -310,8 +309,7 @@ def heartbeat(request, domain, app_build_id):
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     else:
-        if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-            # disable on icds for now since couch still not happy
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             couch_user = request.couch_user
             try:
                 update_user_reporting_data(app_build_id, app_id, couch_user, request)

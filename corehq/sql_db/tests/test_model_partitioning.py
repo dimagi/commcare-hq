@@ -4,7 +4,7 @@ from corehq.form_processor.tests.utils import (
     only_run_with_partitioned_database,
     only_run_with_non_partitioned_database,
 )
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 from django.apps import apps
 from django.db import ProgrammingError, transaction, DEFAULT_DB_ALIAS
 from django.test import TestCase
@@ -49,8 +49,8 @@ class TestPartitionedModelsWithMultipleDBs(PartitionedModelsTestMixin, TestCase)
     ('form_processor', True),
 ], TestPartitionedModelsWithMultipleDBs)
 def test_models_are_located_in_correct_dbs(self, app_label, is_partitioned):
-    proxy_db = partition_config.proxy_db
-    partitioned_dbs = partition_config.form_processing_dbs
+    proxy_db = plproxy_config.proxy_db
+    partitioned_dbs = plproxy_config.form_processing_dbs
 
     for model_class in self.get_models(app_label):
         if is_partitioned:

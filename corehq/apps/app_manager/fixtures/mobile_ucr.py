@@ -1,9 +1,11 @@
 import logging
+import numbers
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.translation import ugettext
 
 from lxml.builder import E
 
@@ -34,7 +36,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -203,7 +205,8 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         rows_elem = ReportFixturesProvider._get_v1_report_elem(
             data_source,
             {ui_filter.field for ui_filter in defer_filters},
-            filter_options_by_field
+            filter_options_by_field,
+            restore_user
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -218,7 +221,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         return report_elem
 
     @staticmethod
-    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field):
+    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -228,16 +231,24 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            restore_user.username, NAMESPACE_USER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
+
         rows_elem = E.rows()
         row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(data_source.final_column_ids),
                         list(map(str, total_row))
                     )
                 ),
@@ -379,6 +390,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             {f.field for f in defer_filters},
             filter_options_by_field,
             _last_sync_time(domain, restore_user.user_id),
+            restore_user
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -397,7 +409,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         return [report_filter_elem, report_elem]
 
     @staticmethod
-    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync):
+    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -407,22 +419,30 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            restore_user.username, NAMESPACE_USER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
+
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(data_source.final_column_ids),
                         list(map(str, total_row))
                     )
                 ),
                 row_index + 1,
                 is_total_row=True,
-            ))
+                ))
         return rows_elem
 
     @staticmethod
@@ -445,3 +465,36 @@ def _last_sync_time(domain, user_id):
 
 report_fixture_generator = ReportFixturesProvider()
 report_fixture_v2_generator = ReportFixturesProviderV2()
+
+
+class SQLTotalRowCalculator(object):
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+    def update_totals(self, row):
+        pass
+
+    def get_total_row(self):
+        return self.data_source.get_total_row()
+
+
+class IterativeTotalRowCalculator(SQLTotalRowCalculator):
+    def __init__(self, data_source):
+        super(IterativeTotalRowCalculator, self).__init__(data_source)
+        self.total_column_ids = data_source.total_column_ids
+        self.total_cols = {col_id: 0 for col_id in self.total_column_ids}
+
+    def update_totals(self, row):
+        for col_id in self.total_column_ids:
+            val = row[col_id]
+            if isinstance(val, numbers.Number):
+                self.total_cols[col_id] += val
+
+    def get_total_row(self):
+        total_row = [
+            self.total_cols.get(col_id, '')
+            for col_id in self.data_source.final_column_ids
+        ]
+        if total_row and total_row[0] == '':
+            total_row[0] = ugettext('Total')
+        return total_row

@@ -146,6 +146,8 @@ class UsernameLengthValidator(ImportValidator):
 
     def validate_spec(self, spec):
         username = spec.get('username')
+        if username:
+            username = str(username)
         if len(raw_username(username)) > self.max_username_length:
             return self.error_message
 

@@ -289,3 +289,32 @@ Useful references
 
 Postgres documentation: https://www.postgresql.org/docs/11/index.html
 Citus documentation: https://docs.citusdata.com/en/v8.3/index.html
+
+
+Front End
+---------
+
+The front end is a legacy AngularJS application (version 1.4.4).
+
+## Directives
+
+Directives are heavily used. A few important gotchas about directives and non-standard Angular usage:
+
+- The templates are served by a Django view (see `IcdsDynamicTemplateView`), and therefore are *rendered by Django*.
+- What this means is that normal `{{ variable.binding }}` in Angular can't be used because it would be rendered
+  by Django. Because of this we override `interpolateProvider.startSymbol` and `interpolateProvider.endSymbol` in
+  `icds_app.js`. Which means that Angular variables can be referenced in the directive templates like: 
+  `{$ variable.binding $}`.
+
+## Mobile Dashboard
+
+The mobile version of the dashboard should share all directive *javascript* and swap out functionality at the
+*template / HTML level*.
+
+This can be done by:
+
+1. Adding a new template to `icds_reports/icds_app/mobile/` with the *same name* as the web directive template.
+1. Updating the `templateUrl` in the directive's javascript file to use the `templateProviderService`, which will
+   return the mobile template for the mobile version of the page. (This is done using an Angular constant `isMobile`).
+
+See `program-summary.directive.js` for an example of this.

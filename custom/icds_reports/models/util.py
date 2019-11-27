@@ -164,14 +164,14 @@ class UcrReconciliationStatus(models.Model):
                 ]
             },
             cls.CommCareCase: {
-                'commcare-user': ['static-commcare_user_cases'],
-                'ccs_record': ['static-ccs_record_cases'],
-                'child_health': ['static-child_health_cases'],
-                'hardware': ['static-hardware_cases'],
-                'household': ['static-household_cases'],
-                'person': ['static-person_cases_v3'],
-                'tasks': ['static-tasks_cases'],
-                'tech_issue': ['static-tech_issue_cases'],
+                'static-commcare_user_cases': ['commcare-user'],
+                'static-ccs_record_cases': ['ccs_record'],
+                'static-child_health_cases': ['child_health'],
+                'static-hardware_cases': ['hardware'],
+                'static-household_cases': ['household'],
+                'static-person_cases_v3': ['person'],
+                'static-tasks_cases': ['tasks'],
+                'static-tech_issue_cases': ['tech_issue'],
             },
         }
 
