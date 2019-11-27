@@ -58,7 +58,7 @@ class RequireDBManager(models.Manager):
         return self.db_manager(hints={'partition_value': partition_value})
 
     def using(self, alias):
-        return self.db_manager(hints={'using': alias})
+        return self.db_manager(hints={'using': alias}).get_queryset()
 
     def plproxy_read(self, raw_query, params=None):
         return RawQuerySet(raw_query, model=self.model, params=params, hints={'plproxy_read': True})
