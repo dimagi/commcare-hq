@@ -15,6 +15,10 @@ from corehq.sql_db.util import select_db_for_read
 
 from .config import plproxy_config
 
+HINT_PARTITION_VALUE = 'partition_value'
+HINT_USING = 'using'
+HINT_PLPROXY_READ = 'plproxy_read'
+
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 BLOB_DB_APP = 'blobs'
@@ -125,13 +129,13 @@ def db_for_read_write(model, write=True, hints=None):
 
 
 def get_db_for_plproxy_cluster(app_label, hints):
-    if hints.get('plproxy_read'):
+    if hints.get(HINT_PLPROXY_READ):
         return plproxy_config.proxy_db
-    if 'using' in hints:
-        return hints['using']
-    if 'partition_value' in hints:
+    if HINT_USING in hints:
+        return hints[HINT_USING]
+    if HINT_PARTITION_VALUE in hints:
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-        return get_db_alias_for_partitioned_doc(hints['partition_value'])
+        return get_db_alias_for_partitioned_doc(hints[HINT_PARTITION_VALUE])
     raise Exception(f'Unable to route query for {app_label} app')
 
 

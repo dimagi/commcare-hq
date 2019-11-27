@@ -11,20 +11,37 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound as BlobNotFound
 from corehq.blobs.models import BlobMeta
-from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.blobs.tests.util import (
+    TemporaryFilesystemBlobDB,
+    TemporaryS3BlobDB,
+)
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces.processor import (
+    FormProcessorInterface,
+    ProcessedForms,
+)
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
-    create_form_for_test, FormProcessorTestUtils, use_sql_backend
+    FormProcessorTestUtils,
+    create_form_for_test,
+    use_sql_backend,
 )
-from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
-from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
-from corehq.sql_db.routers import db_for_read_write
+from corehq.form_processor.utils import (
+    get_simple_form_xml,
+    get_simple_wrapped_form,
+)
+from corehq.form_processor.utils.xform import (
+    FormSubmissionBuilder,
+    TestFormMetadata,
+)
+from corehq.sql_db.routers import HINT_PLPROXY_READ, db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
@@ -36,7 +53,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = db_for_read_write(BlobMeta, hints={'plproxy_read': True})
+        self.using = db_for_read_write(BlobMeta, hints={HINT_PLPROXY_READ: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)

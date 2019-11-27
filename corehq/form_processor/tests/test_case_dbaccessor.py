@@ -6,14 +6,30 @@ from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAccessors
+from corehq.form_processor.exceptions import (
+    AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    CaseIndexInfo,
+)
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
-    CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.models import (
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    SupplyPointCaseMixin,
+    XFormInstanceSQL,
+)
 from corehq.form_processor.tests.test_basics import _submit_case_block
-from corehq.sql_db.routers import db_for_read_write
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
+from corehq.sql_db.routers import HINT_PLPROXY_READ, db_for_read_write
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
@@ -24,7 +40,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = db_for_read_write(CaseAttachmentSQL, hints={'plproxy_read': True})
+        self.using = db_for_read_write(CaseAttachmentSQL, hints={HINT_PLPROXY_READ: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)

@@ -1,6 +1,13 @@
-from corehq.util.exceptions import AccessRestricted
-from django.db import models, connections
+from django.db import connections, models
 from django.db.models.query import RawQuerySet
+
+from corehq.sql_db.routers import (
+    HINT_PARTITION_VALUE,
+    HINT_PLPROXY_READ,
+    HINT_USING,
+    db_for_read_write,
+)
+from corehq.util.exceptions import AccessRestricted
 
 
 def raise_access_restricted(queryset):
@@ -55,13 +62,13 @@ class RequireDBManager(models.Manager):
             db = get_db_alias_for_partitioned_doc(partition_value)
             qs = Model.objects.using(db)
         """
-        return self.db_manager(hints={'partition_value': partition_value})
+        return self.db_manager(hints={HINT_PARTITION_VALUE: partition_value})
 
     def using(self, alias):
-        return self.db_manager(hints={'using': alias}).get_queryset()
+        return self.db_manager(hints={HINT_USING: alias}).get_queryset()
 
     def plproxy_read(self, raw_query, params=None):
-        return RawQuerySet(raw_query, model=self.model, params=params, hints={'plproxy_read': True})
+        return RawQuerySet(raw_query, model=self.model, params=params, hints={HINT_PLPROXY_READ: True})
 
 
 class PartitionedModel(models.Model):
@@ -78,20 +85,17 @@ class PartitionedModel(models.Model):
 
     @classmethod
     def get_plproxy_cursor(cls):
-        from corehq.sql_db.routers import db_for_read_write
-        db = db_for_read_write(cls, hints={'plproxy_read': True})
+        db = db_for_read_write(cls, hints={HINT_PLPROXY_READ: True})
         return connections[db].cursor()
 
     @classmethod
     def get_cursor_for_partition_value(cls, partition_value, readonly=False):
-        from corehq.sql_db.routers import db_for_read_write
-        db = db_for_read_write(cls, write=not readonly, hints={'partition_value': partition_value})
+        db = db_for_read_write(cls, write=not readonly, hints={HINT_PARTITION_VALUE: partition_value})
         return connections[db].cursor()
 
     @classmethod
     def get_cursor_for_partition_db(cls, db_alias, readonly=False):
-        from corehq.sql_db.routers import db_for_read_write
-        db = db_for_read_write(cls, write=not readonly, hints={'using': db_alias})
+        db = db_for_read_write(cls, write=not readonly, hints={HINT_USING: db_alias})
         return connections[db].cursor()
 
     @property
