@@ -1,10 +1,7 @@
-import doctest
-
 from django.test import SimpleTestCase
 
 from nose.tools import assert_false
 
-from corehq.motech.openmrs import finders_utils
 from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.openmrs.finders import (
     PatientFinder,
@@ -276,10 +273,3 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertLess(score, 1)
-
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(finders_utils)
-        self.assertEqual(results.failed, 0)
