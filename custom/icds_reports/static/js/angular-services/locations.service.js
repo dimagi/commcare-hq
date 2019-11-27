@@ -1,6 +1,17 @@
 window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', function($http, $location) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     var gtag = hqImport('analytix/js/google').track;
+
+    function transformLocationTypeName(locationTypeName) {
+        if (locationTypeName === 'awc') {
+            return locationTypeName.toUpperCase();
+        } else if (locationTypeName === 'supervisor') {
+            return 'Sector';
+        } else {
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+        }
+    }
+
     return {
         getRootLocations: function() {
             return this.getChildren(null);
@@ -79,5 +90,11 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 }
             );
         },
+        transformLocationTypeName: transformLocationTypeName,
+        locationTypesToDisplay: function(locationTypes) {
+            return _.map(locationTypes, function(locationType) {
+                return transformLocationTypeName(locationType.name);
+            }).join(', ');
+        }
     };
 }]);

@@ -1,19 +1,4 @@
 /* global _, LocationModalController, LocationFilterController */
-var transformLocationTypeName = function(locationTypeName) {
-    if (locationTypeName === 'awc') {
-        return locationTypeName.toUpperCase();
-    } else if (locationTypeName === 'supervisor') {
-        return 'Sector';
-    } else {
-        return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
-    }
-};
-
-function locationTypesToDisplay(locationTypes) {
-    return _.map(locationTypes, function(locationType) {
-        return transformLocationTypeName(locationType.name);
-    }).join(', ');
-}
 
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
     var vm = this;
@@ -42,7 +27,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.getPlaceholder = function(locationTypes) {
-        return locationTypesToDisplay(locationTypes);
+        return locationsService.locationTypesToDisplay(locationTypes);
     };
 
     vm.getLocationsForLevel = function(level) {
@@ -410,7 +395,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             return 'Location';
         } else {
             var locationTypeName = selectedLocation.location_type_name;
-            return transformLocationTypeName(locationTypeName);
+            return locationsService.transformLocationTypeName(locationTypeName);
         }
     };
 
