@@ -433,6 +433,15 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         }
     };
 
+    // helpers for mobile dashboard - mainly pass-throughs to locations service
+    vm.getDisplayFromLocationTypes = function(locationTypes) {
+        return locationsService.locationTypesToDisplay(locationTypes);
+    };
+    vm.locationTypeIsVisible = function(level) {
+        return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
+    };
+
+
     var selectedLocationIndex = function() {
         return _.findLastIndex(vm.selectedLocations, function(location) {
             return location && location !== ALL_OPTION.location_id && location.location_id !== ALL_OPTION.location_id;
@@ -464,7 +473,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
-window.angular.module('icdsApp').directive("locationFilter", function() {
+window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
@@ -474,8 +483,10 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
             isOpenModal: '=?',
         },
         bindToController: true,
-        templateUrl: url('icds-ng-template', 'location_filter'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('location_filter');
+        },
         controller: LocationFilterController,
         controllerAs: "$ctrl",
     };
-});
+}]);

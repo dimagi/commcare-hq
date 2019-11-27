@@ -25,6 +25,9 @@
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+  {# only needed for importing location directive - not actually referenced by mobile dashboard #}
+  <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+
 
   <script src="{% static 'js/icds_app_mobile.js' %}"></script>
   <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
@@ -32,13 +35,14 @@
   <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
   <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
+  <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
   <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
 
   <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
   <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/filter-opener/filter-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-filters/mobile-filters.directive.js' %}"></script>
-{#  <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>#}
+  <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
   <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
   <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
