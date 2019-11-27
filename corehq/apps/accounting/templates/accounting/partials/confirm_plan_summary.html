@@ -1,0 +1,121 @@
+{% load i18n %}
+
+<p class="lead text-center">
+  {% blocktrans with plan.name as p %}
+    You have selected the <strong>{{ p }} Edition</strong> subscription.
+  {% endblocktrans %}
+</p>
+<div class="confirm-plan-summary">
+  <div class="tile {{ tile_css }}">
+    <h3>
+      {% blocktrans with plan.name as p %}
+        {{ p }} Edition
+      {% endblocktrans %}
+    </h3>
+    <p class="plan-price">
+      {{ plan.monthly_fee }}
+    </p>
+    <p class="plan-monthly-label">
+      <strong>
+        {% trans "Monthly Fee" %}
+      </strong>
+    </p>
+    <h4>
+      {% trans 'Included each month' %}
+    </h4>
+    <div class="plan-included well well-sm">
+      <dl class="dl-horizontal">
+        {% for rate in plan.rates %}
+          <dt>{{ rate.name }}</dt>
+          <dd>{{ rate.included }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+    <p class="plan-desc">
+      {{ plan.description }}
+    </p>
+  </div>
+</div>
+{% if current_plan %}
+  <div class="alert {% if is_same_edition %}alert-info{% else %}alert-warning{% endif %} alert-subscription">
+    {% if is_upgrade %}
+      <h4>
+        <i class="fa fa-warning"></i>
+        {% trans "Note: Continuing will change your current subscription." %}
+      </h4>
+      <p class="text-community">
+        {% blocktrans with next_invoice_date as invoice_date %}
+          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
+          You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
+          subscription by following the instructions
+          <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
+        {% endblocktrans %}
+      </p>
+      <p class="text-community">
+        {% blocktrans %}
+          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,
+          but you will no longer be able to downgrade to the CommCare Community plan.
+        {% endblocktrans %}
+      </p>
+      <p>
+        <strong>
+          {% blocktrans %}
+            <input type="checkbox" data-bind="checked: oUserAgreementSigned"> I understand and wish to continue.
+          {% endblocktrans %}
+        </strong>
+      </p>
+    {% elif is_same_edition %}
+      <h4>
+        {% blocktrans %}
+          Thank you for staying with your current subscription.
+        {% endblocktrans %}
+      </h4>
+      <p>
+        {% blocktrans with current_plan as p %}
+          Continuing will keep you on <strong>{{ p }} Edition Software Plan</strong> and any
+          pending subscriptions will be cancelled.
+        {% endblocktrans %}
+      </p>
+    {% elif is_downgrade_before_minimum %}
+      <h4>
+        {% trans "We're sorry to see you downgrade!" %}
+      </h4>
+      <p>
+        {% blocktrans with current_plan as p %}
+          You’ll have access to the features on your
+          <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.<br />
+          On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
+          to the {{ new_plan_edition }} Edition Software Plan.
+        {% endblocktrans %}
+      </p>
+    {% else %}
+      <h4>
+        <i class="fa fa-warning"></i>
+        {% trans "Note: Continuing will change your current subscription." %}
+      </h4>
+      <p>
+        {% blocktrans with current_plan as p %}
+          We're sorry to see you downgrade! You are currently subscribed to the
+          <strong>{{ p }} Software Plan.</strong>
+        {% endblocktrans %}
+      </p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if downgrade_messages and not is_same_edition %}
+  <hr />
+  <h4 class="text-center">
+    {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
+  </h4>
+  {% for message in downgrade_messages %}
+    <div class="alert alert-warning alert-downgrade">
+      {{ message.message }}
+      <ul>
+        {% for detail in message.details %}
+          <li>{{ detail|safe }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+{% endif %}
