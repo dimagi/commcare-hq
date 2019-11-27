@@ -113,7 +113,7 @@ class MetaDB(object):
             ids = tuple(m for p in split_parent_ids for m in parents[p])
             with connections[dbname].cursor() as cursor:
                 cursor.execute(delete_blobs_sql, [ids, now])
-        deleted_bytes = sum(meta.content_length for m in metas)
+        deleted_bytes = sum(m.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
 
