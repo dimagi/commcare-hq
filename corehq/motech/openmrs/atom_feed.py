@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.utils.translation import ugettext as _
 
@@ -489,8 +489,12 @@ def get_case_block_kwargs_from_observations(
 
 
 def get_case_block_kwargs_from_bahmni_diagnoses(
-    diagnoses, mappings, case_id, case_type, default_owner_id
-):
+    diagnoses: List[dict],
+    mappings: Dict[str, ObservationMapping],
+    case_id: str,
+    case_type: str,
+    default_owner_id: str,
+) -> Tuple[dict, List[CaseBlock]]:
     """
     Iterate a list of Bahmni diagnoses, and return the ones mapped to
     case properties.
@@ -535,8 +539,12 @@ def get_case_block_kwargs_for_case_property(
 
 
 def get_case_block_for_indexed_case(
-    mapping, external_data, parent_case_id, parent_case_type, default_owner_id
-):
+    mapping: ObservationMapping,
+    external_data: dict,
+    parent_case_id: str,
+    parent_case_type: str,
+    default_owner_id: str,
+) -> CaseBlock:
     relationship = mapping.indexed_case_mapping.relationship
     case_block_kwargs = {
         "index": {
