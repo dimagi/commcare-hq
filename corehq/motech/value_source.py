@@ -23,6 +23,7 @@ from corehq.motech.const import (
     DIRECTION_IMPORT,
     DIRECTIONS,
 )
+from corehq.motech.exceptions import JsonpathError
 from corehq.motech.serializers import serializers
 
 
@@ -380,7 +381,10 @@ class JsonPathMixin(DocumentSchema):
     jsonpath = StringProperty(required=True, validators=not_blank)
 
     def _get_external_value(self, external_data):
-        jsonpath = parse_jsonpath(self.jsonpath)
+        try:
+            jsonpath = parse_jsonpath(self.jsonpath)
+        except Exception as err:
+            raise JsonpathError from err
         matches = jsonpath.find(external_data)
         values = [m.value for m in matches]
         if not values:
