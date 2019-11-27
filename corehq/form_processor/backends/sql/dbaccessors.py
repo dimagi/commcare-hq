@@ -700,7 +700,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
                 [domain, state]
@@ -718,7 +718,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def _get_form_ids_for_user(domain, user_id, is_deleted):
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
                 [domain, user_id, is_deleted]
@@ -799,7 +799,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
                 [case_id, CaseTransaction.TYPE_FORM]
@@ -854,7 +854,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        with CommCareCaseIndexSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseIndexSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
                 [domain, list(case_ids)]
@@ -951,7 +951,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        with CaseTransaction.get_plproxy_cursor() as cursor:
+        with CaseTransaction.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
             )
@@ -1040,7 +1040,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
                 [domain, case_type, owner_ids, is_closed, deleted]
@@ -1062,7 +1062,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
                 [domain, case_ids]
@@ -1074,7 +1074,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
                 [accessor.domain, case_ids, sync_log.date, sync_log._id]
@@ -1084,7 +1084,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)',
                 [domain, owner_id, reference_date]
@@ -1120,7 +1120,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
                 [domain, case_ids]

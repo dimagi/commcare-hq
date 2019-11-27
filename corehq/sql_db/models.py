@@ -84,8 +84,8 @@ class PartitionedModel(models.Model):
     objects = RequireDBManager()
 
     @classmethod
-    def get_plproxy_cursor(cls):
-        db = db_for_read_write(cls, hints={HINT_PLPROXY_READ: True})
+    def get_plproxy_cursor(cls, readonly=False):
+        db = db_for_read_write(cls, write=not readonly, hints={HINT_PLPROXY_READ: True})
         return connections[db].cursor()
 
     @classmethod
