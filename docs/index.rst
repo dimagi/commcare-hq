@@ -27,7 +27,6 @@ Welcome to CommCareHQ's documentation!
    class_views
    testing
    forms
-   management_commands
    migrations
    commtrack
    cloudcare
