@@ -1,8 +1,17 @@
 function MobileFiltersController($scope) {
-    // mobile only
+    const MONTH = 'month';
+    const LOCATION = 'location';
+    $scope.selectedTab = MONTH;
     $scope.closeFilters = function () {
         $scope.$emit('closeFilterMenu', {});
     };
+    $scope.selectMonthTab = function () {
+        $scope.selectedTab = MONTH;
+    };
+    $scope.selectLocationTab = function () {
+        $scope.selectedTab = LOCATION;
+    };
+
 }
 
 MobileFiltersController.$inject = ['$scope'];
