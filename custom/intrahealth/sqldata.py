@@ -5990,6 +5990,12 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                           add_sum_of_visits_column=False, add_availability_column=False):
         rows = []
         data = self.recap_rows
+        total_row = ['SYNTHESE']
+        values_for_total_row = {}
+        if add_amount_owed_column or add_latest_visit_column:
+            add_total_row = True
+        else:
+            add_total_row = False
 
         for pps in data.keys():
             pps_data = data[pps]
@@ -6000,10 +6006,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             pps_product_values = self.get_row_product_values(pps_data, displayed_values)
             for name in self.product_names:
                 product_value = pps_product_values.get(name, {'html': 0})
+                if add_total_row:
+                    self._collect_value(values_for_total_row, name, product_value)
+
                 row.append(product_value)
 
             if add_amount_owed_column:
                 amount_sum = self._get_amount_owed(pps_data)
+                self._collect_value(values_for_total_row, 'Recouvrement PPS Net à Payer', amount_sum)
 
                 row.append(amount_sum)
 
@@ -6024,12 +6034,22 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
             rows.append(row)
 
+        if add_total_row:
+            for key, value in values_for_total_row.items():
+                total_row.append({'html': value})
+            rows.append(total_row)
+
         return rows
 
     def get_row_product_values(self, pps_data, column):
         product_value = {}
         for row in pps_data:
-            product_value[row['product_name']] = row.get(column, {'html': 0})
+            key = row['product_name']
+            value = row.get(column, {'html': 0})['html']
+            if key in product_value:
+                product_value[key]['html'] += value
+            else:
+                product_value[key] = {'html': value}
         return product_value
 
     def create_row_with_column_values_sum(self, row_name, rows, title_column=True):
@@ -6117,6 +6137,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 to_return += amount
 
         return {'html': to_return}
+
+    @staticmethod
+    def _collect_value(values_dict, key, product_value):
+        value = product_value['html']
+        if values_dict.get(key, None):
+            values_dict[key] += value
+        else:
+            values_dict[key] = value
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):
