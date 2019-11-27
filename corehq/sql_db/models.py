@@ -82,6 +82,18 @@ class PartitionedModel(models.Model):
         db = db_for_read_write(cls, hints={'plproxy_read': True})
         return connections[db].cursor()
 
+    @classmethod
+    def get_cursor_for_partition_value(cls, partition_value, readonly=False):
+        from corehq.sql_db.routers import db_for_read_write
+        db = db_for_read_write(cls, write=not readonly, hints={'partition_value': partition_value})
+        return connections[db].cursor()
+
+    @classmethod
+    def get_cursor_for_partition_db(cls, db_alias, readonly=False):
+        from corehq.sql_db.routers import db_for_read_write
+        db = db_for_read_write(cls, write=not readonly, hints={'using': db_alias})
+        return connections[db].cursor()
+
     @property
     def partition_attr(self):
         raise NotImplementedError

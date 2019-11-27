@@ -110,7 +110,7 @@ class MetaDB(object):
             parents[meta.parent_id].append(meta.id)
         for dbname, split_parent_ids in split_list_by_db_partition(parents):
             ids = tuple(m for p in split_parent_ids for m in parents[p])
-            with connections[dbname].cursor() as cursor:
+            with BlobMeta.get_cursor_for_partition_db(dbname) as cursor:
                 cursor.execute(delete_blobs_sql, [ids, now])
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
