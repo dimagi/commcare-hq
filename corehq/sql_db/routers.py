@@ -140,11 +140,6 @@ def get_load_balanced_app_db(app_name: str, default: str) -> str:
     return select_db_for_read(read_dbs) or default
 
 
-def get_plproxy_cursor(model):
-    db = db_for_read_write(model, hints={'plproxy_read': True})
-    return connections[db].cursor()
-
-
 @contextmanager
 def force_citus_engine(force=False):
     warnings.warn('Use of non-citus is deprecated', DeprecationWarning)

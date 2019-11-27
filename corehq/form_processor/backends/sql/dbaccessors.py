@@ -58,7 +58,7 @@ from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
 )
 from corehq.sql_db.config import plproxy_config
-from corehq.sql_db.routers import db_for_read_write, get_plproxy_cursor
+from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import (
     estimate_row_count,
     get_db_aliases_for_partitioned_query,
@@ -124,7 +124,7 @@ class ShardAccessor(object):
             SELECT doc_id, hash_string(doc_id, 'siphash24') AS hash
             FROM (VALUES {}) AS t (doc_id)
         """.format(params)
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(query, doc_ids)
             rows = fetchall_as_namedtuple(cursor)
             return {row.doc_id: row.hash for row in rows}
@@ -142,7 +142,7 @@ class ShardAccessor(object):
             raise ValueError("Expected an instance of UUID")
 
         query = "SELECT hash_string(CAST(%s AS bytea), 'siphash24') AS hash"
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
             return fetchone_as_namedtuple(cursor).hash
@@ -507,7 +507,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_exists(form_id, domain=None):
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
             return result.form_exists
@@ -546,7 +546,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
                 [domain, form_ids, problem]
@@ -579,7 +579,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -598,7 +598,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form))
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
@@ -674,7 +674,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def update_form_problem_and_state(form):
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT update_form_problem_and_state(%s, %s, %s)',
                 [form.form_id, form.problem, form.state]
@@ -700,7 +700,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
                 [domain, state]
@@ -718,7 +718,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def _get_form_ids_for_user(domain, user_id, is_deleted):
-        with get_plproxy_cursor(XFormInstanceSQL) as cursor:
+        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
                 [domain, user_id, is_deleted]
@@ -799,7 +799,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
                 [case_id, CaseTransaction.TYPE_FORM]
@@ -854,7 +854,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        with get_plproxy_cursor(CommCareCaseIndexSQL) as cursor:
+        with CommCareCaseIndexSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
                 [domain, list(case_ids)]
@@ -903,7 +903,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
             return sum([result.deleted_count for result in results])
@@ -953,7 +953,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        with get_plproxy_cursor(CaseTransaction) as cursor:
+        with CaseTransaction.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
             )
@@ -1042,7 +1042,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
                 [domain, case_type, owner_ids, is_closed, deleted]
@@ -1064,7 +1064,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
                 [domain, case_ids]
@@ -1076,7 +1076,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
                 [accessor.domain, case_ids, sync_log.date, sync_log._id]
@@ -1086,7 +1086,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)',
                 [domain, owner_id, reference_date]
@@ -1122,7 +1122,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if not case_ids:
             return []
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
                 [domain, case_ids]
@@ -1151,7 +1151,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         NotAllowed.check(domain)
 
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_undelete_cases(%s, %s) as affected_count',
                 [domain, case_ids]
@@ -1177,7 +1177,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         utcnow = datetime.utcnow()
         deletion_date = deletion_date or utcnow
-        with get_plproxy_cursor(CommCareCaseSQL) as cursor:
+        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
                 [domain, case_ids, utcnow, deletion_date, deletion_id]
@@ -1435,7 +1435,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         :return: number of transactions deleted
         """
         assert isinstance(case_ids, list)
-        with get_plproxy_cursor(LedgerTransaction) as cursor:
+        with LedgerTransaction.get_plproxy_cursor() as cursor:
             cursor.execute(
                 "SELECT delete_ledger_transactions_for_form(%s, %s) as deleted_count",
                 [case_ids, form_id]
@@ -1453,7 +1453,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         :return: number of values deleted
         """
         try:
-            with get_plproxy_cursor(LedgerValue) as cursor:
+            with LedgerValue.get_plproxy_cursor() as cursor:
                 cursor.execute(
                     "SELECT delete_ledger_values(%s, %s, %s) as deleted_count",
                     [case_id, section_id, entry_id]

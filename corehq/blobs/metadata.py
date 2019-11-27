@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from django.db import connections
 
-from corehq.sql_db.routers import get_plproxy_cursor
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     split_list_by_db_partition,
@@ -64,7 +63,7 @@ class MetaDB(object):
         :param key: Blob key string.
         :returns: The number of metadata rows deleted.
         """
-        with get_plproxy_cursor(BlobMeta) as cursor:
+        with BlobMeta.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT 1 FROM delete_blob_meta(%s)', [key])
         datadog_counter('commcare.blobs.deleted.count')
         datadog_counter('commcare.blobs.deleted.bytes', value=content_length)

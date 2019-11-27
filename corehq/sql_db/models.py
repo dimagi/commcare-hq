@@ -1,5 +1,5 @@
 from corehq.util.exceptions import AccessRestricted
-from django.db import models
+from django.db import models, connections
 from django.db.models.query import RawQuerySet
 
 
@@ -75,6 +75,12 @@ class PartitionedModel(models.Model):
     """
 
     objects = RequireDBManager()
+
+    @classmethod
+    def get_plproxy_cursor(cls):
+        from corehq.sql_db.routers import db_for_read_write
+        db = db_for_read_write(cls, hints={'plproxy_read': True})
+        return connections[db].cursor()
 
     @property
     def partition_attr(self):
