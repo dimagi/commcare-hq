@@ -493,4 +493,3 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
         controllerAs: "$ctrl",
     };
 });
-

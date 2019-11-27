@@ -14,6 +14,7 @@
   {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
   <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
   <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
 
   {% include 'analytics/analytics_js.html' %}
@@ -35,6 +36,9 @@
 
   <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
   <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
+  <script src="{% static 'js/directives/filter-opener/filter-opener.directive.js' %}"></script>
+  <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
+{#  <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>#}
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
   <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
   <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>

@@ -1,8 +1,13 @@
-function FiltersController() {
+function FiltersController($scope) {
+    // mobile only
+    $scope.closeFilters = function () {
+        $scope.$emit('closeFilterMenu', {});
+    };
 }
 
-window.angular.module('icdsApp').directive("filters", function() {
-    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+FiltersController.$inject = ['$scope'];
+
+window.angular.module('icdsApp').directive("filters", ['templateProviderService', function (templateProviderService) {
     return {
         restrict:'E',
         scope: {
@@ -12,8 +17,10 @@ window.angular.module('icdsApp').directive("filters", function() {
             isOpenModal: '=?',
         },
         bindToController: true,
-        templateUrl: url('icds-ng-template', 'filters'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('filters');
+        },
         controller: FiltersController,
         controllerAs: "$ctrl",
     };
-});
+}]);
