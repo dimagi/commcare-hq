@@ -15,6 +15,7 @@ community_v0 = [
     privileges.DAILY_SAVED_EXPORT,
     privileges.CASE_SHARING_GROUPS,
     privileges.CHILD_CASES,
+    privileges.DATA_FORWARDING,
 ]
 
 # Grandfathered Community Plans created prior to Dec 18, 2019
@@ -22,6 +23,7 @@ community_v1 = [
     privileges.PROJECT_ACCESS,
     privileges.CASE_SHARING_GROUPS,
     privileges.CHILD_CASES,
+    privileges.DATA_FORWARDING,
 ]
 
 # Current Community Plan
@@ -87,6 +89,7 @@ pro_v0 = standard_v0 + [
 
 # Current Pro Plan
 pro_v1 = standard_v1 + [
+    privileges.DATA_FORWARDING,
     privileges.API_ACCESS,
     privileges.CUSTOM_REPORTS,
     privileges.REPORT_BUILDER,
