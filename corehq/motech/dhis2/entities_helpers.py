@@ -73,9 +73,9 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
         if not tracked_entities:
             return (None, None)
         if len(tracked_entities) > 1:
-            msg = _(f'Found {len(tracked_entities)} tracked entity instances '
-                    f'for {case_trigger_info}')
-            raise MultipleInstancesFound(requests.domain_name, requests.base_url, requests.username, msg)
+            raise MultipleInstancesFound(_(
+                f'Found {len(tracked_entities)} tracked entity instances for {case_trigger_info}'
+            ))
         tei_id = tracked_entities[0]["trackedEntityInstance"]
     return get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
 
@@ -103,9 +103,10 @@ def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_in
     if 200 <= response.status_code < 300:
         return response.json(), response.headers["ETag"]
     else:
-        msg = _(f'The tracked entity instance ID "{tei_id}" of '
-                f'{case_trigger_info} was not found on its DHIS2 server.')
-        raise BadTrackedEntityInstanceID(requests.domain_name, requests.base_url, requests.username, msg)
+        raise BadTrackedEntityInstanceID(_(
+            f'The tracked entity instance ID "{tei_id}" of '
+            f'{case_trigger_info} was not found on its DHIS2 server.'
+        ))
 
 
 def find_tracked_entity_instances(requests, case_trigger_info, case_config):
@@ -152,10 +153,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:
-        raise Dhis2Exception(
-            requests.domain_name, requests.base_url, requests.username,
-            _(f'{len(summaries)} tracked entity instances registered from {case_trigger_info}.')
-        )
+        raise Dhis2Exception(_(f'{len(summaries)} tracked entity instances registered from {case_trigger_info}.'))
     tracked_entity["trackedEntityInstance"] = summaries[0]["reference"]
     return tracked_entity
 
