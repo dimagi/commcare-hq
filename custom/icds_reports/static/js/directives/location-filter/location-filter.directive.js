@@ -427,6 +427,11 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     vm.locationTypeIsVisible = function (level) {
         return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
     };
+    vm.getLocationTypeDisplay = function (level) {
+        if (level !== null) {
+            return locationsService.locationTypesToDisplay(vm.hierarchy[level]);
+        }
+    };
     // UI / state management
     vm.showLocationChoices = false;
     vm.levelBeingSelected = null;

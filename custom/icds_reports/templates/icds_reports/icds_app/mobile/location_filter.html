@@ -10,7 +10,7 @@
 </div>
 <div class="select-options-list" ng-show="$ctrl.showLocationChoices">
     <div class="d-flex justify-content-between align-items-center px-3 mb-4">
-        <p class="select-options-heading" ng-bind="'Filter - Select ' + currentLocationType"></p>
+        <p class="select-options-heading" ng-bind="'Filter - Select ' + $ctrl.getLocationTypeDisplay($ctrl.levelBeingSelected)"></p>
         <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" style="width: 16px" ng-click="$ctrl.closeLocationChoices()">
     </div>
     <div ng-repeat="location in $ctrl.getLocationsForLevel($ctrl.levelBeingSelected)" ng-click="$ctrl.selectLocation(location)">
