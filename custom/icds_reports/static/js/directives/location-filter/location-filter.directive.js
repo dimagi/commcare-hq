@@ -424,10 +424,31 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
     // UI / state management
     vm.showLocationChoices = false;
+    vm.levelBeingSelected = null;
     vm.promptToSelectLocation = function (level) {
-        console.log('select location', level);
-        vm.currentLevel = level;
+        vm.levelBeingSelected = level;
         vm.showLocationChoices = true;
+    };
+    vm.selectLocation = function (selectedLocation) {
+        // todo: much of this is copied over from LocationModalController.onSelect.
+        // we may need to backport some permissions / report-location validation checks
+        var selectedLevel = vm.levelBeingSelected;
+        resetLevelsBelow(vm.levelBeingSelected);
+        // actually set selected location
+        vm.selectedLocations[vm.levelBeingSelected] = selectedLocation;
+        vm.myPromise = locationsService.getChildren(selectedLocation.location_id).then(function (data) {
+            // populate next level of selection based on selected location
+            if (selectedLocation.user_have_access) {
+                vm.locationsCache[selectedLocation.location_id] = [ALL_OPTION].concat(data.locations);
+                vm.selectedLocations[selectedLevel + 1] = ALL_OPTION;
+            } else {
+                vm.locationsCache[selectedLocation.location_id] = data.locations;
+                vm.selectedLocations[selectedLevel + 1] = data.locations[0];
+            }
+        });
+        // clear UI state
+        vm.levelBeingSelected = null;
+        vm.showLocationChoices = false;
     };
     vm.closeLocationChoices = function () {
         vm.showLocationChoices = false;

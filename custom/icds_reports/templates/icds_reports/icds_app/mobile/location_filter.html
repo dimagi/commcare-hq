@@ -3,7 +3,7 @@
     <div ng-repeat="locationTypes in $ctrl.hierarchy track by $index" ng-show="$ctrl.locationTypeIsVisible($index)">
         <p class="location-sub-heading">Select {$ $ctrl.getDisplayFromLocationTypes(locationTypes) $}</p>
         <div class="select-menu" ng-click="$ctrl.promptToSelectLocation($index)">
-            <p class="selected-location mb-0" ng-bind="selectedLocation[$index].name"></p>
+            <p class="selected-location mb-0" ng-bind="$ctrl.selectedLocations[$index].name"></p>
             <img src="{% static "icds_reports/mobile/images/drop-down-icon.png" %}">
         </div>
     </div>
@@ -13,8 +13,8 @@
         <p class="select-options-heading" ng-bind="'Filter - Select ' + currentLocationType"></p>
         <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" style="width: 16px" ng-click="$ctrl.closeLocationChoices()">
     </div>
-    <div ng-repeat="option in $ctrl.getLocationsForLevel($ctrl.currentLevel)" ng-click="onSelect($index)">
-        <p class="text-white font-14 select-options px-3" ng-bind="option.name"></p>
+    <div ng-repeat="location in $ctrl.getLocationsForLevel($ctrl.levelBeingSelected)" ng-click="$ctrl.selectLocation(location)">
+        <p class="text-white font-14 select-options px-3" ng-bind="location.name"></p>
         <hr class="mb-0 mt-0">
     </div>
 </div>
