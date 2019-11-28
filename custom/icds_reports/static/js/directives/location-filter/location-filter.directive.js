@@ -421,10 +421,10 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
     // helpers for mobile dashboard
     // pass-throughs to locations service
-    vm.getDisplayFromLocationTypes = function(locationTypes) {
+    vm.getDisplayFromLocationTypes = function (locationTypes) {
         return locationsService.locationTypesToDisplay(locationTypes);
     };
-    vm.locationTypeIsVisible = function(level) {
+    vm.locationTypeIsVisible = function (level) {
         return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
     };
     // UI / state management
