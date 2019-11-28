@@ -1,6 +1,7 @@
 import re
 from contextlib import contextmanager
 from copy import deepcopy
+from distutils.version import LooseVersion
 from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
@@ -11,7 +12,6 @@ from nose.tools import assert_equal, assert_true
 
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
-from corehq.motech.dhis2.version import Version
 from corehq.motech.requests import Requests
 
 dhis2_version = "2.32.2"
@@ -249,9 +249,10 @@ class ApiVersionTests(SimpleTestCase):
         repeater = Dhis2Repeater.wrap({"dhis2_version": "2.31"})
         self.assertEqual(repeater.api_version, 31)
 
-    def test_major_returns_minor_as_zero(self):
+    def test_major_raises_value_error(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": "2"})
-        self.assertEqual(repeater.api_version, 0)
+        with self.assertRaises(ValueError):
+            repeater.api_version
 
     def test_blank_raises_value_error(self):
         repeater = Dhis2Repeater.wrap({"dhis2_version": ""})
@@ -280,9 +281,9 @@ class SlowApiVersionTest(TestCase):
             mock_fetch.assert_called()
 
     def test_max_version_exceeded_notifies_admins(self):
-        max_version = Version(DHIS2_MAX_VERSION)
-        bigly_api_version = max_version.minor + 1
-        bigly_dhis2_version = f"{max_version.major}.{bigly_api_version}.{max_version.patch}"
+        major_ver, max_api_ver, patch_ver = LooseVersion(DHIS2_MAX_VERSION).version
+        bigly_api_version = max_api_ver + 1
+        bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
         with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \
                 patch('corehq.motech.dhis2.repeaters.Requests') as MockRequests:
             mock_fetch.return_value = {"system": {"version": bigly_dhis2_version}}

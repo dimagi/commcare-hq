@@ -1,13 +1,8 @@
 class Dhis2Exception(Exception):
-    def __init__(self, domain, base_url, username, *args):
-        self.domain = domain
-        self.base_url = base_url
-        self.username = username
-        super().__init__(*args)
-
-    def __str__(self):
-        string = super().__str__()
-        return f'{self.domain}: {self.username}@{self.base_url}: {string}'
+    """
+    It's not us, it's them
+    """
+    pass
 
 
 class BadTrackedEntityInstanceID(Dhis2Exception):

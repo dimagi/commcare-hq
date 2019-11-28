@@ -1,4 +1,5 @@
 import json
+from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -6,7 +7,6 @@ from memoized import memoized
 from requests import RequestException
 from urllib3.exceptions import HTTPError
 
-from corehq.motech.dhis2.version import Version
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty, StringProperty
 
@@ -15,6 +15,8 @@ from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
+from corehq.motech.dhis2.exceptions import Dhis2Exception
+from corehq.motech.dhis2.version import Version
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
@@ -172,14 +174,26 @@ def get_api_version(repeater):
         requests = get_requests(repeater)
         metadata = fetch_metadata(requests)
         repeater.dhis2_version = metadata["system"]["version"]
-        if Version.coerce(repeater.dhis2_version) > Version(DHIS2_MAX_VERSION):
+        try:
+            get_minor_component(repeater.dhis2_version)
+        except ValueError as err:
+            requests.notify_exception(str(err))
+            raise Dhis2Exception from err
+        if LooseVersion(repeater.dhis2_version) > DHIS2_MAX_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{repeater.dhis2_version}. Its API may not be supported."
             )
         repeater.save()
-    version = Version.coerce(repeater.dhis2_version)
-    return version.minor
+    return get_minor_component(repeater.dhis2_version)
+
+
+def get_minor_component(version_number):
+    try:
+        minor_component = LooseVersion(version_number).version[1]
+    except (AttributeError, IndexError):
+        raise ValueError(f"Unable to parse version number {version_number!r}.")
+    return minor_component
 
 
 def get_requests(repeater):
