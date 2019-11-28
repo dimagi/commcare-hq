@@ -407,7 +407,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_form_unique_ids(app_source, ids_map):
+def update_form_unique_ids(app_source, ids_map, update_all=True):
     """
     Accepts an ids_map translating IDs in app_source to the desired replacement
     ID. Form IDs not present in ids_map will be given new random UUIDs.
@@ -431,9 +431,10 @@ def update_form_unique_ids(app_source, ids_map):
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = ids_map.get(old_id, uuid.uuid4().hex)
-            new_ids_by_old[old_id] = new_id
-            change_form_unique_id(form, old_id, new_id)
+            if update_all or old_id in ids_map:
+                new_id = ids_map.get(old_id, uuid.uuid4().hex)
+                new_ids_by_old[old_id] = new_id
+                change_form_unique_id(form, old_id, new_id)
 
     for reference_path in form_id_references:
         for reference in reference_path.find(app_source):
