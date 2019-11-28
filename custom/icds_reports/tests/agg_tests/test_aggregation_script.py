@@ -631,35 +631,3 @@ class LocationAggregationTest(TestCase):
                 'state_name': 'State1', 'state_site_code': 'state1',
             }
         ]
-
-
-class DashboardActivityReport(AggregationScriptTestBase):
-    always_include_columns = {'username', 'state_id', 'district_id', 'block_id',
-                              'user_level', 'location_launched', 'last_activity', 'date'}
-
-    def test_dashboard_activity_2017_05_28(self):
-        actual_data = DashboardUserActivityReport.objects.filter(date='2017-05-28').\
-            values(*self.always_include_columns).order_by('username')
-
-        self.assertDictEqual(actual_data, [
-            {
-                'date': datetime.date(2017, 5, 28),
-                'last_activity': None,
-                'location_launched': True,
-                'district_id': 'All',
-                'user_level': 1,
-                'state_id': 'st1',
-                'username': '12.test@icds-cas.commcarehq.org',
-                'block_id': 'All'
-            },
-            {
-                'date': datetime.date(2017, 5, 28),
-                'last_activity': None,
-                'location_launched': True,
-                'district_id': 'd1',
-                'user_level': 2,
-                'state_id': 'st1',
-                'username': '23.test@icds-cas.commcarehq.org',
-                'block_id': 'All'
-            }
-        ])
