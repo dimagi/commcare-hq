@@ -91,12 +91,12 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             );
         },
         transformLocationTypeName: transformLocationTypeName,
-        locationTypesToDisplay: function(locationTypes) {
-            return _.map(locationTypes, function(locationType) {
+        locationTypesToDisplay: function (locationTypes) {
+            return _.map(locationTypes, function (locationType) {
                 return transformLocationTypeName(locationType.name);
             }).join(', ');
         },
-        locationTypeIsVisible: function(selectedLocations, level) {
+        locationTypeIsVisible: function (selectedLocations, level) {
             // whether a location type is visible (should be selectable) from locations service
             // hard code reports that disallow drilling past a certain level
             if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
