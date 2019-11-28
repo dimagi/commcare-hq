@@ -1474,7 +1474,6 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
-
 class DashboardUserActivityReport(models.Model, AggregateMixin):
     """
     Daily Update table to hold Dashboard users activity information
