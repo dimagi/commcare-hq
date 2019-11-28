@@ -490,7 +490,7 @@ def get_case_block_kwargs_from_observations(
 
 def get_case_block_kwargs_from_bahmni_diagnoses(
     diagnoses: List[dict],
-    mappings: Dict[str, ObservationMapping],
+    mappings: Dict[str, List[ObservationMapping]],
     case_id: str,
     case_type: str,
     default_owner_id: str,
