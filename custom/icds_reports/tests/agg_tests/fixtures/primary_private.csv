@@ -1,0 +1,4 @@
+doc_id,inserted_at,timeend,state_id,supervisor_id,person_case_id,admitted_private_school,date_admission_private_school,returned_private_school,date_return_private_school,admitted_primary_school,date_admission_primary_school
+doc_id1,2017-05-25,2017-04-05,st1,s1,2360319e-67f0-44bd-8fa2-d25a79bbe225,,,,,yes,2017-03-31
+doc_id2,2017-05-25,2017-05-15,st1,s1,2360319e-67f0-44bd-8fa2-d25a79bbe225,,,yes,2017-05-13,,
+doc_id3,2017-05-25,2017-05-21,st1,s3,57c9f4f5-b52d-4785-bdf4-0c04fb348fec,yes,2017-05-11,,,,
