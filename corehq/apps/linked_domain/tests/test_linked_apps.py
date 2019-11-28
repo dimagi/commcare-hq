@@ -1,4 +1,3 @@
-import mock
 import os
 import uuid
 
@@ -21,7 +20,6 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
     add_xform_resource_overrides,
     ResourceOverride,
 )
-from corehq.apps.app_manager.suite_xml.xml_models import XFormResource
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
