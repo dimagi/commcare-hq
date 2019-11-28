@@ -93,8 +93,8 @@ ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None, enabled_for_new_domains_after=None,
+                 description=None, save_fn=None, always_enabled=set(),
+                 always_disabled=set(), enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
                  notification_emails=None):
         self.slug = slug
@@ -106,8 +106,12 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        self.always_enabled = always_enabled or set()
-        self.always_disabled = always_disabled or set()
+        # For icds-cas domain, toggles are delcared in localsettings statically
+        #   to avoid cache lookups
+        self.always_enabled = (always_enabled +
+            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_ENABLED_TOGGLES else {})
+        self.always_disabled = (always_disabled +
+            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_DISBLED_TOGGLES else {})
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
