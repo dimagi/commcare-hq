@@ -1,4 +1,5 @@
-from collections import defaultdict, namedtuple
+import logging
+from collections import defaultdict
 
 import attr
 from alembic.autogenerate import compare_metadata
@@ -14,7 +15,8 @@ from fluff.signals import (
 
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import id_is_static
-from corehq.util.soft_assert import soft_assert
+
+logger = logging.getLogger(__name__)
 
 
 def get_redis_key_for_config(config):
@@ -113,15 +115,14 @@ def apply_index_changes(engine, diffs):
     remove_indexes = [index.index for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
     add_indexes = [index.index for index in index_diffs if index.type == DiffTypes.ADD_INDEX]
 
-    with engine.begin() as conn:
-        for index in add_indexes:
-            index.create(conn)
+    for index in add_indexes:
+        column_names = ', '.join(c.name for c in index.columns)
+        logger.info(f'CREATE INDEX CONCURRENTLY "{index.name}" ON {index.table.name} ({column_names})')
 
     # don't remove indexes automatically because we want to be able to add them
     # concurrently without the code removing them
-    _assert = soft_assert(to="@".join(["jemord", "dimagi.com"]))
     for index in remove_indexes:
-        _assert(False, "Index {} can be removed".format(index.name))
+        logger.info(f'DROP INDEX CONCURRENTLY "{index.name}"')
 
     return index_diffs
 

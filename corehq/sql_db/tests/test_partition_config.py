@@ -169,6 +169,20 @@ class TestPartitionConfig(SimpleTestCase):
         with override_settings(DATABASES=databases), self.assertRaises(PartitionValidationError):
             _get_standby_plproxy_config(primary_config)
 
+    def test_get_standby_plproxy_config_legacy_format(self):
+        config = PlProxyConfig.from_legacy_dict(TEST_LEGACY_FORMAT)
+        self.assertEqual('proxy', config.proxy_db)
+        self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
+
+        databases = copy.deepcopy(TEST_DATABASES)
+        databases.update({
+            'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
+            'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+        })
+
+        with override_settings(DATABASES=databases):
+            _get_standby_plproxy_config(config)
+
 
 def test_partition_config_validation():
     def _run_test(config, exception, message):

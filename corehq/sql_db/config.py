@@ -230,6 +230,8 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
     Create plproxy config for querying standbys. This assumes that the main plproxy DB
     will be the same as the primary DB.
 
+    This does not support multiple standby databases per primary.
+
     :returns: PlProxyConfig object with details of all the standby databases
               or None if no standby databases are configured
 
@@ -251,7 +253,10 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
             config = copy.deepcopy(settings.DATABASES[standby])
             if 'PLPROXY' in config:
                 raise PartitionValidationError('Standby databases should not have PLPROXY configuration')
-            config['PLPROXY'] = settings.DATABASES[primary_db]['PLPROXY']
+            config['PLPROXY'] = {
+                'SHARDS': primary_config.shard_map[primary_db]
+            }
+
             standby_db_config[standby] = config
             return True
 
@@ -265,6 +270,12 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
 
     standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
+    standby_db_config[primary_config.proxy_db] = {
+        'PLPROXY': {
+            'PROXY': True
+        }
+    }
+
     cluster_name = f'{settings.PL_PROXY_CLUSTER_NAME}_standby'
     return PlProxyConfig.from_dict(standby_db_config, cluster_name=cluster_name)
 

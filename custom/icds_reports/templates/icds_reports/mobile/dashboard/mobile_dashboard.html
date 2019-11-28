@@ -9,8 +9,13 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.css' %}"/>
   {% endcompress %}
+
+  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
+
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
 {% compress js %}
@@ -28,6 +33,9 @@
   <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
   <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
 
+  <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
+  <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
+  <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
   <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
   <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
   <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
@@ -39,15 +47,16 @@
   {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
 </div>
 <div id="app" ng-cloak>
-    <div ng-controller="MainMobileController" class="container-fluid">
-        <div class="row">
-          <div class="col-md-12 main-container">
-            <div class="row no-margin">
-              <div class="ng-view"></div>
-            </div>
+  <navigation></navigation>
+  <div ng-controller="MainMobileController" class="container-fluid">
+      <div class="row">
+        <div class="col-md-12 main-container">
+          <div class="row no-margin">
+            <div class="ng-view"></div>
           </div>
         </div>
-    </div>
+      </div>
+  </div>
 </div>
 {% include 'analytics/initial/global.html' %}
 {% include 'analytics/initial/google.html' %}
