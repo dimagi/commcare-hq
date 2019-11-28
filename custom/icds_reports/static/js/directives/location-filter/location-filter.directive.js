@@ -465,8 +465,8 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         // vm.selectedLocationId = selectedLocation;
         $scope.$emit('filter_data', {
             'hasLocation': true,
-            'location' : selectedLocation,
-            'locationLevel': selectedIndex
+            'location': selectedLocation,
+            'locationLevel': selectedIndex,
         });
     });
 
