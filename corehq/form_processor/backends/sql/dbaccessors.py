@@ -11,7 +11,7 @@ from itertools import groupby
 from uuid import UUID
 
 from django.conf import settings
-from django.db import InternalError, connections, transaction
+from django.db import InternalError, connections, transaction, router
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat, Greatest
@@ -58,7 +58,6 @@ from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
 )
 from corehq.sql_db.config import plproxy_config
-from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import (
     estimate_row_count,
     get_db_aliases_for_partitioned_query,
@@ -243,7 +242,7 @@ class ReindexAccessor(metaclass=ABCMeta):
     @property
     def sql_db_aliases(self):
         all_db_aliases = get_db_aliases_for_partitioned_query() if self.is_sharded() \
-            else [db_for_read_write(self.model_class)]
+            else [router.db_for_reads(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
             assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(

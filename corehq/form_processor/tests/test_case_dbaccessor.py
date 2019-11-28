@@ -2,6 +2,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.db import router
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -29,7 +30,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.sql_db.routers import HINT_PLPROXY_READ, db_for_read_write
+from corehq.sql_db.routers import HINT_PLPROXY_READ
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
@@ -40,7 +41,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = db_for_read_write(CaseAttachmentSQL, hints={HINT_PLPROXY_READ: True})
+        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY_READ: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)

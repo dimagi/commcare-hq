@@ -4,6 +4,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.db import router
 from django.test import TestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -41,7 +42,7 @@ from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
 )
-from corehq.sql_db.routers import HINT_PLPROXY_READ, db_for_read_write
+from corehq.sql_db.routers import HINT_PLPROXY_READ
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
@@ -53,7 +54,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = db_for_read_write(BlobMeta, hints={HINT_PLPROXY_READ: True})
+        self.using = router.db_for_read(BlobMeta, **{HINT_PLPROXY_READ: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)

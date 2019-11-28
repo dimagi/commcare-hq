@@ -1,11 +1,10 @@
-from django.db import connections, models
+from django.db import connections, models, router
 from django.db.models.query import RawQuerySet
 
 from corehq.sql_db.routers import (
     HINT_PARTITION_VALUE,
     HINT_PLPROXY_READ,
     HINT_USING,
-    db_for_read_write,
 )
 from corehq.util.exceptions import AccessRestricted
 
@@ -71,6 +70,13 @@ class RequireDBManager(models.Manager):
         return RawQuerySet(raw_query, model=self.model, params=params, hints={HINT_PLPROXY_READ: True})
 
 
+def _get_cursor(cls, readonly=False, hints=None):
+    hints = hints or {}
+    action = router.db_for_read if readonly else router.db_for_write
+    db = action(cls, **hints)
+    return connections[db].cursor()
+
+
 class PartitionedModel(models.Model):
     """
     This makes it so that you must specify a database name when
@@ -85,18 +91,15 @@ class PartitionedModel(models.Model):
 
     @classmethod
     def get_plproxy_cursor(cls, readonly=False):
-        db = db_for_read_write(cls, write=not readonly, hints={HINT_PLPROXY_READ: True})
-        return connections[db].cursor()
+        return _get_cursor(cls, readonly, {HINT_PLPROXY_READ: True})
 
     @classmethod
     def get_cursor_for_partition_value(cls, partition_value, readonly=False):
-        db = db_for_read_write(cls, write=not readonly, hints={HINT_PARTITION_VALUE: partition_value})
-        return connections[db].cursor()
+        return _get_cursor(cls, readonly, {HINT_PARTITION_VALUE: partition_value})
 
     @classmethod
     def get_cursor_for_partition_db(cls, db_alias, readonly=False):
-        db = db_for_read_write(cls, write=not readonly, hints={HINT_USING: db_alias})
-        return connections[db].cursor()
+        return _get_cursor(cls, readonly, {HINT_USING: db_alias})
 
     @property
     def partition_attr(self):
