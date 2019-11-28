@@ -114,18 +114,3 @@ class PartitionedModel(models.Model):
 
     class Meta(object):
         abstract = True
-
-    def save(self, *args, **kwargs):
-        self._add_routing(kwargs)
-        return super(PartitionedModel, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self._add_routing(kwargs)
-        return super(PartitionedModel, self).delete(*args, **kwargs)
-
-    def _add_routing(self, kwargs):
-        if 'using' in kwargs:
-            assert kwargs['using'] == self.db, \
-                "using=%r, expected %r" % (kwargs['using'], self.db)
-        else:
-            kwargs['using'] = self.db
