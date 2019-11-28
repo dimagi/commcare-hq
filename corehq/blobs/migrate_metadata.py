@@ -97,7 +97,7 @@ def make_migrators(mod):
                     "domain": obj.domain,
                     "attachments": obj._attachments,
                 })
-            with BlobMeta.get_cursor_for_partition_value(doc['id']) as cursor:
+            with BlobMeta.get_cursor_for_partition_value(doc['_id']) as cursor:
                 for name, meta in obj.external_blobs.items():
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
