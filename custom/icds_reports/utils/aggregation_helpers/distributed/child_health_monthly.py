@@ -7,6 +7,7 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
+    PRIMARY_PRIVATE_SCHOOL
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_temp_tablename,
@@ -69,6 +70,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1, days=-1)).strftime("'%Y-%m-%d'::date")
+        next_month_start = (self.month + relativedelta(months=1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         age_in_months = "(({} - person_cases.dob) / 30.4 )".format(start_month_string)
@@ -86,7 +88,20 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(
             open_in_month, alive_in_month, seeking_services, age_in_months
         )
-        pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
+
+        private_school_attending = "(COALESCE(ps.admitted_private_school, false)" \
+                                   " AND date_admission_private_school<{})".format(next_month_start)
+
+        primary_school_attending = "(COALESCE(ps.admitted_primary_school, false)" \
+                                   " AND date_admission_primary_school<{})".format(next_month_start)
+
+        returned_private_school = "(COALESCE(ps.returned_private_school, false)" \
+                                  " AND date_return_private_school<{})".format(next_month_start)
+
+        primary_private_school = "(({} OR {}) AND NOT {})".format(private_school_attending,
+                                                                primary_school_attending,
+                                                                returned_private_school)
+        pse_eligible = "({} AND {} > 36 AND NOT {})".format(valid_in_month, age_in_months_end, primary_private_school)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
         wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
@@ -318,7 +333,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             """),
             ("mother_phone_number", "child_health.mother_phone_number"),
             ("date_death", "child_health.date_death"),
-            ("mother_case_id", "child_health.mother_case_id")
+            ("mother_case_id", "child_health.mother_case_id"),
+            ('primary_private_school', "CASE WHEN {} THEN 1 ELSE 0 END".format(primary_private_school))
         )
         return """
         INSERT INTO "{tablename}" (
@@ -352,6 +368,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
               AND child_health.supervisor_id = df.supervisor_id
+            LEFT OUTER JOIN "{agg_primary_private_school}" ps ON child_health.mother_id = ps.person_case_id
+              AND ps.month = %(start_date)s
+              AND child_health.state_id = ps.state_id
+              AND child_health.supervisor_id = ps.supervisor_id
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND {open_in_month}
@@ -369,7 +389,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
-            open_in_month=open_in_month
+            open_in_month=open_in_month,
+            agg_primary_private_school=PRIMARY_PRIVATE_SCHOOL
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),

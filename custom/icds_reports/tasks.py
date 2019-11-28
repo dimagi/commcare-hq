@@ -101,6 +101,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsVhndForm,
     AggregateTHRForm,
     DailyAttendance,
+    PrimaryPrivateSchool
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -268,6 +269,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
                                                    func_name='_agg_thr_table', force_citus=force_citus)
+                    for state_id in state_ids
+                ])
+
+                stage_1_tasks.extend([
+                    icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                   func_name='_agg_primary_private_school_table', force_citus=force_citus)
                     for state_id in state_ids
                 ])
 
@@ -439,6 +446,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
             '_agg_beneficiary_form': _agg_beneficiary_form,
             '_agg_thr_table': _agg_thr_table,
+            '_agg_primary_private_school_table': _agg_primary_private_school_table
         }[func_name]
 
         db_alias = get_icds_ucr_citus_db_alias()
@@ -670,6 +678,12 @@ def _agg_thr_table(state_id, day):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
 
 
+@track_time
+def _agg_primary_private_school_table(state_id, day):
+    with transaction.atomic(using=db_for_read_write(PrimaryPrivateSchool)):
+        PrimaryPrivateSchool.aggregate(state_id, force_to_date(day))
+
+
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
     aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
@@ -826,6 +840,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 show_test=include_test,
                 beta=beta
             ).get_excel_data(location)
+
         elif indicator == AWW_INCENTIVE_REPORT:
             today = date.today()
             data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
