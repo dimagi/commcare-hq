@@ -2,10 +2,11 @@ from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import MappingItem
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
+from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, patch_get_xform_resource_overrides
 from corehq.util.test_utils import flag_enabled
 
 
+@patch_get_xform_resource_overrides()
 @flag_enabled('APP_BUILDER_CONDITIONAL_NAMES')
 class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
@@ -21,7 +22,7 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.basic_module.name_enum = self.enum
         self.basic_form.name_enum = self.enum
 
-    def test_module(self):
+    def test_module(self, *args):
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -44,7 +45,7 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'menu[@id="m0"]',
         )
 
-    def test_module_with_media(self):
+    def test_module_with_media(self, *args):
         self.basic_module.media_audio = {'en': 'jr://file/commcare/audio/en/module0.mp3'}
         self.basic_module.media_image = {'en': 'jr://file/commcare/image/module0_en.png'}
         self.assertXmlPartialEqual(
@@ -77,7 +78,7 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'menu[@id="m0"]',
         )
 
-    def test_report_module(self):
+    def test_report_module(self, *args):
         self.report_module = self.factory.new_report_module('basic')
         self.report_module.name_enum = self.enum
         self.assertXmlPartialEqual(
@@ -101,7 +102,7 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'menu[@id="m1"]',
         )
 
-    def test_form(self):
+    def test_form(self, *args):
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -125,7 +126,7 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'entry[1]',
         )
 
-    def test_form_with_media(self):
+    def test_form_with_media(self, *args):
         self.basic_form.media_audio = {'en': 'jr://file/commcare/audio/en/module0.mp3'}
         self.basic_form.media_image = {'en': 'jr://file/commcare/image/module0_en.png'}
         self.assertXmlPartialEqual(
