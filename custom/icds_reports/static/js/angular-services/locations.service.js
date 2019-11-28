@@ -109,5 +109,20 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 (selectedLocations[level - 1] && selectedLocations[level - 1] !== 'all' && selectedLocations[level - 1].location_id !== 'all')
             );
         },
+        getLocationsForLevel: function(level, selectedLocations, locationsCache) {
+            if (level === 0) {
+                return locationsCache.root;
+            } else {
+                var selectedLocation = selectedLocations[level - 1];
+                if (!selectedLocation || selectedLocation.location_id === 'all') {
+                    return [];
+                }
+                return _.sortBy(
+                    locationsCache[selectedLocation.location_id], function(o) {
+                        return o.name;
+                    }
+                );
+            }
+        },
     };
 }]);

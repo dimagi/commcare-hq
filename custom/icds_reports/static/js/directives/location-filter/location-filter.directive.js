@@ -31,15 +31,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (level === 0) {
-            return vm.locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation.location_id === 'all') {
-                return [];
-            }
-            return vm.locationsCache[selectedLocation.location_id];
-        }
+        return locationsService.getLocationsForLevel(level, vm.selectedLocations, vm.locationsCache);
     };
 
     var selectedLocationIndex = function() {
@@ -404,6 +396,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
 
     vm.onSelect = function($item, level) {
+        // called when a location is actually picked
         resetLevelsBelow(level);
         if (level < 4) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
@@ -418,19 +411,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (level === 0) {
-            return vm.locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
-                return [];
-            }
-            return _.sortBy(
-                vm.locationsCache[selectedLocation.location_id], function(o) {
-                    return o.name;
-                }
-            );
-        }
+        return locationsService.getLocationsForLevel(level, vm.selectedLocations, vm.locationsCache);
     };
 
     // helpers for mobile dashboard
