@@ -30,24 +30,21 @@ class PrimaryPrivateSchoolAggregate(StateBasedAggregationDistributedHelper):
           date_admission_private_school, returned_private_school, date_return_private_school,
           admitted_primary_school, date_admission_primary_school
         ) (
-          SELECT DISTINCT
+        SELECT DISTINCT ON (person_case_id)
             %(state_id)s AS state_id,
-            LAST_VALUE(supervisor_id) over w as supervisor_id,
+            supervisor_id,
             %(month)s::DATE AS month,
-            LAST_VALUE(person_case_id) over w AS person_case_id,
-            LAST_VALUE(admitted_private_school) over w ='yes' AS admitted_private_school,
-            LAST_VALUE(date_admission_private_school) over w  AS date_admission_private_school,
-            LAST_VALUE(returned_private_school) over w='yes'  AS returned_private_school,
-            LAST_VALUE(date_return_private_school) over w  AS date_return_private_school,
-            CLAST_VALUE(admitted_primary_school) over w='yes'  AS admitted_primary_school,
-            LAST_VALUE(date_admission_primary_school) over w AS date_admission_primary_school
-          FROM "{ucr_tablename}"
-          WHERE state_id = %(state_id)s AND
+            person_case_id,
+            admitted_private_school='yes' AS admitted_private_school,
+            date_admission_private_school,
+            returned_private_school='yes' AS returned_private_school,
+            date_return_private_school,
+            admitted_primary_school='yes' AS admitted_primary_school,
+            date_admission_primary_school
+            from "{ucr_tablename}"
+            WHERE state_id = %(state_id)s AND
                 timeend < %(next_month_start)s
-          WINDOW w AS (
-            PARTITION BY supervisor_id, person_case_id
-            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-          )
+            ORDER BY person_case_id, timeend DESC
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
