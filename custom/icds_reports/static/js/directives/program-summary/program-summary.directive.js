@@ -142,6 +142,12 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     $scope.$on('closeFilterMenu', function () {
         vm.filtersOpen = false;
     });
+    $scope.$on('mobile_filter_data_changed', function (event, data) {
+        vm.filtersOpen = false;
+        if (data.hasLocation) {
+            vm.moveToLocation(data.location, data.locationLevel);
+        }
+    });
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',

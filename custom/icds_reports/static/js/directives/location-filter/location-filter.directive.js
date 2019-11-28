@@ -458,6 +458,17 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     vm.closeLocationChoices = function () {
         vm.showLocationChoices = false;
     };
+    $scope.$on('request_filter_data', function () {
+        var selectedIndex = selectedLocationIndex();
+        var selectedLocation = vm.selectedLocations[selectedIndex];
+        // unclear whether this is necessary
+        // vm.selectedLocationId = selectedLocation;
+        $scope.$emit('filter_data', {
+            'hasLocation': true,
+            'location' : selectedLocation,
+            'locationLevel': selectedIndex
+        });
+    });
 
     // end mobile only helpers
 
