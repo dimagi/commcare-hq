@@ -21,6 +21,7 @@ from custom.icds_reports.const import (
     AGG_LS_VHND_TABLE,
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
+    PRIMARY_PRIVATE_SCHOOL
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -49,6 +50,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
+    PrimaryPrivateSchoolAggregate
 )
 
 
@@ -315,6 +317,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
+    primary_private_school = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1469,4 +1472,26 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
         db_table = AWW_INCENTIVE_TABLE
 
     _agg_helper_cls = AwwIncentiveAggregationDistributedHelper
+    _agg_atomic = False
+
+
+class PrimaryPrivateSchool(models.Model, AggregateMixin):
+    state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+    admitted_private_school = models.NullBooleanField(null=True)
+    date_admission_private_school = models.DateField(null=True, help_text="Will always be YYYY-MM-01")
+    returned_private_school = models.NullBooleanField(null=True)
+    date_return_private_school = models.DateField(null=True, help_text="Will always be YYYY-MM-01")
+    admitted_primary_school = models.NullBooleanField(null=True)
+    date_admission_primary_school = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = PRIMARY_PRIVATE_SCHOOL
+        unique_together = ('supervisor_id', 'person_case_id', 'month')  # pkey
+
+    _agg_helper_cls = PrimaryPrivateSchoolAggregate
     _agg_atomic = False

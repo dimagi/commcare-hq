@@ -25,7 +25,7 @@ from .postnatal_care_forms_child_health import PostnatalCareFormsChildHealthAggr
 from .thr_forms_child_health import THRFormsChildHealthAggregationDistributedHelper
 from .thr_forms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
 from .thr_form_v2 import THRFormV2AggDistributedHelper
-
+from .primary_private_school import PrimaryPrivateSchoolAggregate
 __all__ = (
     'AggAwcDistributedHelper',
     'AggAwcDailyAggregationDistributedHelper',
@@ -55,5 +55,6 @@ __all__ = (
     'PostnatalCareFormsChildHealthAggregationDistributedHelper',
     'THRFormsCcsRecordAggregationDistributedHelper',
     'THRFormsChildHealthAggregationDistributedHelper',
-    'THRFormV2AggDistributedHelper'
+    'THRFormV2AggDistributedHelper',
+    'PrimaryPrivateSchoolAggregate'
 )

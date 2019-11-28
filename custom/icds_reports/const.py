@@ -108,7 +108,7 @@ AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
-
+PRIMARY_PRIVATE_SCHOOL = 'icds_dashboard_primary_private_school_forms'
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
