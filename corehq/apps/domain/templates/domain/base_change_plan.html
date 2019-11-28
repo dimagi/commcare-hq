@@ -1,5 +1,23 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'accounting/less/pricing.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'accounting/less/pricing.less' %}" />
+    {% endcompress %}
+  {% endif %}
+{% endblock %}
 
 {% block page_content %}
   <ol class="breadcrumb">
@@ -9,7 +27,7 @@
       </li>
     {% endfor %}
   </ol>
-  <div class="page-header">
+  <div class="select-plan-header">
     <h2>{{ step_title }}</h2>
   </div>
   {% block form_content %}
