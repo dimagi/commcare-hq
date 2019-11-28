@@ -111,7 +111,7 @@ class StaticToggle(object):
         self.always_enabled = (always_enabled |
             {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_ENABLED_TOGGLES else {})
         self.always_disabled = (always_disabled |
-            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_DISBLED_TOGGLES else {})
+            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_DISABLED_TOGGLES else {})
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
