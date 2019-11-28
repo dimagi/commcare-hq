@@ -5,9 +5,8 @@ import re
 
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from custom.icds_reports.const import  AGG_DASHBOARD_ACTIVITY
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from django.utils.functional import cached_property
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.es import UserES
 
 
 class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
@@ -34,15 +33,17 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     @cached_property
     def get_dashboard_users(self):
-        all_users = get_all_user_id_username_pairs_by_domain(self.domain, include_web_users=False,
-                                                             include_mobile_users=True)
+        user_query = UserES().mobile_users().domain(self.domain).location(
+            list(self.transformed_locations.keys())).fields(['username', 'location_id'])
+
+        all_users = [u for u in user_query.run().hits]
         dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
 
-        return {
-            uname
-            for id, uname in all_users
-            if dashboard_uname_rx.match(uname)
-        }
+        return [
+            user
+            for user in all_users
+            if dashboard_uname_rx.match(user['username'])
+        ]
 
     @cached_property
     def transformed_locations(self):
@@ -85,30 +86,28 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def get_user_locations(self):
         user_locations = list()
-        print(self.get_dashboard_users)
-        for username in self.get_dashboard_users:
-            user = CommCareUser.get_by_username(username)
+        for user in self.get_dashboard_users:
 
             state_id, district_id, block_id, user_level = None, None, None, None
 
-            if user.location_id:
-                user_level = self.transformed_locations.get(user.location_id)['loc_level']
+            if user['location_id']:
+                user_level = self.transformed_locations.get(user['location_id'])['loc_level']
 
                 if user_level == 1:
-                    state_id = user.location_id
+                    state_id = user['location_id']
                     district_id = 'All'
                     block_id = 'All'
                 elif user_level == 2:
-                    state_id = self.transformed_locations.get(user.location_id)['parents']['state_id']
-                    district_id = user.location_id
+                    state_id = self.transformed_locations.get(user['location_id'])['parents']['state_id']
+                    district_id = user['location_id']
                     block_id = 'All'
                 elif user_level == 3:
-                    state_id = self.transformed_locations.get(user.location_id)['parents']['state_id']
-                    district_id = self.transformed_locations.get(user.location_id)['parents']['district_id']
-                    block_id = user.location_id
+                    state_id = self.transformed_locations.get(user['location_id'])['parents']['state_id']
+                    district_id = self.transformed_locations.get(user['location_id'])['parents']['district_id']
+                    block_id = user['location_id']
 
             user_locations.append((
-                username,
+                user['username'],
                 state_id,
                 district_id,
                 block_id,
