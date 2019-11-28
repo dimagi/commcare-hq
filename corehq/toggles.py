@@ -108,9 +108,9 @@ class StaticToggle(object):
         self.save_fn = save_fn
         # For icds-cas domain, toggles are delcared in localsettings statically
         #   to avoid cache lookups
-        self.always_enabled = (always_enabled +
+        self.always_enabled = (always_enabled |
             {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_ENABLED_TOGGLES else {})
-        self.always_disabled = (always_disabled +
+        self.always_disabled = (always_disabled |
             {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_DISBLED_TOGGLES else {})
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
