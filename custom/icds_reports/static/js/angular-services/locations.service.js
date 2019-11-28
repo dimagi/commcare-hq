@@ -118,7 +118,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     return [];
                 }
                 return _.sortBy(
-                    locationsCache[selectedLocation.location_id], function(o) {
+                    locationsCache[selectedLocation.location_id], function (o) {
                         return o.name;
                     }
                 );
