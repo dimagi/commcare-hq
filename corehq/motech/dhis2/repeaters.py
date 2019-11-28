@@ -113,6 +113,7 @@ class Dhis2Repeater(FormRepeater):
                 try:
                     return send_dhis2_event(
                         requests,
+                        self.api_version,
                         form_config,
                         payload,
                     )
