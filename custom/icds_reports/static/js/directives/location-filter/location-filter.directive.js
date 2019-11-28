@@ -433,14 +433,26 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         }
     };
 
-    // helpers for mobile dashboard - mainly pass-throughs to locations service
+    // helpers for mobile dashboard
+    // pass-throughs to locations service
     vm.getDisplayFromLocationTypes = function(locationTypes) {
         return locationsService.locationTypesToDisplay(locationTypes);
     };
     vm.locationTypeIsVisible = function(level) {
         return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
     };
+    // UI / state management
+    vm.showLocationChoices = false;
+    vm.promptToSelectLocation = function (level) {
+        console.log('select location', level);
+        vm.currentLevel = level;
+        vm.showLocationChoices = true;
+    };
+    vm.closeLocationChoices = function () {
+        vm.showLocationChoices = false;
+    };
 
+    // end mobile only helpers
 
     var selectedLocationIndex = function() {
         return _.findLastIndex(vm.selectedLocations, function(location) {
