@@ -36,8 +36,6 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
     return {
         restrict:'E',
         scope: {
-            data: '=',
-            filters: '=',
             selectedLocations: '=',
         },
         bindToController: true,
