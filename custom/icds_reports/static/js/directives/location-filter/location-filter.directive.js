@@ -1,6 +1,8 @@
 /* global _, LocationModalController, LocationFilterController */
 
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
+    // LocationModalController shares a lot of the same logic / state as LocationFilterController.
+    // But it controls all the logic once the modal is popped up (so tiered selection).
     var vm = this;
 
     var ALL_OPTION = {
@@ -12,8 +14,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.locationsCache = locationsCache;
     vm.userLocationId = userLocationId;
+    // despite it's name strongly claiming otherwise, selectedLocationId is actually a location object.
     vm.selectedLocationId = selectedLocationId || ALL_OPTION;
     vm.hierarchy = hierarchy;
+    // this is a list of location paths. The index into the list is also used as a proxy for the location level
+    // in many places
     vm.selectedLocations = selectedLocations;
     vm.showMessage = showMessage;
     vm.showSectorMessage = showSectorMessage;
