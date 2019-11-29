@@ -43,7 +43,7 @@ CASE
     WHEN length(mobile_number)=13 THEN mobile_number
 END AS "Mobile Number"
 FROM ccs_record_monthly
-RIGHT JOIN awc_location AS loc
+RIGHT JOIN awc_location loc
 ON (loc.doc_id=ccs_record_monthly.awc_id AND loc.supervisor_id=ccs_record_monthly.supervisor_id)
 WHERE
 length(mobile_number) IN (10,12,13) AND
@@ -52,7 +52,7 @@ valid_in_month=1 AND
 mobile_number IS NOT NULL AND
 month='2019-11-01' AND
 state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-) TO '/tmp/phone_numbers_state_name.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/phone_numbers_mothers_state_name.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
 Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
@@ -69,4 +69,42 @@ Tasks Shown: One of 64
                        Index Cond: (doc_id = ccs_record_monthly.awc_id)
                        Filter: ((state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (ccs_record_monthly.supervisor_id = supervisor_id))
 (13 rows)
+*/
+
+COPY(SELECT
+CASE
+    WHEN length(mother_phone_number)=10 THEN CONCAT('+91', mother_phone_number)
+    WHEN length(mother_phone_number)=12 THEN CONCAT('+', mother_phone_number)
+    WHEN length(mother_phone_number)=13 THEN mother_phone_number
+END AS "Mobile Number"
+FROM child_health_monthly
+RIGHT JOIN awc_location loc
+ON (loc.doc_id=child_health_monthly.awc_id AND loc.supervisor_id=child_health_monthly.supervisor_id)
+WHERE
+length(mother_phone_number) IN (10,12,13) AND
+open_in_month=1 AND -- or use closed=0 this IS already covered by valid_in_month but if this does NOT add extra cost, keep it FOR safety
+valid_in_month=1 AND
+mother_phone_number IS NOT NULL AND
+month='2019-11-01' AND
+state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
+) TO '/tmp/phone_numbers_children_state_name.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+
+/*
+ Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+   Task Count: 64
+   Tasks Shown: One of 64
+   ->  Task
+         Node: host=100.71.184.232 port=6432 dbname=icds_ucr
+         ->  Gather  (cost=16937.24..501466.52 rows=1 width=32)
+               Workers Planned: 6
+               ->  Nested Loop  (cost=15937.24..500466.42 rows=1 width=32)
+                     ->  Parallel Bitmap Heap Scan on child_health_monthly_102648 child_health_monthly  (cost=15936.69..497928.19 rows=987 width=69)
+                           Recheck Cond: (month = '2019-11-01'::date)
+                           Filter: ((mother_phone_number IS NOT NULL) AND (open_in_month = 1) AND (valid_in_month = 1) AND (length(mother_phone_number) = ANY ('{10,12,13}'::integer[])))
+                           ->  Bitmap Index Scan on chm_month_supervisor_id_102648  (cost=0.00..15935.21 rows=712660 width=0)
+                                 Index Cond: (month = '2019-11-01'::date)
+                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.56 rows=1 width=63)
+                           Index Cond: (doc_id = child_health_monthly.awc_id)
+                           Filter: ((state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (child_health_monthly.supervisor_id = supervisor_id))
+(16 rows)
 */
