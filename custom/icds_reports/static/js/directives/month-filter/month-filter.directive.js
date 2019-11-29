@@ -128,6 +128,23 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         });
     };
 
+    // mobile only helpers
+    // update currently selected month from inner datepicker's events
+    $scope.$on('date_picked', function (event, data) {
+        vm.selectedDate = data.info;
+    });
+
+    // respond to requests for filter data with currently selected month
+    $scope.$on('request_filter_data', function () {
+        $scope.$emit('filter_data', {
+            'hasDate': true,
+            'date': vm.selectedDate,
+            'month': vm.selectedDate.getMonth() + 1,
+            'year': vm.selectedDate.getFullYear(),
+        });
+    });
+    // end mobile only helpers
+
     vm.init = function () {
         var month = parseInt($location.search()['month']);
         var year = parseInt($location.search()['year']);
