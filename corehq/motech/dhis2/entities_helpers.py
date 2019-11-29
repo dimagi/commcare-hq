@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from django.utils.translation import ugettext as _
 
 from requests import HTTPError
+from schema import Schema, SchemaError
 
 from casexml.apps.case.mock import CaseBlock
 
@@ -16,6 +17,8 @@ from corehq.motech.dhis2.exceptions import (
     MultipleInstancesFound,
 )
 from corehq.motech.dhis2.finders import TrackedEntityInstanceFinder
+from corehq.motech.dhis2.schema import get_tracked_entity_schema
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo, get_value
@@ -135,6 +138,7 @@ def update_tracked_entity_instance(
         tracked_entity["enrollments"] = update_enrollments(
             tracked_entity, enrollments_with_new_events
         )
+    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
     headers = {
@@ -195,6 +199,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
     endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
@@ -348,3 +353,14 @@ def set_te_attr(
         attributes.append(
             {"attribute": attr_id, "value": value}
         )
+
+
+def validate_tracked_entity(tracked_entity):
+    """
+    Raises ConfigurationError if ``tracked_entity`` does not match its
+    schema.
+    """
+    try:
+        Schema(get_tracked_entity_schema()).validate(tracked_entity)
+    except SchemaError as err:
+        raise ConfigurationError from err

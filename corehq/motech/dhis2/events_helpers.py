@@ -1,7 +1,7 @@
-from schema import Optional as SchemaOptional, SchemaError
-from schema import Regex, Schema
+from schema import Schema, SchemaError
 
 from corehq.motech.dhis2.const import DHIS2_API_VERSION
+from corehq.motech.dhis2.schema import get_event_schema
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -110,53 +110,3 @@ def validate_event_schema(event):
         Schema(get_event_schema()).validate(event)
     except SchemaError as err:
         raise ConfigurationError from err
-
-
-def get_event_schema() -> dict:
-    """
-    Returns the schema for a DHIS2 Event.
-
-    >>> event = {
-    ...   "program": "eBAyeGv0exc",
-    ...   "orgUnit": "DiszpKrYNg8",
-    ...   "eventDate": "2013-05-17",
-    ...   "status": "COMPLETED",
-    ...   "completedDate": "2013-05-18",
-    ...   "storedBy": "admin",
-    ...   "coordinate": {
-    ...     "latitude": 59.8,
-    ...     "longitude": 10.9
-    ...   },
-    ...   "dataValues": [
-    ...     { "dataElement": "qrur9Dvnyt5", "value": "22" },
-    ...     { "dataElement": "oZg33kd9taw", "value": "Male" },
-    ...     { "dataElement": "msodh3rEMJa", "value": "2013-05-18" }
-    ...   ]
-    ... }
-    >>> Schema(get_event_schema()).is_valid(event)
-    True
-
-    """
-    date_str = Regex(r"^\d{4}-\d{2}-\d{2}$")
-    dhis2_id_str = Regex(r"^[A-Za-z0-9]+$")  # (ASCII \w without underscore)
-    return {
-        "program": dhis2_id_str,
-        "orgUnit": dhis2_id_str,
-        "eventDate": date_str,
-        SchemaOptional("completedDate"): date_str,
-        SchemaOptional("status"): Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$"),
-        SchemaOptional("storedBy"): str,
-        SchemaOptional("coordinate"): {
-            "latitude": float,
-            "longitude": float,
-        },
-        SchemaOptional("geometry"): {
-            "type": str,
-            "coordinates": [float],
-        },
-        SchemaOptional("assignedUser"): dhis2_id_str,
-        "dataValues": [{
-            "dataElement": dhis2_id_str,
-            "value": object,
-        }],
-    }
