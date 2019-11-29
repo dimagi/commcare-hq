@@ -2,8 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
-                                  haveAccessToAllLocations, isAlertActive, navMetadata) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
+                                  userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -149,11 +149,14 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         } else {
             vm.moveToLocation(data.location, data.locationLevel);
         }
+        dateHelperService.updateSelectedMonth(data['month'], data['year']);
+        storageService.setKey('search', $location.search());
+        $scope.$emit('filtersChange');
     });
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
-    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
+    'dateHelperService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
 window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
