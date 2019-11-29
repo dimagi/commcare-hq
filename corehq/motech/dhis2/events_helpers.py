@@ -1,6 +1,7 @@
-from schema import Optional as SchemaOptional, SchemaError
-from schema import Regex, Schema
+from schema import Optional as SchemaOptional
+from schema import Regex, Schema, SchemaError
 
+from corehq.motech.dhis2.const import DHIS2_DATE_SCHEMA, DHIS2_ID_SCHEMA
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -115,13 +116,11 @@ def get_event_schema() -> dict:
     True
 
     """
-    date_str = Regex(r"^\d{4}-\d{2}-\d{2}$")
-    dhis2_id_str = Regex(r"^[A-Za-z0-9]+$")  # (ASCII \w without underscore)
     return {
-        "program": dhis2_id_str,
-        "orgUnit": dhis2_id_str,
-        "eventDate": date_str,
-        SchemaOptional("completedDate"): date_str,
+        "program": DHIS2_ID_SCHEMA,
+        "orgUnit": DHIS2_ID_SCHEMA,
+        "eventDate": DHIS2_DATE_SCHEMA,
+        SchemaOptional("completedDate"): DHIS2_DATE_SCHEMA,
         SchemaOptional("status"): Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$"),
         SchemaOptional("storedBy"): str,
         SchemaOptional("coordinate"): {
@@ -132,9 +131,9 @@ def get_event_schema() -> dict:
             "type": str,
             "coordinates": [float],
         },
-        SchemaOptional("assignedUser"): dhis2_id_str,
+        SchemaOptional("assignedUser"): DHIS2_ID_SCHEMA,
         "dataValues": [{
-            "dataElement": dhis2_id_str,
+            "dataElement": DHIS2_ID_SCHEMA,
             "value": object,
         }],
     }

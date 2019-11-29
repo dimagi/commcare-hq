@@ -3,18 +3,25 @@ from collections import defaultdict
 from django.utils.translation import ugettext as _
 
 from requests import HTTPError
+from schema import Optional as SchemaOptional
+from schema import Schema, SchemaError
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.const import (
+    DHIS2_DATE_SCHEMA,
+    DHIS2_ID_SCHEMA,
+    XMLNS_DHIS2,
+)
+from corehq.motech.dhis2.events_helpers import get_event, get_event_schema
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
     MultipleInstancesFound,
 )
 from corehq.motech.dhis2.finders import TrackedEntityInstanceFinder
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo
@@ -120,6 +127,7 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
@@ -149,6 +157,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
     endpoint = "/api/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
@@ -206,3 +215,41 @@ def set_te_attr(tracked_entity, attr_id, value):
         tracked_entity["attributes"].append(
             {"attribute": attr_id, "value": value}
         )
+
+
+def validate_tracked_entity(tracked_entity):
+    """
+    Raises ConfigurationError if ``tracked_entity`` does not match its
+    schema.
+    """
+    try:
+        Schema(get_tracked_entity_schema()).validate(tracked_entity)
+    except SchemaError as err:
+        raise ConfigurationError from err
+
+
+def get_tracked_entity_schema() -> dict:
+    """
+    Returns the schema of a tracked entity instance.
+    """
+    event_schema = get_event_schema()
+    return {
+        SchemaOptional("trackedEntityInstance"): DHIS2_ID_SCHEMA,
+        "trackedEntityType": DHIS2_ID_SCHEMA,
+        "orgUnit": DHIS2_ID_SCHEMA,
+        SchemaOptional("geometry"): {
+            "type": str,
+            "coordinates": [float],
+        },
+        SchemaOptional("attributes"): [{
+            "attribute": DHIS2_ID_SCHEMA,
+            "value": object,
+        }],
+        SchemaOptional("enrollments"): [{
+            "program": DHIS2_ID_SCHEMA,
+            SchemaOptional("orgUnit"): DHIS2_ID_SCHEMA,
+            SchemaOptional("enrollmentDate"): DHIS2_DATE_SCHEMA,
+            SchemaOptional("incidentDate"): DHIS2_DATE_SCHEMA,
+            SchemaOptional("events"): [event_schema],
+        }],
+    }
