@@ -16,6 +16,7 @@ from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.dhis2.exceptions import Dhis2Exception
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
@@ -162,7 +163,7 @@ class Dhis2Repeater(FormRepeater):
                         form_config,
                         payload,
                     )
-                except (RequestException, HTTPError) as err:
+                except (RequestException, HTTPError, ConfigurationError) as err:
                     requests.notify_error(f"Error sending Events to {self}: {err}")
                     raise
         return True

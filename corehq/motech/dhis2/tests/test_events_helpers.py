@@ -1,3 +1,4 @@
+import doctest
 import json
 
 from django.test.testcases import TestCase
@@ -118,3 +119,10 @@ class TestDhis2EventsHelpers(TestCase):
             },
             event
         )
+
+
+def test_doctests():
+    from corehq.motech.dhis2 import events_helpers
+
+    results = doctest.testmod(events_helpers)
+    assert results.failed == 0
