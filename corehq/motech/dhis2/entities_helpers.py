@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any, Dict, List
 
 from django.utils.translation import ugettext as _
 
@@ -123,7 +124,11 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
 
 def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config, attempt=1):
     for attr_id, value_source in case_config.attributes.items():
-        set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
+        set_te_attr(
+            tracked_entity["attributes"],
+            attr_id,
+            value_source.get_value(case_trigger_info),
+        )
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
@@ -153,7 +158,11 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         "attributes": [],
     }
     for attr_id, value_source in case_config.attributes.items():
-        set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
+        set_te_attr(
+            tracked_entity["attributes"],
+            attr_id,
+            value_source.get_value(case_trigger_info),
+        )
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
@@ -206,13 +215,17 @@ def save_tracked_entity_instance_id(domain, tracked_entity, case_trigger_info, c
         submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_DHIS2)
 
 
-def set_te_attr(tracked_entity, attr_id, value):
-    for attr in tracked_entity["attributes"]:
+def set_te_attr(
+    attributes: List[Dict[str, Any]],
+    attr_id: str,
+    value: Any
+):
+    for attr in attributes:
         if attr["attribute"] == attr_id:
             attr["value"] = value
             break
     else:
-        tracked_entity["attributes"].append(
+        attributes.append(
             {"attribute": attr_id, "value": value}
         )
 
