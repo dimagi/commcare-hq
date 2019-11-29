@@ -121,7 +121,7 @@ def db_for_read_write(model, write=True, hints=None):
         if hasattr(model, 'partition_attr'):
             return get_db_for_plproxy_cluster(app_label, hints)
         return DEFAULT_DB_ALIAS
-    if app_label == FORM_PROCESSOR_APP:
+    if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
         return get_db_for_plproxy_cluster(app_label, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
