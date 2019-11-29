@@ -101,7 +101,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsVhndForm,
     AggregateTHRForm,
     DailyAttendance,
-    PrimaryPrivateSchool
+    AggregatePrimaryPrivateSchoolForms
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -680,8 +680,8 @@ def _agg_thr_table(state_id, day):
 
 @track_time
 def _agg_primary_private_school_table(state_id, day):
-    with transaction.atomic(using=db_for_read_write(PrimaryPrivateSchool)):
-        PrimaryPrivateSchool.aggregate(state_id, force_to_date(day))
+    with transaction.atomic(using=db_for_read_write(AggregatePrimaryPrivateSchoolForms)):
+        AggregatePrimaryPrivateSchoolForms.aggregate(state_id, force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')

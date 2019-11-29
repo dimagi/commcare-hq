@@ -1,16 +1,16 @@
 from dateutil.relativedelta import relativedelta
 
-from custom.icds_reports.const import PRIMARY_PRIVATE_SCHOOL
+from custom.icds_reports.const import AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     StateBasedAggregationDistributedHelper,
 )
 
 
-class PrimaryPrivateSchoolAggregate(StateBasedAggregationDistributedHelper):
+class AggPrimaryPrivateSchoolAggregate(StateBasedAggregationDistributedHelper):
     helper_key = 'primary-school'
     ucr_data_source_id = 'static-dashboard_primary_private_school'
-    aggregate_parent_table = PRIMARY_PRIVATE_SCHOOL
+    aggregate_parent_table = AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

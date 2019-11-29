@@ -21,7 +21,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateAwcInfrastructureForms,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    PrimaryPrivateSchool
+    AggregatePrimaryPrivateSchoolForms
 )
 from custom.icds_reports.models.views import (
     AggAwcDailyView,

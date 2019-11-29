@@ -8,7 +8,7 @@ from custom.icds_reports.utils.migrations import (
     get_composite_primary_key_migrations,
 )
 from corehq.sql_db.connections import is_citus_db
-from custom.icds_reports.const import PRIMARY_PRIVATE_SCHOOL
+from custom.icds_reports.const import AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
 from custom.icds_reports.utils.migrations import (
     create_citus_distributed_table
 )
@@ -22,7 +22,7 @@ def _distribute_citus_tables(apps, schema_editor):
         if not is_citus_db(cursor):
             return
 
-        for table, col in [(PRIMARY_PRIVATE_SCHOOL, 'supervisor_id')]:
+        for table, col in [(AGG_PRIMARY_PRIVATE_SCHOOL_FORMS, 'supervisor_id')]:
             create_citus_distributed_table(cursor, table, col)
 
 
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='PrimaryPrivateSchool',
+            name='AggregatePrimaryPrivateSchoolForms',
             fields=[
                 ('state_id', models.CharField(max_length=40)),
                 ('supervisor_id', models.TextField(null=True)),
@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
             bases=(models.Model, custom.icds_reports.models.aggregate.AggregateMixin),
         ),
         migrations.AlterUniqueTogether(
-            name='primaryprivateschool',
+            name='aggregateprimaryprivateschoolforms',
             unique_together=set([('supervisor_id', 'person_case_id', 'month')]),
         ),
         migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN primary_private_school INTEGER"),
@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
     ]
     
     #below to steps are to make primaryprivateschool table distributed
-    operations.extend(get_composite_primary_key_migrations(['primaryprivateschool']))
+    operations.extend(get_composite_primary_key_migrations(['aggregateprimaryprivateschoolforms']))
     operations.append(migrations.RunPython(_distribute_citus_tables, migrations.RunPython.noop))
 
 

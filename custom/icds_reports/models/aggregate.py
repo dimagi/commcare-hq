@@ -21,7 +21,7 @@ from custom.icds_reports.const import (
     AGG_LS_VHND_TABLE,
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
-    PRIMARY_PRIVATE_SCHOOL
+    AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -50,7 +50,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
-    PrimaryPrivateSchoolAggregate
+    AggPrimaryPrivateSchoolAggregate
 )
 
 
@@ -1475,7 +1475,7 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
-class PrimaryPrivateSchool(models.Model, AggregateMixin):
+class AggregatePrimaryPrivateSchoolForms(models.Model, AggregateMixin):
     state_id = models.CharField(max_length=40)
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
@@ -1490,8 +1490,8 @@ class PrimaryPrivateSchool(models.Model, AggregateMixin):
     date_admission_primary_school = models.DateField(null=True)
 
     class Meta(object):
-        db_table = PRIMARY_PRIVATE_SCHOOL
+        db_table = AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
         unique_together = ('supervisor_id', 'person_case_id', 'month')  # pkey
 
-    _agg_helper_cls = PrimaryPrivateSchoolAggregate
+    _agg_helper_cls = AggPrimaryPrivateSchoolAggregate
     _agg_atomic = False

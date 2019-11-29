@@ -7,7 +7,7 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-    PRIMARY_PRIVATE_SCHOOL
+    AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_temp_tablename,
@@ -390,7 +390,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month,
-            agg_primary_private_school=PRIMARY_PRIVATE_SCHOOL
+            agg_primary_private_school=AGG_PRIMARY_PRIVATE_SCHOOL_FORMS
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
