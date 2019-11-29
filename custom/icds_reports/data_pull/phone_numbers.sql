@@ -36,7 +36,7 @@ SELECT distinct(state_id), state_name FROM awc_location where state_is_test=0;
 */
 
 
-COPY(SELECT mobile_number AS "Mobile Number", state_name
+COPY(SELECT mobile_number AS "Mobile Number", state_name, district_name, block_name, supervisor_name, awc_name
 FROM ccs_record_monthly
 RIGHT JOIN awc_location loc
 ON (loc.doc_id=ccs_record_monthly.awc_id AND loc.supervisor_id=ccs_record_monthly.supervisor_id)
@@ -48,23 +48,23 @@ month='2019-11-01'
 ) TO '/tmp/phone_numbers_mothers.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
-  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+ Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
    Task Count: 64
    Tasks Shown: One of 64
    ->  Task
          Node: host=100.71.184.232 port=6432 dbname=icds_ucr
-         ->  Gather  (cost=1000.55..110512.17 rows=1 width=15)
+         ->  Gather  (cost=1000.55..110512.17 rows=1 width=81)
                Workers Planned: 5
-               ->  Nested Loop  (cost=0.55..109512.07 rows=1 width=15)
+               ->  Nested Loop  (cost=0.55..109512.07 rows=1 width=81)
                      ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record_monthly  (cost=0.00..105778.36 rows=1479 width=71)
                            Filter: ((closed = 0) AND (valid_in_month = 1) AND (month = '2019-11-01'::date) AND (length(mobile_number) > 0))
-                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.51 rows=1 width=73)
+                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.51 rows=1 width=139)
                            Index Cond: (doc_id = ccs_record_monthly.awc_id)
                            Filter: (ccs_record_monthly.supervisor_id = supervisor_id)
 (13 rows)
 */
 
-COPY(SELECT mother_phone_number AS "Mobile Number", state_name
+COPY(SELECT mother_phone_number AS "Mobile Number", state_name, district_name, block_name, supervisor_name, awc_name
 FROM child_health_monthly
 RIGHT JOIN awc_location loc
 ON (loc.doc_id=child_health_monthly.awc_id AND loc.supervisor_id=child_health_monthly.supervisor_id)
@@ -76,22 +76,21 @@ month='2019-11-01'
 ) TO '/tmp/phone_numbers_children.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
-  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+ Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
    Task Count: 64
    Tasks Shown: One of 64
    ->  Task
          Node: host=100.71.184.232 port=6432 dbname=icds_ucr
-         ->  Gather  (cost=16985.84..531931.93 rows=10 width=13)
+         ->  Gather  (cost=16985.84..531931.93 rows=10 width=79)
                Workers Planned: 6
-               ->  Nested Loop  (cost=15985.84..530930.93 rows=2 width=13)
+               ->  Nested Loop  (cost=15985.84..530930.93 rows=2 width=79)
                      ->  Parallel Bitmap Heap Scan on child_health_monthly_102648 child_health_monthly  (cost=15985.29..496444.10 rows=33390 width=69)
                            Recheck Cond: (month = '2019-11-01'::date)
                            Filter: ((open_in_month = 1) AND (valid_in_month = 1) AND (length(mother_phone_number) > 0))
                            ->  Bitmap Index Scan on chm_month_supervisor_id_102648  (cost=0.00..15935.21 rows=712660 width=0)
                                  Index Cond: (month = '2019-11-01'::date)
-                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..1.02 rows=1 width=73)
+                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..1.02 rows=1 width=139)
                            Index Cond: (doc_id = child_health_monthly.awc_id)
                            Filter: (child_health_monthly.supervisor_id = supervisor_id)
 (16 rows)
-(16 rows)(16 rows)
 */
