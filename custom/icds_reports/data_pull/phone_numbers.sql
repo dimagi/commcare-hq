@@ -36,75 +36,62 @@ SELECT distinct(state_id), state_name FROM awc_location where state_is_test=0;
 */
 
 
-COPY(SELECT
-CASE
-    WHEN length(mobile_number)=10 THEN CONCAT('+91', mobile_number)
-    WHEN length(mobile_number)=12 THEN CONCAT('+', mobile_number)
-    WHEN length(mobile_number)=13 THEN mobile_number
-END AS "Mobile Number"
+COPY(SELECT mobile_number AS "Mobile Number", state_name
 FROM ccs_record_monthly
 RIGHT JOIN awc_location loc
 ON (loc.doc_id=ccs_record_monthly.awc_id AND loc.supervisor_id=ccs_record_monthly.supervisor_id)
 WHERE
-length(mobile_number) IN (10,12,13) AND
 closed=0 AND -- or use open_in_month=1 this IS already covered by valid_in_month but if this does NOT add extra cost, keep it FOR safety
 valid_in_month=1 AND
-mobile_number IS NOT NULL AND
-month='2019-11-01' AND
-state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-) TO '/tmp/phone_numbers_mothers_state_name.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+length(mobile_number) > 0 AND
+month='2019-11-01'
+) TO '/tmp/phone_numbers_mothers.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
-Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
-Task Count: 64
-Tasks Shown: One of 64
-->  Task
-     Node: host=100.71.184.232 port=6432 dbname=icds_ucr
-     ->  Gather  (cost=1000.55..107230.08 rows=1 width=32)
-           Workers Planned: 5
-           ->  Nested Loop  (cost=0.55..106229.98 rows=1 width=32)
-                 ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record_monthly  (cost=0.00..106149.27 rows=29 width=71)
-                       Filter: ((mobile_number IS NOT NULL) AND (closed = 0) AND (valid_in_month = 1) AND (month = '2019-11-01'::date) AND (length(mobile_number) = ANY ('{10,12,13}'::integer[])))
-                 ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.77 rows=1 width=63)
-                       Index Cond: (doc_id = ccs_record_monthly.awc_id)
-                       Filter: ((state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (ccs_record_monthly.supervisor_id = supervisor_id))
-(13 rows)
-*/
-
-COPY(SELECT
-CASE
-    WHEN length(mother_phone_number)=10 THEN CONCAT('+91', mother_phone_number)
-    WHEN length(mother_phone_number)=12 THEN CONCAT('+', mother_phone_number)
-    WHEN length(mother_phone_number)=13 THEN mother_phone_number
-END AS "Mobile Number"
-FROM child_health_monthly
-RIGHT JOIN awc_location loc
-ON (loc.doc_id=child_health_monthly.awc_id AND loc.supervisor_id=child_health_monthly.supervisor_id)
-WHERE
-length(mother_phone_number) IN (10,12,13) AND
-open_in_month=1 AND -- or use closed=0 this IS already covered by valid_in_month but if this does NOT add extra cost, keep it FOR safety
-valid_in_month=1 AND
-mother_phone_number IS NOT NULL AND
-month='2019-11-01' AND
-state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-) TO '/tmp/phone_numbers_children_state_name.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
-
-/*
- Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
    Task Count: 64
    Tasks Shown: One of 64
    ->  Task
          Node: host=100.71.184.232 port=6432 dbname=icds_ucr
-         ->  Gather  (cost=16937.24..501466.52 rows=1 width=32)
+         ->  Gather  (cost=1000.55..110512.17 rows=1 width=15)
+               Workers Planned: 5
+               ->  Nested Loop  (cost=0.55..109512.07 rows=1 width=15)
+                     ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record_monthly  (cost=0.00..105778.36 rows=1479 width=71)
+                           Filter: ((closed = 0) AND (valid_in_month = 1) AND (month = '2019-11-01'::date) AND (length(mobile_number) > 0))
+                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.51 rows=1 width=73)
+                           Index Cond: (doc_id = ccs_record_monthly.awc_id)
+                           Filter: (ccs_record_monthly.supervisor_id = supervisor_id)
+(13 rows)
+*/
+
+COPY(SELECT mother_phone_number AS "Mobile Number", state_name
+FROM child_health_monthly
+RIGHT JOIN awc_location loc
+ON (loc.doc_id=child_health_monthly.awc_id AND loc.supervisor_id=child_health_monthly.supervisor_id)
+WHERE
+open_in_month=1 AND -- or use closed=0 this IS already covered by valid_in_month but if this does NOT add extra cost, keep it FOR safety
+valid_in_month=1 AND
+length(mother_phone_number) > 0 AND
+month='2019-11-01'
+) TO '/tmp/phone_numbers_children.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+
+/*
+  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+   Task Count: 64
+   Tasks Shown: One of 64
+   ->  Task
+         Node: host=100.71.184.232 port=6432 dbname=icds_ucr
+         ->  Gather  (cost=16985.84..531931.93 rows=10 width=13)
                Workers Planned: 6
-               ->  Nested Loop  (cost=15937.24..500466.42 rows=1 width=32)
-                     ->  Parallel Bitmap Heap Scan on child_health_monthly_102648 child_health_monthly  (cost=15936.69..497928.19 rows=987 width=69)
+               ->  Nested Loop  (cost=15985.84..530930.93 rows=2 width=13)
+                     ->  Parallel Bitmap Heap Scan on child_health_monthly_102648 child_health_monthly  (cost=15985.29..496444.10 rows=33390 width=69)
                            Recheck Cond: (month = '2019-11-01'::date)
-                           Filter: ((mother_phone_number IS NOT NULL) AND (open_in_month = 1) AND (valid_in_month = 1) AND (length(mother_phone_number) = ANY ('{10,12,13}'::integer[])))
+                           Filter: ((open_in_month = 1) AND (valid_in_month = 1) AND (length(mother_phone_number) > 0))
                            ->  Bitmap Index Scan on chm_month_supervisor_id_102648  (cost=0.00..15935.21 rows=712660 width=0)
                                  Index Cond: (month = '2019-11-01'::date)
-                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..2.56 rows=1 width=63)
+                     ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 loc  (cost=0.55..1.02 rows=1 width=73)
                            Index Cond: (doc_id = child_health_monthly.awc_id)
-                           Filter: ((state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (child_health_monthly.supervisor_id = supervisor_id))
+                           Filter: (child_health_monthly.supervisor_id = supervisor_id)
 (16 rows)
+(16 rows)(16 rows)
 */
