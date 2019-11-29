@@ -17,6 +17,6 @@
         </div>
     </div>
     <location-filter ng-show="selectedTab == 'location'" selected-locations="$ctrl.selectedLocations"></location-filter>
-    <month-filter></month-filter>
+    <month-filter ng-show="selectedTab == 'month'"></month-filter>
     <div class="apply-button" ng-click="applyFilters()">Apply</div>
 </div>
