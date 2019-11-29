@@ -145,7 +145,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
 MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
-window.angular.module('icdsApp').directive("monthFilter", function() {
+window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
@@ -154,8 +154,10 @@ window.angular.module('icdsApp').directive("monthFilter", function() {
         },
         bindToController: true,
         require: 'ngModel',
-        templateUrl: url('icds-ng-template', 'month-filter'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('month-filter');
+        },
         controller: MonthFilterController,
         controllerAs: "$ctrl",
     };
-});
+}]);
