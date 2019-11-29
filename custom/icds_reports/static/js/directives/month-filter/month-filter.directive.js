@@ -1,6 +1,6 @@
 /* global moment, _ */
 
-function MonthModalController($location, $uibModalInstance) {
+function MonthModalController($location, $uibModalInstance, dateHelperService) {
     var vm = this;
 
     vm.months = [];
@@ -25,8 +25,8 @@ function MonthModalController($location, $uibModalInstance) {
         });
     }
 
-    vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
-    vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
+    vm.selectedMonth = dateHelperService.getSelectedMonth();
+    vm.selectedYear = dateHelperService.getSelectedYear();
 
     if (isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1))) {
         vm.showMessage = true;
@@ -143,7 +143,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-MonthModalController.$inject = ['$location', '$uibModalInstance'];
+MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
