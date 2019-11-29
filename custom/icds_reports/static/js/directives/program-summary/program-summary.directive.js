@@ -152,6 +152,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         storageService.setKey('search', $location.search());
         $scope.$emit('filtersChange');
     });
+    vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
