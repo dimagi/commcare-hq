@@ -242,7 +242,7 @@ class ReindexAccessor(metaclass=ABCMeta):
     @property
     def sql_db_aliases(self):
         all_db_aliases = get_db_aliases_for_partitioned_query() if self.is_sharded() \
-            else [router.db_for_reads(self.model_class)]
+            else [router.db_for_read(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
             assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(
