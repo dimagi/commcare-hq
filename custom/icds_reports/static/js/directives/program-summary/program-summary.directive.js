@@ -144,7 +144,9 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     });
     $scope.$on('mobile_filter_data_changed', function (event, data) {
         vm.filtersOpen = false;
-        if (data.hasLocation) {
+        if (!data.location) {
+            vm.moveToLocation('national', -1);
+        } else {
             vm.moveToLocation(data.location, data.locationLevel);
         }
     });
