@@ -334,7 +334,7 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
             };
             $('.year').WSlot({
                 items:years,
-                center:'last',
+                center:years.indexOf(today.getFullYear()),
                 angle:30,
                 distance:'auto',
                 displayed_length:1,
