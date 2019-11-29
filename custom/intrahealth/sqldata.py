@@ -5992,6 +5992,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         data = self.recap_rows
         total_row = ['SYNTHESE']
         values_for_total_row = {}
+        average_availability = {}
+
         if add_amount_owed_column or add_latest_visit_column:
             add_total_row = True
         else:
@@ -6028,9 +6030,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 row.append(visits_for_pps)
 
             if add_availability_column:
-                availability = self._get_availability(most_recent_pps_data)
-
-                row.append(availability)
+                self._collect_availability(average_availability, pps_data)
 
             rows.append(row)
 
@@ -6038,6 +6038,9 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             for key, value in values_for_total_row.items():
                 total_row.append({'html': value})
             rows.append(total_row)
+
+        if add_availability_column:
+            self._append_availability_to_rows(rows, average_availability)
 
         return rows
 
@@ -6111,16 +6114,21 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
         return {'html': len(visits)}
 
-    def _get_availability(self, data):
-        products_available = 0
-        for record in data:
-            products_available += 1 if record['total_stock']['html'] else 0
-        availability = round((float(products_available / len(self.product_names)) * 100), 2)
-
-        return {
-            'html': f'{availability}%',
-            'percent': True,
-        }
+    def _collect_availability(self, availability_dict, data):
+        products_amount = len(self.product_names)
+        for row in data:
+            date_repeat = row['real_date_repeat'].strftime('%Y/%m/%d')
+            pps_name = row['pps_name']
+            in_stock = 1 if row['total_stock']['html'] else 0
+            if availability_dict.get(pps_name):
+                if availability_dict[pps_name].get(date_repeat):
+                    availability_dict[pps_name][date_repeat][0] += in_stock
+                else:
+                    availability_dict[pps_name][date_repeat] = [in_stock, products_amount]
+            else:
+                availability_dict[pps_name] = {
+                    date_repeat: [in_stock, products_amount]
+                }
 
     @staticmethod
     def _get_amount_owed(ppses_data):
@@ -6145,6 +6153,20 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             values_dict[key] += value
         else:
             values_dict[key] = value
+
+    @staticmethod
+    def _append_availability_to_rows(collected_rows, availability_dict):
+        for row in collected_rows:
+            pps_name = row[0]
+            dates = availability_dict[pps_name]
+            average = 0
+            for date, availability in dates.items():
+                average += (availability[0] / availability[1]) * 100
+            average = round((float(average) / len(dates)), 2)
+            row.append({
+                'html': f'{average}%',
+                'percent': True,
+            })
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):
