@@ -12,9 +12,14 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         // gets the selected date which is the first of the current month, year
         return new Date(getSelectedYear(), getSelectedMonth() - 1, 1);
     }
+    function updateSelectedMonth(month, year) {
+        $location.search('month', month);
+        $location.search('year', year);
+    }
     return {
         getSelectedMonth: getSelectedMonth,
         getSelectedYear: getSelectedYear,
         getSelectedDate: getSelectedDate,
+        updateSelectedMonth: updateSelectedMonth,
     };
 }]);

@@ -97,7 +97,6 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
     // used by mobile dashboard
     vm.selectedDate = dateHelperService.getSelectedDate();
-
     vm.getPlaceholder = function() {
 
         var now = moment().utc();
@@ -121,8 +120,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         });
 
         modalInstance.result.then(function (data) {
-            $location.search('month', data['month']);
-            $location.search('year', data['year']);
+            dateHelperService.updateSelectedMonth(data['month'], data['year']);
             storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });
