@@ -140,6 +140,7 @@ from custom.icds_reports.utils import (
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
+    AggAwcDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -629,6 +630,9 @@ def _agg_ccs_record_table(day):
 @track_time
 def _agg_awc_table(day):
     db_alias = router.db_for_write(AggAwc)
+    helper = AggAwcDistributedHelper(force_to_date(day))
+    with get_cursor(AggAwc) as cursor:
+        cursor.execute(helper.drop_temporary_table())
     with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"

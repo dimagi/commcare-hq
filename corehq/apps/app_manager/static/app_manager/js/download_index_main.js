@@ -16,11 +16,11 @@ hqDefine('app_manager/js/download_index_main',[
             baseAce.initAceEditor(elem, mode, {});
         });
         if ($('#multimedia-sizes-container').length) {
-            var appID = initialPageData.get('app_id');
-            var multimediaSizes = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", appID));
-            multimediaSizes.load();
+            var multimediaSizesContainer = multimediaSizeUtil.multimediaSizesContainer(initialPageData.get('build_profiles'));
+            $("#build-profile-select-for-multimedia").koApplyBindings(multimediaSizesContainer);
+            var multimediaSizes = multimediaSizeUtil.multimediaSizeView(initialPageData.get('app_id'));
             $("#multimedia-sizes-container").koApplyBindings(multimediaSizes);
+            multimediaSizesContainer.views = [multimediaSizes];
         }
     });
 });

@@ -46,21 +46,21 @@ def _update_mm_sizes(mm_sizes):
 
 
 @require_deploy_apps
-@quickcache(['domain', 'app_id'], timeout=60 * 60)
-def get_multimedia_sizes(request, domain, app_id):
+@quickcache(['domain', 'app_id', 'build_profile_id'], timeout=60 * 60)
+def get_multimedia_sizes(request, domain, app_id, build_profile_id=None):
     """
     return size for different multimedia types and total for an app, directly presentable to the user
     """
-    mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id)
+    mm_sizes = get_multimedia_sizes_for_build(domain, build_id=app_id, build_profile_id=build_profile_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
     return JsonResponse(mm_sizes)
 
 
 @require_deploy_apps
-@quickcache(['domain', 'app_id', 'other_build_id'], timeout=60 * 60)
-def compare_multimedia_sizes(request, domain, app_id, other_build_id):
-    mm_sizes = get_new_multimedia_between_builds(domain, app_id, other_build_id)
+@quickcache(['domain', 'app_id', 'other_build_id', 'build_profile_id'], timeout=60 * 60)
+def compare_multimedia_sizes(request, domain, app_id, other_build_id, build_profile_id=None):
+    mm_sizes = get_new_multimedia_between_builds(domain, app_id, other_build_id, build_profile_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
     return JsonResponse(mm_sizes)
