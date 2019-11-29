@@ -94,7 +94,6 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
 
                         return this.html(item).data('cur-angle',(center_index*opts.angle))
                             .off(start).on(start, function(e) {
-                                //console.log('start '+getEventPos(e).y);
                                 var ini = $(this);
                                 ini.addClass('w-roll-touched').data('initialtouch', getEventPos(e).y);
                                 return false;
@@ -102,7 +101,6 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
                                 var ini = $(this);
                                 if (ini.is('.w-roll-touched')) {
                                     var deltaY = ini.data('initialtouch') - getEventPos(e).y;
-                                    // console.log('move '+deltaY);
                                     var mainAngle = parseInt(ini.data('cur-angle')) + parseInt(deltaY/2);
 
                                     var maxAngle = (opts.items.length - 1) * opts.angle;
@@ -137,7 +135,6 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
                                 return false;
                             }).off(end).on(end, function(e) {
                                 var ini = $(this);
-                                //console.log('end');
                                 if (ini.is('.w-roll-touched')) {
                                     var deltaY = ini.data('initialtouch') - getEventPos(e).y;
 
@@ -313,7 +310,6 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
 
 
             var today = $scope.date;
-
             $('.month').WSlot({
                 items:['January','February','March','April','May','June','July','August','September','October','November','December'],
                 center:today.getMonth(),
