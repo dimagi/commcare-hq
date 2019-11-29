@@ -98,13 +98,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     // used by mobile dashboard
     vm.selectedDate = dateHelperService.getSelectedDate();
     vm.getPlaceholder = function() {
-
-        var now = moment().utc();
-
-        var month = $location.search().month || now.month() + 1;
-        var year = $location.search().year || now.year();
-        var formattedMonth = moment(month, 'MM').format('MMMM');
-        return formattedMonth + ' ' + year;
+        return dateHelperService.getSelectedMonthDisplay();
     };
 
     vm.open = function () {

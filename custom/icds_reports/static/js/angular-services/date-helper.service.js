@@ -1,3 +1,5 @@
+/* global moment */
+
 window.angular.module('icdsApp').factory('dateHelperService', ['$location', function ($location) {
     function getSelectedMonth() {
         // gets the selected month from $location or defaults to the current month
@@ -16,10 +18,16 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         $location.search('month', month);
         $location.search('year', year);
     }
+    function getSelectedMonthDisplay() {
+        var formattedMonth = moment(getSelectedMonth(), 'MM').format('MMMM');
+        console.log("returning", formattedMonth + ' ' + getSelectedYear());
+        return formattedMonth + ' ' + getSelectedYear();
+    }
     return {
         getSelectedMonth: getSelectedMonth,
         getSelectedYear: getSelectedYear,
         getSelectedDate: getSelectedDate,
+        getSelectedMonthDisplay: getSelectedMonthDisplay,
         updateSelectedMonth: updateSelectedMonth,
     };
 }]);
