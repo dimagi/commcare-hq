@@ -92,8 +92,11 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal, storageService) {
+function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService) {
     var vm = this;
+
+    // used by mobile dashboard
+    vm.selectedDate = dateHelperService.getSelectedDate();
 
     vm.getPlaceholder = function() {
 
@@ -142,7 +145,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     vm.init();
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService'];
 MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
