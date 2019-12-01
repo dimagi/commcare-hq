@@ -121,3 +121,14 @@ with open('phone_numbers_consolidated.csv', 'w') as _output:
             result[state_name].get('children', {}).get('starting_with_0', 'N/A'),
             len(result[state_name].get('children', {}).get('unique_valid_nums', 'N/A')),
         ])
+
+for state_name in result:
+    with open("Unique_phone_numbers_%s.csv" % state_name, 'w') as _file:
+        writer = csv.writer(_file)
+        writer.writerow(['Phone Number', 'Length'])
+        for num in result[state_name]['unique_valid_nums']:
+            writer.writerow([
+                num,
+                len(num)
+            ])
+
