@@ -64,5 +64,4 @@ branches:
   - jls/resource-overrides  # Jenny Nov 22
   - jls/non-unique-form-ids  # Jenny Nov 24
   - mk/track-build-profile-id-via-heartbeat # MK Nov 26
-  - mk/add-support-for-build-profile # MK Nov 26
 submodules: {}
