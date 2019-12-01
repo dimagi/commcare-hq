@@ -1,3 +1,4 @@
+import doctest
 import json
 
 from django.test.testcases import TestCase
@@ -16,7 +17,7 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 DOMAIN = "dhis2-test"
 
 
-class TestDhisHandler(TestCase):
+class TestDhis2EventsHelpers(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -40,6 +41,7 @@ class TestDhisHandler(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.location.delete()
+        cls.user.delete()
         cls.domain.delete()
         super().tearDownClass()
 
@@ -117,3 +119,10 @@ class TestDhisHandler(TestCase):
             },
             event
         )
+
+
+def test_doctests():
+    from corehq.motech.dhis2 import events_helpers
+
+    results = doctest.testmod(events_helpers)
+    assert results.failed == 0
