@@ -245,7 +245,9 @@ def update_latest_builds(user, app_id, date, version, build_profile_id=None):
             user.reporting_metadata.last_builds.append(last_build)
         last_build.build_version = version
         last_build.app_id = app_id
-        last_build.build_profile_id = build_profile_id
+        # update only when passed to avoid over writing set value
+        if build_profile_id is not None:
+            last_build.build_profile_id = build_profile_id
         last_build.build_version_date = date
         changed = True
 
