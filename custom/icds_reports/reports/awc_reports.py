@@ -27,7 +27,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     get_color_with_red_positive
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, GOING_SCHOOL
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -1050,7 +1050,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 'Normal weight for height',
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
-            pse_days_attended=row_data.pse_days_attended,
+            pse_days_attended=GOING_SCHOOL if row_data.primary_private_school == 1 else row_data.pse_days_attended,
             mother_phone_number=row_data.mother_phone_number,
             aww_phone_number=row_data.aww_phone_number
         )

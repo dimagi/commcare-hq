@@ -1,5 +1,5 @@
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn
+from sqlagg.columns import SimpleColumn, ConditionalAggregation
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
 from sqlagg.sorting import OrderBy
 
@@ -9,6 +9,7 @@ from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
     current_month_wasting_column, format_decimal, DATA_NOT_ENTERED, phone_number_function
+from custom.icds_reports.const import GOING_SCHOOL
 
 
 class BeneficiaryExport(ExportableMixin, IcdsSqlData):
@@ -193,8 +194,11 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
             ),
             DatabaseColumn(
                 'Days attended PSE (as of {})'.format(selected_month.isoformat()),
-                SimpleColumn('pse_days_attended'),
-                slug="pse_days_attended"
+                ConditionalAggregation(whens=[["primary_private_school IS NULL OR primary_private_school<>1",
+                                               'pse_days_attended::varchar']],
+                                       else_=GOING_SCHOOL,
+                                       alias='pse_days_attended' ),
+                format_fn=lambda pse_days: pse_days if pse_days==GOING_SCHOOL else int(pse_days)
             ),
         ]
         return columns
