@@ -134,9 +134,9 @@ def get_db_for_plproxy_cluster(app_label, hints):
     from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
     if HINT_INSTANCE in hints:
-        partitoin_value = getattr(hints[HINT_INSTANCE], 'partition_value', None)
-        if partitoin_value is not None:
-            return get_db_alias_for_partitioned_doc(partitoin_value)
+        partition_value = getattr(hints[HINT_INSTANCE], 'partition_value', None)
+        if partition_value is not None:
+            return get_db_alias_for_partitioned_doc(partition_value)
     if hints.get(HINT_PLPROXY_READ):
         return plproxy_config.proxy_db
     if HINT_USING in hints:
