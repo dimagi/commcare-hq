@@ -43,6 +43,7 @@ from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.queries import paginated_queryset
 from corehq.util.quickcache import quickcache
+from custom.icds.const import IS_ICDS_ENV
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -66,8 +67,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     primary_sort_prop = None
 
     @property
-    def headers(self):
-        headers = DataTablesHeader(
+    def _columns(self):
+        return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
@@ -87,15 +88,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
                              sql_col='last_form_app_build_version'),
-            DataTablesColumn(_("Build Profile"),
-                             help_text=_("The build profile from the user's last hearbeat request."),
-                             sortable=False),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
-        )
+        ]
+
+    @property
+    def headers(self):
+        columns = self._columns
+        if IS_ICDS_ENV:
+            columns.append(
+                DataTablesColumn(_("Build Profile"),
+                                 help_text=_("The build profile from the user's last hearbeat request."),
+                                 sortable=False)
+            )
+        headers = DataTablesHeader(*columns)
         headers.custom_sort = [[1, 'desc']]
         return headers
 
@@ -320,20 +329,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
-                last_build_profile_id = last_build.get('build_profile_id')
-                if last_build_profile_id:
-                    last_build_profile_name = _("Unknown")
-                    build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
-                    if last_build_profile_id in build_profiles:
-                        last_build_profile_name = build_profiles[last_build_profile_id]
+                if IS_ICDS_ENV:
+                    last_build_profile_id = last_build.get('build_profile_id')
+                    if last_build_profile_id:
+                        last_build_profile_name = _("Unknown")
+                        build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
+                        if last_build_profile_id in build_profiles:
+                            last_build_profile_name = build_profiles[last_build_profile_id]
 
             row_data = [
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, last_build_profile_name, commcare_version or '---'
+                app_name or "---", build_version, commcare_version or '---'
             ]
+            if IS_ICDS_ENV:
+                row_data.append(last_build_profile_name)
 
             if self.include_location_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
