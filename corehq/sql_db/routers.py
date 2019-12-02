@@ -131,7 +131,7 @@ def db_for_read_write(model, write=True, hints=None):
 
 
 def get_db_for_plproxy_cluster(model, hints):
-    from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+    from corehq.sql_db.util import get_db_alias_for_partitioned_doc, get_db_aliases_for_partitioned_query
 
     if not hints:
         raise Exception(f'Routing for partitioned models requires a hint. Use one of {ALL_HINTS}')
@@ -146,7 +146,9 @@ def get_db_for_plproxy_cluster(model, hints):
     if hints.get(HINT_PLPROXY_READ):
         return plproxy_config.proxy_db
     if HINT_USING in hints:
-        return hints[HINT_USING]
+        db = hints[HINT_USING]
+        assert db in get_db_aliases_for_partitioned_query()
+        return db
     if HINT_PARTITION_VALUE in hints:
         return get_db_alias_for_partitioned_doc(hints[HINT_PARTITION_VALUE])
 
