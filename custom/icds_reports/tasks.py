@@ -1543,7 +1543,7 @@ def _child_health_monthly_aggregation(day, state_ids):
         cursor.execute(helper.create_temporary_table())
 
     greenlets = []
-    pool = Pool(10)
+    pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
     pool.join(raise_error=True)
