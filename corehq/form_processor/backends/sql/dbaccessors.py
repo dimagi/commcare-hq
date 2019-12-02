@@ -391,7 +391,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         if not form_ids:
             return []
-        forms = list(XFormInstanceSQL.objects.plproxy_read('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        forms = list(XFormInstanceSQL.objects.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
 
@@ -470,7 +470,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_operations(form_id):
-        return list(XFormOperationSQL.objects.plproxy_read('SELECT * from get_form_operations(%s)', [form_id]))
+        return list(XFormOperationSQL.objects.plproxy_raw('SELECT * from get_form_operations(%s)', [form_id]))
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
@@ -497,7 +497,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        forms = XFormInstanceSQL.objects.plproxy_read(
+        forms = XFormInstanceSQL.objects.plproxy_raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
         )
@@ -780,7 +780,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
-        cases = list(CommCareCaseSQL.objects.plproxy_read('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        cases = list(CommCareCaseSQL.objects.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
 
         if ordered:
             _sort_with_id_list(cases, case_ids, 'case_id')
@@ -808,13 +808,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_indices(domain, case_id):
-        return list(CommCareCaseIndexSQL.objects.plproxy_read(
+        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
         ))
 
     @staticmethod
     def get_reverse_indices(domain, case_id):
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_read(
+        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
         ))
 
@@ -831,7 +831,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        indexes = CommCareCaseIndexSQL.objects.plproxy_read(
+        indexes = CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_all_reverse_indices(%s, %s)',
             [domain, case_ids]
         )
@@ -868,12 +868,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        cases = list(CommCareCaseSQL.objects.plproxy_read(
+        cases = list(CommCareCaseSQL.objects.plproxy_raw(
             'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
             [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_read(
+        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_multiple_cases_indices(%s, %s)',
             [domain, list(cases_by_id)])
         )
@@ -908,7 +908,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
         try:
-            return CaseAttachmentSQL.objects.plproxy_read(
+            return CaseAttachmentSQL.objects.plproxy_raw(
                 'select * from get_case_attachment_by_name(%s, %s)',
                 [case_id, attachment_name]
             )[0]
@@ -922,15 +922,15 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.plproxy_read('SELECT * from get_case_attachments(%s)', [case_id]))
+        return list(CaseAttachmentSQL.objects.plproxy_raw('SELECT * from get_case_attachments(%s)', [case_id]))
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.plproxy_read('SELECT * from get_case_transactions(%s)', [case_id]))
+        return list(CaseTransaction.objects.plproxy_raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
-        transactions = list(CaseTransaction.objects.plproxy_read(
+        transactions = list(CaseTransaction.objects.plproxy_raw(
             'SELECT * from get_case_transaction_by_form_id(%s, %s)',
             [case_id, form_id])
         )
@@ -939,7 +939,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
-        return list(CaseTransaction.objects.plproxy_read(
+        return list(CaseTransaction.objects.plproxy_raw(
             'SELECT * from get_case_transactions_by_type(%s, %s)',
             [case_id, transaction_type])
         )
@@ -960,7 +960,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.plproxy_read(
+            return CommCareCaseSQL.objects.plproxy_raw(
                 'SELECT * from get_case_by_location_id(%s, %s)',
                 [domain, location_id]
             )[0]
@@ -1052,7 +1052,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        return list(CommCareCaseIndexSQL.objects.plproxy_read(
+        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
             [domain, case_ids, list(exclude_indices)]))
 
@@ -1129,7 +1129,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        return list(CommCareCaseSQL.objects.plproxy_read(
+        return list(CommCareCaseSQL.objects.plproxy_raw(
             'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
             [domain, external_id, case_type]
         ))
@@ -1326,14 +1326,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         if entry_ids:
             assert isinstance(entry_ids, list)
 
-        return list(LedgerValue.objects.plproxy_read(
+        return list(LedgerValue.objects.plproxy_raw(
             'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
             [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
-        return list(LedgerValue.objects.plproxy_read(
+        return list(LedgerValue.objects.plproxy_raw(
             'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [[case_id]]
         ))
@@ -1341,7 +1341,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_value(case_id, section_id, entry_id):
         try:
-            return LedgerValue.objects.plproxy_read(
+            return LedgerValue.objects.plproxy_raw(
                 'SELECT * FROM get_ledger_value(%s, %s, %s)',
                 [case_id, section_id, entry_id]
             )[0]
@@ -1376,14 +1376,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
-        return list(LedgerTransaction.objects.plproxy_read(
+        return list(LedgerTransaction.objects.plproxy_raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
             [case_id, section_id, entry_id]
         ))
 
     @staticmethod
     def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
-        return list(LedgerTransaction.objects.plproxy_read(
+        return list(LedgerTransaction.objects.plproxy_raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
             [case_id, section_id, entry_id, window_start, window_end]
         ))
@@ -1403,7 +1403,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_latest_transaction(case_id, section_id, entry_id):
         try:
-            return LedgerTransaction.objects.plproxy_read(
+            return LedgerTransaction.objects.plproxy_raw(
                 "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
                 [case_id, section_id, entry_id]
             )[0]
@@ -1412,7 +1412,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
-        ledger_values = LedgerValue.objects.plproxy_read(
+        ledger_values = LedgerValue.objects.plproxy_raw(
             'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [case_ids]
         )
