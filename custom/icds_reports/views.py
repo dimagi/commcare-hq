@@ -1,126 +1,250 @@
 from collections import OrderedDict
+from datetime import date, datetime
 from wsgiref.util import FileWrapper
 
-import requests
-from lxml import etree
-
-
-from datetime import datetime, date
-from celery.result import AsyncResult
-from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
+from django.http.response import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+    StreamingHttpResponse,
+)
 from django.shortcuts import get_object_or_404, redirect
-
-from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
-from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
-from django.views.generic.base import View, TemplateView, RedirectView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import RedirectView, TemplateView, View
+
+import requests
+from celery.result import AsyncResult
+from dateutil.relativedelta import relativedelta
+from lxml import etree
+
+from couchexport.export import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
-from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.hqwebapp.decorators import (
-    use_daterangepicker,
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_access_location_id,
 )
+from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import Permissions, UserRole
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.files import safe_filename_header
-from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from corehq.util.view_utils import reverse
+from custom.icds.const import AWC_LOCATION_TYPE_CODE, IS_ICDS_ENV
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
-    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
-    GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
-    THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
-from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.const import (
+    AWC_INFRASTRUCTURE_EXPORT,
+    AWW_INCENTIVE_REPORT,
+    BHD_ROLE,
+    CHILDREN_EXPORT,
+    DASHBOARD_USAGE_EXPORT,
+    DEMOGRAPHICS_EXPORT,
+    GROWTH_MONITORING_LIST_EXPORT,
+    ICDS_SUPPORT_EMAIL,
+    INDIA_TIMEZONE,
+    ISSNIP_MONTHLY_REGISTER_PDF,
+    LS_REPORT_EXPORT,
+    PREGNANT_WOMEN_EXPORT,
+    SYSTEM_USAGE_EXPORT,
+    THR_REPORT_EXPORT,
+    AggregationLevels,
+    LocationTypes,
+)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.views import (
+    AggAwcDailyView,
+    MWCDReportView,
+    NICIndicatorsView,
+)
 from custom.icds_reports.queries import get_cas_data_blob_file
-from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
-from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
-    get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
-from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
-    get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
-from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
-    get_awc_daily_status_data_map, get_awc_daily_status_sector_data
-from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
-    get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
-    get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
-from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
-    get_awcs_covered_data_chart
-from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
-    get_children_initiated_data_map, get_children_initiated_sector_data
-from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
-    get_clean_water_sector_data
+from custom.icds_reports.reports.adhaar import (
+    get_adhaar_data_chart,
+    get_adhaar_data_map,
+    get_adhaar_sector_data,
+)
+from custom.icds_reports.reports.adolescent_girls import (
+    get_adolescent_girls_data_chart,
+    get_adolescent_girls_data_map,
+    get_adolescent_girls_sector_data,
+)
+from custom.icds_reports.reports.adult_weight_scale import (
+    get_adult_weight_scale_data_chart,
+    get_adult_weight_scale_data_map,
+    get_adult_weight_scale_sector_data,
+)
+from custom.icds_reports.reports.awc_daily_status import (
+    get_awc_daily_status_data_chart,
+    get_awc_daily_status_data_map,
+    get_awc_daily_status_sector_data,
+)
+from custom.icds_reports.reports.awc_reports import (
+    get_awc_report_beneficiary,
+    get_awc_report_demographics,
+    get_awc_report_infrastructure,
+    get_awc_report_lactating,
+    get_awc_report_pregnant,
+    get_awc_reports_maternal_child,
+    get_awc_reports_pse,
+    get_awc_reports_system_usage,
+    get_beneficiary_details,
+    get_pregnant_details,
+)
+from custom.icds_reports.reports.awcs_covered import (
+    get_awcs_covered_data_chart,
+    get_awcs_covered_data_map,
+    get_awcs_covered_sector_data,
+)
+from custom.icds_reports.reports.children_initiated_data import (
+    get_children_initiated_data_chart,
+    get_children_initiated_data_map,
+    get_children_initiated_sector_data,
+)
+from custom.icds_reports.reports.clean_water import (
+    get_clean_water_data_chart,
+    get_clean_water_data_map,
+    get_clean_water_sector_data,
+)
+from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from custom.icds_reports.reports.disha import DishaDump
-from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
-    get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
-from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
-    get_enrolled_children_data_map, get_enrolled_children_sector_data
-from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
-    get_enrolled_women_sector_data, get_enrolled_women_data_chart
-from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
-    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
+from custom.icds_reports.reports.early_initiation_breastfeeding import (
+    get_early_initiation_breastfeeding_chart,
+    get_early_initiation_breastfeeding_data,
+    get_early_initiation_breastfeeding_map,
+)
+from custom.icds_reports.reports.enrolled_children import (
+    get_enrolled_children_data_chart,
+    get_enrolled_children_data_map,
+    get_enrolled_children_sector_data,
+)
+from custom.icds_reports.reports.enrolled_women import (
+    get_enrolled_women_data_chart,
+    get_enrolled_women_data_map,
+    get_enrolled_women_sector_data,
+)
+from custom.icds_reports.reports.exclusive_breastfeeding import (
+    get_exclusive_breastfeeding_data_chart,
+    get_exclusive_breastfeeding_data_map,
+    get_exclusive_breastfeeding_sector_data,
+)
 from custom.icds_reports.reports.fact_sheets import FactSheetsReport
-from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
-    get_functional_toilet_data_map, get_functional_toilet_sector_data
-from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
-    get_immunization_coverage_data_map, get_immunization_coverage_sector_data
-from custom.icds_reports.reports.infantometer import get_infantometer_sector_data, get_infantometer_data_map, \
-    get_infantometer_data_chart
-from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_chart, \
-    get_infants_weight_scale_data_map, get_infants_weight_scale_sector_data
-from custom.icds_reports.reports.institutional_deliveries_sector import get_institutional_deliveries_data_chart,\
-    get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
-from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
-    get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
-from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
-from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
-    get_medicine_kit_sector_data
-from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_chart, \
-    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map
-from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_chart,\
-    get_prevalence_of_severe_data_map, get_prevalence_of_severe_sector_data
-from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_chart, \
-    get_prevalence_of_stunting_data_map, get_prevalence_of_stunting_sector_data
-from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
-    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
-from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
-    get_registered_household_sector_data, get_registered_household_data_chart
-from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
-from custom.icds_reports.reports.stadiometer import get_stadiometer_sector_data, get_stadiometer_data_map, \
-    get_stadiometer_data_chart
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports, prepare_excel_reports
-from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
-    get_datatables_ordering_info
-from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
-    get_program_summary_data_with_retrying, get_awc_covered_data_with_retrying
-from dimagi.utils.dates import force_to_date, add_months
+from custom.icds_reports.reports.functional_toilet import (
+    get_functional_toilet_data_chart,
+    get_functional_toilet_data_map,
+    get_functional_toilet_sector_data,
+)
+from custom.icds_reports.reports.immunization_coverage_data import (
+    get_immunization_coverage_data_chart,
+    get_immunization_coverage_data_map,
+    get_immunization_coverage_sector_data,
+)
+from custom.icds_reports.reports.infantometer import (
+    get_infantometer_data_chart,
+    get_infantometer_data_map,
+    get_infantometer_sector_data,
+)
+from custom.icds_reports.reports.infants_weight_scale import (
+    get_infants_weight_scale_data_chart,
+    get_infants_weight_scale_data_map,
+    get_infants_weight_scale_sector_data,
+)
+from custom.icds_reports.reports.institutional_deliveries_sector import (
+    get_institutional_deliveries_data_chart,
+    get_institutional_deliveries_data_map,
+    get_institutional_deliveries_sector_data,
+)
+from custom.icds_reports.reports.lactating_enrolled_women import (
+    get_lactating_enrolled_data_chart,
+    get_lactating_enrolled_women_data_map,
+    get_lactating_enrolled_women_sector_data,
+)
+from custom.icds_reports.reports.lady_supervisor import (
+    get_lady_supervisor_data,
+)
+from custom.icds_reports.reports.medicine_kit import (
+    get_medicine_kit_data_chart,
+    get_medicine_kit_data_map,
+    get_medicine_kit_sector_data,
+)
+from custom.icds_reports.reports.mwcd_indicators import (
+    get_mwcd_indicator_api_data,
+)
+from custom.icds_reports.reports.new_born_with_low_weight import (
+    get_newborn_with_low_birth_weight_chart,
+    get_newborn_with_low_birth_weight_data,
+    get_newborn_with_low_birth_weight_map,
+)
+from custom.icds_reports.reports.prevalence_of_severe import (
+    get_prevalence_of_severe_data_chart,
+    get_prevalence_of_severe_data_map,
+    get_prevalence_of_severe_sector_data,
+)
+from custom.icds_reports.reports.prevalence_of_stunting import (
+    get_prevalence_of_stunting_data_chart,
+    get_prevalence_of_stunting_data_map,
+    get_prevalence_of_stunting_sector_data,
+)
+from custom.icds_reports.reports.prevalence_of_undernutrition import (
+    get_prevalence_of_undernutrition_data_chart,
+    get_prevalence_of_undernutrition_data_map,
+    get_prevalence_of_undernutrition_sector_data,
+)
+from custom.icds_reports.reports.registered_household import (
+    get_registered_household_data_chart,
+    get_registered_household_data_map,
+    get_registered_household_sector_data,
+)
+from custom.icds_reports.reports.service_delivery_dashboard import (
+    get_service_delivery_data,
+)
+from custom.icds_reports.reports.stadiometer import (
+    get_stadiometer_data_chart,
+    get_stadiometer_data_map,
+    get_stadiometer_sector_data,
+)
+from custom.icds_reports.tasks import (
+    move_ucr_data_into_aggregation_tables,
+    prepare_excel_reports,
+    prepare_issnip_monthly_register_reports,
+)
+from custom.icds_reports.utils import (
+    current_month_stunting_column,
+    current_month_wasting_column,
+    get_age_filter,
+    get_age_filter_in_months,
+    get_datatables_ordering_info,
+    get_latest_issue_tracker_build_id,
+    get_location_filter,
+    get_location_level,
+    icds_pre_release_features,
+)
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.data_accessor import (
+    get_awc_covered_data_with_retrying,
+    get_inc_indicator_api_data,
+    get_program_summary_data,
+    get_program_summary_data_with_retrying,
+)
+
 from . import const
 from .exceptions import TableauTokenException
-from couchexport.shortcuts import export_response
-from couchexport.export import Format
-from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
-from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView, MWCDReportView
-from custom.icds_reports.reports.daily_indicators import get_daily_indicators
-from django.views.decorators.csrf import csrf_exempt
-from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_data
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -1661,7 +1785,7 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        if IS_ICDS_ENV:
             return HttpResponse("This page is only available for QA and not available for production instances.")
 
         couch_user = self.request.couch_user

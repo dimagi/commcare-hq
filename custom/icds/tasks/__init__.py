@@ -1,16 +1,16 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
 from celery.schedules import crontab
 from celery.task import periodic_task
-from django.conf import settings
-from corehq.blobs import get_blob_db, CODES
+
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
-from custom.icds.tasks.hosted_ccz import (
-    setup_ccz_file_for_hosting,
-)
+from custom.icds.const import IS_ICDS_ENV
+from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
 
-if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+if IS_ICDS_ENV:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
     def delete_old_images(cutoff=None):
         cutoff = cutoff or datetime.utcnow()
