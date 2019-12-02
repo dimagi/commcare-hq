@@ -1,3 +1,4 @@
+/* eslint-disable */
 // note: this code is mostly a direct import of https://github.com/Ankitdhir/angularjs-ios-style-datepicker
 // with a few minor modifications to allow for removing the day of month and small UX tweaks
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
