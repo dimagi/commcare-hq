@@ -3,7 +3,7 @@ from django.db.models.query import RawQuerySet
 
 from corehq.sql_db.routers import (
     HINT_PARTITION_VALUE,
-    HINT_PLPROXY_READ,
+    HINT_PLPROXY,
     HINT_USING,
 )
 from corehq.util.exceptions import AccessRestricted
@@ -70,7 +70,7 @@ class RequireDBManager(models.Manager):
         if using:
             hints = {HINT_USING: using}
         else:
-            hints = {HINT_PLPROXY_READ: True}
+            hints = {HINT_PLPROXY: True}
         return RawQuerySet(raw_query, model=self.model, params=params, translations=translations, hints=hints)
 
     def plproxy_raw(self, raw_query, params=None):
@@ -98,7 +98,7 @@ class PartitionedModel(models.Model):
 
     @classmethod
     def get_plproxy_cursor(cls, readonly=False):
-        return _get_cursor(cls, readonly, {HINT_PLPROXY_READ: True})
+        return _get_cursor(cls, readonly, {HINT_PLPROXY: True})
 
     @classmethod
     def get_cursor_for_partition_value(cls, partition_value, readonly=False):

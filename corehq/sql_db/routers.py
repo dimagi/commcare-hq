@@ -17,9 +17,9 @@ from .config import plproxy_config
 
 HINT_INSTANCE = 'instance'
 HINT_PARTITION_VALUE = 'partition_value'
-HINT_PLPROXY_READ = 'plproxy_read'
+HINT_PLPROXY = 'plproxy'
 HINT_USING = 'using'
-ALL_HINTS = {HINT_INSTANCE, HINT_PARTITION_VALUE, HINT_PLPROXY_READ, HINT_USING}
+ALL_HINTS = {HINT_INSTANCE, HINT_PARTITION_VALUE, HINT_PLPROXY, HINT_USING}
 
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
@@ -143,7 +143,7 @@ def get_db_for_plproxy_cluster(model, hints):
         partition_value = getattr(hints[HINT_INSTANCE], 'partition_value', None)
         if partition_value is not None:
             return get_db_alias_for_partitioned_doc(partition_value)
-    if hints.get(HINT_PLPROXY_READ):
+    if hints.get(HINT_PLPROXY):
         return plproxy_config.proxy_db
     if HINT_USING in hints:
         db = hints[HINT_USING]

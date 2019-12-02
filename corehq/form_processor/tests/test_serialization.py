@@ -11,7 +11,7 @@ from corehq.form_processor.tests.utils import (
     use_sql_backend,
 )
 from corehq.form_processor.utils import get_simple_form_xml
-from corehq.sql_db.routers import HINT_PLPROXY_READ
+from corehq.sql_db.routers import HINT_PLPROXY
 
 
 @use_sql_backend
@@ -22,7 +22,7 @@ class SerializationTests(TestCase):
         super(SerializationTests, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
 
-        cls.using = router.db_for_read(XFormInstanceSQL, **{HINT_PLPROXY_READ: True})
+        cls.using = router.db_for_read(XFormInstanceSQL, **{HINT_PLPROXY: True})
 
     @classmethod
     def tearDownClass(cls):
