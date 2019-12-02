@@ -1613,7 +1613,9 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech() and has_project_access:
-            items.append((_('Integration'), _get_integration_section(self.domain)))
+            integration_nav = _get_integration_section(self.domain)
+            if integration_nav:
+                items.append((_('Integration'), integration_nav))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
         if feature_flag_items and user_is_admin and has_project_access:
@@ -1770,26 +1772,29 @@ def _get_integration_section(domain):
         elif repeater_type == 'CaseRepeater':
             return _("Forward Cases")
 
-    integration = [
-        {
-            'title': _('Data Forwarding'),
-            'url': reverse('domain_forwarding', args=[domain]),
-            'subpages': [
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_repeater',
-                },
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_form_repeater',
-                },
-            ]
-        },
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ]
+    integration = []
+
+    if domain_has_privilege(domain, privileges.DATA_FORWARDING):
+        integration.extend([
+            {
+                'title': _('Data Forwarding'),
+                'url': reverse('domain_forwarding', args=[domain]),
+                'subpages': [
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_repeater',
+                    },
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_form_repeater',
+                    },
+                ]
+            },
+            {
+                'title': _('Data Forwarding Records'),
+                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+            }
+        ])
 
     if toggles.BIOMETRIC_INTEGRATION.enabled(domain):
         from corehq.apps.integration.views import BiometricIntegrationView

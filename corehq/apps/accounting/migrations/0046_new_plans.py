@@ -30,7 +30,7 @@ def _ensure_new_software_plans(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0044_grandfather_odata_privs'),
+        ('accounting', '0045_grandfather_data_forwarding_privs'),
     ]
 
     operations = [
