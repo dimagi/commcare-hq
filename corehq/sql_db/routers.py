@@ -16,10 +16,10 @@ from corehq.sql_db.util import select_db_for_read
 from .config import plproxy_config
 
 HINT_INSTANCE = 'instance'
-
 HINT_PARTITION_VALUE = 'partition_value'
-HINT_USING = 'using'
 HINT_PLPROXY_READ = 'plproxy_read'
+HINT_USING = 'using'
+ALL_HINTS = {HINT_INSTANCE, HINT_PARTITION_VALUE, HINT_PLPROXY_READ, HINT_USING}
 
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
@@ -119,10 +119,10 @@ def db_for_read_write(model, write=True, hints=None):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return get_db_for_plproxy_cluster(app_label, hints)
+            return get_db_for_plproxy_cluster(model, hints)
         return DEFAULT_DB_ALIAS
     if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
-        return get_db_for_plproxy_cluster(app_label, hints)
+        return get_db_for_plproxy_cluster(model, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
@@ -130,8 +130,14 @@ def db_for_read_write(model, write=True, hints=None):
         return default_db
 
 
-def get_db_for_plproxy_cluster(app_label, hints):
+def get_db_for_plproxy_cluster(model, hints):
     from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+
+    if not hints:
+        raise Exception(f'Routing for partitioned models requires a hint. Use one of {ALL_HINTS}')
+
+    if len(set(hints) & ALL_HINTS) > 1:
+        raise Exception(f'Unable to perform routing, multiple hints provided: {hints}')
 
     if HINT_INSTANCE in hints:
         partition_value = getattr(hints[HINT_INSTANCE], 'partition_value', None)
@@ -143,7 +149,8 @@ def get_db_for_plproxy_cluster(app_label, hints):
         return hints[HINT_USING]
     if HINT_PARTITION_VALUE in hints:
         return get_db_alias_for_partitioned_doc(hints[HINT_PARTITION_VALUE])
-    raise Exception(f'Unable to route query for {app_label} app')
+
+    raise Exception(f'Unable to route query for {model}. No matching hints. Use one of {ALL_HINTS}')
 
 
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
