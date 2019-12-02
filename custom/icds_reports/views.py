@@ -14,13 +14,11 @@ from django.http.response import (
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView, TemplateView, View
 
 import requests
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
-from lxml import etree
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
@@ -37,7 +35,6 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_location_id,
 )
-from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
 from corehq.blobs.exceptions import NotFound
@@ -71,7 +68,6 @@ from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import (
     AggAwcDailyView,
-    MWCDReportView,
     NICIndicatorsView,
 )
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -106,11 +102,6 @@ from custom.icds_reports.reports.awc_reports import (
     get_awc_reports_system_usage,
     get_beneficiary_details,
     get_pregnant_details,
-)
-from custom.icds_reports.reports.awcs_covered import (
-    get_awcs_covered_data_chart,
-    get_awcs_covered_data_map,
-    get_awcs_covered_sector_data,
 )
 from custom.icds_reports.reports.children_initiated_data import (
     get_children_initiated_data_chart,
@@ -235,11 +226,9 @@ from custom.icds_reports.utils import (
     get_location_level,
     icds_pre_release_features,
 )
-from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
-    get_program_summary_data,
     get_program_summary_data_with_retrying,
 )
 

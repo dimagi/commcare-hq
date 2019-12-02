@@ -53,7 +53,6 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views

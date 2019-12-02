@@ -41,7 +41,6 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
-from corehq.util.queries import paginated_queryset
 from corehq.util.quickcache import quickcache
 from custom.icds.const import IS_ICDS_ENV
 
