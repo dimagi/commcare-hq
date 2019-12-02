@@ -38,11 +38,6 @@ from corehq.apps.domain.views.accounting import (
     WireInvoiceView,
 )
 from corehq.apps.domain.views.base import select
-from corehq.apps.domain.views.exchange import (
-    CreateNewExchangeSnapshotView,
-    ExchangeSnapshotsView,
-    set_published_snapshot,
-)
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
@@ -72,7 +67,6 @@ from corehq.apps.domain.views.settings import (
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
-    ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
 )
@@ -173,12 +167,7 @@ domain_settings = [
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
-    url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
-    url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
-    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
-    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
-    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
