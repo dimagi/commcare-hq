@@ -20,7 +20,6 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
     }
     function getSelectedMonthDisplay() {
         var formattedMonth = moment(getSelectedMonth(), 'MM').format('MMMM');
-        console.log("returning", formattedMonth + ' ' + getSelectedYear());
         return formattedMonth + ' ' + getSelectedYear();
     }
     return {
