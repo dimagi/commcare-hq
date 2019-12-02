@@ -149,6 +149,16 @@ DROP INDEX IF EXISTS "agg_awc_daily_2019-11-21_state_id_idx";
 DROP INDEX IF EXISTS "agg_awc_daily_2019-11-22_state_id_idx";
 DROP INDEX IF EXISTS "agg_awc_daily_2019-11-23_state_id_idx";
 DROP INDEX IF EXISTS "agg_awc_daily_2019-11-24_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-25_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-26_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-27_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-28_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-29_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-11-30_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-12-01_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-12-02_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-12-03_state_id_idx";
+DROP INDEX IF EXISTS "agg_awc_daily_2019-12-04_state_id_idx";
 
 DROP INDEX IF EXISTS "agg_ccs_record_2019-05-01_5_block_id_idx2";
 DROP INDEX IF EXISTS "agg_ccs_record_2019-05-01_5_ccs_status_idx4";
