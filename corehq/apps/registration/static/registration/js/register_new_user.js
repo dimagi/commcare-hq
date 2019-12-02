@@ -16,9 +16,9 @@ hqDefine('registration/js/register_new_user', [
 ) {
     'use strict';
 
-    $('#js-start-trial').click(function (e) {
+    $('#js-create-account').click(function (e) {
         e.preventDefault();
-        $('#registration-start-container').hide();
+        $('#registration-choose-plan-container').hide();
         $('#registration-form-container').fadeIn();
 
         $('#back-to-start-btn').removeClass('hide');
@@ -26,13 +26,7 @@ hqDefine('registration/js/register_new_user', [
 
     $('#back-to-start-btn').click(function () {
         $('#registration-form-container').hide();
-        $('#registration-start-container').fadeIn();
-    });
-
-    $('.view-features').click(function (e) {
-        e.preventDefault();
-
-        $('.tile-wrapper').addClass('show-features');
+        $('#registration-choose-plan-container').fadeIn();
     });
 
     kissmetrics.whenReadyAlways(function () {
