@@ -1493,7 +1493,10 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 def create_all_mbt(month, state_ids):
     first_of_month = month.strftime('%Y-%m-01')
+    prev_month = month.replace(day=1) - relativedelta(months=1)
+    prev_month_string = prev_month.strftime('%Y-%m-01')
     for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, prev_month_string)
         create_mbt_for_month.delay(state_id, first_of_month)
 
 
