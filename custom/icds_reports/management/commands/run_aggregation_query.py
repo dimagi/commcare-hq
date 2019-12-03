@@ -98,7 +98,7 @@ def run_task(agg_record, query_name):
     query = function_map[query_name]
     if query.by_state == SINGLE_STATE:
         greenlets = []
-        pool = Pool(10)
+        pool = Pool(15)
         for state in state_ids:
             greenlets.append(pool.spawn(query.func, state, agg_date))
         pool.join(raise_error=True)
