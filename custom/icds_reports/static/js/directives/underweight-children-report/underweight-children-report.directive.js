@@ -156,10 +156,12 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
 UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
+window.angular.module('icdsApp').directive('underweightChildrenReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('map-chart');
+        },
         bindToController: true,
         scope: {
             data: '=',
@@ -167,4 +169,4 @@ window.angular.module('icdsApp').directive('underweightChildrenReport', function
         controller: UnderweightChildrenReportController,
         controllerAs: '$ctrl',
     };
-});
+}]);
