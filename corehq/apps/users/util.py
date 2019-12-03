@@ -234,7 +234,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, date, version):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
@@ -247,6 +247,9 @@ def update_latest_builds(user, app_id, date, version):
             user.reporting_metadata.last_builds.append(last_build)
         last_build.build_version = version
         last_build.app_id = app_id
+        # update only when passed to avoid over writing set value
+        if build_profile_id is not None:
+            last_build.build_profile_id = build_profile_id
         last_build.build_version_date = date
         changed = True
 
