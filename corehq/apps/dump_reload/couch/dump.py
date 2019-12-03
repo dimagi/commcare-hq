@@ -23,7 +23,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),
     DocTypeIDProvider(['CommtrackConfig']),
     DocTypeIDProvider(['DefaultConsumption']),
-    ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider(['MobileAuthKeyRecord']),
     DocTypeIDProvider(['Product']),
     DocTypeIDProvider(['Program']),
