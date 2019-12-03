@@ -133,12 +133,27 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
+
+    // mobile only, update if filters are visible over the program summary
+    vm.filtersOpen = false;
+    $scope.$on('openFilterMenu', function () {
+        vm.filtersOpen = true;
+    });
+    $scope.$on('closeFilterMenu', function () {
+        vm.filtersOpen = false;
+    });
+    $scope.$on('mobile_filter_data_changed', function (event, data) {
+        vm.filtersOpen = false;
+        if (data.hasLocation) {
+            vm.moveToLocation(data.location, data.locationLevel);
+        }
+    });
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
     'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
-window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
+window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         templateUrl: function () {
