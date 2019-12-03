@@ -28,7 +28,8 @@ class _UserCaseHelper(object):
     def commit(self):
         with CriticalSection(get_sync_lock_key(self.owner_id)):
             if self._case_block_to_submit:
-                submit_case_blocks(self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
+                submit_case_blocks(
+                    self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
             for task, task_args in self._tasks_to_trigger:
                 task.delay(task_args))
 
@@ -39,7 +40,7 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        caseblock = CaseBlock(
+        self._case_block_to_submit = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=fields.pop('owner_id'),
@@ -48,11 +49,10 @@ class _UserCaseHelper(object):
             case_name=fields.pop('name', None),
             update=fields
         )
-        self._case_block_to_submit = caseblock
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        caseblock = CaseBlock(
+        self._case_block_to_submit = CaseBlock(
             create=False,
             case_id=case.case_id,
             owner_id=fields.pop('owner_id', CaseBlock.undefined),
