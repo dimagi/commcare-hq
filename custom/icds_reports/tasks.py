@@ -1493,7 +1493,10 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 def create_all_mbt(month, state_ids):
     first_of_month = month.strftime('%Y-%m-01')
+    prev_month = month.replace(day=1) - relativedelta(months=1)
+    prev_month_string = prev_month.strftime('%Y-%m-01')
     for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, prev_month_string)
         create_mbt_for_month.delay(state_id, first_of_month)
 
 
@@ -1543,7 +1546,7 @@ def _child_health_monthly_aggregation(day, state_ids):
         cursor.execute(helper.create_temporary_table())
 
     greenlets = []
-    pool = Pool(10)
+    pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
     pool.join(raise_error=True)
@@ -1606,7 +1609,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     doc_ids_in_pillow_error = set(
         PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     invalid_doc_ids = set(
-        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id'), flat=True)
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes

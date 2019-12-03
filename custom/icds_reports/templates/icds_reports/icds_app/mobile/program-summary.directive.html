@@ -1,29 +1,35 @@
 {% load staticfiles %}
-<div class="app-bg h-100vh overflow-hidden">
-    <div class="top-section p-3" style="padding-bottom: 25vh">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div class="d-flex align-items-start">
-                <nav-menu-opener></nav-menu-opener>
-                <div>
-                    <p class="font-16 font-montserrat font-weight-600 text-white mb-0">
-                        Program Summary
-                    </p>
-                    <p class="font-14 font-montserrat font-weight-500 text-white">
-                        National | October 2019
-                    </p>
-                </div>
-            </div>
-            <img src="{% static "icds_reports/mobile/images/filter-icon.png" %}" style="width: 50px">
-        </div>
-        <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
-            <div class="position-relative" ng-repeat="step in $ctrl.steps">
-                <dot-link id="{$ step.id $}" label="{$ step.label $}" route="{$ step.route $}" image="{$ step.image $}"></dot-link>
-            </div>
-        </div>
-        <p class="font-weight-700 text-white font-16 font-montserrat" >{$ $ctrl.currentStepMeta.label $}</p>
-    </div>
-    <div class="summary-list">
-        <kpi data="$ctrl.data"></kpi>
-    </div>
-    <help-popup></help-popup>
+<div>
+  <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen">
+      <div class="top-section p-3" style="padding-bottom: 25vh">
+          <div class="d-flex justify-content-between align-items-start mb-4">
+              <div class="d-flex align-items-start">
+                  <nav-menu-opener></nav-menu-opener>
+                  <div>
+                      <p class="font-16 font-montserrat font-weight-600 text-white mb-0">
+                          Program Summary
+                      </p>
+                      <p class="font-14 font-montserrat font-weight-500 text-white">
+                          October 2019 | National
+                          <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                            &gt; {$ loc.name $}
+                          </span>
+                      </p>
+                  </div>
+              </div>
+              <filter-opener></filter-opener>
+          </div>
+          <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
+              <div class="position-relative" ng-repeat="step in $ctrl.steps">
+                  <dot-link id="{$ step.id $}" label="{$ step.label $}" route="{$ step.route $}" image="{$ step.image $}"></dot-link>
+              </div>
+          </div>
+          <p class="font-weight-700 text-white font-16 font-montserrat" >{$ $ctrl.currentStepMeta.label $}</p>
+      </div>
+      <div class="summary-list">
+          <kpi data="$ctrl.data"></kpi>
+      </div>
+      <help-popup></help-popup>
+  </div>
+  <mobile-filters selected-locations="$ctrl.selectedLocations" ng-show="$ctrl.filtersOpen">></mobile-filters>
 </div>

@@ -334,7 +334,7 @@ def process_reporting_metadata_staging():
                     record.sync_date, record.device_id, save=False
                 )
             if save:
-                user.save()
+                user.save(fire_signals=False)
 
             record.delete()
 
