@@ -30,7 +30,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.sql_db.routers import HINT_PLPROXY_READ
+from corehq.sql_db.routers import HINT_PLPROXY
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
@@ -41,7 +41,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY_READ: True})
+        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
