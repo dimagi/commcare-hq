@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<div class="row" id="build-profile-select-for-multimedia">
+  <div class="col-sm-3 form-inline">
+    <div class="form-group">
+      <label>{% trans 'Build Profile' %}:</label>
+      <select data-bind="options: buildProfiles,
+                         optionsText: 'name',
+                         optionsValue: 'id',
+                         value: buildProfileId,
+                         optionsCaption: '{% trans_html_attr 'Select Profile' %}'"
+                         class="hqwebapp-select2">
+      </select>
+    </div>
+  </div>
+</div>

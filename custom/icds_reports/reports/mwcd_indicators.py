@@ -20,7 +20,8 @@ def get_implementation_status_data():
     )
 
     total_count = {
-        "nation_code": 0,
+        'state_name': 'ALL INDIA',
+        'state_id': '0',
         'num_launched_awcs': 0,
         'num_launched_districts': 0,
         'num_launched_states': 0,
@@ -30,15 +31,16 @@ def get_implementation_status_data():
         'total_mothers': 0,
         'cases_child_health': 0
     }
-
+    implementation_stat = list(implementation_stat)
     for record in implementation_stat:
         for key, value in record.items():
             if key not in ['state_name', 'state_id']:
                 total_count[key] += value
 
+    implementation_stat.insert(0, total_count)
+
     return {
-        'national_total': total_count,
-        'dataarray': list(implementation_stat)
+        'dataarray': implementation_stat
     }
 
 
@@ -54,15 +56,23 @@ def get_monthly_trend(monthly_trend_start):
         'num_launched_awcs', 'cases_child_health')
 
     trend_at_national_level = MWCDReportView.objects.filter(month__gte=monthly_trend_start).values(
-        'month').annotate(total_awc_launched=Sum('num_launched_awcs'),
+        'month').annotate(num_launched_awcs=Sum('num_launched_awcs'),
                           total_mothers=Sum('total_mothers'),
-                          total_children=Sum('cases_child_health'))
+                          cases_child_health=Sum('cases_child_health'))
+
+    monthly_trend = list(monthly_trend)
+    trend_at_national_level = list(trend_at_national_level)
+
+    static_national_props = {'state_name': 'ALL INDIA', 'state_id': '0'}
+    for nation_data in trend_at_national_level:
+        nation_data.update(static_national_props)
 
     split_month(monthly_trend)
     split_month(trend_at_national_level)
 
+    monthly_trend.extend(trend_at_national_level)
+
     return {
-        'national_total': list(trend_at_national_level),
         'dataarray': list(monthly_trend)
     }
 
