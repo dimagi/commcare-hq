@@ -5,6 +5,7 @@ from django.db import models
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
+from more_itertools import ichunked
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -16,7 +17,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -110,7 +110,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
             transaction.delete(item)
             item_ids.append(item.get_id)
-        for item_id_chunk in chunked(item_ids, 1000):
+        for item_id_chunk in ichunked(item_ids, 1000):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
 
