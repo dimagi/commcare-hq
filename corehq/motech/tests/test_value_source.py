@@ -15,6 +15,7 @@ from corehq.motech.const import (
     DIRECTION_EXPORT,
     DIRECTION_IMPORT,
 )
+from corehq.motech.exceptions import JsonpathError
 from corehq.motech.value_source import (
     CaseOwnerAncestorLocationField,
     CaseProperty,
@@ -184,8 +185,8 @@ class JsonPathCasePropertyTests(SimpleTestCase):
             "case_property": "bar",
             "jsonpath": "",
         })
-        external_value = value_source.get_import_value(json_doc)
-        self.assertIsNone(external_value)
+        with self.assertRaises(JsonpathError):
+            value_source.get_import_value(json_doc)
 
     def test_no_values(self):
         json_doc = {"foo": {"bar": "baz"}}

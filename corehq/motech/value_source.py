@@ -21,7 +21,7 @@ from corehq.motech.const import (
     DIRECTION_IMPORT,
     DIRECTIONS,
 )
-from corehq.motech.exceptions import JsonpathError
+from corehq.motech.exceptions import ConfigurationError, JsonpathError
 from corehq.motech.serializers import serializers
 
 
@@ -127,7 +127,7 @@ class ValueSource:
         raise NotImplementedError
 
     def get_external_value(self, external_data):
-        if self.jsonpath:
+        if self.jsonpath is not None:
             try:
                 jsonpath = parse_jsonpath(self.jsonpath)
             except Exception as err:
@@ -140,6 +140,7 @@ class ValueSource:
                 return values[0]
             else:
                 return values
+        raise ConfigurationError(f"{self} is not configured to parse external data")
 
     def serialize(self, value: Any) -> Any:
         """
@@ -415,6 +416,18 @@ def get_value(
     """
     value_source = as_value_source(dict(value_source_config))
     return value_source.get_value(case_trigger_info)
+
+
+def get_import_value(
+    value_source_config: JsonDict,
+    external_data: dict,  # This may change if/when we support non-JSON APIs
+) -> Any:
+    """
+    Returns the external value referred to by the value source
+    definition, deserialized for CommCare.
+    """
+    value_source = as_value_source(dict(value_source_config))
+    return value_source.get_import_value(external_data)
 
 
 def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:

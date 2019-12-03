@@ -21,7 +21,6 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.exceptions import ConfigurationError, JsonpathError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
@@ -40,7 +39,11 @@ from corehq.motech.openmrs.openmrs_config import (
 )
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
-from corehq.motech.value_source import as_value_source, deserialize
+from corehq.motech.value_source import (
+    as_value_source,
+    deserialize,
+    get_import_value,
+)
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -529,9 +532,8 @@ def get_case_block_kwargs_for_case_property(
     case_block_kwargs = {"update": {}}
     try:
         value = get_import_value(mapping.value, external_data)
-    except (AttributeError, JsonpathError):
-        # mapping.value doesn't have get_import_value(), or isn't
-        # configured to parse external_data
+    except (ConfigurationError, JsonpathError):
+        # mapping.value isn't configured to parse external_data
         value = deserialize(mapping.value, fallback_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
