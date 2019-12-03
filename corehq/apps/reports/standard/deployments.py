@@ -1,7 +1,6 @@
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
-from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
@@ -110,7 +109,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @cached_property
     def show_build_profile(self):
-        return settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        return toggles.SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS.enabled(self.domain)
 
     @property
     def default_sort(self):
