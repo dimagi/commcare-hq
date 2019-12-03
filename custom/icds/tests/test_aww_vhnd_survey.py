@@ -73,7 +73,6 @@ class TestAWWVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
         messages = run_indicator_for_user(self.aww, AWWVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    @skip('avoid bleeding builds')
     def test_form_sent_thirty_seven_days_ago(self):
         self._save_form(self.aww.get_id, self.today - timedelta(days=37))
         messages = run_indicator_for_user(self.aww, AWWVHNDSurveyIndicator, language_code='en')
