@@ -36,7 +36,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend_mapping.delete()
         cls.backend.delete()
         FormProcessorTestUtils.delete_all_cases(cls.domain)
-        cls.teardown_subscription()
+        cls.teardown_subscriptions()
         cls.domain_obj.delete()
         clear_plan_version_cache()
         super(OptTestCase, cls).tearDownClass()
