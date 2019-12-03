@@ -7,6 +7,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,18 +45,14 @@ from django.views.generic.base import View
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from urllib.parse import urlparse
-
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -90,6 +87,7 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
 )
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,
@@ -114,6 +112,7 @@ from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.view_utils import reverse
+from custom.icds.const import IS_ICDS_ENV
 from no_exceptions.exceptions import Http403
 
 
@@ -406,7 +405,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    if IS_ICDS_ENV:
         auth_view = CloudCareLoginView
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -429,7 +428,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
 def login(req):
     # This is a wrapper around the _login view
 
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    if IS_ICDS_ENV:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -710,8 +709,7 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
+        if re.search(r'@dimagi\.com$', report['username']) and not IS_ICDS_ENV:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
