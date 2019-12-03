@@ -165,7 +165,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         return {
             obs.concept: [obs.value.get_value(self.info)]
             for obs in form_config.openmrs_observations
-            if obs.value.check_direction(DIRECTION_EXPORT) and not is_blank(obs.value.get_value(self.info))
+            if not is_blank(obs.value.get_value(self.info))
         }
 
     def run(self):
@@ -494,11 +494,7 @@ class UpdatePersonNameTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
-            if (
-                property_ in NAME_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(self.info)
-            )
+            if property_ in NAME_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
             self.requests.post(
@@ -546,11 +542,7 @@ class CreatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(self.info)
-            )
+            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
             response = self.requests.post(
@@ -585,11 +577,7 @@ class UpdatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(self.info)
-            )
+            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
             self.requests.post(
@@ -630,11 +618,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(self.info)
-            )
+            if property_ in PERSON_PROPERTIES and value_source.get_value(self.info) is not None
         }
         if properties:
             self.requests.post(

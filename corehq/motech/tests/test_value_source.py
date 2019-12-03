@@ -10,6 +10,9 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
+    DIRECTION_BOTH,
+    DIRECTION_EXPORT,
+    DIRECTION_IMPORT,
 )
 from corehq.motech.value_source import (
     CaseProperty,
@@ -278,6 +281,123 @@ class CasePropertyConstantValueTests(SimpleTestCase):
         self.assertEqual(external_value, "qux")
 
 
+class CheckDirectionTests(SimpleTestCase):
+
+    def test_check_direction_in_true(self):
+        value_source = get_constant_spam({"direction": "in"})
+        can_import = value_source.check_direction(DIRECTION_IMPORT)
+        self.assertTrue(can_import)
+
+    def test_check_direction_in_false(self):
+        value_source = get_constant_spam({"direction": "in"})
+        can_export = value_source.check_direction(DIRECTION_EXPORT)
+        self.assertFalse(can_export)
+
+    def test_check_direction_out_true(self):
+        value_source = get_constant_spam({"direction": "out"})
+        can_export = value_source.check_direction(DIRECTION_EXPORT)
+        self.assertTrue(can_export)
+
+    def test_check_direction_out_false(self):
+        value_source = get_constant_spam({"direction": "out"})
+        can_import = value_source.check_direction(DIRECTION_IMPORT)
+        self.assertFalse(can_import)
+
+    def test_check_direction_both(self):
+        value_source = get_constant_spam({"direction": None})
+        can_import = value_source.check_direction(DIRECTION_IMPORT)
+        can_export = value_source.check_direction(DIRECTION_EXPORT)
+        can_import_and_export = value_source.check_direction(DIRECTION_BOTH)
+        self.assertTrue(can_import)
+        self.assertTrue(can_export)
+        self.assertTrue(can_import_and_export)
+
+    def test_check_default(self):
+        value_source = get_constant_spam()
+        can_import = value_source.check_direction(DIRECTION_IMPORT)
+        can_export = value_source.check_direction(DIRECTION_EXPORT)
+        can_import_and_export = value_source.check_direction(DIRECTION_BOTH)
+        self.assertTrue(can_import)
+        self.assertTrue(can_export)
+        self.assertTrue(can_import_and_export)
+
+
+class CheckSerializeDirectionTests(SimpleTestCase):
+
+    def test_serialize_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertIsNone(value_source.serialize("spam"))
+
+    def test_serialize_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+    def test_serialize_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+    def test_serialize_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+
+class CheckDeserializeDirectionTests(SimpleTestCase):
+
+    def test_deserialize_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+    def test_deserialize_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        self.assertIsNone(value_source.deserialize("spam"))
+
+    def test_deserialize_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+    def test_deserialize_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+
+class GetValueDirectionTests(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id="123456",
+        )
+
+    def test_get_value_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertIsNone(value_source.get_value(self.info))
+
+    def test_get_value_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        value = value_source.get_value(self.info)
+        self.assertEqual(value, "spam")
+
+    def test_get_value_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.get_value(self.info), "spam")
+
+    def test_get_value_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.get_value(self.info), "spam")
+
+
 def test_doctests():
     results = doctest.testmod(corehq.motech.value_source)
     assert results.failed == 0
+
+
+def get_constant_spam(update: dict = None) -> ValueSource:
+    constant_spam = {
+        "doc_type": "ConstantValue",
+        "value": "spam",
+    }
+    if update:
+        constant_spam.update(update)
+    return ValueSource.wrap(constant_spam)
