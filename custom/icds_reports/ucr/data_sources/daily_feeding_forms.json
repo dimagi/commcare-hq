@@ -267,7 +267,7 @@
               "name": "awc_open"
             },
             {
-              "operator": "gte",
+              "operator": "gt",
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
