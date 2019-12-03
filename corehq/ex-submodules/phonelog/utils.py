@@ -5,7 +5,6 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.util import cached_user_id_to_username, format_username
-from custom.icds.const import IS_ICDS_ENV
 
 from .models import (
     DeviceReportEntry,
@@ -201,7 +200,7 @@ class SumoLogicLog(object):
         https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
         """
         environment = 'test-env'
-        if IS_ICDS_ENV:
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
             environment = 'cas'
         if settings.SERVER_ENVIRONMENT == 'india':
             environment = 'india'

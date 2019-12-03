@@ -16,9 +16,8 @@ from soil.util import expose_cached_download
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.files import file_extention_from_filename
-from custom.icds.const import IS_ICDS_ENV
 
-if IS_ICDS_ENV:
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(day_of_month='2', minute=0, hour=0), queue='sms_queue')
     def send_monthly_sms_report():
         subject = _('Monthy SMS report')

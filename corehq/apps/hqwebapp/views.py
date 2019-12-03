@@ -109,7 +109,6 @@ from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.view_utils import reverse
-from custom.icds.const import IS_ICDS_ENV
 from no_exceptions.exceptions import Http403
 
 
@@ -401,7 +400,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
-    if IS_ICDS_ENV:
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -424,7 +423,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
 def login(req):
     # This is a wrapper around the _login view
 
-    if IS_ICDS_ENV:
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -705,7 +704,8 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search(r'@dimagi\.com$', report['username']) and not IS_ICDS_ENV:
+        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL

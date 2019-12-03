@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
@@ -25,7 +26,6 @@ from custom.icds.const import (
     DISPLAY_CHOICE_FOOTER,
     DISPLAY_CHOICE_LIST,
     FILE_TYPE_CHOICE_ZIP,
-    IS_ICDS_ENV,
 )
 from custom.icds.forms import HostedCCZForm, HostedCCZLinkForm
 from custom.icds.models import (
@@ -212,7 +212,7 @@ class HostedCCZView(DomainViewMixin, TemplateView):
             'page_title': self._page_title,
             'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
                             if h.utility.file_exists()],
-            'icds_env': IS_ICDS_ENV,
+            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
             'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
         }

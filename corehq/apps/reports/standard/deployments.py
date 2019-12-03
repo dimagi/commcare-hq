@@ -1,9 +1,11 @@
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -42,7 +44,6 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
-from custom.icds.const import IS_ICDS_ENV
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -97,7 +98,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def headers(self):
         columns = self._columns
-        if IS_ICDS_ENV:
+        if self.show_build_profile:
             columns.append(
                 DataTablesColumn(_("Build Profile"),
                                  help_text=_("The build profile from the user's last hearbeat request."),
@@ -106,6 +107,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         headers = DataTablesHeader(*columns)
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    @cached_property
+    def show_build_profile(self):
+        return settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
 
     @property
     def default_sort(self):
@@ -328,7 +333,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
-                if IS_ICDS_ENV:
+                if self.show_build_profile:
                     last_build_profile_id = last_build.get('build_profile_id')
                     if last_build_profile_id:
                         last_build_profile_name = _("Unknown")
@@ -343,7 +348,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---'
             ]
-            if IS_ICDS_ENV:
+            if self.show_build_profile:
                 row_data.append(last_build_profile_name)
 
             if self.include_location_data():

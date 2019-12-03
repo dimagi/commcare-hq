@@ -2,6 +2,7 @@ from collections import OrderedDict
 from datetime import date, datetime
 from wsgiref.util import FileWrapper
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
@@ -43,7 +44,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.files import safe_filename_header
 from corehq.util.view_utils import reverse
-from custom.icds.const import AWC_LOCATION_TYPE_CODE, IS_ICDS_ENV
+from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import (
     AWC_INFRASTRUCTURE_EXPORT,
@@ -66,10 +67,7 @@ from custom.icds_reports.const import (
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.views import (
-    AggAwcDailyView,
-    NICIndicatorsView,
-)
+from custom.icds_reports.models.views import AggAwcDailyView, NICIndicatorsView
 from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import (
     get_adhaar_data_chart,
@@ -1774,7 +1772,7 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        if IS_ICDS_ENV:
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
             return HttpResponse("This page is only available for QA and not available for production instances.")
 
         couch_user = self.request.couch_user
