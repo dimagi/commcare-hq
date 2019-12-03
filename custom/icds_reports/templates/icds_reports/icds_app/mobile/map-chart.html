@@ -19,7 +19,7 @@
           </div>
           <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
             <div class="d-flex align-items-center" ng-repeat="step in $ctrl.steps">
-              <div class="section-heading" ng-bind="step.label" ></div>
+              <div class="section-heading" ng-bind="step.label" ng-click="$ctrl.goToRoute(step.route)"></div>
             </div>
           </div>
           <p class="font-weight-700 text-white font-16 font-montserrat" >{$ $ctrl.currentStepMeta.label $}</p>

@@ -217,6 +217,11 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return template;
             };
+
+            // mobile dashboard subsection navigation support
+            vm.goToRoute = function (route) {
+                $location.path(route);
+            };
         },
     };
 });
