@@ -46,6 +46,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'server_modified_on', old=None),
 
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=sql_number_has_leading_zero),
         Ignore(check=is_text_xmlns),
     ],
     'XFormInstance': [
@@ -304,6 +305,15 @@ def ignore_renamed(old_name, new_name):
 
 def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
+
+
+def sql_number_has_leading_zero(old_obj, new_obj, rule, diff):
+    if diff.new_value.startswith("0"):
+        try:
+            return float(diff.old_value) == float(diff.new_value)
+        except (TypeError, ValueError):
+            pass
+    return False
 
 
 def is_text_xmlns(old_obj, new_obj, rule, diff):
