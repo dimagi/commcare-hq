@@ -141,6 +141,14 @@ hqDefine("export/js/create_export", [
                     $('#div_id_' + fieldSlug).find("label").text(self._labels[fieldSlug]); 
                     var $formElem = $('#id_' + fieldSlug);
                     if ($formElem.length > 0) {
+                        if ($formElem.hasClass("select2-hidden-accessible")) {
+                            // checks to see if select2 has been initialized already.
+                            // if it has, manually clear all existing HTML <options> on
+                            // the <select> element directly. Otherwise, select2
+                            // will prepend the data below to the existing
+                            // <options>.
+                            $formElem.html('');
+                        }
                         $formElem.select2({
                             data: fieldData || [],
                             width: '100%',

@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.utils.translation import ugettext as _
 
@@ -21,7 +21,8 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.const import DIRECTION_IMPORT
+from corehq.motech.exceptions import ConfigurationError, JsonpathError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
     ATOM_FEED_NAMES,
@@ -33,7 +34,10 @@ from corehq.motech.openmrs.exceptions import (
     OpenmrsException,
     OpenmrsFeedDoesNotExist,
 )
-from corehq.motech.openmrs.openmrs_config import get_property_map
+from corehq.motech.openmrs.openmrs_config import (
+    ObservationMapping,
+    get_property_map,
+)
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.value_source import as_value_source, deserialize
@@ -465,7 +469,7 @@ def get_case_block_kwargs_from_observations(
             for mapping in mappings[concept_uuid]:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
-                        mapping, obs.get('value')
+                        mapping, obs, fallback_value=obs.get('value')
                     )
                     deep_update(case_block_kwargs, more_kwargs)
                 if mapping.indexed_case_mapping:
@@ -487,8 +491,12 @@ def get_case_block_kwargs_from_observations(
 
 
 def get_case_block_kwargs_from_bahmni_diagnoses(
-    diagnoses, mappings, case_id, case_type, default_owner_id
-):
+    diagnoses: List[dict],
+    mappings: Dict[str, List[ObservationMapping]],
+    case_id: str,
+    case_type: str,
+    default_owner_id: str,
+) -> Tuple[dict, List[CaseBlock]]:
     """
     Iterate a list of Bahmni diagnoses, and return the ones mapped to
     case properties.
@@ -501,7 +509,8 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
             for mapping in mappings[codedanswer_uuid]:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
-                        mapping, diag['codedAnswer'].get('name')
+                        mapping, diag,
+                        fallback_value=diag['codedAnswer'].get('name')
                     )
                     deep_update(case_block_kwargs, more_kwargs)
                 if mapping.indexed_case_mapping:
@@ -512,9 +521,18 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
     return case_block_kwargs, case_blocks
 
 
-def get_case_block_kwargs_for_case_property(mapping, external_value):
+def get_case_block_kwargs_for_case_property(
+    mapping: ObservationMapping,
+    external_data: dict,
+    fallback_value: Any,
+) -> dict:
     case_block_kwargs = {"update": {}}
-    value = deserialize(mapping.value, external_value)
+    try:
+        value = get_import_value(mapping.value, external_data)
+    except (AttributeError, JsonpathError):
+        # mapping.value doesn't have get_import_value(), or isn't
+        # configured to parse external_data
+        value = deserialize(mapping.value, fallback_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
     else:
@@ -523,8 +541,12 @@ def get_case_block_kwargs_for_case_property(mapping, external_value):
 
 
 def get_case_block_for_indexed_case(
-    mapping, external_data, parent_case_id, parent_case_type, default_owner_id
-):
+    mapping: ObservationMapping,
+    external_data: dict,
+    parent_case_id: str,
+    parent_case_type: str,
+    default_owner_id: str,
+) -> CaseBlock:
     relationship = mapping.indexed_case_mapping.relationship
     case_block_kwargs = {
         "index": {
