@@ -355,16 +355,26 @@ class CouchSqlDomainMigrator:
             log.info("loading form ids from file: %s", forms)
             with open(forms, encoding="utf-8") as fh:
                 form_ids = [x.rstrip("\n") for x in fh if x.strip()]
-            orig_ids = set(form_ids)
-            form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
-            if form_ids != orig_ids:
-                log.info("forms already migrated: %s", orig_ids - set(form_ids))
         else:
             form_ids = [x for x in forms.split() if x]
+        orig_ids = set(form_ids)
+        form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
+        migrated_ids = orig_ids - set(form_ids)
+        if migrated_ids:
+            log.info("already migrated: %s",
+                f"{len(migrated_ids)} forms" if len(migrated_ids) > 5 else migrated_ids)
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
             self._migrate_form_and_associated_models(form, replace_diffs=True)
+        self._rediff_already_migrated_forms(migrated_ids)
+
+    def _rediff_already_migrated_forms(self, form_ids):
+        for form_id in form_ids:
+            log.info("re-diffing form: %s", form_id)
+            couch_form = XFormInstance.get(form_id)
+            sql_form = FormAccessorSQL.get_form(form_id)
+            self._save_diffs(couch_form, sql_form, replace=True)
 
     def _process_skipped_forms(self):
         """process forms skipped by a previous migration
