@@ -236,7 +236,6 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
                 'ccs.case_id as ccs_record_case_id',
                 't.date_death',
                 't.due_list_date_1g_dpt_1',
-                't.due_list_date_child_health_monthly',
                 't.due_list_date_2g_dpt_2',
                 't.due_list_date_3g_dpt_3',
                 't.due_list_date_5g_dpt_booster',
