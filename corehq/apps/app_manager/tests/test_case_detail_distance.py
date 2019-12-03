@@ -2,9 +2,10 @@ from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import SortElement
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 
 
+@patch_get_xform_resource_overrides()
 class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
@@ -13,7 +14,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
         module = self.factory.app.get_module(0)
         self.case_details = module.case_details
 
-    def test_short_detail_xml(self):
+    def test_short_detail_xml(self, *args):
         short = self.case_details.short
         short.display = 'short'
         short_column = short.get_column(0)
@@ -48,7 +49,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
             template_xpath
         )
 
-    def test_short_detail_xml_with_sort(self):
+    def test_short_detail_xml_with_sort(self, *args):
         short = self.case_details.short
         short.display = 'short'
         short_column = short.get_column(0)
@@ -89,7 +90,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
             template_xpath
         )
 
-    def test_short_detail_xml_sort_only(self):
+    def test_short_detail_xml_sort_only(self, *args):
         short = self.case_details.short
         short.display = 'short'
         short.sort_elements.append(
@@ -139,7 +140,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
             template_xpath
         )
 
-    def test_long_detail_xml(self):
+    def test_long_detail_xml(self, *args):
         long_ = self.case_details.long
         long_.display = 'long'
         long_column = long_.get_column(0)

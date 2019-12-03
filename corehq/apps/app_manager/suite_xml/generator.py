@@ -15,6 +15,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
     EntryInstances,
 )
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
+from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverrideHelper
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     WorkflowHelper,
 )
@@ -104,13 +105,13 @@ class SuiteGenerator(object):
             SchedulerFixtureContributor(self.suite, self.app, self.modules),
         ])
 
-        # post process
         if self.app.enable_post_form_workflow:
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
         if self.app.use_grid_menus:
             GridMenuHelper(self.suite, self.app, self.modules).update_suite()
 
         EntryInstances(self.suite, self.app, self.modules).update_suite()
+        ResourceOverrideHelper(self.suite, self.app, self.modules).update_suite()
         return self.suite.serializeDocument(pretty=True)
 
 
