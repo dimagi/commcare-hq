@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import attr
 from jsonobject.containers import JsonDict
@@ -392,11 +392,6 @@ def as_value_source(data: dict) -> ValueSource:
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
-            # .. WARNING::
-            #    ``validate()`` can modify ``data``. This can break
-            #    validation for other subclasses! If it is ever
-            #    necessary to modify ``data``, it should be deep-copied
-            #    (ouch) to preserve its state for the next iteration).
             valid_data = Schema(*args, **kwargs).validate(data)
         except SchemaError:
             pass

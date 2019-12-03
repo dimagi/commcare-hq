@@ -3,6 +3,9 @@ import warnings
 
 from django.test import SimpleTestCase
 
+import attr
+from schema import Use
+
 import corehq.motech.value_source
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -317,6 +320,27 @@ class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
     def test_with_location(self):
         with self.assertRaises(TypeError):
             as_value_source({"location_field": "dhis_id"})
+
+
+class AsValueSourceTests(SimpleTestCase):
+
+    def test_as_value_source(self):
+
+        @attr.s(auto_attribs=True, kw_only=True)
+        class StringValueSource(ValueSource):
+            test_value: str
+
+            @classmethod
+            def get_schema_params(cls):
+                (schema, *other_args), kwargs = super().get_schema_params()
+                schema.update({"test_value": Use(str)})  # Casts value as string
+                return (schema, *other_args), kwargs
+
+        data = {"test_value": 10}
+        value_source = as_value_source(data)
+        self.assertEqual(data, {"test_value": 10})
+        self.assertIsInstance(value_source, StringValueSource)
+        self.assertEqual(value_source.test_value, "10")
 
 
 def test_doctests():
