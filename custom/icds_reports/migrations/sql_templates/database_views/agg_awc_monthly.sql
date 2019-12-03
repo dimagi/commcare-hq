@@ -85,7 +85,10 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."cases_person_has_aadhaar_v2", 0) AS "cases_person_has_aadhaar_v2",
         COALESCE("agg_awc"."cases_person_beneficiary_v2", 0) AS "cases_person_beneficiary_v2",
         "agg_awc"."infantometer" AS "infantometer",
-        "agg_awc"."stadiometer" AS "stadiometer"
+        "agg_awc"."stadiometer" AS "stadiometer",
+        "agg_awc"."electricity_awc" AS "electricity_awc",
+        "agg_awc"."num_awcs_conducted_cbe" AS "num_awcs_conducted_cbe",
+        "agg_awc"."num_awcs_conducted_vhnd" AS "num_awcs_conducted_vhnd"
     FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
