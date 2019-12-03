@@ -1,3 +1,4 @@
+import schema
 from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.value_source import (
     CaseTriggerInfo,
