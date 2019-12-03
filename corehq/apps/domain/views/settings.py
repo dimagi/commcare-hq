@@ -334,53 +334,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class ManageProjectMediaView(BaseAdminProjectSettingsView):
-    urlname = 'domain_manage_multimedia'
-    page_title = ugettext_lazy("Multimedia Sharing")
-    template_name = 'domain/admin/media_manager.html'
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def project_media_data(self):
-        return [{
-            'license': m.license.type if m.license else 'public',
-            'shared': self.domain in m.shared_by,
-            'url': m.url(),
-            'm_id': m._id,
-            'tags': m.tags.get(self.domain, []),
-            'type': m.doc_type,
-        } for m in self.request.project.all_media()]
-
-    @property
-    def page_context(self):
-        return {
-            'media': self.project_media_data,
-            'licenses': list(LICENSES.items()),
-        }
-
-    @retry_resource(3)
-    def post(self, request, *args, **kwargs):
-        for m_file in request.project.all_media():
-            if '%s_tags' % m_file._id in request.POST:
-                m_file.tags[self.domain] = request.POST.get('%s_tags' % m_file._id, '').split(' ')
-
-            if self.domain not in m_file.shared_by and request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.append(self.domain)
-            elif self.domain in m_file.shared_by and not request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.remove(self.domain)
-
-            if '%s_license' % m_file._id in request.POST:
-                m_file.update_or_add_license(self.domain,
-                                             type=request.POST.get('%s_license' % m_file._id, 'public'),
-                                             should_save=True)
-            m_file.save()
-        messages.success(request, _("Multimedia updated successfully!"))
-        return self.get(request, *args, **kwargs)
-
-
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
     page_title = ugettext_lazy('Case Search')
