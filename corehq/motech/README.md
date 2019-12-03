@@ -118,7 +118,7 @@ MOTECH sends CommCare data to OpenMRS using OpenMRS's Web Services API.
 All data sent to OpenMRS relates to what OpenMRS refers to as
 "patients", "visits", "encounters" and "observations". Values from
 CommCare can be retrieved from case properties, form questions,
-locations, *inter alia*.
+locations, etc.
 
 MOTECH sends a workflow of requests to OpenMRS to update patients and
 create visits, encounters and observations.
