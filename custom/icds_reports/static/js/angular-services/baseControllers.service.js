@@ -2,7 +2,7 @@
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
-        BaseController: function ($scope, $routeParams, $location, locationsService, userLocationId,
+        BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService, userLocationId,
             storageService, haveAccessToAllLocations, haveAccessToFeatures) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
@@ -218,10 +218,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return template;
             };
 
-            // mobile dashboard subsection navigation support
+            // mobile dashboard
+            // subsection navigation support
             vm.goToRoute = function (route) {
                 $location.path(route);
             };
+            // month filter support
+            vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
         },
     };
 });
