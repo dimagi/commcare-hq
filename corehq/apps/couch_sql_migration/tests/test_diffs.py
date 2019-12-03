@@ -556,9 +556,9 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_form, sql_form)
 
-    def test_form_with_opened_by_diff(self):
+    def test_case_with_opened_by_diff(self):
         couch_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "opened_by": "somebody",
             "actions": [
                 {"action_type": "close"},
@@ -566,16 +566,16 @@ class DiffTestCases(SimpleTestCase):
             ],
         }
         sql_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "opened_by": "somebody else",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
 
-    def test_form_with_opened_by_diff2(self):
+    def test_case_with_opened_by_diff2(self):
         couch_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "actions": [
                 {
                     "action_type": "close",
@@ -585,7 +585,7 @@ class DiffTestCases(SimpleTestCase):
             "opened_by": None,
         }
         sql_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "opened_by": "somebody",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
