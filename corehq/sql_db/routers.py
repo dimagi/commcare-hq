@@ -1,6 +1,3 @@
-import warnings
-from contextlib import contextmanager
-
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections
 
@@ -131,9 +128,3 @@ def get_load_balanced_app_db(app_name: str, default: str) -> str:
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
-
-
-@contextmanager
-def force_citus_engine(force=False):
-    warnings.warn('Use of non-citus is deprecated', DeprecationWarning)
-    yield
