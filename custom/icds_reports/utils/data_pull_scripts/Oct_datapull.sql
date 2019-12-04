@@ -11,7 +11,7 @@ COPY(select
     sum(zscore_grading_wfh_recorded_in_month) as "Total Children (0-5y) whose Height and Weight was Measured",
     CASE WHEN sum(zscore_grading_wfh_recorded_in_month)>0 THEN trunc(((sum(wasting_moderate_v2) + sum(wasting_severe_v2))/sum(zscore_grading_wfh_recorded_in_month)::float*100)::numeric,2) ELSE 0 END "% Children (0-5y) with Wasting"
 
-from agg_child_health_monthly where month='2019-10-01' AND aggregation_level=1 and (age_tranche::integer<>72 OR age_tranche is null) group by state_name) TO STDOUT DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+from agg_child_health_monthly where month='2019-11-01' AND aggregation_level=1 and (age_tranche::integer<>72 OR age_tranche is null) group by state_name) TO STDOUT DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=529.16..531.02 rows=24 width=154)
    Group Key: awc_location.state_name
@@ -65,7 +65,7 @@ COPY(select
     sum(cf_in_month) as "# Children Initiated on Appropriate Complementary Feeding",
     sum(cf_eligible) as "Total Children (6-24m)",
     CASE WHEN sum(cf_eligible)>0 THEN trunc((sum(cf_in_month)/sum(cf_eligible)::float*100)::numeric,2) ELSE 0 END "% CF"
-from agg_child_health_monthly where month='2019-10-01' AND aggregation_level=1  group by state_name) TO '/tmp/child_checking.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+from agg_child_health_monthly where month='2019-11-01' AND aggregation_level=1  group by state_name) TO STDOUT DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
 HashAggregate  (cost=537.40..540.58 rows=24 width=346)
@@ -103,7 +103,7 @@ COPY(select
     sum(rations_21_plus_distributed) as "# PW and LM Given Take Home Ration for at Least 21 Days",
     sum(thr_eligible) as "Total PW and LM Eligible for Take Home Ration",
     CASE WHEN sum(thr_eligible)>0 THEN trunc((sum(rations_21_plus_distributed)/sum(thr_eligible)::float*100)::numeric, 2) ELSE 0 END as "% THR (PW and LM, at Least 21 Days)"
-from agg_ccs_record_monthly where aggregation_level=1 and month='2019-10-01' group by state_name) TO  '/tmp/mother.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+from agg_ccs_record_monthly where aggregation_level=1 and month='2019-11-01' group by state_name) TO  STDOUT DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
  HashAggregate  (cost=66.09..67.17 rows=24 width=106)
@@ -147,7 +147,7 @@ COPY(
     valid_visits as "# Home Visits Done",
     CASE WHEN expected_visits>0 THEN trunc((valid_visits/expected_visits::float*100)::numeric,2) ELSE 0 END as "% HVs"
 
-from service_delivery_monthly where aggregation_level=1 and month='2019-10-01') TO '/tmp/sdd_data.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+from service_delivery_monthly where aggregation_level=1 and month='2019-11-01') TO STDOUT DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  Subquery Scan on service_delivery_monthly  (cost=49.86..50.02 rows=1 width=194)
    ->  GroupAggregate  (cost=49.86..49.94 rows=1 width=425)
@@ -187,3 +187,5 @@ from service_delivery_monthly where aggregation_level=1 and month='2019-10-01') 
  */
 
 
+
+COPY(select state_name,sum(CASE WHEN age_tranche::INTEGER<=6 THEN valid_in_month ELSE 0 END ) as  "# Children (0-6m)",sum(CASE WHEN age_tranche::INTEGER BETWEEN 7 and 36 THEN valid_in_month ELSE 0 END ) as  "# Children (6m-3y)",sum(CASE WHEN age_tranche::INTEGER>36 THEN valid_in_month ELSE 0 END ) as "# Children (3-6y)" from "agg_child_health_monthly" where month='2019-11-01' and aggregation_level=1 group by state_name order by state_name) to STDOUT DELIMITER ',' CSV HEADER;
