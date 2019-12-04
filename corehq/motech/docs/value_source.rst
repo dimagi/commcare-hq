@@ -90,52 +90,11 @@ Omit ``direction``, or set it to ``null``, for values that should be
 both imported and exported.
 
 
-CaseProperty
-^^^^^^^^^^^^
+The value_source Module
+-----------------------
 
-.. autoclass:: corehq.motech.value_source.CaseProperty
-
-
-FormQuestion
-^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.FormQuestion
-
-
-ConstantString
-^^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.ConstantString
-
-
-ConstantValue
-^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.ConstantValue
-
-
-CasePropertyMap
-^^^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.CasePropertyMap
-
-
-FormQuestionMap
-^^^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.FormQuestionMap
-
-
-CaseOwnerAncestorLocationField
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.CaseOwnerAncestorLocationField
-
-
-FormUserAncestorLocationField
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: corehq.motech.value_source.FormUserAncestorLocationField
+.. automodule:: corehq.motech.value_source
+   :members:
 
 
 Getting Values From JSON Responses
