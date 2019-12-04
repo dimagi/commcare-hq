@@ -22,8 +22,10 @@
         <div class="col-xs-6 section-heading" ng-bind="step.label" ng-click="$ctrl.goToRoute(step.route)" ng-repeat="step in $ctrl.steps"></div>
       </div>
     </div>
-    <div ng-if="$ctrl.step === 'map'">
-      I'm a Map!
+    <div ng-if="$ctrl.step === 'map'" style="padding-top: 10px">
+      <div class="chartView col-xs-11">
+        I'm a Map!
+      </div>
     </div>
     <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
       <div class="chartView col-xs-11">
