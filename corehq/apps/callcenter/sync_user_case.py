@@ -76,12 +76,12 @@ class _UserCaseHelper(object):
     def _user_case_changed(self, fields):
         field_names = list(fields)
         if _domain_has_new_fields(self.domain, field_names):
-            self._tasks_to_trigger = (add_inferred_export_properties, (
+            self._tasks_to_trigger.append((add_inferred_export_properties, (
                 'UserSave',
                 self.domain,
                 USERCASE_TYPE,
                 field_names,
-            ))
+            )))
 
 
 def _domain_has_new_fields(domain, field_names):
