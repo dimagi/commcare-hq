@@ -7,7 +7,15 @@ filenames = [
     'monthly_stats1.csv',
     'monthly_stats2.csv',
     'monthly_stats3.csv',
-    'monthly_stats4.csv'
+    'monthly_stats4.csv',
+    'monthly_stats5.csv',
+    'monthly_stats6.csv',
+    'monthly_stats7.csv',
+    'monthly_stats8.csv',
+    'monthly_stats9.csv',
+    'monthly_stats10.csv',
+    'monthly_stats11.csv',
+    'monthly_stats12.csv'
 ]
 
 test_state_names = [
