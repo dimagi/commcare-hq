@@ -113,7 +113,7 @@ class PlProxyConfig(object):
         )
 
     @classmethod
-    def from_dict(cls, config_dict, cluster_name=None):
+    def from_dict(cls, config_dict):
         """Get config from Django DATABASES dict. Custom porperties in DATABASE config:
 
         DATABASES = {
@@ -156,7 +156,7 @@ class PlProxyConfig(object):
             return
 
         config = PlProxyConfig(
-            cluster_name or settings.PL_PROXY_CLUSTER_NAME,
+            settings.PL_PROXY_CLUSTER_NAME,
             proxy_db, shard_map, host_map, _get_shard_count(shard_map.values())
         )
         config.validate()
@@ -281,7 +281,7 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         missing = [db for found, db in zip(standbys_found, primary_config.form_processing_dbs) if not found]
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
 
-    return PlProxyConfig.from_dict(standby_db_config, cluster_name=settings.PL_PROXY_STANDBY_CLUSTER_NAME)
+    return PlProxyConfig.from_dict(standby_db_config)
 
 
 plproxy_config = None

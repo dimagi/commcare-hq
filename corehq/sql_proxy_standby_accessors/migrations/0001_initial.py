@@ -10,7 +10,7 @@ from corehq.sql_db.operations import RawSQLMigration
 from corehq.util.django_migrations import noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_proxy_standby_accessors', 'sql_templates'), {
-    'PL_PROXY_STANDBY_CLUSTER_NAME': settings.PL_PROXY_STANDBY_CLUSTER_NAME
+    'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME
 })
 
 
