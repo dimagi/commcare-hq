@@ -66,12 +66,12 @@ group by supervisor_id;
 ---- ROLLUP BY STATE
 select
 state_name,
-sum(child_thr_0),
-sum(child_thr_1_7),
-sum(child_thr_8_14),
-sum(child_thr_15_21),
-sum( child_thr_gt_21),
-sum(thr_eligible)
+sum(child_thr_0) as "# Children (6-36m) Given 0 Days THR",
+sum(child_thr_1_7) as "# Children (6-36m) Given 1-7 Days THR",
+sum(child_thr_8_14) as "# Children (6-36m) Given 8-14 Days THR",
+sum(child_thr_15_21)as "# Children (6-36m) Given 15-21 Days THR",
+sum( child_thr_gt_21) as "# Children (6-36m) Given >21 Days THR",
+sum(thr_eligible) as "Total # of Children (6-36m) Eligible for THR"
 from temp_thr_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc;
 ​
 
@@ -79,12 +79,12 @@ from temp_thr_data_pull t join awc_location_local a on a.supervisor_id=t.supervi
 
 select
 state_name,
-sum(child_pse_0),
-sum(child_pse_1_7),
-sum(child_pse_8_14),
-sum(child_pse_15_21),
-sum( child_pse_gt_21),
-sum(pse_eligible)
+sum(child_pse_0)as "# Children (3-6y) who Attended PSE for 0 Days",
+sum(child_pse_1_7) as "# Children (3-6y) who Attended PSE for 1-7 Days",
+sum(child_pse_8_14)as "# Children (3-6y) who Attended PSE for 8-14 Days",
+sum(child_pse_15_21) as "# Children (3-6y) who Attended PSE for 15-21 Days",
+sum( child_pse_gt_21)as "# Children (3-6y) who Attended PSE for >21 Days",
+sum(pse_eligible)as "Total Children (3-6y) Eligible to Attend PSE"
 from temp_pse_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc;
 
 
@@ -111,59 +111,14 @@ group by  supervisor_id)
 
 
 
-
-
-/*
-Below is another approach. WE should decide which to take
-*/
-
--- BELOW IS THE SECOND APPROACH WHICH CAN BE USED IS:
-
-
--- 1. Aggregate from child_health/ ccs record using chunking  by supervisor like thi
-
-CREATE TEMPORARY TABLE dummy_thr_table_{} AS -- number of dummy_thr_table_{} tables will be equal to number of chunks(124)
-(
-select supervisor_id,
-SUM(CASE WHEN thr_eligible is not null then thr_eligible ELSE 0 END) as mother_thr_eligible,
-SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed=0 THEN 1 else 0 END) as mother_thr_0,
-SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN 1 and 7 THEN 1 else 0 END) as mother_thr_1_7,
-SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN  8 and 14 THEN 1 else 0 END) as mother_thr_8_14,
-SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed BETWEEN  15 and 21 THEN 1 else 0 END) as mother_thr_15_21,
-SUM(CASE WHEN num_rations_distributed is not null and thr_eligible=1 and num_rations_distributed>21 THEN 1 else 0 END) as mother_thr_gt_21
-from
-"ccs_record_monthly" ccs_record where (
-    supervisor_id in ({}) AND
-    thr_eligible=1 and ccs_record.month='2019-10-01'
-    )
-group by  supervisor_id);
-/*
-Approx cost of each chunk
-HashAggregate  (cost=0.00..0.00 rows=0 width=0)
-   Group Key: remote_scan.supervisor_id
-   ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
-         Task Count: 59
-         Tasks Shown: One of 59
-         ->  Task
-               Node: host=100.71.184.229 port=5432 dbname=icds_ucr
-               ->  GroupAggregate  (cost=0.55..3326.07 rows=262 width=81)
-                     Group Key: supervisor_id
-                     ->  Index Scan using ccs_record_monthly_pkey_102754 on ccs_record_monthly_102754 ccs_record  (cost=0.55..3229.60 rows=1877 width=41)
-                           Index Cond: ((supervisor_id = ANY ('{f9b47ea2ee2d8a02acddeeb491d3d1fd,f9b47ea2ee2d8a02acddeeb491d2b373,f9b47ea2ee2d8a02acddeeb491d1de8a,f9b47ea2ee2d8a02acddeeb491d0d0ab,f9b47ea2ee2d8a02acdde
-*/
-
-
-
-
-
--- 2. INSERT INTO master table from chunked tables
-INSERT INTO dummy_thr_tablex(supervisor_id,mother_thr_eligible, mother_thr_0,mother_thr_1_7,mother_thr_8_14,mother_thr_15_21,mother_thr_gt_21) (
-    select supervisor_id,mother_thr_eligible, mother_thr_0,mother_thr_1_7,mother_thr_8_14,mother_thr_15_21,mother_thr_gt_21
-    from dummy_thr_table_{}
-    );
-
-
-
--- 3. Aggregate to state from supervisor.
+select
+state_name,
+sum(mother_thr_0) as "# PW and LM Given 0 Days THR",
+sum(mother_thr_1_7) as "# PW and LM Given 1-7 Days THR",
+sum(mother_thr_8_14) as "# PW and LM Given 8-14 Days THR",
+sum(mother_thr_15_21) as "# PW and LM Given 15-21 Days THR",
+sum( mother_thr_gt_21) as "# PW and LM Given >21 Days THR",
+sum(mother_thr_eligible) as "Total # of PW and LM Eligible for THR"
+from dummy_thr_table t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc;
 
 

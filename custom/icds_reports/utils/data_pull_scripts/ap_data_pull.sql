@@ -51,8 +51,6 @@ group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,
 
 
 
-
-
 COPY (
 select district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as pse_eligible,
