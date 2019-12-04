@@ -31,16 +31,16 @@ class _UserCaseHelper(object):
                 submit_case_blocks(
                     self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
             for task, task_args in self._tasks_to_trigger:
-                task.delay(task_args))
+                task.delay((task_args))
 
     @staticmethod
     def commit_multiple(helpers):
         case_blocks = [h._case_block_to_submit for h in helpers if h]
         case_blocks = [cb.as_text() for cb in case_blocks if cb]
-        submit_case_blocks(case_blocks, user.domain, device_id="sync_user_case")
+        submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
         for helper in helpers:
             for task, task_args in helper._tasks_to_trigger:
-                task.delay(task_args))
+                task.delay((task_args))
 
     @staticmethod
     def re_open_case(case):
@@ -180,10 +180,12 @@ def _get_changed_fields(case, fields):
 def get_sync_lock_key(user_id):
     return "sync_user_case_for_%s" % user_id
 
+
 def sync_call_center_user_case(user):
     helper = get_call_center_case_helper(user)
     if helper:
         helper.commit()
+
 
 def get_call_center_case_helper(user):
     config = user.project.call_center_config
@@ -232,6 +234,7 @@ def sync_usercase(user):
     if helper:
         helper.commit()
 
+
 def get_sync_usercase_helper(user):
     if user.project.usercase_enabled:
         return _get_sync_user_case_helper(
@@ -239,6 +242,7 @@ def get_sync_usercase_helper(user):
             USERCASE_TYPE,
             user.get_id
         )
+
 
 def sync_user_cases(user):
     """
