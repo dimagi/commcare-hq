@@ -1,5 +1,6 @@
 import uuid
 from collections import namedtuple
+from itertools import chain
 from xml.etree import cElementTree as ElementTree
 
 from django.core.cache import cache
@@ -22,24 +23,28 @@ class _UserCaseHelper(object):
     def __init__(self, domain, owner_id):
         self.domain = domain
         self.owner_id = owner_id
-        self._case_block_to_submit = None
-        self._tasks_to_trigger = []
+        self.case_blocks = []
+        self.tasks = []
 
-    def commit(self):
-        with CriticalSection(get_sync_lock_key(self.owner_id)):
-            if self._case_block_to_submit:
-                submit_case_blocks(
-                    self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
-            for task, task_args in self._tasks_to_trigger:
-                task.delay(*task_args)
+    @classmethod
+    def commit(cls, helpers):
+        def get_single(helpers, attr):
+            values = {getattr(h, attr) for h in helpers}
+            assert len(values) == 1, (attr, values)
+            return values.pop()
 
-    @staticmethod
-    def commit_multiple(helpers):
-        case_blocks = [h._case_block_to_submit.as_text() for h in helpers if h and h._case_block_to_submit]
-        submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
-        for helper in helpers:
-            for task, task_args in helper._tasks_to_trigger:
-                task.delay(*task_args)
+        case_blocks = list(chain(h.case_blocks for h in helpers))
+        if not case_blocks:
+            assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
+            return
+
+        domain = get_single(helpers, "domain")
+        owner_id = get_single(helpers, "owner_id")
+        case_blocks = [cb.as_text() for cb in case_blocks]
+        with CriticalSection(get_sync_lock_key(owner_id)):
+            submit_case_blocks(case_blocks, domain, device_id=cls.CASE_SOURCE_ID)
+        for task, task_args in chain(h.tasks for h in helpers):
+            task.delay(*task_args)
 
     @staticmethod
     def re_open_case(case):
@@ -48,7 +53,7 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        self._case_block_to_submit = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=fields.pop('owner_id'),
@@ -56,11 +61,11 @@ class _UserCaseHelper(object):
             case_type=fields.pop('case_type'),
             case_name=fields.pop('name', None),
             update=fields
-        )
+        ))
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        self._case_block_to_submit = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=False,
             case_id=case.case_id,
             owner_id=fields.pop('owner_id', CaseBlock.undefined),
@@ -68,13 +73,13 @@ class _UserCaseHelper(object):
             case_name=fields.pop('name', CaseBlock.undefined),
             close=close,
             update=fields
-        )
+        ))
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
         field_names = list(fields)
         if _domain_has_new_fields(self.domain, field_names):
-            self._tasks_to_trigger.append((add_inferred_export_properties, (
+            self.tasks.append((add_inferred_export_properties, (
                 'UserSave',
                 self.domain,
                 USERCASE_TYPE,
@@ -180,17 +185,15 @@ def get_sync_lock_key(user_id):
 
 
 def sync_call_center_user_case(user):
-    helper = get_call_center_case_helper(user)
-    if helper:
-        helper.commit()
+    _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
 
 
-def get_call_center_case_helper(user):
+def _iter_call_center_case_helpers(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        helper = _get_sync_user_case_helper(user, config.case_type, owner_id, case)
-        return helper
+        yield _get_sync_user_case_helper(user, config.case_type, owner_id, case)
+
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
@@ -228,14 +231,12 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user):
-    helper = get_sync_usercase_helper()
-    if helper:
-        helper.commit()
+    _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user)))
 
 
-def get_sync_usercase_helper(user):
+def _iter_sync_usercase_helpers(user):
     if user.project.usercase_enabled:
-        return _get_sync_user_case_helper(
+        yield _get_sync_user_case_helper(
             user,
             USERCASE_TYPE,
             user.get_id
@@ -250,6 +251,7 @@ def sync_user_cases(user):
     This is also called to create user cases when the usercase is used for the
     first time.
     """
-    with CriticalSection(get_sync_lock_key(user._id)):
-        helpers = [get_sync_usercase_helper(), get_call_center_case_helper()]
-        _UserCaseHelper.commit_multiple(helpers)
+    _UserCaseHelper.commit(list(chain(
+        _iter_sync_usercase_helpers(user),
+        _iter_call_center_case_helpers(user),
+    )))
