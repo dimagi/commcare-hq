@@ -178,7 +178,7 @@ def _get_changed_fields(case, fields):
 
 
 def get_sync_lock_key(user_id):
-    return "sync_user_case_for_%s" % user_id
+    return ["sync_user_case_for_%s" % user_id]
 
 
 def sync_call_center_user_case(user):
