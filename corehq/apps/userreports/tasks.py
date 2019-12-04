@@ -300,7 +300,7 @@ def reprocess_archive_stubs():
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:
         # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
-        if time.time() - start > cutoff:
+        if time.time() > cutoff:
             return
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
         # If the history wasn't updated the first time around, run the whole thing again.
