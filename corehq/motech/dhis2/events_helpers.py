@@ -11,10 +11,7 @@ from corehq.motech.value_source import (
 
 def send_dhis2_event(request, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
-    try:
-        Schema(get_event_schema()).validate(event)
-    except SchemaError as err:
-        raise ConfigurationError from err
+    validate_event_schema(event)
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event,
                         raise_for_status=True)
 
@@ -78,6 +75,17 @@ def _get_datavalues(config, case_trigger_info):
             'value': data_value.value.get_value(case_trigger_info)
         })
     return {'dataValues': values}
+
+
+def validate_event_schema(event):
+    """
+    Raises ConfigurationError if ``event`` is missing required
+    properties, or value data types are invalid.
+    """
+    try:
+        Schema(get_event_schema()).validate(event)
+    except SchemaError as err:
+        raise ConfigurationError from err
 
 
 def get_event_schema() -> dict:
