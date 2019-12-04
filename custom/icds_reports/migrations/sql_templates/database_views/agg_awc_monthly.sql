@@ -88,7 +88,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."stadiometer" AS "stadiometer",
         "agg_awc"."electricity_awc" AS "electricity_awc",
         "agg_awc"."num_awcs_conducted_cbe" AS "num_awcs_conducted_cbe",
-        "agg_awc"."num_awcs_conducted_vhnd" AS "num_awcs_conducted_vhnd"
+        "agg_awc"."num_awcs_conducted_vhnd" AS "num_awcs_conducted_vhnd",
+        "agg_awc"."state_is_test" AS "state_is_test"
     FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
