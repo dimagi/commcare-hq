@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 from datetime import date
 
-from django.db import connections, models, transaction
+from django.db import connections, models, transaction, router
 
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_CF_TABLE,
@@ -53,13 +52,13 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
 
 
 def get_cursor(model):
-    db = db_for_read_write(model)
+    db = router.db_for_write(model)
     return connections[db].cursor()
 
 
 def maybe_atomic(cls, atomic=True):
     if atomic:
-        return transaction.atomic(using=db_for_read_write(cls))
+        return transaction.atomic(using=router.db_for_write(cls))
     else:
         @contextmanager
         def noop_context():

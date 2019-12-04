@@ -89,20 +89,20 @@ def get_count_of_unmatched_models_by_shard(database, model):
 
     The list will be empty if no invalid data is found.
     """
-    cursor = connections[database].cursor()
-    query = _get_unmatched_shard_count_query_for_testing(model)
-    valid_shards = plproxy_config.get_shards_on_db(database)
-    cursor.execute(query, [valid_shards])
-    results = cursor.fetchall()
-    return results
+    with model.get_cursor_for_partition_db(database) as cursor:
+        query = _get_unmatched_shard_count_query_for_testing(model)
+        valid_shards = plproxy_config.get_shards_on_db(database)
+        cursor.execute(query, [valid_shards])
+        results = cursor.fetchall()
+        return results
 
 
 def get_count_of_models_by_shard_for_testing(database, model):
-    cursor = connections[database].cursor()
-    query = _get_counts_by_shard_query_for_testing(model)
-    cursor.execute(query)
-    results = cursor.fetchall()
-    return results
+    with model.get_cursor_for_partition_db(database) as cursor:
+        query = _get_counts_by_shard_query_for_testing(model)
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return results
 
 
 def _get_unmatched_shard_count_query_for_testing(model):

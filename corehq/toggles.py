@@ -106,8 +106,12 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        self.always_enabled = always_enabled or set()
-        self.always_disabled = always_disabled or set()
+        # Toggles can be delcared in localsettings statically
+        #   to avoid cache lookups
+        self.always_enabled = (always_enabled or set() |
+            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', [])))
+        self.always_disabled = (always_disabled or set() |
+            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', [])))
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
@@ -1799,4 +1803,13 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+
+SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+    'show_build_profile_in_app_status',
+    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )

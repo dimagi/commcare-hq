@@ -89,7 +89,6 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMeta, BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.doc_processor.couch import (
     CouchDocumentProvider, doc_type_tuples_to_dict
 )
@@ -338,8 +337,7 @@ class BlobMetaReindexAccessor(ReindexAccessor):
 
     def load(self, key):
         parent_id, doc_id = key.rsplit(" ", 1)
-        dbname = get_db_alias_for_partitioned_doc(parent_id)
-        obj = self.model_class.objects.using(dbname).get(id=int(doc_id))
+        obj = self.model_class.objects.partitioned_get(parent_id, id=int(doc_id))
         return self.doc_to_json(obj)
 
 

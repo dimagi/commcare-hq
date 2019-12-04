@@ -106,7 +106,6 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
@@ -2710,8 +2709,7 @@ class DataFile(object):
     @staticmethod
     def meta_query(domain):
         Q = models.Q
-        db = get_db_alias_for_partitioned_doc(domain)
-        return BlobMeta.objects.using(db).filter(
+        return BlobMeta.objects.partitioned_query(domain).filter(
             Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
             parent_id=domain,
             type_code=CODES.data_file,

@@ -26,6 +26,7 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
 )
 from corehq.apps.userreports.util import get_table_name
+from corehq.blobs.models import BlobMeta
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL,
@@ -305,8 +306,7 @@ class Command(BaseCommand):
             return
 
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        cursor = connections[db_name].cursor()
-        with cursor:
+        with BlobMeta.get_cursor_for_partition_db(db_name, readonly=True) as cursor:
             cursor.execute("""
                 SELECT
                     meta.content_type,

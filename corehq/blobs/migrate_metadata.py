@@ -2,14 +2,12 @@ from functools import partial
 from itertools import groupby
 
 from couchdbkit import ResourceNotFound
-from django.db import connections
 
 from corehq.apps.domain import SHARED_DOMAIN, UNKNOWN_DOMAIN
 from corehq.blobs import CODES
 from corehq.blobs.mixin import BlobHelper, BlobMetaRef
-from corehq.blobs.models import BlobMigrationState
+from corehq.blobs.models import BlobMigrationState, BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 
 import corehq.apps.accounting.models as acct
@@ -83,7 +81,6 @@ def make_migrators(mod):
                 return True
             type_code = self.get_type_code(doc)
             obj = self.blob_helper(doc, self.couchdb, type_code)
-            db = get_db_alias_for_partitioned_doc(doc["_id"])
             domain = obj.domain
             if domain is None:
                 self.error(obj, {
@@ -100,7 +97,7 @@ def make_migrators(mod):
                     "domain": obj.domain,
                     "attachments": obj._attachments,
                 })
-            with connections[db].cursor() as cursor:
+            with BlobMeta.get_cursor_for_partition_value(doc['_id']) as cursor:
                 for name, meta in obj.external_blobs.items():
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved

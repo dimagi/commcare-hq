@@ -1,3 +1,68 @@
+"""
+Repeaters
+=========
+
+Repeaters forward payloads to remote API endpoints over HTTP(S),
+typically in JSON- or XML-formatted requests.
+
+
+Custom Repeaters
+----------------
+
+Custom repeaters subclass ``Repeater``. They allow custom payloads to be
+created that can compile data from multiple sources and be sent as
+JSON or XML. Custom triggers for when to send this data can also be
+defined. These triggers are run whenever the model in question (case,
+form, or application) is changed.
+
+
+How Do They Work?
+-----------------
+
+A good place to start is *signals.py*. From the bottom of the file you
+can see that a repeat record is created when a form is received, or
+after a case or user or location is saved.
+
+The ``create_repeat_records()`` function will iterate through the
+instances of a given subclass of ``Repeater`` that are configured for
+the domain. For example, after a case has been saved,
+``create_repeat_records()`` is called with ``CaseRepeater``, then
+``CreateCaseRepeater`` and then ``UpdateCaseRepeater``. A domain can
+have many case repeaters configured to forward case changes to different
+URLs (or the same URL with different credentials). The ``register()``
+method of each of the domain's case repeaters will be called with the
+case as its payload.
+
+The same applies to forms that are received, or users or locations that
+are saved.
+
+The ``register()`` method creates a ``RepeatRecord`` instance, and
+associates it with the payload using the payload's ID. The
+``RepeatRecord.next_check`` property is set to ``datetime.utcnow()``.
+
+Next we jump to *tasks.py*. The ``check_repeaters()`` function will run
+every ``CHECK_REPEATERS_INTERVAL`` (currently set to 5 minutes). Each
+``RepeatRecord`` due to be processed will be added to the
+``CELERY_REPEAT_RECORD_QUEUE``.
+
+When it is pulled off the queue and processed, if its repeater is paused
+it will be postponed. If its repeater is deleted it will be deleted. And
+if it is waiting to be sent, or resent, its ``fire()`` method will be
+called, which will call its repeater's ``fire_for_record()`` method.
+
+The repeater will transform the payload into the right format for the
+repeater's subclass type and configuration, and then send the
+transformed data to the repeater's destination URL.
+
+The response from the destination will be handled according to whether
+the request succeeded, failed, or raised an exception. It will create a
+``RepeatRecordAttempt``, and may include other actions depending on the
+class.
+
+``RepeatRecordAttempt`` instances are listed under "Project Settings" >
+"Data Forwarding Records".
+
+"""
 import re
 import warnings
 from datetime import datetime, timedelta
