@@ -85,7 +85,10 @@ def allow_migrate(db, app_label, model_name=None):
         return app_label not in (PROXY_APP, PROXY_STANDBY_APP) and db in (DEFAULT_DB_ALIAS, None)
 
     if app_label == PROXY_APP:
-        return db == plproxy_config.proxy_db
+        return (
+            db == plproxy_config.proxy_db
+            or (plproxy_standby_config and db == plproxy_standby_config.proxy_db)
+        )
     if app_label == PROXY_STANDBY_APP:
         return plproxy_standby_config and db == plproxy_standby_config.proxy_db
     elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
