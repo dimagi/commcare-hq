@@ -854,7 +854,7 @@ class SoftwarePlanVersion(models.Model):
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
             ]:
-                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+                return DESC_BY_EDITION[plan.edition]['description'].format(monthly_limit)
             else:
                 return DESC_BY_EDITION[plan.edition]['description']
 

@@ -967,30 +967,37 @@ class SelectPlanView(DomainAccountingSettings):
                 SoftwarePlanEdition.STANDARD,
                 "$300",
                 "$250",
-                _("Perfect to prove the value of CommCare in the pilot phase. "
-                  "Access case imports, API integrations, and better support.")
+                _("For programs with one-time data collection needs and simple "
+                  "case management workflows, and for M&E teams that need basic "
+                  "data tools like Excel-based dashboards.")
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
                 "$600",
                 "$500",
-                _("Ideal for projects that need a complete mobile solution "
-                  "with data management tools, and access to priority email "
-                  "support.")
+                _("For programs with complex case management workflows where "
+                  "field teams collaborate on tasks, and for M&E teams that "
+                  "need to clean and report on their data. "
+                  "Includes all Standard features.")
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("For our savviest users, working on projects at scale that require advanced levels of data, "
-                  "security and support.")
+                _("For programs with facility-based workflows, field "
+                  "staff organized by location, and advanced security "
+                  "needs. Also for M&E teams integrating data capture with "
+                  "analytical tools like Power BI & Tableau. "
+                  "Includes all Pro features.")
             ),
             PlanOption(
                 SoftwarePlanEdition.ENTERPRISE,
                 _("Contact Us"),
                 _("Contact Us"),
-                _("A tailor-made plan for organizations with multiple projects. "
-                  "All paid features included in this plan.")
+                _("For organizations who want a sustainable path towards "
+                  "improving last-mile mobile data collection and service "
+                  "delivery practices across multiple programs. "
+                  "Includes all paid features.")
             )
         ]
 
