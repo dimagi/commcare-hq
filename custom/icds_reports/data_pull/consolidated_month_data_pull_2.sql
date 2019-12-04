@@ -1,4 +1,5 @@
 -- FETCH BY SUPERVISOR AND BRING TO MASTER, SIMILAR QUERY Needs to performed on CCS RECORD
+DROP TABLE if EXISTS temp_thr_data_pull;
 create unlogged table temp_thr_data_pull as select
 supervisor_id,
 SUM(CASE WHEN num_rations_distributed is not null and num_rations_distributed=0 then 1 ELSE 0 END) as child_thr_0,
@@ -29,6 +30,7 @@ group by supervisor_id;
 
 */
 
+DROP TABLE if EXISTS temp_pse_data_pull;
 create unlogged table temp_pse_data_pull as select
 supervisor_id,
 SUM(CASE WHEN pse_days_attended is not null and pse_days_attended=0 then 1 ELSE 0 END) as child_pse_0,
