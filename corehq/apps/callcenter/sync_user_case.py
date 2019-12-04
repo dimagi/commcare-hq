@@ -34,6 +34,15 @@ class _UserCaseHelper(object):
                 task.delay(task_args))
 
     @staticmethod
+    def commit_multiple(helpers):
+        case_blocks = [h._case_block_to_submit for h in helpers if h]
+        case_blocks = [cb.as_text() for cb in case_blocks if cb]
+        submit_case_blocks(case_blocks, user.domain, device_id="sync_user_case")
+        for helper in helpers:
+            for task, task_args in helper._tasks_to_trigger:
+                task.delay(task_args))
+
+    @staticmethod
     def re_open_case(case):
         transactions = case.get_closing_transactions()
         for transaction in transactions:
@@ -241,9 +250,4 @@ def sync_user_cases(user):
     """
     with CriticalSection(get_sync_lock_key(user._id)):
         helpers = [get_sync_usercase_helper(), get_call_center_case_helper()]
-        case_blocks = [h._case_block_to_submit for h in helpers if h]
-        case_blocks = [cb.as_text() for cb in case_blocks if cb]
-        submit_case_blocks(case_blocks, user.domain, device_id="sync_user_case")
-        for helper in helpers:
-            for task, task_args in helper._tasks_to_trigger:
-                task.delay(task_args))
+        _UserCaseHelper.commit_multiple(helpers)
