@@ -46,10 +46,11 @@ for filename in filenames:
                 if column_name != STATE_NAME_COLUMN:
                     result[state_name][column_name] = value
 
-headers = result.values()[0].keys()
+headers = list(list(result.values())[0].keys())
 with open("Consolidated_monthly_report.csv", "w") as _file:
     fieldnames = ['State'] + headers
     writer = csv.DictWriter(_file, fieldnames)
+    writer.writeheader()
     for state_name, col_values in result.items():
         row = copy(col_values)
         row['State'] = state_name
