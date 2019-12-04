@@ -3,9 +3,9 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService, isAlertActive) {
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, userLocationId, storageService, haveAccessToAllLocations, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
 
@@ -80,9 +80,17 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         vm.setStepsMapLabel();
         var usePercentage = true;
         var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+        // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
+        // note: it would be better to not load this data on both step pages but instead save it in the JS, but
+        // doing that now would be a bit complicated and the server-side caching should make the switching
+        // relatively painless
+        var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+        for (var i = 0; i < allSteps.length; i++) {
+            var currentStep = allSteps[i];
+            vm.myPromise = maternalChildService.getUnderweightChildrenData(currentStep, vm.filtersData).then(
+                vm.loadDataFromResponse(usePercentage, forceYAxisFromZero, currentStep)
+            );
+        }
     };
 
     vm.init();
@@ -157,7 +165,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 UnderweightChildrenReportController.$inject = [
     '$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService',
     'dateHelperService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
-    'baseControllersService', 'isAlertActive'
+    'baseControllersService', 'isAlertActive', 'isMobile',
 ];
 
 
