@@ -60,7 +60,7 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 
 # keeping cache timeout as 2 hours as this is going to be used
 # in some script/tool which might flood us with requests
-@icds_quickcache(timeout=120 * 60)
+@icds_quickcache([], timeout=120 * 60)
 def get_inc_indicator_api_data():
     latest_available_month = datetime.utcnow() - timedelta(days=1)
     first_day_month = latest_available_month.replace(day=1)
