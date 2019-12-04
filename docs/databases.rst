@@ -206,3 +206,29 @@ as shown below:
     }
 
 3. Run the Django migrations to create the SQL functions in the new standby proxy database.
+
+Routing queries to standbys
+---------------------------
+The configuration above makes it possible to use the standby databases however in order to actually
+route queries to them the DB router must be told to do so. This can be done it one of two ways:
+
+1. Via an environment variable
+
+.. code-block::
+
+    export READ_FROM_PLPROXY_STANDBYS=1
+
+This will route ALL read queries to the shard standbys.
+
+2. Via a Django decorator / context manager
+
+.. code-block:: python
+
+    # context manager
+    with read_from_plproxy_standbys():
+        case = CommCareCaseSQL.objects.partitioned_get(case_id)
+
+    # decorator
+    @read_from_plproxy_standbys()
+    def get_case_from_standby(case_id)
+        return CommCareCaseSQL.objects.partitioned_get(case_id)
