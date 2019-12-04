@@ -39,7 +39,11 @@
              ng-repeat="location in $ctrl.all_locations">
           <a href="" ng-click="displayInfo(location.loc_name)" class="location-names" ng-bind="location.loc_name"
              data-toggle="modal" data-target="#infoModal" data-backdrop="false"></a>
-          <p class="font-montserrat font-weight-600 font-16" ng-bind="location.percent+'%'"></p>
+
+          <p class="font-montserrat font-weight-600 font-16">
+            <span ng-if="location.value !== undefined">{$ location.value $}</span>
+            <span ng-if="location.percent !== undefined">{$ location.percent | number:2 $}%</span>
+          </p>
         </div>
       </div>
     </div>
