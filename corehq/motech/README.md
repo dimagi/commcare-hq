@@ -66,49 +66,38 @@ sent whenever a change is detected. The schema is
 [predefined](https://confluence.dimagi.com/pages/viewpage.action?pageId=12224128)
 and can be sent as either `XML` or `JSON`.
 
-**Custom repeaters** are defined in code, and subclass any of the
-`BaseRepeater` classes. They allow the developer to create custom
-payloads that can compile data from multiple sources and be sent as
-`JSON` or `XML`. Custom triggers for when to
-send this data are also defined in code. These trigger methods are run
-whenever the model in question (`case`, `form`, or `application`) is
-changed.
-
 All repeaters are hooked into the **MOTECH management dashboard**. This
 allows project managers to create and delete specific repeater
 instances, and contains tools to audit and debug sent, queued and
 cancelled messages.
 
-You can find more details in [the Repeaters README](./repeaters/README.md).
+For developer documentation, see the module docstring in
+[repeaters/models.py](./repeaters/models.py).
 
 
-DHIS2 Module
-------------
+The DHIS2 Module
+----------------
 
 [DHIS2](https://www.dhis2.org/) is a Health Information System that
-offers organisations and governments a visual dashboard of health-
-related data, across geographical areas, time periods, and demographics.
+offers organisations and governments a visual dashboard of
+health-related data, across geographical areas, time periods, and
+demographics.
 
 DHIS2 allows third-party systems like CommCare to send it two kinds of
 data:
 
-* Data that pertains to single events and individuals, for DHIS2 to
-aggregate within DHIS2.
+* Data that pertains to single events and individuals, to be aggregated
+by DHIS2
 * Data that has already been aggregated
 
-The DHIS2 integration module in MOTECH enables aggregate data to be sent
-to DHIS2. Currently, the DHIS2 module does not send individual data.
+The MOTECH DHIS2 module is able to send both kinds of data.
 
-CommCare aggregates and categorises data for DHIS2 using UCRs, and sends
-it at regular intervals.
-
-Configuring a DHIS2 server is done under *Project Settings* >
-*DHIS2 Connection Settings*. Mapping UCR columns to DHIS2 data types is
-done under *Project Settings* > *DHIS2 DataSet Maps*
+See the [MOTECH DHIS2 module documentation](./dhis2/README.md) for more
+information on configuring and managing integrations with DHIS2.
 
 
-OpenMRS (& Bahmni) Module
--------------------------
+The OpenMRS & Bahmni Module
+---------------------------
 
 [OpenMRS](https://openmrs.org/) is used for storing and managing patient
 data. [Bahmni](https://www.bahmni.org/) is an EMR and hospital system
@@ -117,25 +106,28 @@ with OpenMRS.
 
 ### Importing data from OpenMRS to CommCare
 
-CommCare can import data from OpenMRS using OpenMRS's Reporting API and
-OpenMRS's Atom feed API. The Reporting API is used for periodic imports,
-for example monthly. The Atom feed API is for importing data as it is
-added or changed in OpenMRS.
+MOTECH can import data into CommCare from OpenMRS using OpenMRS's
+Reporting API and OpenMRS's Atom feed API. The Reporting API is used for
+periodic imports, for example monthly. The Atom feed API is for
+importing data as it is added or changed in OpenMRS.
 
 ### Sending data from CommCare to OpenMRS
 
-CommCare sends data to OpenMRS using its Web Services API.
+MOTECH sends CommCare data to OpenMRS using OpenMRS's Web Services API.
 
 All data sent to OpenMRS relates to what OpenMRS refers to as
-"patients", "visits", "encounters" and "observations". In CommCare these
-correspond to properties of one or a handful of case types, and values
-of form questions.
+"patients", "visits", "encounters" and "observations". Values from
+CommCare can be retrieved from case properties, form questions,
+locations, etc.
 
-CommCare uses Repeaters to build and send a workflow of requests to
-OpenMRS, populated using both cases and forms.
+MOTECH sends a workflow of requests to OpenMRS to update patients and
+create visits, encounters and observations.
 
-Using an OpenMRS Repeater in conjunction with its OpenMRS server's Atom
-feed allows bidirectional live updates.
+Using MOTECH Data Forwarding in conjunction with OpenMRS's Atom feed
+allows bidirectional live updates.
+
+See the [MOTECH OpenMRS and Bahmni module documentation](./openmrs/docs/index.rst)
+for more information on configuring and managing integrations with DHIS2.
 
 
 History
