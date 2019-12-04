@@ -291,29 +291,33 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        self.archive_form(form, 'user1')
-        form = FormAccessorSQL.get_form(form.form_id)
-        self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
-        operations = form.history
-        self.assertEqual(1, len(operations))
-        self.assertEqual(form.form_id, operations[0].form_id)
-        self.assertEqual('user1', operations[0].user_id)
+        # archive twice to check that it's idempotent
+        for i in range(2):
+            self.archive_form(form, 'user1')
+            form = FormAccessorSQL.get_form(form.form_id)
+            self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
+            operations = form.history
+            self.assertEqual(i + 1, len(operations))
+            self.assertEqual(form.form_id, operations[i].form_id)
+            self.assertEqual('user1', operations[i].user_id)
 
-        transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions), transactions)
-        self.assertTrue(transactions[0].revoked)
+            transactions = CaseAccessorSQL.get_transactions(case_id)
+            self.assertEqual(1, len(transactions), transactions)
+            self.assertTrue(transactions[0].revoked)
 
-        self.unarchive_form(form, 'user2')
-        form = FormAccessorSQL.get_form(form.form_id)
-        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
-        operations = form.history
-        self.assertEqual(2, len(operations))
-        self.assertEqual(form.form_id, operations[1].form_id)
-        self.assertEqual('user2', operations[1].user_id)
+        # unarchive twice to check that it's idempotent
+        for i in range(2, 4):
+            self.unarchive_form(form, 'user2')
+            form = FormAccessorSQL.get_form(form.form_id)
+            self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+            operations = form.history
+            self.assertEqual(i + 1, len(operations))
+            self.assertEqual(form.form_id, operations[i].form_id)
+            self.assertEqual('user2', operations[i].user_id)
 
-        transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions))
-        self.assertFalse(transactions[0].revoked)
+            transactions = CaseAccessorSQL.get_transactions(case_id)
+            self.assertEqual(1, len(transactions))
+            self.assertFalse(transactions[0].revoked)
 
     def test_save_new_form(self):
         unsaved_form = create_form_for_test(DOMAIN, save=False)
