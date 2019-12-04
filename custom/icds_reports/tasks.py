@@ -1609,7 +1609,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     doc_ids_in_pillow_error = set(
         PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     invalid_doc_ids = set(
-        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id'), flat=True)
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes

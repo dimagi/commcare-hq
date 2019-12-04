@@ -14,6 +14,7 @@ def test_concept_directions():
         }
     }
     form_config_dict = get_form_config_dict()
+    form_config = OpenmrsFormConfig.wrap(form_config_dict)
     openmrs_config = OpenmrsConfig.wrap({
         "case_config": {},
         "form_configs": [form_config_dict]
@@ -34,9 +35,7 @@ def test_concept_directions():
         openmrs_config=openmrs_config,
         person_uuid="test-person_uuid",
     )
-    values_for_concept = task._get_values_for_concept(
-        OpenmrsFormConfig.wrap(form_config_dict)
-    )
+    values_for_concept = task._get_values_for_concept(form_config)
     eq(values_for_concept, {
         # "direction": "out"
         'e7fdcd25-6d11-4d85-a80a-8979785f0f4b': ['eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'],
