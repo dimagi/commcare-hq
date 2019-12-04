@@ -142,7 +142,12 @@ class PathNode(DocumentSchema):
         return (type(self), self.doc_type, self.name, self.is_repeat)
 
     def __eq__(self, other):
-        return self.__key() == other.__key()
+        # First we try a least expensive comparison (name vs name) to rule the
+        # majority of failed comparisons. This improves performance by nearly
+        # a factor of 2 when __eq__ is used on large data sets.
+        if self.name == other.name:
+            return self.__key() == other.__key()
+        return False
 
     def __hash__(self):
         return hash(self.__key())
