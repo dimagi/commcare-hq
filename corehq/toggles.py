@@ -1813,3 +1813,12 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )
+
+
+USE_NEW_GET_COLUMN = StaticToggle(
+    'use_new_get_column',
+    'Uses the new get_column method when loading edit exports '
+    '(strictly for QA right now).',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
