@@ -106,12 +106,12 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        # For icds-cas domain, toggles are delcared in localsettings statically
+        # Toggles can be delcared in localsettings statically
         #   to avoid cache lookups
         self.always_enabled = (always_enabled or set() |
-            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
+            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', [])))
         self.always_disabled = (always_disabled or set() |
-            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', []))
+            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', [])))
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
