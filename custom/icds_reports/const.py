@@ -101,7 +101,7 @@ AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
-AGG_DASHBOARD_ACTIVITY = 'dashboard_user_activity'
+AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'

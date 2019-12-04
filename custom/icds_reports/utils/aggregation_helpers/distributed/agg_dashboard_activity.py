@@ -1,12 +1,12 @@
 from datetime import timedelta
 from django.db.models import Max
 
-import re
-
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from custom.icds_reports.const import  AGG_DASHBOARD_ACTIVITY
 from django.utils.functional import cached_property
-from corehq.apps.es import UserES
+from django.contrib.auth.models import User
+from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username
+from dimagi.utils.chunked import chunked
 
 
 class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
@@ -20,6 +20,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         drop_query = self.drop_table_query()
         create_table_query, create_table_param = self.create_table_query()
         add_query, add_params = self.add_missing_users()
+
         rollover_query, rollover_param = self.rollover_previous_data()
         update_queries = self.update_queries()
 
@@ -33,27 +34,27 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     @cached_property
     def get_dashboard_users(self):
-        user_query = UserES().mobile_users().domain(self.domain).location(
-            list(self.transformed_locations.keys())).fields(['username', 'location_id'])
+        dashboard_users = User.objects.filter(username__regex=r'^\d*\.[a-zA-Z]*@.*').all()
+        usernames = {user.username for user in dashboard_users if user.username is not None}
 
-        all_users = [u for u in user_query.run().hits]
-        dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
+        user_docs = list()
+        for user_list in chunked(usernames, 200):
+            user_docs.extend(get_user_docs_by_username(user_list))
 
-        return [
-            user
-            for user in all_users
-            if dashboard_uname_rx.match(user['username'])
-        ]
+        return user_docs
 
     @cached_property
     def transformed_locations(self):
         """
         :return: Returns a dict containing location_id as key and its info(loc_level,parents) as value
-                eg: {block_loc_id1: {'loc_level':3, parents:{
-                                                    'district_id': district_loc_id1,
-                                                    'state_id': state_loc_id1
-                                                }
-                                    }
+                eg: {
+                        block_loc_id1: {
+                            'loc_level':3,
+                            'parents':{
+                                'district_id': 'district_loc_id1',
+                                'state_id': 'state_loc_id1'
+                            }
+                        }
                     }
         """
         from custom.icds_reports.models.aggregate import AwcLocation
@@ -70,18 +71,21 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                 transformed_locations[state_id] = {'loc_level': 1}
 
             if district_id not in transformed_locations:
-                transformed_locations[district_id] = {'loc_level': 2,
-                                                      'parents': {
-                                                          'state_id': state_id
-                                                      }
-                                                      }
+                transformed_locations[district_id] = {
+                    'loc_level': 2,
+                    'parents': {
+                        'state_id': state_id
+                    }
+                }
+
             if block_id not in transformed_locations:
-                transformed_locations[block_id] = {'loc_level': 3,
-                                                   'parents': {
-                                                       'district_id': district_id,
-                                                       'state_id': state_id
-                                                   }
-                                                   }
+                transformed_locations[block_id] = {
+                    'loc_level': 3,
+                    'parents': {
+                        'district_id': district_id,
+                        'state_id': state_id
+                    }
+                }
         return transformed_locations
 
     def get_user_locations(self):
@@ -138,9 +142,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def get_last_agg_date(self):
         from custom.icds_reports.models.aggregate import DashboardUserActivityReport
-        result = DashboardUserActivityReport.objects.\
-            filter(date__lt=self.date.strftime("%Y-%m-%d")).\
-            aggregate(Max('date'))
+        result = (DashboardUserActivityReport.objects.
+                  filter(date__lt=self.date.strftime("%Y-%m-%d")).
+                  aggregate(Max('date')))
         if result:
             return result['date__max']
         return None
