@@ -32,7 +32,7 @@ class _UserCaseHelper(object):
                 submit_case_blocks(
                     self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
             for task, task_args in self._tasks_to_trigger:
-                task.delay((task_args))
+                task.delay(*task_args)
 
     @staticmethod
     def commit_multiple(helpers):
@@ -41,7 +41,7 @@ class _UserCaseHelper(object):
         submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
         for helper in helpers:
             for task, task_args in helper._tasks_to_trigger:
-                task.delay((task_args))
+                task.delay(*task_args)
 
     @staticmethod
     def re_open_case(case):
