@@ -37,7 +37,7 @@ class _UserCaseHelper(object):
     @staticmethod
     def commit_multiple(helpers):
         case_blocks = itertools.chain(
-            [h._case_block_to_submit for h in helpers if h and h._case_block_to_submit])
+            [h._case_block_to_submit.as_text() for h in helpers if h and h._case_block_to_submit])
         submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
         for helper in helpers:
             for task, task_args in helper._tasks_to_trigger:
