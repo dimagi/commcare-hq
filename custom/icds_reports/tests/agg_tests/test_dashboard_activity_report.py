@@ -1,4 +1,3 @@
-
 from datetime import date
 
 from custom.icds_reports.models.aggregate import DashboardUserActivityReport
@@ -8,7 +7,7 @@ from mock import patch
 from custom.icds_reports.tasks import update_dashboard_activity_report
 
 
-@patch('corehq.apps.es.es_query.ESQuerySet.hits', [
+@patch('custom.icds_reports.utils.aggregation_helpers.distributed.agg_dashboard_activity.DashboardActivityReportAggregate.get_dashboard_users',  [
     {'username': '12.test@icds-cas.commcarehq.org', 'location_id': 'st1'},
     {'username': '23.test@icds-cas.commcarehq.org', 'location_id': 'd1'},
 ])
@@ -20,26 +19,11 @@ class DashboardActivityReport(TestCase):
         update_dashboard_activity_report(date(2017, 5, 28))
         actual_data = DashboardUserActivityReport.objects.filter(date='2017-05-28').\
             values(*self.always_include_columns).order_by('username')
-
-        self.assertEqual(list(actual_data), [
-            {
-                'date': date(2017, 5, 28),
-                'last_activity': None,
-                'location_launched': True,
-                'district_id': 'All',
-                'user_level': 1,
-                'state_id': 'st1',
-                'username': '12.test@icds-cas.commcarehq.org',
-                'block_id': 'All'
-            },
-            {
-                'date': date(2017, 5, 28),
-                'last_activity': None,
-                'location_launched': True,
-                'district_id': 'd1',
-                'user_level': 2,
-                'state_id': 'st1',
-                'username': '23.test@icds-cas.commcarehq.org',
-                'block_id': 'All'
-            }
-        ])
+        self.assertEqual(list(actual_data),
+                         [{'block_id': 'All', 'username': '12.test@icds-cas.commcarehq.org',
+                           'location_launched': True, 'date': date(2017, 5, 28), 'state_id': 'st1',
+                           'district_id': 'All', 'user_level': 1, 'last_activity': None},
+                          {'block_id': 'All', 'username': '23.test@icds-cas.commcarehq.org',
+                           'location_launched': True, 'date': date(2017, 5, 28), 'state_id': 'st1',
+                           'district_id': 'd1', 'user_level': 2, 'last_activity': None}]
+                         )
