@@ -76,7 +76,7 @@ sum(child_thr_15_21)as "# Children (6-36m) Given 15-21 Days THR",
 sum( child_thr_gt_21) as "# Children (6-36m) Given >21 Days THR",
 sum(thr_eligible) as "Total # of Children (6-36m) Eligible for THR"
 from temp_thr_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc
-​) TO '/tmp/monthly_stats5.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats5.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 COPY(
@@ -89,7 +89,7 @@ sum(child_pse_15_21) as "# Children (3-6y) who Attended PSE for 15-21 Days",
 sum( child_pse_gt_21)as "# Children (3-6y) who Attended PSE for >21 Days",
 sum(pse_eligible)as "Total Children (3-6y) Eligible to Attend PSE"
 from temp_pse_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc
-​) TO '/tmp/monthly_stats6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
@@ -124,7 +124,7 @@ sum(mother_thr_15_21) as "# PW and LM Given 15-21 Days THR",
 sum( mother_thr_gt_21) as "# PW and LM Given >21 Days THR",
 sum(mother_thr_eligible) as "Total # of PW and LM Eligible for THR"
 from dummy_thr_table t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc
-​) TO '/tmp/monthly_stats7.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats7.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 COPY(select
     state_name,
@@ -139,7 +139,7 @@ COPY(select
     CASE WHEN sum(zscore_grading_wfh_recorded_in_month)>0 THEN trunc(((sum(wasting_moderate_v2) + sum(wasting_severe_v2))/sum(zscore_grading_wfh_recorded_in_month)::float*100)::numeric,2) ELSE 0 END "% Children (0-5y) with Wasting"
 
 from agg_child_health_monthly where month='2019-11-01' AND aggregation_level=1 and (age_tranche::integer<>72 OR age_tranche is null) group by state_name
-​) TO '/tmp/monthly_stats8.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats8.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=529.16..531.02 rows=24 width=154)
    Group Key: awc_location.state_name
@@ -194,7 +194,7 @@ COPY(select
     sum(cf_eligible) as "Total Children (6-24m)",
     CASE WHEN sum(cf_eligible)>0 THEN trunc((sum(cf_in_month)/sum(cf_eligible)::float*100)::numeric,2) ELSE 0 END "% CF"
 from agg_child_health_monthly where month='2019-11-01' AND aggregation_level=1  group by state_name
-​) TO '/tmp/monthly_stats9.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats9.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
 HashAggregate  (cost=537.40..540.58 rows=24 width=346)
@@ -233,7 +233,7 @@ COPY(select
     sum(thr_eligible) as "Total PW and LM Eligible for Take Home Ration",
     CASE WHEN sum(thr_eligible)>0 THEN trunc((sum(rations_21_plus_distributed)/sum(thr_eligible)::float*100)::numeric, 2) ELSE 0 END as "% THR (PW and LM, at Least 21 Days)"
 from agg_ccs_record_monthly where aggregation_level=1 and month='2019-11-01' group by state_name
-​) TO '/tmp/monthly_stats10.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats10.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 /*
  HashAggregate  (cost=66.09..67.17 rows=24 width=106)
@@ -278,7 +278,7 @@ COPY(
     CASE WHEN expected_visits>0 THEN trunc((valid_visits/expected_visits::float*100)::numeric,2) ELSE 0 END as "% HVs"
 
 from service_delivery_monthly where aggregation_level=1 and month='2019-11-01'
-​) TO '/tmp/monthly_stats11.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/monthly_stats11.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  Subquery Scan on service_delivery_monthly  (cost=49.86..50.02 rows=1 width=194)
    ->  GroupAggregate  (cost=49.86..49.94 rows=1 width=425)
