@@ -30,7 +30,9 @@
     <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
       <div class="chartView col-xs-11" ng-if="!$ctrl.hideRanking" >
         <div class="mb-3">
-          <span class="font-16 font-montserrat font-weight-600 mr-3">Sectors Ranking</span>
+          <span class="font-16 font-montserrat font-weight-600 mr-3">
+            {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking
+          </span>
           <img src="{% static "icds_reports/mobile/images/dark-info.png" %}" class="d-inline">
         </div>
         <div class="d-flex justify-content-between align-items-center"
