@@ -22,7 +22,6 @@ class TestLocationView(CSVTestCase):
         return rows
 
     def test_child_health_monthly_cas_data(self):
-        print("test")
         indicator = 'child_health_monthly'
         state_id = 'st1'
         month = '2017-05-01'
