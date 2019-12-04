@@ -21,7 +21,6 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.exceptions import ConfigurationError, JsonpathError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
@@ -40,6 +39,11 @@ from corehq.motech.openmrs.openmrs_config import (
 )
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
+from corehq.motech.value_source import (
+    as_value_source,
+    deserialize,
+    get_import_value,
+)
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -247,8 +251,9 @@ def get_case_block_kwargs(patient, repeater, case=None):
         "case_name": patient['person']['display'],
         "update": {}
     }
-    for prop, (jsonpath, value_source) in property_map.items():
-        if not value_source.check_direction(DIRECTION_IMPORT):
+    for prop, (jsonpath, value_source_dict) in property_map.items():
+        value_source = as_value_source(value_source_dict)
+        if not value_source.can_import:
             continue
         matches = jsonpath.find(patient)
         if matches:
@@ -526,11 +531,10 @@ def get_case_block_kwargs_for_case_property(
 ) -> dict:
     case_block_kwargs = {"update": {}}
     try:
-        value = mapping.value.get_import_value(external_data)
-    except (AttributeError, JsonpathError):
-        # mapping.value doesn't have get_import_value(), or isn't
-        # configured to parse external_data
-        value = mapping.value.deserialize(fallback_value)
+        value = get_import_value(mapping.value, external_data)
+    except (ConfigurationError, JsonpathError):
+        # mapping.value isn't configured to parse external_data
+        value = deserialize(mapping.value, fallback_value)
     if mapping.case_property in CASE_BLOCK_ARGS:
         case_block_kwargs[mapping.case_property] = value
     else:
@@ -556,7 +560,8 @@ def get_case_block_for_indexed_case(
         },
         "update": {}
     }
-    for value_source in mapping.indexed_case_mapping.case_properties:
+    for value_source_dict in mapping.indexed_case_mapping.case_properties:
+        value_source = as_value_source(dict(value_source_dict))
         value = value_source.get_import_value(external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
             case_block_kwargs[value_source.case_property] = value

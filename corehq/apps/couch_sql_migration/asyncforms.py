@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 POOL_SIZE = 15
 
 
-class AsyncFormProcessor(object):
+class AsyncFormProcessor:
 
     def __init__(self, statedb, migrate_form):
         self.statedb = statedb
@@ -157,7 +157,7 @@ class AsyncFormProcessor(object):
         return status
 
 
-class PartiallyLockingQueue(object):
+class PartiallyLockingQueue:
     """ Data structure that holds a queue of objects returning them as locks become free
 
     This is not currently thread safe
@@ -310,7 +310,7 @@ def log_status(status):
 
 
 @attr.s
-class RetryForms(object):
+class RetryForms:
     process_form = attr.ib()
     max_retries = attr.ib(default=3)
     workers = attr.ib(factory=dict, init=False)

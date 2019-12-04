@@ -2,8 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
-                                  haveAccessToAllLocations, isAlertActive, navMetadata) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
+                                  userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -14,7 +14,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.isAlertActive = isAlertActive;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
     vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
 
     if (Object.keys($location.search()).length === 0) {
@@ -144,14 +143,20 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     });
     $scope.$on('mobile_filter_data_changed', function (event, data) {
         vm.filtersOpen = false;
-        if (data.hasLocation) {
+        if (!data.location) {
+            vm.moveToLocation('national', -1);
+        } else {
             vm.moveToLocation(data.location, data.locationLevel);
         }
+        dateHelperService.updateSelectedMonth(data['month'], data['year']);
+        storageService.setKey('search', $location.search());
+        $scope.$emit('filtersChange');
     });
+    vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
-    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
+    'dateHelperService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
 window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
