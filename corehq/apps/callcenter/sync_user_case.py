@@ -71,7 +71,6 @@ class _UserCaseHelper(object):
             close=close,
             update=fields
         )
-        self._case_block_to_submit = caseblock
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
