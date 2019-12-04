@@ -56,5 +56,6 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN due_list_date_tt_1 DATE"),
         migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN due_list_date_tt_2 DATE"),
         migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN due_list_date_tt_booster DATE"),
-        migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN due_list_date_1g_bcg DATE")
+        migrations.RunSQL("ALTER table child_health_monthly ADD COLUMN due_list_date_1g_bcg DATE"),
+        migrator.get_migration('child_health_monthly.sql')
     ]
