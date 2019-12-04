@@ -150,11 +150,12 @@ def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
 
 
 def get_sql_to_create_pl_proxy_cluster(cluster_config, drop_existing=False):
-    return [
-        get_drop_server_sql(cluster_config.cluster_name),
+    sql = [get_drop_server_sql(cluster_config.cluster_name)] if drop_existing else []
+    sql.extend([
         get_pl_proxy_server_config_sql(cluster_config.cluster_name, cluster_config.get_shards()),
         get_user_mapping_sql(cluster_config)
-    ]
+    ])
+    return sql
 
 
 def get_drop_server_sql(cluster_name):
