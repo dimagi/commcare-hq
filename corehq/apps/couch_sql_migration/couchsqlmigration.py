@@ -907,7 +907,6 @@ _iter_skipped_form_ids.chunk_size = 5000
 
 
 def _drop_sql_form_ids(couch_ids, domain):
-    from django.db import connections
     from corehq.sql_db.util import split_list_by_db_partition
     get_missing_forms = """
         SELECT couch.form_id
@@ -916,7 +915,7 @@ def _drop_sql_form_ids(couch_ids, domain):
         WHERE sql.form_id IS NULL
     """
     for dbname, form_ids in split_list_by_db_partition(couch_ids):
-        with connections[dbname].cursor() as cursor:
+        with XFormInstanceSQL.get_cursor_for_partition_db(dbname, readonly=True) as cursor:
             cursor.execute(get_missing_forms, [form_ids])
             yield from (form_id for form_id, in cursor.fetchall())
 

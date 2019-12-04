@@ -7,7 +7,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction
+from django.db import models, transaction, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -78,7 +78,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -1205,7 +1204,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def get_django_user(self, use_primary_db=False):
         queryset = User.objects
         if use_primary_db:
-            queryset = queryset.using(db_for_read_write(User, write=True))
+            queryset = queryset.using(router.db_for_write(User))
         return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):

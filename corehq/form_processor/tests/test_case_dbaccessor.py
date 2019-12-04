@@ -2,18 +2,35 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.db import router
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAccessors
+from corehq.form_processor.exceptions import (
+    AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    CaseIndexInfo,
+)
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
-    CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.models import (
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    SupplyPointCaseMixin,
+    XFormInstanceSQL,
+)
 from corehq.form_processor.tests.test_basics import _submit_case_block
-from corehq.sql_db.routers import db_for_read_write
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
+from corehq.sql_db.routers import HINT_PLPROXY
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
@@ -21,6 +38,10 @@ CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 @use_sql_backend
 class CaseAccessorTestsSQL(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -176,7 +197,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
+        with self.assertNumQueries(1, using=self.using):
             attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
@@ -204,7 +225,7 @@ class CaseAccessorTestsSQL(TestCase):
         ))
         CaseAccessorSQL.save_case(case)
 
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
+        with self.assertNumQueries(1, using=self.using):
             attachments = CaseAccessorSQL.get_attachments(case.case_id)
 
         self.assertEqual(2, len(attachments))
