@@ -58,9 +58,9 @@ class ValueSource:
     Subclasses model a reference to a value, like a case property or a
     form question.
 
-    Use the `get_value()` method to fetch the value using the reference,
-    and serialize it, if necessary, for the external system that it is
-    being sent to.
+    Use the ``get_value()`` method to fetch the value using the
+    reference, and serialize it, if necessary, for the external system
+    that it is being sent to.
     """
     external_data_type: Optional[str] = DATA_TYPE_UNKNOWN
     commcare_data_type: Optional[str] = DATA_TYPE_UNKNOWN
@@ -175,16 +175,15 @@ class ValueSource:
 @attr.s(auto_attribs=True, kw_only=True)
 class CaseProperty(ValueSource):
     """
-    A reference to a case property
+    A reference to a case property value.
+
+    e.g. Get the value of a case property named "dob"::
+
+        {
+          "case_property": "dob"
+        }
+
     """
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "case_property": "dob"
-    #       }
-    #     }
-    #
     case_property: str
 
     class IsNotBlank:
@@ -208,7 +207,19 @@ class CaseProperty(ValueSource):
 @attr.s(auto_attribs=True, kw_only=True)
 class FormQuestion(ValueSource):
     """
-    A reference to a form question
+    A reference to a form question value.
+
+    e.g. Get the value of a form question named "bar" in the group
+    "foo"::
+
+        {
+          "form_question": "/data/foo/bar"
+        }
+
+    .. NOTE:: Normal form questions are prefixed with "/data". Form
+              metadata, like "received_on" and "userID", are prefixed
+              with "/metadata".
+
     """
     form_question: str
 
@@ -227,15 +238,15 @@ class FormQuestion(ValueSource):
 @attr.s(auto_attribs=True, kw_only=True)
 class ConstantValue(ValueSource):
     """
-    ConstantValue provides a ValueSource for constant values.
+    ``ConstantValue`` provides a ``ValueSource`` for constant values.
 
     ``value`` must be cast as ``value_data_type``.
 
-    ``deserialize()`` returns the value for import. Use
-    ``commcare_data_type`` to cast the import value.
+    ``get_value()`` returns the value for export. Use
+    ``external_data_type`` to cast the export value.
 
-    ``ConstantValue.get_value(case_trigger_info)`` returns the value for
-    export.
+    ``get_import_value()`` and ``deserialize()`` return the value for
+    import. Use ``commcare_data_type`` to cast the import value.
 
     >>> one = ConstantValue.wrap({
     ...     "value": 1,
@@ -256,8 +267,7 @@ class ConstantValue(ValueSource):
        ``commcare_data_type`` to ``external_data_type``.
 
        This may seem counter-intuitive, but we do it to preserve the
-       behaviour of ``serialize()`` because it is public and is used
-       outside the class.
+       behaviour of ``ValueSource.serialize()``.
 
     """
     value: str
@@ -313,6 +323,14 @@ class CaseOwnerAncestorLocationField(ValueSource):
     A reference to a location metadata value. The location may be the
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
+
+    e.g. ::
+
+        {
+          "doc_type": "CaseOwnerAncestorLocationField",
+          "location_field": "openmrs_uuid"
+        }
+
     """
     case_owner_ancestor_location_field: str
 
@@ -353,6 +371,14 @@ class FormUserAncestorLocationField(ValueSource):
     A reference to a location metadata value. The location is the form
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
+
+    e.g. ::
+
+        {
+          "doc_type": "FormUserAncestorLocationField",
+          "location_field": "dhis_id"
+        }
+
     """
     form_user_ancestor_location_field: str
 

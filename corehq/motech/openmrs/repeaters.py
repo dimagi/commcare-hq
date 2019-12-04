@@ -72,9 +72,26 @@ class AtomFeedStatus(DocumentSchema):
     last_page = StringProperty(default=None)
 
 
-# it actually triggers on forms,
-# but I wanted to get a case type, and this is the easiest way
 class OpenmrsRepeater(CaseRepeater):
+    """
+    ``OpenmrsRepeater`` is responsible for updating OpenMRS patients
+    with changes made to cases in CommCare. It is also responsible for
+    creating OpenMRS "visits", "encounters" and "observations" when a
+    corresponding visit form is submitted in CommCare.
+
+    The ``OpenmrsRepeater`` class is different from most repeater
+    classes in three details:
+
+    1. It has a case type and it updates the OpenMRS equivalent of cases
+       like the ``CaseRepeater`` class, but it reads forms like the
+       ``FormRepeater`` class. So it subclasses ``CaseRepeater`` but its
+       payload format is ``form_json``.
+
+    2. It makes many API calls for each payload.
+
+    3. It can have a location.
+
+    """
     class Meta(object):
         app_label = 'repeaters'
 
