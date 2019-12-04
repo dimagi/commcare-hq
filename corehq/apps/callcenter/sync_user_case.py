@@ -1,3 +1,4 @@
+import itertools
 import uuid
 from collections import namedtuple
 from xml.etree import cElementTree as ElementTree
@@ -35,8 +36,8 @@ class _UserCaseHelper(object):
 
     @staticmethod
     def commit_multiple(helpers):
-        case_blocks = [h._case_block_to_submit for h in helpers if h]
-        case_blocks = [cb.as_text() for cb in case_blocks if cb]
+        case_blocks = itertools.chain(
+            [h._case_block_to_submit for h in helpers if h and h._case_block_to_submit])
         submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
         for helper in helpers:
             for task, task_args in helper._tasks_to_trigger:
