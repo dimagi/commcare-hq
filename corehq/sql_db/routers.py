@@ -12,7 +12,7 @@ from corehq.sql_db.connections import (
     get_aaa_db_alias,
     get_icds_ucr_citus_db_alias,
 )
-from corehq.sql_db.util import select_db_for_read
+from corehq.sql_db.util import select_db_for_read, select_plproxy_db_for_read
 
 from .config import plproxy_config
 
@@ -123,11 +123,10 @@ def db_for_read_write(model, write=True, hints=None):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return get_db_for_plproxy_cluster(model, hints)
+            return get_read_write_db_for_paritioned_model(model, hints, write)
         return DEFAULT_DB_ALIAS
     if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
-        # TODO SK: select standby db if necessary
-        return get_db_for_plproxy_cluster(model, hints)
+        return get_read_write_db_for_paritioned_model(model, hints, write)
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
@@ -135,7 +134,14 @@ def db_for_read_write(model, write=True, hints=None):
         return default_db
 
 
-def get_db_for_plproxy_cluster(model, hints):
+def get_read_write_db_for_paritioned_model(model, hints, for_write):
+    db = get_db_for_partitioned_model(model, hints)
+    if for_write or not allow_read_from_plproxy_standby():
+        return db
+    return select_plproxy_db_for_read(db)
+
+
+def get_db_for_partitioned_model(model, hints):
     from corehq.sql_db.util import get_db_alias_for_partitioned_doc, get_db_aliases_for_partitioned_query
 
     if not hints:
@@ -163,6 +169,10 @@ def get_db_for_plproxy_cluster(model, hints):
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
     read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
     return select_db_for_read(read_dbs) or default
+
+
+def allow_read_from_plproxy_standby():
+    return False
 
 
 @contextmanager

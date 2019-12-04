@@ -1,15 +1,14 @@
+import random
 import re
 import uuid
 from collections import defaultdict
 from functools import wraps
-from random import choices
 
 from django import db
 from django.conf import settings
 from django.db import OperationalError
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.db.utils import InterfaceError as DjangoInterfaceError
-
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
@@ -383,4 +382,35 @@ def select_db_for_read(weighted_dbs):
             weights.append(weight)
 
     if dbs:
-        return choices(dbs, weights=weights)[0]
+        return random.choices(dbs, weights=weights)[0]
+
+
+def select_plproxy_db_for_read(primary_db):
+    if not plproxy_standby_config:
+        return primary_db
+
+    if primary_db == plproxy_config.proxy_db:
+        plproxy_shard_standbys = set(plproxy_standby_config.form_processing_dbs)
+        ok_standbys = get_standbys_with_acceptible_delay() & plproxy_shard_standbys
+        if ok_standbys == plproxy_shard_standbys:
+            # require ALL standbys to be available
+            return plproxy_standby_config.proxy_db
+        else:
+            return primary_db
+    else:
+        standbys = primary_to_standbys_mapping()[primary_db]
+        ok_standbys = get_standbys_with_acceptible_delay() & standbys
+        if ok_standbys:
+            return random.choice(list(ok_standbys))
+        else:
+            return primary_db
+
+
+@memoized
+def primary_to_standbys_mapping():
+    mapping = defaultdict(set)
+    for db, config in settings.DATABASES.items():
+        master = config.get('STANDBY', {}).get('MASTER')
+        if master:
+            mapping[master].add(db)
+    return mapping
