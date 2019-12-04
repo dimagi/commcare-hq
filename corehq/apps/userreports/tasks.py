@@ -306,9 +306,10 @@ def reprocess_archive_stubs():
         # If the history wasn't updated the first time around, run the whole thing again.
         if not stub.history_updated:
             if stub.archive:
-                xform.archive(user_id=stub.user_id)
+                FormAccessors.do_archive(xform, True, stub.user_id, trigger_signals=True)
             else:
-                xform.unarchive(user_id=stub.user_id)
+                FormAccessors.do_archive(xform, False, stub.user_id, trigger_signals=True)
+
         # If the history was updated the first time around, just send the update to kafka
         else:
             FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
