@@ -109,9 +109,9 @@ class StaticToggle(object):
         # For icds-cas domain, toggles are delcared in localsettings statically
         #   to avoid cache lookups
         self.always_enabled = (always_enabled or set() |
-            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_ENABLED_TOGGLES else {})
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
         self.always_disabled = (always_disabled or set() |
-            {'icds-cas'} if self.slug in settings.ICDS_CAS_ALWAYS_DISABLED_TOGGLES else {})
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', []))
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
