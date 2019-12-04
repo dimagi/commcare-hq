@@ -95,6 +95,7 @@ PARTITION_CONFIG_WITH_STANDBYS = databases = _get_partition_config({
     'db2': [2, 3],
 })
 PARTITION_CONFIG_WITH_STANDBYS.update({
+    'proxy_standby': {'NAME': 'proxy', 'PLPROXY': {'PROXY_FOR_STANDBYS': True}},
     'db1_standby': {'NAME': 'db1', 'STANDBY': {'MASTER': 'db1'}},
     'db2_standby': {'NAME': 'db2', 'STANDBY': {'MASTER': 'db2'}},
 })
@@ -149,7 +150,7 @@ class TestPartitionConfig(SimpleTestCase):
         with override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS):
             standby_config = _get_standby_plproxy_config(primary_config)
         self.assertEqual('commcarehq_standby', standby_config.cluster_name)
-        self.assertEqual('proxy', standby_config.proxy_db)
+        self.assertEqual('proxy_standby', standby_config.proxy_db)
         self.assertEqual({'db1_standby', 'db2_standby'}, set(standby_config.form_processing_dbs))
         self.assertEqual(primary_config.shard_count, standby_config.shard_count)
 

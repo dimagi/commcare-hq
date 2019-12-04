@@ -253,8 +253,10 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         if config.get('STANDBY', {}).get('MASTER')
     }
 
+    proxy_config = copy.deepcopy(settings.DATABASES[proxy_for_standbys])
+    proxy_config['PLPROXY']['PROXY'] = True
     standby_db_config = {
-        proxy_for_standbys: settings.DATABASES[proxy_for_standbys]
+        proxy_for_standbys: proxy_config
     }
 
     def _convert_primary_config(primary_db):
