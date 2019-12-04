@@ -28,7 +28,7 @@
       </div>
     </div>
     <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
-      <div class="chartView col-xs-11">
+      <div class="chartView col-xs-11" ng-if="!$ctrl.hideRanking" >
         <div class="mb-3">
           <span class="font-16 font-montserrat font-weight-600 mr-3">Sectors Ranking</span>
           <img src="{% static "icds_reports/mobile/images/dark-info.png" %}" class="d-inline">
