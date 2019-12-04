@@ -71,19 +71,19 @@ ORDER BY state_name
 COPY(
 SELECT state_name,
 count(*) FILTER (WHERE infra_clean_water=1) AS "# of AWCs that reported available drinking water",
-count(*) FILTER (WHERE infra_clean_water=0) AS "# of AWCs that reported unavailable drinking water",
+count(*) FILTER (WHERE infra_clean_water=0) AS "# of AWCs that reported unavailable drinking water or did not answer the question",
 count(*) FILTER (WHERE infra_functional_toilet=1) AS "# of AWCs that reported available functional toilet",
-count(*) FILTER (WHERE infra_functional_toilet=0) AS "# of AWCs that reported unavailable functional toilet",
+count(*) FILTER (WHERE infra_functional_toilet=0) AS "# of AWCs that reported unavailable functional toilet or did not answer the question",
 count(*) FILTER (WHERE infantometer=1) AS "# of AWCs that reported usable infantometer",
-count(*) FILTER (WHERE infantometer=0) AS "# of AWCs that reported unavailable usable infantometer",
+count(*) FILTER (WHERE infantometer=0) AS "# of AWCs that reported unavailable usable infantometer or did not answer the question",
 count(*) FILTER (WHERE stadiometer=1) AS "# of AWCs that reported usable stadiometer",
-count(*) FILTER (WHERE stadiometer=0) AS "# of AWCs that reported unavailable usable stadiometer",
+count(*) FILTER (WHERE stadiometer=0) AS "# of AWCs that reported unavailable usable stadiometer or did not answer the question",
 count(*) FILTER (WHERE infra_medicine_kits=1) AS "# of AWCs that reported available medicine kit",
-count(*) FILTER (WHERE infra_medicine_kits=0) AS "# of AWCs that reported unavailable medicine kit",
+count(*) FILTER (WHERE infra_medicine_kits=0) AS "# of AWCs that reported unavailable medicine kit or did not answer the question",
 count(*) FILTER (WHERE infra_infant_weighing_scale=1) AS "# of AWCs that reported available infant weighing scale",
-count(*) FILTER (WHERE infra_infant_weighing_scale=0) AS "# of AWCs that reported unavailable infant weighing scale",
+count(*) FILTER (WHERE infra_infant_weighing_scale=0) AS "# of AWCs that reported unavailable infant weighing scale or did not answer the question",
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "# of AWCs that reported available mother and child weighing scale",
-count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "# of AWCs that reported unavailable mother and child weighing scale",
+count(*) FILTER (WHERE infra_adult_weighing_scale=0) AS "# of AWCs that reported unavailable mother and child weighing scale or did not answer the question",
 FROM agg_awc_monthly
 WHERE aggregation_level=5 AND month='2019-11-01'
 GROUP BY state_name
@@ -97,7 +97,7 @@ ORDER BY state_name
 COPY(
 SELECT state_name,
 count(*) FILTER (WHERE electricity_awc=1) AS "# of AWCs that reported available electricity line",
-count(*) FILTER (WHERE electricity_awc=0) AS "# of AWCs that reported unavailable electricity line",
+count(*) FILTER (WHERE electricity_awc=0) AS "# of AWCs that reported unavailable electricity line or did not answer the question",
 sum(num_awcs_conducted_cbe) AS "# AWCs conducted at least 2 CBE events",
 sum(num_awcs_conducted_vhnd) AS "# AWCs conducted at least 1 VHNSD"
 FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "public"."agg_awc" "agg_awc" ON (
