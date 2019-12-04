@@ -17,7 +17,7 @@ hqDefine('toggle_ui/js/flags', [
             if (viewModel.tagFilter() === 'all') {
                 return true;
             }
-            var tag = aData[0].replace(/\n/g," ").replace(/<.*?>/g, "");
+            var tag = aData[0].replace(/\s+/g," ").replace(/<.*?>/g, "").replace(/^\d+ /, "");
             if (viewModel.tagFilter() === "Solutions" && tag.includes("Solutions")) {
                 return true;
             }

@@ -124,11 +124,10 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            result = self.es.get(self.index, doc_id)
+            doc = self.es_interface.get_doc(self.index, '_all', doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
-        doc = result['_source']
         if doc.get('domain') != self.domain:
             raise object_does_not_exist(self.doc_type, doc_id)
 

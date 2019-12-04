@@ -109,13 +109,11 @@ class GenericReportView(object):
 
     exportable = False
     exportable_all = False  # also requires overriding self.get_all_rows
-    mobile_enabled = False
     export_format_override = None
     icon = None
 
     # the defaults for this should be sufficient. But if they aren't, well go for it.
     base_template = None
-    base_template_mobile = None
     base_template_async = None
     base_template_filters = None
 
@@ -259,11 +257,6 @@ class GenericReportView(object):
     @memoized
     def template_base(self):
         return self.base_template
-
-    @property
-    @memoized
-    def mobile_template_base(self):
-        return self.base_template_mobile or "reports/mobile/mobile_report_base.html"
 
     @property
     @memoized
@@ -583,22 +576,6 @@ class GenericReportView(object):
                 self.update_report_context()
                 template = self.template_report
             return render(self.request, template, self.context)
-
-    @property
-    @request_cache()
-    def mobile_response(self):
-        """
-        This tries to render a mobile version of the report, by just calling
-        out to a very simple default template. Likely won't work out of the box
-        with most reports.
-        """
-        if not self.mobile_enabled:
-            raise NotImplementedError("This report isn't configured for mobile usage. "
-                                      "If you're a developer, add mobile_enabled=True "
-                                      "to the report config.")
-        async_context = self._async_context()
-        self.context.update(async_context)
-        return render(self.request, self.mobile_template_base, self.context)
 
     @property
     def email_response(self):

@@ -4,6 +4,7 @@ import os
 import re
 from datetime import datetime
 
+import attr
 from django.test import SimpleTestCase
 
 from dateutil.tz import tzoffset, tzutc
@@ -23,11 +24,12 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.util.test_utils import TestFileMixin
 
 
-class CaseMock(dict):
-
-    @property
-    def get_id(self):
-        return self.get('_id')
+@attr.s
+class CaseMock:
+    case_id = attr.ib()
+    name = attr.ib()
+    type = attr.ib()
+    owner_id = attr.ib()
 
 
 class GetTimestampTests(SimpleTestCase):
@@ -132,9 +134,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.case = CaseMock(
+            case_id='abcdef',
             name='Randall',
             type='patient',
-            _id='abcdef',
+            owner_id='123456'
         )
 
     def setUpRepeater(self):
@@ -147,22 +150,51 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "form_question": "/data/height"
                 },
                 "case_property": "height"
-            },
+            }
+        ]
+        diagnoses = [
             {
                 "doc_type": "ObservationMapping",
                 "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
                 "value": {
                     "doc_type": "FormQuestionMap",
-                    "form_question": "/data/bahmni_hypothermia",
+                    "direction": "in",
+                    "form_question": "[unused when direction == 'in']",
                     "value_map": {
                         "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
-                    },
-                    "direction": "in",
+                    }
                 },
                 "case_property": "owner_id"
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "JsonPathCasePropertyMap",
+                    "direction": "in",
+                    "jsonpath": "codedAnswer.name",
+                    "case_property": "[unused when direction == 'in']",
+                    "value_map": {
+                        "yes": "Hypothermia"
+                    }
+                },
+                "case_property": "hypothermia_diagnosis"
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "JsonPathCaseProperty",
+                    "direction": "in",
+                    "jsonpath": "diagnosisDateTime",
+                    "case_property": "[unused when direction == 'in']",
+                    "commcare_data_type": "cc_date",
+                    "external_data_type": "omrs_datetime"
+                },
+                "case_property": "hypothermia_date"
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -190,7 +222,9 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                         }
                     ]
                 }
-            },
+            }
+        ]
+        diagnoses = [
             {
                 "doc_type": "ObservationMapping",
                 "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
@@ -218,17 +252,26 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                             "case_property": "certainty",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
+                            "doc_type": "JsonPathCasePropertyMap",
                             "jsonpath": "order",
-                            "case_property": "primary_or_secondary",
+                            "case_property": "is_primary",
+                            "value_map": {
+                                "yes": "PRIMARY",
+                                "no": "SECONDARY"
+                            }
                         },
+                        {
+                            "doc_type": "CasePropertyConstantValue",
+                            "case_property": "code",
+                            "value": "T68 (ICD 10 - WHO)"
+                        }
                     ]
                 }
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
-    def get_repeater_dict(self, observations):
+    def get_repeater_dict(self, observations, diagnoses):
         return {
             "_id": "123456",
             "domain": "test_domain",
@@ -241,7 +284,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_observations": observations
+                    "openmrs_observations": observations,
+                    "bahmni_diagnoses": diagnoses
                 }]
             }
         }
@@ -297,10 +341,16 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings,
+            self.repeater.diagnosis_mappings,
             None, None, None
         )
-        self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
+        self.assertEqual(case_block_kwargs, {
+            'owner_id': 'emergency_room_user_id',
+            'update': {
+                'hypothermia_diagnosis': 'yes',
+                'hypothermia_date': '2019-10-18'
+            }
+        })
         self.assertEqual(case_blocks, [])
 
     def test_get_case_blocks_from_observations(self):
@@ -312,7 +362,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.observation_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -344,10 +394,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.observation_mappings,
+            self.repeater.diagnosis_mappings,
             'test-case-id',
             'patient',
-            Mock(user_id='default-owner-id')
+            'default-owner-id'
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -365,7 +415,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
-                <primary_or_secondary>PRIMARY</primary_or_secondary>
+                <code>T68 (ICD 10 - WHO)</code>
+                <is_primary>yes</is_primary>
               </update>
               <index>
                 <parent case_type="patient" relationship="extension">test-case-id</parent>

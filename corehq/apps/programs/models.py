@@ -96,14 +96,6 @@ class Program(Document):
         self.is_archived = False
         self.save()
 
-    @classmethod
-    def get_by_code(cls, domain, code):
-        result = cls.view("program_by_code/view",
-                          key=[domain, code],
-                          include_docs=True,
-                          limit=1).first()
-        return result
-
     def get_products_count(self):
         return (SQLProduct.objects
                 .filter(domain=self.domain, program_id=self.get_id)

@@ -77,7 +77,6 @@
       {
         "column_id": "timeend",
         "datatype": "datetime",
-        "create_index": true,
         "type": "expression",
         "expression": {
           "type": "root_doc",
@@ -377,6 +376,9 @@
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      },
       {
         "column_ids": ["doc_id"]
       }

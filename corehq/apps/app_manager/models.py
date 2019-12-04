@@ -31,7 +31,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import qrcode
-from couchdbkit import MultipleResultsFound, ResourceNotFound
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
@@ -95,7 +95,6 @@ from corehq.apps.app_manager.exceptions import (
     ScheduleError,
     VersioningError,
     XFormException,
-    XFormIdNotUnique,
     XFormValidationError,
     XFormValidationFailed,
 )
@@ -1076,31 +1075,6 @@ class FormBase(DocumentSchema):
     @case_references.setter
     def case_references(self, case_references):
         self.case_references_data = case_references
-
-    @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = Application.get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
-
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
-        if and_app:
-            return form, app
-        else:
-            return form
 
     def pre_delete_hook(self):
         raise NotImplementedError()
@@ -3068,7 +3042,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.requires_case() for form in self.forms)
+        return all(form.requires_case() for form in self.get_forms())
 
     @property
     def search_detail(self):
@@ -3090,7 +3064,7 @@ class AdvancedModule(ModuleBase):
         return AdvancedModuleValidator(self)
 
     def _uses_case_type(self, case_type, invert_match=False):
-        return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
+        return any(form.uses_case_type(case_type, invert_match) for form in self.get_forms())
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
@@ -4534,7 +4508,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
-        del self.uses_master_app_form_ids
 
     @property
     def commcare_flavor(self):
@@ -4614,7 +4587,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
     def has_modules(self):
-        return len(self.modules) > 0 and not self.is_remote_app()
+        return len(self.get_modules()) > 0 and not self.is_remote_app()
 
     @property
     @memoized
@@ -5086,7 +5059,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         raise ModuleNotFoundException(error)
 
     def get_report_modules(self):
-        for module in self.modules:
+        for module in self.get_modules():
             if isinstance(module, ReportModule):
                 yield module
 
@@ -5212,7 +5185,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         from_module = self.get_module_by_unique_id(from_module_uid)
         to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[from_index].pre_move_hook(from_module, to_module)
+            from_module.get_form(from_index).pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
@@ -5234,10 +5207,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def move_child_modules_after_parents(self):
         # This makes the module ordering compatible with the front-end display
         modules_by_parent_id = OrderedDict(
-            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+            (m.unique_id, [m]) for m in self.get_modules() if not m.root_module_id
         )
         orphaned_modules = []
-        for module in self.modules:
+        for module in self.get_modules():
             if module.root_module_id:
                 if module.root_module_id in modules_by_parent_id:
                     modules_by_parent_id[module.root_module_id].append(module)
@@ -5567,11 +5540,6 @@ class LinkedApplication(Application):
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
     SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
-
-    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
-    # from a bug years ago. These should be fixed when mobile can handle the change
-    # https://manage.dimagi.com/default.asp?283410
-    uses_master_app_form_ids = BooleanProperty(default=False)
 
     @property
     @memoized

@@ -292,10 +292,13 @@ def update_domain_date(user_id, domain):
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
     today = datetime.today().date()
-    if (domain_membership and domain_membership.last_accessed
-            and today > domain_membership.last_accessed):
+    if domain_membership and (
+            not domain_membership.last_accessed or domain_membership.last_accessed < today):
         domain_membership.last_accessed = today
-        user.save()
+        try:
+            user.save()
+        except ResourceConflict:
+            pass
 
 
 @periodic_task(
@@ -303,25 +306,36 @@ def update_domain_date(user_id, domain):
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
-    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.apps.users.models import (
+        CouchUser,
+        UserReportingMetadataStaging,
+    )
     from corehq.pillows.synclog import mark_last_synclog
     from pillowtop.processors.form import mark_latest_submission
 
-    records = (
-        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-    )[:100]
     with transaction.atomic():
+        records = (
+            UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+        )[:100]
         for record in records:
+            user = CouchUser.get_by_user_id(record.user_id, record.domain)
+            if not user or user.is_deleted():
+                continue
+
+            save = False
             if record.received_on:
-                mark_latest_submission(
-                    record.domain, record.user_id, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on
+                save = mark_latest_submission(
+                    record.domain, user, record.app_id, record.build_id,
+                    record.xform_version, record.form_meta, record.received_on, save=False
                 )
             if record.device_id or record.sync_date:
-                mark_last_synclog(
-                    record.domain, record.user_id, record.app_id, record.build_id,
-                    record.sync_date, record.device_id
+                save = mark_last_synclog(
+                    record.domain, user, record.app_id, record.build_id,
+                    record.sync_date, record.device_id, save=False
                 )
+            if save:
+                user.save(fire_signals=False)
+
             record.delete()
 
     if UserReportingMetadataStaging.objects.exists():

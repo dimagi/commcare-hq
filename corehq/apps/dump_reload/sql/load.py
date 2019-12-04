@@ -17,7 +17,7 @@ from django.utils.encoding import force_text
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 
 PARTITIONED_MODEL_SHARD_ID_FIELDS = {
     'form_processor.xforminstancesql': 'form_id',
@@ -168,7 +168,7 @@ def _group_objects_by_db(objects):
         app_label = obj['model']
         model = apps.get_model(app_label)
         db_alias = router.db_for_write(model)
-        if settings.USE_PARTITIONED_DATABASE and db_alias == partition_config.proxy_db:
+        if settings.USE_PARTITIONED_DATABASE and db_alias == plproxy_config.proxy_db:
             doc_id = _get_doc_id(app_label, obj)
             db_alias = ShardAccessor.get_database_for_doc(doc_id)
 

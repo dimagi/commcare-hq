@@ -26,7 +26,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
@@ -250,13 +249,11 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            # domain hides Dashboard tab if user is non-admin
-            if not user_has_custom_top_menu(self.domain, self.couch_user):
-                if self.couch_user.is_commcare_user():
-                    # never show the dashboard for mobile workers
-                    return False
-                else:
-                    return domain_has_apps(self.domain)
+            if self.couch_user.is_commcare_user():
+                # never show the dashboard for mobile workers
+                return False
+            else:
+                return domain_has_apps(self.domain)
         return False
 
     @property
@@ -337,7 +334,6 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
-            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -403,11 +399,6 @@ class SetupTab(UITab):
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
             ]
-            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
-                commcare_supply_setup.append({
-                    'title': _(StockLevelsView.page_title),
-                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -931,9 +922,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
-                # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class CloudcareTab(UITab):

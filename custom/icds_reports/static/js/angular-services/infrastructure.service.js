@@ -53,6 +53,40 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 }
             );
         },
+        getInfantometerData: function(step, params) {
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Infantometer');
+            var get_url = url('infantometer', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            }).then(
+                function(response) {
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Infantometer');
+                    return response;
+                },
+                function() {
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Infantometer');
+                }
+            );
+        },
+        getStadiometerData: function(step, params) {
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Stadiometer');
+            var get_url = url('stadiometer', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            }).then(
+                function(response) {
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Stadiometer');
+                    return response;
+                },
+                function() {
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Stadiometer');
+                }
+            );
+        },
         getInfantsWeightScaleData: function(step, params) {
             gtag.event('Infrastructure Service', 'Fetching data started', 'Infants Weight Scale');
             var get_url = url('infants_weight_scale', step);
