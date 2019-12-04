@@ -583,6 +583,9 @@ class AggAwcMonthly(models.Model):
     )
     infantometer = models.IntegerField(blank=True, null=True)
     stadiometer = models.IntegerField(blank=True, null=True)
+    electricity_awc = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_cbe = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_vhnd = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
