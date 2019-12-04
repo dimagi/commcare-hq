@@ -34,9 +34,44 @@ class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
 
 ### Templates for ICDS
 
+class AdultFemaleMigrantDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("adult_female_migrant_death")
+    expression = "sex = 'F' AND resident IS DISTINCT FROM 1 AND age_at_death_yrs >= 11"
+
+
+class AdultFemaleResidentDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("adult_female_resident_death")
+    expression = "sex = 'F' AND resident = 1 AND age_at_death_yrs >= 11"
+
+
+class AgeAtDeathRangeMigrantSpec(SumWhenTemplateSpec):
+    type = TypeProperty("age_at_death_range_migrant")
+    expression = "sex = ? AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN ? AND ?"
+
+
+class AgeAtDeathRangeResidentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("age_at_death_range_resident")
+    expression = "sex = ? AND resident = 1 AND date_death - dob BETWEEN ? AND ?"
+
+
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"
+
+
+class FemaleAgeAtDeathSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_age_at_death")
+    expression = "female_death_type IS NOT NULL AND age_at_death_yrs >= ?"
+
+
+class FemaleDeathTypeMigrantSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_death_type_migrant")
+    expression = "female_death_type = ? AND resident IS DISTINCT FROM 1"
+
+
+class FemaleDeathTypeResidentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("female_death_type_resident")
+    expression = "female_death_type = ? AND resident = 1"
 
 
 class OpenDisabilityTypeSpec(SumWhenTemplateSpec):
@@ -69,6 +104,11 @@ class OpenFemaleMigrantSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL AND sex = 'F' AND resident != 1"
 
 
+class OpenFemaleMigrantDistinctFromSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_female_migrant_distinct_from")
+    expression = "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 1"
+
+
 class OpenFemaleResidentSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_female_resident")
     expression = "closed_on IS NULL AND sex = 'F' AND resident = 1"
@@ -76,7 +116,7 @@ class OpenFemaleResidentSpec(SumWhenTemplateSpec):
 
 class OpenMaleDisabledSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_disabled")
-    expression = "closed_on IS NULL AND sex = IN ('M', 'O') and disabled = 1"
+    expression = "closed_on IS NULL AND sex IN ('M', 'O') and disabled = 1"
 
 
 class OpenMaleHHCasteSpec(SumWhenTemplateSpec):
@@ -99,6 +139,51 @@ class OpenMaleMigrantSpec(SumWhenTemplateSpec):
     expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1"
 
 
+class OpenMaleMigrantDistinctFromSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_male_migrant_distinct_from")
+    expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 1"
+
+
 class OpenMaleResidentSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_resident")
     expression = "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1"
+
+
+class OpenPregnantMigrantSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_pregnant_migrant")
+    expression = "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1"
+
+
+class OpenPregnantResidentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_pregnant_resident")
+    expression = "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1"
+
+
+class ReachedReferralHealthProblemSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem")
+    expression = "referral_reached_facility = ? AND referral_health_problem ~ ?"
+
+
+class ReachedReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem_2_problems")
+    expression = "referral_reached_facility = ? AND (referral_health_problem ~ ? OR referral_health_problem ~ ?)"
+
+
+class ReachedReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("reached_referral_health_problem_3_problems")
+    expression = "referral_reached_facility = ? AND (referral_health_problem ~ ? OR referral_health_problem ~ ? OR referral_health_problem ~ ?)"
+
+
+class ReferralHealthProblemSpec(SumWhenTemplateSpec):
+    type = TypeProperty("referral_health_problem")
+    expression = "referral_health_problem ~ ?"
+
+
+class ReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("referral_health_problem_2_problems")
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ?"
+
+
+class ReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
+    type = TypeProperty("referral_health_problem_3_problems")
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR referral_health_problem ~ ?"

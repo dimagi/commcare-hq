@@ -16,6 +16,12 @@ from corehq.sql_db.util import select_db_for_read
 
 from .config import plproxy_config
 
+HINT_INSTANCE = 'instance'
+HINT_PARTITION_VALUE = 'partition_value'
+HINT_PLPROXY = 'plproxy'
+HINT_USING = 'using'
+ALL_HINTS = {HINT_INSTANCE, HINT_PARTITION_VALUE, HINT_PLPROXY, HINT_USING}
+
 PROXY_APP = 'sql_proxy_accessors'
 PROXY_STANDBY_APP = 'sql_proxy_standby_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
@@ -30,10 +36,10 @@ AAA_APP = 'aaa'
 class MultiDBRouter(object):
 
     def db_for_read(self, model, **hints):
-        return db_for_read_write(model, write=False)
+        return db_for_read_write(model, write=False, hints=hints)
 
     def db_for_write(self, model, **hints):
-        return db_for_read_write(model, write=True)
+        return db_for_read_write(model, write=True, hints=hints)
 
     def allow_migrate(self, db, app_label, model=None, model_name=None, **hints):
         return allow_migrate(db, app_label, model_name)
@@ -93,12 +99,13 @@ def allow_migrate(db, app_label, model_name=None):
         return db == DEFAULT_DB_ALIAS
 
 
-def db_for_read_write(model, write=True):
+def db_for_read_write(model, write=True, hints=None):
     """
     :param model: Django model being queried
     :param write: Default to True since the DB for writes can also handle reads
     :return: Django DB alias to use for query
     """
+    hints = hints or {}
     app_label = model._meta.app_label
 
     if app_label == SYNCLOGS_APP:
@@ -116,11 +123,11 @@ def db_for_read_write(model, write=True):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return plproxy_config.proxy_db
+            return get_db_for_plproxy_cluster(model, hints)
         return DEFAULT_DB_ALIAS
-    if app_label == FORM_PROCESSOR_APP:
+    if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
         # TODO SK: select standby db if necessary
-        return plproxy_config.proxy_db
+        return get_db_for_plproxy_cluster(model, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
@@ -128,14 +135,34 @@ def db_for_read_write(model, write=True):
         return default_db
 
 
+def get_db_for_plproxy_cluster(model, hints):
+    from corehq.sql_db.util import get_db_alias_for_partitioned_doc, get_db_aliases_for_partitioned_query
+
+    if not hints:
+        raise Exception(f'Routing for partitioned models requires a hint. Use one of {ALL_HINTS}')
+
+    if len(set(hints) & ALL_HINTS) > 1:
+        raise Exception(f'Unable to perform routing, multiple hints provided: {hints}')
+
+    if HINT_INSTANCE in hints:
+        partition_value = getattr(hints[HINT_INSTANCE], 'partition_value', None)
+        if partition_value is not None:
+            return get_db_alias_for_partitioned_doc(partition_value)
+    if hints.get(HINT_PLPROXY):
+        return plproxy_config.proxy_db
+    if HINT_USING in hints:
+        db = hints[HINT_USING]
+        assert db in get_db_aliases_for_partitioned_query()
+        return db
+    if HINT_PARTITION_VALUE in hints:
+        return get_db_alias_for_partitioned_doc(hints[HINT_PARTITION_VALUE])
+
+    raise Exception(f'Unable to route query for {model}. No matching hints. Use one of {ALL_HINTS}')
+
+
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
     read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
     return select_db_for_read(read_dbs) or default
-
-
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
 
 
 @contextmanager

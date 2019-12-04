@@ -1724,20 +1724,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Nov 15, 2019 if no one is using
-GROUP_API_USE_COUCH_BACKEND = StaticToggle(
-    'group_api_use_couch_backend',
-    'Use Old Couch backend for Group API. '
+# todo: remove after Dec 25, 2019 if no one is using
+USER_API_USE_COUCH_BACKEND = StaticToggle(
+    'user_api_use_couch_backend',
+    'Use Old Couch backend for User API. '
     'This is an escape hatch for support '
     'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
-USER_API_USE_ES_BACKEND = StaticToggle(
-    'user_api_use_es_backend',
-    'Use new ES backend for User API.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
@@ -1807,4 +1799,13 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+
+SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+    'show_build_profile_in_app_status',
+    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )

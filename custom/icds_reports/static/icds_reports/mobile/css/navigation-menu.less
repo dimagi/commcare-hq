@@ -1,0 +1,40 @@
+@import "app";
+
+@nav-menu-width: 300px;
+
+.sideNavigation {
+  .dark-background;
+  .h-100vh;
+  .position-fixed;
+  .pl-3;
+  .pr-3;
+  padding-top: 2rem;
+  left: -(@nav-menu-width);
+  z-index: 1000;
+  width: @nav-menu-width;
+  transition: all 0.4s;
+}
+
+.navigation-font {
+  .font-weight-600;
+  .font-16;
+  .font-montserrat;
+  .text-white;
+}
+
+.menu-options {
+  .d-flex;
+  .align-items-center;
+  .mb-3;
+  .pt-2;
+  .pb-2;
+}
+.menu-options:hover, .close-icon:hover {
+  background-color: #363c51!important;
+}
+.close-icon {
+  .position-absolute;
+  width: 15px;
+  top: 15px;
+  right: 15px;
+}

@@ -13,7 +13,8 @@ class AggregateSQLProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UcrReconciliationStatus)
 class UcrReconciliationStatusAdmin(admin.ModelAdmin):
-    list_display = ('db_alias', 'day', 'table_id', 'verified_date')
+    list_display = ('db_alias', 'day', 'table_id', 'last_processed_date', 'verified_date')
+    list_filter = ('db_alias', 'day', 'table_id')
     actions = ['queue_reconciliation']
 
     def queue_reconciliation(self, request, queryset):

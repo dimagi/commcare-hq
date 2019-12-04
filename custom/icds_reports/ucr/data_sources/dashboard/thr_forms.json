@@ -96,8 +96,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "display_name": "Supervisor ID",
@@ -217,6 +216,9 @@
     "sql_column_indexes": [
       {
         "column_ids": ["doc_id"]
+      },
+      {
+        "column_ids": ["state_id", "timeend"]
       }
     ],
     "disable_destructive_rebuild": true

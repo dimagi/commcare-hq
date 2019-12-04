@@ -14,7 +14,6 @@ from jinja2 import Template
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.motech.openmrs.exceptions import OpenmrsException
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -40,7 +39,8 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import OpenmrsImporter
+from corehq.motech.openmrs.exceptions import OpenmrsException
+from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
@@ -101,7 +101,7 @@ def get_case_properties(patient, importer):
     for mapping in importer.column_map:
         value = patient[mapping.column]
         try:
-            fields_to_update[mapping.property] = mapping.deserialize(value, tz)
+            fields_to_update[mapping.property] = deserialize(mapping, value, tz)
         except (TypeError, ValueError) as err:
             errors.append(
                 f'Unable to deserialize value {repr(value)} '

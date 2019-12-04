@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
-from django.db import Error, IntegrityError, connections, transaction
+from django.db import Error, IntegrityError, connections, transaction, router
 from django.db.models import F
 
 import pytz
@@ -46,7 +46,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
-from corehq.sql_db.routers import db_for_read_write, force_citus_engine
+from corehq.sql_db.routers import force_citus_engine
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
@@ -140,6 +140,7 @@ from custom.icds_reports.utils import (
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
+    AggAwcDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -364,7 +365,7 @@ def _create_aggregate_functions(cursor):
 def _update_aggregate_locations_tables():
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with transaction.atomic(using=db_for_read_write(AwcLocation)):
+        with transaction.atomic(using=router.db_for_write(AwcLocation)):
             AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
@@ -545,18 +546,18 @@ def aggregate_awc_daily(day):
                        force_to_date(day)]
 
     for daily_date in agg_daily_dates:
-        with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+        with transaction.atomic(using=router.db_for_write(AggAwcDaily)):
             AggAwcDaily.aggregate(daily_date)
 
 
 @track_time
 def _update_months_table(day):
-    db_alias = db_for_read_write(IcdsMonths)
+    db_alias = router.db_for_write(IcdsMonths)
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day, db_alias=db_alias)
 
 
 def get_cursor(model, write=True):
-    db = db_for_read_write(model, write)
+    db = router.db_for_write(model) if write else router.db_for_read(model)
     return connections[db].cursor()
 
 
@@ -586,7 +587,7 @@ def _child_health_monthly_data(state_ids, day):
 def update_child_health_monthly_table(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
     celery_task_logger.info("Inserting into child_health_monthly_table")
-    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
+    with transaction.atomic(using=router.db_for_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
 
@@ -602,7 +603,7 @@ def _child_health_helper(query, params, force_citus=False):
 
 @track_time
 def _ccs_record_monthly_table(day):
-    with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
+    with transaction.atomic(using=router.db_for_write(CcsRecordMonthly)):
         CcsRecordMonthly.aggregate(force_to_date(day))
 
 
@@ -618,7 +619,7 @@ def _agg_child_health_table(day):
 
 @track_time
 def _agg_ccs_record_table(day):
-    db_alias = db_for_read_write(AggCcsRecord)
+    db_alias = router.db_for_write(AggCcsRecord)
     with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
@@ -628,7 +629,10 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    db_alias = db_for_read_write(AggAwc)
+    db_alias = router.db_for_write(AggAwc)
+    helper = AggAwcDistributedHelper(force_to_date(day))
+    with get_cursor(AggAwc) as cursor:
+        cursor.execute(helper.drop_temporary_table())
     with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
@@ -638,31 +642,31 @@ def _agg_awc_table(day):
 
 @track_time
 def _agg_ls_vhnd_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
+    with transaction.atomic(using=router.db_for_write(AggLs)):
         AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
 
 
 @track_time
 def _agg_beneficiary_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
+    with transaction.atomic(using=router.db_for_write(AggLs)):
         AggregateBeneficiaryForm.aggregate(state_id, force_to_date(day))
 
 
 @track_time
 def _agg_ls_awc_mgt_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
+    with transaction.atomic(using=router.db_for_write(AggLs)):
         AggregateLsAWCVisitForm.aggregate(state_id, force_to_date(day))
 
 
 @track_time
 def _agg_ls_table(day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
+    with transaction.atomic(using=router.db_for_write(AggLs)):
         AggLs.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_thr_table(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggregateTHRForm)):
+    with transaction.atomic(using=router.db_for_write(AggregateTHRForm)):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
 
 
@@ -1489,7 +1493,10 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 def create_all_mbt(month, state_ids):
     first_of_month = month.strftime('%Y-%m-01')
+    prev_month = month.replace(day=1) - relativedelta(months=1)
+    prev_month_string = prev_month.strftime('%Y-%m-01')
     for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, prev_month_string)
         create_mbt_for_month.delay(state_id, first_of_month)
 
 
@@ -1539,7 +1546,7 @@ def _child_health_monthly_aggregation(day, state_ids):
         cursor.execute(helper.create_temporary_table())
 
     greenlets = []
-    pool = Pool(10)
+    pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
     pool.join(raise_error=True)
@@ -1602,7 +1609,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     doc_ids_in_pillow_error = set(
         PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     invalid_doc_ids = set(
-        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id'), flat=True)
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
     known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes

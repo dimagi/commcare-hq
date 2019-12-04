@@ -1,6 +1,17 @@
 window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', function($http, $location) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     var gtag = hqImport('analytix/js/google').track;
+
+    function transformLocationTypeName(locationTypeName) {
+        if (locationTypeName === 'awc') {
+            return locationTypeName.toUpperCase();
+        } else if (locationTypeName === 'supervisor') {
+            return 'Sector';
+        } else {
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+        }
+    }
+
     return {
         getRootLocations: function() {
             return this.getChildren(null);
@@ -78,6 +89,40 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     gtag.event('Location Service', 'Fetching data failed', 'getAwcLocations');
                 }
             );
+        },
+        transformLocationTypeName: transformLocationTypeName,
+        locationTypesToDisplay: function (locationTypes) {
+            return _.map(locationTypes, function (locationType) {
+                return transformLocationTypeName(locationType.name);
+            }).join(', ');
+        },
+        locationTypeIsVisible: function (selectedLocations, level) {
+            // whether a location type is visible (should be selectable) from locations service
+            // hard code reports that disallow drilling past a certain level
+            if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
+                return false;
+            }
+            // otherwise
+            return (
+                level === 0 ||  // first level to select should be visible
+                // or previous location should be set and not equal to "all".
+                (selectedLocations[level - 1] && selectedLocations[level - 1] !== 'all' && selectedLocations[level - 1].location_id !== 'all')
+            );
+        },
+        getLocationsForLevel: function (level, selectedLocations, locationsCache) {
+            if (level === 0) {
+                return locationsCache.root;
+            } else {
+                var selectedLocation = selectedLocations[level - 1];
+                if (!selectedLocation || selectedLocation.location_id === 'all') {
+                    return [];
+                }
+                return _.sortBy(
+                    locationsCache[selectedLocation.location_id], function (o) {
+                        return o.name;
+                    }
+                );
+            }
         },
     };
 }]);

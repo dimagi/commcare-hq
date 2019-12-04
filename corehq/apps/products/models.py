@@ -17,7 +17,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.database import iter_docs
 
-# move these too
 from corehq.apps.commtrack.exceptions import (
     DuplicateProductCodeException,
     InvalidProductException,
@@ -31,7 +30,7 @@ class Product(Document):
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
-    code_ = StringProperty()  # todo: why the hell is this code_ and not code
+    code_ = StringProperty()
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
