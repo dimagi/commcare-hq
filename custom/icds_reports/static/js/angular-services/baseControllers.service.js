@@ -74,7 +74,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     vm.steps['map'].label = 'Map View: ' + locType;
                 }
             };
-            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero) {
+            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero, overrideStep) {
+                // if overrideStep is defined use it, else just use the current step
+                // mobile dashboard requires this to load data beyond the currently displayed step on some pages
+                var currentStep = overrideStep || vm.step;
                 var tailsMultiplier = 1;
                 if (usePercentage) {
                     tailsMultiplier = 100;
@@ -87,9 +90,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     return parseFloat((value / tailsMultiplier).toFixed(precision));
                 };
                 return function(response) {
-                    if (vm.step === "map") {
+                    if (currentStep === "map") {
                         vm.data.mapData = response.data.report_data;
-                    } else if (vm.step === "chart") {
+                    } else if (currentStep === "chart") {
                         vm.chartData = response.data.report_data.chart_data;
                         vm.all_locations = response.data.report_data.all_locations;
                         vm.top_five = response.data.report_data.top_five;
