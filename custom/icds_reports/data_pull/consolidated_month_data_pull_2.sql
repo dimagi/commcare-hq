@@ -75,19 +75,21 @@ sum(child_thr_8_14) as "# Children (6-36m) Given 8-14 Days THR",
 sum(child_thr_15_21)as "# Children (6-36m) Given 15-21 Days THR",
 sum( child_thr_gt_21) as "# Children (6-36m) Given >21 Days THR",
 sum(thr_eligible) as "Total # of Children (6-36m) Eligible for THR"
-from temp_thr_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc
+from temp_thr_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id
+where aggregation_level=4 and state_is_test=0
+group by state_name order by state_name ASC
 ) TO '/tmp/monthly_stats5.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 COPY(
 select
 state_name,
-sum(child_pse_0)as "# Children (3-6y) who Attended PSE for 0 Days",
+sum(child_pse_0) as "# Children (3-6y) who Attended PSE for 0 Days",
 sum(child_pse_1_7) as "# Children (3-6y) who Attended PSE for 1-7 Days",
 sum(child_pse_8_14)as "# Children (3-6y) who Attended PSE for 8-14 Days",
 sum(child_pse_15_21) as "# Children (3-6y) who Attended PSE for 15-21 Days",
-sum( child_pse_gt_21)as "# Children (3-6y) who Attended PSE for >21 Days",
-sum(pse_eligible)as "Total Children (3-6y) Eligible to Attend PSE"
+sum( child_pse_gt_21) as "# Children (3-6y) who Attended PSE for >21 Days",
+sum(pse_eligible) as "Total Children (3-6y) Eligible to Attend PSE"
 from temp_pse_data_pull t join awc_location_local a on a.supervisor_id=t.supervisor_id where aggregation_level=4 and state_is_test=0 group by state_name order by state_name asc
 ) TO '/tmp/monthly_stats6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
