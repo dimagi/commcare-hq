@@ -961,9 +961,10 @@ class LastSync(DocumentSchema):
 class LastBuild(DocumentSchema):
     """
     Build info for the app on the user's phone
-    when they last synced or submitted
+    when they last synced or submitted or sent heartbeat request
     """
     app_id = StringProperty()
+    build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
 

@@ -4133,8 +4133,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
 
+    def heartbeat_url(self, build_profile_id=None):
+        return self.base_heartbeat_url + '?build_profile_id=%s' % (build_profile_id or '')
+
     @absolute_url_property
-    def heartbeat_url(self):
+    def base_heartbeat_url(self):
         return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
@@ -4846,8 +4849,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
-
-        apk_heartbeat_url = self.heartbeat_url
+        apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
