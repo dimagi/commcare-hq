@@ -83,7 +83,7 @@ count(*) FILTER (WHERE infra_medicine_kits IS NULL OR infra_medicine_kits=0) AS 
 count(*) FILTER (WHERE infra_infant_weighing_scale=1) AS "# of AWCs that reported available infant weighing scale",
 count(*) FILTER (WHERE infra_infant_weighing_scale IS NULL OR infra_infant_weighing_scale=0) AS "# of AWCs that reported unavailable infant weighing scale or did not answer the question",
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "# of AWCs that reported available mother and child weighing scale",
-count(*) FILTER (WHERE infra_adult_weighing_scale IS NULL OR infra_adult_weighing_scale=0) AS "# of AWCs that reported unavailable mother and child weighing scale or did not answer the question",
+count(*) FILTER (WHERE infra_adult_weighing_scale IS NULL OR infra_adult_weighing_scale=0) AS "# of AWCs that reported unavailable mother and child weighing scale or did not answer the question"
 FROM agg_awc_monthly
 WHERE aggregation_level=5 AND month='2019-11-01'
 GROUP BY state_name
