@@ -37,6 +37,7 @@ class Command(BaseCommand):
             indicator_config_ids=[datasource_id],
             date_created__gte=start_date, date_created__lt=end_date,
         ).all()
+        logging.info(len(indicators))
 
         data_source = StaticDataSourceConfiguration.by_id(datasource_id)
         doc_store = data_sources.get_document_store_for_doc_type(
