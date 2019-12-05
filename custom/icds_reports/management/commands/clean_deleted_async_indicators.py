@@ -59,7 +59,7 @@ class Command(BaseCommand):
         if doc_ids_to_delete and execute:
             adapter = get_indicator_adapter(data_source)
             logger.info("Deleting from UCR table")
-            adapter.bulk_delete({{'_id': doc_id for doc_id in doc_ids_to_delete}})
+            adapter.bulk_delete([{'_id': doc_id} for doc_id in doc_ids_to_delete])
             # if everything went well, delete the records
             logger.info("Deleting from async indicator table")
             AsyncIndicator.objects.filter(doc_id__in=doc_ids_to_delete).delete()
