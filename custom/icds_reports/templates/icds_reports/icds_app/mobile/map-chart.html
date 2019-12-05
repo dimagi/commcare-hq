@@ -39,7 +39,7 @@
         </div>
         <div class="d-flex justify-content-between align-items-center"
              ng-repeat="location in $ctrl.all_locations">
-          <a href="" ng-click="displayInfo(location.loc_name)" class="location-names" ng-bind="location.loc_name"
+          <a ng-click="$ctrl.displayMobilePopup(location)" class="location-names" ng-bind="location.loc_name"
              data-toggle="modal" data-target="#infoModal" data-backdrop="false"></a>
           <p class="font-montserrat font-weight-600 font-16">
             <span ng-if="location.value !== undefined">{$ location.value $}</span>
@@ -55,26 +55,17 @@
         <div class="modal-content col-xs-11 mx-auto float-unset no-gutters">
           <div class="modal-body rounded-border" style="background: #2C3648;">
             <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0 font-montserrat font-14 font-weight-600 text-white">October 2019</p>
+              <p class="mb-0 font-montserrat font-14 font-weight-600 text-white">{$ $ctrl.selectedMonthDisplay $}</p>
               <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" data-dismiss="modal" style="width: 15px">
             </div>
-            <p class="font-weight-600 font-16 font-montserrat text-blue" ng-bind="selectedStateName"></p>
-            <p class="font-weight-600 font-30 font-montserrat text-white" ng-bind="selectedStatePercentage"></p>
-            <p class="font-weight-600 font-16 font-montserrat text-white">
-              Total Children (0 - 5 yrs) weighed in given month
-              <span class="text-red" ng-bind="selectedStateInfo.total"></span>
+            <p class="font-weight-600 font-16 font-montserrat text-blue" ng-bind="$ctrl.mobilePopupLocation.loc_name"></p>
+            <p class="font-weight-600 font-30 font-montserrat text-white" >
+              <span ng-if="$ctrl.mobilePopupLocation.value !== undefined">{$ $ctrl.mobilePopupLocation.value $}</span>
+              <span ng-if="$ctrl.mobilePopupLocation.percent !== undefined">{$ $ctrl.mobilePopupLocation.percent | number:2 $}%</span>
             </p>
-            <p class="font-weight-600 font-16 font-montserrat text-white">
-              No. of children severely underweighed (0 - 5 yrs)
-              <span class="text-red" ng-bind="selectedStateInfo.severely_underweight"></span>
-            </p>
-            <p class="font-weight-600 font-16 font-montserrat text-white">
-              No. of children normal (0 - 5 yrs)
-              <span class="text-red" ng-bind="selectedStateInfo.normal"></span>
-            </p>
-            <p class="font-weight-600 font-16 font-montserrat text-white">
-              No. of children moderately underweighed
-              <span class="text-red" ng-bind="selectedStateInfo.moderately_underweight"></span>
+            <p class="font-weight-600 font-16 font-montserrat text-white" ng-repeat="indicatorData in $ctrl.mobilePopupData">
+              {$ indicatorData.indicator_name $}
+              <span class="text-red" ng-bind="indicatorData.indicator_value"></span>
             </p>
           </div>
         </div>

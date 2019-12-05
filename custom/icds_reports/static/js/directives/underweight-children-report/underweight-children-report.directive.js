@@ -169,7 +169,13 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         );
     };
 
-
+    // todo: this should be abstracted to a base class
+    vm.displayMobilePopup = function (location) {
+        var locationData = vm.data.mapData.data[location.loc_name];
+        var data = getPopupData(locationData);
+        vm.mobilePopupLocation = location;
+        vm.mobilePopupData = data;
+    };
 }
 
 UnderweightChildrenReportController.$inject = [
