@@ -34,7 +34,6 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
               SELECT DISTINCT ON (awc_id, submitted_on)
                 doc_id as doc_id,
                 awc_id as awc_id,
-                state_id as state_id,
                 month as month,
                 submitted_on as pse_date,
                 awc_open_count as awc_open_count,
@@ -47,7 +46,8 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
                 form_location_long as form_location_long,
                 image_name as image_name,
                 pse_conducted as pse_conducted,
-                supervisor_id as supervisor_id
+                supervisor_id as supervisor_id,
+                state_id as state_id
               FROM "{ucr_daily_attendance_tablename}"
               WHERE month = %(start_month)s and (awc_open_count=1 OR awc_not_open = 1)
               ORDER BY awc_id, submitted_on, inserted_at DESC

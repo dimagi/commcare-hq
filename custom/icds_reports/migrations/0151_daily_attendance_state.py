@@ -3,6 +3,8 @@ from django.db import migrations
 from custom.icds_reports.utils.migrations import create_index_migration
 
 
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
+
 class Migration(migrations.Migration):
 
     table_name = "daily_attendance"
@@ -10,6 +12,8 @@ class Migration(migrations.Migration):
     columns = ['month', 'state_id']
 
     create_index_sql, drop_index_sql = create_index_migration(table_name, index_name, columns)
+
+    atomic = False
 
     dependencies = [
         ('icds_reports', '0150_update_agg_awc_monthly_view'),
@@ -21,4 +25,5 @@ class Migration(migrations.Migration):
             sql=create_index_sql,
             reverse_sql=drop_index_sql,
         ),
+        migrator.get_migration('daily_attendance.sql')
     ]
