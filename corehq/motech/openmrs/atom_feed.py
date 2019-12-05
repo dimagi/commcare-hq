@@ -252,7 +252,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
         "update": {}
     }
     for prop, (jsonpath, value_source_dict) in property_map.items():
-        value_source = as_value_source(value_source_dict)
+        value_source = as_value_source(dict(value_source_dict))
         if not value_source.can_import:
             continue
         matches = jsonpath.find(patient)
