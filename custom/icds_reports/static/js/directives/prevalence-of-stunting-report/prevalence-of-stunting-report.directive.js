@@ -3,10 +3,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService,  genders, ages, haveAccessToAllLocations,
+    locationsService, dateHelperService, navigationService, userLocationId, storageService,  genders, ages, haveAccessToAllLocations,
     baseControllersService, haveAccessToFeatures, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
     var vm = this;
     vm.isAlertActive = isAlertActive;
 
@@ -166,7 +166,12 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
 }
 
-PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures', 'isAlertActive'];
+PrevalenceOfStuntingReportController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
+    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive'
+];
 
 window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
     return {
