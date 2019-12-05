@@ -791,22 +791,6 @@ class IndicatorConfigFilterTest(SimpleTestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         ))
 
-    def test_deleted_filter(self):
-        not_matching = [
-            dict(doc_type="CommCareCase", domain='user-reports', type='ticket'),
-            dict(doc_type="CommCareCase-Deleted", domain='not-user-reports', type='ticket'),
-        ]
-        for document in not_matching:
-            self.assertFalse(self.config.deleted_filter(document), 'Failing dog: %s' % document)
-
-        matching = [
-            dict(doc_type="CommCareCase-Deleted", domain='user-reports', type='ticket'),
-            dict(doc_type="CommCareCase-Deleted", domain='user-reports', type='bot-ticket'),
-            dict(doc_type="CommCareCase-Deleted", domain='user-reports'),
-        ]
-        for document in matching:
-            self.assertTrue(self.config.deleted_filter(document), 'Failing dog: %s' % document)
-
 
 def _save_sql_case(doc):
     system_props = ['_id', '_rev', 'opened_on', 'owner_id', 'doc_type', 'domain', 'type']

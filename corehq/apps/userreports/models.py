@@ -263,10 +263,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         filter_fn = self._get_main_filter()
         return filter_fn(document, eval_context)
 
-    def deleted_filter(self, document):
-        filter_fn = self._get_deleted_filter()
-        return filter_fn and filter_fn(document, EvaluationContext(document, 0))
-
     @property
     def has_validations(self):
         return len(self.validations) > 0
