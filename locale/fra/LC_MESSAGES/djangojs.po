@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-27 19:08+0000\n"
+"POT-Creation-Date: 2019-12-04 20:57+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -137,7 +137,7 @@ msgid "You have unsaved changes"
 msgstr "Vous avez des modifications non sauvegardées."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:33
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:56
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
 

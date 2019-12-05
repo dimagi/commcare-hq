@@ -556,9 +556,33 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_form, sql_form)
 
-    def test_form_with_opened_by_diff(self):
-        couch_case = {
+    def test_form_with_number_with_extra_leading_zero(self):
+        couch_form = {
             "doc_type": "XFormInstance",
+            "form": {"case": {"update": {
+                "floating": "6.2",
+                "NaN": "fab",
+            }}},
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "form": {"case": {"update": {
+                "floating": "006.2",
+                "NaN": "00fab",
+            }}},
+        }
+        self._test_form_diff_filter(
+            couch_form,
+            sql_form,
+            expected=[FormJsonDiff(
+                diff_type='diff', path=('form', 'case', 'update', 'NaN'),
+                old_value='fab', new_value='00fab'
+            )] + REAL_DIFFS
+        )
+
+    def test_case_with_opened_by_diff(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
             "opened_by": "somebody",
             "actions": [
                 {"action_type": "close"},
@@ -566,16 +590,16 @@ class DiffTestCases(SimpleTestCase):
             ],
         }
         sql_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "opened_by": "somebody else",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
 
-    def test_form_with_opened_by_diff2(self):
+    def test_case_with_opened_by_diff2(self):
         couch_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "actions": [
                 {
                     "action_type": "close",
@@ -585,7 +609,7 @@ class DiffTestCases(SimpleTestCase):
             "opened_by": None,
         }
         sql_case = {
-            "doc_type": "XFormInstance",
+            "doc_type": "CommCareCase",
             "opened_by": "somebody",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)

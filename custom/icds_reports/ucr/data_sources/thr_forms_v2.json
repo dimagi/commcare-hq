@@ -78,7 +78,6 @@
         "transform": {},
         "is_nullable": false,
         "is_primary_key": true,
-        "create_index": true,
         "column_id": "supervisor_id",
         "expression": {
           "location_id_expression": {

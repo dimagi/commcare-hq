@@ -505,7 +505,7 @@ class TestCaseDiffProcess(SimpleTestCase):
         return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
 
-class FakeCaseDiffQueue(object):
+class FakeCaseDiffQueue:
 
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
@@ -687,7 +687,7 @@ class TestDiffCases(SimpleTestCase):
 
 
 @attr.s
-class Diff(object):
+class Diff:
     doc_id = attr.ib()
     kind = attr.ib(default="CommCareCase")
     type = attr.ib(default="diff")
@@ -697,7 +697,7 @@ class Diff(object):
 
 
 @attr.s
-class FakeCase(object):
+class FakeCase:
 
     _id = attr.ib()
     xform_ids = attr.ib(factory=list)
@@ -714,7 +714,7 @@ class FakeCase(object):
 
 
 @attr.s
-class FakeAction(object):
+class FakeAction:
 
     xform_id = attr.ib()
 

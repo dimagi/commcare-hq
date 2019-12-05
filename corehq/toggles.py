@@ -1773,3 +1773,12 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+
+SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+    'show_build_profile_in_app_status',
+    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
