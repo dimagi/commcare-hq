@@ -2,15 +2,14 @@
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
-        BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService, userLocationId,
-            storageService, haveAccessToAllLocations, haveAccessToFeatures) {
+        BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
+                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
             } else {
                 storageService.setKey('search', $location.search());
             }
-
             vm.userLocationId = userLocationId;
             vm.filtersData = $location.search();
             vm.step = $routeParams.step;
@@ -226,8 +225,12 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.goToRoute = function (route) {
                 $location.path(route);
             };
+            vm.getBackArrowLink = function () {
+                return navigationService.getPagePath('program_summary/' + vm.sectionSlug, $location.search());
+            };
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
+
         },
     };
 });

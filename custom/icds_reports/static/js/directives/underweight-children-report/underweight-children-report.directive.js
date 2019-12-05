@@ -2,11 +2,12 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, dateHelperService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, userLocationId, storageService, haveAccessToAllLocations, isMobile);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, isMobile);
     var vm = this;
+    vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
     vm.isAlertActive = isAlertActive;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -164,7 +165,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
 UnderweightChildrenReportController.$inject = [
     '$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService',
-    'dateHelperService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
+    'dateHelperService', 'navigationService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
     'baseControllersService', 'isAlertActive', 'isMobile',
 ];
 
