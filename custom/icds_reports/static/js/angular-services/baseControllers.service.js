@@ -14,6 +14,25 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.search('location_name', loc.name);
             }
         };
+        vm.filtersOpen = false;
+        $scope.$on('openFilterMenu', function () {
+            vm.filtersOpen = true;
+        });
+        $scope.$on('closeFilterMenu', function () {
+            vm.filtersOpen = false;
+        });
+        $scope.$on('mobile_filter_data_changed', function (event, data) {
+            vm.filtersOpen = false;
+            if (!data.location) {
+                vm.moveToLocation('national', -1);
+            } else {
+                vm.moveToLocation(data.location, data.locationLevel);
+            }
+            dateHelperService.updateSelectedMonth(data['month'], data['year']);
+            storageService.setKey('search', $location.search());
+            $scope.$emit('filtersChange');
+        });
+        vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
