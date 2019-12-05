@@ -72,6 +72,9 @@ def allow_migrate(db, app_label, model_name=None):
 
     :return: Must return a boolean value, not None.
     """
+    if not settings.DATABASES[db].get('MIGRATE', True):
+        return False
+
     if app_label == ICDS_REPORTS_APP:
         db_alias = get_icds_ucr_citus_db_alias()
         return bool(db_alias and db_alias == db)
