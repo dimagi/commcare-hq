@@ -87,18 +87,19 @@ def allow_migrate(db, app_label, model_name=None):
     if app_label == PROXY_APP:
         return (
             db == plproxy_config.proxy_db
-            or (plproxy_standby_config and db == plproxy_standby_config.proxy_db)
+            or bool(plproxy_standby_config and db == plproxy_standby_config.proxy_db)
         )
     if app_label == PROXY_STANDBY_APP:
-        return plproxy_standby_config and db == plproxy_standby_config.proxy_db
+        return bool(plproxy_standby_config and db == plproxy_standby_config.proxy_db)
     elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
         return False
     elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
         return (
-            db == plproxy_config.proxy_db or
-            db in plproxy_config.form_processing_dbs
+            db == plproxy_config.proxy_db
+            or db in plproxy_config.form_processing_dbs
+            or bool(plproxy_standby_config and db == plproxy_standby_config.proxy_db)
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in plproxy_config.form_processing_dbs
