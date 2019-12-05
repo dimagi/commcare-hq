@@ -251,8 +251,8 @@ def get_case_block_kwargs(patient, repeater, case=None):
         "case_name": patient['person']['display'],
         "update": {}
     }
-    for prop, (jsonpath, value_source_dict) in property_map.items():
-        value_source = as_value_source(dict(value_source_dict))
+    for prop, (jsonpath, value_source_config) in property_map.items():
+        value_source = as_value_source(value_source_config)
         if not value_source.can_import:
             continue
         matches = jsonpath.find(patient)
@@ -560,8 +560,8 @@ def get_case_block_for_indexed_case(
         },
         "update": {}
     }
-    for value_source_dict in mapping.indexed_case_mapping.case_properties:
-        value_source = as_value_source(dict(value_source_dict))
+    for value_source_config in mapping.indexed_case_mapping.case_properties:
+        value_source = as_value_source(value_source_config)
         value = value_source.get_import_value(external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
             case_block_kwargs[value_source.case_property] = value
