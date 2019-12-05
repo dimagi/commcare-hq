@@ -22,7 +22,8 @@ class Migration(migrations.Migration):
                 ('block_id', models.TextField(null=True)),
                 ('user_level', models.IntegerField(null=True)),
                 ('location_launched', models.NullBooleanField()),
-                ('last_activity', models.DateTimeField(help_text='The latest time dashboard user used dashboard', null=True)),
+                ('last_activity', models.DateTimeField(help_text='The latest time dashboard user used dashboard',
+                                                       null=True)),
                 ('date', models.DateField(null=True)),
             ],
             options={

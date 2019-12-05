@@ -2,7 +2,7 @@ from datetime import timedelta
 from django.db.models import Max
 
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
-from custom.icds_reports.const import  AGG_DASHBOARD_ACTIVITY
+from custom.icds_reports.const import AGG_DASHBOARD_ACTIVITY
 from django.utils.functional import cached_property
 from django.contrib.auth.models import User
 from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username
@@ -19,7 +19,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
     def aggregate(self, cursor):
         drop_query = self.drop_table_query()
         create_table_query, create_table_param = self.create_table_query()
-        add_query, add_params = self.add_missing_users()
+        add_query, add_params = self.add_latest_users_list()
 
         rollover_query, rollover_param = self.rollover_previous_data()
         update_queries = self.update_queries()
@@ -33,10 +33,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             cursor.execute(query, param)
 
     @cached_property
-    def get_dashboard_users(self):
-        dashboard_users = User.objects.filter(username__regex=r'^\d*\.[a-zA-Z]*@.*').all()
-        usernames = {user.username for user in dashboard_users if user.username is not None}
-
+    def dashboard_users(self):
+        usernames = User.objects.filter(username__regex=r'^\d*\.[a-zA-Z]*@.*').values_list('username',
+                                                                                           flat=True)
         user_docs = list()
         for user_list in chunked(usernames, 200):
             user_docs.extend(get_user_docs_by_username(user_list))
@@ -90,7 +89,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def get_user_locations(self):
         user_locations = list()
-        for user in self.get_dashboard_users:
+        for user in self.dashboard_users:
 
             state_id, district_id, block_id, user_level = None, None, None, None
 
@@ -149,7 +148,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             return result['date__max']
         return None
 
-    def add_missing_users(self):
+    def add_latest_users_list(self):
 
         parameters = {'value{}'.format(index): tuple(list(loc) + [self.date])
                       for index, loc in enumerate(self.get_user_locations())
