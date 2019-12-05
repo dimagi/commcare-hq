@@ -2,9 +2,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.isAlertActive = isAlertActive;
 
@@ -98,7 +98,12 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     };
 }
 
-ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+ExclusiveBreasfeedingController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
+    'isAlertActive'
+];
 
 window.angular.module('icdsApp').directive('exclusiveBreastfeeding', function() {
     return {
