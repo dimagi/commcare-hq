@@ -46,15 +46,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
     };
 
-    vm.templatePopup = function(loc, row) {
+    function getPopupData(row) {
         var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
         var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
         var severelyUnderweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
         var moderatelyUnderweight = row ? d3.format(".2%")(row.moderately_underweight / (row.weighed || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.weighed || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
                 indicator_value: total,
             },
@@ -73,7 +72,15 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             {
                 indicator_name: '% Normal '+ vm.chosenFilters() +': ',
                 indicator_value: normal,
-            }]
+            }
+        ];
+    };
+
+    vm.templatePopup = function(loc, row) {
+        var popupData = getPopupData(row);
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            popupData,
         );
     };
 
@@ -161,6 +168,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             }]
         );
     };
+
+
 }
 
 UnderweightChildrenReportController.$inject = [
