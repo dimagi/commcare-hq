@@ -63,9 +63,9 @@
               <span ng-if="$ctrl.mobilePopupLocation.value !== undefined">{$ $ctrl.mobilePopupLocation.value $}</span>
               <span ng-if="$ctrl.mobilePopupLocation.percent !== undefined">{$ $ctrl.mobilePopupLocation.percent | number:2 $}%</span>
             </p>
-            <p class="font-weight-600 font-16 font-montserrat text-white" ng-repeat="indicatorData in $ctrl.mobilePopupData">
+            <p class="font-16 font-montserrat text-white" ng-repeat="indicatorData in $ctrl.mobilePopupData">
               {$ indicatorData.indicator_name $}
-              <span class="text-red" ng-bind="indicatorData.indicator_value"></span>
+              <span class="font-weight-600" ng-bind="indicatorData.indicator_value"></span>
             </p>
           </div>
         </div>
