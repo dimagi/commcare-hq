@@ -1,10 +1,26 @@
 /* global d3, moment */
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
+    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService) {
+        var vm = this;
+        vm.moveToLocation = function(loc, index) {
+            if (loc === 'national') {
+                $location.search('location_id', '');
+                $location.search('selectedLocationLevel', -1);
+                $location.search('location_name', '');
+            } else {
+                $location.search('location_id', loc.location_id);
+                $location.search('selectedLocationLevel', index);
+                $location.search('location_name', loc.name);
+            }
+        };
+    };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
                   navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures) {
+            BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
             var vm = this;
+
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
             } else {
@@ -143,17 +159,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return i;
             };
-            vm.moveToLocation = function(loc, index) {
-                if (loc === 'national') {
-                    $location.search('location_id', '');
-                    $location.search('selectedLocationLevel', -1);
-                    $location.search('location_name', '');
-                } else {
-                    $location.search('location_id', loc.location_id);
-                    $location.search('selectedLocationLevel', index);
-                    $location.search('location_name', loc.name);
-                }
-            };
             vm.getChartOptions = function(options) {
                 return {
                     chart: {
@@ -232,5 +237,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 
         },
+        BaseFilterController: BaseFilterController,
     };
 });
