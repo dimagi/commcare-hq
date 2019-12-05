@@ -34,6 +34,7 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
               SELECT DISTINCT ON (awc_id, submitted_on)
                 doc_id as doc_id,
                 awc_id as awc_id,
+                state_id as state_id,
                 month as month,
                 submitted_on as pse_date,
                 awc_open_count as awc_open_count,
