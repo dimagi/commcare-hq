@@ -51,9 +51,9 @@ class Command(BaseCommand):
 
         if doc_ids_to_delete:
             logger.info("Found following doc_ids to delete:")
-            with open(f'{config_id}_doc_ids_deleted.csv', 'w', newline='') as csvfile:
+            with open(f'{config_id}_{start_date}_{end_date}_deleted.csv', 'w', newline='') as csvfile:
                 for doc_id in doc_ids_to_delete:
-                    csvfile.write(doc_id)
+                    csvfile.write(doc_id + "\n")
 
         if doc_ids_to_delete and execute:
             adapter = get_indicator_adapter(data_source)
