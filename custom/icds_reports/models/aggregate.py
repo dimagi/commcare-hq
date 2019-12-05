@@ -199,7 +199,7 @@ class AwcLocation(models.Model, AggregateMixin):
     district_id = models.TextField(db_index=True)
     district_name = models.TextField(blank=True, null=True)
     district_site_code = models.TextField(blank=True, null=True)
-    state_id = models.TextField(db_index=True)
+    state_id = models.TextField()
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True, db_index=True)

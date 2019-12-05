@@ -93,8 +93,7 @@ ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None, enabled_for_new_domains_after=None,
+                 description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
                  notification_emails=None):
         self.slug = slug
@@ -108,10 +107,10 @@ class StaticToggle(object):
         self.save_fn = save_fn
         # Toggles can be delcared in localsettings statically
         #   to avoid cache lookups
-        self.always_enabled = (always_enabled or set() |
-            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', [])))
-        self.always_disabled = (always_disabled or set() |
-            set(settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', [])))
+        self.always_enabled = set(
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
+        self.always_disabled = set(
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', []))
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
@@ -272,11 +271,9 @@ class PredictablyRandomToggle(StaticToggle):
         randomness,
         help_link=None,
         description=None,
-        always_disabled=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description,
-                                                      always_disabled=always_disabled)
+                                                      help_link=help_link, description=description)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(randomness)
         self.randomness = randomness
@@ -329,12 +326,10 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         namespaces,
         default_randomness=0.0,
         help_link=None,
-        description=None,
-        always_disabled=None
+        description=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description,
-                                                      always_disabled=always_disabled)
+                                                      help_link=help_link, description=description)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -571,7 +566,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -622,7 +616,6 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
     ),
-    always_enabled={'icds-cas'},
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
 
@@ -631,7 +624,6 @@ ASYNC_RESTORE = StaticToggle(
     'Generate restore response in an asynchronous task to prevent timeouts',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
@@ -649,7 +641,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
-    always_disabled={'icds-cas'}
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -662,7 +653,6 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
         "compatability for old projects.  We are actively trying to remove "
         "projects from this list."
     ),
-    always_enabled={'icds-cas'}
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -671,7 +661,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 
@@ -744,7 +733,6 @@ LIVEQUERY_SYNC = StaticToggle(
     'Enable livequery sync algorithm',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 NO_VELLUM = StaticToggle(
@@ -883,7 +871,6 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
@@ -892,7 +879,6 @@ MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
      'NOTE: This won\'t work without developer intervention'),
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas', 'fmoh-echis-staging'}
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -921,7 +907,6 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     description="This is a temporary solution to an unusually high volume of "
     "form submissions from a domain.  We have some projects that automatically "
     "send forms. If that ever causes problems, we can use this to cut them off.",
-    always_disabled={'icds-cas'}
 )
 
 
@@ -1108,7 +1093,6 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
@@ -1223,7 +1207,6 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_enabled={'icds', 'icds-cas'},
 )
 
 LOCALE_ID_INTEGRITY = StaticToggle(
@@ -1275,14 +1258,6 @@ ICDS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
-    always_enabled={
-        "icds-dashboard-qa",
-        "reach-test",
-        "icds-sql",
-        "icds-test",
-        "icds-cas",
-        "icds-cas-sandbox"
-    },
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1313,9 +1288,6 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_enabled={
-        'ews-ghana', 'ils-gateway', 'ils-gateway-train'
-    }
 )
 
 PAGINATED_EXPORTS = StaticToggle(
@@ -1438,7 +1410,6 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -1599,7 +1570,6 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'Sort out of order form submissions in the SQL update strategy',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 
@@ -1623,7 +1593,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'Manage releases per location',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'},
     help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
 )
 
@@ -1810,8 +1779,7 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
+    [NAMESPACE_DOMAIN]
 )
 
 
