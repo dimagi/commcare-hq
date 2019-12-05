@@ -7,7 +7,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import models, transaction, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -78,7 +78,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -961,9 +960,10 @@ class LastSync(DocumentSchema):
 class LastBuild(DocumentSchema):
     """
     Build info for the app on the user's phone
-    when they last synced or submitted
+    when they last synced or submitted or sent heartbeat request
     """
     app_id = StringProperty()
+    build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
 
@@ -1204,7 +1204,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def get_django_user(self, use_primary_db=False):
         queryset = User.objects
         if use_primary_db:
-            queryset = queryset.using(db_for_read_write(User, write=True))
+            queryset = queryset.using(router.db_for_write(User))
         return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
@@ -2798,52 +2798,52 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
-        obj, created = cls.objects.get_or_create(
-            domain=domain, user_id=user_id, app_id=app_id,
-            defaults={
-                'build_id': build_id,
-                'xform_version': version,
-                'form_meta': metadata,
-                'received_on': received_on,
-            }
-        )
+        with transaction.atomic():
+            try:
+                obj = cls.objects.select_for_update().get(
+                    domain=domain, user_id=user_id, app_id=app_id,
+                )
+            except cls.DoesNotExist:
+                cls.objects.create(
+                    domain=domain, user_id=user_id, app_id=app_id,
+                    build_id=build_id, xform_version=version,
+                    form_meta=metadata, received_on=received_on,
+                )
+                return
 
-        if created:
-            return
+            save = False
 
-        save = False
+            if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
+                obj.received_on = received_on
+                save = True
+            if build_id != obj.build_id:
+                obj.build_id = build_id
+                save = True
 
-        if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
-            obj.received_on = received_on
-            save = True
-        if build_id != obj.build_id:
-            obj.build_id = build_id
-            save = True
-
-        if save:
-            obj.form_meta = metadata
-            obj.xform_version = version
-            obj.save()
+            if save:
+                obj.form_meta = metadata
+                obj.xform_version = version
+                obj.save()
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
-        obj, created = cls.objects.get_or_create(
-            domain=domain, user_id=user_id, app_id=app_id,
-            defaults={
-                'build_id': build_id,
-                'sync_date': sync_date,
-                'device_id': device_id,
-            }
-        )
+        with transaction.atomic():
+            try:
+                obj = cls.objects.select_for_update().get(
+                    domain=domain, user_id=user_id, app_id=app_id,
+                )
+            except cls.DoesNotExist:
+                cls.objects.create(
+                    domain=domain, user_id=user_id, app_id=app_id,
+                    build_id=build_id, sync_date=sync_date, device_id=device_id
+                )
+                return
 
-        if created:
-            return
-
-        if not obj.sync_date or sync_date > obj.sync_date:
-            obj.sync_date = sync_date
-            obj.build_id = build_id
-            obj.device_id = device_id
-            obj.save()
+            if not obj.sync_date or sync_date > obj.sync_date:
+                obj.sync_date = sync_date
+                obj.build_id = build_id
+                obj.device_id = device_id
+                obj.save()
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')

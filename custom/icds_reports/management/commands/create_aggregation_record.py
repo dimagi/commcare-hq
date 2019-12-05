@@ -1,12 +1,14 @@
 import logging
 from datetime import datetime
 
+from django.db.models import Count
 from django.core.management.base import BaseCommand
 
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import DASHBOARD_DOMAIN
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import setup_aggregation
 
@@ -24,10 +26,17 @@ class Command(BaseCommand):
     def handle(self, agg_uuid, run_date, interval, **options):
         self.run_date = run_date
         self.interval = int(interval)
-        state_ids = list(
+        states_by_size = (AwcLocation.objects.filter(aggregation_level=5)
+                          .values('state_id')
+                          .annotate(awcs=Count('doc_id'))
+                          .order_by('-awcs'))
+        state_ids = [loc['state_id'] for loc in states_by_size]
+        new_state_ids = list(
             SQLLocation.objects
             .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+            .exclude(location_id__in=state_ids)
             .values_list('location_id', flat=True))
+        state_ids.extend(new_state_ids)
 
         agg_date = self.get_agg_date()
         agg_record, created = AggregationRecord.objects.get_or_create(

@@ -245,6 +245,16 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [],
         )
 
+    def test_update_user_numeric_username(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=123)],
+            [],
+        )
+        self.assertIsNotNone(
+            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
+        )
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     def setUp(self):

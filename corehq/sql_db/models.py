@@ -1,39 +1,19 @@
-from corehq.sql_db.routers import db_for_read_write
-from corehq.util.exceptions import AccessRestricted
-from django.db import models
+from django.db import connections, models, router
 from django.db.models.query import RawQuerySet
 
+from corehq.sql_db.routers import (
+    HINT_PARTITION_VALUE,
+    HINT_PLPROXY,
+    HINT_USING,
+)
+from corehq.util.exceptions import AccessRestricted
 
-def raise_access_restricted():
-    raise AccessRestricted("This model can be partitioned. Please specify which"
-        "partitioned database with `using` or look for an appropriate dbaccessors "
-        "method.")
 
-
-class RequireDBQuerySet(object):
-    """
-    Takes a QuerySet when instantiated. If .using() is called on this object,
-    it will return the queryset with the given database selected. If anything
-    else is called on this object, it will raise AccessRestricted.
-    """
-
-    def __init__(self, queryset):
-        self.queryset = queryset
-
-    def using(self, db_name):
-        return self.queryset.using(db_name)
-
-    def __getattr__(self, item):
-        raise_access_restricted()
-
-    def __iter__(self):
-        raise_access_restricted()
-
-    def __len__(self):
-        raise_access_restricted()
-
-    def __getitem__(self, key):
-        raise_access_restricted()
+def raise_access_restricted(queryset):
+    if not queryset._db and 'partition_value' not in queryset._hints and 'using' not in queryset._hints:
+        raise AccessRestricted("This model can be partitioned. Please specify which"
+            "partitioned database with `using` or look for an appropriate dbaccessors "
+            "method.")
 
 
 class RequireDBManager(models.Manager):
@@ -44,7 +24,8 @@ class RequireDBManager(models.Manager):
 
     def get_queryset(self):
         queryset = super(RequireDBManager, self).get_queryset()
-        return RequireDBQuerySet(queryset)
+        raise_access_restricted(queryset)
+        return queryset
 
     @staticmethod
     def get_db(partition_value):
@@ -71,27 +52,36 @@ class RequireDBManager(models.Manager):
             kwargs = {
                 self.model.partition_attr: partition_value
             }
-        return self.using(self.get_db(partition_value)).get(**kwargs)
+        return self.partitioned_query(partition_value).get(**kwargs)
 
-    def partitioned_query(self, partition_value):
+    def partitioned_query(self, partition_value=None):
         """Shortcut to get a queryset for a partitioned database.
         Equivalent to:
 
             db = get_db_alias_for_partitioned_doc(partition_value)
             qs = Model.objects.using(db)
         """
-        return self.using(self.get_db(partition_value))
+        return self.db_manager(hints={HINT_PARTITION_VALUE: partition_value})
 
-
-class RestrictedManager(RequireDBManager):
+    def using(self, alias):
+        return self.db_manager(hints={HINT_USING: alias}).get_queryset()
 
     def raw(self, raw_query, params=None, translations=None, using=None):
-        if not using:
-            using = db_for_read_write(self.model)
-        return RawQuerySet(
-            raw_query, model=self.model,
-            params=params, translations=translations, using=using
-        )
+        if using:
+            hints = {HINT_USING: using}
+        else:
+            hints = {HINT_PLPROXY: True}
+        return RawQuerySet(raw_query, model=self.model, params=params, translations=translations, hints=hints)
+
+    def plproxy_raw(self, raw_query, params=None):
+        return self.raw(raw_query, params)
+
+
+def _get_cursor(cls, readonly=False, hints=None):
+    hints = hints or {}
+    action = router.db_for_read if readonly else router.db_for_write
+    db = action(cls, **hints)
+    return connections[db].cursor()
 
 
 class PartitionedModel(models.Model):
@@ -105,6 +95,18 @@ class PartitionedModel(models.Model):
     """
 
     objects = RequireDBManager()
+
+    @classmethod
+    def get_plproxy_cursor(cls, readonly=False):
+        return _get_cursor(cls, readonly, {HINT_PLPROXY: True})
+
+    @classmethod
+    def get_cursor_for_partition_value(cls, partition_value, readonly=False):
+        return _get_cursor(cls, readonly, {HINT_PARTITION_VALUE: partition_value})
+
+    @classmethod
+    def get_cursor_for_partition_db(cls, db_alias, readonly=False):
+        return _get_cursor(cls, readonly, {HINT_USING: db_alias})
 
     @property
     def partition_attr(self):
@@ -122,18 +124,3 @@ class PartitionedModel(models.Model):
 
     class Meta(object):
         abstract = True
-
-    def save(self, *args, **kwargs):
-        self._add_routing(kwargs)
-        return super(PartitionedModel, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self._add_routing(kwargs)
-        return super(PartitionedModel, self).delete(*args, **kwargs)
-
-    def _add_routing(self, kwargs):
-        if 'using' in kwargs:
-            assert kwargs['using'] == self.db, \
-                "using=%r, expected %r" % (kwargs['using'], self.db)
-        else:
-            kwargs['using'] = self.db

@@ -2,7 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
+                                  userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -13,7 +14,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.isAlertActive = isAlertActive;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
     vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
 
     if (Object.keys($location.search()).length === 0) {
@@ -58,13 +58,20 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         return newValue;
     }, true);
 
+    function _getStep(stepId) {
+        return {
+            "id": stepId,
+            "route": "/program_summary/" + stepId,
+            "label": navMetadata[stepId]["label"],
+            "image": navMetadata[stepId]["image"],
+        };
+    }
     vm.steps = {
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
-        "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
-        "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+        "maternal_child": _getStep("maternal_child"),
+        "icds_cas_reach": _getStep("icds_cas_reach"),
+        "demographics": _getStep("demographics"),
+        "awc_infrastructure": _getStep("awc_infrastructure"),
     };
-
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -124,11 +131,34 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     }
 
     vm.getDataForStep(vm.step);
+    vm.currentStepMeta = vm.steps[vm.step];
+
+    // mobile only, update if filters are visible over the program summary
+    vm.filtersOpen = false;
+    $scope.$on('openFilterMenu', function () {
+        vm.filtersOpen = true;
+    });
+    $scope.$on('closeFilterMenu', function () {
+        vm.filtersOpen = false;
+    });
+    $scope.$on('mobile_filter_data_changed', function (event, data) {
+        vm.filtersOpen = false;
+        if (!data.location) {
+            vm.moveToLocation('national', -1);
+        } else {
+            vm.moveToLocation(data.location, data.locationLevel);
+        }
+        dateHelperService.updateSelectedMonth(data['month'], data['year']);
+        storageService.setKey('search', $location.search());
+        $scope.$emit('filtersChange');
+    });
+    vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 }
 
-ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
+    'dateHelperService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
-window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
+window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         templateUrl: function () {

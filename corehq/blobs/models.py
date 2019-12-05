@@ -12,7 +12,7 @@ from django.db.models import (
 from memoized import memoized
 from partial_index import PartialIndex, PQ
 
-from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.sql_db.models import PartitionedModel
 
 from .util import get_content_md5, NullJsonField
 
@@ -25,7 +25,6 @@ class BlobMeta(PartitionedModel, Model):
     """Metadata about an object stored in the blob db"""
 
     partition_attr = "parent_id"
-    objects = RestrictedManager()
 
     domain = CharField(max_length=255)
     parent_id = CharField(
@@ -100,6 +99,10 @@ class BlobMeta(PartitionedModel, Model):
         from . import get_blob_db
         return get_blob_db().get(key=self.key)
 
+    def blob_exists(self):
+        from . import get_blob_db
+        return get_blob_db().exists(self.key)
+
     @memoized
     def content_md5(self):
         """Get RFC-1864-compliant Content-MD5 header value"""
@@ -115,7 +118,6 @@ class DeletedBlobMeta(PartitionedModel, Model):
     """
 
     partition_attr = "parent_id"
-    objects = RestrictedManager()
 
     id = IntegerField(primary_key=True)
     domain = CharField(max_length=255)

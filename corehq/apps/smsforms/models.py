@@ -237,7 +237,3 @@ class SQLXFormsSession(models.Model):
         while self.current_action_is_a_reminder and self.current_action_due < utcnow():
             self.current_reminder_num += 1
             self.set_current_action_due_timestamp()
-
-
-def get_session_by_session_id(id):
-    return SQLXFormsSession.by_session_id(id)
