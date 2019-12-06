@@ -48,16 +48,14 @@
   <script src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
 
   {# components #}
-  <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_component_directives.html' %}
+{% compress js %}
   <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/filter-opener/filter-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-filters/mobile-filters.directive.js' %}"></script>
-  <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
-  <script src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
-  <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
-  <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
 
   {# reports #}
   <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
