@@ -36,12 +36,9 @@
 
   <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
-  {# utilty services #}
-  <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/navigation.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/date-helper.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_utility_services.html' %}
+{% compress js %}
 
   {# report services #}
   <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
