@@ -137,7 +137,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime for the Visit
         """
         if form_config.openmrs_start_datetime:
-            value_source = as_value_source(dict(form_config.openmrs_start_datetime))
+            value_source = as_value_source(form_config.openmrs_start_datetime)
             cc_start_datetime_str = value_source.get_commcare_value(self.info)
             if cc_start_datetime_str is None:
                 raise ConfigurationError(
@@ -168,7 +168,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
     def _get_values_for_concept(self, form_config):
         values_for_concept = {}
         for obs in form_config.openmrs_observations:
-            value_source = as_value_source(dict(obs.value))
+            value_source = as_value_source(obs.value)
             if value_source.can_export and not is_blank(value_source.get_value(self.info)):
                 values_for_concept[obs.concept] = [value_source.get_value(self.info)]
         return values_for_concept

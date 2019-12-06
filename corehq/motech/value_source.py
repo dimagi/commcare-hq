@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 import attr
 from jsonobject.containers import JsonDict
@@ -419,17 +419,21 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
-def as_value_source(data: dict) -> ValueSource:
+def as_value_source(
+    value_source_config: Union[dict, JsonDict],
+) -> ValueSource:
+    if isinstance(value_source_config, JsonDict):
+        value_source_config = dict(value_source_config)  # JsonDict fails assertion in Schema.validate()
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
-            valid_data = Schema(*args, **kwargs).validate(data)
+            validated_config = Schema(*args, **kwargs).validate(value_source_config)
         except SchemaError:
             pass
         else:
-            return subclass.wrap(valid_data)
+            return subclass.wrap(validated_config)
     else:
-        raise TypeError(f"Unable to determine class for {data!r}")
+        raise TypeError(f"Unable to determine class for {value_source_config!r}")
 
 
 def get_value(
@@ -440,7 +444,7 @@ def get_value(
     Returns the value referred to by the value source definition,
     serialized for the external system.
     """
-    value_source = as_value_source(dict(value_source_config))
+    value_source = as_value_source(value_source_config)
     return value_source.get_value(case_trigger_info)
 
 
@@ -452,7 +456,7 @@ def get_import_value(
     Returns the external value referred to by the value source
     definition, deserialized for CommCare.
     """
-    value_source = as_value_source(dict(value_source_config))
+    value_source = as_value_source(value_source_config)
     return value_source.get_import_value(external_data)
 
 
@@ -462,7 +466,7 @@ def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:
     type or format for CommCare, if necessary, otherwise returns the
     value unchanged.
     """
-    value_source = as_value_source(dict(value_source_config))
+    value_source = as_value_source(value_source_config)
     return value_source.deserialize(external_value)
 
 
