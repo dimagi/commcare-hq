@@ -1541,7 +1541,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     # Fill data
     for row_index, row in enumerate(excel_data[0][1][1:]):
-        worksheet.row_dimensions[row_index+2].height = 25
+        worksheet.row_dimensions[row_index + 2].height = 25
         for col_index, col_value in enumerate(row):
             if col_index == 0:
                 col_value = row_index + 1

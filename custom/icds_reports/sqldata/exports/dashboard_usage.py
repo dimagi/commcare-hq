@@ -3,6 +3,7 @@ import datetime
 import re
 from collections import defaultdict
 
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.es import UserES
 from custom.icds_reports.models import AwcLocation
@@ -84,7 +85,7 @@ class DashBoardUsage:
                     location_ids.append(result[sub_location])
                     # adding location id and name to the dict
                     self.location_id_name_dict[result[sub_location]] = result[
-                        self.get_location_type_string_from_location_id(sub_location)+'_name']
+                        self.get_location_type_string_from_location_id(sub_location) + '_name']
         return location_ids
 
     def get_location_id_string_from_location_type(self, location_type):
@@ -103,12 +104,12 @@ class DashBoardUsage:
     def get_location_name_from_id(self, location_id):
         return self.location_id_name_dict[location_id]
 
+    def get_data_for_usgae_report(self, date, filters):
+        return list(DashboardUserActivityReport.objects.filter(date=date, **filters))
+
     def get_excel_data(self):
         excel_rows = []
         filters = [['Generated at', india_now()]]
-
-        today = datetime.datetime.utcnow()
-        previous_day = today - datetime.timedelta(days=1)
 
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
                    'Launched?', 'Last Login  Activity ', 'Activity in the last 7 days?']
@@ -143,11 +144,15 @@ class DashBoardUsage:
 
             usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
 
-            records = list(DashboardUserActivityReport.objects.filter(
-                                                               username__in=usernames,
-                                                               date=previous_day))
+            date = datetime.datetime.now().date()
+            usage_data = None
+            filters = {'username__in': usernames}
+            # keep the record in searched - current - month
+            while usage_data is None:
+                usage_data = self.get_data_for_usgae_report(date, filters)
+                date -= relativedelta(days=1)
 
-            for record in records:
+            for record in usage_data:
                 last_activity, activity_in_last_week = self.check_if_date_in_last_week(record.last_activity)
                 district_name = self.get_location_name_from_id(record.district_id)
                 block_name = self.get_location_name_from_id(record.block_id)
