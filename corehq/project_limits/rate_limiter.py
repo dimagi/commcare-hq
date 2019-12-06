@@ -5,6 +5,7 @@ import attr
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.users.models import CommCareUser
+from corehq.project_limits.models import DynamicRateDefinition
 from corehq.project_limits.rate_counter.presets import (
     day_rate_counter,
     hour_rate_counter,
@@ -176,3 +177,19 @@ class RateDefinition(object):
             (self.per_minute, minute_rate_counter),
             (self.per_second, second_rate_counter),
         ) if limit]
+
+
+def get_dynamic_rate_definition(key, default):
+    dynamic_rate_definition, _ = DynamicRateDefinition.objects.get_or_create(
+        key=key, defaults=_get_rate_definition_dict(default))
+    return RateDefinition(**_get_rate_definition_dict(dynamic_rate_definition))
+
+
+def _get_rate_definition_dict(rate_definition):
+    """
+    Convert RateDefinition-like object to dict like {'per_week': ..., 'per_hour': ..., ...}
+    """
+    return {
+        attribute.name: getattr(rate_definition, attribute.name)
+        for attribute in RateDefinition.__attrs_attrs__
+    }
