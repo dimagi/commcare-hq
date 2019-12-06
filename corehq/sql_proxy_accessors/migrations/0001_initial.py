@@ -18,7 +18,7 @@ def create_update_pl_proxy_config():
     if not (settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE):
         return noop_migration()
 
-    sql_statements = get_sql_to_create_pl_proxy_cluster(plproxy_config, drop_existing=False)
+    sql_statements = get_sql_to_create_pl_proxy_cluster(plproxy_config)
     drop_server_sql = get_drop_server_sql(plproxy_config.cluster_name)
     return migrations.RunSQL('\n'.join(sql_statements), drop_server_sql)
 

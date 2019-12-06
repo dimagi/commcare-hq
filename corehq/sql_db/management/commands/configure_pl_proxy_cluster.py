@@ -134,10 +134,10 @@ def _get_alter_server_sql(cluster_name, shards_to_update):
     )
 
 
-def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
+def create_pl_proxy_cluster(cluster_config, verbose=False):
     proxy_db = cluster_config.proxy_db
 
-    sql = get_sql_to_create_pl_proxy_cluster(cluster_config, drop_existing)
+    sql = get_sql_to_create_pl_proxy_cluster(cluster_config)
 
     with transaction.atomic(proxy_db), connections[proxy_db].cursor() as cursor:
         for command in sql:
@@ -146,13 +146,11 @@ def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
             cursor.execute(command)
 
 
-def get_sql_to_create_pl_proxy_cluster(cluster_config, drop_existing=False):
-    sql = [get_drop_server_sql(cluster_config.cluster_name)] if drop_existing else []
-    sql.extend([
+def get_sql_to_create_pl_proxy_cluster(cluster_config):
+    return [
         get_pl_proxy_server_config_sql(cluster_config.cluster_name, cluster_config.get_shards()),
         get_user_mapping_sql(cluster_config)
-    ])
-    return sql
+    ]
 
 
 def get_drop_server_sql(cluster_name):
