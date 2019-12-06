@@ -53,76 +53,30 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                'st4': {
-                    'normal': 0,
-                    'total_measured': 0,
-                    'original_name': ['st4'],
-                    'total_weighed': 0,
-                    'severe': 0,
-                    'moderate': 0,
-                    'total_height_eligible': 0,
-                    'fillKey': '0%-5%'
-                },
-                'st5': {
-                    'normal': 0,
-                    'total_measured': 0,
-                    'original_name': ['st5'],
-                    'total_weighed': 0,
-                    'severe': 0,
-                    'moderate': 0,
-                    'total_height_eligible': 0,
-                    'fillKey': '0%-5%'
-                },
-                'st6': {
-                    'normal': 0,
-                    'total_measured': 0,
-                    'original_name': ['st6'],
-                    'total_weighed': 0,
-                    'severe': 0,
-                    'moderate': 0,
-                    'total_height_eligible': 0,
-                    'fillKey': '0%-5%'
-                },
-                'st7': {
-                    'normal': 0,
-                    'total_measured': 0,
-                    'original_name': ['st7'],
-                    'total_weighed': 0,
-                    'severe': 0,
-                    'moderate': 0,
-                    'total_height_eligible': 1,
-                    'fillKey': '0%-5%'
-                },
-                'st1': {
-                    'normal': 3,
-                    'total_measured': 7,
-                    'original_name': ['st1'],
-                    'total_weighed': 317,
-                    'severe': 0,
-                    'moderate': 4,
-                    'total_height_eligible': 454,
-                    'fillKey': '7%-100%'
-                },
-                'st2': {
-                    'normal': 16,
-                    'total_measured': 20,
-                    'original_name': ['st2'],
-                    'total_weighed': 378,
-                    'severe': 0,
-                    'moderate': 4,
-                    'total_height_eligible': 496,
-                    'fillKey': '7%-100%'
-                },
-                'st3': {
-                    'normal': 0,
-                    'total_measured': 0,
-                    'original_name': ['st3'],
-                    'total_weighed': 0,
-                    'severe': 0,
-                    'moderate': 0,
-                    'total_height_eligible': 0,
-                    'fillKey': '0%-5%'
-                }
+                'st1': {'moderate': 4,
+                        'severe': 0,
+                        'normal': 3,
+                        'total_weighed': 317,
+                        'total_measured': 7,
+                        'total_height_eligible': 454,
+                        'original_name': ['st1'],
+                        'fillKey': '7%-100%'},
+                'st2': {'moderate': 4,
+                        'severe': 0,
+                        'normal': 16,
+                        'total_weighed': 378,
+                        'total_measured': 20,
+                        'total_height_eligible': 496,
+                        'original_name': ['st2'],
+                        'fillKey': '7%-100%'},
+                'st7': {'moderate': 0,
+                        'severe': 0,
+                        'normal': 0,
+                        'total_weighed': 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 1,
+                        'original_name': ['st7'],
+                        'fillKey': '0%-5%'}
             }
         )
 
@@ -286,8 +240,6 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {'loc_name': 'st5', 'percent': 0.0},
-                {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 20.0},
                 {'loc_name': 'st1', 'percent': 57.142857142857146}
@@ -306,11 +258,9 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {'loc_name': 'st3', 'percent': 0.0},
-                {'loc_name': 'st4', 'percent': 0.0},
-                {'loc_name': 'st5', 'percent': 0.0},
-                {'loc_name': 'st6', 'percent': 0.0},
-                {'loc_name': 'st7', 'percent': 0.0}
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 20.0},
+                {'loc_name': 'st1', 'percent': 57.142857142857146}
             ]
         )
 
@@ -484,10 +434,6 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {'loc_name': 'st3', 'percent': 0.0},
-                {'loc_name': 'st4', 'percent': 0.0},
-                {'loc_name': 'st5', 'percent': 0.0},
-                {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 20.0},
                 {'loc_name': 'st1', 'percent': 57.142857142857146}

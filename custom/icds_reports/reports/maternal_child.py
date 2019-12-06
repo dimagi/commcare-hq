@@ -18,42 +18,42 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
 
     def get_data_for_child_health_monthly(date, filters):
 
-        age_filters = {'age_tranche__lt': 72}
+        age_filters = {'age_tranche': 72}
 
-        moderately_underweight = include_records_by_age_for_column(
+        moderately_underweight = exclude_records_by_age_for_column(
             age_filters,
             'nutrition_status_moderately_underweight'
         )
-        severely_underweight = include_records_by_age_for_column(
+        severely_underweight = exclude_records_by_age_for_column(
             age_filters,
             'nutrition_status_severely_underweight'
         )
         wasting_moderate = include_records_by_age_for_column(
-            age_filters,
+            {'age_tranche__lt': 72},
             wasting_moderate_column(icds_feature_flag)
         )
         wasting_severe = include_records_by_age_for_column(
-            age_filters,
+            {'age_tranche__lt': 72},
             wasting_severe_column(icds_feature_flag)
         )
-        stunting_moderate = include_records_by_age_for_column(
+        stunting_moderate = exclude_records_by_age_for_column(
             age_filters,
             stunting_moderate_column(icds_feature_flag)
         )
-        stunting_severe = include_records_by_age_for_column(
+        stunting_severe = exclude_records_by_age_for_column(
             age_filters,
             stunting_severe_column(icds_feature_flag)
         )
-        nutrition_status_weighed = include_records_by_age_for_column(
+        nutrition_status_weighed = exclude_records_by_age_for_column(
             age_filters,
             'nutrition_status_weighed'
         )
-        height_measured_in_month = include_records_by_age_for_column(
+        height_measured_in_month = exclude_records_by_age_for_column(
             age_filters,
             hfa_recorded_in_month_column(icds_feature_flag)
         )
         weighed_and_height_measured_in_month = include_records_by_age_for_column(
-            age_filters,
+            {'age_tranche__lt': 72},
             wfh_recorded_in_month_column(icds_feature_flag)
         )
 
