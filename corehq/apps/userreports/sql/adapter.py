@@ -438,9 +438,7 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
                 *index.column_ids
             ))
         else:
-            _assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
-            _assert(False, "Invalid index specified on {}".format(table_name))
-            break
+            logger.error(f"Invalid index specified on {table_name} ({index.column_ids})")
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.

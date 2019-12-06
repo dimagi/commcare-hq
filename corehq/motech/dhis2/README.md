@@ -1,7 +1,7 @@
-MOTECH's DHIS2 Module
-=====================
+The MOTECH DHIS2 Module
+=======================
 
-See the [MOTECH README](../README.md#dhis2-module) for a brief
+See the [MOTECH README](../README.md#the-dhis2-module) for a brief
 introduction to DHIS2 in the context of MOTECH.
 
 MOTECH currently supports two ways of integrating with DHSI2: Forwarding

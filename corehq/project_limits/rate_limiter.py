@@ -3,6 +3,7 @@ import time
 
 import attr
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.users.models import CommCareUser
 from corehq.project_limits.rate_counter.presets import (
     day_rate_counter,
@@ -85,8 +86,40 @@ class RateLimiter(object):
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def get_user_count(domain):
+def get_n_users_for_rate_limiting(domain):
+    """
+    Returns the number of users "allocated" to the project
+
+    That is, the actual number of users or the number of users included in the subscription,
+    whichever is higher.
+
+    This number is then used to portion out resource allocation through rate limiting.
+
+    """
+    n_users = _get_user_count(domain)
+    n_users_included_in_subscription = _get_users_included_in_subscription(domain)
+    return max(n_users_included_in_subscription, n_users)
+
+
+def _get_user_count(domain):
     return CommCareUser.total_by_domain(domain, is_active=True)
+
+
+def _get_users_included_in_subscription(domain):
+    subscription = Subscription.get_active_subscription_by_domain(domain)
+    if subscription:
+        plan_version = subscription.plan_version
+
+        n_included_users = (
+            plan_version.feature_rates.get(feature__feature_type='User').monthly_limit)
+
+        if plan_version.plan.is_customer_software_plan:
+            n_domains = len(plan_version.subscription_set.filter(is_active=True))
+            return n_included_users / n_domains
+        else:
+            return n_included_users
+    else:
+        return 0
 
 
 class PerUserRateDefinition(object):
@@ -95,7 +128,7 @@ class PerUserRateDefinition(object):
         self.constant_rate_definition = constant_rate_definition or RateDefinition()
 
     def get_rate_limits(self, domain):
-        n_users = get_user_count(domain)
+        n_users = get_n_users_for_rate_limiting(domain)
         return (
             self.per_user_rate_definition
             .times(n_users)

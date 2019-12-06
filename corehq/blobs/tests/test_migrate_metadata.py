@@ -8,8 +8,6 @@ from corehq.blobs.migrate import MIGRATIONS
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.test_migrate import discard_migration_state
 
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-
 import attr
 from dimagi.ext.couchdbkit import DocumentSchema, IntegerProperty, StringProperty
 from django.test import TestCase
@@ -167,9 +165,8 @@ class TestMigrateBackend(TestCase):
             obj = doc.class_.get(doc.id)
             self.assertEqual(obj._rev, doc.data["_rev"])  # rev should not change
             self.assertEqual(set(obj.blobs), set(doc.data["external_blobs"]))
-            db = get_db_alias_for_partitioned_doc(obj._id)
             metas = {meta.name: meta
-                for meta in BlobMeta.objects.using(db).filter(parent_id=doc.id)}
+                for meta in BlobMeta.objects.partitioned_query(obj._id).filter(parent_id=doc.id)}
             for name, meta in obj.blobs.items():
                 blobmeta = metas[name]
                 dbname = doc.class_.get_db().dbname
@@ -180,8 +177,7 @@ class TestMigrateBackend(TestCase):
                 self.assertEqual(blobmeta.content_length, meta.content_length, doc)
 
         for doc in self.sql_docs:
-            db = get_db_alias_for_partitioned_doc(doc.parent_id)
-            blobmeta = BlobMeta.objects.using(db).get(
+            blobmeta = BlobMeta.objects.partitioned_query(doc.parent_id).get(
                 parent_id=doc.parent_id,
                 type_code=doc.type_code,
                 name="",
@@ -217,8 +213,7 @@ class TestMigrateBackend(TestCase):
 
         # should have one blob per parent
         for parent_id in parent_ids:
-            db = get_db_alias_for_partitioned_doc(parent_id)
-            metas = list(BlobMeta.objects.using(db).filter(parent_id=parent_id))
+            metas = list(BlobMeta.objects.partitioned_query(parent_id).filter(parent_id=parent_id))
             self.assertEqual(len(metas), 1, metas)
 
 
