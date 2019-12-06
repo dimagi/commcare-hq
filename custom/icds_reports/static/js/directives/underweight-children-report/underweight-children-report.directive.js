@@ -80,7 +80,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         var popupData = getPopupData(row);
         return vm.createTemplatePopup(
             loc.properties.name,
-            popupData,
+            popupData
         );
     };
 
