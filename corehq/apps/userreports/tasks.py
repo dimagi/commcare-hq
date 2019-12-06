@@ -300,15 +300,13 @@ def reprocess_archive_stubs():
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:
         # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
-        if time.time() - start > cutoff:
+        if time.time() > cutoff:
             return
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
         # If the history wasn't updated the first time around, run the whole thing again.
         if not stub.history_updated:
-            if stub.archive:
-                xform.archive(user_id=stub.user_id)
-            else:
-                xform.unarchive(user_id=stub.user_id)
+            FormAccessors.do_archive(xform, stub.archive, stub.user_id, trigger_signals=True)
+
         # If the history was updated the first time around, just send the update to kafka
         else:
             FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)

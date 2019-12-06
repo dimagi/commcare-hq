@@ -10,7 +10,7 @@
                           Program Summary
                       </p>
                       <p class="font-14 font-montserrat font-weight-500 text-white">
-                          October 2019 | National
+                          {$ $ctrl.selectedMonthDisplay $} | National
                           <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                             &gt; {$ loc.name $}
                           </span>

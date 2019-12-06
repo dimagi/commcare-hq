@@ -1,9 +1,17 @@
 from django.conf import settings
 from django.db import transaction
+
 from dimagi.utils.logging import notify_exception
-from corehq.apps.users.util import format_username, cached_user_id_to_username
+
 from corehq.apps.users.dbaccessors import get_user_id_by_username
-from .models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
+from corehq.apps.users.util import cached_user_id_to_username, format_username
+
+from .models import (
+    DeviceReportEntry,
+    ForceCloseEntry,
+    UserEntry,
+    UserErrorEntry,
+)
 from .tasks import send_device_log_to_sumologic
 
 

@@ -2,11 +2,14 @@ import json
 import re
 from collections import namedtuple
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 
+from couchdbkit import ResourceNotFound
+
 import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -15,7 +18,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
 
 
 def get_submit_url(domain, app_id=None):

@@ -27,6 +27,17 @@ DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
 DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
+# Setting to declare always_enabled/always_disabled toggle states for domains
+#   declaring toggles here avoids toggle lookups from cache for all requests.
+#   Example format
+#   STATIC_TOGGLES_STATES = {
+#     'toggle_slug': {
+#         'always_enabled': ['domain1', 'domain2],
+#         'always_disabled': ['domain4', 'domain3],
+#     }
+#   }
+STATIC_TOGGLE_STATES = {}
+
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -148,6 +159,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
