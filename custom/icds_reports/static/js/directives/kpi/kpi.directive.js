@@ -25,6 +25,7 @@ function KpiController($rootScope, $location, haveAccessToFeatures) {
 
     this.isNumber = window.angular.isNumber;
 
+    // Added to hide Infantometer and Stadiometer cards in the UI. To be removed post testing
     this.toShowInKpi = function (cellLabel) {
         return !cellLabel.includes('Infantometer') && !cellLabel.includes('Stadiometer');
     };
