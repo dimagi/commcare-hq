@@ -38,14 +38,10 @@
 
 {% endcompress %}
   {% include 'icds_reports/partials/shared_utility_services.html' %}
-{% compress js %}
 
-  {# report services #}
-  <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
+  {% include 'icds_reports/partials/shared_report_services.html' %}
 
   {# components #}
-{% endcompress %}
   {% include 'icds_reports/partials/shared_component_directives.html' %}
 {% compress js %}
   <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
