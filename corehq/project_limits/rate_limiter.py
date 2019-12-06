@@ -133,7 +133,7 @@ class PerUserRateDefinition(object):
             self.per_user_rate_definition
             .times(n_users)
             .plus(self.constant_rate_definition)
-        ).rate_limits
+        ).get_rate_limits()
 
 
 @attr.s
@@ -168,8 +168,7 @@ class RateDefinition(object):
                 kwargs[attribute.name] = math_func(value)
         return self.__class__(**kwargs)
 
-    @property
-    def rate_limits(self):
+    def get_rate_limits(self):
         return [(rate_counter, limit) for limit, rate_counter in (
             (self.per_week, week_rate_counter),
             (self.per_day, day_rate_counter),
