@@ -196,8 +196,8 @@ def create_patient(requests, info, case_config):
 
     def get_identifiers():
         identifiers = []
-        for patient_identifier_type, value_source_dict in case_config.patient_identifiers.items():
-            value_source = as_value_source(dict(value_source_dict))
+        for patient_identifier_type, value_source_config in case_config.patient_identifiers.items():
+            value_source = as_value_source(value_source_config)
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
                 and value_source.can_export
@@ -429,8 +429,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
 
 def get_export_data(config, properties, case_trigger_info):
     export_data = {}
-    for property_, value_source_dict in config.items():
-        value_source = as_value_source(dict(value_source_dict))
+    for property_, value_source_config in config.items():
+        value_source = as_value_source(value_source_config)
         if (
             property_ in properties
             and value_source.can_export

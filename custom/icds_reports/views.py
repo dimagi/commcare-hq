@@ -889,7 +889,6 @@ class ExportIndicatorView(View):
                 month,
                 year,
                 request.couch_user,
-                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -921,7 +920,6 @@ class ExportIndicatorView(View):
                 self.kwargs['domain'],
                 export_format,
                 indicator,
-                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})

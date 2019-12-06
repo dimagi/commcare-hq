@@ -1,6 +1,3 @@
-import warnings
-from contextlib import contextmanager
-
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections
 
@@ -158,9 +155,3 @@ def get_db_for_plproxy_cluster(model, hints):
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
     read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
     return select_db_for_read(read_dbs) or default
-
-
-@contextmanager
-def force_citus_engine(force=False):
-    warnings.warn('Use of non-citus is deprecated', DeprecationWarning)
-    yield
