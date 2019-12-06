@@ -39,7 +39,6 @@ hqDefine("js/icds_dashboard_utils", function () {
     }
 
     function addMaternalChildRoutes($routeProvider) {
-        console.log('updating')
         return $routeProvider.when("/maternal_and_child", {
                 redirectTo: "/maternal_and_child/underweight_children/map",
             })
