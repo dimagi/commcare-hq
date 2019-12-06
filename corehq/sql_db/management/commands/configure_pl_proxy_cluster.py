@@ -2,7 +2,7 @@ import re
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import connections, transaction
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import ShardMeta, plproxy_config, plproxy_standby_config
@@ -139,7 +139,7 @@ def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
 
     sql = get_sql_to_create_pl_proxy_cluster(cluster_config, drop_existing)
 
-    with connections[proxy_db].cursor() as cursor:
+    with transaction.atomic(proxy_db), connections[proxy_db].cursor() as cursor:
         for command in sql:
             if verbose:
                 print(f'\t{command}')
