@@ -50,9 +50,7 @@
   <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
 
-  {# reports #}
-  <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
-  <script src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
+  {% include 'icds_reports/partials/shared_report_directives.html' %}
 
 {% endcompress %}
 {% endblock head %}

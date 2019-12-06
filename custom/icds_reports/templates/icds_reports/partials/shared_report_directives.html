@@ -1,0 +1,6 @@
+{% load compress %}
+{% load hq_shared_tags %}
+{% compress js %}
+  <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
+  <script src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
+{% endcompress %}
