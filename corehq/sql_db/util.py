@@ -4,17 +4,16 @@ import uuid
 from collections import defaultdict
 from functools import wraps
 
-from django import db
 from django.conf import settings
-from django.db import OperationalError
-from django.db.utils import DEFAULT_DB_ALIAS
+from django.db import OperationalError, connections, transaction
+from django.db.utils import DEFAULT_DB_ALIAS, DatabaseError
 from django.db.utils import InterfaceError as DjangoInterfaceError
-from memoized import memoized
-from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 from corehq.sql_db.config import plproxy_config, plproxy_standby_config
 from corehq.util.datadog.utils import load_counter_for_model
 from corehq.util.quickcache import quickcache
+from memoized import memoized
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
@@ -119,7 +118,7 @@ def estimate_row_count(query, db_name="default"):
     to query. The sum of counts from all databases will be returned.
     """
     def count(db_name):
-        with db.connections[db_name].cursor() as cursor:
+        with connections[db_name].cursor() as cursor:
             cursor.execute(sql, params)
             lines = [line for line, in cursor.fetchall()]
             for line in lines:
@@ -200,11 +199,11 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
         def _inner(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
-            except db.utils.DatabaseError:
+            except DatabaseError:
                 # we have to do this manually to avoid issues with
                 # open transactions and already closed connections
                 for db_name in get_db_aliases():
-                    db.transaction.rollback(using=db_name)
+                    transaction.rollback(using=db_name)
 
                 # re raise the exception for additional error handling
                 raise
@@ -212,7 +211,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
                 # force closing the connection to prevent Django from trying to reuse it.
                 # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
                 for db_name in get_db_aliases():
-                    db.connections[db_name].close()
+                    connections[db_name].close()
 
                 # re raise the exception for additional error handling
                 raise
@@ -246,7 +245,7 @@ def _get_all_nested_subclasses(cls):
 def get_standby_databases():
     standby_dbs = set()
     for db_alias in settings.DATABASES:
-        with db.connections[db_alias].cursor() as cursor:
+        with connections[db_alias].cursor() as cursor:
             cursor.execute("SELECT pg_is_in_recovery()")
             [(is_standby, )] = cursor.fetchall()
             if is_standby:
@@ -272,7 +271,7 @@ def get_replication_delay_for_standby(db_alias):
         END
         AS replication_lag;
         """
-        with db.connections[db_alias].cursor() as cursor:
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(sql)
             [(delay, )] = cursor.fetchall()
             return delay
@@ -294,7 +293,7 @@ def get_replication_delay_for_shard_standbys():
 
 def _get_replication_delay_results_from_proxy():
     try:
-        with db.connections[plproxy_standby_config.proxy_db].cursor() as cursor:
+        with connections[plproxy_standby_config.proxy_db].cursor() as cursor:
             cursor.execute('select * from get_replication_delay()')
             return cursor.fetchall()
     except OperationalError:
