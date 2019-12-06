@@ -139,13 +139,10 @@ def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
 
     sql = get_sql_to_create_pl_proxy_cluster(cluster_config, drop_existing)
 
-    if verbose:
-        print('Running SQL')
-        for command in sql:
-            print(f'\t{command}')
-
     with connections[proxy_db].cursor() as cursor:
         for command in sql:
+            if verbose:
+                print(f'\t{command}')
             cursor.execute(command)
 
 
