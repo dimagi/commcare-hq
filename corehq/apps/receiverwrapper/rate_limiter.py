@@ -4,6 +4,7 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateDefinition,
     RateLimiter,
+    get_dynamic_rate_definition,
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import RATE_LIMIT_SUBMISSIONS, NAMESPACE_DOMAIN
@@ -40,6 +41,19 @@ submission_rate_limiter = RateLimiter(
     ).get_rate_limits
 )
 
+global_submission_rate_limiter = RateLimiter(
+    feature_key='global_submissions',
+    get_rate_limits=lambda: get_dynamic_rate_definition(
+        'global_submissions',
+        default=RateDefinition(
+            per_hour=17000,
+            per_minute=400,
+            per_second=30,
+        )
+    ).get_rate_limits(),
+    scope_length=0,
+)
+
 
 SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
 
@@ -48,37 +62,40 @@ SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UN
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission(domain):
-    if RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
-        return _rate_limit_submission(domain)
+    should_allow_usage = (
+        global_submission_rate_limiter.allow_usage()
+        or submission_rate_limiter.allow_usage(domain))
+
+    if should_allow_usage:
+        allow_usage = True
+    elif RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        allow_usage = False
+        _report_rate_limit_submission(domain)
     else:
-        _rate_limit_submission_by_delaying(domain, max_wait=15)
-        return False
-
-
-def _rate_limit_submission(domain):
-
-    allow_usage = submission_rate_limiter.allow_usage(domain)
+        allow_usage = True
+        _delay_and_report_rate_limit_submission_test(domain, max_wait=15)
 
     if allow_usage:
         submission_rate_limiter.report_usage(domain)
-    else:
-        datadog_counter('commcare.xform_submissions.rate_limited', tags=[
-            'domain:{}'.format(domain),
-        ])
+        global_submission_rate_limiter.report_usage()
 
     return not allow_usage
 
 
-def _rate_limit_submission_by_delaying(domain, max_wait):
-    if not submission_rate_limiter.allow_usage(domain):
-        with TimingContext() as timer:
-            acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
-        if acquired:
-            duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
-        else:
-            duration_tag = 'timeout'
-        datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
-            'domain:{}'.format(domain),
-            'duration:{}'.format(duration_tag)
-        ])
-    submission_rate_limiter.report_usage(domain)
+def _report_rate_limit_submission(domain):
+    datadog_counter('commcare.xform_submissions.rate_limited', tags=[
+        'domain:{}'.format(domain),
+    ])
+
+
+def _delay_and_report_rate_limit_submission_test(domain, max_wait):
+    with TimingContext() as timer:
+        acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+    if acquired:
+        duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+    else:
+        duration_tag = 'timeout'
+    datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+        'domain:{}'.format(domain),
+        'duration:{}'.format(duration_tag)
+    ])
