@@ -10,6 +10,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.sectionSlug = 'maternal_child';
+    vm.serviceDataFunction = maternalChildService.earlyInitiationBreastfeeding;
+
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -53,15 +55,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 indicator_name: '% children who were put to the breast within one hour of birth' + chosenFilters + ': ',
                 indicator_value: percent,
             }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
         );
     };
 
