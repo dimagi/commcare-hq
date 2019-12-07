@@ -3,9 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
-    haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     var genderIndex = _.findIndex(genders, function (x) {
@@ -104,7 +105,7 @@ EarlyInitiationBreastfeedingController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive'
+    'isAlertActive', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', ['templateProviderService', function (templateProviderService) {
