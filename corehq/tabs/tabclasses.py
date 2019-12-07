@@ -36,6 +36,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
+from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -2041,6 +2042,9 @@ class AdminTab(UITab):
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
+                {'title': GlobalThresholds.page_title,
+                 'url': reverse(GlobalThresholds.urlname),
+                 'icon': 'fa fa-fire'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

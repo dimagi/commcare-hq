@@ -17,6 +17,7 @@ from corehq.apps.hqadmin.views.reports import (
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
     branches_on_staging,
+    GlobalThresholds,
     check_services,
     pillow_operation_api,
     system_ajax,
@@ -40,6 +41,7 @@ urlpatterns = [
     url(r'^system/system_ajax$', system_ajax, name="system_ajax"),
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
+    url(r'^global_thresholds/$', GlobalThresholds.as_view(), name=GlobalThresholds.urlname),
     url(r'^mass_email/$', mass_email, name="mass_email"),
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
