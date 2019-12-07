@@ -1118,9 +1118,9 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'ICDS: Allow specifying a custom base URL for an application. Main use case is '
-    'to allow migrating ICDS to a new cluster.',
-    TAG_CUSTOM,
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating projects to a new cluster.',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1235,7 +1235,7 @@ USER_TESTING_SIMPLIFY = StaticToggle(
 # when enabled this should prevent any changes to a domains data
 DATA_MIGRATION = StaticToggle(
     'data_migration',
-    'Disable submissions and restores during a data migration',
+    'Disable submissions, restores, and web user access during a data migration',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
