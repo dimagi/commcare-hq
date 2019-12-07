@@ -126,7 +126,16 @@ def map_visit_to_child_from_visit_cases(visit_ids):
 
 
 def get_rec_child_id_from_visit(visit_case):
-    for index in visit_case.indices:
+    try:
+        indices = visit_case.indices
+    except AttributeError:
+        # `visit_case` is a dict, not a CommCareCase. e.g.
+        # {'key': '9e3a777f-3a44-421d-8d61-5c2b67bccf48', 'error': 'not_found'}
+        message = f"imci_visit {visit_case['key']!r}: {visit_case['error']}"
+        print(message, file=sys.stderr)
+        return f"[{message}]"
+
+    for index in indices:
         if index.identifier == "parent" and index.referenced_type == "rec_child":
             return index.referenced_id
     else:
