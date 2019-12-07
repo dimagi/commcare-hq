@@ -289,6 +289,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 
+            // popup support on rankings pages
+            vm.displayMobilePopup = function (location) {
+                var locationData = vm.data.mapData.data[location.loc_name];
+                var data = vm.getPopupData(locationData);
+                vm.mobilePopupLocation = location;
+                vm.mobilePopupData = data;
+            };
         },
         BaseFilterController: BaseFilterController,
     };
