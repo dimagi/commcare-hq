@@ -8,9 +8,10 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import RATE_LIMIT_SUBMISSIONS, NAMESPACE_DOMAIN
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
 # Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
@@ -78,6 +79,7 @@ def rate_limit_submission(domain):
     if allow_usage:
         submission_rate_limiter.report_usage(domain)
         global_submission_rate_limiter.report_usage()
+        _report_current_global_submission_thresholds()
 
     return not allow_usage
 
@@ -99,3 +101,14 @@ def _delay_and_report_rate_limit_submission_test(domain, max_wait):
         'domain:{}'.format(domain),
         'duration:{}'.format(duration_tag)
     ])
+
+
+@quickcache([], timeout=60)  # Only report up to once a minute
+def _report_current_global_submission_thresholds():
+    for window, value, threshold in global_submission_rate_limiter.iter_rates():
+        datadog_gauge('commcare.xform_submissions.global_threshold', threshold, tags=[
+            'window:{}'.format(window)
+        ])
+        datadog_gauge('commcare.xform_submissions.global_usage', value, tags=[
+            'window:{}'.format(window)
+        ])
