@@ -79,6 +79,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
+            vm.templatePopup = function(loc, row) {
+                // subclasses that don't override this must implement vm.getPopupData
+                // See UnderweightChildrenReportController for an example
+                var popupData = vm.getPopupData(row);
+                return vm.createTemplatePopup(
+                    loc.properties.name,
+                    popupData
+                );
+            };
+
             vm.createTemplatePopup = function(header, lines) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
@@ -88,6 +98,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 template += '</div>';
                 return template;
             };
+
             vm.getLocationType = function() {
                 if (vm.location) {
                     if (vm.location.location_type === 'supervisor') {
@@ -154,7 +165,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             };
 
             vm.loadData = function () {
-                console.log("is mobile", isMobile);
                 // a default implementation of loadData that is web and mobile friendly.
                 // subclasses that don't override this must set vm.serviceDataFunction to a function
                 // that takes in the current step and filters and returns the appropriate data from the relevant

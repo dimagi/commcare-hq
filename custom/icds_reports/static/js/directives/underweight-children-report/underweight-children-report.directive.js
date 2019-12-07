@@ -51,7 +51,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
     };
 
-    function getPopupData(row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
         var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
         var severelyUnderweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
@@ -79,14 +79,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 indicator_value: normal,
             }
         ];
-    };
-
-    vm.templatePopup = function(loc, row) {
-        var popupData = getPopupData(row);
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            popupData
-        );
     };
 
     vm.init();
@@ -160,7 +152,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     // todo: this should be abstracted to a base class
     vm.displayMobilePopup = function (location) {
         var locationData = vm.data.mapData.data[location.loc_name];
-        var data = getPopupData(locationData);
+        var data = vm.getPopupData(locationData);
         vm.mobilePopupLocation = location;
         vm.mobilePopupData = data;
     };
