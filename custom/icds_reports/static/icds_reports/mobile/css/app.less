@@ -1,6 +1,6 @@
 @font-face {
   font-family: Montserrat;
-  src: url(/static/icds_reports/mobile/fonts/Montserrat-Regular.otf);
+  src: url("/static/icds_reports/mobile/fonts/Montserrat-Regular.otf");
 }
 
 .app-bg {
@@ -110,6 +110,9 @@
 }
 .font-20 {
   font-size: 20px;
+}
+.font-22 {
+  font-size: 22px;
 }
 .font-30 {
   font-size: 30px;
@@ -259,6 +262,7 @@
   .position-absolute;
   height: 0;
   top: 100vh;
+  width: 100vw;
   border-top-left-radius: 50px;
   border-top-right-radius: 50px;
   overflow: auto;
@@ -267,4 +271,34 @@
   transition: all 0.4s;
   margin-bottom: 0;
   min-height: 0;
+}
+.px-3 {
+  .pl-3;
+  .pr-3;
+}
+.mt-0 {
+  margin-top: 0;
+}
+.text-red {
+  color: #E16969;
+}
+.apply-button {
+  text-align: center;
+  .font-montserrat;
+  .font-weight-500;
+  .font-16;
+  .text-white;
+  background: #0047CC;
+  .pt-3;
+  .pb-3;
+  .position-fixed;
+  bottom: 0;
+  height: 45px;
+  width: 100vw;
+}
+.h-100 {
+  height: 100%;
+}
+.float-left {
+  float: left;
 }

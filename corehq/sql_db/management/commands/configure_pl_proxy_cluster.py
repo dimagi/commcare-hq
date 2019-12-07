@@ -52,7 +52,8 @@ class Command(BaseCommand):
 
         verbose = options['verbose']
         create_or_update_cluster(plproxy_config, verbose, options['create_only'])
-        create_or_update_cluster(plproxy_standby_config, verbose, options['create_only'])
+        if plproxy_standby_config:
+            create_or_update_cluster(plproxy_standby_config, verbose, options['create_only'])
 
 
 def create_or_update_cluster(cluster_config, verbose, create_only):

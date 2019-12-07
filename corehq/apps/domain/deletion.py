@@ -26,7 +26,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
@@ -159,8 +158,7 @@ def _delete_all_forms(domain_name):
 
 
 def _delete_data_files(domain_name):
-    db = get_db_alias_for_partitioned_doc(domain_name)
-    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.using(db).filter(
+    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
         parent_id=domain_name,
         type_code=CODES.data_file,
     )))

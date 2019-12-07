@@ -2,19 +2,20 @@ from schema import Optional as SchemaOptional
 from schema import Regex, Schema, SchemaError
 
 from corehq.motech.dhis2.const import DHIS2_DATE_SCHEMA, DHIS2_ID_SCHEMA
+from schema import Optional as SchemaOptional, SchemaError
+from schema import Regex, Schema
+
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
+    get_value,
 )
 
 
 def send_dhis2_event(request, api_version, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
-    try:
-        Schema(get_event_schema()).validate(event)
-    except SchemaError as err:
-        raise ConfigurationError from err
+    validate_event_schema(event)
     return request.post(f'/api/{api_version}/events', json=event,
                         raise_for_status=True)
 
@@ -57,14 +58,14 @@ def _get_program_stage(config, case_trigger_info):
 def _get_org_unit(config, case_trigger_info):
     org_unit_id = None
     if config.org_unit_id:
-        org_unit_id = config.org_unit_id.get_value(case_trigger_info)
+        org_unit_id = get_value(config.org_unit_id, case_trigger_info)
     if org_unit_id:
         return {'orgUnit': org_unit_id}
     return {}
 
 
 def _get_event_date(config, case_trigger_info):
-    event_date = config.event_date.get_value(case_trigger_info)
+    event_date = get_value(config.event_date, case_trigger_info)
     return {'eventDate': event_date}
 
 
@@ -75,7 +76,7 @@ def _get_event_status(config, case_trigger_info):
 def _get_completed_date(config, case_trigger_info):
     completed_date = None
     if config.completed_date:
-        completed_date = config.completed_date.get_value(case_trigger_info)
+        completed_date = get_value(config.completed_date, case_trigger_info)
     if completed_date:
         return {'completedDate': completed_date}
     return {}
@@ -86,9 +87,20 @@ def _get_datavalues(config, case_trigger_info):
     for data_value in config.datavalue_maps:
         values.append({
             'dataElement': data_value.data_element_id,
-            'value': data_value.value.get_value(case_trigger_info)
+            'value': get_value(data_value.value, case_trigger_info)
         })
     return {'dataValues': values}
+
+
+def validate_event_schema(event):
+    """
+    Raises ConfigurationError if ``event`` is missing required
+    properties, or value data types are invalid.
+    """
+    try:
+        Schema(get_event_schema()).validate(event)
+    except SchemaError as err:
+        raise ConfigurationError from err
 
 
 def get_event_schema() -> dict:

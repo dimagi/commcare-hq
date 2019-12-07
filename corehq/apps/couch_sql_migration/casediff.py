@@ -39,7 +39,7 @@ MAX_FORMS_PER_MEMORIZED_CASE = 20
 MAX_FORMS_PER_DIFF = 1000
 
 
-class CaseDiffQueue(object):
+class CaseDiffQueue:
     """A queue that diffs cases when all relevant forms have been processed
 
     Cases in the queue are moved through the following phases:
@@ -352,7 +352,7 @@ def task_switch():
     gevent.sleep()
 
 
-class BatchProcessor(object):
+class BatchProcessor:
     """Process batches of items with a worker pool
 
     Each batch of items is retained until its processing job has
@@ -411,7 +411,7 @@ class BatchProcessor(object):
         return iter(self.batches.values())
 
 
-class CaseDiffProcess(object):
+class CaseDiffProcess:
     """Run CaseDiffQueue in a separate process"""
 
     def __init__(self, statedb, queue_class=CaseDiffQueue):
@@ -617,7 +617,7 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
-class NoCaseDiff(object):
+class NoCaseDiff:
 
     def __init__(self, statedb):
         pass
@@ -761,7 +761,7 @@ def is_orphaned_case(couch_case):
     return not any(references_case(x) for x in couch_case["xform_ids"])
 
 
-class CaseRecord(object):
+class CaseRecord:
 
     def __init__(self, case, stock_forms, processed_forms=0):
         self.id = case.case_id
