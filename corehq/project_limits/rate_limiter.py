@@ -184,6 +184,7 @@ class RateDefinition(object):
         ) if limit]
 
 
+@quickcache(['key'], timeout=24 * 60 * 60)
 def get_dynamic_rate_definition(key, default):
     dynamic_rate_definition, _ = DynamicRateDefinition.objects.get_or_create(
         key=key, defaults=_get_rate_definition_dict(default))

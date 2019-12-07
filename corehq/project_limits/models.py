@@ -8,3 +8,8 @@ class DynamicRateDefinition(models.Model):
     per_hour = models.FloatField(default=None, blank=True, null=True)
     per_minute = models.FloatField(default=None, blank=True, null=True)
     per_second = models.FloatField(default=None, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
+        get_dynamic_rate_definition.clear(self.key, {})
+        super().save(*args, **kwargs)
