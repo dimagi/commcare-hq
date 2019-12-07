@@ -5,9 +5,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, isMobile);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        null, isMobile);
     var vm = this;
+
     vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
+    // where the data for this report comes from
+    vm.serviceDataFunction = maternalChildService.getUnderweightChildrenData;
+
     vm.isAlertActive = isAlertActive;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -82,23 +87,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             loc.properties.name,
             popupData
         );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
-        // note: it would be better to not load this data on both step pages but instead save it in the JS, but
-        // doing that now would be a bit complicated and the server-side caching should make the switching
-        // relatively painless
-        var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
-        for (var i = 0; i < allSteps.length; i++) {
-            var currentStep = allSteps[i];
-            vm.myPromise = maternalChildService.getUnderweightChildrenData(currentStep, vm.filtersData).then(
-                vm.loadDataFromResponse(usePercentage, forceYAxisFromZero, currentStep)
-            );
-        }
     };
 
     vm.init();

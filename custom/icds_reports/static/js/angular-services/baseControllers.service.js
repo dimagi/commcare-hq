@@ -36,7 +36,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
-                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures) {
+                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
+                  isMobile) {
             BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
             var vm = this;
 
@@ -151,6 +152,29 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     }
                 };
             };
+
+            vm.loadData = function () {
+                console.log("is mobile", isMobile);
+                // a default implementation of loadData that is web and mobile friendly.
+                // subclasses that don't override this must set vm.serviceDataFunction to a function
+                // that takes in the current step and filters and returns the appropriate data from the relevant
+                // service. See UnderweightChildrenReportController for an example
+                vm.setStepsMapLabel();
+                var usePercentage = true;
+                var forceYAxisFromZero = false;
+                // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
+                // note: it would be better to not load this data on both step pages but instead save it in the JS, but
+                // doing that now would be a bit complicated and the server-side caching should make the switching
+                // relatively painless
+                var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+                for (var i = 0; i < allSteps.length; i++) {
+                    var currentStep = allSteps[i];
+                    vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
+                        vm.loadDataFromResponse(usePercentage, forceYAxisFromZero, currentStep)
+                    );
+                }
+            };
+
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
