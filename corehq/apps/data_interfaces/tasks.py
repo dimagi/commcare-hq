@@ -9,6 +9,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.privileges import DATA_FORWARDING
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
 
@@ -204,6 +206,12 @@ def delete_old_rule_submission_logs():
 def task_operate_on_payloads(payload_ids, domain, action=''):
     task = task_operate_on_payloads
 
+    if not domain_has_privilege(domain, DATA_FORWARDING):
+        return {'messages': {'errors': [_(
+            "This project does not have access to Data Forwarding, please "
+            "check your subscription."
+        )]}}
+
     if not payload_ids:
         return {'messages': {'errors': [_('No Payloads are supplied')]}}
 
@@ -218,6 +226,12 @@ def task_operate_on_payloads(payload_ids, domain, action=''):
 @task(serializer='pickle')
 def task_generate_ids_and_operate_on_payloads(data, domain, action=''):
     task = task_generate_ids_and_operate_on_payloads
+
+    if not domain_has_privilege(domain, DATA_FORWARDING):
+        return {'messages': {'errors': [_(
+            "This project does not have access to Data Forwarding, please "
+            "check your subscription."
+        )]}}
 
     if not data:
         return {'messages': {'errors': [_('No data is supplied')]}}
