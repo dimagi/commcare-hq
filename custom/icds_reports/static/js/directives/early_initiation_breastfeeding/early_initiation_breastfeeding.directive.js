@@ -9,6 +9,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'maternal_child';
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
