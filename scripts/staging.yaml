@@ -57,9 +57,9 @@ branches:
   - jls/kill-exchange # Jenny Nov 13
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
-  - dmr/refactor-rate-definitions  # Danny Nov 20
   - bmb/update-requirejs  # Biyeun Nov 21
   - jls/resource-overrides  # Jenny Nov 22
   - jls/non-unique-form-ids  # Jenny Nov 24
   - mk/track-build-profile-id-via-heartbeat # MK Nov 26
+  - dmr/rate-limit-only-at-high-load  # Danny Dec 6
 submodules: {}
