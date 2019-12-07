@@ -188,9 +188,7 @@ UnderweightChildrenReportController.$inject = [
 window.angular.module('icdsApp').directive('underweightChildrenReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('map-chart');
-        },
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
