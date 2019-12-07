@@ -248,7 +248,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Reset initial roles to standard permissions.
         """
         custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
-        if not custom_roles:
+        from corehq.apps.accounting.models import SoftwarePlanEdition
+        if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
@@ -667,6 +668,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
         num_roles = len(custom_roles)
+        from corehq.apps.accounting.models import SoftwarePlanEdition
+        if new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+            # don't perform this downgrade for paused plans, as we don't want
+            # users to lose their original role assignments when the plan is un-paused.
+            return
         if num_roles > 0:
             return _fmt_alert(
                 ungettext(
@@ -687,22 +693,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Alert the user if they have subscriptions scheduled to start
         in the future.
         """
-        from corehq.apps.accounting.models import Subscription
+        from corehq.apps.accounting.models import (
+            Subscription,
+            SoftwarePlanEdition,
+        )
         later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
-            date_start__gt=self.date_start
+            date_start__gt=self.date_start,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start')
         if later_subs.exists():
-            next_subscription = later_subs[0]
-            plan_desc = next_subscription.plan_version.user_facing_description
-            return _fmt_alert(_(
-                "You have a subscription SCHEDULED TO START on %(date_start)s. "
-                "Changing this plan will CANCEL that %(plan_name)s "
-                "subscription."
-            ) % {
-                'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
-                'plan_name': plan_desc['name'],
-            })
+            for next_subscription in later_subs:
+                if next_subscription.date_start != next_subscription.date_end:
+                    plan_desc = next_subscription.plan_version.user_facing_description
+                    return _fmt_alert(_(
+                        "You have a subscription SCHEDULED TO START on %(date_start)s. "
+                        "Changing this plan will CANCEL that %(plan_name)s "
+                        "subscription."
+                    ) % {
+                        'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
+                        'plan_name': plan_desc['name'],
+                    })
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
