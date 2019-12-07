@@ -51,16 +51,15 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence of insufficient food intake or a high incidence of infectious diseases.',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.total_weighed) : 'N/A';
         var totalMeasured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
         var unmeasured = row ? $filter('indiaNumbers')(row.total_height_eligible - row.total_measured) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
                 indicator_value: total,
             },
@@ -83,8 +82,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             {
                 indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
                 indicator_value: normal,
-            }]
-        );
+            }
+        ];
     };
 
     vm.init();
