@@ -29,28 +29,33 @@ class RateLimiter(object):
     ...     my_feature_rate_limiter.report_usage('my_domain')
 
     """
-    def __init__(self, feature_key, get_rate_limits):
+    def __init__(self, feature_key, get_rate_limits, scope_length=1):
         self.feature_key = feature_key
         self.get_rate_limits = get_rate_limits
+        self.scope_length = scope_length
 
     def get_normalized_scope(self, scope):
-        if isinstance(scope, str):
+        if scope is None:
+            scope = ()
+        elif isinstance(scope, str):
             scope = (scope,)
         elif not isinstance(scope, tuple):
             raise ValueError("scope must be a string or tuple: {!r}".format(scope))
-
+        elif len(scope) != self.scope_length:
+            raise ValueError("The scope for this rate limiter must be of length {!r}"
+                             .format(self.scope_length))
         return scope
 
-    def report_usage(self, scope, delta=1):
+    def report_usage(self, scope=None, delta=1):
         scope = self.get_normalized_scope(scope)
         for rate_counter, limit in self.get_rate_limits(*scope):
             rate_counter.increment((self.feature_key,) + scope, delta=delta)
 
-    def allow_usage(self, scope):
+    def allow_usage(self, scope=None):
         return all(current_rate < limit
                    for rate_counter_key, current_rate, limit in self.iter_rates(scope))
 
-    def iter_rates(self, scope):
+    def iter_rates(self, scope=None):
         """
         Get generator of (key, current rate, rate limit) as applies to scope
 
