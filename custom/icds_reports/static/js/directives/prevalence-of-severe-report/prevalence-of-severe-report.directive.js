@@ -4,13 +4,14 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages,
-    haveAccessToAllLocations, baseControllersService, haveAccessToFeatures, isAlertActive) {
+    haveAccessToAllLocations, baseControllersService, haveAccessToFeatures, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        haveAccessToFeatures);
+        haveAccessToFeatures, isMobile);
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = maternalChildService.getPrevalenceOfSevereData;
 
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
@@ -83,15 +84,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
                 indicator_value: normal,
             }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
         );
     };
 
@@ -174,7 +166,7 @@ PrevalenceOfSevereReportController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
-    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive'];
+    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive', 'isMobile'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', ['templateProviderService', function (templateProviderService) {
     return {
