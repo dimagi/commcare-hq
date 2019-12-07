@@ -35,15 +35,14 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Number of Children born in the given month' + chosenFilters + ': ',
                 indicator_value: total,
             },
@@ -54,8 +53,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             {
                 indicator_name: '% children who were put to the breast within one hour of birth' + chosenFilters + ': ',
                 indicator_value: percent,
-            }]
-        );
+            }
+        ];
     };
 
     vm.init();
