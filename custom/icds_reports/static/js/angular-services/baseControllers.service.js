@@ -83,19 +83,29 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
+            vm.getPopupSubheading = function () {
+                // if the map popup should have a subheading, then implement this function in a subclass
+                // this is inserted before the indicators. see `AWCSCoveredController` for an example usage.
+                return '';
+            };
+
             vm.templatePopup = function(loc, row) {
                 // subclasses that don't override this must implement vm.getPopupData
                 // See UnderweightChildrenReportController for an example
                 var popupData = vm.getPopupData(row);
                 return vm.createTemplatePopup(
                     loc.properties.name,
-                    popupData
+                    popupData,
+                    vm.getPopupSubheading(),
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines) {
+            vm.createTemplatePopup = function(header, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
+                if (subheading) {
+                    template += '<p>' + subheading + '</p>';
+                }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }

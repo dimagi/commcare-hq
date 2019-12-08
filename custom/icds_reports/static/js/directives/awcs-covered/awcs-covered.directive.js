@@ -28,12 +28,18 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
     vm.filters = ['age', 'gender'];
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupSubheading = function () {
+        return vm.rightLegend.info;
+    };
+
+    vm.getPopupData = function(row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div></div>';
+        return [
+            {
+                indicator_name: 'Number of AWCs Launched: ',
+                indicator_value: awcs,
+            },
+        ];
     };
 
     vm.init();
