@@ -84,10 +84,10 @@ AWCSCoveredController.$inject = [
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
 ];
 
-window.angular.module('icdsApp').directive('awcsCovered', function() {
+window.angular.module('icdsApp').directive('awcsCovered', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -95,4 +95,4 @@ window.angular.module('icdsApp').directive('awcsCovered', function() {
         controller: AWCSCoveredController,
         controllerAs: '$ctrl',
     };
-});
+}]);

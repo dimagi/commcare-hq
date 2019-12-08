@@ -88,10 +88,10 @@ AWCDailyStatusController.$inject = [
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
 ];
 
-window.angular.module('icdsApp').directive('awcDailyStatus', function() {
+window.angular.module('icdsApp').directive('awcDailyStatus', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -99,4 +99,4 @@ window.angular.module('icdsApp').directive('awcDailyStatus', function() {
         controller: AWCDailyStatusController,
         controllerAs: '$ctrl',
     };
-});
+}]);
