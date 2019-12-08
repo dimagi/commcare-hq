@@ -9,6 +9,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'icds_cas_reach';
     vm.usePercentage = false;
     vm.forceYAxisFromZero = true;
     vm.serviceDataFunction = icdsCasReachService.getAwcDailyStatusData;

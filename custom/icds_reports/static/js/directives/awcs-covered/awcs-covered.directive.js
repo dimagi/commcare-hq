@@ -9,6 +9,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'icds_cas_reach';
     vm.usePercentage = false;
     vm.serviceDataFunction = icdsCasReachService.getAwcsCoveredData;
 
