@@ -60,6 +60,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.haveAccessToFeatures = haveAccessToFeatures;
             vm.message = storageService.getKey('message') || false;
 
+            // variables used for chart rendering. can be overridden by subclasses
+            vm.usePercentage = true;
+            vm.forceYAxisFromZero = false;
+
             $scope.$watch(function() {
                 return vm.selectedLocations;
             }, function (newValue, oldValue) {
@@ -170,8 +174,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 // that takes in the current step and filters and returns the appropriate data from the relevant
                 // service. See UnderweightChildrenReportController for an example
                 vm.setStepsMapLabel();
-                var usePercentage = true;
-                var forceYAxisFromZero = false;
                 // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
                 // note: it would be better to not load this data on both step pages but instead save it in the JS, but
                 // doing that now would be a bit complicated and the server-side caching should make the switching
@@ -180,7 +182,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 for (var i = 0; i < allSteps.length; i++) {
                     var currentStep = allSteps[i];
                     vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
-                        vm.loadDataFromResponse(usePercentage, forceYAxisFromZero, currentStep)
+                        vm.loadDataFromResponse(vm.usePercentage, vm.forceYAxisFromZero, currentStep)
                     );
                 }
             };
