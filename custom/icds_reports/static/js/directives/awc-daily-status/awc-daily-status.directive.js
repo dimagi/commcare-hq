@@ -9,6 +9,10 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.usePercentage = false;
+    vm.forceYAxisFromZero = true;
+    vm.serviceDataFunction = icdsCasReachService.getAwcDailyStatusData;
+
     vm.label = "AWC Daily Status";
     vm.steps = {
         'map': {route: '/icds_cas_reach/awc_daily_status/map', label: 'Map View'},
@@ -40,15 +44,6 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 indicator_name: '% of AWCs open yesterday: ',
                 indicator_value: percent,
             }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = true;
-        vm.myPromise = icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
         );
     };
 

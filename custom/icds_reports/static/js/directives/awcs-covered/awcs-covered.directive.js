@@ -9,6 +9,9 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.usePercentage = false;
+    vm.serviceDataFunction = icdsCasReachService.getAwcsCoveredData;
+
     vm.label = "AWCs Launched";
     vm.steps = {
         'map': {route: '/icds_cas_reach/awcs_covered/map', label: 'Map View'},
@@ -30,15 +33,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div></div>';
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = false;
-        vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
     };
 
     vm.init();
