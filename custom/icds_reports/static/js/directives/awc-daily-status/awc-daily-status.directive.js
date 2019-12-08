@@ -3,9 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive) {
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWC Daily Status";
@@ -85,7 +86,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 AWCDailyStatusController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'icdsCasReachService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
-    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('awcDailyStatus', ['templateProviderService', function (templateProviderService) {
