@@ -59,7 +59,7 @@ hqDefine('icds_reports/js/spec/utils', function () {
             {id: '72', name: '60-72 months'},
         ]);
     };
-    module.provideDefaultConstants = function ($provide, overrides) {
+    module.provideDefaultConstants = function ($provide, includeGenders, includeAges, overrides) {
         // overrides should be an object with values of any overrides keyed by the same
         // as the below strings
         function getOverrideOrDefault(key, defaultValue) {
@@ -70,6 +70,13 @@ hqDefine('icds_reports/js/spec/utils', function () {
         }
         function provideOverrideOrDefault(key, defaultValue) {
             $provide.constant(key, getOverrideOrDefault(key, defaultValue));
+        }
+
+        if (includeGenders) {
+            module.provideGenders($provide);
+        }
+        if (includeAges) {
+            module.provideAges($provide);
         }
         provideOverrideOrDefault("userLocationId", null);
         provideOverrideOrDefault("isAlertActive", false);

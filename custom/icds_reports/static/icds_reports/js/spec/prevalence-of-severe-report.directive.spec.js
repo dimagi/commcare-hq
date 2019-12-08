@@ -5,13 +5,6 @@ var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-function provideConstants($provide) {
-    utils.provideGenders($provide);
-    utils.provideAges($provide);
-    utils.provideDefaultConstants($provide);
-}
-
-
 describe('Prevalence Of Severe Directive feature flag disable', function () {
 
     var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
@@ -21,7 +14,7 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        provideConstants($provide);
+        utils.provideDefaultConstants($provide, true, true);
         $provide.constant("haveAccessToFeatures", false);
     }));
 
@@ -248,7 +241,7 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        provideConstants($provide);
+        utils.provideDefaultConstants($provide, true, true);
         $provide.constant("haveAccessToFeatures", true);
     }));
 
