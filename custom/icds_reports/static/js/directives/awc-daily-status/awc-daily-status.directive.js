@@ -27,13 +27,12 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function(row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var inDay = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of AWCs that were open yesterday: ',
                 indicator_value: inDay,
             },
@@ -44,8 +43,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             {
                 indicator_name: '% of AWCs open yesterday: ',
                 indicator_value: percent,
-            }]
-        );
+            }
+        ];
     };
 
     vm.init();
