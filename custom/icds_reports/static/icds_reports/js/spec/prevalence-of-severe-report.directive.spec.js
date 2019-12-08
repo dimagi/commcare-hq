@@ -5,6 +5,13 @@ var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
+function provideConstants($provide) {
+    utils.provideGenders($provide);
+    utils.provideAges($provide);
+    utils.provideDefaultConstants($provide);
+}
+
+
 describe('Prevalence Of Severe Directive feature flag disable', function () {
 
     var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
@@ -14,25 +21,8 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("genders", [
-            {id: '', name: 'All'},
-            {id: 'M', name: 'Male'},
-            {id: 'F', name: 'Female'},
-        ]);
-        $provide.constant('ages', [
-            {id: '', name: 'All'},
-            {id: '6', name: '0-6 months'},
-            {id: '12', name: '6-12 months'},
-            {id: '24', name: '12-24 months'},
-            {id: '36', name: '24-36 months'},
-            {id: '48', name: '36-48 months'},
-            {id: '60', name: '48-60 months'},
-            {id: '72', name: '60-72 months'},
-        ]);
-        $provide.constant("userLocationId", null);
+        provideConstants($provide);
         $provide.constant("haveAccessToFeatures", false);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -258,25 +248,8 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("genders", [
-            {id: '', name: 'All'},
-            {id: 'M', name: 'Male'},
-            {id: 'F', name: 'Female'},
-        ]);
-        $provide.constant('ages', [
-            {id: '', name: 'All'},
-            {id: '6', name: '0-6 months'},
-            {id: '12', name: '6-12 months'},
-            {id: '24', name: '12-24 months'},
-            {id: '36', name: '24-36 months'},
-            {id: '48', name: '36-48 months'},
-            {id: '60', name: '48-60 months'},
-            {id: '72', name: '60-72 months'},
-        ]);
-        $provide.constant("userLocationId", null);
+        provideConstants($provide);
         $provide.constant("haveAccessToFeatures", true);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
