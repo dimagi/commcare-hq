@@ -96,7 +96,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return vm.createTemplatePopup(
                     loc.properties.name,
                     popupData,
-                    vm.getPopupSubheading(),
+                    vm.getPopupSubheading()
                 );
             };
 
