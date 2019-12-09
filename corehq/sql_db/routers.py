@@ -1,6 +1,6 @@
 import os
-import warnings
-from contextlib import ContextDecorator, contextmanager
+
+from contextlib import ContextDecorator
 from threading import local
 
 from django.conf import settings
