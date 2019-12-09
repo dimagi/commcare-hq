@@ -293,5 +293,5 @@ if settings.USE_PARTITIONED_DATABASE:
     plproxy_config = PlProxyConfig.from_settings()
     try:
         plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
-    except PartitionValidationError as e:
+    except PartitionValidationError:
         logger.exception('Error in PLPROXY standby configuration')
