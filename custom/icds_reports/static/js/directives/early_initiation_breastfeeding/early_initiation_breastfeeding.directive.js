@@ -3,11 +3,15 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
-    haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'maternal_child';
+    vm.serviceDataFunction = maternalChildService.earlyInitiationBreastfeeding;
+
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -31,15 +35,14 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Number of Children born in the given month' + chosenFilters + ': ',
                 indicator_value: total,
             },
@@ -50,17 +53,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             {
                 indicator_name: '% children who were put to the breast within one hour of birth' + chosenFilters + ': ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -104,13 +98,13 @@ EarlyInitiationBreastfeedingController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive'
+    'isAlertActive', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', function() {
+window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -118,4 +112,4 @@ window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', funct
         controller: EarlyInitiationBreastfeedingController,
         controllerAs: '$ctrl',
     };
-});
+}]);

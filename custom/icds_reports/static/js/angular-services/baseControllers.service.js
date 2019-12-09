@@ -36,7 +36,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
-                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures) {
+                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
+                  isMobile) {
             BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
             var vm = this;
 
@@ -59,6 +60,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.haveAccessToFeatures = haveAccessToFeatures;
             vm.message = storageService.getKey('message') || false;
 
+            // variables used for chart rendering. can be overridden by subclasses
+            vm.usePercentage = true;
+            vm.forceYAxisFromZero = false;
+
             $scope.$watch(function() {
                 return vm.selectedLocations;
             }, function (newValue, oldValue) {
@@ -78,15 +83,36 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
-            vm.createTemplatePopup = function(header, lines) {
+            vm.getPopupSubheading = function () {
+                // if the map popup should have a subheading, then implement this function in a subclass
+                // this is inserted before the indicators. see `AWCSCoveredController` for an example usage.
+                return '';
+            };
+
+            vm.templatePopup = function(loc, row) {
+                // subclasses that don't override this must implement vm.getPopupData
+                // See UnderweightChildrenReportController for an example
+                var popupData = vm.getPopupData(row);
+                return vm.createTemplatePopup(
+                    loc.properties.name,
+                    popupData,
+                    vm.getPopupSubheading()
+                );
+            };
+
+            vm.createTemplatePopup = function(header, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
+                if (subheading) {
+                    template += '<p>' + subheading + '</p>';
+                }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }
                 template += '</div>';
                 return template;
             };
+
             vm.getLocationType = function() {
                 if (vm.location) {
                     if (vm.location.location_type === 'supervisor') {
@@ -151,6 +177,26 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     }
                 };
             };
+
+            vm.loadData = function () {
+                // a default implementation of loadData that is web and mobile friendly.
+                // subclasses that don't override this must set vm.serviceDataFunction to a function
+                // that takes in the current step and filters and returns the appropriate data from the relevant
+                // service. See UnderweightChildrenReportController for an example
+                vm.setStepsMapLabel();
+                // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
+                // note: it would be better to not load this data on both step pages but instead save it in the JS, but
+                // doing that now would be a bit complicated and the server-side caching should make the switching
+                // relatively painless
+                var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+                for (var i = 0; i < allSteps.length; i++) {
+                    var currentStep = allSteps[i];
+                    vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
+                        vm.loadDataFromResponse(vm.usePercentage, vm.forceYAxisFromZero, currentStep)
+                    );
+                }
+            };
+
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
@@ -255,6 +301,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 
+            // popup support on rankings pages
+            vm.displayMobilePopup = function (location) {
+                var locationData = vm.data.mapData.data[location.loc_name];
+                var data = vm.getPopupData(locationData);
+                vm.mobilePopupLocation = location;
+                vm.mobilePopupData = data;
+            };
         },
         BaseFilterController: BaseFilterController,
     };

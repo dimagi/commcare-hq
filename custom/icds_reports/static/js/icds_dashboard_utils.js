@@ -97,8 +97,26 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<immunization-coverage></immunization-coverage>",
             });
     }
+    function addCasReachRoutes($routeProvider) {
+        return $routeProvider.when("/icds_cas_reach", {
+                redirectTo: "/icds_cas_reach/awc_daily_status/map",
+            })
+            .when("/icds_cas_reach/awc_daily_status", {
+                redirectTo: "/icds_cas_reach/awc_daily_status/map",
+            })
+            .when("/icds_cas_reach/awc_daily_status/:step", {
+                template: "<awc-daily-status></awc-daily-status>",
+            })
+            .when("/icds_cas_reach/awcs_covered", {
+                redirectTo: "/icds_cas_reach/awcs_covered/map",
+            })
+            .when("/icds_cas_reach/awcs_covered/:step", {
+                template: "<awcs-covered></awcs-covered>",
+            });
+    }
     return {
         populateDashboardConstants: populateDashboardConstants,
         addMaternalChildRoutes: addMaternalChildRoutes,
+        addCasReachRoutes: addCasReachRoutes,
     };
 });

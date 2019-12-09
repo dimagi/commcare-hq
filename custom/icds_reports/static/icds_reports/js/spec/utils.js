@@ -40,5 +40,48 @@ hqDefine('icds_reports/js/spec/utils', function () {
             },
         },
     };
+    module.provideGenders = function ($provide) {
+        $provide.constant("genders", [
+            {id: '', name: 'All'},
+            {id: 'M', name: 'Male'},
+            {id: 'F', name: 'Female'},
+        ]);
+    };
+    module.provideAges = function ($provide) {
+        $provide.constant('ages', [
+            {id: '', name: 'All'},
+            {id: '6', name: '0-6 months'},
+            {id: '12', name: '6-12 months'},
+            {id: '24', name: '12-24 months'},
+            {id: '36', name: '24-36 months'},
+            {id: '48', name: '36-48 months'},
+            {id: '60', name: '48-60 months'},
+            {id: '72', name: '60-72 months'},
+        ]);
+    };
+    module.provideDefaultConstants = function ($provide, includeGenders, includeAges, overrides) {
+        // overrides should be an object with values of any overrides keyed by the same
+        // as the below strings
+        function getOverrideOrDefault(key, defaultValue) {
+            if (overrides && overrides.hasOwnProperty(key)) {
+                return overrides[key];
+            }
+            return defaultValue;
+        }
+        function provideOverrideOrDefault(key, defaultValue) {
+            $provide.constant(key, getOverrideOrDefault(key, defaultValue));
+        }
+
+        if (includeGenders) {
+            module.provideGenders($provide);
+        }
+        if (includeAges) {
+            module.provideAges($provide);
+        }
+        provideOverrideOrDefault("userLocationId", null);
+        provideOverrideOrDefault("isAlertActive", false);
+        provideOverrideOrDefault("haveAccessToAllLocations", false);
+        provideOverrideOrDefault("isMobile", false);
+    };
     return module;
 });

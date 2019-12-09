@@ -157,21 +157,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/health_tabular_report", {
                 template: "health_tabular_report",
             })
-            .when("/icds_cas_reach", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
-            })
-            .when("/icds_cas_reach/awc_daily_status", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
-            })
-            .when("/icds_cas_reach/awc_daily_status/:step", {
-                template: "<awc-daily-status></awc-daily-status>",
-            })
-            .when("/icds_cas_reach/awcs_covered", {
-                redirectTo: "/icds_cas_reach/awcs_covered/map",
-            })
-            .when("/icds_cas_reach/awcs_covered/:step", {
-                template: "<awcs-covered></awcs-covered>",
-            })
             .when("/demographics", {
                 redirectTo: "/demographics/registered_household/map",
             })
@@ -287,5 +272,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template: "<access-denied></access-denied>",
             });
         hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
+        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
     }]);
 

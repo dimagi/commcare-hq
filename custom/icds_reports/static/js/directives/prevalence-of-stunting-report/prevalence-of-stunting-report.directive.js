@@ -4,11 +4,14 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,  genders, ages, haveAccessToAllLocations,
-    baseControllersService, haveAccessToFeatures, isAlertActive) {
+    baseControllersService, haveAccessToFeatures, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
+        isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'maternal_child';
+    vm.serviceDataFunction = maternalChildService.getPrevalenceOfStuntingData;
 
     var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
@@ -48,16 +51,15 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
         var unmeasured = row ? $filter('indiaNumbers')(row.total - row.total_measured) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
                 indicator_value: total,
             },
@@ -80,17 +82,8 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
             {
                 indicator_name: '% children ' + vm.chosenFilters() + ' with normal stunted growth: ',
                 indicator_value: normal,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getPrevalenceOfStuntingData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -170,13 +163,13 @@ PrevalenceOfStuntingReportController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
-    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive'
+    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
+window.angular.module('icdsApp').directive('prevalenceOfStunting', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -184,4 +177,4 @@ window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
         controller: PrevalenceOfStuntingReportController,
         controllerAs: '$ctrl',
     };
-});
+}]);

@@ -5,9 +5,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, isMobile);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        null, isMobile);
     var vm = this;
+
     vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
+    // where the data for this report comes from
+    vm.serviceDataFunction = maternalChildService.getUnderweightChildrenData;
+
     vm.isAlertActive = isAlertActive;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -46,7 +51,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
     };
 
-    function getPopupData(row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
         var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
         var severelyUnderweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
@@ -74,31 +79,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 indicator_value: normal,
             }
         ];
-    };
-
-    vm.templatePopup = function(loc, row) {
-        var popupData = getPopupData(row);
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            popupData
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
-        // note: it would be better to not load this data on both step pages but instead save it in the JS, but
-        // doing that now would be a bit complicated and the server-side caching should make the switching
-        // relatively painless
-        var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
-        for (var i = 0; i < allSteps.length; i++) {
-            var currentStep = allSteps[i];
-            vm.myPromise = maternalChildService.getUnderweightChildrenData(currentStep, vm.filtersData).then(
-                vm.loadDataFromResponse(usePercentage, forceYAxisFromZero, currentStep)
-            );
-        }
     };
 
     vm.init();
@@ -168,14 +148,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             }]
         );
     };
-
-    // todo: this should be abstracted to a base class
-    vm.displayMobilePopup = function (location) {
-        var locationData = vm.data.mapData.data[location.loc_name];
-        var data = getPopupData(locationData);
-        vm.mobilePopupLocation = location;
-        vm.mobilePopupData = data;
-    };
 }
 
 UnderweightChildrenReportController.$inject = [
@@ -188,9 +160,7 @@ UnderweightChildrenReportController.$inject = [
 window.angular.module('icdsApp').directive('underweightChildrenReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('map-chart');
-        },
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',

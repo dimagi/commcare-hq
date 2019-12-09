@@ -60,4 +60,5 @@ window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap'])
                 template: "<program-summary></program-summary>",
             });
         hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
+        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
     }]);
