@@ -10,6 +10,13 @@ class DynamicRateDefinition(models.Model):
     per_second = models.FloatField(default=None, blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        self._clear_caches()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        super().delete(*args, **kwargs)
+
+    def _clear_caches(self):
         from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
         get_dynamic_rate_definition.clear(self.key, {})
-        super().save(*args, **kwargs)
