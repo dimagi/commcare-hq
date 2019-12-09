@@ -591,7 +591,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
-    notification_emails=['jemord']
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -1513,7 +1512,6 @@ RELATED_LOCATIONS = StaticToggle(
     'REACH: Enable experimental location many-to-many mappings',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
