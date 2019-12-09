@@ -7,6 +7,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,18 +45,14 @@ from django.views.generic.base import View
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from urllib.parse import urlparse
-
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -90,6 +87,7 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
 )
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,

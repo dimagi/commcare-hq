@@ -4,7 +4,6 @@ from django.db import migrations
 
 from corehq.sql_db.operations import RawSQLMigration
 
-
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 

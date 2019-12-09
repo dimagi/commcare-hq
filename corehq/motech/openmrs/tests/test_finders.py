@@ -15,7 +15,7 @@ from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     get_property_map,
 )
-from corehq.motech.value_source import ConstantString
+from corehq.motech.value_source import get_value, CaseTriggerInfo
 
 PATIENT = {
     'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
@@ -83,13 +83,10 @@ class PatientFinderTests(SimpleTestCase):
         })
         self.assertEqual(
             finder.create_missing,
-            ConstantString(
-                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
-                commcare_data_type=None,
-                direction=None,
-                doc_type='ConstantString',
-                value='False',
-            )
+            {
+                "external_data_type": OPENMRS_DATA_TYPE_BOOLEAN,
+                "value": 'False',
+            }
         )
 
     def test_create_missing_true(self):
@@ -101,13 +98,10 @@ class PatientFinderTests(SimpleTestCase):
         })
         self.assertEqual(
             finder.create_missing,
-            ConstantString(
-                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
-                commcare_data_type=None,
-                direction=None,
-                doc_type='ConstantString',
-                value='True',
-            )
+            {
+                "external_data_type": OPENMRS_DATA_TYPE_BOOLEAN,
+                "value": 'True',
+            }
         )
 
     def test_create_missing_false(self):
@@ -119,19 +113,16 @@ class PatientFinderTests(SimpleTestCase):
         })
         self.assertEqual(
             finder.create_missing,
-            ConstantString(
-                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
-                commcare_data_type=None,
-                direction=None,
-                doc_type='ConstantString',
-                value='False',
-            )
+            {
+                'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
+                'value': 'False',
+            }
         )
 
 
 def test_constant_false():
-    info = {}
-    assert_false(constant_false.get_value(info))
+    info = CaseTriggerInfo('test-domain', '123456')
+    assert_false(get_value(constant_false, info))
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):

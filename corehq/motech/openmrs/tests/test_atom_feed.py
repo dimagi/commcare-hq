@@ -158,13 +158,40 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
                 "value": {
                     "doc_type": "FormQuestionMap",
-                    "form_question": "/data/bahmni_hypothermia",
+                    "direction": "in",
+                    "form_question": "[unused when direction == 'in']",
                     "value_map": {
                         "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
-                    },
-                    "direction": "in",
+                    }
                 },
                 "case_property": "owner_id"
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "JsonPathCasePropertyMap",
+                    "direction": "in",
+                    "jsonpath": "codedAnswer.name",
+                    "case_property": "[unused when direction == 'in']",
+                    "value_map": {
+                        "yes": "Hypothermia"
+                    }
+                },
+                "case_property": "hypothermia_diagnosis"
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                "value": {
+                    "doc_type": "JsonPathCaseProperty",
+                    "direction": "in",
+                    "jsonpath": "diagnosisDateTime",
+                    "case_property": "[unused when direction == 'in']",
+                    "commcare_data_type": "cc_date",
+                    "external_data_type": "omrs_datetime"
+                },
+                "case_property": "hypothermia_date"
             }
         ]
         self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
@@ -317,7 +344,13 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.repeater.diagnosis_mappings,
             None, None, None
         )
-        self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
+        self.assertEqual(case_block_kwargs, {
+            'owner_id': 'emergency_room_user_id',
+            'update': {
+                'hypothermia_diagnosis': 'yes',
+                'hypothermia_date': '2019-10-18'
+            }
+        })
         self.assertEqual(case_blocks, [])
 
     def test_get_case_blocks_from_observations(self):

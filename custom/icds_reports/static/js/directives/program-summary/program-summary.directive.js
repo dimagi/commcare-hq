@@ -2,8 +2,9 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
-                                  haveAccessToAllLocations, isAlertActive, navMetadata) {
+function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
+          baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
+    baseControllersService.BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -14,7 +15,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.isAlertActive = isAlertActive;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
     vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
 
     if (Object.keys($location.search()).length === 0) {
@@ -85,18 +85,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         return i;
     };
 
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.showInfoMessage = function () {
         var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
@@ -133,12 +121,13 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
+
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
-    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
+    'dateHelperService', 'baseControllersService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
-window.angular.module('icdsApp').directive("programSummary",  ['templateProviderService', function (templateProviderService) {
+window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         templateUrl: function () {

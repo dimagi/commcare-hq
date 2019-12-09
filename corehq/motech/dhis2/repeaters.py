@@ -12,6 +12,7 @@ from dimagi.ext.couchdbkit import SchemaProperty
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.models import FormRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
@@ -88,7 +89,7 @@ class Dhis2Repeater(FormRepeater):
                         form_config,
                         payload,
                     )
-                except (RequestException, HTTPError) as err:
+                except (RequestException, HTTPError, ConfigurationError) as err:
                     requests.notify_error(f"Error sending Events to {self}: {err}")
                     raise
         return True

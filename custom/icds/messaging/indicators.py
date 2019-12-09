@@ -416,7 +416,8 @@ def compute_awws_in_vhnd_timeframe(domain):
     FROM "{table}"
     WHERE vhsnd_date_past_month > %(37_days_ago)s
     """.format(table=table)
-    query_params = {"37_days_ago": datetime.today().date() - timedelta(days=37)}
+    cutoff = datetime.now(tz=pytz.timezone('Asia/Kolkata')).date()
+    query_params = {"37_days_ago": cutoff - timedelta(days=37)}
 
     datasource_id = StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form')
     data_source = StaticDataSourceConfiguration.by_id(datasource_id)
