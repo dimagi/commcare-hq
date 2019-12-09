@@ -143,12 +143,12 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 
         #because we dont expect the report to fail for 7 consecutive days
-        seven_days_back = self.date - timedelta(days=1)
+        seven_days_back = self.date - timedelta(days=7)
 
         result = (DashboardUserActivityReport.objects.
                   filter(date__lt=self.date.strftime("%Y-%m-%d"), date__gt=seven_days_back).
                   aggregate(Max('date')))
-        if result:
+        if result.get('date__max'):
             return result['date__max']
 
         return date(1970, 1, 1)  # return the oldest date
@@ -228,7 +228,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
               audit.time_of_use<%(last_time_to_consider)s
         GROUP BY audit.username
         )ut
-        WHERE user_activity.username = ut.username;
+        WHERE user_activity.username = ut.username and ut.last_activity is not null;
         """.format(
             tablename=self.tablename
         ), {
