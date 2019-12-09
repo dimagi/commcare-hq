@@ -138,7 +138,7 @@ def check_db_tables(app_configs, **kwargs):
         if enabled_envs and settings.SERVER_ENVIRONMENT not in enabled_envs:
             continue
 
-        if model.__name__ in ignored_models:
+        if model.__name__ in ignored_models or not model._meta.managed:
             continue
 
         if issubclass(model, PartitionedModel):
