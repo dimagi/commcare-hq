@@ -110,9 +110,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 4;
+                var options = Datamap.prototype[vm.type].objects[vm.scope];
                 var projection = d3.geo.equirectangular()
-                    .center(Datamap.prototype[vm.type].objects[vm.scope].center)
-                    .scale(Datamap.prototype[vm.type].objects[vm.scope].scale)
+                    .center(options.center)
+                    .scale(options.scale)
                     .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                 var path = d3.geo.path()
                     .projection(projection);
