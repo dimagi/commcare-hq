@@ -15,7 +15,7 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_standby_accessors', 'sql_templa
 
 
 def create_update_pl_proxy_config():
-    if not (settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE):
+    if not plproxy_standby_config or not (settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE):
         return noop_migration()
 
     sql_statements = get_sql_to_create_pl_proxy_cluster(plproxy_standby_config)

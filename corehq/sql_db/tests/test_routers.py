@@ -61,10 +61,11 @@ class AllowMigrateTest(SimpleTestCase):
     def test_icds_db_citus(self, mock):
         mock.return_value = None
         self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, ICDS_REPORTS_APP))
-        mock.return_value = 'icds'
+        mock.return_value = 'icds-ucr'
         self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, ICDS_REPORTS_APP))
-        self.assertIs(True, allow_migrate('icds', ICDS_REPORTS_APP))
+        self.assertIs(True, allow_migrate('icds-ucr', ICDS_REPORTS_APP))
 
+    @override_settings(DATABASES={'default': {}, 'synclogs': {}})
     def test_synclogs_non_partitioned(self):
         self.assertIs(False, allow_migrate('synclogs', 'accounting'))
         self.assertIs(True, allow_migrate(None, 'accounting'))
