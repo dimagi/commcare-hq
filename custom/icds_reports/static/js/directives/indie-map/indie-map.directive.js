@@ -44,6 +44,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
+    vm.scalingFactor = 1;
 
     vm.initTopoJson = function (location_level, location) {
         if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
@@ -71,10 +72,17 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 // take window height and subtract height of the header plus 44px of additional padding / margins
                 var availableHeight = window.innerHeight - headerHeight - 44;
                 if (availableHeight < vm.mapHeight) {
+                    // how much we have downscaled so we can also scale the map itself
+                    vm.scalingFactor = availableHeight / vm.mapHeight;
                     vm.mapHeight = availableHeight;
                 }
             }
         }
+    };
+
+    vm.getScale = function (options) {
+        // apply additional scaling if necessary (used by mobile maps)
+        return vm.scalingFactor * options.scale;
     };
 
     var mapConfiguration = function (location) {
@@ -113,7 +121,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 var options = Datamap.prototype[vm.type].objects[vm.scope];
                 var projection = d3.geo.equirectangular()
                     .center(options.center)
-                    .scale(options.scale)
+                    .scale(vm.getScale(options))
                     .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                 var path = d3.geo.path()
                     .projection(projection);
