@@ -87,6 +87,29 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
+    vm.getCenter = function (options) {
+        if (isMobile) {
+            // adjust center for mobile maps, because web maps are intentionally offset to leave
+            // room for the legend.
+            function getLatAdjustmentForScale(scale) {
+                // this is a very rough approximation made with a few data points for a first pass
+                // basically the further zoomed in we are the less we should adjust
+                if (scale < 5000) {
+                    return 2;
+                } else if (scale < 8000) {
+                    return 1.5;
+                } else if (scale < 12000) {
+                    return 1;
+                } else {
+                    return .5;
+                }
+            }
+            return [options.center[0] + getLatAdjustmentForScale(options.scale), options.center[1]];
+        } else {
+            return options.center;
+        }
+    };
+
     vm.getScale = function (options) {
         // apply additional scaling if necessary (used by mobile maps)
         return vm.scalingFactor * options.scale;
@@ -127,7 +150,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 var div = vm.scope === "ind" ? 3 : 4;
                 var options = Datamap.prototype[vm.type].objects[vm.scope];
                 var projection = d3.geo.equirectangular()
-                    .center(options.center)
+                    .center(vm.getCenter(options))
                     .scale(vm.getScale(options))
                     .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                 var path = d3.geo.path()
