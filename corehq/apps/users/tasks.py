@@ -329,7 +329,7 @@ def process_reporting_metadata_staging():
                     record.xform_version, record.form_meta, record.received_on, save=False
                 )
             if record.device_id or record.sync_date:
-                save = mark_last_synclog(
+                save |= mark_last_synclog(
                     record.domain, user, record.app_id, record.build_id,
                     record.sync_date, record.device_id, save=False
                 )
