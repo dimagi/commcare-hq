@@ -130,8 +130,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "display_name": "Supervisor ID",

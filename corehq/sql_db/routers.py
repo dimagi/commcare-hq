@@ -195,9 +195,3 @@ class read_from_plproxy_standbys(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         setattr(_thread_locals, READ_FROM_PLPROXY_STANDBYS, False)
-
-
-@contextmanager
-def force_citus_engine(force=False):
-    warnings.warn('Use of non-citus is deprecated', DeprecationWarning)
-    yield
