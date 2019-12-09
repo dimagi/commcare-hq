@@ -15,12 +15,14 @@
   <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
   <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
   <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
 
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
 {% compress js %}
   <script src="{% static 'autotrack/autotrack.js' %}"></script>
+  <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
   <script src="{% static 'angular/angular.js' %}"></script>
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
@@ -34,22 +36,22 @@
 
   <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
-  <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/date-helper.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_utility_services.html' %}
 
-  <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
+  {% include 'icds_reports/partials/shared_report_services.html' %}
+
+  {# components #}
+  {% include 'icds_reports/partials/shared_component_directives.html' %}
+{% compress js %}
   <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/filter-opener/filter-opener.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-filters/mobile-filters.directive.js' %}"></script>
-  <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
-  <script src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
-  <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
-  <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
-  <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
+
+  {% include 'icds_reports/partials/shared_report_directives.html' %}
+
 {% endcompress %}
 {% endblock head %}
 {% block body %}

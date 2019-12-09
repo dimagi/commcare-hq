@@ -562,6 +562,14 @@ def exclude_records_by_age_for_column(exclude_config, column):
     )
 
 
+def include_records_by_age_for_column(include_config, column):
+    return Case(
+        When(Q(**include_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )
+
+
 def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
