@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from django.db.models import Max
 
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
@@ -141,12 +141,17 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
     def get_last_agg_date(self):
         from custom.icds_reports.models.aggregate import DashboardUserActivityReport
+
+        #because we dont expect the report to fail for 7 consecutive days
+        seven_days_back = self.date - timedelta(days=1)
+
         result = (DashboardUserActivityReport.objects.
-                  filter(date__lt=self.date.strftime("%Y-%m-%d")).
+                  filter(date__lt=self.date.strftime("%Y-%m-%d"), date__gt=seven_days_back).
                   aggregate(Max('date')))
         if result:
             return result['date__max']
-        return None
+
+        return date(1970, 1, 1)  # return the oldest date
 
     def add_latest_users_list(self):
 
@@ -212,61 +217,18 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
             'latest_month': latest_month
         }
 
-        # This is query I prepare which could do what the last two queries are doing but
-        # the cost of this single query coming out to be very high
-        # yield """
-        # UPDATE {tablename} user_activity
-        # SET
-        #     last_activity
-        # from (
-        # SELECT audit.username, max(audit.time_of_use) from {tablename} user_activity left join
-        # icds_audit_entry_record audit
-        # on user_activity.username = audit.username
-        # group by username where (user_activity.last_activity is not null AND
-        #                          time_of_use>user_activity.last_activity
-        #                           ) or
-        #                         ( user_activity.last_activity is null)
-        # )ut
-        # where user_activity.username = ut.username
-        # """.format(tablename=self.tablename)
-
         yield """
-        UPDATE "{tablename}" user_activity
+        UPDATE  "{tablename}" user_activity
         SET
-            last_activity = ut.last_used
+            last_activity = ut.last_activity
         FROM (
-            SELECT
-                username,
-                max(time_of_use)  as last_used
-            FROM icds_audit_entry_record
-            WHERE username IN (
-                SELECT username FROM "{tablename}" WHERE last_activity IS NULL
-                ) AND time_of_use <= %(last_time_to_consider)s
-            GROUP BY username
-        ) ut
-        WHERE user_activity.username = ut.username
-        """.format(
-            tablename=self.tablename
-        ), {
-            'last_time_to_consider': last_time_to_consider
-        }
-
-        yield """
-        UPDATE "{tablename}" user_activity
-        SET
-            last_activity = ut.last_used
-        FROM (
-            SELECT
-                username,
-                max(time_of_use)  as last_used
-            FROM icds_audit_entry_record
-            WHERE username IN (
-                SELECT username FROM "{tablename}" WHERE last_activity IS NOT NULL)  AND
-                time_of_use >= %(last_agg_date)s AND
-                time_of_use <= %(last_time_to_consider)s
-            GROUP BY username
-        ) ut
-        WHERE user_activity.username = ut.username
+        SELECT audit.username, max(audit.time_of_use)  AS last_activity FROM "{tablename}" user_activity
+            left join icds_audit_entry_record audit ON user_activity.username = audit.username
+        where audit.time_of_use>=%(last_agg_date)s AND
+              audit.time_of_use<%(last_time_to_consider)s
+        GROUP BY audit.username
+        )ut
+        WHERE user_activity.username = ut.username;
         """.format(
             tablename=self.tablename
         ), {

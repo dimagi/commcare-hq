@@ -1691,6 +1691,6 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
 def update_dashboard_activity_report(target_date=None):
     if target_date is None:
         target_date = date.today()
-    db_alias = db_for_read_write(AggCcsRecord)
+    db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
