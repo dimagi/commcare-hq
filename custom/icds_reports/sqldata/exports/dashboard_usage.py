@@ -146,10 +146,10 @@ class DashBoardUsage:
 
             date = datetime.datetime.now().date()
             usage_data = None
-            filters = {'username__in': usernames}
+            dashboard_filters = {'username__in': usernames}
             # keep the record in searched - current - month
             while usage_data is None:
-                usage_data = self.get_data_for_usgae_report(date, filters)
+                usage_data = self.get_data_for_usgae_report(date, dashboard_filters)
                 date -= relativedelta(days=1)
 
             for record in usage_data:
@@ -163,7 +163,7 @@ class DashBoardUsage:
                     block_name = ''
                 excel = [serial_count, self.get_location_name_from_id(record.state_id),
                          district_name, block_name, record.username.split('@')[0],
-                         self.user_levels[record.user_level],
+                         self.user_levels[record.user_level-1],
                          self.get_role_from_username(record.username),
                          self.convert_boolean_to_string(record.location_launched),
                          last_activity,
@@ -173,7 +173,8 @@ class DashBoardUsage:
         excel_rows = sorted(excel_rows, key=lambda x: (x[1], x[2], x[3]))
         # appending serial numbers
         for i in range(len(excel_rows)):
-            excel_rows[i][0] = 1
+            serial_count += 1
+            excel_rows[i][0] = serial_count
         excel_rows.insert(0, headers)
         return [
             [
