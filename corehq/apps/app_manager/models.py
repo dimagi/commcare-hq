@@ -5771,19 +5771,16 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
 
         # Save to SQL
-        model, created = SQLGlobalAppConfig.objects.get_or_create(
+        model, created = SQLGlobalAppConfig.objects.update_or_create(
             domain=self.domain,
             app_id=self.app_id,
             defaults={
-                'apk_version': LATEST_APK_VALUE,
-                'app_version': LATEST_APP_VALUE,
+                'apk_prompt': self.apk_prompt,
+                'app_prompt': self.app_prompt,
+                'apk_version': self.apk_version or LATEST_APK_VALUE,
+                'app_version': self.app_version or LATEST_APP_VALUE,
             }
         )
-        model.app_prompt = self.app_prompt
-        model.apk_prompt = self.apk_prompt
-        model.app_version = self.app_version
-        model.apk_version = self.apk_version
-        model.save()
 
         # Save to couch
         super(GlobalAppConfig, self).save(*args, **kwargs)
