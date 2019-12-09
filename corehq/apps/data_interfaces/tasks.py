@@ -9,8 +9,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import DATA_FORWARDING
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
 
