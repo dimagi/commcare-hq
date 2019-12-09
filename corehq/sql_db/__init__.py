@@ -114,7 +114,7 @@ def check_db_tables(app_configs, **kwargs):
     # some apps only apply to specific envs
     env_specific_apps = {
         ICDS_REPORTS_APP: settings.ICDS_ENVS,
-        AAA_APP: settings.ICDS_ENVS
+        AAA_APP: ('none',),
     }
 
     ignored_models = [
