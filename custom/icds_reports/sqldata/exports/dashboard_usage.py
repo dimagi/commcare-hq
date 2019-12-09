@@ -163,7 +163,7 @@ class DashBoardUsage:
                     block_name = ''
                 excel = [serial_count, self.get_location_name_from_id(record.state_id),
                          district_name, block_name, record.username.split('@')[0],
-                         self.user_levels[record.user_level-1],
+                         self.user_levels[record.user_level - 1],
                          self.get_role_from_username(record.username),
                          self.convert_boolean_to_string(record.location_launched),
                          last_activity,
