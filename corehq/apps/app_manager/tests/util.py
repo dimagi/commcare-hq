@@ -183,6 +183,16 @@ def patch_get_xform_resource_overrides():
     )
 
 
+def patch_add_xform_resource_overrides():
+    """
+    Temporary patch while code that adds resource overrides every time a linked app is pulled is live.
+    """
+    return mock.patch(
+        'corehq.apps.app_manager.suite_xml.post_process.resources.add_xform_resource_overrides',
+        lambda _, __, ___: None
+    )
+
+
 @unit_testing_only
 def delete_all_apps():
     for doc_type in app_doc_types():
