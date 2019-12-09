@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core import checks
 from django.db import DEFAULT_DB_ALIAS
 
+from corehq.sql_db.exceptions import PartitionValidationError
 from corehq.sql_db.routers import AAA_APP
 
 
@@ -34,6 +35,13 @@ def check_plproxy_config(app_configs, **kwargs):
                 messages.append(checks.Warning(
                     f'Unrecognised PLPROXY settings: {unknown_keys}'
                 ))
+
+    try:
+        from corehq.sql_db.config import plproxy_config, _get_standby_plproxy_config
+        if plproxy_config:
+            _get_standby_plproxy_config(plproxy_config)
+    except PartitionValidationError as e:
+        messages.append(checks.Error(f'Error in PLPROXY standby configuration: {e}'))
     return messages
 
 

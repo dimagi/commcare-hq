@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 from typing import Optional
 
 from django.conf import settings
@@ -21,6 +22,8 @@ FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
 
 SHARD_OPTION_TEMPLATE = "p{id:04d} 'dbname={dbname} host={host} port={port}'"
+
+logger = logging.getLogger(__name__)
 
 
 class LooslyEqualJsonObject(object):
@@ -288,4 +291,7 @@ plproxy_config = None
 plproxy_standby_config = None
 if settings.USE_PARTITIONED_DATABASE:
     plproxy_config = PlProxyConfig.from_settings()
-    plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
+    try:
+        plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
+    except PartitionValidationError as e:
+        logger.exception('Error in PLPROXY standby configuration')
