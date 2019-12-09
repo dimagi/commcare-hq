@@ -5,7 +5,8 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
-from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.connections import ConnectionManager, read_from_citus_standbys, \
+    allow_read_from_citus_standbys
 from corehq.sql_db.util import get_databases_for_read_query
 
 
@@ -124,3 +125,15 @@ class ConnectionManagerTests(SimpleTestCase):
             get_databases_for_read_query({'ucr', 'other'}),
             {'ucr', 'other'}
         )
+
+
+class TestReadsFromCitusStandbys(SimpleTestCase):
+
+    def test_basic(self):
+        @read_from_citus_standbys()
+        def read():
+            self.assertTrue(allow_read_from_citus_standbys())
+
+        self.assertFalse(allow_read_from_citus_standbys())
+        read()
+        self.assertFalse(allow_read_from_citus_standbys())
