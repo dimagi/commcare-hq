@@ -1,5 +1,4 @@
 import os
-from contextlib import contextmanager
 
 from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
