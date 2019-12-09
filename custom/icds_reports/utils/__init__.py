@@ -1592,11 +1592,3 @@ def get_datatables_ordering_info(request):
 
 def phone_number_function(x):
     return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
-
-
-def include_records_by_age_for_column(include_config, column):
-    return Case(
-        When(Q(**include_config), then=F(column)),
-        default=0,
-        output_field=IntegerField()
-    )
