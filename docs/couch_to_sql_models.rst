@@ -1,3 +1,5 @@
+.. _couch-to-sql-model-migration:
+
 ***************************************
 Migrating models from couch to postgres
 ***************************************
