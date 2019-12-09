@@ -8,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import connection, models, transaction, router
+from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -2774,9 +2774,6 @@ class AnonymousCouchUser(object):
 
     def can_view_roles(self):
         return False
-
-
-reporting_update_freq = timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY)
 
 
 class UserReportingMetadataStaging(models.Model):
