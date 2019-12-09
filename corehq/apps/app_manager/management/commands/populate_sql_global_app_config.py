@@ -45,7 +45,8 @@ class Command(BaseCommand):
                 if not model:
                     logger.info(log_message)
             else:
-                model, created = SQLGlobalAppConfig.objects.get_or_create(domain=doc['domain'], app_id=doc['app_id'])
+                model, created = SQLGlobalAppConfig.objects.get_or_create(domain=doc['domain'],
+                                                                          app_id=doc['app_id'])
                 if created:
                     model.apk_prompt = doc['apk_prompt']
                     model.app_prompt = doc['app_prompt']
