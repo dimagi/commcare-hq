@@ -75,10 +75,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     // how much we have downscaled so we can also scale the map itself
                     vm.scalingFactor = availableHeight / vm.mapHeight;
                     // this approximates additional scaling based on the width of the device.
-                    // the 1.3 factor was determined from a few samples and is not perfect.
+                    // the factor was determined from a few samples and is not perfect.
+                    var factor = 1.1;
                     var aspectRatio = window.innerHeight / window.innerWidth;
-                    if (aspectRatio > 1.3) {
-                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / 1.3);
+                    if (aspectRatio > factor) {
+                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / factor);
                     }
                     vm.mapHeight = availableHeight;
                 }
