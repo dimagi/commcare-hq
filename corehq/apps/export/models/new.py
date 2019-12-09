@@ -22,6 +22,7 @@ from couchdbkit import (
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.toggles import USE_NEW_GET_COLUMN
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.ext.couchdbkit import (
@@ -106,7 +107,6 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
@@ -143,7 +143,12 @@ class PathNode(DocumentSchema):
         return (type(self), self.doc_type, self.name, self.is_repeat)
 
     def __eq__(self, other):
-        return self.__key() == other.__key()
+        # First we try a least expensive comparison (name vs name) to rule the
+        # majority of failed comparisons. This improves performance by nearly
+        # a factor of 2 when __eq__ is used on large data sets.
+        if self.name == other.name:
+            return self.__key() == other.__key()
+        return False
 
     def __hash__(self):
         return hash(self.__key())
@@ -528,6 +533,50 @@ class TableConfiguration(DocumentSchema):
                 ))
         return rows
 
+    def get_column_new(self, item_path, item_doc_type, column_transform):
+        """
+        Given a path and transform, will return the column and its index. If not found, will
+        return None, None.
+
+        NOTE: This method is in QA for accuracy to test against get_column
+        as a more efficient replacement.
+
+        :param item_path: A list of path nodes that identify a column
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
+        :param column_transform: A transform that is applied on the column
+        :returns index, column: The index of the column in the list and an ExportColumn
+        """
+        string_item_path = _path_nodes_to_string(item_path)
+
+        # Previously we iterated over self.columns with each call to return the
+        # index. Now we do an index lookup on the string-ified path names for
+        # self.columns and regenerate it only when the length of self.columns
+        # changes, which probably happens due to some couch db magic in the bg:
+        if (not hasattr(self, '_string_column_paths')
+                or len(self._string_column_paths) != len(self.columns)):
+            self._string_column_paths = [
+                _path_nodes_to_string(column.item.path) for column in
+                self.columns
+            ]
+
+        try:
+            index = self._string_column_paths.index(string_item_path)
+        except ValueError:
+            return None, None
+
+        column = self.columns[index]
+        if (column.item.path == item_path
+                and column.item.transform == column_transform
+                and column.item.doc_type == item_doc_type):
+            return index, column
+        # No item doc type searches for a UserDefinedExportColumn
+        elif (isinstance(column, UserDefinedExportColumn)
+                and column.custom_path == item_path
+                and item_doc_type is None):
+            return index, column
+        return None, None
+
     def get_column(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
@@ -795,9 +844,15 @@ class ExportInstance(BlobMixin, Document):
 
             prev_index = 0
             for item in group_schema.items:
-                index, column = table.get_column(
-                    item.path, item.doc_type, None
-                )
+                if (hasattr(instance, 'domain')
+                        and USE_NEW_GET_COLUMN.enabled(instance.domain)):
+                    index, column = table.get_column_new(
+                        item.path, item.doc_type, None
+                    )
+                else:
+                    index, column = table.get_column(
+                        item.path, item.doc_type, None
+                    )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
                         table.path,
@@ -916,16 +971,24 @@ class ExportInstance(BlobMixin, Document):
         insert_fn = self._get_insert_fn(table, top)
 
         for static_column in properties:
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.item.doc_type,
-                static_column.item.transform,
-            )
+            domain = column_initialization_data.get('domain')
+            if domain and USE_NEW_GET_COLUMN.enabled(domain):
+                index, existing_column = table.get_column_new(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
+            else:
+                index, existing_column = table.get_column(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
             column = (existing_column or static_column)
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))
             elif isinstance(column, StockExportColumn):
-                column.update_domain(column_initialization_data.get('domain'))
+                column.update_domain(domain)
 
             if not existing_column:
                 if static_column.label in ['case_link', 'form_link'] and self.get_id:
@@ -2710,8 +2773,7 @@ class DataFile(object):
     @staticmethod
     def meta_query(domain):
         Q = models.Q
-        db = get_db_alias_for_partitioned_doc(domain)
-        return BlobMeta.objects.using(db).filter(
+        return BlobMeta.objects.partitioned_query(domain).filter(
             Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
             parent_id=domain,
             type_code=CODES.data_file,

@@ -43,8 +43,6 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
-    ConstantString,
-    FormQuestionMap,
     get_case_location,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -650,22 +648,23 @@ def test_observation_mappings():
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='abnormal_temperature',
-                value=FormQuestionMap(
-                    form_question='/data/abnormal_temperature',
-                    value_map={
+                value={
+                    "doc_type": "FormQuestionMap",
+                    "form_question": '/data/abnormal_temperature',
+                    "value_map": {
                         'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
                         'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
                     }
-                )
+                }
             ),
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='bahmni_abnormal_temperature',
-                value=ConstantString(
-                    direction='in',
-                    doc_type='ConstantString',
-                    value=''
-                )
+                value={
+                    "direction": 'in',
+                    "doc_type": "ConstantString",
+                    "value": ''
+                }
             )
         ]
     })
