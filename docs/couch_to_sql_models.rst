@@ -18,7 +18,7 @@ Conceptual Steps
 Practical Steps
 ###############
 
-Even a simple model takes several pull requests to migrate, to avoid data loss while deploys and migrationos are in progress. Best practice is a minimum of three pull requests, described below, each deployed to all large environments before merging the next one.
+Even a simple model takes several pull requests to migrate, to avoid data loss while deploys and migrations are in progress. Best practice is a minimum of three pull requests, described below, each deployed to all large environments before merging the next one.
 
 See `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_ for possibly helpful code.
 
@@ -52,6 +52,6 @@ This is the cleanup PR. Wait a few days or weeks the previous PR to merge this o
 
 * Remove the old couch model
 * Add the couch class to `deletable_doc_types <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cleanup/deletable_doc_types.py>`_
-* Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migrationo docs <https://commcare-hq.readthedocs.io/migrations.html>`_
+* Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_
 
 `Sample PR 3 <https://github.com/dimagi/commcare-hq/pull/26027>`_
