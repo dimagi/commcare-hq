@@ -345,22 +345,22 @@ def import_encounter(repeater, encounter_uuid):
     case_blocks = []
 
     # NOTE: Atom Feed integration requires Patient UUID to be external_id
-    case = get_case(repeater, encounter['patientUuid'])
-    if case:
-        case_id = case.case_id
-        default_owner_id = case.owner_id
+    patient_case = get_case(repeater, encounter['patientUuid'])
+    if patient_case:
+        patient_case_id = patient_case.case_id
+        default_owner_id = patient_case.owner_id
     else:
-        case_block = create_case(repeater, encounter['patientUuid'])
-        case_blocks.append(case_block)
-        case_id = case_block.case_id
-        default_owner_id = case_block.owner_id
+        patient_case_block = create_case(repeater, encounter['patientUuid'])
+        case_blocks.append(patient_case_block)
+        patient_case_id = patient_case_block.case_id
+        default_owner_id = patient_case_block.owner_id
 
-    case_type = repeater.white_listed_case_types[0]
+    patient_case_type = repeater.white_listed_case_types[0]
     more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
         encounter['observations'],
         repeater.observation_mappings,
-        case_id,
-        case_type,
+        patient_case_id,
+        patient_case_type,
         default_owner_id,
     )
     deep_update(case_block_kwargs, more_kwargs)
@@ -370,8 +370,8 @@ def import_encounter(repeater, encounter_uuid):
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
             repeater.diagnosis_mappings,
-            case_id,
-            case_type,
+            patient_case_id,
+            patient_case_type,
             default_owner_id,
         )
         deep_update(case_block_kwargs, more_kwargs)
@@ -382,8 +382,8 @@ def import_encounter(repeater, encounter_uuid):
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
             repeater.observation_mappings,
-            case_id,
-            case_type,
+            patient_case_id,
+            patient_case_type,
             default_owner_id,
         )
         deep_update(case_block_kwargs, more_kwargs)
@@ -391,7 +391,7 @@ def import_encounter(repeater, encounter_uuid):
         #  O\ ˙˙˙ ˙˙˙ ˙˙˙ end snip
 
     if has_case_updates(case_block_kwargs) or case_blocks:
-        update_case(repeater, case_id, case_block_kwargs, case_blocks)
+        update_case(repeater, patient_case_id, case_block_kwargs, case_blocks)
 
 
 def get_encounter(repeater, encounter_uuid):
