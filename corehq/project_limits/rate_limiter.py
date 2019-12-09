@@ -188,6 +188,10 @@ class RateDefinition(object):
 def get_dynamic_rate_definition(key, default):
     dynamic_rate_definition, _ = DynamicRateDefinition.objects.get_or_create(
         key=key, defaults=_get_rate_definition_dict(default))
+    return rate_definition_from_db_object(dynamic_rate_definition)
+
+
+def rate_definition_from_db_object(dynamic_rate_definition):
     return RateDefinition(**_get_rate_definition_dict(dynamic_rate_definition))
 
 
