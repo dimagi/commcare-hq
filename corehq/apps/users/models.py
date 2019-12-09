@@ -2831,23 +2831,33 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
-        with transaction.atomic():
-            try:
-                obj = cls.objects.select_for_update().get(
-                    domain=domain, user_id=user_id, app_id=app_id,
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on,
+                    build_id,
+                    sync_date, device_id
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(sync_date)s, %(device_id)s
                 )
-            except cls.DoesNotExist:
-                cls.objects.create(
-                    domain=domain, user_id=user_id, app_id=app_id,
-                    build_id=build_id, sync_date=sync_date, device_id=device_id
-                )
-                return
-
-            if not obj.sync_date or sync_date > obj.sync_date:
-                obj.sync_date = sync_date
-                obj.build_id = build_id
-                obj.device_id = device_id
-                obj.save()
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    sync_date = EXCLUDED.sync_date,
+                    device_id = EXCLUDED.device_id
+                WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
+                """, {
+                    'domain': domain,
+                    'user_id': user_id,
+                    'app_id': app_id,
+                    'build_id': build_id,
+                    'sync_date': sync_date,
+                    'device_id': device_id,
+                }
+            )
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
