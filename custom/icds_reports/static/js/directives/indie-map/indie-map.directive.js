@@ -65,6 +65,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             } else {
                 vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
             }
+            if (isMobile) {
+                // scale maps based on space available on device.
+                var headerHeight = $('#map-chart-header').height();
+                // take window height and subtract height of the header plus 44px of additional padding / margins
+                var availableHeight = window.innerHeight - headerHeight - 44;
+                if (availableHeight < vm.mapHeight) {
+                    vm.mapHeight = availableHeight;
+                }
+            }
         }
     };
 
@@ -111,6 +120,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 return {path: path, projection: projection};
             },
         };
+        if (isMobile) {
+            // this is used to add padding in datamap that we don't want on mobile.
+            // can't set to 0 because then it will default to 50
+            vm.map.options = {
+                legendHeight: 1,
+            };
+        }
 
         vm.mapPlugins = {
             bubbles: null,
