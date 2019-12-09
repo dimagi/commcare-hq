@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -119,7 +119,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data) {
+        if (vm.map.data && !isMobile) {
+            // this chunk of code adds the legend to web maps
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
@@ -267,7 +268,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService'];
+IndieMapController.$inject = [
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+];
 
 window.angular.module('icdsApp').directive('indieMap', function () {
     return {
