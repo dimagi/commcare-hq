@@ -5718,10 +5718,10 @@ class SQLGlobalAppConfig(models.Model):
 
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    app_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
-    apk_prompt = models.CharField(max_length=32, null=True, choices=choices, default="off")
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
     apk_version = models.CharField(max_length=32, null=True)
-    app_version = models.IntegerField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
