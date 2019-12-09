@@ -326,12 +326,12 @@ def process_reporting_metadata_staging():
             if record.received_on:
                 save = mark_latest_submission(
                     record.domain, user, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on, save=False
+                    record.xform_version, record.form_meta, record.received_on, save_user=False
                 )
             if record.device_id or record.sync_date:
                 save |= mark_last_synclog(
                     record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, record.device_id, save=False
+                    record.sync_date, record.device_id, save_user=False
                 )
             if save:
                 user.save(fire_signals=False)
