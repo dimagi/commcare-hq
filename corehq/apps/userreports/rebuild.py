@@ -117,7 +117,7 @@ def apply_index_changes(engine, diffs):
 
     for index in add_indexes:
         column_names = ', '.join(c.name for c in index.columns)
-        logger.info(f'CREATE INDEX CONCURRENTLY "{index.name}" ON {index.table.name} ({column_names})')
+        logger.info(f'CREATE INDEX CONCURRENTLY "{index.name}" ON "{index.table.name}" ({column_names})')
 
     # don't remove indexes automatically because we want to be able to add them
     # concurrently without the code removing them
