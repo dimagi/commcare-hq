@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction, router
+from django.db import connection, models, transaction, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -2798,32 +2799,35 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
-        with transaction.atomic():
-            try:
-                obj = cls.objects.select_for_update().get(
-                    domain=domain, user_id=user_id, app_id=app_id,
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on,
+                    build_id,
+                    xform_version, form_meta, received_on
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(xform_version)s, %(form_meta)s, %(received_on)s
                 )
-            except cls.DoesNotExist:
-                cls.objects.create(
-                    domain=domain, user_id=user_id, app_id=app_id,
-                    build_id=build_id, xform_version=version,
-                    form_meta=metadata, received_on=received_on,
-                )
-                return
-
-            save = False
-
-            if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
-                obj.received_on = received_on
-                save = True
-            if build_id != obj.build_id:
-                obj.build_id = build_id
-                save = True
-
-            if save:
-                obj.form_meta = metadata
-                obj.xform_version = version
-                obj.save()
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    xform_version = EXCLUDED.xform_version,
+                    form_meta = EXCLUDED.form_meta,
+                    received_on = EXCLUDED.received_on
+                WHERE staging.received_on IS NULL OR EXCLUDED.received_on > staging.received_on
+                """, {
+                    'domain': domain,
+                    'user_id': user_id,
+                    'app_id': app_id,
+                    'build_id': build_id,
+                    'xform_version': version,
+                    'form_meta': json.dumps(metadata),
+                    'received_on': received_on,
+                }
+            )
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
