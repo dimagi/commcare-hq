@@ -6,9 +6,7 @@
               <div class="d-flex align-items-start">
                   <nav-menu-opener></nav-menu-opener>
                   <div>
-                      <p class="font-16 font-montserrat font-weight-600 text-white mb-0">
-                          Program Summary
-                      </p>
+                      <p class="font-16 font-montserrat font-weight-600 text-white mb-0" ng-bind="$ctrl.label"></p>
                       <p class="font-14 font-montserrat font-weight-500 text-white">
                           {$ $ctrl.selectedMonthDisplay $} | National
                           <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">

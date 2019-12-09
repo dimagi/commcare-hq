@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
-                                  userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
+          baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
+    baseControllersService.BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -84,18 +85,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         return i;
     };
 
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.showInfoMessage = function () {
         var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
@@ -133,30 +122,10 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
 
-    // mobile only, update if filters are visible over the program summary
-    vm.filtersOpen = false;
-    $scope.$on('openFilterMenu', function () {
-        vm.filtersOpen = true;
-    });
-    $scope.$on('closeFilterMenu', function () {
-        vm.filtersOpen = false;
-    });
-    $scope.$on('mobile_filter_data_changed', function (event, data) {
-        vm.filtersOpen = false;
-        if (!data.location) {
-            vm.moveToLocation('national', -1);
-        } else {
-            vm.moveToLocation(data.location, data.locationLevel);
-        }
-        dateHelperService.updateSelectedMonth(data['month'], data['year']);
-        storageService.setKey('search', $location.search());
-        $scope.$emit('filtersChange');
-    });
-    vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 }
 
 ProgramSummaryController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
-    'dateHelperService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
+    'dateHelperService', 'baseControllersService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'navMetadata'];
 
 window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
     return {
