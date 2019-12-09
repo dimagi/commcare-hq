@@ -5,7 +5,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getRegisteredHouseholdData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Registered Household');
             var get_url = url('registered_household', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,
@@ -22,7 +22,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getEnrolledChildrenData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Enrolled Children');
             var get_url = url('enrolled_children', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,
@@ -39,7 +39,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getEnrolledWomenData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Enrolled Women');
             var get_url = url('enrolled_women', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,
@@ -56,7 +56,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getLactatingEnrolledWomenData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Lactating Enrolled Women');
             var get_url = url('lactating_enrolled_women', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,
@@ -73,7 +73,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getAdolescentGirlsData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Adolescent Girls');
             var get_url = url('adolescent_girls', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,
@@ -90,7 +90,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
         getAdhaarData: function(step, params) {
             gtag.event('Demographics Service', 'Fetching data started', 'Adhaar Beneficiaries');
             var get_url = url('adhaar', step);
-            return  $http({
+            return $http({
                 method: "GET",
                 url: get_url,
                 params: params,

@@ -1,8 +1,7 @@
-
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainMobileController($scope, $route, $routeParams, $location, $window, $http,
-                              isWebUser, userLocationId) {
+    isWebUser, userLocationId) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -11,14 +10,14 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
 
-    $scope.checkAccessToLocation = function () {
+    $scope.checkAccessToLocation = function() {
         var locationId = $location.search()['location_id'];
         if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
             $http.get(url('have_access_to_location'), {
-                params: {location_id: locationId},
-            }).then(function (response) {
+                params: { location_id: locationId },
+            }).then(function(response) {
                 if ($scope.$location.$$path !== '/access_denied' && !response.data.haveAccess) {
-                    $scope.$evalAsync(function () {
+                    $scope.$evalAsync(function() {
                         $location.search('location_id', userLocationId);
                         $location.path('/access_denied');
                         $window.location.href = '#/access_denied';
@@ -28,7 +27,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
         }
     };
 
-    $scope.$on('$routeChangeStart', function () {
+    $scope.$on('$routeChangeStart', function() {
         $scope.checkAccessToLocation();
         var path = window.location.pathname + $location.path().substr(1);
         $window.ga('set', 'page', path);
@@ -48,14 +47,16 @@ MainMobileController.$inject = [
 ];
 
 // ui.bootstrap not truly needed - but location directive depends on it to compile
-window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap'])
+window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap','leaflet-directive'])
     .controller('MainMobileController', MainMobileController)
-    .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
+    .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
         $routeProvider
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
+            }).when("/demographics", {
+                template: "<demographics></demographics>",
             }).when("/program_summary/:step", {
                 template: "<program-summary></program-summary>",
             });
