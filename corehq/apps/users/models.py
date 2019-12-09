@@ -2796,6 +2796,15 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'xform_version': version,
+            'form_meta': json.dumps(metadata),
+            'received_on': received_on,
+        }
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
@@ -2815,19 +2824,18 @@ class UserReportingMetadataStaging(models.Model):
                     form_meta = EXCLUDED.form_meta,
                     received_on = EXCLUDED.received_on
                 WHERE staging.received_on IS NULL OR EXCLUDED.received_on > staging.received_on
-                """, {
-                    'domain': domain,
-                    'user_id': user_id,
-                    'app_id': app_id,
-                    'build_id': build_id,
-                    'xform_version': version,
-                    'form_meta': json.dumps(metadata),
-                    'received_on': received_on,
-                }
-            )
+                """, params)
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'sync_date': sync_date,
+            'device_id': device_id,
+        }
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
@@ -2846,15 +2854,7 @@ class UserReportingMetadataStaging(models.Model):
                     sync_date = EXCLUDED.sync_date,
                     device_id = EXCLUDED.device_id
                 WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
-                """, {
-                    'domain': domain,
-                    'user_id': user_id,
-                    'app_id': app_id,
-                    'build_id': build_id,
-                    'sync_date': sync_date,
-                    'device_id': device_id,
-                }
-            )
+                """, params)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
