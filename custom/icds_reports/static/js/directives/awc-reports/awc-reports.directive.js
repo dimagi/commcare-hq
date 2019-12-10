@@ -2600,18 +2600,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         return i;
     };
 
-    vm.moveToLocation = function (loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.layers = {
         baselayers: {
             mapbox_light: {
