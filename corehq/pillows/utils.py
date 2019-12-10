@@ -75,7 +75,20 @@ def get_user_type(user_id):
                 return MOBILE_USER_TYPE
         except (ResourceNotFound, WrappingAttributeError):
             pass
+
+    get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(True)
     return UNKNOWN_USER_TYPE
+
+
+@quickcache(['user_id'], timeout=30 * ONE_DAY)
+def get_user_type_deep_cache_for_unknown_users(user_id):
+    """
+    Only call this on user_ids that have previously been classified as 'unknown'
+
+    This allows us to periodically check if unknown users really are unknown
+    without pummeling the user db.
+    """
+    return get_user_type(user_id)
 
 
 def get_all_expected_es_indices():

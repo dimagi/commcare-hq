@@ -100,6 +100,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsVhndForm,
     AggregateTHRForm,
     DailyAttendance,
+    DashboardUserActivityReport
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1679,3 +1680,17 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
         type=case_type
     )
     return matching_cases.values_list('case_id', 'type', 'server_modified_on')
+
+
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    run_every=crontab(minute=30, hour=12),  # To run on 6PM IST
+    acks_late=True,
+    queue='icds_aggregation_queue'
+)
+def update_dashboard_activity_report(target_date=None):
+    if target_date is None:
+        target_date = date.today()
+    db_alias = router.db_for_write(DashboardUserActivityReport)
+    with transaction.atomic(using=db_alias):
+        DashboardUserActivityReport().aggregate(target_date)
