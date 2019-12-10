@@ -1,11 +1,10 @@
 
 import datetime
-import re
 from collections import defaultdict
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.es import UserES
+from custom.icds_reports.const import INDIA_TIMEZONE
 from custom.icds_reports.models import AwcLocation
 from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 from custom.icds_reports.utils import india_now
@@ -60,8 +59,6 @@ class DashBoardUsage:
         """
         :param results_queryset: AwcLocation values queryset
         :param main_location_type: parent location type to fetch only locations below that level
-        :return: dict with location id and value mapping and locations ids of all the locations below the given
-         location
         """
         location_ids = []
         for result in results_queryset:
@@ -71,7 +68,6 @@ class DashBoardUsage:
                     # adding location id and name to the dict
                     self.location_id_name_dict[result[sub_location]] = result[
                         self.get_location_type_string_from_location_id(sub_location) + '_name']
-        return location_ids
 
     def get_location_id_string_from_location_type(self, location_type):
         """
@@ -86,14 +82,24 @@ class DashBoardUsage:
 
     def check_if_date_in_last_week(self, date):
         """
+        checks if the date is in last 7 days excluding today
         :param date: user last activity date
         :return: Returns if the user has an activity in dashboard in last 7 days
         """
         if date is None:
             return 'N/A', False
+        date = self.convert_utc_to_ist(date)
         date_formatted = datetime.datetime.strftime(date, "%d/%m/%Y, %I:%M %p")
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(INDIA_TIMEZONE)
         return date_formatted, 0 < (now - date).days <= 7
+
+    def convert_utc_to_ist(self, utc_date):
+        """
+        converts utc date to ist date
+        :param utc_date:
+        :return: ist date
+        """
+        return utc_date.astimezone(INDIA_TIMEZONE)
 
     def get_location_name_from_id(self, location_id):
         """
@@ -128,53 +134,52 @@ class DashBoardUsage:
         serial_count = 0
 
         location_type_filter = {
-            'aggregation_level': 5
+            'aggregation_level': 3
         }
         if not self.national_user:
             user_location = self.user.get_sql_location(self.domain)
-            user_location_type_name = \
+            user_loc_id_key = \
                 self.get_location_id_string_from_location_type(user_location.location_type_name)
-            location_type_filter[user_location_type_name] = user_location.get_id
+            location_type_filter[user_loc_id_key] = user_location.get_id
         else:
-            user_location_type_name = None
+            user_loc_id_key = None
         for test_location in self.location_test_fields:
             location_type_filter[test_location] = 0
 
         all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
 
-        self.populate_location_id_vs_name_mapping(all_awc_locations, user_location_type_name)
+        self.populate_location_id_vs_name_mapping(all_awc_locations, user_loc_id_key)
 
-        date = (datetime.datetime.now() - relativedelta(days=1)).date()
-        usage_data = None
+        date = datetime.datetime.now()
+        usage_data = []
 
         dashboard_filters = {}
 
         if not self.national_user:
             # retrieving the user_level from logged in user location type
-            user_level = self.user_levels.index(user_location_type_name.replace('_id', '')) + 1
+            user_level = self.user_levels.index(user_loc_id_key.replace('_id', '')) + 1
             dashboard_filters['user_level__gt'] = user_level
 
-            dashboard_filters[user_location_type_name] = user_location.get_id
+            dashboard_filters[user_loc_id_key] = user_location.get_id
 
         # keep the record in searched - current - month
-        while usage_data is None:
+        while not usage_data:
             usage_data = self.get_data_for_usage_report(date, dashboard_filters)
             date -= relativedelta(days=1)
 
         for record in usage_data:
             last_activity, activity_in_last_week = self.check_if_date_in_last_week(record.last_activity)
 
-            if record.user_level == 1:
-                district_name = ''
-                block_name = ''
-            else:
-                district_name = self.get_location_name_from_id(record.district_id)
-                if record.user_level == 2:
-                    block_name = ''
-                else:
-                    block_name = self.get_location_name_from_id(record.block_id)
+            state_name = self.get_location_name_from_id(record.state_id)
+            district_name = ''
+            block_name = ''
 
-            excel = [serial_count, self.get_location_name_from_id(record.state_id),
+            if record.user_level > 1:
+                district_name = self.get_location_name_from_id(record.district_id)
+            if record.user_level > 2:
+                block_name = self.get_location_name_from_id(record.block_id)
+
+            excel = [serial_count, state_name,
                      district_name, block_name, record.username.split('@')[0],
                      self.user_levels[record.user_level - 1],
                      self.get_role_from_username(record.username),
