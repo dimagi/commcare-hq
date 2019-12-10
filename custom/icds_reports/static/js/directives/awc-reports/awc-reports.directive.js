@@ -2630,12 +2630,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
 AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive('awcReports', function () {
+window.angular.module('icdsApp').directive('awcReports', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'awc-reports'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('awc-reports');
+        },
         bindToController: true,
         controller: AwcReportsController,
         controllerAs: '$ctrl',
     };
-});
+}]);
