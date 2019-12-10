@@ -26,12 +26,11 @@ class _UserCaseHelper(object):
         self._tasks_to_trigger = []
 
     def commit(self):
-        with CriticalSection(get_sync_lock_key(self.owner_id)):
-            if self._case_block_to_submit:
-                submit_case_blocks(
-                    self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
-            for task, task_args in self._tasks_to_trigger:
-                task.delay(*task_args)
+        if self._case_block_to_submit:
+            submit_case_blocks(
+                self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
+        for task, task_args in self._tasks_to_trigger:
+            task.delay(*task_args)
 
     @staticmethod
     def commit_multiple(helpers):
@@ -180,9 +179,10 @@ def get_sync_lock_key(user_id):
 
 
 def sync_call_center_user_case(user):
-    helper = get_call_center_case_helper(user)
-    if helper:
-        helper.commit()
+    with CriticalSection(get_sync_lock_key(user._id)):
+        helper = get_call_center_case_helper(user)
+        if helper:
+            helper.commit()
 
 
 def get_call_center_case_helper(user):
@@ -228,9 +228,10 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user):
-    helper = get_sync_usercase_helper()
-    if helper:
-        helper.commit()
+    with CriticalSection(get_sync_lock_key(user._id)):
+        helper = get_sync_usercase_helper()
+        if helper:
+            helper.commit()
 
 
 def get_sync_usercase_helper(user):
