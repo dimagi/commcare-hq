@@ -189,8 +189,7 @@ def get_call_center_case_helper(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        helper = _get_sync_user_case_helper(user, config.case_type, owner_id, case)
-        return helper
+        return _get_sync_user_case_helper(user, config.case_type, owner_id, case)
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
