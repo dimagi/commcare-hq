@@ -773,6 +773,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
@@ -794,6 +795,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
