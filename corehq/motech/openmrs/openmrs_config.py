@@ -13,8 +13,6 @@ from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
     ListProperty,
-    SchemaDictProperty,
-    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
@@ -27,6 +25,7 @@ INDEX_RELATIONSHIPS = (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
 )
+
 
 class OpenmrsCaseConfig(DocumentSchema):
 
