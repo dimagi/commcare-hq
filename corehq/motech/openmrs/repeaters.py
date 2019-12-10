@@ -250,13 +250,18 @@ class OpenmrsRepeater(CaseRepeater):
             form_question_values=get_form_question_values(payload),
         )
 
-        return send_openmrs_data(
-            self.requests,
-            self.domain,
-            payload,
-            self.openmrs_config,
-            case_trigger_infos,
-        )
+        try:
+            response = send_openmrs_data(
+                self.requests,
+                self.domain,
+                payload,
+                self.openmrs_config,
+                case_trigger_infos,
+            )
+        except Exception as err:
+            self.requests.notify_exception(str(err))
+            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+        return response
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
