@@ -1,11 +1,13 @@
 import json
 from collections import defaultdict
 from itertools import chain
+from typing import Iterable
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 import attr
+from jsonobject.containers import JsonDict
 from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -235,16 +237,16 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_sources = chain(
+        value_source_configs = chain(
             self.openmrs_config.case_config.patient_identifiers.values(),
             self.openmrs_config.case_config.person_properties.values(),
             self.openmrs_config.case_config.person_preferred_name.values(),
             self.openmrs_config.case_config.person_preferred_address.values(),
             self.openmrs_config.case_config.person_attributes.values(),
-        )
+        )  # type: Iterable[JsonDict]
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
 
