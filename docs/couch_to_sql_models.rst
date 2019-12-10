@@ -48,7 +48,7 @@ For models with many references, it may make sense to do this work incrementally
 
 PR 3: 
 ****
-This is the cleanup PR. Wait a few days or weeks the previous PR to merge this one; there's no rush. Clean up:
+This is the cleanup PR. Wait a few days or weeks after the previous PR to merge this one; there's no rush. Clean up:
 
 * Remove the old couch model
 * Add the couch class to `deletable_doc_types <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cleanup/deletable_doc_types.py>`_
