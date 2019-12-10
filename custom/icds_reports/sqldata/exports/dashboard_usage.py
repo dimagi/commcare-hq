@@ -91,7 +91,9 @@ class DashBoardUsage:
         date = self.convert_utc_to_ist(date)
         date_formatted = datetime.datetime.strftime(date, "%d/%m/%Y, %I:%M %p")
         now = datetime.datetime.now(INDIA_TIMEZONE)
-        return date_formatted, 0 < (now - date).days <= 7
+        yesterday_date = (now - relativedelta(days=1)).date()
+        seven_days_before_date = (now - relativedelta(days=8)).date()
+        return date_formatted, seven_days_before_date <= date.date() <= yesterday_date
 
     def convert_utc_to_ist(self, utc_date):
         """
