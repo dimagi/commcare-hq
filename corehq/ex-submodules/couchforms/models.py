@@ -516,6 +516,7 @@ class UnfinishedArchiveStub(models.Model):
     archive = models.BooleanField(default=False)
     history_updated = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+    attempts = models.IntegerField(default=0)
 
     def __str__(self):
         return str(
