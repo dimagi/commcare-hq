@@ -266,8 +266,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
-        utils.addMaternalChildRoutes($routeProvider);
-        utils.addCasReachRoutes($routeProvider);
-        utils.addAWCReportRoutes($routeProvider);
+        utils.addSharedRoutes($routeProvider);
     }]);
 
