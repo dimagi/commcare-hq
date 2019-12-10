@@ -1,7 +1,7 @@
 {% load staticfiles %}
 <div class="app-bg min-vh-100">
   <div ng-show="!$ctrl.filtersOpen">
-    <div class="bg-white">
+    <div class="bg-white" id="map-chart-header">
       <div class="filter-header">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="d-flex align-items-center">
@@ -24,8 +24,10 @@
       </div>
     </div>
     <div ng-if="$ctrl.step === 'map'" style="padding-top: 10px">
-      <div class="chartView col-xs-11">
-        I'm a Map!
+      <div class="mapView col-xs-11">
+        <map-or-sector-view label="$ctrl.label" template-popup="$ctrl.templatePopup(loc, row)"
+                            mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location">
+        </map-or-sector-view>
       </div>
     </div>
     <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">

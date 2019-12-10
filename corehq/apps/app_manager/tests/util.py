@@ -172,6 +172,27 @@ def commtrack_enabled(is_enabled):
     )
 
 
+def patch_get_xform_resource_overrides():
+    """
+    Override get_xform_resource_overrides, one of the few places in app manager that uses
+    SQL-based models, to avoid needing to turn SimpleTestCases into TestCases.
+    """
+    return mock.patch(
+        'corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_resource_overrides',
+        lambda _, __: {}
+    )
+
+
+def patch_add_xform_resource_overrides():
+    """
+    Temporary patch while code that adds resource overrides every time a linked app is pulled is live.
+    """
+    return mock.patch(
+        'corehq.apps.app_manager.suite_xml.post_process.resources.add_xform_resource_overrides',
+        lambda _, __, ___: None
+    )
+
+
 @unit_testing_only
 def delete_all_apps():
     for doc_type in app_doc_types():

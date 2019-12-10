@@ -48,7 +48,7 @@ MainMobileController.$inject = [
 ];
 
 // ui.bootstrap not truly needed - but location directive depends on it to compile
-window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap'])
+window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap', 'datamaps',])
     .controller('MainMobileController', MainMobileController)
     .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
