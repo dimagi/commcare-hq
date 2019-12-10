@@ -1697,8 +1697,13 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures, isAlertActive) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder,
+        $compile, storageService, dateHelperService, baseControllersService, userLocationId,
+        haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile) {
     var vm = this;
+    baseControllersService.BaseFilterController.call(
+        this, $scope, $routeParams, $location, dateHelperService, storageService
+    );
     vm.data = {};
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
@@ -2628,7 +2633,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures', 'isAlertActive'];
+AwcReportsController.$inject = [
+    '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile',
+    'storageService', 'dateHelperService', 'baseControllersService', 'userLocationId', 'haveAccessToAllLocations',
+    'haveAccessToFeatures', 'isAlertActive', 'isMobile',
+];
 
 window.angular.module('icdsApp').directive('awcReports', ['templateProviderService', function (templateProviderService) {
     return {
