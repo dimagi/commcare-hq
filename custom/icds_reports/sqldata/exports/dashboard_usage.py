@@ -172,13 +172,8 @@ class DashBoardUsage:
             last_activity, activity_in_last_week = self.check_if_date_in_last_week(record.last_activity)
 
             state_name = self.get_location_name_from_id(record.state_id)
-            district_name = ''
-            block_name = ''
-
-            if record.user_level > 1:
-                district_name = self.get_location_name_from_id(record.district_id)
-            if record.user_level > 2:
-                block_name = self.get_location_name_from_id(record.block_id)
+            district_name = self.get_location_name_from_id(record.district_id)
+            block_name = self.get_location_name_from_id(record.block_id)
 
             excel = [serial_count, state_name,
                      district_name, block_name, record.username.split('@')[0],
