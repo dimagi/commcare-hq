@@ -42,6 +42,7 @@ from corehq.motech.openmrs.openmrs_config import (
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.value_source import (
+    ValueSource,
     as_value_source,
     deserialize,
     get_import_value,
@@ -496,6 +497,21 @@ def get_diagnosis_mappings(
                 concept = diag_mapping.concept or None
                 diag_mappings[concept].append(diag_mapping)
     return diag_mappings
+
+
+def get_encounter_datetime_value_sources(
+    repeater: OpenmrsRepeater
+) -> List[ValueSource]:
+    value_sources = []
+    for form_config in repeater.openmrs_config.form_configs:
+        encounter_datetime_config = form_config.openmrs_start_datetime
+        if encounter_datetime_config and "case_property" in encounter_datetime_config:
+            value_source = as_value_source(encounter_datetime_config)
+            if value_source.can_import:
+                if not value_source.jsonpath:
+                    value_source.jsonpath = "encounterDateTime"
+                value_sources.append(value_source)
+    return value_sources
 
 
 def update_case(repeater, case_id, case_block_kwargs, case_blocks):
