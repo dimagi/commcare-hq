@@ -242,17 +242,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_infrastructure/adult_weight_scale/:step", {
                 template: "<adult-weight-scale></adult-weight-scale>",
             })
-            .when("/awc_reports", {
-                redirectTo: "/awc_reports/pse",
-            })
             .when("/service_delivery_dashboard", {
                 redirectTo: "/service_delivery_dashboard/pw_lw_children",
             })
             .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
-            })
-            .when("/awc_reports/:step", {
-                template: "<awc-reports></awc-reports>",
             })
             .when("/lady_supervisor", {
                 template: "<lady-supervisor></lady-supervisor>",
@@ -274,5 +268,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             });
         utils.addMaternalChildRoutes($routeProvider);
         utils.addCasReachRoutes($routeProvider);
+        utils.addAWCReportRoutes($routeProvider);
     }]);
 
