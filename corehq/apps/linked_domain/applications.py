@@ -1,10 +1,13 @@
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
+    get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
+    wrap_app,
 )
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.remote_accessors import (
+    get_app_by_version,
     get_brief_apps,
     get_latest_released_versions_by_app_id,
     get_released_app,
@@ -19,6 +22,15 @@ def get_master_app_briefs(domain_link, family_id):
 
     # Ignore deleted, linked and remote apps
     return [app for app in apps if family_id in [app._id, app.family_id] and app.doc_type == 'Application']
+
+
+def get_master_app_by_version(domain_link, upstream_app_id, upstream_version):
+    if domain_link.is_remote:
+        return get_app_by_version(domain_link, upstream_app_id, upstream_version)
+    else:
+        app = get_build_doc_by_version(domain_link.master_domain, upstream_app_id, upstream_version)
+        if app:
+            return wrap_app(app)
 
 
 def get_latest_master_app_release(domain_link, app_id):
