@@ -42,7 +42,7 @@ This should contain:
 * A django migration that verifies all couch docs have been migrated and cleans up any stragglers, using the `auto-managed migration pattern <https://commcare-hq.readthedocs.io/migration_command_pattern.html#auto-managed-migration-pattern>`_
 * Replacements of all code that reads from the couch document to instead read from SQL.
 
-For models with many references, it may make sense to do this work incrementally, with a first PR that includes the verification migration andthen subsequent PRs that update a subset of reads.
+For models with many references, it may make sense to do this work incrementally, with a first PR that includes the verification migration and then subsequent PRs that update a subset of reads.
 
 `Sample PR 2 <https://github.com/dimagi/commcare-hq/pull/26026>`_
 
