@@ -65,17 +65,20 @@ def is_citus_db(connection):
     return bool(list(res))
 
 
-def is_citus(engine, citus_list=[]):
+def is_citus(engine, citus_list=[], non_citus_list=[]):
     # hacking mutable default arg to memoize list of citus DBs
-    #   to avoid hitting DB. citus_list is never to be actually
-    #   passed.
+    #   to avoid hitting DB. citus_list, non_citus_list
+    #   is never to be actually passed.
     if engine.url in citus_list:
         return True
+    if engine.url in non_citus_list:
+        return False
     with engine.begin() as connection:
         if is_citus_db(connection):
             citus_list.append(engine.url)
             return True
         else:
+            non_citus_list.append(engine.url)
             return False
 
 
@@ -85,7 +88,7 @@ def create_engine(connection_string):
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
     engine = sqlalchemy.create_engine(connection_string, paramstyle='format')
 
-    if is_citus(engine) and allow_read_from_citus_standbys():
+    if allow_read_from_citus_standbys():
         connect_args = {'options': '-c citus.use_secondary_nodes=always'}
         return sqlalchemy.create_engine(connection_string, paramstyle='format', connect_args=connect_args)
     else:
