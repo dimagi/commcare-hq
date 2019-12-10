@@ -21,7 +21,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
         age_filters = {'age_tranche': 72}
 
         moderately_underweight = include_records_by_age_for_column(
-             {'age_tranche__lt': 72},
+            {'age_tranche__lt': 72},
             'nutrition_status_moderately_underweight'
         )
         severely_underweight = include_records_by_age_for_column(
@@ -45,7 +45,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             stunting_severe_column(icds_feature_flag)
         )
         nutrition_status_weighed = exclude_records_by_age_for_column(
-            age_filters,
+             age_filters,
             'nutrition_status_weighed'
         )
         height_measured_in_month = exclude_records_by_age_for_column(
