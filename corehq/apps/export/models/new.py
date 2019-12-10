@@ -843,9 +843,10 @@ class ExportInstance(BlobMixin, Document):
             ) and not group_schema.inferred
 
             prev_index = 0
+            use_get_column_new = (hasattr(instance, 'domain')
+                                  and USE_NEW_GET_COLUMN.enabled(instance.domain))
             for item in group_schema.items:
-                if (hasattr(instance, 'domain')
-                        and USE_NEW_GET_COLUMN.enabled(instance.domain)):
+                if use_get_column_new:
                     index, column = table.get_column_new(
                         item.path, item.doc_type, None
                     )
@@ -970,9 +971,10 @@ class ExportInstance(BlobMixin, Document):
 
         insert_fn = self._get_insert_fn(table, top)
 
+        domain = column_initialization_data.get('domain')
+        use_get_column_new = domain and USE_NEW_GET_COLUMN.enabled(domain)
         for static_column in properties:
-            domain = column_initialization_data.get('domain')
-            if domain and USE_NEW_GET_COLUMN.enabled(domain):
+            if use_get_column_new:
                 index, existing_column = table.get_column_new(
                     static_column.item.path,
                     static_column.item.doc_type,
