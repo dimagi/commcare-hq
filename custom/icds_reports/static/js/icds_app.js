@@ -126,6 +126,7 @@ MainController.$inject = [
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+        var utils = hqImport("js/icds_dashboard_utils");
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
         $routeProvider
@@ -271,7 +272,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
-        hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
-        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
+        utils.addMaternalChildRoutes($routeProvider);
+        utils.addCasReachRoutes($routeProvider);
     }]);
 
