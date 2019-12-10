@@ -345,16 +345,12 @@ def import_encounter(repeater, encounter_uuid):
     case_block_kwargs = {"update": {}, "index": {}}
     case_blocks = []
 
-    # NOTE: Atom Feed integration requires Patient UUID to be external_id
-    patient_case = get_case(repeater, encounter['patientUuid'])
-    if patient_case:
-        patient_case_id = patient_case.case_id
-        default_owner_id = patient_case.owner_id
-    else:
-        patient_case_block = create_case(repeater, encounter['patientUuid'])
+    patient_case_id, default_owner_id, patient_case_block = get_case_id_owner_id_case_block(
+        repeater,
+        encounter['patientUuid'],
+    )
+    if patient_case_block:
         case_blocks.append(patient_case_block)
-        patient_case_id = patient_case_block.case_id
-        default_owner_id = patient_case_block.owner_id
 
     patient_case_type = repeater.white_listed_case_types[0]
     more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
@@ -409,6 +405,23 @@ def get_encounter(repeater, encounter_uuid):
         raise_for_status=True
     )
     return response.json()
+
+
+def get_case_id_owner_id_case_block(
+    repeater: OpenmrsRepeater,
+    patient_uuid: str,
+) -> Tuple[str, str, Optional[CaseBlock]]:
+    """
+    If a case exists with external_id == patient_uuid, returns its
+    case_id, owner_id, and None. Otherwise returns the case_id, owner_id
+    and case block for a new case.
+    """
+    # NOTE: Atom Feed integration requires Patient UUID to be external_id
+    case = get_case(repeater, patient_uuid)
+    if case:
+        return case.case_id, case.owner_id, None
+    case_block = create_case(repeater, patient_uuid)
+    return case_block.case_id, case_block.owner_id, case_block
 
 
 def get_case(
