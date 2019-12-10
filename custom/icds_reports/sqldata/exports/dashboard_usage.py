@@ -8,6 +8,7 @@ from custom.icds_reports.const import INDIA_TIMEZONE
 from custom.icds_reports.models import AwcLocation
 from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 from custom.icds_reports.utils import india_now
+from django.utils.functional import cached_property
 
 
 class DashBoardUsage:
@@ -44,7 +45,6 @@ class DashBoardUsage:
         self.user = couch_user
         self.domain = domain
         self.location_id_name_dict = defaultdict(str)
-        self.national_user = self.is_national_user()
 
     def get_role_from_username(self, username):
         for key, value in self.roles.items():
@@ -116,6 +116,7 @@ class DashBoardUsage:
         """
         return list(DashboardUserActivityReport.objects.filter(date=date, **filters))
 
+    @cached_property
     def is_national_user(self):
         """
         :return: Returns if the users has access to all locations or not
@@ -136,7 +137,7 @@ class DashBoardUsage:
         location_type_filter = {
             'aggregation_level': 3
         }
-        if not self.national_user:
+        if not self.is_national_user:
             user_location = self.user.get_sql_location(self.domain)
             user_loc_id_key = \
                 self.get_location_id_string_from_location_type(user_location.location_type_name)
@@ -155,7 +156,7 @@ class DashBoardUsage:
 
         dashboard_filters = {}
 
-        if not self.national_user:
+        if not self.is_national_user:
             # retrieving the user_level from logged in user location type
             user_level = self.user_levels.index(user_loc_id_key.replace('_id', '')) + 1
             dashboard_filters['user_level__gt'] = user_level
