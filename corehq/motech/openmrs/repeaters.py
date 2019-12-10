@@ -9,6 +9,8 @@ from django.utils.translation import ugettext_lazy as _
 import attr
 from jsonobject.containers import JsonDict
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.signals import successful_form_received
@@ -283,7 +285,14 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        patient = get_patient(requests, domain, info, openmrs_config)
+        try:
+            patient = get_patient(requests, domain, info, openmrs_config)
+        except (RequestException, HTTPError) as err:
+            errors.append(_(
+                "Unable to create an OpenMRS patient for case "
+                f"{info.case_id!r}: {err}"
+            ))
+            continue
         if patient is None:
             warnings.append(
                 f"CommCare case '{info.case_id}' was not matched to a "

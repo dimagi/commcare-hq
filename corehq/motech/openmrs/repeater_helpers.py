@@ -246,11 +246,11 @@ def create_patient(requests, info, case_config):
         response = requests.post(
             '/ws/rest/v1/patient/',
             json=patient,
+            raise_for_status=True,
         )
-        if 200 <= response.status_code < 300:
-            # response.json() is not the full patient record. We need
-            # the patient's identifiers and attributes.
-            return get_patient_by_uuid(requests, response.json()['uuid'])
+        # response.json() is not the full patient record. We need
+        # the patient's identifiers and attributes.
+        return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
 def authenticate_session(requests):
@@ -365,6 +365,12 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         patient, = patients
     elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient is None:
+            # ``create_patient()`` will return None without an error
+            # if the case has no basic data, not even a name. It
+            # seems unlikely that the case is meant to be forwarded.
+            # The user will get a warning, but not an error.
+            return None
     else:
         # If PatientFinder can't narrow down the number of candidate
         # patients, don't guess. Just admit that we don't know.
