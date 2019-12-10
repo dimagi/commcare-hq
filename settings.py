@@ -27,6 +27,17 @@ DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
 DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
+# Setting to declare always_enabled/always_disabled toggle states for domains
+#   declaring toggles here avoids toggle lookups from cache for all requests.
+#   Example format
+#   STATIC_TOGGLES_STATES = {
+#     'toggle_slug': {
+#         'always_enabled': ['domain1', 'domain2],
+#         'always_disabled': ['domain4', 'domain3],
+#     }
+#   }
+STATIC_TOGGLE_STATES = {}
+
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -111,7 +122,6 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
-SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -125,11 +135,11 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    'corehq.middleware.LoggingSessionMiddleware',
+    'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
@@ -149,6 +159,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -228,7 +239,7 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
-    'corehq.apps.hqadmin',
+    'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
@@ -237,14 +248,16 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
-    'corehq.sql_db',
+    'corehq.sql_db.app_config.SqlDbAppConfig',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
+    'corehq.sql_proxy_standby_accessors',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -912,6 +925,8 @@ STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
+BYPASS_SESSIONS_FOR_MOBILE = False
+
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
     r'^/a/{domain}/phone/restore/',
@@ -940,7 +955,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if str(error) != 'No module named localsettings':
+    if str(error) != "No module named 'localsettings'":
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1142,14 +1157,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
-        'session_access_log': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': SESSION_ACCESS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,
-            'backupCount': 20
-        },
     },
     'root': {
         'level': 'INFO',
@@ -1239,11 +1246,6 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': False,
-        },
-        'session_access_log': {
-            'handlers': ['session_access_log'],
-            'level': 'DEBUG',
             'propagate': False,
         },
     }
@@ -1877,6 +1879,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),

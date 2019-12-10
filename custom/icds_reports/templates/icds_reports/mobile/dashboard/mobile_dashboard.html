@@ -1,76 +1,80 @@
+{% extends "icds_reports/base_minimal.html" %}
 {% load menu_tags %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-<!DOCTYPE html>
-<html>
-<head>
-        <title>{% trans "ICDS-CAS Mobile Dashboard" %}</title>
+{% block title %}{% trans "ICDS-CAS Mobile Dashboard" %}{% endblock %}
+{% block head %}
   {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
-{% endcompress %}
-</head>
-{% include 'analytics/google.html' %}
-{% javascript_libraries hq=True %}
-  <script src="{% static 'autotrack/autotrack.js' %}"></script>
+  {% endcompress %}
+
+  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
+
+  {% include 'analytics/analytics_js.html' %}
+  {% include 'analytics/google.html' %}
 {% compress js %}
+  <script src="{% static 'autotrack/autotrack.js' %}"></script>
+  <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
   <script src="{% static 'angular/angular.js' %}"></script>
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+  {# only needed for importing location directive - not actually referenced by mobile dashboard #}
+  <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+
 
   <script src="{% static 'js/icds_app_mobile.js' %}"></script>
   <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
 
   <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
-  <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
-  <script src="{% static 'js/angular-services/template-provider.service.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_utility_services.html' %}
 
-  <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
-  <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
-  <script src="{% static 'js/directives/program-summary/program-summary.directive.js' %}"></script>
+  {% include 'icds_reports/partials/shared_report_services.html' %}
+
+  {# components #}
+  {% include 'icds_reports/partials/shared_component_directives.html' %}
+{% compress js %}
+  <script src="{% static 'js/directives/nav-menu-opener/nav-menu-opener.directive.js' %}"></script>
+  <script src="{% static 'js/directives/filter-opener/filter-opener.directive.js' %}"></script>
+  <script src="{% static 'js/directives/mobile-filters/mobile-filters.directive.js' %}"></script>
+  <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
+  <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
+
+  {% include 'icds_reports/partials/shared_report_directives.html' %}
 
 {% endcompress %}
-</head>
-<body>
+{% endblock head %}
+{% block body %}
 <div class="hidden">
   {% include 'icds_reports/partials/register_dashboard_urls.html' %}
   {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
 </div>
 <div id="app" ng-cloak>
-    <div ng-controller="MainMobileController" class="container-fluid">
-        <div class="row">
-          <div class="col-md-12 main-container">
-            <div class="row no-margin">
-              <div class="ng-view"></div>
-            </div>
+  <navigation></navigation>
+  <div ng-controller="MainMobileController" class="container-fluid">
+      <div class="row">
+        <div class="col-md-12 main-container">
+          <div class="row no-margin">
+            <div class="ng-view"></div>
           </div>
         </div>
-    </div>
-</div>
-<div class="commcarehq-urls hide">
-{% block registered_urls %}
-    {# do not override this block, use registerurl template tag to populate #}
-{% endblock %}
-</div>
-
-{% include 'analytics/initial/global.html' %}
-{% include 'analytics/initial/google.html' %}
-<div class="initial-analytics-data hide">
-{% block initial_analytics_data %}
-  {# do not override this block, use initial_analytics_data template tag to populate #}
-{% endblock %}
-  <div class="initial-page-data hide">
-    {% block initial_page_data %}
-      {# do not override this block, use initial_page_data template tag to populate #}
-    {% endblock %}
+      </div>
   </div>
 </div>
-{% block js-inline %}{% endblock js-inline %}
+{% include 'analytics/initial/global.html' %}
+{% include 'analytics/initial/google.html' %}
+{% endblock body %}
+{% block body_end %}
 <script>
   var appName = 'icdsApp';
   hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
@@ -84,5 +88,4 @@
   });
   angular.bootstrap(document.getElementById('app'), [appName]);
 </script>
-</body>
-</html>
+{% endblock body_end %}

@@ -16,9 +16,12 @@
 {% block mm_block %}
   {% initial_page_data 'first_app_id' app.id %}
   {% initial_page_data 'second_app_id' other_app.id %}
+  {% initial_page_data 'build_profiles' build_profiles %}
   {% registerurl 'compare_multimedia_sizes' app.domain app.id other_app.id %}
+  {% registerurl 'compare_multimedia_sizes_for_build_profile' app.domain app.id other_app.id '---' %}
   <div id="multimedia-sizes-diff-container">
     <h2>{% trans 'Multimedia Sizes' %}</h2>
+    {% include 'app_manager/partials/build_profiles_select.html' %}
     <div id="multimedia-sizes-container-1" class="ko-template">
       {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
     </div>

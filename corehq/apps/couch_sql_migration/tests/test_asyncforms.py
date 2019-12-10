@@ -302,12 +302,12 @@ class TestLockingQueues(SimpleTestCase):
 
 
 @attr.s
-class DummyObject(object):
+class DummyObject:
     id = attr.ib()
 
 
 @attr.s
-class Form(object):
+class Form:
     form_id = attr.ib()
 
     @property

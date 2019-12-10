@@ -2,11 +2,14 @@ import json
 import re
 from collections import namedtuple
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 
+from couchdbkit import ResourceNotFound
+
 import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -15,7 +18,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
 
 
 def get_submit_url(domain, app_id=None):
@@ -206,17 +208,13 @@ DEMO_SUBMIT_MODE = 'demo'
 IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
 
 
-def _submitted_by_demo_user(form_json, domain):
+def _submitted_by_demo_user(form_meta, domain):
     from corehq.apps.users.util import DEMO_USER_ID
-    try:
-        user_id = form_json['meta']['userID']
-    except (KeyError, ValueError):
-        pass
-    else:
-        if user_id and user_id != DEMO_USER_ID:
-            user = CommCareUser.get_by_user_id(user_id, domain)
-            if user and user.is_demo_user:
-                return True
+    user_id = form_meta.get('userID')
+    if user_id and user_id != DEMO_USER_ID:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if user and user.is_demo_user:
+            return True
     return False
 
 
@@ -232,7 +230,7 @@ def _notify_ignored_form_submission(request, form_meta):
         "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
         message,
         settings.DEFAULT_FROM_EMAIL,
-        ['mkangia@dimagi.com']
+        ['mkangia@dimagi.com', 'sgoyal@dimagi.com']
     )
 
 
@@ -252,10 +250,9 @@ def should_ignore_submission(request):
             # let the usual workflow handle response for invalid xml
             return False
         else:
-            if _submitted_by_demo_user(form_json, request.domain):
-                if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
-                    # notify the case where the form would have gotten processed
-                    _notify_ignored_form_submission(request, form_json['meta'])
+            form_meta = form_json.get('meta')
+            if form_meta and _submitted_by_demo_user(form_meta, request.domain):
+                _notify_submission_if_applicable(request, form_meta)
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
@@ -265,3 +262,13 @@ def should_ignore_submission(request):
         instance, _ = couchforms.get_instance_and_attachment(request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
+
+
+def _notify_submission_if_applicable(request, form_meta):
+    # notify the submission if form would have gotten processed due to missing param
+    if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        app_version_text = form_meta.get('appVersion')
+        if app_version_text:
+            commcare_version = get_commcare_version_from_appversion_text(app_version_text)
+            if commcare_version and commcare_version >= '2.44.0':
+                _notify_ignored_form_submission(request, form_meta)

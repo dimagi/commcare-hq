@@ -9,7 +9,7 @@ By default CommCare will use the `default` Django database for all SQL data.
 .. image:: images/django_db_monolith.png
 
 Synclog Data
-~~~~~~~~~~~
+~~~~~~~~~~~~
 Synclog data may be stored in a separate database specified by the
 `SYNCLOGS_SQL_DB_ALIAS` setting. The value of this setting must be a DB
 alias in the Django `DATABASES` setting.
@@ -53,21 +53,31 @@ as follows:
 
     USE_PARTITIONED_DATABASE = True
 
-    PARTITION_DATABASE_CONFIG = {
-        'shards': {
-            'p1': [0, 511],  # shard range for p1 database
-            'p2': [512, 1023],
+    DATABASES = {
+        'proxy': {
+            ...
+            'PLPROXY': {
+                'PROXY': True
+            }
         },
-        'proxy': 'proxydb'
+        'p1': {
+            ...
+            'PLPROXY': {
+                'SHARDS': [0, 511]
+            }
+        },
+        'p2': {
+            ...
+            'PLPROXY': {
+                'SHARDS': [512, 1023]
+            }
+        }
     }
-
-The keys in `PARTITION_DATABASE_CONFIG['shards']` as well as the value of `PARTITION_DATABASE_CONFIG['proxy']
- must be databases defined in the `DATABASES` setting.
 
 Rules for shards
 ................
 
-* There can only be one proxy DB
+* There can only DB with `PROXY=True`
 * The total number of shards must be a power of 2 i.e. 2, 4, 8, 16, 32 etc
 * The number of shards cannot be changed once you have data in them so
   it is wise to start with a large enough number e.g. 1024
@@ -165,3 +175,60 @@ under `READ`:
 * There can only be one master database (not a standby database)
 * All standby databases must point to the same master database
 * If a master database is in this list, all standbys must point to this master
+
+Using standbys with the plproxy cluster
+.......................................
+The plproxy cluster needs some special attention since the queries are routed by plproxy and not by
+Django. In order to do this routing there are a number of additional pieces that are needed:
+
+1. Separate plproxy cluster configuration which points the shards to the appropriate standby node instead
+of the primary node.
+2. Duplicate SQL functions that make use of this new plproxy cluster.
+
+In order to maintain the SQL function naming the new plproxy cluster must be in a separate database.
+
+Steps to setup:
+
+1. Add all the standby shard databases to the Django `DATABASES` setting as described above.
+
+2. Create a new database for the standby plproxy cluster configuration and functions and add it to `DATABASES`
+as shown below:
+
+.. code-block:: python
+
+    DATABASES = {
+        'proxy_standby': {
+            ...
+            'PLPROXY': {
+                'PROXY_FOR_STANDBYS': True
+            }
+        }
+    }
+
+3. Run the Django migrations to create the SQL functions in the new standby proxy database.
+
+Routing queries to standbys
+---------------------------
+The configuration above makes it possible to use the standby databases however in order to actually
+route queries to them the DB router must be told to do so. This can be done it one of two ways:
+
+1. Via an environment variable
+
+.. code-block::
+
+    export READ_FROM_PLPROXY_STANDBYS=1
+
+This will route ALL read queries to the shard standbys.
+
+2. Via a Django decorator / context manager
+
+.. code-block:: python
+
+    # context manager
+    with read_from_plproxy_standbys():
+        case = CommCareCaseSQL.objects.partitioned_get(case_id)
+
+    # decorator
+    @read_from_plproxy_standbys()
+    def get_case_from_standby(case_id)
+        return CommCareCaseSQL.objects.partitioned_get(case_id)

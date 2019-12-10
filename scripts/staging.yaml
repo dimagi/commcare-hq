@@ -52,12 +52,14 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
-  #- nh/dhis2/te  # Norman Oct 2
-  - MC/SL-229  # Norman Oct 9
+  - nh/dhis2/te  # Norman Oct 2
   - sr-session-audit  # Sravan Oct 15
-  - nh/blank_row  # Norman Oct 28
   - jls/kill-exchange # Jenny Nov 13
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
-  - dmr/hard-rate-limit-restores  # Danny Nov 19
+  - bmb/update-requirejs  # Biyeun Nov 21
+  - jls/resource-overrides  # Jenny Nov 22
+  - jls/non-unique-form-ids  # Jenny Nov 24
+  - mk/track-build-profile-id-via-heartbeat # MK Nov 26
+  - dmr/rate-limit-only-at-high-load  # Danny Dec 6
 submodules: {}

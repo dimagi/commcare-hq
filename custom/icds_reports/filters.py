@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -74,10 +75,8 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
 class ICDSTableauFilterMixin(object):
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
                  css_label=None, css_field=None):
-        css_label = 'col-xs-4 col-md-4 col-lg-4 control-label'
-        css_field = 'col-xs-8 col-md-8 col-lg-8'
         super(ICDSTableauFilterMixin, self).__init__(
-            request, domain, timezone, parent_report, css_label, css_field
+            request, domain, timezone, parent_report, 'control-label ' + CSS_LABEL_CLASS, CSS_FIELD_CLASS
         )
 
 

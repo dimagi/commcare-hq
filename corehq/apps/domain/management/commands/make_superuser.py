@@ -5,6 +5,8 @@ from django.core.management.base import BaseCommand, CommandError
 
 from email_validator import EmailSyntaxError, validate_email
 
+from corehq.util.signals import signalcommand
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,6 +25,7 @@ class Command(BaseCommand):
             if password == getpass.getpass('Repeat Password:'):
                 return password
 
+    @signalcommand
     def handle(self, username, **options):
         from corehq.apps.users.models import WebUser
         try:

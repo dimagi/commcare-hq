@@ -70,6 +70,7 @@ class Command(BaseCommand):
                 job.get()
             except Exception:
                 print('\n======================= Error During Migration =======================')
+                print(repr(job))
                 print(get_traceback_string())
                 migration_error_occured = True
 
