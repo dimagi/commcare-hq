@@ -30,6 +30,11 @@
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+{% endcompress %}
+{% comment %}
+Split up compression due to a weird js dependency bug that makes it not work without this.
+{% endcomment %}
+{% compress js %}
   <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
   {# only needed for importing location directive - not actually referenced by mobile dashboard #}
   <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
