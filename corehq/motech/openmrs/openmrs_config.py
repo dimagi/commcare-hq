@@ -184,7 +184,10 @@ class ObservationMapping(DocumentSchema):
         }
 
     """
-    concept = StringProperty()
+    # If no concept is specified, this ObservationMapping is used for
+    # setting a case property or creating an extension case for any
+    # concept
+    concept = StringProperty(required=False, default=None)
     value = DictProperty()
 
     # Import Observations as case updates from Atom feed. (Case type is

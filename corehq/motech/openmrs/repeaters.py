@@ -156,11 +156,15 @@ class OpenmrsRepeater(CaseRepeater):
                     value_source.can_import
                     and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
                 ):
+                    # If obs_mapping.concept is "" or None, the mapping
+                    # should apply to any concept
+                    concept = obs_mapping.concept or None
+
                     # It's possible that an OpenMRS concept appears more
                     # than once in form_configs. We are using a
                     # defaultdict(list) so that earlier definitions
                     # don't get overwritten by later ones:
-                    obs_mappings[obs_mapping.concept].append(obs_mapping)
+                    obs_mappings[concept].append(obs_mapping)
         return obs_mappings
 
     @cached_property
@@ -173,7 +177,8 @@ class OpenmrsRepeater(CaseRepeater):
                     value_source.can_import
                     and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
                 ):
-                    diag_mappings[diag_mapping.concept].append(diag_mapping)
+                    concept = diag_mapping.concept or None
+                    diag_mappings[concept].append(diag_mapping)
         return diag_mappings
 
     @cached_property

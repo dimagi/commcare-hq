@@ -1,6 +1,7 @@
 import re
 import uuid
 from datetime import datetime
+from itertools import chain
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.utils.translation import ugettext as _
@@ -468,8 +469,9 @@ def get_case_block_kwargs_from_observations(
     case_block_kwargs = {"update": {}}
     for obs in observations:
         concept_uuid = obs.get('concept', {}).get('uuid')
-        if concept_uuid and concept_uuid in mappings:
-            for mapping in mappings[concept_uuid]:
+        if concept_uuid and (concept_uuid in mappings or None in mappings):
+            obs_mappings = chain(mappings.get(concept_uuid, []), mappings.get(None, []))
+            for mapping in obs_mappings:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
                         mapping, obs, fallback_value=obs.get('value')
@@ -508,8 +510,9 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
     case_block_kwargs = {"update": {}}
     for diag in diagnoses:
         codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
-        if codedanswer_uuid and codedanswer_uuid in mappings:
-            for mapping in mappings[codedanswer_uuid]:
+        if codedanswer_uuid and (codedanswer_uuid in mappings or None in mappings):
+            diag_mappings = chain(mappings.get(codedanswer_uuid, []), mappings.get(None, []))
+            for mapping in diag_mappings:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
                         mapping, diag,
