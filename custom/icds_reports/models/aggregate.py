@@ -20,6 +20,7 @@ from custom.icds_reports.const import (
     AGG_LS_VHND_TABLE,
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
+    AGG_DASHBOARD_ACTIVITY
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -48,6 +49,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
+    DashboardActivityReportAggregate
 )
 
 
@@ -1469,3 +1471,26 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
 
     _agg_helper_cls = AwwIncentiveAggregationDistributedHelper
     _agg_atomic = False
+
+
+class DashboardUserActivityReport(models.Model, AggregateMixin):
+    """
+    Daily Update table to hold Dashboard users activity information
+    """
+    # This will be unique per day not unique universally among all data in it
+    username = models.TextField(primary_key=True)
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    user_level = models.IntegerField(null=True)
+    location_launched = models.NullBooleanField(null=True)
+    last_activity = models.DateTimeField(
+        help_text="The latest time dashboard user used dashboard",
+        null=True
+    )
+    date = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_DASHBOARD_ACTIVITY
+
+    _agg_helper_cls = DashboardActivityReportAggregate
