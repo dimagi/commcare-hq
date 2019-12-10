@@ -116,7 +116,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
         'records': [
             [
                 {
-                    'label': _('Wasting (Weight-for-Height)'),
+                    'label': _('Underweight (Weight-for-Age)'),
                     'help_text': underweight_children_help_text(),
                     'percent': percent_diff(
                         'underweight',
@@ -130,7 +130,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'valid'
                     )),
-                    'value': 45,
+                    'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
