@@ -59,6 +59,5 @@ window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap', 'datamaps
             }).when("/program_summary/:step", {
                 template: "<program-summary></program-summary>",
             });
-        hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
-        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
+        hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider);
     }]);
