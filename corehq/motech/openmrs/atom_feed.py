@@ -1,8 +1,9 @@
 import re
 import uuid
+from collections import defaultdict
 from datetime import datetime
 from itertools import chain
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, DefaultDict
 
 from django.utils.translation import ugettext as _
 
@@ -353,9 +354,10 @@ def import_encounter(repeater, encounter_uuid):
         case_blocks.append(patient_case_block)
 
     patient_case_type = repeater.white_listed_case_types[0]
+    observation_mappings = get_observation_mappings(repeater)
     more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
         encounter['observations'],
-        repeater.observation_mappings,
+        observation_mappings,
         patient_case_id,
         patient_case_type,
         default_owner_id,
@@ -378,7 +380,7 @@ def import_encounter(repeater, encounter_uuid):
         #       been moved to repeater.bahmni_diagnoses
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
-            repeater.observation_mappings,
+            observation_mappings,
             patient_case_id,
             patient_case_type,
             default_owner_id,
@@ -455,6 +457,29 @@ def create_case(
     default_owner: Optional[CommCareUser] = repeater.first_user
     case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     return case_block
+
+
+def get_observation_mappings(
+    repeater: OpenmrsRepeater
+) -> DefaultDict[str, List[ObservationMapping]]:
+    obs_mappings = defaultdict(list)
+    for form_config in repeater.openmrs_config.form_configs:
+        for obs_mapping in form_config.openmrs_observations:
+            value_source = as_value_source(obs_mapping.value)
+            if (
+                value_source.can_import
+                and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
+            ):
+                # If obs_mapping.concept is "" or None, the mapping
+                # should apply to any concept
+                concept = obs_mapping.concept or None
+
+                # It's possible that an OpenMRS concept appears more
+                # than once in form_configs. We are using a
+                # defaultdict(list) so that earlier definitions
+                # don't get overwritten by later ones:
+                obs_mappings[concept].append(obs_mapping)
+    return obs_mappings
 
 
 def update_case(repeater, case_id, case_block_kwargs, case_blocks):

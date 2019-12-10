@@ -4,9 +4,9 @@ import os
 import re
 from datetime import datetime
 
-import attr
 from django.test import SimpleTestCase
 
+import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
 from mock import Mock, patch
@@ -16,6 +16,7 @@ from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_bahmni_diagnoses,
     get_case_block_kwargs_from_observations,
     get_encounter_uuid,
+    get_observation_mappings,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
@@ -329,7 +330,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         observations = encounter['observations']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
-            self.repeater.observation_mappings,
+            get_observation_mappings(self.repeater),
             None, None, None
         )
         self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
@@ -359,7 +360,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         observations = encounter['observations']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
-            self.repeater.observation_mappings,
+            get_observation_mappings(self.repeater),
             'test-case-id',
             'patient',
             'default-owner-id'

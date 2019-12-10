@@ -147,27 +147,6 @@ class OpenmrsRepeater(CaseRepeater):
         )
 
     @cached_property
-    def observation_mappings(self):
-        obs_mappings = defaultdict(list)
-        for form_config in self.openmrs_config.form_configs:
-            for obs_mapping in form_config.openmrs_observations:
-                value_source = as_value_source(obs_mapping.value)
-                if (
-                    value_source.can_import
-                    and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
-                ):
-                    # If obs_mapping.concept is "" or None, the mapping
-                    # should apply to any concept
-                    concept = obs_mapping.concept or None
-
-                    # It's possible that an OpenMRS concept appears more
-                    # than once in form_configs. We are using a
-                    # defaultdict(list) so that earlier definitions
-                    # don't get overwritten by later ones:
-                    obs_mappings[concept].append(obs_mapping)
-        return obs_mappings
-
-    @cached_property
     def diagnosis_mappings(self):
         diag_mappings = defaultdict(list)
         for form_config in self.openmrs_config.form_configs:
