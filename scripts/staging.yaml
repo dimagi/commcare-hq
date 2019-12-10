@@ -59,5 +59,4 @@ branches:
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
   - jls/non-unique-form-ids  # Jenny Nov 24
-  - cz/fix-compress-2  # cz dec 10
 submodules: {}
