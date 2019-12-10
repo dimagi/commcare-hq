@@ -15,6 +15,7 @@ import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_bahmni_diagnoses,
     get_case_block_kwargs_from_observations,
+    get_diagnosis_mappings,
     get_encounter_uuid,
     get_observation_mappings,
     get_patient_uuid,
@@ -342,7 +343,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.diagnosis_mappings,
+            get_diagnosis_mappings(self.repeater),
             None, None, None
         )
         self.assertEqual(case_block_kwargs, {
@@ -395,7 +396,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.diagnosis_mappings,
+            get_diagnosis_mappings(self.repeater),
             'test-case-id',
             'patient',
             'default-owner-id'

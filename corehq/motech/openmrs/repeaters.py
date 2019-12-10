@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from itertools import chain
 
 from django.utils.functional import cached_property
@@ -50,7 +49,6 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
-    as_value_source,
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
@@ -145,20 +143,6 @@ class OpenmrsRepeater(CaseRepeater):
             verify=self.verify,
             notify_addresses=self.notify_addresses,
         )
-
-    @cached_property
-    def diagnosis_mappings(self):
-        diag_mappings = defaultdict(list)
-        for form_config in self.openmrs_config.form_configs:
-            for diag_mapping in form_config.bahmni_diagnoses:
-                value_source = as_value_source(diag_mapping.value)
-                if (
-                    value_source.can_import
-                    and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
-                ):
-                    concept = diag_mapping.concept or None
-                    diag_mappings[concept].append(diag_mapping)
-        return diag_mappings
 
     @cached_property
     def first_user(self):

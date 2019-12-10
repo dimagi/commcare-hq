@@ -3,7 +3,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
-from typing import Any, Dict, List, Optional, Tuple, Union, DefaultDict
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 from django.utils.translation import ugettext as _
 
@@ -368,7 +368,7 @@ def import_encounter(repeater, encounter_uuid):
     if 'bahmniDiagnoses' in encounter:
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
-            repeater.diagnosis_mappings,
+            get_diagnosis_mappings(repeater),
             patient_case_id,
             patient_case_type,
             default_owner_id,
@@ -480,6 +480,22 @@ def get_observation_mappings(
                 # don't get overwritten by later ones:
                 obs_mappings[concept].append(obs_mapping)
     return obs_mappings
+
+
+def get_diagnosis_mappings(
+    repeater: OpenmrsRepeater
+) -> DefaultDict[str, List[ObservationMapping]]:
+    diag_mappings = defaultdict(list)
+    for form_config in repeater.openmrs_config.form_configs:
+        for diag_mapping in form_config.bahmni_diagnoses:
+            value_source = as_value_source(diag_mapping.value)
+            if (
+                value_source.can_import
+                and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
+            ):
+                concept = diag_mapping.concept or None
+                diag_mappings[concept].append(diag_mapping)
+    return diag_mappings
 
 
 def update_case(repeater, case_id, case_block_kwargs, case_blocks):
