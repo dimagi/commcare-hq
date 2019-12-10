@@ -17,6 +17,7 @@
 /corehq/sql_accessors/ @snopoke
 /corehq/sql_db/ @snopoke
 /corehq/sql_proxy_accessors/ @snopoke
+/corehq/sql_proxy_standby_accessors/ @snopoke
 /corehq/tests/nose.py @millerdev
 /corehq/tests/noseplugins/ @millerdev
 /corehq/util/ @esoergel

@@ -1,13 +1,14 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService, isAlertActive) {
+    downloadService, isAlertActive, userLocationType) {
     var vm = this;
 
     vm.months = [];
     vm.monthsCopy = [];
     vm.years = [];
     vm.yearsCopy = [];
+    vm.userLocationType = userLocationType;
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.previousTaskFailed = null;
@@ -141,7 +142,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 10, name: 'Take Home Ration (THR)'},
     ];
 
-    if (vm.haveAccessToFeatures) {
+    if (vm.haveAccessToFeatures && vm.userLocationType.toLowerCase() !== 'block') {
         vm.indicators.push({id: 11, name: 'Dashboard usage(Last 7 days)'});
     }
 
@@ -644,7 +645,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService', 'isAlertActive'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

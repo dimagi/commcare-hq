@@ -30,7 +30,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -309,7 +309,6 @@ class AttachmentMixin(SaveStateMixin):
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     # states should be powers of 2
     NORMAL = 1
@@ -612,7 +611,6 @@ class DeprecatedXFormAttachmentSQL(models.Model):
 
 class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
@@ -703,7 +701,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255, default=None)
@@ -1039,7 +1036,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     for sharding locality with other data from the same case.
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
@@ -1137,7 +1133,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
     CHILD = 1
@@ -1221,7 +1216,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # types should be powers of 2
     TYPE_FORM = 1
@@ -1527,7 +1521,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     Represents the current state of a ledger. Supercedes StockState
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
@@ -1600,7 +1593,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2

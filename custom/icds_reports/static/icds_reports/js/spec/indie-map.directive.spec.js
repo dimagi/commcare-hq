@@ -1,6 +1,7 @@
 /* global module, inject, chai, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Indie Map Directive', function () {
@@ -41,8 +42,7 @@ describe('Indie Map Directive', function () {
     };
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, false, false);
     }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService) {

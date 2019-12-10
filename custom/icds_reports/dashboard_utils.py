@@ -13,6 +13,10 @@ def get_dashboard_template_context(domain, couch_user):
     context['all_user_location_id'] = list(couch_user.get_sql_locations(
         domain
     ).location_ids())
+    try:
+        context['user_location_type'] = couch_user.get_sql_location(domain).location_type_name
+    except AttributeError:
+        context['user_location_type'] = ''
     context['state_level_access'] = 'state' in set(
         [loc.location_type.code for loc in couch_user.get_sql_locations(
             domain

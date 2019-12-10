@@ -1,16 +1,51 @@
 /* global d3, moment */
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
+    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService) {
+        var vm = this;
+        vm.moveToLocation = function(loc, index) {
+            if (loc === 'national') {
+                $location.search('location_id', '');
+                $location.search('selectedLocationLevel', -1);
+                $location.search('location_name', '');
+            } else {
+                $location.search('location_id', loc.location_id);
+                $location.search('selectedLocationLevel', index);
+                $location.search('location_name', loc.name);
+            }
+        };
+        vm.filtersOpen = false;
+        $scope.$on('openFilterMenu', function () {
+            vm.filtersOpen = true;
+        });
+        $scope.$on('closeFilterMenu', function () {
+            vm.filtersOpen = false;
+        });
+        $scope.$on('mobile_filter_data_changed', function (event, data) {
+            vm.filtersOpen = false;
+            if (!data.location) {
+                vm.moveToLocation('national', -1);
+            } else {
+                vm.moveToLocation(data.location, data.locationLevel);
+            }
+            dateHelperService.updateSelectedMonth(data['month'], data['year']);
+            storageService.setKey('search', $location.search());
+            $scope.$emit('filtersChange');
+        });
+        vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
+    };
     return {
-        BaseController: function ($scope, $routeParams, $location, locationsService, userLocationId,
-            storageService, haveAccessToAllLocations, haveAccessToFeatures) {
+        BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
+                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
+                  isMobile) {
+            BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
             var vm = this;
+
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
             } else {
                 storageService.setKey('search', $location.search());
             }
-
             vm.userLocationId = userLocationId;
             vm.filtersData = $location.search();
             vm.step = $routeParams.step;
@@ -24,6 +59,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
 
             vm.haveAccessToFeatures = haveAccessToFeatures;
             vm.message = storageService.getKey('message') || false;
+
+            // variables used for chart rendering. can be overridden by subclasses
+            vm.usePercentage = true;
+            vm.forceYAxisFromZero = false;
 
             $scope.$watch(function() {
                 return vm.selectedLocations;
@@ -44,15 +83,36 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
-            vm.createTemplatePopup = function(header, lines) {
+            vm.getPopupSubheading = function () {
+                // if the map popup should have a subheading, then implement this function in a subclass
+                // this is inserted before the indicators. see `AWCSCoveredController` for an example usage.
+                return '';
+            };
+
+            vm.templatePopup = function(loc, row) {
+                // subclasses that don't override this must implement vm.getPopupData
+                // See UnderweightChildrenReportController for an example
+                var popupData = vm.getPopupData(row);
+                return vm.createTemplatePopup(
+                    loc.properties.name,
+                    popupData,
+                    vm.getPopupSubheading()
+                );
+            };
+
+            vm.createTemplatePopup = function(header, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
+                if (subheading) {
+                    template += '<p>' + subheading + '</p>';
+                }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }
                 template += '</div>';
                 return template;
             };
+
             vm.getLocationType = function() {
                 if (vm.location) {
                     if (vm.location.location_type === 'supervisor') {
@@ -74,7 +134,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     vm.steps['map'].label = 'Map View: ' + locType;
                 }
             };
-            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero) {
+            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero, overrideStep) {
+                // if overrideStep is defined use it, else just use the current step
+                // mobile dashboard requires this to load data beyond the currently displayed step on some pages
+                var currentStep = overrideStep || vm.step;
                 var tailsMultiplier = 1;
                 if (usePercentage) {
                     tailsMultiplier = 100;
@@ -87,9 +150,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     return parseFloat((value / tailsMultiplier).toFixed(precision));
                 };
                 return function(response) {
-                    if (vm.step === "map") {
+                    if (currentStep === "map") {
                         vm.data.mapData = response.data.report_data;
-                    } else if (vm.step === "chart") {
+                    } else if (currentStep === "chart") {
                         vm.chartData = response.data.report_data.chart_data;
                         vm.all_locations = response.data.report_data.all_locations;
                         vm.top_five = response.data.report_data.top_five;
@@ -114,6 +177,26 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     }
                 };
             };
+
+            vm.loadData = function () {
+                // a default implementation of loadData that is web and mobile friendly.
+                // subclasses that don't override this must set vm.serviceDataFunction to a function
+                // that takes in the current step and filters and returns the appropriate data from the relevant
+                // service. See UnderweightChildrenReportController for an example
+                vm.setStepsMapLabel();
+                // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
+                // note: it would be better to not load this data on both step pages but instead save it in the JS, but
+                // doing that now would be a bit complicated and the server-side caching should make the switching
+                // relatively painless
+                var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+                for (var i = 0; i < allSteps.length; i++) {
+                    var currentStep = allSteps[i];
+                    vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
+                        vm.loadDataFromResponse(vm.usePercentage, vm.forceYAxisFromZero, currentStep)
+                    );
+                }
+            };
+
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
@@ -140,17 +223,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     });
                 }
                 return i;
-            };
-            vm.moveToLocation = function(loc, index) {
-                if (loc === 'national') {
-                    $location.search('location_id', '');
-                    $location.search('selectedLocationLevel', -1);
-                    $location.search('location_name', '');
-                } else {
-                    $location.search('location_id', loc.location_id);
-                    $location.search('selectedLocationLevel', index);
-                    $location.search('location_name', loc.name);
-                }
             };
             vm.getChartOptions = function(options) {
                 return {
@@ -217,6 +289,26 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return template;
             };
+
+            // mobile dashboard
+            // subsection navigation support
+            vm.goToRoute = function (route) {
+                $location.path(route);
+            };
+            vm.getBackArrowLink = function () {
+                return navigationService.getPagePath('program_summary/' + vm.sectionSlug, $location.search());
+            };
+            // month filter support
+            vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
+
+            // popup support on rankings pages
+            vm.displayMobilePopup = function (location) {
+                var locationData = vm.data.mapData.data[location.loc_name];
+                var data = vm.getPopupData(locationData);
+                vm.mobilePopupLocation = location;
+                vm.mobilePopupData = data;
+            };
         },
+        BaseFilterController: BaseFilterController,
     };
 });

@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
-from django.test import TestCase
-from mock import patch
-import pytz
+from unittest import skip
 
-from corehq.apps.es.fake.users_fake import UserESFake
+from django.test import TestCase
+
+import pytz
+from mock import patch
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.locations.tests.util import (
     LocationStructure,
     LocationTypeStructure,

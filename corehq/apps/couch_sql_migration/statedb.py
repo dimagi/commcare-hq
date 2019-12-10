@@ -270,11 +270,20 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
-    def save_form_diffs(self, couch_json, sql_json):
+    def save_form_diffs(self, couch_json, sql_json, replace=False):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
+        doc_type = couch_json["doc_type"]
+        doc_id = couch_json["_id"]
+        if replace:
+            with self.session() as session:
+                (
+                    session.query(Diff)
+                    .filter(Diff.kind == doc_type, Diff.doc_id == doc_id)
+                    .delete(synchronize_session=False)
+                )
         if diffs:
-            self.add_diffs(couch_json["doc_type"], couch_json["_id"], diffs)
+            self.add_diffs(doc_type, doc_id, diffs)
 
     def replace_case_diffs(self, kind, case_id, diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
