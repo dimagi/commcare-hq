@@ -10,6 +10,7 @@
         <div class="col-xs-11 d-flex justify-content-between align-items-center mb-3 no-gutters float-unset" >
             <p class="mb-0 font-30 font-montserrat text-blue font-weight-500" >
               <span ng-if="(cell.format == 'number' || cell.format == 'number_and_percent') " ng-bind="cell.value | indiaNumbers"></span>
+              <span ng-if="cell.format == 'string'" ng-bind="cell.value"></span>
               <span ng-if="cell.format == 'percent_and_div'">
                 <span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%
               </span>
