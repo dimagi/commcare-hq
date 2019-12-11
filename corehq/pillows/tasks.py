@@ -4,17 +4,20 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import CardinalityAggregation
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.xform import resave_form
 from corehq.pillows.utils import get_user_type_deep_cache_for_unknown_users
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
+from corehq.util.quickcache import quickcache
 
 
 @periodic_task(run_every=timedelta(minutes=10))
+@quickcache([], timeout=9 * 60)  # Protect from many runs after recovering from a backlog
 def send_unknown_user_type_stats():
     datadog_gauge('commcare.fix_user_types.unknown_user_count',
-                  len(_get_unknown_user_type_user_ids()))
+                  _get_unknown_user_type_user_ids_approx_count())
     datadog_gauge('commcare.fix_user_types.unknown_user_form_count',
                   FormES().user_type('unknown').count())
 
@@ -41,3 +44,8 @@ def resave_es_forms_with_unknown_user_type(user_id):
 
 def _get_unknown_user_type_user_ids():
     return FormES().user_type('unknown').user_aggregation().run().aggregations.user.keys
+
+
+def _get_unknown_user_type_user_ids_approx_count():
+    agg = CardinalityAggregation('users_count', 'form.meta.userID')
+    return FormES().user_type('unknown').aggregation(agg).run().aggregations.users_count.value
