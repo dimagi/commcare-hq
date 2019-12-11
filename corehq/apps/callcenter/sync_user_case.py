@@ -228,7 +228,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 def sync_usercase(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        helper = get_sync_usercase_helper()
+        helper = get_sync_usercase_helper(user)
         if helper:
             helper.commit()
 
@@ -251,5 +251,5 @@ def sync_user_cases(user):
     first time.
     """
     with CriticalSection(get_sync_lock_key(user._id)):
-        helpers = [get_sync_usercase_helper(), get_call_center_case_helper()]
+        helpers = [get_sync_usercase_helper(user), get_call_center_case_helper(user)]
         _UserCaseHelper.commit_multiple(helpers)
