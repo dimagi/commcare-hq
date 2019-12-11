@@ -1,5 +1,6 @@
 import uuid
 from collections import namedtuple
+from itertools import chain
 from xml.etree import cElementTree as ElementTree
 
 from django.core.cache import cache
@@ -34,7 +35,7 @@ class _UserCaseHelper(object):
 
     @staticmethod
     def commit_multiple(helpers):
-        case_blocks = [h._case_block_to_submit.as_text() for h in helpers if h and h._case_block_to_submit]
+        case_blocks = [h._case_block_to_submit.as_text() for h in helpers if h._case_block_to_submit]
         submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
         for helper in helpers:
             for task, task_args in helper._tasks_to_trigger:
@@ -111,7 +112,7 @@ def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
         close_case = close and not case.closed
         if changed_fields or close_case:
             user_case_helper.update_user_case(case, changed_fields, close_case)
-    return user_case_helper
+    yield user_case_helper
 
 
 def _get_user_case_fields(commcare_user, case_type, owner_id):
@@ -180,16 +181,15 @@ def get_sync_lock_key(user_id):
 
 def sync_call_center_user_case(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        helper = get_call_center_case_helper(user)
-        if helper:
+        for helper in _iter_call_center_case_helpers(user):
             helper.commit()
 
 
-def get_call_center_case_helper(user):
+def _iter_call_center_case_helpers(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        return _get_sync_user_case_helper(user, config.case_type, owner_id, case)
+        yield _get_sync_user_case_helper(user, config.case_type, owner_id, case)
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
@@ -228,14 +228,13 @@ def _call_center_location_owner(user, ancestor_level):
 
 def sync_usercase(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        helper = get_sync_usercase_helper(user)
-        if helper:
+        for helper in _iter_sync_usercase_helpers(user):
             helper.commit()
 
 
-def get_sync_usercase_helper(user):
+def _iter_sync_usercase_helpers(user):
     if user.project.usercase_enabled:
-        return _get_sync_user_case_helper(
+        yield _get_sync_user_case_helper(
             user,
             USERCASE_TYPE,
             user.get_id
@@ -251,6 +250,9 @@ def sync_user_cases(user):
     first time.
     """
     with CriticalSection(get_sync_lock_key(user._id)):
-        helpers = [get_sync_usercase_helper(user), get_call_center_case_helper(user)]
+        helpers = list(chain(
+            _iter_sync_usercase_helpers(user),
+            _iter_call_center_case_helpers(user),
+        ))
         if helpers:
-            _UserCaseHelper.commit_multiple([h for h in helpers if h])
+            _UserCaseHelper.commit_multiple(helpers)
