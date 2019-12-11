@@ -111,6 +111,7 @@ def create_citus_reference_table(connection, table):
     if not list(res):
         connection.execute("select create_reference_table(%s)", [table])
 
+
 def create_index_migration(table_name, index_name, columns):
     create_index_sql = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
         index_name, table_name, ','.join(columns)

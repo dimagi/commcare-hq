@@ -1,9 +1,11 @@
 from django.db import migrations
 
 from custom.icds_reports.utils.migrations import create_index_migration
+from corehq.sql_db.operations import RawSQLMigration
 
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
+
 
 class Migration(migrations.Migration):
 
