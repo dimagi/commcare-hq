@@ -702,6 +702,7 @@ def diff_case(sql_case, couch_case, statedb):
     diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
     diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
     if diffs and not sql_case.is_deleted:
+        # TODO rebuild SQL case with couch action order
         try:
             couch_case, diffs = rebuild_couch_case_and_re_diff(
                 couch_case, sql_case_json, statedb)

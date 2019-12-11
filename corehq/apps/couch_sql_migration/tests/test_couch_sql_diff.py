@@ -87,6 +87,27 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         db = open_state_db(self.domain_name, self.state_dir)
         self.assertEqual(list(db.iter_undiffed_case_ids()), ["case-1"])
 
+    def test_reconcile_transaction_order(self):
+        from ..rebuildcase import SortTransactionsRebuild
+        form1 = make_test_form("form-1", age="33", date="2016-08-04T18:25:56.656Z")
+        form2 = make_test_form("form-2", age="32", date="2015-08-04T18:25:56.656Z")
+        self.submit_form(form1)
+        self.submit_form(form2)
+        self.assertEqual(self._get_case("test-case").age, "33")
+        self._do_migration(case_diff="local")
+        self._compare_diffs([
+            ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.do_case_diffs()
+        sql_case = self._get_case("test-case")
+        self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
+        self._compare_diffs([], ignore_fail=True)
+        details = sql_case.transactions[-1].details
+        self.assertEqual(details["reason"], SortTransactionsRebuild._REASON)
+        server_dates = details["original_server_dates"]
+        self.assertEqual(len(server_dates), 1, server_dates)
+
     def do_case_diffs(self, live=False, cases=None):
         migrator = mod.get_migrator(self.domain_name, self.state_dir, live)
         return mod.do_case_diffs(migrator, cases)

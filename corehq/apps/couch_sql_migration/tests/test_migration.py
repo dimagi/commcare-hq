@@ -1468,15 +1468,22 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
+def make_test_form(form_id, **data):
+    fields = {
+        "age": (27, ">{}<", 2),
+        "case_id": ("test-case", '"{}"', 1),
+        "case_name": ("Xeenax", ">{}<", 2),
+        "date": ("2015-08-04T18:25:56.656Z", "{}", 2),
+    }
     form = TEST_FORM
-    assert form.count(">test-form<") == 1
-    assert form.count(">27<") == 2
-    assert form.count('"test-case"') == 1
-    assert form.count('>Xeenax<') == 2
-    form = form.replace(">27<", f">{age}<")
-    form = form.replace('"test-case"', f'"{case_id}"')
-    form = form.replace('>Xeenax<', f'>{case_name}<')
+    for name, value in data.items():
+        if name not in fields:
+            raise ValueError(f"unknown field: {name}")
+        default_value, template, occurs = fields[name]
+        old = template.format(default_value)
+        new = template.format(value)
+        assert form.count(old) == occurs, (name, old, new, occurs)
+        form = form.replace(old, new)
     return form.replace(">test-form<", f">{form_id}<")
 
 

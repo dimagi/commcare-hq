@@ -31,6 +31,11 @@ from ...couchsqlmigration import (
 )
 from ...diff import filter_case_diffs, filter_ledger_diffs
 from ...parallel import Pool
+from ...rebuildcase import (
+    is_action_order_equal,
+    rebuild_case_with_couch_action_order,
+    was_rebuilt,
+)
 from ...util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
@@ -100,7 +105,10 @@ def do_case_diffs(migrator, cases):
         add_cases(len(data.doc_ids))
         statedb.add_diffed_cases(data.doc_ids)
         for doc_type, doc_id, diffs in data.diffs:
-            statedb.add_diffs(doc_type, doc_id, diffs)
+            if doc_type == "stock state":
+                statedb.add_diffs(doc_type, doc_id, diffs)
+            else:
+                statedb.replace_case_diffs(doc_type, doc_id, diffs)
         for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
 
@@ -204,7 +212,7 @@ class CaseDiffTool:
 
     @property
     def initargs(self):
-        return self.statedb.get_no_action_case_forms(), self.cutoff_date
+        return self.domain, self.statedb.get_no_action_case_forms(), self.cutoff_date
 
 
 def diff_cases(case_ids, log_cases=False):
@@ -235,10 +243,21 @@ def diff_cases(case_ids, log_cases=False):
     return data
 
 
-def diff_case(sql_case, couch_case):
+def diff_case(sql_case, couch_case, fix=True):
     sql_case_json = sql_case.to_json()
     diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-    return filter_case_diffs(couch_case, sql_case_json, diffs, _state)
+    diffs = filter_case_diffs(couch_case, sql_case_json, diffs, _state)
+    if fix and diffs and should_sort_sql_transactions(sql_case, couch_case):
+        sql_case = rebuild_case_with_couch_action_order(sql_case)
+        diffs = diff_case(sql_case, couch_case, fix=False)
+    return diffs
+
+
+def should_sort_sql_transactions(sql_case, couch_case):
+    return (
+        not was_rebuilt(sql_case)
+        and not is_action_order_equal(sql_case, couch_case)
+    )
 
 
 def iter_ledger_diffs(case_ids):
@@ -266,7 +285,7 @@ def add_missing_docs(data, couch_cases, sql_case_ids):
             data.missing_docs.append((doc_type, doc_ids))
 
 
-def init_worker(*args):
+def init_worker(domain, *args):
     def on_break(signum, frame):
         nonlocal clean_break
         if clean_break:
@@ -278,6 +297,7 @@ def init_worker(*args):
     _state = WorkerState(*args)
     clean_break = False
     signal.signal(signal.SIGINT, on_break)
+    set_local_domain_sql_backend_override(domain)
 
 
 @attr.s
