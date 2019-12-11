@@ -93,7 +93,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
             state_id, district_id, block_id, user_level = None, None, None, None
 
-            if user['location_id']:
+            if user['location_id'] and user['location_id'] in self.transformed_locations:
                 user_level = self.transformed_locations.get(user['location_id'])['loc_level']
 
                 if user_level == 1:
@@ -109,13 +109,13 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                     district_id = self.transformed_locations.get(user['location_id'])['parents']['district_id']
                     block_id = user['location_id']
 
-            user_locations.append((
-                user['username'],
-                state_id,
-                district_id,
-                block_id,
-                user_level
-            ))
+                user_locations.append((
+                    user['username'],
+                    state_id,
+                    district_id,
+                    block_id,
+                    user_level
+                ))
 
         return user_locations
 
