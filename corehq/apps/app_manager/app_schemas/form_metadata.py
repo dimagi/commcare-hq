@@ -8,6 +8,7 @@ from jsonobject import (
     ObjectProperty,
     StringProperty,
 )
+from jsonobject.base import DefaultProperty
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     AppCaseMetadata,
@@ -39,8 +40,8 @@ MODULE_ATTRIBUTES = (
 
 class _Change(JsonObject):
     action = StringProperty(choices=DIFF_STATES)
-    old_value = StringProperty()
-    new_value = StringProperty()
+    old_value = DefaultProperty()
+    new_value = DefaultProperty()
 
 
 class _TranslationChange(_Change):
