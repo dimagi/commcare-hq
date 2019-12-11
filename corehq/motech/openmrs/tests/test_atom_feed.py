@@ -238,23 +238,28 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     },
                     "direction": "in",
                 },
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": None,  # Import all diagnoses as extension cases
+                "value": {
+                    "direction": "in",
+                    "value": "[unused when direction='in' and ObservationMapping.case_property not set]",
+                },
                 "indexed_case_mapping": {
                     "identifier": "parent",
                     "case_type": "diagnosis",
                     "relationship": "extension",
                     "case_properties": [
                         {
-                            "doc_type": "JsonPathCaseProperty",
                             "jsonpath": "codedAnswer.name",
                             "case_property": "case_name",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
                             "jsonpath": "certainty",
                             "case_property": "certainty",
                         },
                         {
-                            "doc_type": "JsonPathCasePropertyMap",
                             "jsonpath": "order",
                             "case_property": "is_primary",
                             "value_map": {
@@ -263,9 +268,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                             }
                         },
                         {
-                            "doc_type": "CasePropertyConstantValue",
-                            "case_property": "code",
-                            "value": "T68 (ICD 10 - WHO)"
+                            "jsonpath": "diagnosisDateTime",
+                            "case_property": "diagnosis_date",
+                            "external_data_type": "omrs_datetime",
+                            "commcare_data_type": "cc_date",
                         }
                     ]
                 }
@@ -425,7 +431,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
-                <code>T68 (ICD 10 - WHO)</code>
+                <diagnosis_date>2019-10-18</diagnosis_date>
                 <is_primary>yes</is_primary>
               </update>
               <index>
