@@ -2,9 +2,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdhaarController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Aadhaar-seeded Beneficiaries";
@@ -69,7 +70,11 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 }
 
-AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+AdhaarController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
+];
 
 window.angular.module('icdsApp').directive('adhaarBeneficiary', function() {
     return {

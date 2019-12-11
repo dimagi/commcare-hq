@@ -4,6 +4,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.db import router
 from django.test import TestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -11,20 +12,37 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound as BlobNotFound
 from corehq.blobs.models import BlobMeta
-from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.blobs.tests.util import (
+    TemporaryFilesystemBlobDB,
+    TemporaryS3BlobDB,
+)
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces.processor import (
+    FormProcessorInterface,
+    ProcessedForms,
+)
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
-    create_form_for_test, FormProcessorTestUtils, use_sql_backend
+    FormProcessorTestUtils,
+    create_form_for_test,
+    use_sql_backend,
 )
-from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
-from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
-from corehq.sql_db.routers import db_for_read_write
+from corehq.form_processor.utils import (
+    get_simple_form_xml,
+    get_simple_wrapped_form,
+)
+from corehq.form_processor.utils.xform import (
+    FormSubmissionBuilder,
+    TestFormMetadata,
+)
+from corehq.sql_db.routers import HINT_PLPROXY
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
@@ -33,6 +51,10 @@ DOMAIN = 'test-form-accessor'
 
 @use_sql_backend
 class FormAccessorTestsSQL(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.using = router.db_for_read(BlobMeta, **{HINT_PLPROXY: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -166,7 +188,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         form = forms[0]
         self.assertEqual(form_with_pic.form_id, form.form_id)
-        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
+        with self.assertNumQueries(0, using=self.using):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -175,7 +197,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
+        with self.assertNumQueries(0, using=self.using):
             expected = {
                 'form.xml': 'text/xml',
             }
@@ -269,29 +291,33 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        self.archive_form(form, 'user1')
-        form = FormAccessorSQL.get_form(form.form_id)
-        self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
-        operations = form.history
-        self.assertEqual(1, len(operations))
-        self.assertEqual(form.form_id, operations[0].form_id)
-        self.assertEqual('user1', operations[0].user_id)
+        # archive twice to check that it's idempotent
+        for i in range(2):
+            self.archive_form(form, 'user1')
+            form = FormAccessorSQL.get_form(form.form_id)
+            self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
+            operations = form.history
+            self.assertEqual(i + 1, len(operations))
+            self.assertEqual(form.form_id, operations[i].form_id)
+            self.assertEqual('user1', operations[i].user_id)
 
-        transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions), transactions)
-        self.assertTrue(transactions[0].revoked)
+            transactions = CaseAccessorSQL.get_transactions(case_id)
+            self.assertEqual(1, len(transactions), transactions)
+            self.assertTrue(transactions[0].revoked)
 
-        self.unarchive_form(form, 'user2')
-        form = FormAccessorSQL.get_form(form.form_id)
-        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
-        operations = form.history
-        self.assertEqual(2, len(operations))
-        self.assertEqual(form.form_id, operations[1].form_id)
-        self.assertEqual('user2', operations[1].user_id)
+        # unarchive twice to check that it's idempotent
+        for i in range(2, 4):
+            self.unarchive_form(form, 'user2')
+            form = FormAccessorSQL.get_form(form.form_id)
+            self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+            operations = form.history
+            self.assertEqual(i + 1, len(operations))
+            self.assertEqual(form.form_id, operations[i].form_id)
+            self.assertEqual('user2', operations[i].user_id)
 
-        transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions))
-        self.assertFalse(transactions[0].revoked)
+            transactions = CaseAccessorSQL.get_transactions(case_id)
+            self.assertEqual(1, len(transactions))
+            self.assertFalse(transactions[0].revoked)
 
     def test_save_new_form(self):
         unsaved_form = create_form_for_test(DOMAIN, save=False)

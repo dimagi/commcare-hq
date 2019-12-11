@@ -123,12 +123,15 @@ MainController.$inject = [
     'isAlertActive',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
+window.angular.module('icdsApp', [
+        'ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3',
+        'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader',
+        'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+        var utils = hqImport("js/icds_dashboard_utils");
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
-
         $routeProvider
             .when("/", {
                 redirectTo: '/program_summary/maternal_child',
@@ -157,78 +160,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/health_tabular_report", {
                 template: "health_tabular_report",
-            })
-            .when("/maternal_and_child", {
-                redirectTo: "/maternal_and_child/underweight_children/map",
-            })
-            .when("/maternal_and_child/underweight_children", {
-                redirectTo: "/maternal_and_child/underweight_children/map",
-            })
-            .when("/maternal_and_child/underweight_children/:step", {
-                template: "<underweight-children-report></underweight-children-report>",
-            })
-            .when("/maternal_and_child/wasting", {
-                redirectTo: "/maternal_and_child/wasting/map",
-            })
-            .when("/maternal_and_child/wasting/:step", {
-                template: "<prevalence-of-severe></prevalence-of-severe>",
-            })
-            .when("/maternal_and_child/stunting", {
-                redirectTo: "/maternal_and_child/stunting/map",
-            })
-            .when("/maternal_and_child/stunting/:step", {
-                template: "<prevalence-of-stunting></prevalence-of-stunting>",
-            })
-            .when("/maternal_and_child/low_birth", {
-                redirectTo: "/maternal_and_child/low_birth/map",
-            })
-            .when("/maternal_and_child/low_birth/:step", {
-                template: "<newborn-low-weight></newborn-low-weight>",
-            })
-            .when("/maternal_and_child/early_initiation", {
-                redirectTo: "/maternal_and_child/early_initiation/map",
-            })
-            .when("/maternal_and_child/early_initiation/:step", {
-                template: "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
-            })
-            .when("/maternal_and_child/exclusive_breastfeeding", {
-                redirectTo: "/maternal_and_child/exclusive_breastfeeding/map",
-            })
-            .when("/maternal_and_child/exclusive_breastfeeding/:step", {
-                template: "<exclusive-breastfeeding></exclusive-breastfeeding>",
-            })
-            .when("/maternal_and_child/children_initiated", {
-                redirectTo: "/maternal_and_child/children_initiated/map",
-            })
-            .when("/maternal_and_child/children_initiated/:step", {
-                template: "<children-initiated></children-initiated>",
-            })
-            .when("/maternal_and_child/institutional_deliveries", {
-                redirectTo: "/maternal_and_child/institutional_deliveries/map",
-            })
-            .when("/maternal_and_child/institutional_deliveries/:step", {
-                template: "<institutional-deliveries></institutional-deliveries>",
-            })
-            .when("/maternal_and_child/immunization_coverage", {
-                redirectTo: "/maternal_and_child/immunization_coverage/map",
-            })
-            .when("/maternal_and_child/immunization_coverage/:step", {
-                template: "<immunization-coverage></immunization-coverage>",
-            })
-            .when("/icds_cas_reach", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
-            })
-            .when("/icds_cas_reach/awc_daily_status", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
-            })
-            .when("/icds_cas_reach/awc_daily_status/:step", {
-                template: "<awc-daily-status></awc-daily-status>",
-            })
-            .when("/icds_cas_reach/awcs_covered", {
-                redirectTo: "/icds_cas_reach/awcs_covered/map",
-            })
-            .when("/icds_cas_reach/awcs_covered/:step", {
-                template: "<awcs-covered></awcs-covered>",
             })
             .when("/demographics", {
                 redirectTo: "/demographics/registered_household/map",
@@ -314,17 +245,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_infrastructure/adult_weight_scale/:step", {
                 template: "<adult-weight-scale></adult-weight-scale>",
             })
-            .when("/awc_reports", {
-                redirectTo: "/awc_reports/pse",
-            })
             .when("/service_delivery_dashboard", {
                 redirectTo: "/service_delivery_dashboard/pw_lw_children",
             })
             .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
-            })
-            .when("/awc_reports/:step", {
-                template: "<awc-reports></awc-reports>",
             })
             .when("/lady_supervisor", {
                 template: "<lady-supervisor></lady-supervisor>",
@@ -344,5 +269,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
+        utils.addSharedRoutes($routeProvider);
     }]);
 

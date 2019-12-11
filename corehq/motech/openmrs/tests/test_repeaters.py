@@ -7,6 +7,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 import mock
+from requests import RequestException
 from testil import eq
 
 from casexml.apps.case.models import CommCareCase
@@ -41,12 +42,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    ConstantString,
-    FormQuestionMap,
-    get_case_location,
-)
+from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
 
 DOMAIN = 'openmrs-repeater-tests'
@@ -267,7 +263,7 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        requests.post.return_value.status_code = 500
+        requests.post.side_effect = RequestException()
         info = mock.Mock(
             updates={'sex': 'M', 'dob': '1918-07-18'},
             extra_fields={},
@@ -282,10 +278,12 @@ class ExportOnlyTests(SimpleTestCase):
         case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
         case_config = OpenmrsCaseConfig(case_config)
 
-        create_patient(requests, info, case_config)
+        with self.assertRaises(RequestException):
+            create_patient(requests, info, case_config)
         requests.post.assert_called_with(
             '/ws/rest/v1/patient/',
-            json={'person': {'birthdate': '1918-07-18'}}
+            json={'person': {'birthdate': '1918-07-18'}},
+            raise_for_status=True,
         )
 
 
@@ -650,22 +648,23 @@ def test_observation_mappings():
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='abnormal_temperature',
-                value=FormQuestionMap(
-                    form_question='/data/abnormal_temperature',
-                    value_map={
+                value={
+                    "doc_type": "FormQuestionMap",
+                    "form_question": '/data/abnormal_temperature',
+                    "value_map": {
                         'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
                         'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
                     }
-                )
+                }
             ),
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='bahmni_abnormal_temperature',
-                value=ConstantString(
-                    direction='in',
-                    doc_type='ConstantString',
-                    value=''
-                )
+                value={
+                    "direction": 'in',
+                    "doc_type": "ConstantString",
+                    "value": ''
+                }
             )
         ]
     })

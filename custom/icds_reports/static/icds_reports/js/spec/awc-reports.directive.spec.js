@@ -1,6 +1,7 @@
 /* global module, inject, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
@@ -14,10 +15,8 @@ describe('AWC Reports Directive', function () {
     pageData.registerUrl('awc_reports', 'beneficiary_details');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
+        utils.provideDefaultConstants($provide, false, false);
         $provide.constant("haveAccessToFeatures", false);
-        $provide.constant("isAlertActive", false);
     }));
 
     var mockBeneficiaryDetails = {

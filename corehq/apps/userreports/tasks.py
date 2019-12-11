@@ -1,5 +1,4 @@
 import logging
-import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -65,7 +64,6 @@ from corehq.util.datadog.gauges import (
     datadog_histogram,
 )
 from corehq.util.decorators import serial_task
-from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 
@@ -287,31 +285,6 @@ def _compare_ucr_reports(domain, control_report, candidate_report, filter_values
 def delete_data_source_task(domain, config_id):
     from corehq.apps.userreports.views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
-
-
-@periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
-def reprocess_archive_stubs():
-    # Check for archive stubs
-    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-    from couchforms.models import UnfinishedArchiveStub
-    stubs = UnfinishedArchiveStub.objects.filter()
-    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
-    start = time.time()
-    cutoff = start + timedelta(minutes=4).total_seconds()
-    for stub in stubs:
-        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
-        if time.time() - start > cutoff:
-            return
-        xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
-        # If the history wasn't updated the first time around, run the whole thing again.
-        if not stub.history_updated:
-            if stub.archive:
-                xform.archive(user_id=stub.user_id)
-            else:
-                xform.unarchive(user_id=stub.user_id)
-        # If the history was updated the first time around, just send the update to kafka
-        else:
-            FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)

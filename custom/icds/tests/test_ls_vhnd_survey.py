@@ -1,25 +1,59 @@
+import uuid
 from datetime import datetime, timedelta
-from django.test import TestCase
-from mock import patch
-import pytz
+from unittest import skip
 
-from corehq.apps.es.fake.users_fake import UserESFake
+from django.test import TestCase
+
+import pytz
+from mock import patch
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.locations.tests.util import (
     LocationStructure,
     LocationTypeStructure,
     setup_location_types_with_structure,
     setup_locations_with_structure,
 )
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import CommCareUser
+from custom.icds.const import VHND_SURVEY_XMLNS
 from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import LSVHNDSurveyIndicator
 
 
+class VHNDIndicatorTestMixin(object):
+    @classmethod
+    def setup_datasource(cls):
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'static-vhnd_form')
+        data_source = StaticDataSourceConfiguration.by_id(datasource_id)
+        cls.adapter = get_indicator_adapter(data_source)
+        cls.adapter.rebuild_table()
+
+    def _save_form(self, user_id, date):
+        def es_formatted_date(date):
+            return date.strftime('%Y-%m-%d')
+
+        doc = {
+            'form': {
+                'meta': {
+                    'userID': user_id
+                },
+                'vhsnd_date_past_month': es_formatted_date(date),
+            },
+            '_id': uuid.uuid4().hex,
+            'domain': self.domain,
+            'xmlns': VHND_SURVEY_XMLNS,
+            'doc_type': 'XFormInstance',
+        }
+        self.adapter.save(doc)
+        self.addCleanup(self.adapter.delete, doc)
+
+
 @patch('corehq.apps.locations.dbaccessors.UserES', UserESFake)
-@patch('custom.icds.messaging.indicators.get_last_form_submissions_by_user')
-class TestLSVHNDSurveyIndicator(TestCase):
-    domain = 'domain'
+class TestLSVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
+    domain = 'icds-test'
 
     @classmethod
     def setUpClass(cls):
@@ -41,6 +75,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
         cls.locs = setup_locations_with_structure(cls.domain, location_structure)
         cls.ls = cls._make_user('ls', cls.locs['LSL'])
         cls.aww = cls._make_user('aww', cls.locs['AWC1'])
+        cls.setup_datasource()
 
     @classmethod
     def tearDownClass(cls):
@@ -60,71 +95,49 @@ class TestLSVHNDSurveyIndicator(TestCase):
         tz = pytz.timezone('Asia/Kolkata')
         return datetime.now(tz=tz).date()
 
-    def _make_form(self, user_id, date):
-        def es_formatted_date(date):
-            return date.strftime('%Y-%m-%d')
-
-        return {
-            'form': {
-                'meta': {
-                    'user_id': user_id
-                },
-                'vhsnd_date_past_month': es_formatted_date(date),
-            }
-        }
-
-    def test_survey_date_today(self, last_subs):
-        last_subs.return_value = {
-            self.aww.get_id: [self._make_form(self.aww.get_id, self.today)]
-        }
+    def test_survey_date_today(self):
+        self._save_form(self.aww.get_id, self.today)
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    def test_form_sent_thirty_six_days_ago(self, last_subs):
-        last_subs.return_value = {
-            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=36))]
-        }
+    def test_form_sent_thirty_six_days_ago(self):
+        self._save_form(self.aww.get_id, self.today - timedelta(days=36))
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    def test_form_sent_thirty_seven_days_ago(self, last_subs):
-        last_subs.return_value = {
-            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))]
-        }
+    def test_form_sent_thirty_seven_days_ago(self):
+        self._save_form(self.aww.get_id, self.today - timedelta(days=37))
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])
 
-    def test_multiple_locations(self, last_subs):
+    def test_multiple_locations(self):
         aww_2 = self._make_user('aww_2', self.locs['AWC2'])
         self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
         self.addCleanup(aww_2.delete)
-        last_subs.return_value = {
-            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))],
-            aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
-        }
+        self._save_form(self.aww.get_id, self.today - timedelta(days=37))
+        self._save_form(aww_2.get_id, self.today - timedelta(days=37))
+
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('AWC1' in message)
         self.assertTrue('AWC2' in message)
 
-    def test_multiple_locations_one_is_old(self, last_subs):
+    def test_multiple_locations_one_is_old(self):
         aww_2 = self._make_user('aww_2', self.locs['AWC2'])
         self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
         self.addCleanup(aww_2.delete)
-        last_subs.return_value = {
-            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=15))],
-            aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
-        }
+        self._save_form(aww_2.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww.get_id, self.today - timedelta(days=15))
+
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertFalse('AWC1' in message)
         self.assertTrue('AWC2' in message)
 
-    def test_no_form_submitted(self, last_subs):
-        last_subs.return_value = {}
+    def test_no_form_submitted(self):
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])

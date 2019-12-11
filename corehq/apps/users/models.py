@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction
+from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -78,7 +79,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -961,9 +961,10 @@ class LastSync(DocumentSchema):
 class LastBuild(DocumentSchema):
     """
     Build info for the app on the user's phone
-    when they last synced or submitted
+    when they last synced or submitted or sent heartbeat request
     """
     app_id = StringProperty()
+    build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
 
@@ -1204,7 +1205,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def get_django_user(self, use_primary_db=False):
         queryset = User.objects
         if use_primary_db:
-            queryset = queryset.using(db_for_read_write(User, write=True))
+            queryset = queryset.using(router.db_for_write(User))
         return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
@@ -2775,9 +2776,6 @@ class AnonymousCouchUser(object):
         return False
 
 
-reporting_update_freq = timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY)
-
-
 class UserReportingMetadataStaging(models.Model):
     domain = models.TextField()
     user_id = models.TextField()
@@ -2798,52 +2796,65 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
-        with transaction.atomic():
-            try:
-                obj = cls.objects.select_for_update().get(
-                    domain=domain, user_id=user_id, app_id=app_id,
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'xform_version': version,
+            'form_meta': json.dumps(metadata),
+            'received_on': received_on,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on,
+                    build_id,
+                    xform_version, form_meta, received_on
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(xform_version)s, %(form_meta)s, %(received_on)s
                 )
-            except cls.DoesNotExist:
-                cls.objects.create(
-                    domain=domain, user_id=user_id, app_id=app_id,
-                    build_id=build_id, xform_version=version,
-                    form_meta=metadata, received_on=received_on,
-                )
-                return
-
-            save = False
-
-            if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
-                obj.received_on = received_on
-                save = True
-            if build_id != obj.build_id:
-                obj.build_id = build_id
-                save = True
-
-            if save:
-                obj.form_meta = metadata
-                obj.xform_version = version
-                obj.save()
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    xform_version = EXCLUDED.xform_version,
+                    form_meta = EXCLUDED.form_meta,
+                    received_on = EXCLUDED.received_on
+                WHERE staging.received_on IS NULL OR EXCLUDED.received_on > staging.received_on
+                """, params)
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
-        with transaction.atomic():
-            try:
-                obj = cls.objects.select_for_update().get(
-                    domain=domain, user_id=user_id, app_id=app_id,
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'sync_date': sync_date,
+            'device_id': device_id,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on,
+                    build_id,
+                    sync_date, device_id
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(sync_date)s, %(device_id)s
                 )
-            except cls.DoesNotExist:
-                cls.objects.create(
-                    domain=domain, user_id=user_id, app_id=app_id,
-                    build_id=build_id, sync_date=sync_date, device_id=device_id
-                )
-                return
-
-            if not obj.sync_date or sync_date > obj.sync_date:
-                obj.sync_date = sync_date
-                obj.build_id = build_id
-                obj.device_id = device_id
-                obj.save()
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    sync_date = EXCLUDED.sync_date,
+                    device_id = EXCLUDED.device_id
+                WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
+                """, params)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')

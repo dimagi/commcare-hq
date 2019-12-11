@@ -61,7 +61,7 @@ class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
 
 class FemaleAgeAtDeathSpec(SumWhenTemplateSpec):
     type = TypeProperty("female_age_at_death")
-    expression = "female_death_type IS NOT NULL AND age_at_death_yrs >= ?"
+    expression = "female_death_type IS NOT NULL AND female_death_type != '' AND age_at_death_yrs >= ?"
 
 
 class FemaleDeathTypeMigrantSpec(SumWhenTemplateSpec):
@@ -116,7 +116,7 @@ class OpenFemaleResidentSpec(SumWhenTemplateSpec):
 
 class OpenMaleDisabledSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_male_disabled")
-    expression = "closed_on IS NULL AND sex = IN ('M', 'O') and disabled = 1"
+    expression = "closed_on IS NULL AND sex IN ('M', 'O') and disabled = 1"
 
 
 class OpenMaleHHCasteSpec(SumWhenTemplateSpec):
@@ -186,4 +186,4 @@ class ReferralHealthProblem2ProblemsSpec(SumWhenTemplateSpec):
 
 class ReferralHealthProblem3ProblemsSpec(SumWhenTemplateSpec):
     type = TypeProperty("referral_health_problem_3_problems")
-    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR OR referral_health_problem ~ ?"
+    expression = "referral_health_problem ~ ? OR referral_health_problem ~ ? OR referral_health_problem ~ ?"
