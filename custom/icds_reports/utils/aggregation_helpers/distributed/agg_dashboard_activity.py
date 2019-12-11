@@ -152,7 +152,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                   aggregate(Max('date')))
 
         last_agg_date = result.get('date__max')
-        return last_agg_date or date(1970, 1, 1) # return the oldest date in default case
+        return last_agg_date or date(1970, 1, 1)  # return the oldest date in default case
 
     def add_latest_users_list(self):
 
