@@ -1,4 +1,5 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, ContextDecorator
+from threading import local
 
 from django.conf import settings
 from django.core import signals
@@ -36,11 +37,62 @@ def _get_db_alias_or_none(enigne_id):
         return None
 
 
+_thread_locals = local()
+
+
+READ_FROM_CITUS_STANDBYS = 'READ_FROM_CITUS_STANDBYS'
+
+
+def allow_read_from_citus_standbys():
+    return getattr(_thread_locals, READ_FROM_CITUS_STANDBYS, False)
+
+
+class read_from_citus_standbys(ContextDecorator):
+    def __enter__(self):
+        setattr(_thread_locals, READ_FROM_CITUS_STANDBYS, True)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        setattr(_thread_locals, READ_FROM_CITUS_STANDBYS, False)
+
+
+def is_citus_db(connection):
+    """
+    :param connection: either a sqlalchemy connection or a Django cursor
+    """
+    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
+    if res is None:
+        res = list(connection)
+    return bool(list(res))
+
+
+def is_citus(engine, citus_list=[], non_citus_list=[]):
+    # hacking mutable default arg to memoize list of citus DBs
+    #   to avoid hitting DB. citus_list, non_citus_list
+    #   is never to be actually passed.
+    if engine.url in citus_list:
+        return True
+    if engine.url in non_citus_list:
+        return False
+    with engine.begin() as connection:
+        if is_citus_db(connection):
+            citus_list.append(engine.url)
+            return True
+        else:
+            non_citus_list.append(engine.url)
+            return False
+
+
 def create_engine(connection_string):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
-    return sqlalchemy.create_engine(connection_string, paramstyle='format')
+    engine = sqlalchemy.create_engine(connection_string, paramstyle='format')
+
+    if allow_read_from_citus_standbys():
+        connect_args = {'options': '-c citus.use_secondary_nodes=always'}
+        return sqlalchemy.create_engine(connection_string, paramstyle='format', connect_args=connect_args)
+    else:
+        return engine
 
 
 class SessionHelper(object):
@@ -73,8 +125,7 @@ class SessionHelper(object):
 
     @cached_property
     def is_citus_db(self):
-        with self.engine.begin() as connection:
-            return is_citus_db(connection)
+        return is_citus(self.engine)
 
 
 class ConnectionManager(object):
@@ -239,13 +290,3 @@ def override_engine(engine_id, connection_url, db_alias=None):
         connection_manager.dispose_engine(engine_id)
         connection_manager.get_connection_string = get_connection_string
         connection_manager.engine_id_django_db_map[engine_id] = original_alias
-
-
-def is_citus_db(connection):
-    """
-    :param connection: either a sqlalchemy connection or a Django cursor
-    """
-    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
-    if res is None:
-        res = list(connection)
-    return bool(list(res))
