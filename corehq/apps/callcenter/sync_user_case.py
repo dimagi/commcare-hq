@@ -112,7 +112,7 @@ def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
         close_case = close and not case.closed
         if changed_fields or close_case:
             user_case_helper.update_user_case(case, changed_fields, close_case)
-    yield user_case_helper
+    return user_case_helper
 
 
 def _get_user_case_fields(commcare_user, case_type, owner_id):
