@@ -46,7 +46,7 @@ awc_id,
     SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_in_month else 0 END) as F_open_valid_till_month_0_3,
     SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_in_month else 0 END) as F_open_valid_till_month_3_6,
     SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_all_registered_in_month else 0 END) as F_open_register_till_month_0_3,
-    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_all_registered_in_month else 0 END) as F_open_register_till_month_3_6
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_all_registered_in_month else 0 END) as F_open_register_till_month_3_6,
 
     SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_in_month else 0 END) as M_open_valid_till_month_0_3,
     SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_in_month else 0 END) as M_open_valid_till_month_3_6,
