@@ -2565,13 +2565,34 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.steps = {
         // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
-        pse: {route: "/awc_reports/pse", label: "Pre School Education"},
-        maternal_child: {route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
-        demographics: {route: "/awc_reports/demographics", label: "Demographics"},
-        awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
-        beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
-        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
-        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
+        pse: {
+            route: "/awc_reports/pse",
+            label: "Pre School Education",
+        },
+        maternal_child: {
+            route: "/awc_reports/maternal_child",
+            label: "Maternal and Child Nutrition",
+        },
+        demographics: {
+            route: "/awc_reports/demographics",
+            label: "Demographics",
+        },
+        awc_infrastructure: {
+            route: "/awc_reports/awc_infrastructure",
+            label: "AWC Infrastructure",
+        },
+        beneficiary: {
+            route: "/awc_reports/beneficiary",
+            label: "Child Beneficiaries List",
+        },
+        pregnant: {
+            route: "/awc_reports/pregnant",
+            label: "Pregnant Women"
+        },
+        lactating: {
+            route: "/awc_reports/lactating",
+            label: "Lactating Women",
+        },
     };
 
     if (vm.step === 'beneficiary_details') {
