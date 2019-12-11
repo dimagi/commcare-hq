@@ -316,6 +316,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
