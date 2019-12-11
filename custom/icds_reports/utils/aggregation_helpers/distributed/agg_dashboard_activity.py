@@ -57,7 +57,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                     }
         """
         from custom.icds_reports.models.aggregate import AwcLocation
-        locations = AwcLocation.objects.filter(aggregation_level=3).values('state_id', 'district_id', 'block_id')
+        locations = (AwcLocation.objects.filter(aggregation_level=3).
+                     exclude(state_is_test=1).
+                     values('state_id', 'district_id', 'block_id'))
 
         transformed_locations = dict()
 
@@ -93,7 +95,7 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
 
             state_id, district_id, block_id, user_level = None, None, None, None
 
-            if user['location_id']:
+            if user['location_id'] and user['location_id'] in self.transformed_locations:
                 user_level = self.transformed_locations.get(user['location_id'])['loc_level']
 
                 if user_level == 1:
@@ -109,13 +111,13 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                     district_id = self.transformed_locations.get(user['location_id'])['parents']['district_id']
                     block_id = user['location_id']
 
-            user_locations.append((
-                user['username'],
-                state_id,
-                district_id,
-                block_id,
-                user_level
-            ))
+                user_locations.append((
+                    user['username'],
+                    state_id,
+                    district_id,
+                    block_id,
+                    user_level
+                ))
 
         return user_locations
 
@@ -149,7 +151,8 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                   filter(date__lt=self.date.strftime("%Y-%m-%d"), date__gt=seven_days_back).
                   aggregate(Max('date')))
 
-        return result.get('date__max',  date(1970, 1, 1))  # return the oldest date in default case
+        last_agg_date = result.get('date__max')
+        return last_agg_date or date(1970, 1, 1)  # return the oldest date in default case
 
     def add_latest_users_list(self):
 

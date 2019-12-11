@@ -1,24 +1,10 @@
 {% load staticfiles %}
 <div class="app-bg min-vh-100">
   <div ng-show="!$ctrl.filtersOpen">
+    <div class="top-section p-3">
+      {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
+    </div>
     <div class="bg-white" id="map-chart-header">
-      <div class="filter-header">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="d-flex align-items-center">
-            <a href="{$ $ctrl.getBackArrowLink() $}">
-              <img src="{% static "icds_reports/mobile/images/back-icon.png" %}" class="mr-2">
-            </a>
-            <p class="font-montserrat font-weight-600 font-16 text-white mb-0" ng-bind="$ctrl.label"></p>
-          </div>
-          <filter-opener></filter-opener>
-        </div>
-        <p class="font-montserrat font-weight-600 font-16 text-white" style="padding-left: 40px;">
-          {$ $ctrl.selectedMonthDisplay $} | National
-          <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                      &gt; {$ loc.name $}
-          </span>
-        </p>
-      </div>
       <div class="d-flex align-items-center" >
         <div class="col-xs-6 section-heading" ng-class="{'selectedSection': $ctrl.step === stepId}" ng-bind="step.label" ng-click="$ctrl.goToRoute(step.route)" ng-repeat="(stepId, step) in $ctrl.steps"></div>
       </div>

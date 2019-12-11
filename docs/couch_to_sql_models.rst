@@ -6,6 +6,35 @@ Migrating models from couch to postgres
 
 This is a step by step guide to migrating a single model from couch to postgres.
 
+Selecting a Model
+################
+
+To find all classes that descend from `Document`:
+::
+
+    from dimagi.ext.couchdbkit import Document
+
+    def all_subclasses(cls):
+        return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])
+
+    sorted([str(s) for s in all_subclasses(Document)])
+
+To find how many documents of a given type exist in a given environment:
+::
+
+    from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class, get_deleted_doc_ids_by_class
+    
+    len(list(get_doc_ids_by_class(MyDocumentClass) + get_deleted_doc_ids_by_class(MyDocumentClass)))
+
+There's a little extra value to migrating models that have dedicated views:
+::
+
+    grep -r MyDocumentClass . | grep _design.*map.js
+
+There's a lot of extra value in migrating areas where you're familiar with the code context.
+
+Ultimately, all progress is good.
+
 Conceptual Steps
 ################
 

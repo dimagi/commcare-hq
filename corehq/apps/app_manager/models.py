@@ -5715,6 +5715,20 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
+class SQLGlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
 class GlobalAppConfig(Document):
     # this should be the unique id of the app (not of a versioned copy)
     app_id = StringProperty()
@@ -5757,6 +5771,20 @@ class GlobalAppConfig(Document):
 
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
+
+        # Save to SQL
+        model, created = SQLGlobalAppConfig.objects.update_or_create(
+            domain=self.domain,
+            app_id=self.app_id,
+            defaults={
+                'apk_prompt': self.apk_prompt,
+                'app_prompt': self.app_prompt,
+                'apk_version': self.apk_version or LATEST_APK_VALUE,
+                'app_version': self.app_version or LATEST_APP_VALUE,
+            }
+        )
+
+        # Save to couch
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 

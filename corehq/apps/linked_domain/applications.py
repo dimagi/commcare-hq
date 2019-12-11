@@ -26,11 +26,12 @@ def get_master_app_briefs(domain_link, family_id):
 
 def get_master_app_by_version(domain_link, upstream_app_id, upstream_version):
     if domain_link.is_remote:
-        return get_app_by_version(domain_link, upstream_app_id, upstream_version)
+        app = get_app_by_version(domain_link, upstream_app_id, upstream_version)
     else:
         app = get_build_doc_by_version(domain_link.master_domain, upstream_app_id, upstream_version)
-        if app:
-            return wrap_app(app)
+
+    if app:
+        return wrap_app(app)
 
 
 def get_latest_master_app_release(domain_link, app_id):
