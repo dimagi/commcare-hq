@@ -77,7 +77,7 @@ class Command(BaseCommand):
                     add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
                 except ResourceOverrideError as e:
                     logger.error("{}: {}".format(log_prefix, str(e)))
-        elif self.verbose:
+        else:
             logger.info("{}: Skipping, {} overrides already match".format(log_prefix, len(override_map)))
 
     def _get_xmlns_map(self, app):
@@ -99,7 +99,7 @@ class Command(BaseCommand):
             '--dry-run',
             action='store_true',
             default=False,
-            help='Do not actually modify the database, just verbosely log what will happen',
+            help='Do not actually modify the database, just log what will happen',
         )
         parser.add_argument(
             '--verbose',
@@ -108,9 +108,13 @@ class Command(BaseCommand):
             help='Log every action, including apps that were skipped',
         )
 
-    def handle(self, domain=None, app_id=None, dry_run=False, verbose=False, **options):
+    def handle(self, domain=None, app_id=None, dry_run=False, verbose=0, **options):
         self.dry_run = dry_run
-        self.verbose = verbose
+        if verbose:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.ERROR)
+
         if domain and app_id:
             app = get_app(domain, app_id)   # Sanity check, will 404 if domain doesn't match
             assert(app.doc_type == 'LinkedApplication' or app.doc_type == 'LinkedApplication-Deleted')
