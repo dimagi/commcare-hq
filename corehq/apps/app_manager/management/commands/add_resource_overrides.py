@@ -37,6 +37,10 @@ class Command(BaseCommand):
         if not linked_build.upstream_app_id or not linked_build.upstream_version:
             return
 
+        if not linked_build.domain_link:
+            logger.error("{}: Skipping due to missing domain link".format(log_prefix))
+            return
+
         try:
             master_build = get_master_app_by_version(linked_build.domain_link, linked_build.upstream_app_id,
                                                      linked_build.upstream_version)
