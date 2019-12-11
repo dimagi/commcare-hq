@@ -13,7 +13,7 @@ from django.utils.functional import cached_property
 
 class DashBoardUsage:
 
-    title = 'Dashboard usage'
+    title = 'Dashboard Activity'
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
     location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
