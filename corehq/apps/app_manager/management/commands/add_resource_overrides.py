@@ -121,7 +121,8 @@ class Command(BaseCommand):
             app_ids = set([v.build_id for v in get_all_built_app_ids_and_versions(domain, app_id)])
             app_ids.add(app_id)  # in case linked app has no builds yet
         else:
-            app_ids = (get_doc_ids_by_class(LinkedApplication) + get_deleted_doc_ids_by_class(LinkedApplication))
+            app_ids = get_doc_ids_by_class(LinkedApplication)
+            #app_ids += get_deleted_doc_ids_by_class(LinkedApplication)
         iter_update(LinkedApplication.get_db(),
                     self._add_overrides_for_build,
                     with_progress_bar(app_ids),
