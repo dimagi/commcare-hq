@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 try:
                     add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
                 except ResourceOverrideError as e:
-                    logger.error("{}: {}".format(log_prefix, str(e)))
+                    logger.error("{}".format(str(e)))   # skip log_prefix, error message has same info
         else:
             logger.info("{}: Skipping, all {} overrides already present".format(log_prefix, len(override_map)))
 
