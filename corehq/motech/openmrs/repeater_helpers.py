@@ -397,6 +397,13 @@ def get_patient(requests, domain, info, openmrs_config):
         assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
         patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
+            if patient["voided"]:
+                # The patient associated with the case has been merged with
+                # another patient in OpenMRS, or deleted. Delete the OpenMRS
+                # identifier on the case, and try again.
+                delete_case_property(domain, info.case_id, identifier_case_property)
+                info.extra_fields[identifier_case_property] = None
+                return get_patient(requests, domain, info, openmrs_config)
             return patient
 
     # Definitive IDs did not match a patient in OpenMRS.
