@@ -41,12 +41,19 @@ where agg_awc_monthly.num_launched_awcs=1 and agg_awc_monthly.month='2019-11-01'
 
 
 
-create unlogged table temp_child_data_pull as select
+create unlogged table temp_child_data_pull_oct as select
 awc_id,
-    SUM(CASE WHEN age_tranche::INTEGER<=36 THEN valid_in_month else 0 END) as open_valid_till_month_0_3,
-    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 THEN valid_in_month else 0 END) as open_valid_till_month_3_6,
-    SUM(CASE WHEN age_tranche::INTEGER<=36 THEN valid_all_registered_in_month else 0 END) as open_register_till_month_0_3,
-    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 THEN valid_all_registered_in_month else 0 END) as open_register_till_month_3_6
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_in_month else 0 END) as F_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_in_month else 0 END) as F_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_all_registered_in_month else 0 END) as F_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_all_registered_in_month else 0 END) as F_open_register_till_month_3_6
+
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_in_month else 0 END) as M_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_in_month else 0 END) as M_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_all_registered_in_month else 0 END) as M_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_all_registered_in_month else 0 END) as M_open_register_till_month_3_6
+
+
 from "child_health_monthly" child_health where month='2019-10-01'
 group by awc_id;
 /*
@@ -76,18 +83,25 @@ state_name,
 district_name,
 block_name,
 supervisor_name,
-awc_name
-sum(open_valid_till_month_0_3) as "open_valid_till_month_0_3",
-sum(open_valid_till_month_3_6) as "open_valid_till_month_3_6",
-sum(open_register_till_month_0_3) as "open_register_till_month_0_3",
-sum(open_register_till_month_3_6)as "open_register_till_month_3_6",
-from temp_child_data_pull t join awc_location_local a on a.doc_id=t.awc_id where aggregation_level=5 and state_is_test=0
+awc_name,
+sum(F_open_valid_till_month_0_3) as "F_open_valid_till_month_0_3",
+sum(F_open_valid_till_month_3_6) as "F_open_valid_till_month_3_6",
+sum(F_open_register_till_month_0_3) as "F_open_register_till_month_0_3",
+sum(F_open_register_till_month_3_6)as "F_open_register_till_month_3_6",
+
+sum(M_open_valid_till_month_0_3) as "M_open_valid_till_month_0_3",
+sum(M_open_valid_till_month_3_6) as "M_open_valid_till_month_3_6",
+sum(M_open_register_till_month_0_3) as "M_open_register_till_month_0_3",
+sum(M_open_register_till_month_3_6)as "M_open_register_till_month_3_6"
+from agg_awc_monthly left join
+    temp_child_data_pull_oct t on agg_awc_monthly.awc_id=t.awc_id
+where aggregation_level=5 and agg_awc_monthly.month='2019-11-01' and num_launched_awcs=1
 group by state_name,
 district_name,
 block_name,
 supervisor_name,
 awc_name
-order by state_name asc) to 'child_Oct.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+order by state_name asc) to '/tmp/child_oct.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
