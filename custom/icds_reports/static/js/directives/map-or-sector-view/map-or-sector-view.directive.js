@@ -104,10 +104,21 @@ function MapOrSectorController($location, storageService, locationsService) {
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            var awcReportPath = 'awc_reports';
+                            if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
+                                awcReportPath += '/maternal_child';
+                            } else if ($location.path().indexOf('demographics') !== -1) {
+                                awcReportPath += '/demographics';
+                            } else if ($location.path().indexOf('awc_infrastructure') !== -1) {
+                                awcReportPath += '/awc_infrastructure';
+                            } else if ($location.path().indexOf('icds_cas_reach') !== -1) {
+                                awcReportPath += '/pse';
+                            } else {
+                                awcReportPath += '/pse';
+                            }
+                            $location.path(awcReportPath);
                         }
                     });
                 });
