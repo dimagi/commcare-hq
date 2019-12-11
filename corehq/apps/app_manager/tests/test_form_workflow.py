@@ -16,14 +16,15 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
 )
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
 from corehq.apps.app_manager.xpath import session_var
 
 
+@patch_get_xform_resource_overrides()
 class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_workflow')
 
-    def test_basic(self):
+    def test_basic(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
@@ -34,7 +35,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         ]
         self.assertXmlPartialEqual(self.get_xml('form_link_basic'), factory.app.create_suite(), "./entry[1]")
 
-    def test_with_case_management_both_update(self):
+    def test_with_case_management_both_update(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_requires_case(m0f0)
@@ -48,7 +49,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), factory.app.create_suite(), "./entry[1]")
 
-    def test_with_case_management_create_update(self):
+    def test_with_case_management_create_update(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
@@ -62,7 +63,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'), factory.app.create_suite(), "./entry[1]")
 
-    def test_with_case_management_multiple_links(self):
+    def test_with_case_management_multiple_links(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
@@ -80,7 +81,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), factory.app.create_suite(), "./entry[1]")
 
-    def test_link_to_child_module(self):
+    def test_link_to_child_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -105,7 +106,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
 
-    def test_manual_form_link(self):
+    def test_manual_form_link(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -135,7 +136,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
 
-    def test_manual_form_link_with_fallback(self):
+    def test_manual_form_link_with_fallback(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -183,7 +184,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_root'),
                                    factory.app.create_suite(), "./entry")
 
-    def test_reference_to_missing_session_variable_in_stack(self):
+    def test_reference_to_missing_session_variable_in_stack(self, *args):
         # http://manage.dimagi.com/default.asp?236750
         #
         # Stack create blocks do not update the session after each datum
@@ -223,7 +224,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_enikshay'), factory.app.create_suite(), "./entry")
 
-    def test_return_to_parent_module(self):
+    def test_return_to_parent_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -252,7 +253,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
-    def test_return_to_child_module(self):
+    def test_return_to_child_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -282,7 +283,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
-    def test_link_to_form_in_parent_module(self):
+    def test_link_to_form_in_parent_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
@@ -301,7 +302,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'), factory.app.create_suite(), "./entry[3]")
 
-    def test_form_links_submodule(self):
+    def test_form_links_submodule(self, *args):
         # Test that when linking between two forms in a submodule we match up the
         # session variables between the source and target form correctly
         factory = AppFactory(build_version='2.9.0')
@@ -367,15 +368,15 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         return factory.app
 
-    def test_form_workflow_previous(self):
+    def test_form_workflow_previous(self, *args):
         app = self._build_workflow_app(WORKFLOW_PREVIOUS)
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-previous'), app.create_suite(), "./entry")
 
-    def test_form_workflow_module(self):
+    def test_form_workflow_module(self, *args):
         app = self._build_workflow_app(WORKFLOW_MODULE)
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-module'), app.create_suite(), "./entry")
 
-    def test_form_workflow_module_in_root(self):
+    def test_form_workflow_module_in_root(self, *args):
         app = self._build_workflow_app(WORKFLOW_PREVIOUS)
         for m in [1, 2]:
             module = app.get_module(m)
@@ -383,7 +384,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite(), "./entry")
 
-    def test_form_workflow_root(self):
+    def test_form_workflow_root(self, *args):
         app = self._build_workflow_app(WORKFLOW_ROOT)
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-root'), app.create_suite(), "./entry")
 

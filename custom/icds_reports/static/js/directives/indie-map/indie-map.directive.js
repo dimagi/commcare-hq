@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -44,6 +44,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
+    vm.scalingFactor = 1;
 
     vm.initTopoJson = function (location_level, location) {
         if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
@@ -65,7 +66,53 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             } else {
                 vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
             }
+            if (isMobile) {
+                // scale maps based on space available on device.
+                var headerHeight = $('#map-chart-header').height();
+                // take window height and subtract height of the header plus 44px of additional padding / margins
+                var availableHeight = window.innerHeight - headerHeight - 44;
+                if (availableHeight < vm.mapHeight) {
+                    // how much we have downscaled so we can also scale the map itself
+                    vm.scalingFactor = availableHeight / vm.mapHeight;
+                    // this approximates additional scaling based on the width of the device.
+                    // the factor was determined from a few samples and is not perfect.
+                    var factor = 1.1;
+                    var aspectRatio = window.innerHeight / window.innerWidth;
+                    if (aspectRatio > factor) {
+                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / factor);
+                    }
+                    vm.mapHeight = availableHeight;
+                }
+            }
         }
+    };
+
+    vm.getCenter = function (options) {
+        if (isMobile) {
+            // adjust center for mobile maps, because web maps are intentionally offset to leave
+            // room for the legend.
+            function getLatAdjustmentForScale(scale) {
+                // this is a very rough approximation made with a few data points for a first pass
+                // basically the further zoomed in we are the less we should adjust
+                if (scale < 5000) {
+                    return 2;
+                } else if (scale < 8000) {
+                    return 1.5;
+                } else if (scale < 12000) {
+                    return 1;
+                } else {
+                    return .5;
+                }
+            }
+            return [options.center[0] + getLatAdjustmentForScale(options.scale), options.center[1]];
+        } else {
+            return options.center;
+        }
+    };
+
+    vm.getScale = function (options) {
+        // apply additional scaling if necessary (used by mobile maps)
+        return vm.scalingFactor * options.scale;
     };
 
     var mapConfiguration = function (location) {
@@ -101,9 +148,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 4;
+                var options = Datamap.prototype[vm.type].objects[vm.scope];
                 var projection = d3.geo.equirectangular()
-                    .center(Datamap.prototype[vm.type].objects[vm.scope].center)
-                    .scale(Datamap.prototype[vm.type].objects[vm.scope].scale)
+                    .center(vm.getCenter(options))
+                    .scale(vm.getScale(options))
                     .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                 var path = d3.geo.path()
                     .projection(projection);
@@ -111,6 +159,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 return {path: path, projection: projection};
             },
         };
+        if (isMobile) {
+            // this is used to add padding in datamap that we don't want on mobile.
+            // can't set to 0 because then it will default to 50
+            vm.map.options = {
+                legendHeight: 1,
+            };
+        }
 
         vm.mapPlugins = {
             bubbles: null,
@@ -119,7 +174,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data) {
+        if (vm.map.data && !isMobile) {
+            // this chunk of code adds the legend to web maps
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
@@ -267,7 +323,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService'];
+IndieMapController.$inject = [
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+];
 
 window.angular.module('icdsApp').directive('indieMap', function () {
     return {

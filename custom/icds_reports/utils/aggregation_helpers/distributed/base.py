@@ -1,10 +1,9 @@
 import hashlib
 import logging
 
-from django.db import transaction
+from django.db import transaction, router
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import (
     AggregationHelper,
@@ -182,7 +181,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         for index_query in self.indexes():
             cursor.execute(index_query)
 
-        db_alias = db_for_read_write(self.model)
+        db_alias = router.db_for_write(self.model)
         with transaction.atomic(using=db_alias):
             logger.info(f"Dropping legacy tables for {self.helper_key} {self.month}")
             for i in range(1, 6):

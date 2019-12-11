@@ -212,6 +212,24 @@ def test_replace_case_diffs():
         )
 
 
+def test_save_form_diffs():
+    def doc(name):
+        return {"doc_type": "XFormInstance", "_id": "test", "name": name}
+
+    def check_diffs(expect_count):
+        diffs = db.get_diffs()
+        eq(len(diffs), expect_count, [d.json_diff for d in diffs])
+
+    with init_db() as db:
+        db.save_form_diffs(doc("a"), doc("b"))
+        db.save_form_diffs(doc("a"), doc("c"))
+        check_diffs(2)
+        db.save_form_diffs(doc("a"), doc("d"), replace=True)
+        check_diffs(1)
+        db.save_form_diffs(doc("a"), doc("a"), replace=True)
+        check_diffs(0)
+
+
 def test_counters():
     with init_db() as db:
         db.increment_counter("abc", 1)

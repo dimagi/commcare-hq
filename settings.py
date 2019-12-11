@@ -27,6 +27,17 @@ DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
 DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
+# Setting to declare always_enabled/always_disabled toggle states for domains
+#   declaring toggles here avoids toggle lookups from cache for all requests.
+#   Example format
+#   STATIC_TOGGLES_STATES = {
+#     'toggle_slug': {
+#         'always_enabled': ['domain1', 'domain2],
+#         'always_disabled': ['domain4', 'domain3],
+#     }
+#   }
+STATIC_TOGGLE_STATES = {}
+
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -148,6 +159,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -227,7 +239,7 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
-    'corehq.apps.hqadmin',
+    'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
@@ -236,14 +248,17 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
-    'corehq.sql_db',
+    'corehq.sql_db.app_config.SqlDbAppConfig',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
+    'corehq.sql_proxy_standby_accessors',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',

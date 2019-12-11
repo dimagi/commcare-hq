@@ -92,3 +92,4 @@ Migration Patterns and Best Practices
 -------------------------------------
 
 - :ref:`auto-managed-migration-pattern`
+- :ref:`couch-to-sql-model-migration`

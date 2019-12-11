@@ -2241,7 +2241,7 @@ class TestExportData(TestCase):
                     ['Disclaimer',
                      'The information in the report is based on the self-reported '
                      'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data syncs.']
+                     ' and is subject to timely data submissions.']
                 ]
              ]
         ]

@@ -27,6 +27,9 @@
             <span ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
           </p>
         </div>
+        <div>
+          <span ng-show="cell.redirect" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="font-montserrat">See more</a></span>
+        </div>
     </div>
   </div>
 </div>

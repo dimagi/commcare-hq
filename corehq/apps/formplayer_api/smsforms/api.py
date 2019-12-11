@@ -226,9 +226,8 @@ def _post_data(data, user_id):
             "Content-Type": "application/json",
             "content-length": str(len(data_bytes)),
             "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
-            # todo: stop defaulting to session-id
-            "X-FORMPLAYER-SESSION": user_id or data.get('session-id'),
-        }
+            "X-FORMPLAYER-SESSION": user_id,
+        },
     )
     if response.status_code == 404:
         raise Http404(response.reason)
