@@ -353,6 +353,8 @@ class SimpleFixtureGeneratorTests(TestCase):
                 cost=10.0,
             ),
         ]
+        SQLProduct.objects.bulk_create(products)
+        products = list(SQLProduct.objects.filter(domain='test-domain').order_by('product_id').all())
         fixtures = simple_fixture_generator(
             restore_user=MockUser(user_id="123456"),
             id="7890ab",
