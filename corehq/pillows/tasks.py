@@ -7,7 +7,7 @@ from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import CardinalityAggregation
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.xform import resave_form
-from corehq.pillows.utils import get_user_type_deep_cache_for_unknown_users
+from corehq.pillows.utils import get_user_type_deep_cache_for_unknown_users, UNKNOWN_USER_TYPE
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
@@ -19,7 +19,7 @@ def send_unknown_user_type_stats():
     datadog_gauge('commcare.fix_user_types.unknown_user_count',
                   _get_unknown_user_type_user_ids_approx_count())
     datadog_gauge('commcare.fix_user_types.unknown_user_form_count',
-                  FormES().user_type('unknown').count())
+                  FormES().user_type(UNKNOWN_USER_TYPE).count())
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -27,14 +27,14 @@ def fix_user_types():
     unknown_user_ids = _get_unknown_user_type_user_ids()
     for user_id in unknown_user_ids:
         user_type = get_user_type_deep_cache_for_unknown_users(user_id)
-        if user_type != unknown_user_ids:
+        if user_type != UNKNOWN_USER_TYPE:
             resave_es_forms_with_unknown_user_type.delay(user_id)
 
 
 @serial_task('{user_id}', queue='background_queue')
 def resave_es_forms_with_unknown_user_type(user_id):
     domain_form_id_list = (
-        FormES().user_type('unknown').user_id(user_id)
+        FormES().user_type(UNKNOWN_USER_TYPE).user_id(user_id)
         .values_list('domain', '_id', scroll=True)
     )
     for domain, form_id in domain_form_id_list:
@@ -43,9 +43,11 @@ def resave_es_forms_with_unknown_user_type(user_id):
 
 
 def _get_unknown_user_type_user_ids():
-    return FormES().user_type('unknown').user_aggregation().run().aggregations.user.keys
+    return (FormES().user_type(UNKNOWN_USER_TYPE).user_aggregation().run()
+            .aggregations.user.keys)
 
 
 def _get_unknown_user_type_user_ids_approx_count():
     agg = CardinalityAggregation('users_count', 'form.meta.userID')
-    return FormES().user_type('unknown').aggregation(agg).run().aggregations.users_count.value
+    return (FormES().user_type(UNKNOWN_USER_TYPE).aggregation(agg).run()
+            .aggregations.users_count.value)
