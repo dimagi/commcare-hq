@@ -266,7 +266,7 @@
               "name": "awc_open"
             },
             {
-              "operator": "gte",
+              "operator": "gt",
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
@@ -1002,11 +1002,6 @@
         "column_ids": [
           "district_id",
           "submitted_on"
-        ]
-      },
-      {
-        "column_ids": [
-          "doc_id"
         ]
       }
     ],

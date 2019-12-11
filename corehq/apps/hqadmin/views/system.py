@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 import requests
 from requests.exceptions import HTTPError
 
+from corehq.apps.domain.views.internal import get_project_limits_context
+from corehq.apps.receiverwrapper.rate_limiter import global_submission_rate_limiter
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.web import json_response
@@ -272,3 +274,16 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
+
+
+@method_decorator(require_superuser, name='dispatch')
+class GlobalThresholds(BaseAdminSectionView):
+    urlname = 'global_thresholds'
+    page_title = ugettext_lazy("Global Usage Thresholds")
+    template_name = 'hqadmin/global_thresholds.html'
+
+    @property
+    def page_context(self):
+        return get_project_limits_context([
+            ('Submission Rate Limits', global_submission_rate_limiter),
+        ])

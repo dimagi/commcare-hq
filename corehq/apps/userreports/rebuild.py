@@ -13,7 +13,6 @@ from fluff.signals import (
     reformat_alembic_diffs,
 )
 
-from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import id_is_static
 
 logger = logging.getLogger(__name__)
@@ -117,7 +116,7 @@ def apply_index_changes(engine, diffs):
 
     for index in add_indexes:
         column_names = ', '.join(c.name for c in index.columns)
-        logger.info(f'CREATE INDEX CONCURRENTLY "{index.name}" ON {index.table.name} ({column_names})')
+        logger.info(f'CREATE INDEX CONCURRENTLY "{index.name}" ON "{index.table.name}" ({column_names})')
 
     # don't remove indexes automatically because we want to be able to add them
     # concurrently without the code removing them
@@ -151,6 +150,8 @@ def _get_indexes_diffs_to_change(diffs):
                     or DiffTypes.ADD_INDEX not in actions
                     or DiffTypes.REMOVE_INDEX not in actions
             ):
-                raise TableRebuildError("Unexpected diffs")
+                table_name = index_diffs[0].table.name
+                column_names = ', '.join(c.name for c in index_diffs[0].columns)
+                logger.warning(f"There may be duplicate indexes on {table_name}, {column_names}")
 
     return indexes_to_change

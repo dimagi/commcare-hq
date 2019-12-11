@@ -1,13 +1,24 @@
 from collections import Counter
 
-import mock
 from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
+import mock
+from decorator import contextmanager
+from testil import eq
 from corehq.sql_db.connections import ConnectionManager, read_from_citus_standbys, \
     allow_read_from_citus_standbys
-from corehq.sql_db.util import get_databases_for_read_query
+from corehq.sql_db.tests.test_partition_config import (
+    PARTITION_CONFIG_WITH_STANDBYS,
+)
+from corehq.sql_db.util import (
+    get_acceptible_replication_delays,
+    get_databases_for_read_query,
+    get_replication_delay_for_shard_standbys,
+    get_standbys_with_acceptible_delay,
+)
+
 
 
 def _get_db_config(db_name, master=None, delay=None):
@@ -41,6 +52,10 @@ REPORTING_DATABASES = {
 
 @override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        get_acceptible_replication_delays.reset_cache()
+
     @override_settings(REPORTING_DATABASES={})
     def test_new_settings_empty(self):
         manager = ConnectionManager()
@@ -137,3 +152,31 @@ class TestReadsFromCitusStandbys(SimpleTestCase):
         self.assertFalse(allow_read_from_citus_standbys())
         read()
         self.assertFalse(allow_read_from_citus_standbys())
+
+
+@override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
+class TestReadsFromShardStandbys(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        get_acceptible_replication_delays.reset_cache()
+
+    def test_get_replication_delay_for_shard_standbys(self):
+        with self.mock_standby_delay():
+            delays = get_replication_delay_for_shard_standbys()
+            eq(delays, {'db1_standby': 1, 'db2_standby': 2})
+
+    def test_get_standbys_with_acceptible_delay(self):
+        with self.mock_standby_delay({('db1', 1), ('db2', 4)}):
+            dbs = get_standbys_with_acceptible_delay()
+        eq(dbs, {'db1_standby'})
+
+    @contextmanager
+    def mock_standby_delay(self, replication_results=None):
+        rows = replication_results or {('db1', 1), ('db2', 2)}
+        standbys = {'db1_standby', 'db2_standby'}
+        with mock.patch('corehq.sql_db.util._get_replication_delay_results_from_proxy', return_value=rows), \
+                mock.patch('corehq.sql_db.util.plproxy_standby_config') as plproxy_standby_config, \
+                mock.patch('corehq.sql_db.util.get_standby_databases', return_value=standbys):
+
+            plproxy_standby_config.form_processing_dbs = ['db1_standby', 'db2_standby']
+            yield
