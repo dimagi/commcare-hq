@@ -100,6 +100,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsVhndForm,
     AggregateTHRForm,
     DailyAttendance,
+    DashboardUserActivityReport
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -874,7 +875,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
+        data_type = 'Dashboard Activity Report__{}'.format(formatted_timestamp)
         if file_format == 'xlsx':
             cache_key = get_dashboard_usage_excel_file(
                 excel_data,
@@ -1679,3 +1680,17 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
         type=case_type
     )
     return matching_cases.values_list('case_id', 'type', 'server_modified_on')
+
+
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    run_every=crontab(minute=30, hour=12),  # To run on 6PM IST
+    acks_late=True,
+    queue='icds_aggregation_queue'
+)
+def update_dashboard_activity_report(target_date=None):
+    if target_date is None:
+        target_date = date.today()
+    db_alias = router.db_for_write(DashboardUserActivityReport)
+    with transaction.atomic(using=db_alias):
+        DashboardUserActivityReport().aggregate(target_date)

@@ -431,6 +431,16 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
     table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
+
+    citus_config = indicator_config.sql_settings.citus_config
+    if citus_config.distribution_type == 'hash':
+        # Create hash index on doc_id for distributed tables
+        extra_indices.append(Index(
+            _custom_index_name(table_name, ['doc_id']),
+            'doc_id',
+            postgresql_using='hash'
+        ))
+
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):
             extra_indices.append(Index(

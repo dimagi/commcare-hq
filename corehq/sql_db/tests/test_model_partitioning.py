@@ -59,7 +59,7 @@ def test_models_are_located_in_correct_dbs(self, app_label, is_partitioned):
             # models do not exist in main db
             self.assertModelDoesNotExist(model_class, DEFAULT_DB_ALIAS)
 
-            # models exist in paritioned dbs
+            # models exist in partitioned dbs
             for db in ([proxy_db] + partitioned_dbs):
                 self.assertModelExists(model_class, db)
         else:

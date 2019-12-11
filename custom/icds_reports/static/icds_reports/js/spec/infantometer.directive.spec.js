@@ -15,9 +15,7 @@ describe('Infantometer Directive', function () {
 
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, false, false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

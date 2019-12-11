@@ -2,11 +2,17 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService,
+    userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive,
+    isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        null, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.sectionSlug = 'maternal_child';
+    vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
+
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -30,7 +36,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         'Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
@@ -39,9 +45,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
         var percentNormal = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
         var unweighedPercent = row ? d3.format('.2%')((row.all - row.in_month) / (row.all || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: chosenFilters + 'Total Number of Newborns born in given month: ',
                 indicator_value: total,
             },
@@ -64,17 +69,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             {
                 indicator_name: '% Unweighted' + chosenFilters + ': ',
                 indicator_value: unweighedPercent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -132,12 +128,17 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     };
 }
 
-NewbornWithLowBirthController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+NewbornWithLowBirthController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
+    'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('newbornLowWeight', function() {
+window.angular.module('icdsApp').directive('newbornLowWeight', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -145,4 +146,4 @@ window.angular.module('icdsApp').directive('newbornLowWeight', function() {
         controller: NewbornWithLowBirthController,
         controllerAs: '$ctrl',
     };
-});
+}]);

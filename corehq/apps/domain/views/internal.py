@@ -270,19 +270,27 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        return {
-            'project_limits': [
-                ('Submission Rate Limits', self._get_rate_limits(submission_rate_limiter)),
-                ('Restore Rate Limits', self._get_rate_limits(restore_rate_limiter)),
-            ]
-        }
+        return get_project_limits_context([
+            ('Submission Rate Limits', submission_rate_limiter),
+            ('Restore Rate Limits', restore_rate_limiter),
+        ], self.domain)
 
-    def _get_rate_limits(self, rate_limiter):
-        return [
-            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
-             'percent_usage': round(100 * current_usage / limit, 1)}
-            for key, current_usage, limit in rate_limiter.iter_rates(self.domain)
+
+def get_project_limits_context(name_limiter_tuple_list, scope=None):
+    return {
+        'project_limits': [
+            (name, _get_rate_limits(scope, rate_limiter))
+            for (name, rate_limiter) in name_limiter_tuple_list
         ]
+    }
+
+
+def _get_rate_limits(scope, rate_limiter):
+    return [
+        {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+         'percent_usage': round(100 * current_usage / limit, 1)}
+        for key, current_usage, limit in rate_limiter.iter_rates(scope)
+    ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):

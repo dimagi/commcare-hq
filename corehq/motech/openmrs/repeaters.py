@@ -1,11 +1,17 @@
 import json
 from collections import defaultdict
 from itertools import chain
+from typing import Iterable
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
+
+import attr
+from jsonobject.containers import JsonDict
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.signals import successful_form_received
@@ -226,26 +232,31 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_sources = chain(
+        value_source_configs = chain(
             self.openmrs_config.case_config.patient_identifiers.values(),
             self.openmrs_config.case_config.person_properties.values(),
             self.openmrs_config.case_config.person_preferred_name.values(),
             self.openmrs_config.case_config.person_preferred_address.values(),
             self.openmrs_config.case_config.person_attributes.values(),
-        )
+        )  # type: Iterable[JsonDict]
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
 
-        return send_openmrs_data(
-            self.requests,
-            self.domain,
-            payload,
-            self.openmrs_config,
-            case_trigger_infos,
-        )
+        try:
+            response = send_openmrs_data(
+                self.requests,
+                self.domain,
+                payload,
+                self.openmrs_config,
+                case_trigger_infos,
+            )
+        except Exception as err:
+            self.requests.notify_exception(str(err))
+            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+        return response
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
@@ -267,7 +278,14 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        patient = get_patient(requests, domain, info, openmrs_config)
+        try:
+            patient = get_patient(requests, domain, info, openmrs_config)
+        except (RequestException, HTTPError) as err:
+            errors.append(_(
+                "Unable to create an OpenMRS patient for case "
+                f"{info.case_id!r}: {err}"
+            ))
+            continue
         if patient is None:
             warnings.append(
                 f"CommCare case '{info.case_id}' was not matched to a "
