@@ -44,12 +44,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             {'age_tranche__lt': 72},
             stunting_severe_column(icds_feature_flag)
         )
-        nutrition_status_weighed = exclude_records_by_age_for_column(
-             age_filters,
+        nutrition_status_weighed = include_records_by_age_for_column(
+            {'age_tranche__lt': 72},
             'nutrition_status_weighed'
         )
-        height_measured_in_month = exclude_records_by_age_for_column(
-            age_filters,
+        height_measured_in_month = include_records_by_age_for_column(
+            {'age_tranche__lt': 72},
             hfa_recorded_in_month_column(icds_feature_flag)
         )
         weighed_and_height_measured_in_month = include_records_by_age_for_column(
