@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -9,12 +11,17 @@ from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
 
 
+@periodic_task(run_every=timedelta(minutes=10))
+def send_unknown_user_type_stats():
+    datadog_gauge('commcare.fix_user_types.unknown_user_count',
+                  len(_get_unknown_user_type_user_ids()))
+    datadog_gauge('commcare.fix_user_types.unknown_user_form_count',
+                  FormES().user_type('unknown').count())
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0))
 def fix_user_types():
-    unknown_user_ids = (
-        FormES().user_type('unknown').user_aggregation().run().aggregations.user.keys
-    )
-    datadog_gauge('commcare.fix_user_types.unknown_user_count', len(unknown_user_ids))
+    unknown_user_ids = _get_unknown_user_type_user_ids()
     for user_id in unknown_user_ids:
         user_type = get_user_type_deep_cache_for_unknown_users(user_id)
         if user_type != unknown_user_ids:
@@ -30,3 +37,7 @@ def resave_es_forms_with_unknown_user_type(user_id):
     for domain, form_id in domain_form_id_list:
         form = FormAccessors(domain).get_form(form_id)
         resave_form(domain, form)
+
+
+def _get_unknown_user_type_user_ids():
+    return FormES().user_type('unknown').user_aggregation().run().aggregations.user.keys
