@@ -1,6 +1,6 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService) {
+function MapOrSectorController($location, storageService, locationsService, isMobile) {
     var vm = this;
     var location_id = $location.search().location_id;
 
@@ -40,13 +40,17 @@ function MapOrSectorController($location, storageService, locationsService) {
         });
     }
 
+    // reduce caption width to fit screen up to 900px on mobile view
+    var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
+    var leftMargin = isMobile ? 20 : 150;
+
     vm.chartOptions = {
 
         chart: {
             type: 'multiBarHorizontalChart',
             margin: {
                 bottom: 40,
-                left: 150,
+                left: leftMargin,
             },
             x: function (d) {
                 return d[0];
@@ -128,7 +132,7 @@ function MapOrSectorController($location, storageService, locationsService) {
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
-                'width': '900px',
+                'width': captionWidth + 'px',
             },
         },
         title: {
@@ -142,7 +146,7 @@ function MapOrSectorController($location, storageService, locationsService) {
     };
 }
 
-MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService'];
+MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService', 'isMobile'];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 

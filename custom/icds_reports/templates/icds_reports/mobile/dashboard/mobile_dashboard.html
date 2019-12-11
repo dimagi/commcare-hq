@@ -8,6 +8,7 @@
   {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
   {% endcompress %}
 
@@ -23,6 +24,7 @@
 {% compress js %}
   <script src="{% static 'autotrack/autotrack.js' %}"></script>
   <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
+  <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
   <script src="{% static 'topojson/topojson.js' %}"></script>
   <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 
@@ -30,6 +32,7 @@
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+  <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
 {% endcompress %}
 {% comment %}
 Split up compression due to a weird js dependency bug that makes it not work without this.
