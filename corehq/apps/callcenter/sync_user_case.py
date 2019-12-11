@@ -252,4 +252,5 @@ def sync_user_cases(user):
     """
     with CriticalSection(get_sync_lock_key(user._id)):
         helpers = [get_sync_usercase_helper(user), get_call_center_case_helper(user)]
-        _UserCaseHelper.commit_multiple(helpers)
+        if helpers:
+            _UserCaseHelper.commit_multiple([h for h in helpers if h])
