@@ -286,6 +286,13 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_start_datetime": {
+                        "direction": "in",
+                        "case_property": "last_visit_date",
+                        "external_data_type": "omrs_datetime",
+                        "commcare_data_type": "cc_date",
+                        # "jsonpath": "encounterDateTime",  # get_encounter_datetime_value_sources() default value
+                    },
                     "openmrs_observations": observations,
                     "bahmni_diagnoses": diagnoses
                 }]
@@ -316,6 +323,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                       xmlns="http://commcarehq.org/case/transaction/v2">
                   <update>
                     <height>105</height>
+                    <last_visit_date>2018-01-18</last_visit_date>
                   </update>
                 </case>"""
             case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
