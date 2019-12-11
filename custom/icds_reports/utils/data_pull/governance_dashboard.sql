@@ -6,7 +6,7 @@ SELECT
     supervisor_name,
     awc_name,
     '2019-11-01' as month,
-    1 as vhsnd_conducted,
+    case when ucr.submitted_on is not null THEN 'yes' ELSE 'no' as vhsnd_conducted,
     vhsnd_date_past_month,
     child_immu,
     anc_today,
