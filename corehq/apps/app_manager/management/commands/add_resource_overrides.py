@@ -29,10 +29,10 @@ class Command(BaseCommand):
 
     def _add_overrides_for_build(self, doc):
         linked_build = wrap_app(doc)
-        log_prefix = "{} Domain {}, app {}, build {}".format("[DRY RUN]" if self.dry_run else "",
-                                                             linked_build.domain,
-                                                             linked_build.master_id,
-                                                             linked_build.get_id)
+        log_prefix = "{}{} app {}, build {}".format("[DRY RUN] " if self.dry_run else "",
+                                                     linked_build.domain,
+                                                     linked_build.master_id,
+                                                     linked_build.get_id)
 
         if not linked_build.upstream_app_id or not linked_build.upstream_version:
             return
