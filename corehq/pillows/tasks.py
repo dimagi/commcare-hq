@@ -9,9 +9,11 @@ from corehq.form_processor.utils.xform import resave_form
 from corehq.pillows.utils import get_user_type_deep_cache_for_unknown_users
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
+from corehq.util.quickcache import quickcache
 
 
 @periodic_task(run_every=timedelta(minutes=10))
+@quickcache([], timeout=9 * 60)  # Protect from many runs after recovering from a backlog
 def send_unknown_user_type_stats():
     datadog_gauge('commcare.fix_user_types.unknown_user_count',
                   len(_get_unknown_user_type_user_ids()))
