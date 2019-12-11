@@ -354,6 +354,12 @@ def import_encounter(repeater, encounter_uuid):
     if patient_case_block:
         case_blocks.append(patient_case_block)
 
+    more_kwargs = get_case_block_kwargs_from_encounter_meta(
+        encounter,
+        get_encounter_datetime_value_sources(repeater)
+    )
+    deep_update(case_block_kwargs, more_kwargs)
+
     patient_case_type = repeater.white_listed_case_types[0]
     observation_mappings = get_observation_mappings(repeater)
     more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
@@ -563,6 +569,24 @@ def get_case_block_kwargs_from_observations(
             deep_update(case_block_kwargs, more_kwargs)
             case_blocks.extend(more_case_blocks)
     return case_block_kwargs, case_blocks
+
+
+def get_case_block_kwargs_from_encounter_meta(
+    encounter: dict,
+    encounter_datetime_value_sources: List[ValueSource],
+) -> dict:
+    case_block_kwargs = {"update": {}}
+    for value_source in encounter_datetime_value_sources:
+        try:
+            value = value_source.get_import_value(encounter)
+        except (ConfigurationError, JsonpathError):
+            # value_source isn't configured to parse encounter
+            continue
+        if value_source.case_property in CASE_BLOCK_ARGS:
+            case_block_kwargs[value_source.case_property] = value
+        else:
+            case_block_kwargs["update"][value_source.case_property] = value
+    return case_block_kwargs
 
 
 def get_case_block_kwargs_from_bahmni_diagnoses(
