@@ -4143,7 +4143,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin, Prod
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            (self.is_product_in_program((product_id, product_name), program_id) and
+                            (self.is_product_in_program((product_id, product_name), program_id) and \
                                 (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
@@ -4329,7 +4329,7 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin, ProductsAndProgramsMixi
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            (self.is_product_in_program((product_id, product_name), program_id) and
+                            (self.is_product_in_program((product_id, product_name), program_id) and \
                                 (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
@@ -4501,7 +4501,7 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin, ProductsAndProgram
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            (self.is_product_in_program((product_id, product_name), program_id) and
+                            (self.is_product_in_program((product_id, product_name), program_id) and \
                                 (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
