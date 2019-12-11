@@ -5740,6 +5740,10 @@ class SQLGlobalAppConfig(models.Model):
         })
         return model
 
+    def save(self):
+        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        super().save()
+
 
 class GlobalAppConfig(Document):
     pass
