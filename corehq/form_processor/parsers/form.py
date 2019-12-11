@@ -177,6 +177,13 @@ def _handle_duplicate(new_doc):
         XFormInstance.get_db().delete_doc(conflict_id)
         return new_doc, None
 
+    is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+    if is_icds and new_doc.metadata.deviceID == existing_doc.metadata.deviceID:
+        # ICDS does not use 'edit form' functionality via the web and form editing is not possible
+        # on mobile devices so it's safe to assume this is a duplicate without checking md5 etc.
+        duplicate = interface.deduplicate_xform(new_doc)
+        return duplicate, existing_doc
+
     try:
         existing_md5 = existing_doc.xml_md5()
     except MissingFormXml:
@@ -185,13 +192,6 @@ def _handle_duplicate(new_doc):
             existing_doc.problem = 'Missing form.xml'
 
     new_md5 = new_doc.xml_md5()
-
-    is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-    if is_icds and new_doc.metadata.deviceID == existing_doc.metadata.deviceID:
-        # ICDS does not use 'edit form' functionality via the web and form editing is not possible
-        # on mobile devices so it's safe to assume this is a duplicate without checking md5 etc.
-        duplicate = interface.deduplicate_xform(new_doc)
-        return duplicate, existing_doc
 
     if existing_md5 != new_md5:
         _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
