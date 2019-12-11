@@ -3,26 +3,11 @@
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen">
     <div class="top-section p-3" style="padding-bottom: 25vh">
       {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
-        <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
-            <div class="position-relative" ng-click="changeOption(1)">
-                <div class="options shadow yellow-gradient d-flex justify-content-center">
-                    <img src="{% static "icds_reports/mobile/images/motherandchild.png" %}">
-                </div>
-                <img src="{% static "icds_reports/mobile/images/active-play-button.png" %}" class="active-play-button" ng-if="currentOption==1">
-            </div>
-            <div class="position-relative" ng-click="changeOption(2)">
-                <div class="options shadow red-gradient d-flex justify-content-center">
-                    <img src="{% static "icds_reports/mobile/images/threegroup.png" %}">
-                </div>
-                <img src="{% static "icds_reports/mobile/images/active-play-button.png" %}" class="active-play-button" ng-if="currentOption==2">
-            </div>
-            <div class="position-relative" ng-click="changeOption(3)">
-                <div class="options shadow blue-gradient d-flex justify-content-center">
-                    <img src="{% static "icds_reports/mobile/images/bulb.png" %}">
-                </div>
-                <img src="{% static "icds_reports/mobile/images/active-play-button.png" %}" class="active-play-button" ng-if="currentOption==3">
-            </div>
-        </div>
+      <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
+          <div class="position-relative" ng-repeat="step in $ctrl.mobileSteps">
+              <dot-link id="{$ step.id $}" label="{$ step.label $}" route="{$ step.route $}" image="{$ step.image $}"></dot-link>
+          </div>
+      </div>
         <p class="font-weight-700 text-white font-16 font-montserrat">{{currentOptionName}}</p>
     </div>
     <div class="summary-list">

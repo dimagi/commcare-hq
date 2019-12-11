@@ -2562,39 +2562,56 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.showLactating = false;
         vm.showTable = true;
     };
-
-    vm.steps = {
-        // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
-        pse: {
+    var steps = [
+        {
+            id: 'pse',
             route: "/awc_reports/pse",
             label: "Pre School Education",
         },
-        maternal_child: {
+        {
+            id: 'maternal_child',
             route: "/awc_reports/maternal_child",
             label: "Maternal and Child Nutrition",
+            image: "/static/icds_reports/mobile/images/motherandchild.png",
+            isMobile: true,
         },
-        demographics: {
+        {
+            id: 'demographics',
             route: "/awc_reports/demographics",
             label: "Demographics",
+            image: "/static/icds_reports/mobile/images/threegroup.png",
+            isMobile: true,
         },
-        awc_infrastructure: {
+        {
+            id: 'awc_infrastructure',
             route: "/awc_reports/awc_infrastructure",
             label: "AWC Infrastructure",
+            image: "/static/icds_reports/mobile/images/bulb.png",
+            isMobile: true,
         },
-        beneficiary: {
+        {
+            id: 'beneficiary',
             route: "/awc_reports/beneficiary",
             label: "Child Beneficiaries List",
         },
-        pregnant: {
+        {
+            id: 'pregnant',
             route: "/awc_reports/pregnant",
             label: "Pregnant Women"
         },
-        lactating: {
+        {
+            id: 'lactating',
             route: "/awc_reports/lactating",
             label: "Lactating Women",
         },
-    };
+    ];
+    vm.mobileSteps = _.filter(steps, function (step) { return step.isMobile; });
 
+    // create a hash with the keys being the ids and values being the complete step data
+    // https://stackoverflow.com/a/23994851/8207
+    vm.steps = _.indexBy(steps, 'id');
+
+    // overwrite beneficiary / pregnant step if on the details view.
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
             route: '/awc_reports/beneficiary_details',
