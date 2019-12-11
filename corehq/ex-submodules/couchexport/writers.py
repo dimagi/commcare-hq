@@ -9,6 +9,8 @@ import csv
 import json
 import bz2
 from collections import OrderedDict
+
+import dateutil
 import openpyxl
 
 from django.template.loader import render_to_string, get_template
@@ -18,6 +20,8 @@ import xlwt
 from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
+
+from corehq.apps.userreports import datatypes as hq_datatypes
 
 
 MAX_XLS_COLUMNS = 256
@@ -387,26 +391,58 @@ class Excel2007ExportWriter(ExportWriter):
             '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
         )
 
-        def get_write_value(value):
-            if isinstance(value, (int, float)):
-                return value
-            if isinstance(value, bytes):
-                value = value.decode('utf-8')
-            elif value is not None:
-                value = str(value)
-            else:
-                value = ''
-            return dirty_chars.sub('?', value)
+        row_is_formatted = isinstance(row, FormattedRow)
+        force_format = row_is_formatted and not self.format_as_text
 
-        write_values = [get_write_value(val) for val in row]
+        def get_write_value(_value, _index):
+            if isinstance(_value, (int, float)):
+                return _value
+
+            if force_format and _index < len(row.data_types):
+                _data_type = row.data_types[_index]
+                if _data_type in [hq_datatypes.DATA_TYPE_INTEGER,
+                                  hq_datatypes.DATA_TYPE_SMALL_INTEGER]:
+                    return int(_value)
+                if _data_type == hq_datatypes.DATA_TYPE_DECIMAL:
+                    return float(_value)
+                if _data_type in [hq_datatypes.DATA_TYPE_DATE,
+                                  hq_datatypes.DATA_TYPE_DATETIME]:
+                    return dateutil.parser.parse(_value)
+                if _data_type == hq_datatypes.DATA_TYPE_BOOLEAN:
+                    return bool(_value)
+
+            if isinstance(_value, bytes):
+                _value = _value.decode('utf-8')
+            elif _value is not None:
+                _value = str(_value)
+            else:
+                _value = ''
+            return dirty_chars.sub('?', _value)
+
+        write_values = [get_write_value(val, ind) for ind, val in enumerate(row)]
         cells = [WriteOnlyCell(sheet, val) for val in write_values]
+
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
-        if isinstance(row, FormattedRow):
+        elif row_is_formatted:
+            for ind, data_type in enumerate(row.data_types):
+                if data_type in [hq_datatypes.DATA_TYPE_INTEGER,
+                                 hq_datatypes.DATA_TYPE_SMALL_INTEGER]:
+                    cells[ind].number_format = numbers.FORMAT_NUMBER
+                elif data_type == hq_datatypes.DATA_TYPE_DECIMAL:
+                    cells[ind].number_format = numbers.FORMAT_NUMBER_00
+                elif data_type == hq_datatypes.DATA_TYPE_DATE:
+                    cells[ind].number_format = numbers.FORMAT_DATE_YYYYMMDD2
+                elif data_type == hq_datatypes.DATA_TYPE_DATETIME:
+                    cells[ind].number_format = numbers.FORMAT_DATE_DATETIME
+
+        # always format hyperlinks, even when format_as_text is True
+        if row_is_formatted:
             for hyperlink_column_index in row.hyperlink_column_indices:
                 cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
                 cells[hyperlink_column_index].style = 'Hyperlink'
+
         sheet.append(cells)
 
     def _close(self):
