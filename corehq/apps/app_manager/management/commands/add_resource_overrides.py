@@ -102,13 +102,19 @@ class Command(BaseCommand):
             help='Do not actually modify the database, just log what will happen',
         )
         parser.add_argument(
+            '--ignore-deleted',
+            action='store_true',
+            default=False,
+            help='Skip deleted apps',
+        )
+        parser.add_argument(
             '--verbose',
             action='store_true',
             default=False,
             help='Log every action, including apps that were skipped',
         )
 
-    def handle(self, domain=None, app_id=None, dry_run=False, verbose=0, **options):
+    def handle(self, domain=None, app_id=None, dry_run=False, ignore_deleted=False, verbose=False, **options):
         self.dry_run = dry_run
         if verbose:
             logger.setLevel(logging.DEBUG)
@@ -121,7 +127,9 @@ class Command(BaseCommand):
             app_ids = set([v.build_id for v in get_all_built_app_ids_and_versions(domain, app_id)])
             app_ids.add(app_id)  # in case linked app has no builds yet
         else:
-            app_ids = (get_doc_ids_by_class(LinkedApplication) + get_deleted_doc_ids_by_class(LinkedApplication))
+            app_ids = get_doc_ids_by_class(LinkedApplication)
+            if not ignore_deleted:
+                app_ids += get_deleted_doc_ids_by_class(LinkedApplication)
         iter_update(LinkedApplication.get_db(),
                     self._add_overrides_for_build,
                     with_progress_bar(app_ids),
