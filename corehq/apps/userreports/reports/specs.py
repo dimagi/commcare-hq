@@ -22,6 +22,7 @@ from sqlagg.columns import (
     SimpleColumn,
     SumWhen,
     YearColumn,
+    LastValueColumn,
 )
 from sqlalchemy import bindparam
 
@@ -64,6 +65,7 @@ SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_SIMPLE: SimpleColumn,
     const.AGGGREGATION_TYPE_YEAR: YearColumn,
     const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
+    const.AGGREGATION_TYPE_LAST_VALUE: LastValueColumn,
 }
 
 

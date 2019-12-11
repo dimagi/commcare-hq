@@ -140,6 +140,7 @@ six==1.13.0
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3
 sqlagg==0.14.0
+git+ssh://git@github.com:dimagi/sql-agg.git@b42e0e063ca90c9e1bfa8f6eb13d9af082db1e86
 sqlalchemy==1.3.10
 stripe==1.67.0
 suds-jurko==0.6

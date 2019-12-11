@@ -154,7 +154,13 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
                     "field": 'indicator_col_id_number',
                     'column_id': 'report_column_col_id_number',
                     'aggregation': 'sum'
-                }
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_last_number",
+                    "field": 'indicator_col_id_number',
+                    'aggregation': 'last_value'
+                },
             ]
         )
         view = self._create_view(report_config)
@@ -164,9 +170,10 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
             [[
                 'foo',
                 [
-                    ['report_column_display_first_name', 'report_column_display_number'],
-                    ['Ada', 3],
-                    ['Alan', 6]
+                    ['report_column_display_first_name', 'report_column_display_number',
+                     'report_column_display_last_number'],
+                    ['Ada', 3, 3],
+                    ['Alan', 6, 2]
                 ]
             ]]
         )
