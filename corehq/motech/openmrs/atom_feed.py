@@ -221,7 +221,7 @@ def get_addpatient_caseblock(
     repeater: OpenmrsRepeater,
 ) -> CaseBlock:
 
-    case_block_kwargs = get_case_block_kwargs(patient, repeater)
+    case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater)
     if default_owner:
         case_block_kwargs.setdefault("owner_id", default_owner.user_id)
     if not case_block_kwargs.get("owner_id"):
@@ -240,7 +240,7 @@ def get_addpatient_caseblock(
 
 
 def get_updatepatient_caseblock(case, patient, repeater):
-    case_block_kwargs = get_case_block_kwargs(patient, repeater, case)
+    case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater, case)
     return CaseBlock(
         create=False,
         case_id=case.case_id,
@@ -248,7 +248,7 @@ def get_updatepatient_caseblock(case, patient, repeater):
     )
 
 
-def get_case_block_kwargs(patient, repeater, case=None):
+def get_case_block_kwargs_from_patient(patient, repeater, case=None):
     property_map = get_property_map(repeater.openmrs_config.case_config)
     case_block_kwargs = {
         "case_name": patient['person']['display'],
