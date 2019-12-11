@@ -2597,7 +2597,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         {
             id: 'pregnant',
             route: "/awc_reports/pregnant",
-            label: "Pregnant Women"
+            label: "Pregnant Women",
         },
         {
             id: 'lactating',
@@ -2605,7 +2605,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             label: "Lactating Women",
         },
     ];
-    vm.mobileSteps = _.filter(steps, function (step) { return step.isMobile; });
+    vm.mobileSteps = _.filter(steps, function (step) {
+        return step.isMobile;
+    });
 
     // create a hash with the keys being the ids and values being the complete step data
     // https://stackoverflow.com/a/23994851/8207
