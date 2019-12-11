@@ -11,41 +11,16 @@
       <p class="font-weight-700 text-white font-16 font-montserrat" ng-bind="$ctrl.currentStepMeta.label"></p>
     </div>
     <div class="summary-list">
-        <div class="bar-chart" ng-if="currentOption==2">
-            <nvd3 options="chartOptions" data="chartData" class="with-3d-shadow with-transitions"></nvd3>
+      {% comment %}
+      bar charts currently not working well so hide them
+      <div ng-if="$ctrl.step === 'demographics'">
+        <div class="bar-chart">
+          <h2 class="center">{$ $ctrl.data.chart[0].key $}</h2>
+          <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
         </div>
-        <div ng-repeat="kpiList in summaryList">
-            <div ng-repeat="summary in kpiList">
-                <div class="shadow rounded-border bg-white p-3 col-xs-11 mx-auto float-unset mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <p class="font-14 font-weight-600 font-montserrat mb-0">{{summary.label}}</p>
-                        <img src="{% static "icds_reports/mobile/images/dark-info.png" %}" ng-show="summary.help_text"
-                             ng-click="setInformation(summary.label, summary.help_text)">
-                    </div>
-                    <div class="col-xs-11 d-flex justify-content-between align-items-center mb-3 no-gutters float-unset" ng-show="summary.show_percent!==false">
-                        <p class="mb-0 font-30 font-montserrat text-blue font-weight-500"
-                           ng-bind="(summary.percent | number:2) + '%'"></p>
-                        <div class="d-flex align-items-center">
-                            <p class="mb-0 font-16 font-montserrat font-weight-500">({{summary.value}}/{{summary.all}})</p>
-                            <img src="{% static "icds_reports/mobile/images/up-arrow.png" %}" ng-if="summary.color == 'red'">
-                            <img src="{% static "icds_reports/mobile/images/down-arrow.png" %}" ng-if="summary.color == 'green'">
-                        </div>
-                    </div>
-                    <p class="mb-0 font-30 font-montserrat text-blue font-weight-500" ng-show="summary.show_percent===false"
-                       ng-bind="summary.value"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="summary-info">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="d-flex align-items-center col-xs-9 no-gutters">
-                <img src="{% static "icds_reports/mobile/images/gray-info.png" %}" class="mr-3">
-                <p class="mb-0 text-blue font-montserrat font-18 font-weight-600">{{currentHeading}}</p>
-            </div>
-            <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" style="width: 20px" ng-click="closeInformation()">
-        </div>
-        <p class="mb-0 text-white font-montserrat font-16 font-weight-500">{{currentInformation}}</p>
+      </div>
+      {% endcomment %}
+      <kpi data="$ctrl.data.kpi"></kpi>
     </div>
   </div>
   <mobile-filters selected-locations="$ctrl.selectedLocations" ng-show="$ctrl.filtersOpen"></mobile-filters>
