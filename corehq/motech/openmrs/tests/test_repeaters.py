@@ -2,6 +2,7 @@ import copy
 import doctest
 import json
 import os
+import re
 import uuid
 
 from django.test import SimpleTestCase, TestCase
@@ -34,6 +35,7 @@ from corehq.motech.openmrs.openmrs_config import (
 )
 from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
+    delete_case_property,
     find_or_create_patient,
     get_ancestor_location_openmrs_uuid,
     get_case_location_ancestor_repeaters,
@@ -43,6 +45,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
 from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
 
@@ -606,6 +609,56 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         with self.assertRaises(DuplicateCaseMatch):
             save_match_ids(self.case, self.case_config, self.patient)
+
+
+class DeleteCasePropertyTests(SimpleTestCase):
+
+    def test_delete_case_block_arg(self):
+        case_property = "external_id"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <external_id />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def test_delete_case_block_update_key(self):
+        case_property = "openmrs_uuid"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <openmrs_uuid />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def test_too_much_rope_error(self):
+        case_property = "case_id"
+        with self.assertRaises(TypeError):
+            delete_case_property(DOMAIN, "CASE_ID", case_property)
+
+    def test_too_much_rope_no_error(self):
+        import ipdb; ipdb.sset_trace()
+        case_property = "update"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2" />
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def assert_expected_case_block(self, case_property, case_block_re):
+        with mock.patch("corehq.motech.openmrs.repeater_helpers.submit_case_blocks") as mock_submit:
+            delete_case_property(DOMAIN, "CASE_ID", case_property)
+            case_block = mock_submit.call_args[0][0][0]
+            self.assertIsNotNone(re.match(case_block_re, case_block))
 
 
 def test_observation_mappings():
