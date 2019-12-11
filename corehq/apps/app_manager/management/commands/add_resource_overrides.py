@@ -3,6 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app, wrap_app
+from corehq.apps.app_manager.exceptions import ResourceOverrideError
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     add_xform_resource_overrides,
@@ -61,8 +62,11 @@ class Command(BaseCommand):
                                                                           len(current_overrides),
                                                                           len(override_map)))
             if not self.dry_run:
-                add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
-        else:
+                try:
+                    add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
+                except ResourceOverrideError as e:
+                    logger.info("{} FAIL: {}".format(log_prefix, str(e)))
+        elif self.verbose:
             logger.info("{}: Skipping, {} overrides already match".format(log_prefix, len(override_map)))
 
     def _get_xmlns_map(self, app):
@@ -86,9 +90,16 @@ class Command(BaseCommand):
             default=False,
             help='Do not actually modify the database, just verbosely log what will happen',
         )
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Log every action, including apps that were skipped',
+        )
 
-    def handle(self, domain=None, app_id=None, dry_run=False, **options):
+    def handle(self, domain=None, app_id=None, dry_run=False, verbose=False, **options):
         self.dry_run = dry_run
+        self.verbose = verbose
         if domain and app_id:
             app = get_app(domain, app_id)   # Sanity check, will 404 if domain doesn't match
             assert(app.doc_type == 'LinkedApplication' or app.doc_type == 'LinkedApplication-Deleted')

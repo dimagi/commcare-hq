@@ -1,7 +1,7 @@
 function MobileFiltersController($scope) {
     const MONTH = 'month';
     const LOCATION = 'location';
-    $scope.selectedTab = MONTH;
+    $scope.selectedTab = LOCATION;
     $scope.filterData = {};
     $scope.closeFilters = function () {
         $scope.$emit('closeFilterMenu', {});

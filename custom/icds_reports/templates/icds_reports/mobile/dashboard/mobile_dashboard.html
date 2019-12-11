@@ -33,6 +33,11 @@
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
   <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+{% endcompress %}
+{% comment %}
+Split up compression due to a weird js dependency bug that makes it not work without this.
+{% endcomment %}
+{% compress js %}
   <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
   {# only needed for importing location directive - not actually referenced by mobile dashboard #}
   <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
@@ -60,10 +65,10 @@
   {# maps #}
   <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
   <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
+{% endcompress %}
 
   {% include 'icds_reports/partials/shared_report_directives.html' %}
 
-{% endcompress %}
   <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
   <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
   <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
