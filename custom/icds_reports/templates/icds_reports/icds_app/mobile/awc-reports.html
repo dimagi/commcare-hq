@@ -8,7 +8,7 @@
               <dot-link id="{$ step.id $}" label="{$ step.label $}" route="{$ step.route $}" image="{$ step.image $}"></dot-link>
           </div>
       </div>
-        <p class="font-weight-700 text-white font-16 font-montserrat">{{currentOptionName}}</p>
+      <p class="font-weight-700 text-white font-16 font-montserrat" ng-bind="$ctrl.currentStepMeta.label"></p>
     </div>
     <div class="summary-list">
         <div class="bar-chart" ng-if="currentOption==2">

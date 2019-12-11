@@ -2656,7 +2656,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         },
     };
 
+    vm.currentStepMeta = vm.steps[vm.step];
+
     vm.getDataForStep(vm.step);
+
 }
 
 AwcReportsController.$inject = [
