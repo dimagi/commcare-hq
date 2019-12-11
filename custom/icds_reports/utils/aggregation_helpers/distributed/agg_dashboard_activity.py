@@ -57,7 +57,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
                     }
         """
         from custom.icds_reports.models.aggregate import AwcLocation
-        locations = AwcLocation.objects.filter(aggregation_level=3).values('state_id', 'district_id', 'block_id')
+        locations = (AwcLocation.objects.filter(aggregation_level=3).
+                     exclude(state_is_test=1).
+                     values('state_id', 'district_id', 'block_id'))
 
         transformed_locations = dict()
 
