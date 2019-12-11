@@ -30,6 +30,7 @@ from ...couchsqlmigration import (
 )
 from ...diff import filter_case_diffs, filter_ledger_diffs
 from ...parallel import Pool
+from ...util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
 
@@ -57,12 +58,19 @@ class Command(BaseCommand):
                 Do not diff cases modified after the most recently
                 migrated form.
             ''')
+        parser.add_argument('--cases',
+            help='''
+                Diff specific cases. The value of this option should
+                be a space-delimited list of case ids OR a path to a file
+                containing a case id on each line. The path must begin
+                with / or ./
+            ''')
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "state_dir", "live"]:
+        for opt in ["no_input", "state_dir", "live", "cases"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -71,7 +79,7 @@ class Command(BaseCommand):
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         setup_logging(self.state_dir, "case_diff", options['debug'])
         migrator = get_migrator(domain, self.state_dir, self.live)
-        msg = do_case_diffs(migrator)
+        msg = do_case_diffs(migrator, self.cases)
         if msg:
             sys.exit(msg)
 
@@ -83,7 +91,7 @@ def get_migrator(domain, state_dir, live):
         domain, state_dir, live_migrate=live, diff_process=None)
 
 
-def do_case_diffs(migrator):
+def do_case_diffs(migrator, cases):
     def save_result(data):
         log.debug(data)
         add_cases(len(data.doc_ids))
@@ -93,7 +101,7 @@ def do_case_diffs(migrator):
         for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
 
-    casediff = CaseDiffTool(migrator)
+    casediff = CaseDiffTool(migrator, cases)
     statedb = casediff.statedb
     with casediff.context() as add_cases:
         for data in casediff.iter_case_diff_results():
@@ -102,10 +110,11 @@ def do_case_diffs(migrator):
 
 class CaseDiffTool:
 
-    def __init__(self, migrator):
+    def __init__(self, migrator, cases):
         self.migrator = migrator
         self.domain = migrator.domain
         self.statedb = migrator.statedb
+        self.cases = cases
         if not migrator.live_migrate:
             cutoff_date = None
         elif hasattr(migrator.stopper, "stop_date"):
@@ -131,6 +140,18 @@ class CaseDiffTool:
                 yield add_cases
 
     def iter_case_diff_results(self):
+        if self.cases is not None:
+            return self.iter_diff_specific_cases()
+        return self.resumable_iter_diff_cases()
+
+    def iter_diff_specific_cases(self):
+        case_ids = get_ids_from_string_or_file(self.cases)
+        batches = chunked(case_ids, DIFF_BATCH_SIZE, list)
+        init_worker(*self.initargs)
+        for batch in batches:
+            yield diff_cases(batch, log_cases=True)
+
+    def resumable_iter_diff_cases(self):
         batches = chunked(self.iter_case_ids(), DIFF_BATCH_SIZE, list)
         pool = Pool(initializer=init_worker, initargs=self.initargs, maxtasksperchild=100)
         yield from pool.imap_unordered(diff_cases, batches)
@@ -150,9 +171,12 @@ class CaseDiffTool:
         return self.statedb.get_no_action_case_forms(), self.cutoff_date
 
 
-def diff_cases(case_ids):
+def diff_cases(case_ids, log_cases=False):
     couch_cases = {c.case_id: c.to_json()
         for c in CaseAccessorCouch.get_cases(case_ids) if _state.should_diff(c)}
+    if log_cases:
+        skipped = [id for id in case_ids if id not in couch_cases]
+        log.info("skipping cases modified since cutoff date: %s", skipped)
     case_ids = list(couch_cases)
     data = DiffData(case_ids)
     sql_case_ids = set()
@@ -162,6 +186,8 @@ def diff_cases(case_ids):
         couch_case = couch_cases[case_id]
         diffs = diff_case(sql_case, couch_case)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
+        if log_cases:
+            log.info("case %s -> %s diffs", case_id, len(diffs))
 
     data.diffs.extend(iter_ledger_diffs(case_ids))
     add_missing_docs(data, couch_cases, sql_case_ids)
