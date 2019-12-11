@@ -19,7 +19,7 @@ FROM "public"."awc_location_months_local" "awc_location_months"
         ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
     )
-WHERE "agg_awc"."month" = '2019-11-01' AND "agg_awc"."aggregation_level"=5
+WHERE "agg_awc"."month" = '2019-11-01' AND "agg_awc"."aggregation_level"=5 AND "agg_awc"."state_is_test"=0
 
 /*
 Nested Loop  (cost=80296.62..210426.04 rows=6 width=84)
