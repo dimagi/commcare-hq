@@ -25,7 +25,6 @@ from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -89,7 +88,7 @@ from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
-from .util import exit_on_error
+from .util import get_ids_from_string_or_file, exit_on_error, str_to_datetime
 
 log = logging.getLogger(__name__)
 
@@ -351,12 +350,7 @@ class CouchSqlDomainMigrator:
         if forms == "skipped":
             self._process_skipped_forms()
             return
-        if forms.startswith(("./", "/")):
-            log.info("loading form ids from file: %s", forms)
-            with open(forms, encoding="utf-8") as fh:
-                form_ids = [x.rstrip("\n") for x in fh if x.strip()]
-        else:
-            form_ids = [x for x in forms.split() if x]
+        form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
         form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
         migrated_ids = orig_ids - set(form_ids)
@@ -879,7 +873,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = self._convert_date(key_date)
+        key_date = str_to_datetime(key_date)
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -889,14 +883,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
-
-    @staticmethod
-    def _convert_date(value):
-        try:
-            return datetime.strptime(value, ISO_DATETIME_FORMAT)
-        except ValueError:
-            sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
-            return datetime.strptime(value, sans_micros)
 
     def stop(self):
         if self.should_stop is not None:
