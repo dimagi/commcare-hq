@@ -948,7 +948,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
 PlanOption = namedtuple(
     'PlanOption',
-    ['name', 'monthly_price', 'annual_price', 'description']
+    ['name', 'monthly_price', 'annual_price', 'description', 'desc_extra']
 )
 
 
@@ -967,37 +967,36 @@ class SelectPlanView(DomainAccountingSettings):
                 SoftwarePlanEdition.STANDARD,
                 "$300",
                 "$250",
-                _("For programs with one-time data collection needs and simple "
-                  "case management workflows, and for M&E teams that need basic "
-                  "data tools like Excel-based dashboards.")
+                _("For programs with one-time data collection needs, simple "
+                  "case management workflows, and basic M&E requirements."),
+                None,
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
                 "$600",
                 "$500",
-                _("For programs with complex case management workflows where "
-                  "field teams collaborate on tasks, and for M&E teams that "
-                  "need to clean and report on their data. "
-                  "Includes all Standard features.")
+                _("For programs with complex case management needs, field "
+                  "staff collaborating on tasks, and M&E teams that need to "
+                  "clean and report on data."),
+                _("Includes all Standard Features."),
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("For programs with facility-based workflows, field "
-                  "staff organized by location, and advanced security "
-                  "needs. Also for M&E teams integrating data capture with "
-                  "analytical tools like Power BI & Tableau. "
-                  "Includes all Pro features.")
+                _("For programs with facility-based workflows, distributed "
+                  "field staff, and advanced security needs. Also for M&E "
+                  "teams integrating data with 3rd party analytics."),
+                _("Includes all Pro Features."),
             ),
             PlanOption(
                 SoftwarePlanEdition.ENTERPRISE,
                 _("Contact Us"),
                 _("Contact Us"),
-                _("For organizations who want a sustainable path towards "
-                  "improving last-mile mobile data collection and service "
-                  "delivery practices across multiple programs. "
-                  "Includes all paid features.")
+                _("For organizations that need a sustainable path to scale "
+                  "mobile data collection and service delivery across multiple "
+                  "teams, programs, or countries."),
+                _("Includes all Advanced Features."),
             )
         ]
 
