@@ -68,7 +68,7 @@ class Command(BaseCommand):
             for pre_id, override
             in get_xform_resource_overrides(linked_build.domain, linked_build.master_id).items()
         }
-        if current_overrides != override_map:
+        if set(override_map.items()) - set(current_overrides.items()):
             logger.info("{}: Found {} overrides, updating with {}".format(log_prefix,
                                                                           len(current_overrides),
                                                                           len(override_map)))
@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 except ResourceOverrideError as e:
                     logger.error("{}: {}".format(log_prefix, str(e)))
         else:
-            logger.info("{}: Skipping, {} overrides already match".format(log_prefix, len(override_map)))
+            logger.info("{}: Skipping, {} all overrides already present".format(log_prefix, len(override_map)))
 
     def _get_xmlns_map(self, app):
         return {
