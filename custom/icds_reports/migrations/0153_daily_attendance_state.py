@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('icds_reports', '0150_update_agg_awc_monthly_view'),
+        ('icds_reports', '0152_dashboarduseractivityreport'),
     ]
 
     operations = [
