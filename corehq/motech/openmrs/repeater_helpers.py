@@ -1,3 +1,4 @@
+import inspect
 import re
 from collections import defaultdict
 
@@ -405,6 +406,24 @@ def get_patient(requests, domain, info, openmrs_config):
             patient = find_or_create_patient(requests, domain, info, openmrs_config)
 
     return patient
+
+
+def delete_case_property(
+    domain: str,
+    case_id: str,
+    case_property: str,
+):
+    """
+    Delete the OpenMRS identifier on the case.
+    """
+    members = dict(inspect.getmembers(CaseBlock.__init__.__code__))
+    case_block_args = members['co_varnames']
+    if case_property in case_block_args:
+        case_block_kwargs = {case_property: None}
+    else:
+        case_block_kwargs = {"update": {case_property: None}}
+    case_block = CaseBlock(case_id=case_id, create=False, **case_block_kwargs)
+    submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_OPENMRS)
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
