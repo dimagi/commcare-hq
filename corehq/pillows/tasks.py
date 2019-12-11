@@ -27,7 +27,7 @@ def fix_user_types():
     unknown_user_ids = _get_unknown_user_type_user_ids()
     for user_id in unknown_user_ids:
         user_type = get_user_type_deep_cache_for_unknown_users(user_id)
-        if user_type != unknown_user_ids:
+        if user_type != 'unknown':
             resave_es_forms_with_unknown_user_type.delay(user_id)
 
 
