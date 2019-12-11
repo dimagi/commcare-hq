@@ -4,7 +4,7 @@ from corehq.project_limits.rate_limiter import RateLimiter, RateDefinition, \
     PerUserRateDefinition
 
 
-@mock.patch('corehq.project_limits.rate_limiter.get_user_count', lambda domain: 10)
+@mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
 def test_rate_limit_interface():
     """
     Just test that very basic usage doesn't error

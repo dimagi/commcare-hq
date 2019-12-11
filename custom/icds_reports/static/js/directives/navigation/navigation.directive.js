@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location,
+function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
                               stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
                               userFullName, userUsername, isMobile) {
     $scope.$route = $route;
@@ -30,18 +30,8 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     };
 
     $scope.goToStep = function(path, params) {
-        var page_path = "#/" + path;
-        if (Object.keys(params).length > 0) {
-            page_path += '?';
-        }
+        return navigationService.getPagePath(path, params);
 
-        window.angular.forEach(params, function(v, k) {
-            if (v === undefined || v === null) {
-                v = '';
-            }
-            page_path += (k + '=' + v + '&');
-        });
-        return page_path;
     };
 
     // used by mobile only
@@ -53,7 +43,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 }
 
 NavigationController.$inject = [
-    '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location',
+    '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'navigationService',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
     'userFullName', 'userUsername', 'isMobile',
 ];

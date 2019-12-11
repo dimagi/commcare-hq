@@ -2,9 +2,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Medicine Kit";
@@ -70,7 +71,11 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     };
 }
 
-MedicineKitController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+MedicineKitController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
+];
 
 window.angular.module('icdsApp').directive('medicineKit', function() {
     return {

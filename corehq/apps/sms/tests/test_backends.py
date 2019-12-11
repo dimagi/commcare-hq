@@ -219,7 +219,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.teardown_subscription()
+        cls.teardown_subscriptions()
 
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
@@ -645,7 +645,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend9.delete()
         cls.backend10.delete()
 
-        cls.teardown_subscription()
+        cls.teardown_subscriptions()
 
         cls.domain_obj.delete()
         clear_plan_version_cache()
