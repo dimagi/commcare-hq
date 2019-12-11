@@ -344,15 +344,29 @@ def import_encounter(repeater, encounter_uuid):
             f'"{encounter_uuid}": {err}'
         )) from err
 
-    case_block_kwargs = {"update": {}, "index": {}}
     case_blocks = []
-
     patient_case_id, default_owner_id, patient_case_block = get_case_id_owner_id_case_block(
-        repeater,
-        encounter['patientUuid'],
+        repeater, encounter['patientUuid'],
     )
     if patient_case_block:
         case_blocks.append(patient_case_block)
+
+    case_block_kwargs, more_case_blocks = get_case_block_kwargs_from_encounter(
+        repeater, encounter, patient_case_id, default_owner_id,
+    )
+    case_blocks.extend(more_case_blocks)
+    if has_case_updates(case_block_kwargs) or case_blocks:
+        update_case(repeater, patient_case_id, case_block_kwargs, case_blocks)
+
+
+def get_case_block_kwargs_from_encounter(
+    repeater: OpenmrsRepeater,
+    encounter: dict,
+    patient_case_id: str,
+    default_owner_id: str,
+) -> Tuple[dict, List[CaseBlock]]:
+    case_block_kwargs = {"update": {}, "index": {}}
+    case_blocks = []
 
     more_kwargs = get_case_block_kwargs_from_encounter_meta(
         encounter,
@@ -396,8 +410,7 @@ def import_encounter(repeater, encounter_uuid):
         case_blocks.extend(more_case_blocks)
         #  O\ ˙˙˙ ˙˙˙ ˙˙˙ end snip
 
-    if has_case_updates(case_block_kwargs) or case_blocks:
-        update_case(repeater, patient_case_id, case_block_kwargs, case_blocks)
+    return case_block_kwargs, case_blocks
 
 
 def get_encounter(repeater, encounter_uuid):
