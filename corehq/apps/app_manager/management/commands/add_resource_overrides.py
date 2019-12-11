@@ -10,6 +10,7 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
     get_xform_resource_overrides,
 )
 from corehq.apps.linked_domain.applications import get_master_app_by_version
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.dbaccessors.couchapps.all_docs import (
     get_deleted_doc_ids_by_class,
     get_doc_ids_by_class,
@@ -28,12 +29,23 @@ class Command(BaseCommand):
 
     def _add_overrides_for_build(self, doc):
         linked_build = wrap_app(doc)
+        log_prefix = "{} Domain {}, app {}, build {}".format("[DRY RUN]" if self.dry_run else "",
+                                                             linked_build.domain,
+                                                             linked_build.master_id,
+                                                             linked_build.get_id)
+
         if not linked_build.upstream_app_id or not linked_build.upstream_version:
             return
 
-        master_build = get_master_app_by_version(linked_build.domain_link, linked_build.upstream_app_id,
-                                                 linked_build.upstream_version)
+        try:
+            master_build = get_master_app_by_version(linked_build.domain_link, linked_build.upstream_app_id,
+                                                     linked_build.upstream_version)
+        except ActionNotPermitted:
+            logger.error("{}: Skipping due to 403".format(log_prefix))
+            return
+
         if not master_build:
+            logger.info("{}: Skipping, no master build found".format(log_prefix))
             return
 
         linked_map = self._get_xmlns_map(linked_build)
@@ -42,11 +54,6 @@ class Command(BaseCommand):
             master_form_unique_id: linked_map[xmlns]
             for xmlns, master_form_unique_id in master_map.items() if xmlns in linked_map
         }
-
-        log_prefix = "{} Domain {}, app {}, build {}".format("[DRY RUN]" if self.dry_run else "",
-                                                             linked_build.domain,
-                                                             linked_build.master_id,
-                                                             linked_build.get_id)
 
         if not override_map:
             logger.info("{}: Skipping, no forms found to map".format(log_prefix))
@@ -65,7 +72,7 @@ class Command(BaseCommand):
                 try:
                     add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
                 except ResourceOverrideError as e:
-                    logger.info("{} FAIL: {}".format(log_prefix, str(e)))
+                    logger.error("{}: {}".format(log_prefix, str(e)))
         elif self.verbose:
             logger.info("{}: Skipping, {} overrides already match".format(log_prefix, len(override_map)))
 
