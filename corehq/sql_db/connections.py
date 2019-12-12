@@ -74,13 +74,21 @@ def is_citus(connection_url: str, citus_list=[], non_citus_list=[], engine=None)
     if connection_url in non_citus_list:
         return False
 
-    engine = engine or create_engine(connection_url)
-    if is_citus_db(engine):
-        citus_list.append(engine.url)
-        return True
-    else:
-        non_citus_list.append(engine.url)
-        return False
+    dispose = False
+    if not engine:
+        engine = create_engine(connection_url)
+        dispose = True
+
+    try:
+        if is_citus_db(engine):
+            citus_list.append(engine.url)
+            return True
+        else:
+            non_citus_list.append(engine.url)
+            return False
+    finally:
+        if dispose:
+            engine.dispose()
 
 
 def create_engine(connection_url: str, connect_args: dict=None):
