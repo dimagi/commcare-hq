@@ -1202,11 +1202,6 @@ class FormBase(DocumentSchema):
             return key
         return format_key
 
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         try:
@@ -2335,13 +2330,6 @@ class ModuleDetailsMixin(object):
         super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
-
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
 
     def get_details(self):
         details = [
@@ -5715,6 +5703,20 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
+class SQLGlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
 class GlobalAppConfig(Document):
     # this should be the unique id of the app (not of a versioned copy)
     app_id = StringProperty()
@@ -5757,6 +5759,20 @@ class GlobalAppConfig(Document):
 
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
+
+        # Save to SQL
+        model, created = SQLGlobalAppConfig.objects.update_or_create(
+            domain=self.domain,
+            app_id=self.app_id,
+            defaults={
+                'apk_prompt': self.apk_prompt,
+                'app_prompt': self.app_prompt,
+                'apk_version': self.apk_version or LATEST_APK_VALUE,
+                'app_version': self.app_version or LATEST_APP_VALUE,
+            }
+        )
+
+        # Save to couch
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 

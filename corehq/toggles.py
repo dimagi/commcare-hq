@@ -757,14 +757,6 @@ CAN_EDIT_EULA = StaticToggle(
     TAG_INTERNAL,
 )
 
-STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
-    'stock_and_sms_handler',
-    "Enable the stock report handler to accept both stock and receipt values "
-    "in the format 'soh abc 100.20'",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 # This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
 MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'mobile_privileges_flag',
@@ -1118,9 +1110,9 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'ICDS: Allow specifying a custom base URL for an application. Main use case is '
-    'to allow migrating ICDS to a new cluster.',
-    TAG_CUSTOM,
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating projects to a new cluster.',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1235,7 +1227,7 @@ USER_TESTING_SIMPLIFY = StaticToggle(
 # when enabled this should prevent any changes to a domains data
 DATA_MIGRATION = StaticToggle(
     'data_migration',
-    'Disable submissions and restores during a data migration',
+    'Disable submissions, restores, and web user access during a data migration',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
@@ -1789,4 +1781,15 @@ USE_NEW_GET_COLUMN = StaticToggle(
     '(strictly for QA right now).',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+    'livequery_read_from_standbys',
+    'Allow livequery restore to read data from plproxy standbys if they are available',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description="""
+    To allow a gradual rollout and testing of using the standby
+    databases to generate restore payloads.
+    """
 )
