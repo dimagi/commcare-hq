@@ -1,3 +1,4 @@
+import time
 import uuid
 from collections import Counter, defaultdict, namedtuple
 
@@ -8,6 +9,9 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
@@ -21,7 +25,7 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.datadog.utils import case_load_counter, bucket_value
 from corehq.util.soft_assert import soft_assert
 
 from . import exceptions
@@ -51,7 +55,21 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
 
+        # metrics and rate limiting
+        self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
+        self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
+
     def do_import(self, spreadsheet):
+        with TimingContext() as timer:
+            results = self._do_import(spreadsheet)
+        try:
+            self._report_import_timings(timer, results)
+        except Exception:
+            notify_exception(None, "Error reporting case import timings")
+        finally:
+            return results
+
+    def _do_import(self, spreadsheet):
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
             set_task_progress(self.task, row_num - 1, spreadsheet.max_row)
             if row_num == 1:
@@ -64,6 +82,24 @@ class _Importer(object):
 
         self.commit_caseblocks()
         return self.results.to_json()
+
+    def _report_import_timings(self, timer, results):
+        active_duration = timer.duration - self._total_delayed_duration
+        rows_created = results['created_count']
+        rows_updated = results['match_count']
+        rows_failed = results['failed_count']
+        # Add 1 to smooth / prevent denominator from ever being zero
+        active_duration_per_case = active_duration / (rows_created + rows_updated + rows_failed + 1)
+        active_duration_per_case_bucket = bucket_value(
+            active_duration_per_case, [1, 4, 9, 16, 25, 36, 49], unit='ms')
+
+        for rows, status in ((rows_created, 'created'),
+                             (rows_updated, 'updated'),
+                             (rows_failed, 'error')):
+            datadog_counter('commcare.case_importer.cases', rows, tags=[
+                'active_duration_per_case:{}'.format(active_duration_per_case_bucket),
+                'status:{}'.format(status),
+            ])
 
     def import_row(self, row_num, raw_row):
         search_id = _parse_search_id(self.config, raw_row)
@@ -119,15 +155,33 @@ class _Importer(object):
     def submit_caseblocks(self, caseblocks):
         if not caseblocks:
             return
+        if rate_limit_submission(self.domain):
+            # the duration of the last submission is a combined heuristic
+            # for the amount of load on the databases
+            # and the amount of load that the requests from this import put on the databases.
+            # The amount of time to wait, during a high submission period
+            # and while this project is using up more than its fair share
+            # should be proportional to this heuristic.
+            # For a fully throttled domain, this will up to double
+            # the amount of time the case import takes
+            datadog_counter(
+                'commcare.case_importer.import_delayed_duration',
+                self._last_submission_duration, tags=[
+                    'domain:{}'.format(self.domain)
+                ]
+            )
+            self._total_delayed_duration += self._last_submission_duration
+            time.sleep(self._last_submission_duration)
 
         try:
-            form, cases = submit_case_blocks(
-                [cb.case.as_text() for cb in caseblocks],
-                self.domain,
-                self.user.username,
-                self.user.user_id,
-                device_id=__name__ + ".do_import",
-            )
+            with TimingContext() as timer:
+                form, cases = submit_case_blocks(
+                    [cb.case.as_text() for cb in caseblocks],
+                    self.domain,
+                    self.user.username,
+                    self.user.user_id,
+                    device_id=__name__ + ".do_import",
+                )
             if form.is_error:
                 raise Exception("Form error during case import: {}".format(form.problem))
         except Exception:
@@ -135,6 +189,7 @@ class _Importer(object):
             for row_number, case in caseblocks:
                 self.results.add_error(row_number, exceptions.ImportErrorMessage())
         else:
+            self._last_submission_duration = timer.duration
             if self.record_form_callback:
                 self.record_form_callback(form.form_id)
             properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
@@ -337,6 +392,7 @@ class _ImportResults(object):
         return {
             'created_count': counts.get(self.CREATED, 0),
             'match_count': counts.get(self.UPDATED, 0),
+            'failed_count': counts.get(self.FAILED, 0),
             'errors': dict(self._errors),
             'num_chunks': self.num_chunks,
         }
