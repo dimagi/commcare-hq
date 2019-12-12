@@ -113,17 +113,18 @@ function MapOrSectorController($location, storageService, locationsService) {
                                 'maternal_and_child': '/maternal_child',
                                 'demographics': '/demographics',
                                 'awc_infrastructure': '/awc_infrastructure',
-                                'icds_cas_reach': '/pse'
-                            }
-                            for(var tab in tabRoutes) {
-                                if($location.path().indexOf(tab) !== -1) {
+                                'icds_cas_reach': '/pse',
+                            };
+                            for (var tab in tabRoutes) {
+                                if ($location.path().indexOf(tab) !== -1) {
                                     awcReportPath += tabRoutes[tab];
                                     break;    
                                 }
                             }
                             // PSE is the deafult tab
-                            if(awcReportPath === 'awc_reports')
+                            if (awcReportPath === 'awc_reports') {
                                 awcReportPath += '/pse';
+                            }
                             $location.path(awcReportPath);
                         }
                     });
