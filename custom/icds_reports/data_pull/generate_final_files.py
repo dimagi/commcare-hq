@@ -198,7 +198,7 @@ select
     cases_ccs_pregnant as nov_open_lw_valid_till_month
 FROM agg_awc_monthly
 where agg_awc_monthly.num_launched_awcs=1 and agg_awc_monthly.month='2019-11-01' and agg_awc_monthly.aggregation_level=5
-) TO '/tmp/beneficiary_coverage_mother_nov.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/beneficiary_coverage_mother_nov_new.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 COPY(
 select
@@ -213,12 +213,97 @@ select
     cases_ccs_pregnant as oct_open_lw_valid_till_month
 FROM agg_awc_monthly
 where agg_awc_monthly.num_launched_awcs=1 and agg_awc_monthly.month='2019-10-01' and agg_awc_monthly.aggregation_level=5
-) TO '/tmp/beneficiary_coverage_mother_oct.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) TO '/tmp/beneficiary_coverage_mother_oct_new.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+
+
+create unlogged table temp_child_data_pull_oct as select
+awc_id,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_in_month else 0 END) as oct_F_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_in_month else 0 END) as oct_F_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_all_registered_in_month else 0 END) as oct_F_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_all_registered_in_month else 0 END) as oct_F_open_register_till_month_3_6,
+
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_in_month else 0 END) as oct_M_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_in_month else 0 END) as oct_M_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_all_registered_in_month else 0 END) as oct_M_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_all_registered_in_month else 0 END) as oct_M_open_register_till_month_3_6
+
+
+from "child_health_monthly" child_health where month='2019-10-01'
+group by awc_id;
+
+COPY(select
+state_name,
+district_name,
+block_name,
+supervisor_name,
+awc_name,
+sum(F_open_valid_till_month_0_3) as "oct_F_open_valid_till_month_0_3",
+sum(F_open_valid_till_month_3_6) as "oct_F_open_valid_till_month_3_6",
+sum(F_open_register_till_month_0_3) as "oct_F_open_register_till_month_0_3",
+sum(F_open_register_till_month_3_6)as "oct_F_open_register_till_month_3_6",
+
+sum(M_open_valid_till_month_0_3) as "oct_M_open_valid_till_month_0_3",
+sum(M_open_valid_till_month_3_6) as "oct_M_open_valid_till_month_3_6",
+sum(M_open_register_till_month_0_3) as "oct_M_open_register_till_month_0_3",
+sum(M_open_register_till_month_3_6)as "oct_M_open_register_till_month_3_6"
+from agg_awc_monthly left join
+    temp_child_data_pull_oct t on agg_awc_monthly.awc_id=t.awc_id
+where aggregation_level=5 and agg_awc_monthly.month='2019-11-01' and num_launched_awcs=1
+group by state_name,
+district_name,
+block_name,
+supervisor_name,
+awc_name
+order by state_name asc
+) to '/tmp/child_oct_new.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+
+create unlogged table temp_child_data_pull_nov as select
+awc_id,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_in_month else 0 END) as nov_F_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_in_month else 0 END) as nov_F_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='F' THEN valid_all_registered_in_month else 0 END) as nov_F_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='F' THEN valid_all_registered_in_month else 0 END) as nov_F_open_register_till_month_3_6,
+
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_in_month else 0 END) as nov_M_open_valid_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_in_month else 0 END) as nov_M_open_valid_till_month_3_6,
+    SUM(CASE WHEN age_tranche::INTEGER<=36 and sex='M' THEN valid_all_registered_in_month else 0 END) as nov_M_open_register_till_month_0_3,
+    SUM(CASE WHEN age_tranche::INTEGER between 37 and 72 and sex='M' THEN valid_all_registered_in_month else 0 END) as nov_M_open_register_till_month_3_6
+
+
+from "child_health_monthly" child_health where month='2019-11-01'
+group by awc_id;
+
+COPY(select
+state_name,
+district_name,
+block_name,
+supervisor_name,
+awc_name,
+sum(nov_F_open_valid_till_month_0_3) as "nov_F_open_valid_till_month_0_3",
+sum(nov_F_open_valid_till_month_3_6) as "nov_F_open_valid_till_month_3_6",
+sum(nov_F_open_register_till_month_0_3) as "nov_F_open_register_till_month_0_3",
+sum(nov_F_open_register_till_month_3_6)as "nov_F_open_register_till_month_3_6",
+
+sum(nov_M_open_valid_till_month_0_3) as "nov_M_open_valid_till_month_0_3",
+sum(nov_M_open_valid_till_month_3_6) as "nov_M_open_valid_till_month_3_6",
+sum(nov_M_open_register_till_month_0_3) as "nov_M_open_register_till_month_0_3",
+sum(nov_M_open_register_till_month_3_6)as "nov_M_open_register_till_month_3_6"
+from agg_awc_monthly left join
+    temp_child_data_pull_nov t on agg_awc_monthly.awc_id=t.awc_id
+where aggregation_level=5 and agg_awc_monthly.month='2019-11-01' and num_launched_awcs=1
+group by state_name,
+district_name,
+block_name,
+supervisor_name,
+awc_name
+order by state_name asc
+) to '/tmp/child_nov_new.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 """
 
-child_file_name_1 = "beneficiary_coverage_child_oct.csv"
-child_file_name_2 = "beneficiary_coverage_child_nov.csv"
+child_file_name_1 = "child_oct_new.csv"
+child_file_name_2 = "child_nov_new.csv"
 
 open_files = []
 
@@ -259,7 +344,7 @@ for row in reader2:
 for _file in open_files:
     _file.close()
 
-with open("data_pull/beneficiary_coverage/beneficiary_coverage_child.csv", "w") as _file:
+with open("data_pull/beneficiary_coverage/beneficiary_coverage_child_new.csv", "w") as _file:
     writer = csv.DictWriter(_file, fieldnames=all_headers)
     writer.writeheader()
     for row in second_set_of_data.values():
@@ -268,8 +353,8 @@ with open("data_pull/beneficiary_coverage/beneficiary_coverage_child.csv", "w") 
 
 # mother
 
-mother_file_name_1 = "beneficiary_coverage_mother_oct.csv"
-mother_file_name_2 = "beneficiary_coverage_mother_nov.csv"
+mother_file_name_1 = "beneficiary_coverage_mother_oct_new.csv"
+mother_file_name_2 = "beneficiary_coverage_mother_nov_new.csv"
 
 open_files = []
 
@@ -310,10 +395,9 @@ for row in reader2:
 for _file in open_files:
     _file.close()
 
-with open("data_pull/beneficiary_coverage/beneficiary_coverage_mother.csv", "w") as _file:
+with open("data_pull/beneficiary_coverage/beneficiary_coverage_mother_new.csv", "w") as _file:
     writer = csv.DictWriter(_file, fieldnames=all_headers)
     writer.writeheader()
     for row in second_set_of_data.values():
         writer.writerow(row)
-
 
