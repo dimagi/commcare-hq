@@ -107,17 +107,23 @@ function MapOrSectorController($location, storageService, locationsService) {
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
                             var awcReportPath = 'awc_reports';
-                            if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
-                                awcReportPath += '/maternal_child';
-                            } else if ($location.path().indexOf('demographics') !== -1) {
-                                awcReportPath += '/demographics';
-                            } else if ($location.path().indexOf('awc_infrastructure') !== -1) {
-                                awcReportPath += '/awc_infrastructure';
-                            } else if ($location.path().indexOf('icds_cas_reach') !== -1) {
-                                awcReportPath += '/pse';
-                            } else {
-                                awcReportPath += '/pse';
+                            // Routes for various tabs on PS page
+                            var tabRoutes = {
+                                'maternal_child': '/maternal_child',
+                                'maternal_and_child': '/maternal_child',
+                                'demographics': '/demographics',
+                                'awc_infrastructure': '/awc_infrastructure',
+                                'icds_cas_reach': '/pse'
                             }
+                            for(var tab in tabRoutes) {
+                                if($location.path().indexOf(tab) !== -1) {
+                                    awcReportPath += tabRoutes[tab];
+                                    break;    
+                                }
+                            }
+                            // PSE is the deafult tab
+                            if(awcReportPath === 'awc_reports')
+                                awcReportPath += '/pse';
                             $location.path(awcReportPath);
                         }
                     });
