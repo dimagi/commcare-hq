@@ -44,12 +44,14 @@ class Command(BaseCommand):
                 if not SQLGlobalAppConfig.objects.filter(domain=doc['domain'], app_id=doc['app_id']).exists():
                     logger.info(log_message)
             else:
-                model, created = SQLGlobalAppConfig.objects.get_or_create(domain=doc['domain'],
-                                                                          app_id=doc['app_id'])
+                model, created = SQLGlobalAppConfig.objects.get_or_create(
+                    domain=doc['domain'],
+                    app_id=doc['app_id'],
+                    defaults={
+                        "apk_prompt": doc['apk_prompt'],
+                        "app_prompt": doc['app_prompt'],
+                        "apk_version": doc.get('apk_version', LATEST_APK_VALUE),
+                        "app_version": doc.get('app_version', LATEST_APP_VALUE),
+                    })
                 if created:
-                    model.apk_prompt = doc['apk_prompt']
-                    model.app_prompt = doc['app_prompt']
-                    model.apk_version = doc.get('apk_version', LATEST_APK_VALUE)
-                    model.app_version = doc.get('app_version', LATEST_APP_VALUE)
-                    model.save()
                     logger.info(log_message)
