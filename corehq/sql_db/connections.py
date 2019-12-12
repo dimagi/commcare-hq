@@ -65,34 +65,29 @@ def is_citus_db(connection):
     return bool(list(res))
 
 
-def is_citus(engine, citus_list=[], non_citus_list=[]):
+def is_citus(connection_url: str, citus_list=[], non_citus_list=[], engine=None):
     # hacking mutable default arg to memoize list of citus DBs
     #   to avoid hitting DB. citus_list, non_citus_list
     #   is never to be actually passed.
-    if engine.url in citus_list:
+    if connection_url in citus_list:
         return True
-    if engine.url in non_citus_list:
+    if connection_url in non_citus_list:
         return False
-    with engine.begin() as connection:
-        if is_citus_db(connection):
-            citus_list.append(engine.url)
-            return True
-        else:
-            non_citus_list.append(engine.url)
-            return False
+
+    engine = engine or create_engine(connection_url)
+    if is_citus_db(engine):
+        citus_list.append(engine.url)
+        return True
+    else:
+        non_citus_list.append(engine.url)
+        return False
 
 
-def create_engine(connection_string):
+def create_engine(connection_url: str, connect_args: dict=None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
-    engine = sqlalchemy.create_engine(connection_string, paramstyle='format')
-
-    if allow_read_from_citus_standbys() and is_citus(engine):
-        connect_args = {'options': '-c citus.use_secondary_nodes=always'}
-        return sqlalchemy.create_engine(connection_string, paramstyle='format', connect_args=connect_args)
-    else:
-        return engine
+    return sqlalchemy.create_engine(connection_url, paramstyle='format', connect_args=connect_args)
 
 
 class SessionHelper(object):
@@ -100,8 +95,8 @@ class SessionHelper(object):
     Shim class helper for a single connection/session factory
     """
 
-    def __init__(self, connection_string):
-        self.engine = create_engine(connection_string)
+    def __init__(self, connection_url: str, connect_args: dict=None):
+        self.engine = create_engine(connection_url, connect_args)
         self._session_factory = sessionmaker(bind=self.engine)
         # Session is the actual constructor object
         self.Session = scoped_session(self._session_factory)
@@ -125,7 +120,7 @@ class SessionHelper(object):
 
     @cached_property
     def is_citus_db(self):
-        return is_citus(self.engine)
+        return is_citus(self.engine.url, engine=self.engine)
 
 
 class ConnectionManager(object):
@@ -142,10 +137,19 @@ class ConnectionManager(object):
         self.engine_id_django_db_map = {}
         self._populate_connection_map()
 
-    def _get_or_create_helper(self, connection_string):
-        if connection_string not in self._session_helpers:
-            self._session_helpers[connection_string] = SessionHelper(connection_string)
-        return self._session_helpers[connection_string]
+    def _get_or_create_helper(self, connection_url: str):
+        connect_args = self._get_connection_args(connection_url)
+        key = (connection_url,) + tuple(connect_args.items())
+        if key not in self._session_helpers:
+            self._session_helpers[key] = SessionHelper(connection_url, connect_args)
+
+        return self._session_helpers[key]
+
+    def _get_connection_args(self, connection_url: str) -> dict:
+        connect_args = {}
+        if allow_read_from_citus_standbys() and is_citus(connection_url):
+            connect_args = {'options': '-c citus.use_secondary_nodes=always'}
+        return connect_args
 
     def get_django_db_alias(self, engine_id):
         return self.engine_id_django_db_map[engine_id]
