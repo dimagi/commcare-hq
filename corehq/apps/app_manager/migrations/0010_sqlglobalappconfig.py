@@ -7,7 +7,7 @@ import traceback
 from django.core.management import call_command
 from django.db import migrations
 
-from corehq.apps.app_manager.models import GlobalAppConfig, SQLGlobalAppConfig
+from corehq.apps.app_manager.models import SQLGlobalAppConfig
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
 
@@ -20,6 +20,10 @@ AUTO_MIGRATE_FAILED_MESSAGE = """
 
 
 def count_items_to_be_migrated():
+    try:
+        from corehq.apps.app_manager.models import GlobalAppConfig
+    except ImportError:
+        return 0
     couch_count = len(get_doc_ids_by_class(GlobalAppConfig))
     sql_count = SQLGlobalAppConfig.objects.count()
     return couch_count - sql_count

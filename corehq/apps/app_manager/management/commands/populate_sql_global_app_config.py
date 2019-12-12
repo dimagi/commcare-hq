@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.models import (
-    GlobalAppConfig,
     LATEST_APK_VALUE,
     LATEST_APP_VALUE,
     SQLGlobalAppConfig,
@@ -31,6 +30,11 @@ class Command(BaseCommand):
 
     def handle(self, dry_run=False, **options):
         log_prefix = "[DRY RUN] " if dry_run else ""
+
+        try:
+            from corehq.apps.app_manager.models import GlobalAppConfig
+        except ImportError:
+            return
 
         doc_ids = get_doc_ids_by_class(GlobalAppConfig)
         logger.info("{}Found {} GlobalAppConfig docs and {} SQLGlobalAppConfig models".format(
