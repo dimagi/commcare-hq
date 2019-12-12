@@ -72,7 +72,7 @@ GROUP BY state_name,
     block_name,
     supervisor_name,
     awc_name,
-    child_health.awc_id limit 1
+    child_health.awc_id
 
 /*
  Limit  (cost=0.00..0.00 rows=0 width=0)
