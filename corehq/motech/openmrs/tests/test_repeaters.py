@@ -20,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
+from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
     LOCATION_OPENMRS_UUID,
     OPENMRS_DATA_TYPE_BOOLEAN,
@@ -642,7 +643,7 @@ def test_observation_mappings():
             }]
         }
     })
-    observation_mappings = repeater.observation_mappings
+    observation_mappings = get_observation_mappings(repeater)
     eq(observation_mappings, {
         '397b9631-2911-435a-bf8a-ae4468b9c1d4': [
             ObservationMapping(
