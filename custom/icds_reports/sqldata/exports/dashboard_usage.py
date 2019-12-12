@@ -38,7 +38,7 @@ class DashBoardUsage:
         '.bpa': 'Block Project Assistant',
         '.dpo': 'District Programme Officer (DPO)',
         '.cdpo': 'Child Development Project Officer (CDPO)',
-
+        '.sbp': 'Swasth Bharat Prerak'
     }
 
     def __init__(self, couch_user, domain):
