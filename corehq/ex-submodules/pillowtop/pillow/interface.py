@@ -470,7 +470,8 @@ def handle_pillow_error(pillow, change, exception):
     ))
 
     datadog_counter('commcare.change_feed.changes.exceptions', tags=[
-        'pillow_name:{}'.format(pillow.get_name()),
+        f'pillow_name:{pillow.get_name()}',
+        f'exception_type:{exception}'
     ])
 
     # keep track of error attempt count
