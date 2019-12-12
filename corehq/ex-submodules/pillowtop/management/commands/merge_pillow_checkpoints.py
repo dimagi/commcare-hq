@@ -39,7 +39,10 @@ class Command(BaseCommand):
             if info['checkpoint_id__count'] != number_checkpoints
         )
         if number_nonstandard_checkpoints > 0:
-            logger.error(f'Not all checkpoints have the same topics and partitions specified. Aborting pillow merging')
+            logger.error(
+                f'Not all checkpoints have the same topics and partitions specified. '
+                'Aborting pillow merging'
+            )
             sys.exit(2)
 
         minimum_difference = min(
