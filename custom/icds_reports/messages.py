@@ -92,7 +92,7 @@ def awcs_launched_help_text():
 
 def percent_aadhaar_seeded_beneficiaries_help_text():
     return _(
-        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar '
+        'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar '
         'identification has been captured. '
     )
 
@@ -175,4 +175,18 @@ def lady_supervisor_number_of_beneficiaries_visited_help_text():
 def lady_supervisor_number_of_vhnds_observed_help_text():
     return _(
         'Number of VHSND observed: Number of VHSND observed by LS in the current month'
+    )
+
+
+def awcs_reported_infantometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having an Infantometer. '
+    )
+
+
+def awcs_reported_stadiometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having a Stadiometer. '
     )

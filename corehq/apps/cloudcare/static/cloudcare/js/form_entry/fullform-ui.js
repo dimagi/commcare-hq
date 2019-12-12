@@ -576,6 +576,8 @@ Formplayer.Const = {
     // Appearance attributes
     NUMERIC: 'numeric',
     MINIMAL: 'minimal',
+    LABEL: 'label',
+    LIST_NOLABEL: 'list-nolabel',
     COMBOBOX: 'combobox',
     COMBOBOX_MULTIWORD: 'multiword',
     COMBOBOX_FUZZY: 'fuzzy',

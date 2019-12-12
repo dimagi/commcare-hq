@@ -152,6 +152,12 @@ class Command(BaseCommand):
         Role(slug=privileges.CHILD_CASES,
              name='Child Cases',
              description='Allows for use of child cases / subcases in applications.'),
+        Role(slug=privileges.ODATA_FEED,
+             name='OData Feed - Tableau / BI Integration',
+             description='Allows usage of Tableau / BI Integration (OData Feeds)'),
+        Role(slug=privileges.DATA_FORWARDING,
+             name='Data Forwarding',
+             description='Allows use of Data Forwarding'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -172,11 +178,13 @@ class Command(BaseCommand):
         privileges.DAILY_SAVED_EXPORT,
         privileges.CASE_SHARING_GROUPS,
         privileges.CHILD_CASES,
+        privileges.DATA_FORWARDING,
     ]
 
     community_plan_v1_features = [
         privileges.CASE_SHARING_GROUPS,
         privileges.CHILD_CASES,
+        privileges.DATA_FORWARDING,
     ]
 
     standard_plan_features = community_plan_v0_features + [
@@ -216,6 +224,7 @@ class Command(BaseCommand):
         privileges.CUSTOM_INTENTS,
         privileges.ADVANCED_DOMAIN_SECURITY,
         privileges.BUILD_PROFILES,
+        privileges.ODATA_FEED,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

@@ -127,5 +127,5 @@ ECD_PREVIEW_UPDATE = StaticUINotify(
 
 BI_PREVIEW_UPDATE = StaticUINotify(
     'bi_preview_update_aug2019',
-    ends_on=datetime(2019, 11, 1),
+    ends_on=datetime(2019, 12, 31),
 )

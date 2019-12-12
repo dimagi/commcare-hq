@@ -36,8 +36,6 @@ class GroupGenerationCache(GenerationCache):
     doc_types = ['Group']
     views = [
         "groups/by_user",
-        "groups/by_hierarchy_type",
-        "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
         "users/by_group",

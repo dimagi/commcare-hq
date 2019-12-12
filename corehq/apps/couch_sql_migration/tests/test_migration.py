@@ -56,7 +56,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
@@ -72,8 +72,8 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
+from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
-from ..couchsqlmigration import MigrationRestricted, sql_form_to_json
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
     COMMIT,
@@ -81,6 +81,8 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
 )
 from ..statedb import init_state_db, open_state_db
+from ..util import UnhandledError
+
 
 log = logging.getLogger(__name__)
 
@@ -133,7 +135,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
-        options.setdefault("diff_process", False)
+        options.setdefault("case_diff", "local")
+        assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
@@ -141,6 +144,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
+            except UnhandledError:
+                raise
             except SystemExit:
                 success = False
         self.migration_success = success
@@ -282,13 +287,13 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(MigrationRestricted):
+        with self.assertRaises(mod.MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
         with get_report_domain() as domain:
-            with self.assertRaises(MigrationRestricted):
+            with self.assertRaises(mod.MigrationRestricted):
                 self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
@@ -1077,6 +1082,49 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self._compare_diffs([])
 
+    def test_migrate_skipped_forms(self):
+        def skip_forms(form_ids):
+            def maybe_migrate_form(self, form, **kw):
+                if form.form_id in form_ids:
+                    log.info("skipping %s", form.form_id)
+                else:
+                    migrate(self, form, **kw)
+
+            migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
+            return mock.patch.object(
+                mod.CouchSqlDomainMigrator,
+                "_migrate_form_and_associated_models",
+                maybe_migrate_form,
+            )
+
+        self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("test-2"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("test-3"), timedelta(minutes=-85))
+        self.submit_form(make_test_form("test-4"))
+        self.assert_backend("couch")
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-1", "test-2"}):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-3"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        clear_local_domain_sql_backend_override(self.domain_name)
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
+            self._do_migration(live=True, forms="skipped")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True, forms="skipped")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
@@ -1117,7 +1165,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
         with self.patch_migration_chunk_size(1), \
                 self.on_doc("XFormInstance", "one", interrupt, **kw):
-            self._do_migration(live=True, diff_process=True)
+            self._do_migration(live=True, case_diff="process")
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
@@ -1230,26 +1278,18 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name, diff_process=True)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
 
-        # This may change in the future: it may be possible to rebuild the
-        # XML using parsed form JSON from couch.
-        with self.assertRaises(CaseNotFound):
-            self._get_case("test-case")
-        self._compare_diffs([
-            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
-        ], missing={'CommCareCase': 1})
+    def test_form_with_extra_xml_blob_metadata(self):
+        form = create_form_with_extra_xml_blob_metadata(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        self.assertEqual(
+            [m.name for m in get_blob_db().metadb.get_for_parent(form.form_id)],
+            ["form.xml"],
+        )
 
     def test_unwrappable_form(self):
         def bad_wrap(doc):
@@ -1347,37 +1387,79 @@ class TestHelperFunctions(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def get_form_with_missing_xml(self):
-        return create_form_with_missing_xml(self.domain_name)
+    def get_form_with_missing_xml(self, **kw):
+        return create_form_with_missing_xml(self.domain_name, **kw)
 
     def test_sql_form_to_json_with_missing_xml(self):
         self.domain.use_sql_backend = True
         self.domain.save()
         form = self.get_form_with_missing_xml()
-        data = sql_form_to_json(form)
+        data = mod.sql_form_to_json(form)
         self.assertEqual(data["form"], {})
 
     def test_get_case_ids_with_missing_xml(self):
         form = self.get_form_with_missing_xml()
         self.assertEqual(get_case_ids(form), {"test-case"})
 
+    def test_migrate_form_attachments_missing_xml(self, couch_meta=True):
+        def delete_blob():
+            meta = sql_form.get_attachment_meta('form.xml')
+            get_blob_db().delete(meta.key)
+        couch_form = self.get_form_with_missing_xml(couch_meta=couch_meta)
+        sql_form = mod.XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            domain=couch_form.domain,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        self.addCleanup(delete_blob)
+        mod._migrate_form_attachments(sql_form, couch_form)
+        self.assertEqual(sql_form.form_data, couch_form.form_data)
+        xml = sql_form.get_xml()
+        self.assertEqual(convert_xform_to_json(xml), couch_form.form_data)
 
-def create_form_with_missing_xml(domain_name):
+    def test_migrate_form_attachments_missing_xml_meta(self):
+        self.test_migrate_form_attachments_missing_xml(couch_meta=False)
+
+
+def create_form_with_missing_xml(domain_name, couch_meta=False):
     form = submit_form_locally(TEST_FORM, domain_name).xform
     form = FormAccessors(domain_name).get_form(form.form_id)
     blobs = get_blob_db()
     with mock.patch.object(blobs.metadb, "delete"):
         if isinstance(form, XFormInstance):
             # couch
+            metaref = form.blobs["form.xml"]
             form.delete_attachment("form.xml")
+            if couch_meta:
+                form.blobs["form.xml"] = metaref
         else:
             # sql
+            assert not couch_meta, "couch_meta=True not valid with SQL form"
             blobs.delete(form.get_attachment_meta("form.xml").key)
         try:
             form.get_xml()
             assert False, "expected MissingFormXml exception"
         except MissingFormXml:
             pass
+    return form
+
+
+def create_form_with_extra_xml_blob_metadata(domain_name):
+    form = submit_form_locally(TEST_FORM, domain_name).xform
+    form = FormAccessors(domain_name).get_form(form.form_id)
+    meta = get_blob_db().metadb.get(
+        parent_id=form.form_id, key=form.blobs["form.xml"].key)
+    args = {n: getattr(meta, n) for n in [
+        "domain",
+        "parent_id",
+        "type_code",
+        "name",
+        "content_length",
+        "content_type",
+        "properties",
+    ]}
+    get_blob_db().metadb.new(key=uuid.uuid4().hex, **args).save()
     return form
 
 
@@ -1411,7 +1493,7 @@ _real_atomic = transaction.atomic
 
 
 @attr.s(cmp=False)
-class Diff(object):
+class Diff:
 
     type = attr.ib(default=ANY)
     path = attr.ib(default=ANY)

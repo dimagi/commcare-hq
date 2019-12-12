@@ -36,6 +36,15 @@
     ],
     "filters": [
       {
+        "compare_as_string": false,
+        "display" : "Opened on",
+        "slug": "opened_on",
+        "type": "date",
+        "field": "opened_on",
+        "datatype": "date",
+        "required": false
+      },
+      {
         "display": "Filter by AWW",
         "slug": "awc_id",
         "type": "dynamic_choice_list",
@@ -103,12 +112,13 @@
       {
         "display": "open_count",
         "column_id": "open_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL": 1
-        }
+        "whens": [{
+          "type": "closed_on_null",
+          "binds": [],
+          "then": 1
+        }]
       }
     ],
     "sort_expression": [],

@@ -15,6 +15,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
+from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -90,6 +91,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'is_test': self.domain_object.is_test,
             'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
+            'odata_feed_limit': self.domain_object.odata_feed_limit,
             'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
@@ -267,18 +270,27 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        return {
-            'project_limits': {
-                'submissions': self._get_submission_rate_limits()
-            }
-        }
+        return get_project_limits_context([
+            ('Submission Rate Limits', submission_rate_limiter),
+            ('Restore Rate Limits', restore_rate_limiter),
+        ], self.domain)
 
-    def _get_submission_rate_limits(self):
-        return [
-            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
-             'percent_usage': round(100 * current_usage / limit, 1)}
-            for key, current_usage, limit in submission_rate_limiter.iter_rates(self.domain)
+
+def get_project_limits_context(name_limiter_tuple_list, scope=None):
+    return {
+        'project_limits': [
+            (name, _get_rate_limits(scope, rate_limiter))
+            for (name, rate_limiter) in name_limiter_tuple_list
         ]
+    }
+
+
+def _get_rate_limits(scope, rate_limiter):
+    return [
+        {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+         'percent_usage': round(100 * current_usage / limit, 1)}
+        for key, current_usage, limit in rate_limiter.iter_rates(scope)
+    ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):

@@ -1,5 +1,6 @@
 import errno
 import json
+import logging
 import os
 import os.path
 from collections import namedtuple
@@ -18,11 +19,14 @@ from sqlalchemy import (
     func,
     or_,
 )
+from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
 
 from .diff import filter_form_diffs
+
+log = logging.getLogger(__name__)
 
 
 def init_state_db(domain, state_dir):
@@ -176,11 +180,17 @@ class StateDB(DiffDB):
             return [make_result(case_id) for case_id in cases]
 
     def iter_cases_with_unprocessed_forms(self):
-        query = self.Session().query(CaseForms.case_id).filter(
-            CaseForms.total_forms > CaseForms.processed_forms
-        )
-        for case_id, in iter_large(query, CaseForms.case_id):
-            yield case_id
+        query = self.Session().query(
+            CaseForms.case_id,
+            CaseForms.total_forms,
+        ).filter(CaseForms.total_forms > CaseForms.processed_forms)
+        for case_id, total_forms in iter_large(query, CaseForms.case_id):
+            yield case_id, total_forms
+
+    def get_forms_count(self, case_id):
+        with self.session() as session:
+            query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
+            return query.scalar() or 0
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -196,9 +206,13 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        with self.session() as session:
-            session.add(NoActionCaseForm(id=form_id))
-        self.get_no_action_case_forms.reset_cache(self)
+        try:
+            with self.session() as session:
+                session.add(NoActionCaseForm(id=form_id))
+        except IntegrityError:
+            pass
+        else:
+            self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
     def get_no_action_case_forms(self):
@@ -226,7 +240,7 @@ class StateDB(DiffDB):
                 kv.value = RESUME_NOT_ALLOWED
 
     def _get_kv(self, key, session):
-        return session.query(KeyValue).filter_by(key=key).scalar()
+        return session.query(KeyValue).get(key)
 
     def _set_kv(self, key, value, session=None):
         with self.session(session) as session:
@@ -256,11 +270,20 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
-    def save_form_diffs(self, couch_json, sql_json):
+    def save_form_diffs(self, couch_json, sql_json, replace=False):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
+        doc_type = couch_json["doc_type"]
+        doc_id = couch_json["_id"]
+        if replace:
+            with self.session() as session:
+                (
+                    session.query(Diff)
+                    .filter(Diff.kind == doc_type, Diff.doc_id == doc_id)
+                    .delete(synchronize_session=False)
+                )
         if diffs:
-            self.add_diffs(couch_json["doc_type"], couch_json["_id"], diffs)
+            self.add_diffs(doc_type, doc_id, diffs)
 
     def replace_case_diffs(self, kind, case_id, diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
@@ -335,6 +358,7 @@ class StateDB(DiffDB):
             return column.key == "id" and isinstance(column.type, Integer)
 
         def copy(model, session, where_expr=None):
+            log.info("copying casediff data: %s", model.__name__)
             where = f"WHERE {where_expr}" if where_expr else ""
             fields = ", ".join(c.key for c in model.__table__.columns if not is_id(c))
             session.execute(f"DELETE FROM main.{model.__tablename__} {where}")
@@ -343,6 +367,7 @@ class StateDB(DiffDB):
                 SELECT {fields} FROM cddb.{model.__tablename__} {where}
             """)
 
+        log.info("checking casediff data preconditions...")
         casediff_db = type(self).open(casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {

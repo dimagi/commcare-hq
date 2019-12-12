@@ -40,11 +40,11 @@
 {"start_date": "2019-01-01T00:00:00"}
 
         INSERT INTO "agg_ls_2019-01-01_4" (
-            state_id, district_id, block_id, supervisor_id, month, awc_visits, vhnd_observed, beneficiary_vists, aggregation_level
+            state_id, district_id, block_id, supervisor_id, month, awc_visits, vhnd_observed, beneficiary_vists, aggregation_level, num_supervisor_launched
         )
         (
         SELECT
-        location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4
+        location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4, 0
         from (
             select distinct state_id, district_id, block_id, supervisor_id
             from awc_location_local where (
@@ -66,15 +66,34 @@
         LEFT  JOIN "icds_dashboard_ls_beneficiary_forms" beneficiary_table on (
             location.supervisor_id = beneficiary_table.supervisor_id AND
             beneficiary_table.month = %(start_date)s
-        )
-        )
+        ));
+        CREATE UNLOGGED TABLE "tmp_ls_usage" AS SELECT
+            supervisor_id,
+            count(*) as form_count
+            FROM "ucr_icds-cas_static-ls_usage_forms_85eca43d" ls_usage_ucr
+            WHERE timeend<%(next_month_start)s
+            GROUP BY supervisor_id;
+
+        UPDATE "agg_ls_2019-01-01_4" agg_ls
+            SET num_supervisor_launched = CASE WHEN form_count>0 THEN 1 ELSE 0 END
+            from (
+                SELECT
+                    supervisor_id,
+                    form_count
+                FROM tmp_ls_usage
+                ) ut
+        WHERE agg_ls.supervisor_id = ut.supervisor_id;
+
+        DROP TABLE "tmp_ls_usage";
+
         
-{"start_date": "2019-01-01T00:00:00"}
+{"next_month_start": "2019-02-01T00:00:00", "prev_month": "2018-12-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
             INSERT INTO "agg_ls_2019-01-01_3" (
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -86,6 +105,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 3,
                 state_id,district_id,block_id,'All',
                 month
@@ -99,6 +119,7 @@
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -110,6 +131,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 2,
                 state_id,district_id,'All','All',
                 month
@@ -123,6 +145,7 @@
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -134,6 +157,7 @@
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 1,
                 state_id,'All','All','All',
                 month

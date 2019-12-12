@@ -1,5 +1,5 @@
 <div class="row" ng-repeat="section in $ctrl.data track by $index">
-    <div class="col-md-6" ng-repeat="cell in section track by $index">
+    <div ng-if="((cell.label !== 'AWCs Reported Infantometer' && cell.label !== 'AWCs Reported Stadiometer' && cell.label !== 'Infantometer' && cell.label !== 'Stadiometer') || $ctrl.haveAccessToFeatures)" class="col-md-6" ng-repeat="cell in section track by $index">
         <div class="report-cell kpi">
             <div class="row">
                 <div class="col-md-1"

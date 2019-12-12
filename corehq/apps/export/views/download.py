@@ -397,7 +397,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         from corehq.apps.export.views.list import FormExportListView, DeIdFormExportListView
-        if not self.permissions.has_edit_permissions:
+        if not (self.permissions.has_edit_permissions and self.permissions.has_view_permissions):
             return [{
                 'title': DeIdFormExportListView.page_title,
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),

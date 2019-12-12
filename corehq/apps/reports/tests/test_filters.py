@@ -4,6 +4,7 @@ from django.test.client import RequestFactory
 from mock import patch
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -124,6 +125,7 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
 
 class TestExpandedMobileWorkerFilter(TestCase):
     def setUp(self):
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
@@ -133,6 +135,10 @@ class TestExpandedMobileWorkerFilter(TestCase):
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_get_assigned_locations_default(self, assigned_locations_patch):
@@ -145,6 +151,7 @@ class TestExpandedMobileWorkerFilter(TestCase):
 class TestLocationRestrictedMobileWorkerFilter(TestCase):
     def setUp(self):
         self.subject = ExpandedMobileWorkerFilter
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
@@ -154,6 +161,10 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):
@@ -175,6 +186,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
 class TestCaseListFilter(TestCase):
     def setUp(self):
         self.subject = CaseListFilter
+        clear_domain_names('test')
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
@@ -184,6 +196,10 @@ class TestCaseListFilter(TestCase):
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):

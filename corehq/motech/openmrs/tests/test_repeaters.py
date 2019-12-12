@@ -7,6 +7,8 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 import mock
+from requests import RequestException
+from testil import eq
 
 from casexml.apps.case.models import CommCareCase
 
@@ -18,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
+from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
     LOCATION_OPENMRS_UUID,
     OPENMRS_DATA_TYPE_BOOLEAN,
@@ -25,6 +28,7 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.exceptions import DuplicateCaseMatch
 from corehq.motech.openmrs.openmrs_config import (
+    ObservationMapping,
     OpenmrsCaseConfig,
     OpenmrsConfig,
 )
@@ -260,7 +264,7 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        requests.post.return_value.status_code = 500
+        requests.post.side_effect = RequestException()
         info = mock.Mock(
             updates={'sex': 'M', 'dob': '1918-07-18'},
             extra_fields={},
@@ -275,10 +279,12 @@ class ExportOnlyTests(SimpleTestCase):
         case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
         case_config = OpenmrsCaseConfig(case_config)
 
-        create_patient(requests, info, case_config)
+        with self.assertRaises(RequestException):
+            create_patient(requests, info, case_config)
         requests.post.assert_called_with(
             '/ws/rest/v1/patient/',
-            json={'person': {'birthdate': '1918-07-18'}}
+            json={'person': {'birthdate': '1918-07-18'}},
+            raise_for_status=True,
         )
 
 
@@ -602,8 +608,69 @@ class SaveMatchIdsTests(SimpleTestCase):
             save_match_ids(self.case, self.case_config, self.patient)
 
 
-class DocTests(SimpleTestCase):
+def test_observation_mappings():
+    repeater = OpenmrsRepeater.wrap({
+        "openmrs_config": {
+            "openmrs_provider": "",
+            "case_config": {},
+            "form_configs": [{
+                "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+                "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
+                "openmrs_observations": [
+                    {
+                        "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+                        "case_property": "abnormal_temperature",
+                        "value": {
+                            "doc_type": "FormQuestionMap",
+                            "form_question": "/data/abnormal_temperature",
+                            "value_map": {
+                                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+                            },
+                        },
+                    },
+                    {
+                        "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+                        "case_property": "bahmni_abnormal_temperature",
+                        "value": {
+                            "doc_type": "ConstantString",
+                            "value": "",
+                            "direction": "in",
+                        },
+                    },
+                ]
+            }]
+        }
+    })
+    observation_mappings = get_observation_mappings(repeater)
+    eq(observation_mappings, {
+        '397b9631-2911-435a-bf8a-ae4468b9c1d4': [
+            ObservationMapping(
+                concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
+                case_property='abnormal_temperature',
+                value={
+                    "doc_type": "FormQuestionMap",
+                    "form_question": '/data/abnormal_temperature',
+                    "value_map": {
+                        'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
+                        'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
+                    }
+                }
+            ),
+            ObservationMapping(
+                concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
+                case_property='bahmni_abnormal_temperature',
+                value={
+                    "direction": 'in',
+                    "doc_type": "ConstantString",
+                    "value": ''
+                }
+            )
+        ]
+    })
 
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
-        self.assertEqual(results.failed, 0)
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
+    assert results.failed == 0

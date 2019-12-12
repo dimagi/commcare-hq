@@ -25,16 +25,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
-  ],
   "config": {
     "table_id": "static-gm_forms",
     "display_name": "Forms - Growth Monitoring (Static)",
@@ -490,7 +480,7 @@
         "property_value": "F"
       }
     },
-    "engine_id": "icds-ucr-non-dashboard",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",

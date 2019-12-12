@@ -10,7 +10,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
@@ -76,7 +75,20 @@ def get_user_type(user_id):
                 return MOBILE_USER_TYPE
         except (ResourceNotFound, WrappingAttributeError):
             pass
+
+    get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(True)
     return UNKNOWN_USER_TYPE
+
+
+@quickcache(['user_id'], timeout=30 * ONE_DAY)
+def get_user_type_deep_cache_for_unknown_users(user_id):
+    """
+    Only call this on user_ids that have previously been classified as 'unknown'
+
+    This allows us to periodically check if unknown users really are unknown
+    without pummeling the user db.
+    """
+    return get_user_type(user_id)
 
 
 def get_all_expected_es_indices():
@@ -90,7 +102,6 @@ def get_all_expected_es_indices():
     yield GROUP_INDEX_INFO
     yield SMS_INDEX_INFO
     yield CASE_SEARCH_INDEX_INFO
-    yield LEDGER_INDEX_INFO
 
 
 def format_form_meta_for_es(form_metadata):

@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 import requests
 from requests.exceptions import HTTPError
 
+from corehq.apps.domain.views.internal import get_project_limits_context
+from corehq.apps.receiverwrapper.rate_limiter import global_submission_rate_limiter
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.web import json_response
@@ -73,7 +75,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
         context['redis'] = service_checks.check_redis()
-        context['rabbitmq'] = service_checks.check_rabbitmq()
+        context['rabbitmq'] = service_checks.check_rabbitmq(settings.CELERY_BROKER_URL)
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
@@ -213,8 +215,8 @@ def pillow_operation_api(request):
 
 
 def get_rabbitmq_management_url():
-    if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
+    if settings.CELERY_BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.CELERY_BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:
@@ -274,45 +276,14 @@ def _get_submodules():
     ]
 
 
-class RecentCouchChangesView(BaseAdminSectionView):
-    urlname = 'view_recent_changes'
-    template_name = 'hqadmin/couch_changes.html'
-    page_title = ugettext_lazy("Recent Couch Changes")
-
-    @use_nvd3_v3
-    @use_datatables
-    @use_jquery_ui
-    @method_decorator(require_superuser_or_contractor)
-    def dispatch(self, *args, **kwargs):
-        return super(RecentCouchChangesView, self).dispatch(*args, **kwargs)
+@method_decorator(require_superuser, name='dispatch')
+class GlobalThresholds(BaseAdminSectionView):
+    urlname = 'global_thresholds'
+    page_title = ugettext_lazy("Global Usage Thresholds")
+    template_name = 'hqadmin/global_thresholds.html'
 
     @property
     def page_context(self):
-        count = int(self.request.GET.get('changes', 1000))
-        changes = list(get_recent_changes(get_db(), count))
-        domain_counts = defaultdict(lambda: 0)
-        doc_type_counts = defaultdict(lambda: 0)
-        for change in changes:
-            domain_counts[change['domain']] += 1
-            doc_type_counts[change['doc_type']] += 1
-
-        def _to_chart_data(data_dict):
-            return [
-                {'label': l, 'value': v} for l, v in sorted(list(data_dict.items()), key=lambda tup: tup[1], reverse=True)
-            ][:20]
-
-        return {
-            'count': count,
-            'recent_changes': changes,
-            'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
-            'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
-        }
-
-
-@require_superuser_or_contractor
-def download_recent_changes(request):
-    count = int(request.GET.get('changes', 10000))
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="recent_changes.csv"'
-    download_changes(get_db(), count, resp)
-    return resp
+        return get_project_limits_context([
+            ('Submission Rate Limits', global_submission_rate_limiter),
+        ])

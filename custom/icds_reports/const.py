@@ -18,6 +18,13 @@ UCR_PILLOWS = ['kafka-ucr-static', 'kafka-ucr-static-cases',
                'kafka-ucr-main']
 
 
+class NavigationSections:
+    MATERNAL_CHILD = 'maternal_child'
+    ICDS_CAS_REACH = 'icds_cas_reach'
+    DEMOGRAPHICS = 'demographics'
+    AWC_INFRASTRUCTURE = 'awc_infrastructure'
+
+
 class LocationTypes(object):
     STATE = 'state'
     DISTRICT = 'district'
@@ -83,6 +90,7 @@ ISSNIP_MONTHLY_REGISTER_PDF = 7
 AWW_INCENTIVE_REPORT = 8
 LS_REPORT_EXPORT = 9
 THR_REPORT_EXPORT = 10
+DASHBOARD_USAGE_EXPORT = 11
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -100,12 +108,14 @@ AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
+AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
+
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 

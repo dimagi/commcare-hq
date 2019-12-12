@@ -176,7 +176,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self.case.location_id = value
             elif key == 'name':
                 # replicate legacy behaviour
-                self.case.name = value
+                self.case.name = _convert_type_check_length(key, value)
             elif key not in const.RESTRICTED_PROPERTIES:
                 self.case.case_json[key] = value
 

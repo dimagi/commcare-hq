@@ -6,6 +6,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.privileges import DATA_FORWARDING
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -76,6 +78,14 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+
+    # A RepeatRecord should ideally never get into this state, as the
+    # domain_has_privilege check is also triggered in the create_repeat_records
+    # in signals.py. But if it gets here, forcefully cancel the RepeatRecord.
+    if not domain_has_privilege(repeat_record.domain, DATA_FORWARDING):
+        repeat_record.cancel()
+        repeat_record.save()
+
     if (
         repeat_record.state == RECORD_FAILURE_STATE and
         repeat_record.overall_tries >= repeat_record.max_possible_tries
