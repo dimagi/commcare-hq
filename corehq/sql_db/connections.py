@@ -88,7 +88,7 @@ def create_engine(connection_string):
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
     engine = sqlalchemy.create_engine(connection_string, paramstyle='format')
 
-    if allow_read_from_citus_standbys():
+    if allow_read_from_citus_standbys() and is_citus(engine):
         connect_args = {'options': '-c citus.use_secondary_nodes=always'}
         return sqlalchemy.create_engine(connection_string, paramstyle='format', connect_args=connect_args)
     else:
