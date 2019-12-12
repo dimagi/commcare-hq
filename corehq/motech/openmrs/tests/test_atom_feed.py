@@ -241,7 +241,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             },
             {
                 "doc_type": "ObservationMapping",
-                "concept": None,  # Import all diagnoses as extension cases
+                "concept": "all",  # Import all diagnoses as extension cases
                 "value": {
                     "direction": "in",
                     "value": "[unused when direction='in' and ObservationMapping.case_property not set]",
