@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from django.db import models
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -12,6 +13,20 @@ from dimagi.ext.couchdbkit import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
+
+
+class SQLApplicationAccess(models.Model):
+    domain = models.CharField(max_length=255, null=False, unique=True)
+    restrict = models.BooleanField(default=False)
+
+
+class SQLAppGroup(models.Model):
+    app_id = models.CharField(max_length=255, null=False)
+    group_id = models.CharField(max_length=255)
+    application_access = models.ForeignKey('SQLApplicationAccess', on_delete=models.CASCADE)
+
+    class Meta(object):
+        unique_together = ('app_id', 'group_id')
 
 
 class AppGroup(DocumentSchema):
