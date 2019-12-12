@@ -41,8 +41,7 @@ class Command(BaseCommand):
         for doc in iter_docs(GlobalAppConfig.get_db(), doc_ids):
             log_message = "{}Created model for domain {} app {}".format(log_prefix, doc['domain'], doc['app_id'])
             if dry_run:
-                model = SQLGlobalAppConfig.objects.filter(domain=doc['domain'], app_id=doc['app_id']).first()
-                if not model:
+                if not SQLGlobalAppConfig.objects.filter(domain=doc['domain'], app_id=doc['app_id']).exists():
                     logger.info(log_message)
             else:
                 model, created = SQLGlobalAppConfig.objects.get_or_create(domain=doc['domain'],
