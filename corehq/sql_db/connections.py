@@ -88,6 +88,7 @@ def create_engine(connection_url: str, connect_args: dict=None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
+    connect_args = connect_args or {}
     return sqlalchemy.create_engine(connection_url, paramstyle='format', connect_args=connect_args)
 
 
