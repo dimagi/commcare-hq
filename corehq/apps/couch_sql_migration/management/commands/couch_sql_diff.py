@@ -105,13 +105,14 @@ class CaseDiffTool:
         self.migrator = migrator
         self.domain = migrator.domain
         self.statedb = migrator.statedb
-        if migrator.live_migrate:
-            assert not hasattr(migrator.stopper, "stop_date")  # TODO use if set
+        if not migrator.live_migrate:
+            cutoff_date = None
+        elif hasattr(migrator.stopper, "stop_date"):
+            cutoff_date = migrator.stopper.stop_date
+        else:
             cutoff_date = get_main_forms_iteration_stop_date(
                 self.domain, self.statedb.unique_id)
             migrator.stopper.stop_date = cutoff_date
-        else:
-            cutoff_date = None
         self.cutoff_date = cutoff_date
 
     @contextmanager
