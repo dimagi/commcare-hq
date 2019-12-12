@@ -20,26 +20,26 @@ class _UserCaseHelper(object):
 
     CASE_SOURCE_ID = __name__ + "._UserCaseHelper."
 
-    def __init__(self, domain, owner_id):
+    def __init__(self, domain, owner_id, user_id):
         self.domain = domain
         self.owner_id = owner_id
-        self._case_block_to_submit = None
-        self._tasks_to_trigger = []
+        self.user_id = user_id
+        self.case_blocks = []
+        self.tasks = []
 
-    def commit(self):
-        if self._case_block_to_submit:
-            submit_case_blocks(
-                self._case_block_to_submit.as_text(), self.domain, device_id=self.CASE_SOURCE_ID)
-        for task, task_args in self._tasks_to_trigger:
+    @classmethod
+    def commit(cls, helpers):
+        case_blocks = list(chain(h.case_blocks for h in helpers))
+        if not case_blocks:
+            assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
+            return
+        assert len({h.user_id for h in helpers}) <= 1
+        assert len({h.domain for h in helpers}) <= 1
+
+        case_blocks = [cb.as_text() for cb in case_blocks]
+        submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
+        for task, task_args in chain(h.tasks for h in helpers):
             task.delay(*task_args)
-
-    @staticmethod
-    def commit_multiple(helpers):
-        case_blocks = [h._case_block_to_submit.as_text() for h in helpers if h._case_block_to_submit]
-        submit_case_blocks(case_blocks, helpers[0].domain, device_id="sync_user_case")
-        for helper in helpers:
-            for task, task_args in helper._tasks_to_trigger:
-                task.delay(*task_args)
 
     @staticmethod
     def re_open_case(case):
@@ -48,7 +48,7 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        self._case_block_to_submit = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=fields.pop('owner_id'),
@@ -56,11 +56,11 @@ class _UserCaseHelper(object):
             case_type=fields.pop('case_type'),
             case_name=fields.pop('name', None),
             update=fields
-        )
+        ))
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        self._case_block_to_submit = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=False,
             case_id=case.case_id,
             owner_id=fields.pop('owner_id', CaseBlock.undefined),
@@ -74,7 +74,7 @@ class _UserCaseHelper(object):
     def _user_case_changed(self, fields):
         field_names = list(fields)
         if _domain_has_new_fields(self.domain, field_names):
-            self._tasks_to_trigger.append((add_inferred_export_properties, (
+            self.tasks.append((add_inferred_export_properties, (
                 'UserSave',
                 self.domain,
                 USERCASE_TYPE,
@@ -98,7 +98,7 @@ def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
     fields = _get_user_case_fields(commcare_user, case_type, owner_id)
     case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
-    user_case_helper = _UserCaseHelper(domain, owner_id)
+    user_case_helper = _UserCaseHelper(domain, owner_id, commcare_user._id)
 
     def case_should_be_reopened(case, user_case_should_be_closed):
         return case and case.closed and not user_case_should_be_closed
@@ -181,8 +181,7 @@ def get_sync_lock_key(user_id):
 
 def sync_call_center_user_case(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        for helper in _iter_call_center_case_helpers(user):
-            helper.commit()
+        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
 
 
 def _iter_call_center_case_helpers(user):
@@ -228,8 +227,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 def sync_usercase(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        for helper in _iter_sync_usercase_helpers(user):
-            helper.commit()
+        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user)))
 
 
 def _iter_sync_usercase_helpers(user):
@@ -255,4 +253,4 @@ def sync_user_cases(user):
             _iter_call_center_case_helpers(user),
         ))
         if helpers:
-            _UserCaseHelper.commit_multiple(helpers)
+            _UserCaseHelper.commit(helpers)
