@@ -74,7 +74,8 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         agg_query, agg_params = self.aggregation_query()
 
         logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
-        cursor.execute(*self.delete_old_data_query())
+        if self.months_required:
+            cursor.execute(*self.delete_old_data_query())
         logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(delete_query, delete_params)
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
