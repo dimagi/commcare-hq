@@ -30,7 +30,7 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
     )
 
 
-def _update_existing_tech_issue_delegate(tech_issue_delegate):
+def _update_existing_tech_issue_delegate(tech_issue_delegate, owner_id):
     if tech_issue_delegate.get_case_property('change_in_level') == '1':
         change_in_level = '2'
     else:
@@ -43,6 +43,7 @@ def _update_existing_tech_issue_delegate(tech_issue_delegate):
         close=False,
         xmlns=AUTO_UPDATE_XMLNS,
         device_id=__name__ + "._update_existing_tech_issue_delegate",
+        owner_id=owner_id,
     )
 
 
@@ -113,7 +114,7 @@ def escalate_tech_issue(case, rule):
     tech_issue_delegate = _get_escalated_tech_issue_delegate(case, current_location_id)
 
     if tech_issue_delegate:
-        delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate)
+        delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate, escalated_location_id)
         rule.log_submission(delegate_update_result[0].form_id)
         num_related_updates = 1
     else:
