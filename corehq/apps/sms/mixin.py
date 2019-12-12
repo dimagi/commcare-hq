@@ -37,10 +37,6 @@ class UnrecognizedBackendException(Exception):
     pass
 
 
-def add_plus(phone_number):
-    return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
-
-
 def apply_leniency(contact_phone_number):
     """
     The documentation says that contact_phone_number should be
