@@ -5733,10 +5733,8 @@ class SQLGlobalAppConfig(models.Model):
     @classmethod
     def for_app(cls, app):
         model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
-            'apk_prompt': LATEST_APK_VALUE,
-            'app_prompt': LATEST_APP_VALUE,
-            'apk_version': self.apk_version or LATEST_APK_VALUE,
-            'app_version': self.app_version or LATEST_APP_VALUE,
+            'apk_version': LATEST_APK_VALUE,
+            'app_version': LATEST_APP_VALUE,
         })
         return model
 
