@@ -390,22 +390,19 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 
 
 def get_patient(requests, domain, info, openmrs_config):
-    patient = None
     for id_ in openmrs_config.case_config.match_on_ids:
-        identifier_config = openmrs_config.case_config.patient_identifiers[id_]  # type: JsonDict
+        identifier_config: JsonDict = openmrs_config.case_config.patient_identifiers[id_]
         identifier_case_property = identifier_config["case_property"]
         # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
         assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
         patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
-            break
-    else:
-        # Definitive IDs did not match a patient in OpenMRS.
-        if openmrs_config.case_config.patient_finder:
-            # Search for patients based on other case properties
-            patient = find_or_create_patient(requests, domain, info, openmrs_config)
+            return patient
 
-    return patient
+    # Definitive IDs did not match a patient in OpenMRS.
+    if openmrs_config.case_config.patient_finder:
+        # Search for patients based on other case properties
+        return find_or_create_patient(requests, domain, info, openmrs_config)
 
 
 def delete_case_property(
