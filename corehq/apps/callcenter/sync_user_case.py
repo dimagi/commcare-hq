@@ -33,8 +33,8 @@ class _UserCaseHelper(object):
         if not case_blocks:
             assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
             return
-        assert len({h.user_id for h in helpers}) <= 1
-        assert len({h.domain for h in helpers}) <= 1
+        assert len({h.user_id for h in helpers}) == 1
+        assert len({h.domain for h in helpers}) == 1
 
         case_blocks = [cb.as_text() for cb in case_blocks]
         submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
