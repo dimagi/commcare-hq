@@ -6,7 +6,6 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.products.models import Product
 from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
@@ -14,15 +13,6 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
-
-
-def make_product(domain, name, code):
-    p = Product()
-    p.domain = domain
-    p.name = name
-    p.code = code.lower()
-    p.save()
-    return p
 
 
 def make_supply_point(domain, location):
