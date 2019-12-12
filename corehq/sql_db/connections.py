@@ -65,30 +65,23 @@ def is_citus_db(connection):
     return bool(list(res))
 
 
-def is_citus(connection_url: str, citus_list=[], non_citus_list=[], engine=None):
-    # hacking mutable default arg to memoize list of citus DBs
-    #   to avoid hitting DB. citus_list, non_citus_list
-    #   is never to be actually passed.
-    if connection_url in citus_list:
-        return True
-    if connection_url in non_citus_list:
-        return False
+_IS_CITUS_URLS = {}
 
-    dispose = False
-    if not engine:
-        engine = create_engine(connection_url)
-        dispose = True
 
-    try:
-        if is_citus_db(engine):
-            citus_list.append(engine.url)
-            return True
-        else:
-            non_citus_list.append(engine.url)
-            return False
-    finally:
-        if dispose:
-            engine.dispose()
+def is_citus(connection_url: str, engine=None):
+    if connection_url not in _IS_CITUS_URLS:
+        dispose = False
+        if not engine:
+            engine = create_engine(connection_url)
+            dispose = True
+
+        try:
+            _IS_CITUS_URLS[connection_url] = is_citus_db(engine)
+        finally:
+            if dispose:
+                engine.dispose()
+
+    return _IS_CITUS_URLS[connection_url]
 
 
 def create_engine(connection_url: str, connect_args: dict=None):
