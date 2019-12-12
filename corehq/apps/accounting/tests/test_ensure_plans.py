@@ -42,7 +42,7 @@ class TestEnsurePlans(BaseAccountingTest):
                 }
             },
             (SoftwarePlanEdition.PRO, False, False): {
-                'role': 'pro_plan_v0',
+                'role': 'pro_plan_v1',
                 'product_rate_monthly_fee': Decimal('601.00'),
                 'feature_rates': {
                     FeatureType.USER: dict(monthly_limit=16, per_excess_fee=Decimal('1.01')),
