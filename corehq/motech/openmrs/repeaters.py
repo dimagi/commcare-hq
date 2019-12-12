@@ -221,7 +221,7 @@ class OpenmrsRepeater(CaseRepeater):
             )
         except Exception as err:
             self.requests.notify_exception(str(err))
-            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+            return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
 
