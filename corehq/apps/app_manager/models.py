@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -5740,9 +5740,11 @@ class SQLGlobalAppConfig(models.Model):
         })
         return model
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
-        super().save()
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
 
 class GlobalAppConfig(Document):
