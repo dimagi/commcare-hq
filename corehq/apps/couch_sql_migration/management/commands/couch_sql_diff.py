@@ -21,7 +21,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 
-from ...casediff import filter_missing_cases
+from ...casediff import ProcessNotAllowed, filter_missing_cases, get_casediff_state_path
 from ...couchsqlmigration import (
     CouchSqlDomainMigrator,
     get_main_forms_iteration_stop_date,
@@ -114,6 +114,14 @@ class CaseDiffTool:
                 self.domain, self.statedb.unique_id)
             migrator.stopper.stop_date = cutoff_date
         self.cutoff_date = cutoff_date
+        self.lock_out_casediff_process()
+
+    def lock_out_casediff_process(self):
+        if not self.statedb.get(ProcessNotAllowed.__name__):
+            state_path = get_casediff_state_path(self.statedb.db_filepath)
+            if os.path.exists(state_path):
+                self.statedb.clone_casediff_data_from(state_path)
+            self.statedb.set(ProcessNotAllowed.__name__, True)
 
     @contextmanager
     def context(self):
