@@ -9,6 +9,7 @@ from typing import (
     DefaultDict,
     Dict,
     List,
+    NamedTuple,
     Optional,
     Tuple,
     Union,
@@ -59,6 +60,12 @@ from corehq.motech.value_source import (
 )
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
+
+
+class CaseAttrs(NamedTuple):
+    case_id: str
+    case_type: str
+    owner_id: str
 
 
 def get_feed_xml(requests, feed_name, page):
@@ -386,12 +393,15 @@ def get_case_block_kwargs_from_encounter(
 
     patient_case_type = repeater.white_listed_case_types[0]
     observation_mappings = get_observation_mappings(repeater)
-    more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
-        encounter['observations'],
-        observation_mappings,
+    patient_case_attrs = CaseAttrs(
         patient_case_id,
         patient_case_type,
         default_owner_id,
+    )
+    more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
+        encounter['observations'],
+        observation_mappings,
+        patient_case_attrs,
     )
     deep_update(case_block_kwargs, more_kwargs)
     case_blocks.extend(more_case_blocks)
@@ -400,9 +410,7 @@ def get_case_block_kwargs_from_encounter(
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
             get_diagnosis_mappings(repeater),
-            patient_case_id,
-            patient_case_type,
-            default_owner_id,
+            patient_case_attrs,
         )
         deep_update(case_block_kwargs, more_kwargs)
         case_blocks.extend(more_case_blocks)
@@ -412,9 +420,7 @@ def get_case_block_kwargs_from_encounter(
         more_kwargs, more_case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
             observation_mappings,
-            patient_case_id,
-            patient_case_type,
-            default_owner_id,
+            patient_case_attrs,
         )
         deep_update(case_block_kwargs, more_kwargs)
         case_blocks.extend(more_case_blocks)
@@ -558,8 +564,10 @@ def update_case(repeater, case_id, case_block_kwargs, case_blocks):
 
 
 def get_case_block_kwargs_from_observations(
-    observations, mappings, case_id, case_type, default_owner_id
-):
+    observations: List[dict],
+    mappings: Dict[str, List[ObservationMapping]],
+    case_attrs: CaseAttrs,
+) -> Tuple[dict, List[CaseBlock]]:
     """
     Traverse a tree of observations, and return the ones mapped to case
     properties.
@@ -567,9 +575,7 @@ def get_case_block_kwargs_from_observations(
     case_block_kwargs, case_blocks = get_case_block_kwargs_from_concepts(
         observations,
         mappings,
-        case_id,
-        case_type,
-        default_owner_id,
+        case_attrs,
         uuid_func=lambda obs: obs.get('concept', {}).get('uuid'),
         fallback_value_func=lambda obs: obs.get('value'),
     )
@@ -579,9 +585,7 @@ def get_case_block_kwargs_from_observations(
             more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
                 obs['groupMembers'],
                 mappings,
-                case_id,
-                case_type,
-                default_owner_id,
+                case_attrs,
             )
             deep_update(case_block_kwargs, more_kwargs)
             case_blocks.extend(more_case_blocks)
@@ -610,9 +614,7 @@ def get_case_block_kwargs_from_encounter_meta(
 def get_case_block_kwargs_from_bahmni_diagnoses(
     diagnoses: List[dict],
     mappings: Dict[str, List[ObservationMapping]],
-    case_id: str,
-    case_type: str,
-    default_owner_id: str,
+    case_attrs: CaseAttrs,
 ) -> Tuple[dict, List[CaseBlock]]:
     """
     Iterate a list of Bahmni diagnoses, and return the ones mapped to
@@ -621,9 +623,7 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
     return get_case_block_kwargs_from_concepts(
         diagnoses,
         mappings,
-        case_id,
-        case_type,
-        default_owner_id,
+        case_attrs,
         uuid_func=lambda diag: diag.get('codedAnswer', {}).get('uuid'),
         fallback_value_func=lambda diag: diag.get('codedAnswer', {}).get('name'),
     )
@@ -632,9 +632,7 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
 def get_case_block_kwargs_from_concepts(
     observationoids: List[dict],  # Observations or things that look like them
     mappings: Dict[str, List[ObservationMapping]],
-    case_id: str,
-    case_type: str,
-    default_owner_id: str,
+    case_attrs: CaseAttrs,
     uuid_func: Callable,
     fallback_value_func: Callable,
 ) -> Tuple[dict, List[CaseBlock]]:
@@ -655,7 +653,7 @@ def get_case_block_kwargs_from_concepts(
                     deep_update(case_block_kwargs, more_kwargs)
                 if mapping.indexed_case_mapping:
                     case_block = get_case_block_for_indexed_case(
-                        mapping, obs, case_id, case_type, default_owner_id
+                        mapping, obs, case_attrs,
                     )
                     case_blocks.append(case_block)
     return case_block_kwargs, case_blocks
@@ -682,10 +680,10 @@ def get_case_block_kwargs_for_case_property(
 def get_case_block_for_indexed_case(
     mapping: ObservationMapping,
     external_data: dict,
-    parent_case_id: str,
-    parent_case_type: str,
-    default_owner_id: str,
+    parent_case_attrs: CaseAttrs,
 ) -> CaseBlock:
+    parent_case_id, parent_case_type, default_owner_id = parent_case_attrs
+
     relationship = mapping.indexed_case_mapping.relationship
     case_block_kwargs = {
         "index": {
