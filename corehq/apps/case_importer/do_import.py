@@ -85,14 +85,17 @@ class _Importer(object):
 
     def _report_import_timings(self, timer, results):
         active_duration = timer.duration - self._total_delayed_duration
-        success_rows = results['created_count'] + results['match_count']
-        error_rows = results['failed_count']
+        rows_created = results['created_count']
+        rows_updated = results['match_count']
+        rows_failed = results['failed_count']
         # Add 1 to smooth / prevent denominator from ever being zero
-        active_duration_per_case = active_duration / (success_rows + error_rows + 1)
+        active_duration_per_case = active_duration / (rows_created + rows_updated + rows_failed + 1)
         active_duration_per_case_bucket = bucket_value(
             active_duration_per_case, [1, 4, 9, 16, 25, 36, 49], unit='ms')
 
-        for rows, status in ((success_rows, 'success'), (error_rows, 'error')):
+        for rows, status in ((rows_created, 'created'),
+                             (rows_updated, 'updated'),
+                             (rows_failed, 'error')):
             datadog_counter('commcare.case_importer.cases', rows, tags=[
                 'active_duration_per_case:{}'.format(active_duration_per_case_bucket),
                 'status:{}'.format(status),
