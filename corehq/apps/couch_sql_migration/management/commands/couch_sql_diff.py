@@ -214,13 +214,18 @@ def diff_cases(case_ids, log_cases=False):
         skipped = [id for id in case_ids if id not in couch_cases]
         log.info("skipping cases modified since cutoff date: %s", skipped)
     case_ids = list(couch_cases)
-    data = DiffData(case_ids)
+    data = DiffData()
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
         couch_case = couch_cases[case_id]
-        diffs = diff_case(sql_case, couch_case)
+        try:
+            diffs = diff_case(sql_case, couch_case)
+        except Exception:
+            log.exception("cannot diff case %s", case_id)
+            continue
+        data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         if log_cases:
             log.info("case %s -> %s diffs", case_id, len(diffs))
@@ -254,6 +259,7 @@ def add_missing_docs(data, couch_cases, sql_case_ids):
         only_in_sql = sql_case_ids - couch_cases.keys()
         assert not only_in_sql, only_in_sql
         only_in_couch = couch_cases.keys() - sql_case_ids
+        data.doc_ids.extend(only_in_couch)
         missing_cases = [couch_cases[x] for x in only_in_couch]
         log.debug("Found %s missing SQL cases", len(missing_cases))
         for doc_type, doc_ids in filter_missing_cases(missing_cases):
@@ -276,7 +282,7 @@ def init_worker(*args):
 
 @attr.s
 class DiffData:
-    doc_ids = attr.ib()
+    doc_ids = attr.ib(factory=list)
     diffs = attr.ib(factory=list)
     missing_docs = attr.ib(factory=list)
 

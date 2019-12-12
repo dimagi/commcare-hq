@@ -9,6 +9,7 @@ from corehq.form_processor.utils.general import (
 
 from .test_migration import BaseMigrationTestCase, Diff, make_test_form
 from ..management.commands import couch_sql_diff as mod
+from ..statedb import open_state_db
 
 
 class TestCouchSqlDiff(BaseMigrationTestCase):
@@ -75,6 +76,16 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
         self.do_case_diffs(live=True)
         self._compare_diffs([])
+
+    def test_failed_diff(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self._do_migration(case_diff="none")
+        with patch.object(mod, "diff_case") as mock:
+            mock.side_effect = Exception("fail!")
+            self.do_case_diffs()
+        self._compare_diffs([])
+        db = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(list(db.iter_undiffed_case_ids()), ["case-1"])
 
     def do_case_diffs(self, live=False, cases=None):
         migrator = mod.get_migrator(self.domain_name, self.state_dir, live)
