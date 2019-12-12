@@ -84,7 +84,7 @@ def is_citus(connection_url: str, engine=None):
     return _IS_CITUS_URLS[connection_url]
 
 
-def create_engine(connection_url: str, connect_args: dict=None):
+def create_engine(connection_url: str, connect_args: dict = None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
@@ -97,7 +97,7 @@ class SessionHelper(object):
     Shim class helper for a single connection/session factory
     """
 
-    def __init__(self, connection_url: str, connect_args: dict=None):
+    def __init__(self, connection_url: str, connect_args: dict = None):
         self.engine = create_engine(connection_url, connect_args)
         self._session_factory = sessionmaker(bind=self.engine)
         # Session is the actual constructor object
