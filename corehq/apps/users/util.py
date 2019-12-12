@@ -17,6 +17,8 @@ from casexml.apps.case.const import (
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
+from django.core.exceptions import ValidationError
+
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -51,6 +53,10 @@ def normalize_username(username, domain=None):
     """
     from django.core.validators import validate_email
 
+    if not username:
+        raise ValidationError("Invalid username: {}".format(username))
+
+    username = str(username)
     username = re.sub(r'\s+', '.', username).lower()
     if domain:
         username = format_username(username, domain)
@@ -232,7 +238,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, date, version):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
@@ -245,6 +251,9 @@ def update_latest_builds(user, app_id, date, version):
             user.reporting_metadata.last_builds.append(last_build)
         last_build.build_version = version
         last_build.app_id = app_id
+        # update only when passed to avoid over writing set value
+        if build_profile_id is not None:
+            last_build.build_profile_id = build_profile_id
         last_build.build_version_date = date
         changed = True
 

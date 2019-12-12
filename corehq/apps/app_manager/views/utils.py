@@ -188,7 +188,9 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
+    from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_resource_overrides
     ids_map = _map_old_form_ids_to_new(wrapped_app, old_form_ids_by_xmlns)
+    add_xform_resource_overrides(app.domain, app.master_id, ids_map)
     wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
@@ -427,7 +429,7 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
     target_build = get_app_cached(domain, target_build_id)
     assert source_build.copy_of, _("Size calculation available only for builds")
     assert target_build.copy_of, _("Size calculation available only for builds")
-    build_profile = source_build.build_profiles[build_profile_id] if build_profile_id else None
+    build_profile = source_build.build_profiles.get(build_profile_id) if build_profile_id else None
     source_mm_map = source_build.multimedia_map_for_build(build_profile=build_profile)
     target_mm_map = target_build.multimedia_map_for_build(build_profile=build_profile)
     source_mm_map_by_id = _get_mm_map_by_id(source_mm_map)
@@ -448,7 +450,7 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
 def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     build = get_app_cached(domain, build_id)
     assert build.copy_of, _("Size calculation available only for builds")
-    build_profile = build.build_profiles[build_profile_id] if build_profile_id else None
+    build_profile = build.build_profiles.get(build_profile_id) if build_profile_id else None
     multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)
     multimedia_map_for_build_by_id = {
         media_map_item['multimedia_id']: media_map_item

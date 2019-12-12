@@ -13,9 +13,9 @@ from pprint import pformat
 
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
+    DictProperty,
     DocumentSchema,
     ListProperty,
-    SchemaProperty,
     StringProperty,
 )
 
@@ -25,8 +25,8 @@ from corehq.motech.openmrs.finders_utils import (
     le_levenshtein_percent,
 )
 from corehq.motech.value_source import (
-    ConstantString,
-    ValueSource,
+    as_value_source,
+    deserialize,
     recurse_subclasses,
 )
 
@@ -44,38 +44,59 @@ MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
 logger = logging.getLogger(__name__)
 
 
-constant_false = ConstantString(
-    doc_type='ConstantString',
-    value='False',
+constant_false = {
+    "value": 'False',
     # We are fetching from a case property or a form question value, and
     # we want `get_value()` to return False (bool). `get_value()`
     # serialises case properties and form question values as external
     # data types. OPENMRS_DATA_TYPE_BOOLEAN is useful because it is a
     # bool, not a string, so `constant_false.get_value()` will return
     # False (not 'False')
-    external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
-)
+    "external_data_type": OPENMRS_DATA_TYPE_BOOLEAN,
+}
 
 
 class PatientFinder(DocumentSchema):
     """
-    Subclasses of the PatientFinder class implement particular
-    strategies for finding OpenMRS patients that suit a particular
-    project. (WeightedPropertyPatientFinder was first subclass to be
-    written. A future project with stronger emphasis on patient names
-    might use Levenshtein distance, for example.)
+    The ``PatientFinder`` base class was developed as a way to
+    handle situations where patient cases are created in CommCare
+    instead of being imported from OpenMRS.
 
-    Subclasses must implement the `find_patients()` method.
+    When patients are imported from OpenMRS, they will come with at
+    least one identifier that MOTECH can use to match the case in
+    CommCare with the corresponding patient in OpenMRS. But if the case
+    is registered in CommCare then we may not have an ID, or the ID
+    could be wrong. We need to search for a corresponding OpenMRS
+    patient.
+
+    Different projects may focus on different kinds of case properties,
+    so it was felt that a base class would allow some flexibility.
+
+    The ``PatientFinder.wrap()`` method allows you to wrap documents of
+    subclasses.
+
+    The ``PatientFinder.find_patients()`` method must be implemented by
+    subclasses. It returns a list of zero, one, or many patients. If it
+    returns one patient, the OpenmrsRepeater.find_or_create_patient()
+    will accept that patient as a true match.
+
+    .. NOTE:: The consequences of a false positive (a Type II error) are
+              severe: A real patient will have their valid values
+              overwritten by those of someone else. So ``PatientFinder``
+              subclasses should be written and configured to skew
+              towards false negatives (Type I errors). In other words,
+              it is much better not to choose a patient than to choose
+              the wrong patient.
+
     """
 
     # Whether to create a new patient if no patients are found
-    create_missing = SchemaProperty(ValueSource, default=constant_false)
+    create_missing = DictProperty(default=constant_false)
 
     @classmethod
     def wrap(cls, data):
         if 'create_missing' in data and isinstance(data['create_missing'], bool):
             data['create_missing'] = {
-                'doc_type': 'ConstantString',
                 'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
                 'value': str(data['create_missing'])
             }
@@ -93,12 +114,6 @@ class PatientFinder(DocumentSchema):
         Given a case, search OpenMRS for possible matches. Return the
         best results. Subclasses must define "best". If just one result
         is returned, it will be chosen.
-
-        NOTE:: False positives can result in overwriting one patient
-               with the data of another. It is definitely better to
-               return no results or multiple results than to return a
-               single invalid result. Returned results should be
-               logged.
         """
         raise NotImplementedError
 
@@ -115,9 +130,10 @@ class PropertyWeight(DocumentSchema):
 
 class WeightedPropertyPatientFinder(PatientFinder):
     """
-    Finds patients that match cases by assigning weights to matching
-    property values, and adding those weights to calculate a confidence
-    score.
+    The ``WeightedPropertyPatientFinder`` class finds OpenMRS patients
+    that match CommCare cases by assigning weights to case properties,
+    and adding the weights of matching patient properties to calculate a
+    confidence score.
     """
 
     # Identifiers that are searchable in OpenMRS. e.g.
@@ -170,7 +186,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
         def weights():
             for property_weight in self.property_weights:
                 prop = property_weight['case_property']
-                jsonpath, value_source = self._property_map[prop]
+                jsonpath, value_source_dict = self._property_map[prop]
                 weight = property_weight['weight']
 
                 matches = jsonpath.find(patient)
@@ -180,7 +196,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                     match_type = property_weight['match_type']
                     match_params = property_weight['match_params']
                     match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
-                    is_equivalent = match_function(value_source.deserialize(patient_value), case_value)
+                    is_equivalent = match_function(deserialize(value_source_dict, patient_value), case_value)
                     yield weight if is_equivalent else 0
 
         return sum(weights())

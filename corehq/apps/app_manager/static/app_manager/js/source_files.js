@@ -27,18 +27,19 @@ hqDefine('app_manager/js/source_files', [
         if ($('#multimedia-sizes-diff-container').length) {
             var firstAppID = initialPageData.get('first_app_id');
             var secondAppID = initialPageData.get('second_app_id');
-            var multimediaSizes1 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", firstAppID));
-            multimediaSizes1.load();
-            $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizes1);
-            var multimediaSizes2 = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("get_multimedia_sizes", secondAppID));
-            multimediaSizes2.load();
-            $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizes2);
-            var multimediaSizesDiff = multimediaSizeUtil.multimediaSizesView(
-                initialPageData.reverse("compare_multimedia_sizes"));
-            multimediaSizesDiff.load();
+            var multimediaSizesContainer = multimediaSizeUtil.multimediaSizesContainer(initialPageData.get('build_profiles'));
+            $("#build-profile-select-for-multimedia").koApplyBindings(multimediaSizesContainer);
+
+            var multimediaSizeApp1 = multimediaSizeUtil.multimediaSizeView(firstAppID);
+            $("#multimedia-sizes-container-1").koApplyBindings(multimediaSizeApp1);
+
+            var multimediaSizeApp2 = multimediaSizeUtil.multimediaSizeView(secondAppID);
+            $("#multimedia-sizes-container-2").koApplyBindings(multimediaSizeApp2);
+
+            var multimediaSizesDiff = multimediaSizeUtil.multimediaSizeView(firstAppID, secondAppID);
             $("#multimedia-sizes-diff").koApplyBindings(multimediaSizesDiff);
+
+            multimediaSizesContainer.views = [multimediaSizeApp1, multimediaSizeApp2, multimediaSizesDiff];
         }
     });
 });

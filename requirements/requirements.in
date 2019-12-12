@@ -10,7 +10,7 @@ git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=
 decorator==4.0.11
 django>=1.11.23,<2  # security update
 django-braces==1.13.0
-django-celery-results~=1.0
+django-celery-results~=1.0.0
 django-crispy-forms==1.7.0
 jsonfield==1.0.3
 dropbox==9.3.0
@@ -42,6 +42,7 @@ python-magic~=0.4.13
 pytz>=2017.2
 PyYAML~=5.1
 requests~=2.20
+schema
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
 Unidecode==0.04.20

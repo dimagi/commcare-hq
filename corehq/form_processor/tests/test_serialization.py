@@ -1,13 +1,17 @@
 import uuid
 
+from django.db import router
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.form_processor.utils import get_simple_form_xml
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.routers import HINT_PLPROXY
 
 
 @use_sql_backend
@@ -17,6 +21,8 @@ class SerializationTests(TestCase):
     def setUpClass(cls):
         super(SerializationTests, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
+
+        cls.using = router.db_for_read(XFormInstanceSQL, **{HINT_PLPROXY: True})
 
     @classmethod
     def tearDownClass(cls):
@@ -40,7 +46,6 @@ class SerializationTests(TestCase):
             self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))
 
         # this query goes through pl_proxy
-        db = db_for_read_write(XFormInstanceSQL)
-        with self.assertNumQueries(1, using=db):
+        with self.assertNumQueries(1, using=self.using):
             # lazy evaluation of history
             self.assertEqual(0, len(form_json['history']))

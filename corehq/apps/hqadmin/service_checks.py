@@ -218,17 +218,18 @@ def check_couch():
 
 @ignore_warning(urllib3.exceptions.InsecureRequestWarning)
 def check_formplayer():
+    url = f'{get_formplayer_url()}/serverup'
     try:
         # Setting verify=False in this request keeps this from failing for urls with self-signed certificates.
         # Allowing this because the certificate will always be self-signed in the "provable deploy"
         # bootstrapping test in commcare-cloud.
-        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5, verify=False)
+        res = requests.get(url, timeout=5, verify=False)
     except requests.exceptions.ConnectTimeout:
-        return ServiceStatus(False, "Could not establish a connection in time")
+        return ServiceStatus(False, f"Could not establish a connection in time {url}")
     except requests.ConnectionError:
-        return ServiceStatus(False, "Could not connect to formplayer")
+        return ServiceStatus(False, f"Could not connect to formplayer: {url}")
     else:
-        msg = "Formplayer returned a {} status code".format(res.status_code)
+        msg = f"Formplayer returned a {res.status_code} status code: {url}"
         return ServiceStatus(res.ok, msg)
 
 

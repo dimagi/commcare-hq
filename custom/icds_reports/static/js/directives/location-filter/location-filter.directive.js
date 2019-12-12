@@ -1,15 +1,8 @@
 /* global _, LocationModalController, LocationFilterController */
-var transformLocationTypeName = function(locationTypeName) {
-    if (locationTypeName === 'awc') {
-        return locationTypeName.toUpperCase();
-    } else if (locationTypeName === 'supervisor') {
-        return 'Sector';
-    } else {
-        return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
-    }
-};
 
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
+    // LocationModalController shares a lot of the same logic / state as LocationFilterController.
+    // But it controls all the logic once the modal is popped up (so tiered selection).
     var vm = this;
 
     var ALL_OPTION = {
@@ -21,8 +14,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.locationsCache = locationsCache;
     vm.userLocationId = userLocationId;
+    // despite it's name strongly claiming otherwise, selectedLocationId is actually a location object.
     vm.selectedLocationId = selectedLocationId || ALL_OPTION;
     vm.hierarchy = hierarchy;
+    // this is a list of location paths. The index into the list is also used as a proxy for the location level
+    // in many places
     vm.selectedLocations = selectedLocations;
     vm.showMessage = showMessage;
     vm.showSectorMessage = showSectorMessage;
@@ -36,21 +32,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.getPlaceholder = function(locationTypes) {
-        return _.map(locationTypes, function(locationType) {
-            return transformLocationTypeName(locationType.name);
-        }).join(', ');
+        return locationsService.locationTypesToDisplay(locationTypes);
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (level === 0) {
-            return vm.locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation.location_id === 'all') {
-                return [];
-            }
-            return vm.locationsCache[selectedLocation.location_id];
-        }
+        return locationsService.getLocationsForLevel(level, vm.selectedLocations, vm.locationsCache);
     };
 
     var selectedLocationIndex = function() {
@@ -133,10 +119,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.isVisible = function(level) {
-        if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
-            return false;
-        }
-        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all' && vm.selectedLocations[level - 1].location_id !== 'all');
+        return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
     };
 }
 
@@ -406,7 +389,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             return 'Location';
         } else {
             var locationTypeName = selectedLocation.location_type_name;
-            return transformLocationTypeName(locationTypeName);
+            return locationsService.transformLocationTypeName(locationTypeName);
         }
     };
 
@@ -418,6 +401,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
 
     vm.onSelect = function($item, level) {
+        // called when a location is actually picked
         resetLevelsBelow(level);
         if (level < 4) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
@@ -432,20 +416,66 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (level === 0) {
-            return vm.locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
-                return [];
-            }
-            return _.sortBy(
-                vm.locationsCache[selectedLocation.location_id], function(o) {
-                    return o.name;
-                }
-            );
+        return locationsService.getLocationsForLevel(level, vm.selectedLocations, vm.locationsCache);
+    };
+
+    // helpers for mobile dashboard
+    // pass-throughs to locations service
+    vm.getDisplayFromLocationTypes = function (locationTypes) {
+        return locationsService.locationTypesToDisplay(locationTypes);
+    };
+    vm.locationTypeIsVisible = function (level) {
+        return locationsService.locationTypeIsVisible(vm.selectedLocations, level);
+    };
+    vm.getLocationTypeDisplay = function (level) {
+        if (level !== null) {
+            return locationsService.locationTypesToDisplay(vm.hierarchy[level]);
         }
     };
+    // UI / state management
+    vm.showLocationChoices = false;
+    vm.levelBeingSelected = null;
+    vm.promptToSelectLocation = function (level) {
+        vm.levelBeingSelected = level;
+        vm.showLocationChoices = true;
+    };
+    vm.selectLocation = function (selectedLocation) {
+        // todo: much of this is copied over from LocationModalController.onSelect.
+        // we may need to backport some permissions / report-location validation checks
+        var selectedLevel = vm.levelBeingSelected;
+        resetLevelsBelow(vm.levelBeingSelected);
+        // actually set selected location
+        vm.selectedLocations[vm.levelBeingSelected] = selectedLocation;
+        vm.myPromise = locationsService.getChildren(selectedLocation.location_id).then(function (data) {
+            // populate next level of selection based on selected location
+            if (selectedLocation.user_have_access) {
+                vm.locationsCache[selectedLocation.location_id] = [ALL_OPTION].concat(data.locations);
+                vm.selectedLocations[selectedLevel + 1] = ALL_OPTION;
+            } else {
+                vm.locationsCache[selectedLocation.location_id] = data.locations;
+                vm.selectedLocations[selectedLevel + 1] = data.locations[0];
+            }
+        });
+        // clear UI state
+        vm.levelBeingSelected = null;
+        vm.showLocationChoices = false;
+    };
+    vm.closeLocationChoices = function () {
+        vm.showLocationChoices = false;
+    };
+    $scope.$on('request_filter_data', function () {
+        var selectedIndex = selectedLocationIndex();
+        var selectedLocation = vm.selectedLocations[selectedIndex];
+        // unclear whether this is necessary
+        // vm.selectedLocationId = selectedLocation;
+        $scope.$emit('filter_data', {
+            'hasLocation': true,
+            'location': selectedLocation,
+            'locationLevel': selectedIndex,
+        });
+    });
+
+    // end mobile only helpers
 
     var selectedLocationIndex = function() {
         return _.findLastIndex(vm.selectedLocations, function(location) {
@@ -478,7 +508,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
-window.angular.module('icdsApp').directive("locationFilter", function() {
+window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
@@ -488,9 +518,10 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
             isOpenModal: '=?',
         },
         bindToController: true,
-        templateUrl: url('icds-ng-template', 'location_filter'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('location_filter');
+        },
         controller: LocationFilterController,
         controllerAs: "$ctrl",
     };
-});
-
+}]);

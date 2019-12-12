@@ -1,6 +1,9 @@
 from django.core.management.base import BaseCommand
 
 import attr
+import logging
+import sys
+
 from gevent.pool import Pool
 
 from custom.icds_reports.models.util import AggregationRecord
@@ -32,6 +35,9 @@ from custom.icds_reports.tasks import (
     setup_aggregation,
     update_child_health_monthly_table,
 )
+
+
+logger = logging.getLogger(__name__)
 
 STATE_TASKS = {
     'aggregate_gm_forms': _aggregate_gm_forms,
@@ -98,12 +104,18 @@ def run_task(agg_record, query_name):
     query = function_map[query_name]
     if query.by_state == SINGLE_STATE:
         greenlets = []
-        pool = Pool(10)
+        pool = Pool(15)
+        logger.info('Spawning greenlets')
         for state in state_ids:
             greenlets.append(pool.spawn(query.func, state, agg_date))
+        logger.info('Joining greenlets')
         pool.join(raise_error=True)
+        logger.info('Getting greenlets')
         for g in greenlets:
+            logger.info('getting {}'.format(g))
             g.get()
+            logger.info('got {}'.format(g))
+        logger.info('Done getting greenlets')
     elif query.by_state == NO_STATES:
         query.func(agg_date)
     else:
@@ -125,3 +137,5 @@ class Command(BaseCommand):
             return
 
         run_task(agg_record, query_name)
+        logger.info('Done with task')
+        sys.stdout.flush()

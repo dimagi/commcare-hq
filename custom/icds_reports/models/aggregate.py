@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 from datetime import date
 
-from django.db import connections, models, transaction
+from django.db import connections, models, transaction, router
 
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_CF_TABLE,
@@ -21,6 +20,7 @@ from custom.icds_reports.const import (
     AGG_LS_VHND_TABLE,
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
+    AGG_DASHBOARD_ACTIVITY
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -49,17 +49,18 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
+    DashboardActivityReportAggregate
 )
 
 
 def get_cursor(model):
-    db = db_for_read_write(model)
+    db = router.db_for_write(model)
     return connections[db].cursor()
 
 
 def maybe_atomic(cls, atomic=True):
     if atomic:
-        return transaction.atomic(using=db_for_read_write(cls))
+        return transaction.atomic(using=router.db_for_write(cls))
     else:
         @contextmanager
         def noop_context():
@@ -200,7 +201,7 @@ class AwcLocation(models.Model, AggregateMixin):
     district_id = models.TextField(db_index=True)
     district_name = models.TextField(blank=True, null=True)
     district_site_code = models.TextField(blank=True, null=True)
-    state_id = models.TextField(db_index=True)
+    state_id = models.TextField()
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True, db_index=True)
@@ -775,6 +776,7 @@ class DailyAttendance(models.Model, AggregateMixin):
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
+    state_id = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -783,6 +785,7 @@ class DailyAttendance(models.Model, AggregateMixin):
         indexes = [
             models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
         ]
+        index_together = ('month', 'state_id')
 
     _agg_helper_cls = DailyAttendanceAggregationDistributedHelper
     _agg_atomic = False
@@ -1470,3 +1473,26 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
 
     _agg_helper_cls = AwwIncentiveAggregationDistributedHelper
     _agg_atomic = False
+
+
+class DashboardUserActivityReport(models.Model, AggregateMixin):
+    """
+    Daily Update table to hold Dashboard users activity information
+    """
+    # This will be unique per day not unique universally among all data in it
+    username = models.TextField(primary_key=True)
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    user_level = models.IntegerField(null=True)
+    location_launched = models.NullBooleanField(null=True)
+    last_activity = models.DateTimeField(
+        help_text="The latest time dashboard user used dashboard",
+        null=True
+    )
+    date = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_DASHBOARD_ACTIVITY
+
+    _agg_helper_cls = DashboardActivityReportAggregate

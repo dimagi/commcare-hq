@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 from typing import Optional
 
 from django.conf import settings
@@ -21,6 +22,8 @@ FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
 
 SHARD_OPTION_TEMPLATE = "p{id:04d} 'dbname={dbname} host={host} port={port}'"
+
+logger = logging.getLogger(__name__)
 
 
 class LooslyEqualJsonObject(object):
@@ -113,7 +116,7 @@ class PlProxyConfig(object):
         )
 
     @classmethod
-    def from_dict(cls, config_dict, cluster_name=None):
+    def from_dict(cls, config_dict):
         """Get config from Django DATABASES dict. Custom porperties in DATABASE config:
 
         DATABASES = {
@@ -156,7 +159,7 @@ class PlProxyConfig(object):
             return
 
         config = PlProxyConfig(
-            cluster_name or settings.PL_PROXY_CLUSTER_NAME,
+            settings.PL_PROXY_CLUSTER_NAME,
             proxy_db, shard_map, host_map, _get_shard_count(shard_map.values())
         )
         config.validate()
@@ -230,20 +233,34 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
     Create plproxy config for querying standbys. This assumes that the main plproxy DB
     will be the same as the primary DB.
 
+    This does not support multiple standby databases per primary.
+
     :returns: PlProxyConfig object with details of all the standby databases
               or None if no standby databases are configured
 
     :raises: PartitionValidationError if a partial set of standby databases could be found.
     """
+
+    proxy_for_standbys = None
+    for db_alias, config in settings.DATABASES.items():
+        if config.get('PLPROXY', {}).get('PROXY_FOR_STANDBYS'):
+            proxy_for_standbys = db_alias
+            break
+
+    if not proxy_for_standbys:
+        return
+
     standbys_by_primary = {
         config['STANDBY']['MASTER']: db
         for db, config in settings.DATABASES.items()
         if config.get('STANDBY', {}).get('MASTER')
     }
-    if not standbys_by_primary:
-        return
 
-    standby_db_config = {}
+    proxy_config = copy.deepcopy(settings.DATABASES[proxy_for_standbys])
+    proxy_config['PLPROXY']['PROXY'] = True
+    standby_db_config = {
+        proxy_for_standbys: proxy_config
+    }
 
     def _convert_primary_config(primary_db):
         standby = standbys_by_primary.get(primary_db)
@@ -251,7 +268,10 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
             config = copy.deepcopy(settings.DATABASES[standby])
             if 'PLPROXY' in config:
                 raise PartitionValidationError('Standby databases should not have PLPROXY configuration')
-            config['PLPROXY'] = settings.DATABASES[primary_db]['PLPROXY']
+            config['PLPROXY'] = {
+                'SHARDS': primary_config.shard_map[primary_db]
+            }
+
             standby_db_config[standby] = config
             return True
 
@@ -260,17 +280,18 @@ def _get_standby_plproxy_config(primary_config: PlProxyConfig) -> Optional[PlPro
         for db in primary_config.form_processing_dbs
     ]
 
-    if any(standbys_found) and not all(standbys_found):
+    if not all(standbys_found):
         missing = [db for found, db in zip(standbys_found, primary_config.form_processing_dbs) if not found]
         raise PartitionValidationError(f'Not all shard DBs have standbys configured {missing}')
 
-    standby_db_config[primary_config.proxy_db] = copy.deepcopy(settings.DATABASES[primary_config.proxy_db])
-    cluster_name = f'{settings.PL_PROXY_CLUSTER_NAME}_standby'
-    return PlProxyConfig.from_dict(standby_db_config, cluster_name=cluster_name)
+    return PlProxyConfig.from_dict(standby_db_config)
 
 
 plproxy_config = None
 plproxy_standby_config = None
 if settings.USE_PARTITIONED_DATABASE:
     plproxy_config = PlProxyConfig.from_settings()
-    plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
+    try:
+        plproxy_standby_config = _get_standby_plproxy_config(plproxy_config)
+    except PartitionValidationError:
+        logger.exception('Error in PLPROXY standby configuration')
