@@ -371,18 +371,21 @@ class DashboardView(TemplateView):
         return super().get_context_data(**kwargs)
 
 
-@location_safe
-class IcdsDynamicTemplateView(TemplateView):
+class IcdsDynamicTemplateViewBase(TemplateView):
+    template_directory = None
 
     def get_template_names(self):
-        return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+        return [f'{self.template_directory}/%s.html' % self.kwargs['template']]
 
 
 @location_safe
-class IcdsDynamicMobileTemplateView(TemplateView):
+class IcdsDynamicTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app'
 
-    def get_template_names(self):
-        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
+
+@location_safe
+class IcdsDynamicMobileTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app/mobile'
 
 
 @location_safe
