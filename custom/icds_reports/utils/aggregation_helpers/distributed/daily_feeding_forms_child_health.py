@@ -42,6 +42,7 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
           FROM "{self.ucr_tablename}" ucr INNER JOIN daily_attendance ON (
             ucr.doc_id = daily_attendance.doc_id AND
             ucr.supervisor_id = daily_attendance.supervisor_id AND
+            ucr.state_id = daily_attendance.state_id AND
             daily_attendance.month=%(current_month_start)s
           )
           WHERE ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s
