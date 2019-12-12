@@ -1,4 +1,5 @@
-from datetime import datetime
+import uuid
+import warnings
 from decimal import Decimal
 
 from django.db import models
@@ -23,254 +24,10 @@ from corehq.apps.commtrack.exceptions import (
 )
 
 
-class Product(Document):
-    """
-    A product, e.g. "coartem" or "tylenol"
-    """
-    domain = StringProperty()
-    name = StringProperty()
-    unit = StringProperty()
-    code_ = StringProperty()
-    description = StringProperty()
-    category = StringProperty()
-    program_id = StringProperty()
-    cost = DecimalProperty()
-    product_data = DictProperty()
-    is_archived = BooleanProperty(default=False)
-    last_modified = DateTimeProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.groups.models import dt_no_Z_re
-        # If "Z" is missing because of the Aug 2014 migration, then add it.
-        # cf. Group class
-        last_modified = data.get('last_modified')
-        if last_modified and dt_no_Z_re.match(last_modified):
-            data['last_modified'] += 'Z'
-        return super(Product, cls).wrap(data)
-
-    @classmethod
-    def save_docs(cls, docs, use_uuids=True, codes_by_domain=None):
-        from corehq.apps.commtrack.util import generate_code
-
-        codes_by_domain = codes_by_domain or {}
-
-        def get_codes(domain):
-            if domain not in codes_by_domain:
-                codes_by_domain[domain] = SQLProduct.objects.filter(domain=domain)\
-                    .values_list('code', flat=True).distinct()
-            return codes_by_domain[domain]
-
-        for doc in docs:
-            doc.last_modified = datetime.utcnow()
-            if not doc['code_']:
-                doc['code_'] = generate_code(
-                    doc['name'],
-                    get_codes(doc['domain'])
-                )
-
-        super(Product, cls).save_docs(docs, use_uuids)
-
-        domains = {doc['domain'] for doc in docs}
-        for domain in domains:
-            cls.clear_caches(domain)
-
-    bulk_save = save_docs
-
-    def sync_to_sql(self):
-        properties_to_sync = [
-            ('product_id', '_id'),
-            'domain',
-            'name',
-            'is_archived',
-            ('code', 'code_'),
-            'description',
-            'category',
-            'program_id',
-            'cost',
-            ('units', 'unit'),
-            'product_data',
-        ]
-
-        # sync properties to SQL version
-        sql_product, _ = SQLProduct.objects.get_or_create(
-            product_id=self._id
-        )
-
-        for prop in properties_to_sync:
-            if isinstance(prop, tuple):
-                sql_prop, couch_prop = prop
-            else:
-                sql_prop = couch_prop = prop
-
-            if hasattr(self, couch_prop):
-                setattr(sql_product, sql_prop, getattr(self, couch_prop))
-
-        sql_product.save()
-
-    def save(self, *args, **kwargs):
-        """
-        Saving a couch version of Product will trigger
-        one way syncing to the SQLProduct version of this
-        product.
-        """
-        # mark modified time stamp for selective syncing
-        self.last_modified = datetime.utcnow()
-
-        # generate code if user didn't specify one
-        if not self.code:
-            from corehq.apps.commtrack.util import generate_code
-            self.code = generate_code(
-                self.name,
-                SQLProduct.objects
-                    .filter(domain=self.domain)
-                    .values_list('code', flat=True)
-                    .distinct()
-            )
-
-        result = super(Product, self).save(*args, **kwargs)
-
-        self.clear_caches(self.domain)
-        self.sync_to_sql()
-
-        return result
-
-    @property
-    def code(self):
-        return self.code_
-
-    @code.setter
-    def code(self, val):
-        self.code_ = val.lower() if val else None
-
-    @classmethod
-    def clear_caches(cls, domain):
-        from casexml.apps.phone.utils import clear_fixture_cache
-        from corehq.apps.products.fixtures import ALL_CACHE_PREFIXES
-        for prefix in ALL_CACHE_PREFIXES:
-            clear_fixture_cache(domain, prefix)
-
-    @classmethod
-    def by_domain(cls, domain, wrap=True, include_archived=False):
-        queryset = SQLProduct.objects.filter(domain=domain)
-        if not include_archived:
-            queryset = queryset.filter(is_archived=False)
-        return list(queryset.couch_products(wrapped=wrap))
-
-    @classmethod
-    def _export_attrs(cls):
-        return [
-            ('name', str),
-            ('unit', str),
-            'description',
-            'category',
-            ('program_id', str),
-            ('cost', lambda a: Decimal(a) if a else None),
-        ]
-
-    def to_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        product_dict = {}
-
-        product_dict['id'] = self._id
-        product_dict['product_id'] = self.code_
-
-        for attr in self._export_attrs():
-            real_attr = attr[0] if isinstance(attr, tuple) else attr
-            product_dict[real_attr] = encode_if_needed(
-                getattr(self, real_attr)
-            )
-
-        return product_dict
-
-    def custom_property_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        property_dict = {}
-
-        for prop, val in self.product_data.items():
-            property_dict['data: ' + prop] = encode_if_needed(val)
-
-        return property_dict
-
-    def archive(self):
-        """
-        Mark a product as archived. This will cause it (and its data)
-        to not show up in default Couch and SQL views.
-        """
-        self.is_archived = True
-        self.save()
-
-    def unarchive(self):
-        """
-        Unarchive a product, causing it (and its data) to show
-        up in Couch and SQL views again.
-        """
-        if self.code:
-            if SQLProduct.objects.filter(domain=self.domain, code=self.code, is_archived=False).exists():
-                raise DuplicateProductCodeException()
-        self.is_archived = False
-        self.save()
-
-    @classmethod
-    def from_excel(cls, row, custom_data_validator):
-        if not row:
-            return None
-
-        id = row.get('id')
-        if id:
-            try:
-                p = cls.get(id)
-            except ResourceNotFound:
-                raise InvalidProductException(
-                    _("Product with ID '{product_id}' could not be found!").format(product_id=id)
-                )
-        else:
-            p = cls()
-
-        p.code = str(row.get('product_id') or '')
-
-        for attr in cls._export_attrs():
-            key = attr[0] if isinstance(attr, tuple) else attr
-            if key in row:
-                val = row[key]
-                if val is None:
-                    val = ''
-                if isinstance(attr, tuple):
-                    val = attr[1](val)
-                setattr(p, key, val)
-            else:
-                break
-
-        if not p.code:
-            raise InvalidProductException(_('Product ID is a required field and cannot be blank!'))
-        if not p.name:
-            raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
-
-        custom_data = row.get('data', {})
-        error = custom_data_validator(custom_data)
-        if error:
-            raise InvalidProductException(error)
-
-        p.product_data = custom_data
-        p.product_data.update(row.get('uncategorized_data', {}))
-
-        return p
-
-
 class ProductQueriesMixin(object):
 
     def product_ids(self):
         return self.values_list('product_id', flat=True)
-
-    def couch_products(self, wrapped=True):
-        """
-        Returns the couch products corresponding to this queryset.
-        """
-        ids = self.product_ids()
-        products = iter_docs(Product.get_db(), ids)
-        if wrapped:
-            return map(Product.wrap, products)
-        return products
 
 
 class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
@@ -330,12 +87,116 @@ class SQLProduct(models.Model):
 
     @property
     def get_id(self):
+        warnings.warn(
+            "get_id should be changed to product_id",
+            DeprecationWarning,
+        )
+        return self.product_id
+
+    @property
+    def _id(self):
+        warnings.warn(
+            "_id should be changed to product_id",
+            DeprecationWarning,
+        )
         return self.product_id
 
     @property
     def unit(self):
-        # For compatibility with Product
+        warnings.warn(
+            "unit should be changed to units",
+            DeprecationWarning,
+        )
         return self.units
 
     class Meta(object):
         app_label = 'products'
+
+    def to_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        product_dict = {}
+
+        product_dict['id'] = self.product_id
+        product_dict['product_id'] = self.code  # This seems wrong
+
+        for attr in PRODUCT_EXPORT_ATTRS:
+            real_attr = attr[0] if isinstance(attr, tuple) else attr
+            product_dict[real_attr] = encode_if_needed(
+                getattr(self, real_attr)
+            )
+
+        return product_dict
+
+    def archive(self):
+        """
+        Mark a product as archived. This will cause it (and its data)
+        to not show up in default Couch and SQL views.
+        """
+        self.is_archived = True
+        self.save()
+
+    def unarchive(self):
+        """
+        Unarchive a product, causing it (and its data) to show
+        up in Couch and SQL views again.
+        """
+        if self.code:
+            if SQLProduct.active_objects.filter(domain=self.domain, code=self.code).exists():
+                raise DuplicateProductCodeException()
+        self.is_archived = False
+        self.save()
+
+    @classmethod
+    def from_excel(cls, row, custom_data_validator):
+        if not row:
+            return None
+
+        id = row.get('id')
+        if id:
+            try:
+                product = cls.objects.get(location_id=id)
+            except ResourceNotFound:
+                raise InvalidProductException(
+                    _("Product with ID '{product_id}' could not be found!").format(product_id=id)
+                )
+        else:
+            product = cls()
+
+        product.code = str(row.get('product_id') or uuid.uuid4().hex)
+
+        for attr in PRODUCT_EXPORT_ATTRS:
+            key = attr[0] if isinstance(attr, tuple) else attr
+            if key in row:
+                val = row[key]
+                if val is None:
+                    val = ''
+                if isinstance(attr, tuple):
+                    val = attr[1](val)
+                setattr(product, key, val)
+            else:
+                break
+
+        if not product.code:
+            raise InvalidProductException(_('Product ID is a required field and cannot be blank!'))
+        if not product.name:
+            raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
+
+        custom_data = row.get('data', {})
+        error = custom_data_validator(custom_data)
+        if error:
+            raise InvalidProductException(error)
+
+        product.product_data = custom_data
+        product.product_data.update(row.get('uncategorized_data', {}))
+
+        return product
+
+
+PRODUCT_EXPORT_ATTRS = [
+    ('name', str),
+    ('unit', str),
+    'description',
+    'category',
+    ('program_id', str),
+    ('cost', lambda a: Decimal(a) if a else None),
+]
