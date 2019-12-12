@@ -3,7 +3,16 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
-from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from django.utils.translation import ugettext as _
 
@@ -555,26 +564,17 @@ def get_case_block_kwargs_from_observations(
     Traverse a tree of observations, and return the ones mapped to case
     properties.
     """
-    case_blocks = []
-    case_block_kwargs = {"update": {}}
+    case_block_kwargs, case_blocks = get_case_block_kwargs_from_concepts(
+        observations,
+        mappings,
+        case_id,
+        case_type,
+        default_owner_id,
+        uuid_func=lambda obs: obs.get('concept', {}).get('uuid'),
+        fallback_value_func=lambda obs: obs.get('value'),
+    )
+
     for obs in observations:
-        concept_uuid = obs.get('concept', {}).get('uuid')
-        if concept_uuid:
-            obs_mappings = chain(
-                mappings.get(concept_uuid, []),
-                mappings.get(ALL_CONCEPTS, []),
-            )
-            for mapping in obs_mappings:
-                if mapping.case_property:
-                    more_kwargs = get_case_block_kwargs_for_case_property(
-                        mapping, obs, fallback_value=obs.get('value')
-                    )
-                    deep_update(case_block_kwargs, more_kwargs)
-                if mapping.indexed_case_mapping:
-                    case_block = get_case_block_for_indexed_case(
-                        mapping, obs, case_id, case_type, default_owner_id
-                    )
-                    case_blocks.append(case_block)
         if obs.get('groupMembers'):
             more_kwargs, more_case_blocks = get_case_block_kwargs_from_observations(
                 obs['groupMembers'],
@@ -585,6 +585,7 @@ def get_case_block_kwargs_from_observations(
             )
             deep_update(case_block_kwargs, more_kwargs)
             case_blocks.extend(more_case_blocks)
+
     return case_block_kwargs, case_blocks
 
 
@@ -617,25 +618,44 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
     Iterate a list of Bahmni diagnoses, and return the ones mapped to
     case properties.
     """
-    case_blocks = []
+    return get_case_block_kwargs_from_concepts(
+        diagnoses,
+        mappings,
+        case_id,
+        case_type,
+        default_owner_id,
+        uuid_func=lambda diag: diag.get('codedAnswer', {}).get('uuid'),
+        fallback_value_func=lambda diag: diag.get('codedAnswer', {}).get('name'),
+    )
+
+
+def get_case_block_kwargs_from_concepts(
+    observationoids: List[dict],  # Observations or things that look like them
+    mappings: Dict[str, List[ObservationMapping]],
+    case_id: str,
+    case_type: str,
+    default_owner_id: str,
+    uuid_func: Callable,
+    fallback_value_func: Callable,
+) -> Tuple[dict, List[CaseBlock]]:
     case_block_kwargs = {"update": {}}
-    for diag in diagnoses:
-        codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
-        if codedanswer_uuid:
-            diag_mappings = chain(
-                mappings.get(codedanswer_uuid, []),
+    case_blocks = []
+    for obs in observationoids:
+        uuid = uuid_func(obs)
+        if uuid:
+            obs_mappings = chain(
+                mappings.get(uuid, []),
                 mappings.get(ALL_CONCEPTS, []),
             )
-            for mapping in diag_mappings:
+            for mapping in obs_mappings:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
-                        mapping, diag,
-                        fallback_value=diag['codedAnswer'].get('name')
+                        mapping, obs, fallback_value=fallback_value_func(obs)
                     )
                     deep_update(case_block_kwargs, more_kwargs)
                 if mapping.indexed_case_mapping:
                     case_block = get_case_block_for_indexed_case(
-                        mapping, diag, case_id, case_type, default_owner_id
+                        mapping, obs, case_id, case_type, default_owner_id
                     )
                     case_blocks.append(case_block)
     return case_block_kwargs, case_blocks
