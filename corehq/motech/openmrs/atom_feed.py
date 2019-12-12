@@ -36,6 +36,7 @@ from corehq.motech.openmrs.exceptions import (
     OpenmrsFeedDoesNotExist,
 )
 from corehq.motech.openmrs.openmrs_config import (
+    ALL_CONCEPTS,
     ObservationMapping,
     get_property_map,
 )
@@ -558,8 +559,11 @@ def get_case_block_kwargs_from_observations(
     case_block_kwargs = {"update": {}}
     for obs in observations:
         concept_uuid = obs.get('concept', {}).get('uuid')
-        if concept_uuid and (concept_uuid in mappings or None in mappings):
-            obs_mappings = chain(mappings.get(concept_uuid, []), mappings.get(None, []))
+        if concept_uuid:
+            obs_mappings = chain(
+                mappings.get(concept_uuid, []),
+                mappings.get(ALL_CONCEPTS, []),
+            )
             for mapping in obs_mappings:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
@@ -617,8 +621,11 @@ def get_case_block_kwargs_from_bahmni_diagnoses(
     case_block_kwargs = {"update": {}}
     for diag in diagnoses:
         codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
-        if codedanswer_uuid and (codedanswer_uuid in mappings or None in mappings):
-            diag_mappings = chain(mappings.get(codedanswer_uuid, []), mappings.get(None, []))
+        if codedanswer_uuid:
+            diag_mappings = chain(
+                mappings.get(codedanswer_uuid, []),
+                mappings.get(ALL_CONCEPTS, []),
+            )
             for mapping in diag_mappings:
                 if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(

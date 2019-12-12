@@ -21,6 +21,7 @@ from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 
+ALL_CONCEPTS = "all"
 INDEX_RELATIONSHIPS = (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
@@ -186,7 +187,7 @@ class ObservationMapping(DocumentSchema):
     # If no concept is specified, this ObservationMapping is used for
     # setting a case property or creating an extension case for any
     # concept
-    concept = StringProperty(required=False, default=None)
+    concept = StringProperty(required=True, default=ALL_CONCEPTS)
     value = DictProperty()
 
     # Import Observations as case updates from Atom feed. (Case type is
