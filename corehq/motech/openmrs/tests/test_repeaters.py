@@ -645,7 +645,6 @@ class DeleteCasePropertyTests(SimpleTestCase):
             delete_case_property(DOMAIN, "CASE_ID", case_property)
 
     def test_too_much_rope_no_error(self):
-        import ipdb; ipdb.sset_trace()
         case_property = "update"
         case_block_re = strip_xml(f"""
             <case case_id="CASE_ID" »
