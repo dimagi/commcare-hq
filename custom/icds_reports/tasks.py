@@ -562,9 +562,6 @@ def _child_health_monthly_data(state_ids, day):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
-        for state in state_ids:
-            cursor.execute(helper.drop_partition(state))
-            cursor.execute(helper.create_partition(state))
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
@@ -1530,9 +1527,6 @@ def _child_health_monthly_aggregation(day, state_ids):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
-        for state in state_ids:
-            cursor.execute(helper.drop_partition(state))
-            cursor.execute(helper.create_partition(state))
 
     greenlets = []
     pool = Pool(20)
