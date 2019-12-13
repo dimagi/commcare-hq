@@ -22,7 +22,7 @@ from sqlagg.columns import (
     SimpleColumn,
     SumWhen,
     YearColumn,
-    LastValueColumn,
+    LastValueAggregation,
 )
 from sqlalchemy import bindparam
 
@@ -484,6 +484,33 @@ class PercentageColumn(ReportColumn):
 
     def get_fields(self, data_source_config=None, lang=None):
         return self.numerator.get_fields() + self.denominator.get_fields()
+
+
+class LastValueColumn(_CaseExpressionColumn):
+    type = TypeProperty("last_value")
+    partition_by = StringProperty(required=True)
+    order_by = StringProperty(required=True)
+    _agg_column_type = LastValueAggregation
+
+    def get_column_config(self, data_source_config, lang):
+        if not self.type and self._agg_column_type:
+            raise NotImplementedError("subclasses must define a type and column_type")
+        return ColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=self._agg_column_type(
+                    key=self.column_id,
+                    partition_by=self.partition_by,
+                    order_by=self.order_by,
+                    alias=self.column_id,
+                ),
+                sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description,
+                visible=self.visible,
+            )],
+        )
 
 
 def _add_column_id_if_missing(obj):

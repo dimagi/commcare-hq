@@ -21,6 +21,7 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
+    LastValueColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
     AdultFemaleMigrantDeathSpec,
@@ -71,6 +72,7 @@ class ReportColumnFactory(object):
         'percent': PercentageColumn,
         'sum_when': SumWhenColumn,
         'sum_when_template': SumWhenTemplateColumn,
+        'last_value': LastValueColumn,
     }
 
     @classmethod
