@@ -141,7 +141,7 @@ class ConnectionManager(object):
 
     def _get_or_create_helper(self, connection_url: str):
         connect_args = self._get_connection_args(connection_url)
-        key = (connection_url,) + tuple(connect_args.items())
+        key = (connection_url, tuple(connect_args.items()))
         if key not in self._session_helpers:
             self._session_helpers[key] = SessionHelper(connection_url, connect_args)
 
@@ -197,26 +197,31 @@ class ConnectionManager(object):
         for helper in self._session_helpers.values():
             helper.Session.remove()
 
-    def dispose_engine(self, engine_id=DEFAULT_ENGINE_ID):
+    def dispose_engines(self, engine_id=DEFAULT_ENGINE_ID):
         """
         If found, closes the active sessions associated with an an engine and disposes it.
         Also removes it from the session manager.
         If not found, does nothing.
         """
-        self._dispose_engine(self.get_connection_string(engine_id))
+        self._dispose_engines_for_url(self.get_connection_string(engine_id))
 
-    def _dispose_engine(self, connection_string):
-        if connection_string in self._session_helpers:
-            helper = self._session_helpers.pop(connection_string)
-            helper.Session.remove()
-            helper.engine.dispose()
+    def _dispose_engines_for_url(self, connection_url):
+        for key in list(self._session_helpers):
+            (url, args) = key
+            if url == connection_url:
+                self.__dispose(key)
+
+    def __dispose(self, key):
+        helper = self._session_helpers.pop(key)
+        helper.Session.remove()
+        helper.engine.dispose()
 
     def dispose_all(self):
         """
         Dispose all engines associated with this. Useful for tests.
         """
-        for connection_string in list(self._session_helpers.keys()):
-            self._dispose_engine(connection_string)
+        for session_key in list(self._session_helpers):
+            self.__dispose(session_key)
 
     def get_connection_string(self, engine_id):
         db_alias = self.engine_id_django_db_map.get(engine_id, DEFAULT_DB_ALIAS)
@@ -293,6 +298,6 @@ def override_engine(engine_id, connection_url, db_alias=None):
     try:
         yield
     finally:
-        connection_manager.dispose_engine(engine_id)
+        connection_manager.dispose_engines(engine_id)
         connection_manager.get_connection_string = get_connection_string
         connection_manager.engine_id_django_db_map[engine_id] = original_alias
