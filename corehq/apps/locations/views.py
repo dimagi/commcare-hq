@@ -351,6 +351,7 @@ class LocationTypesView(BaseDomainView):
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+            loc_type['name'] = loc_type['name'].strip()
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
@@ -1049,7 +1050,7 @@ def child_locations_for_select2(request, domain):
     paginator = Paginator(locs, 10)
     return json_response({
         'results': list(map(loc_to_payload, paginator.page(page))),
-        'total_count': paginator.count,
+        'total': paginator.count,
     })
 
 

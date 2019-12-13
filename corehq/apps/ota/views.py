@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.http import (
     Http404,
     HttpResponse,
@@ -15,6 +14,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
+from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -45,6 +45,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.users.util import (
     update_device_meta,
@@ -79,6 +80,9 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
+    if rate_limit_restore(domain):
+        return HttpTooManyRequests()
+
     response, timing_context = get_restore_response(
         domain, request.couch_user, app_id, **get_restore_params(request))
     return response
@@ -292,6 +296,7 @@ def heartbeat(request, domain, app_build_id):
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     app_id = request.GET.get('app_id', '')
+    build_profile_id = request.GET.get('build_profile_id', '')
 
     info = {"app_id": app_id}
     try:
@@ -305,22 +310,21 @@ def heartbeat(request, domain, app_build_id):
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     else:
-        if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-            # disable on icds for now since couch still not happy
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             couch_user = request.couch_user
             try:
-                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+                update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request)
             except ResourceConflict:
                 # https://sentry.io/dimagi/commcarehq/issues/521967014/
                 couch_user = CouchUser.get(couch_user.user_id)
-                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+                update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request)
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)
 
 
-def update_user_reporting_data(app_build_id, app_id, couch_user, request):
+def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request):
     def _safe_int(val):
         try:
             return int(val)
@@ -336,7 +340,7 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     save_user = False
     # if mobile cannot determine app version it sends -1
     if app_version and app_version > 0:
-        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version, build_profile_id)
     try:
         last_sync = adjust_text_to_datetime(last_sync_time)
     except iso8601.ParseError:

@@ -76,8 +76,8 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
     case_query = (CaseES(es_instance_alias=es_instance)
          .domain(domain)
-         .opened_range(lte=datespan.enddate)
-         .NOT(closed_range_filter(lt=datespan.startdate))
+         .opened_range(lte=datespan.enddate.date())
+         .NOT(closed_range_filter(lt=datespan.startdate.date()))
          .terms_aggregation('owner_id', 'owner_id')
          .size(0))
 
@@ -88,8 +88,8 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
 
     if not is_total:
         case_query = case_query.active_in_range(
-            gte=datespan.startdate,
-            lte=datespan.enddate
+            gte=datespan.startdate.date(),
+            lte=datespan.enddate.date(),
         )
 
     if owner_ids:

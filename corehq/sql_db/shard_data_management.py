@@ -1,7 +1,7 @@
 from collections import defaultdict
 from django.db import connections
 from django.db.models import UUIDField, CharField, ForeignKey
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import get_all_sharded_models
 
 
@@ -11,7 +11,7 @@ class DatabaseShardInfo(object):
         self.db = db
         # dicts of shard ID to dicts of model: count
         self._expected_data = {
-            shard_id: defaultdict(lambda: 0) for shard_id in partition_config.get_shards_on_db(db)
+            shard_id: defaultdict(lambda: 0) for shard_id in plproxy_config.get_shards_on_db(db)
         }
         self._unexpected_data = defaultdict(lambda: defaultdict(lambda: 0))
 
@@ -89,20 +89,20 @@ def get_count_of_unmatched_models_by_shard(database, model):
 
     The list will be empty if no invalid data is found.
     """
-    cursor = connections[database].cursor()
-    query = _get_unmatched_shard_count_query_for_testing(model)
-    valid_shards = partition_config.get_shards_on_db(database)
-    cursor.execute(query, [valid_shards])
-    results = cursor.fetchall()
-    return results
+    with model.get_cursor_for_partition_db(database) as cursor:
+        query = _get_unmatched_shard_count_query_for_testing(model)
+        valid_shards = plproxy_config.get_shards_on_db(database)
+        cursor.execute(query, [valid_shards])
+        results = cursor.fetchall()
+        return results
 
 
 def get_count_of_models_by_shard_for_testing(database, model):
-    cursor = connections[database].cursor()
-    query = _get_counts_by_shard_query_for_testing(model)
-    cursor.execute(query)
-    results = cursor.fetchall()
-    return results
+    with model.get_cursor_for_partition_db(database) as cursor:
+        query = _get_counts_by_shard_query_for_testing(model)
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return results
 
 
 def _get_unmatched_shard_count_query_for_testing(model):
@@ -128,13 +128,13 @@ def _get_counts_by_shard_query_for_testing(model):
             "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
             " & {total_shard_count}"
         ).format(
-            total_shard_count=partition_config.shard_count - 1,
+            total_shard_count=plproxy_config.shard_count - 1,
             id_field=model.partition_attr,
         )
     elif _is_a_string_field(field_type):
         # todo: are there any other types we need to worry about?
         shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
-            total_shard_count=partition_config.shard_count - 1,
+            total_shard_count=plproxy_config.shard_count - 1,
             id_field=model.partition_attr,
         )
     else:

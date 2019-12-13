@@ -246,6 +246,6 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             'CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)),
         ]
 
-        for location in agg_locations:
+        for location in agg_locations[1:]:
             indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, location))
         return indexes

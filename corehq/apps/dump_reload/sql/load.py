@@ -1,8 +1,7 @@
 import json
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
 
 from django.apps import apps
-from django.conf import settings
 from django.core.management.color import no_style
 from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.db import (
@@ -16,20 +15,7 @@ from django.utils.encoding import force_text
 
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.sql_db.config import partition_config
-
-PARTITIONED_MODEL_SHARD_ID_FIELDS = {
-    'form_processor.xforminstancesql': 'form_id',
-    'form_processor.xformattachmentsql': 'form',
-    'form_processor.xformoperationsql': 'form',
-    'form_processor.commcarecasesql': 'case_id',
-    'form_processor.commcarecaseindexsql': 'case',
-    'form_processor.casetransaction': 'case',
-    'form_processor.ledgervalue': 'case',
-    'form_processor.ledgertransaction': 'case',
-    'blobs.blobmeta': 'parent_id',
-}
+from corehq.sql_db.routers import HINT_PARTITION_VALUE
 
 
 class LoadStat(object):
@@ -167,15 +153,19 @@ def _group_objects_by_db(objects):
     for obj in objects:
         app_label = obj['model']
         model = apps.get_model(app_label)
-        db_alias = router.db_for_write(model)
-        if settings.USE_PARTITIONED_DATABASE and db_alias == partition_config.proxy_db:
-            doc_id = _get_doc_id(app_label, obj)
-            db_alias = ShardAccessor.get_database_for_doc(doc_id)
-
+        router_hints = {}
+        if hasattr(model, 'partition_attr'):
+            try:
+                partition_value = obj['fields'][model.partition_attr]
+            except KeyError:
+                # in the case of foreign keys the serialized field name is the
+                # name of the foreign key attribute
+                field = [
+                    field for field in model._meta.fields
+                    if field.column == model.partition_attr
+                ][0]
+                partition_value = obj['fields'][field.name]
+            router_hints[HINT_PARTITION_VALUE] = partition_value
+        db_alias = router.db_for_write(model, **router_hints)
         objects_by_db[db_alias].append(obj)
     return list(objects_by_db.items())
-
-
-def _get_doc_id(app_label, model_json):
-    field = PARTITIONED_MODEL_SHARD_ID_FIELDS[app_label]
-    return model_json['fields'][field]

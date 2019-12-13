@@ -16,7 +16,6 @@ from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 
 class LocationTypeManager(models.Manager):
@@ -73,11 +72,7 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 def stock_level_config_for_domain(domain, commtrack_enabled):
     from corehq.apps.commtrack.models import CommtrackConfig
     ct_config = CommtrackConfig.for_domain(domain)
-    if (
-        (ct_config is None) or
-        (not commtrack_enabled) or
-        LOCATION_TYPE_STOCK_RATES.enabled(domain)
-    ):
+    if ct_config is None or not commtrack_enabled:
         return None
     else:
         return ct_config.stock_levels_config

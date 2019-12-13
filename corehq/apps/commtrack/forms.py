@@ -12,9 +12,7 @@ from corehq.apps.consumption.shortcuts import (
     set_default_consumption_for_product,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import SQLProduct
-from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 
 class CommTrackSettingsForm(forms.Form):
@@ -64,7 +62,6 @@ class CommTrackSettingsForm(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
-        from .views import StockLevelsView
         domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -77,7 +74,7 @@ class CommTrackSettingsForm(forms.Form):
                 'stock_emergency_level',
                 'stock_understock_threshold',
                 'stock_overstock_threshold'
-            ) if not LOCATION_TYPE_STOCK_RATES.enabled(domain) else None,
+            ),
             Fieldset(
                 _('Consumption Settings'),
                 PrependedText('use_auto_consumption', ''),
@@ -155,47 +152,3 @@ class ConsumptionForm(forms.Form):
                 product.product_id,
                 val,
             )
-
-
-class LocationTypeStockLevels(forms.Form):
-    """
-    Sub form for configuring stock levels for a specific location type
-    """
-    emergency_level = forms.DecimalField(
-        label=ugettext_noop("Emergency Level (months)"),
-        required=True,
-    )
-    understock_threshold = forms.DecimalField(
-        label=ugettext_noop("Low Stock Level (months)"),
-        required=True,
-    )
-    overstock_threshold = forms.DecimalField(
-        label=ugettext_noop("Overstock Level (months)"),
-        required=True,
-    )
-
-    def clean(self):
-        cleaned_data = super(LocationTypeStockLevels, self).clean()
-        emergency = cleaned_data.get('emergency_level')
-        understock = cleaned_data.get('understock_threshold')
-        overstock = cleaned_data.get('overstock_threshold')
-        if not self.errors and not (emergency < understock < overstock):
-            raise forms.ValidationError(_(
-                "The Emergency Level must be less than the Low Stock Level, "
-                "which much must be less than the Overstock Level."
-            ))
-        return cleaned_data
-
-
-class StockLevelsForm(FormListForm):
-    """
-    Form for specifying stock levels per location type
-    """
-
-    child_form_class = LocationTypeStockLevels
-    columns = [
-        {'label': _("Location Type"), 'key': 'loc_type'},
-        'emergency_level',
-        'understock_threshold',
-        'overstock_threshold',
-    ]

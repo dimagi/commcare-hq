@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect,
-    deployments, sms, ivr
+    deployments, sms
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
@@ -133,8 +133,6 @@ def REPORTS(project):
         sms.SurveyDetailReport,
         sms.MessageLogReport,
         sms.SMSOptOutReport,
-        ivr.CallReport,
-        ivr.ExpectedCallbackReport,
         sms.PhoneNumberReport,
         sms.ScheduleInstanceReport,
     ])

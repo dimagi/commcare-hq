@@ -48,20 +48,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "DomainDbKafkaPillow"
     },
-    "FarmerRecordFluffPillow": {
-        "advertised_name": "FarmerRecordFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.FarmerRecordFluffPillow.testhq",
-        "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
-        "name": "FarmerRecordFluffPillow"
-    },
-    "GeographyFluffPillow": {
-        "advertised_name": "GeographyFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.GeographyFluffPillow.testhq",
-        "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
-        "name": "GeographyFluffPillow"
-    },
     "GroupPillow": {
         "advertised_name": "GroupPillow",
         "change_feed_type": "KafkaChangeFeed",

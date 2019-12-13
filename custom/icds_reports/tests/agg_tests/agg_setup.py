@@ -39,6 +39,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
     'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
+    'ls_usage': get_table_name('icds-cas', 'static-ls_usage_forms'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
@@ -46,6 +47,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'awc_location': 'awc_location',
     'awc_location_local': 'awc_location_local',
     'agg_awc': 'agg_awc',
+    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school')
 }
 
 

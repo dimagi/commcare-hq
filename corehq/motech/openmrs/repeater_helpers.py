@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 
+from jsonobject.containers import JsonDict
 from lxml import html
 from requests import RequestException
 from urllib3.exceptions import HTTPError
@@ -14,7 +15,6 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -33,8 +33,10 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    as_value_source,
     get_ancestor_location_metadata_value,
     get_case_location,
+    get_value,
 )
 from corehq.util.quickcache import quickcache
 
@@ -93,8 +95,8 @@ def get_patient_by_identifier(requests, identifier_type_uuid, value):
     for patient in response_json['results']:
         for identifier in patient['identifiers']:
             if (
-                identifier['identifierType']['uuid'] == identifier_type_uuid and
-                identifier['identifier'] == value
+                identifier['identifierType']['uuid'] == identifier_type_uuid
+                and identifier['identifier'] == value
             ):
                 patients.append(patient)
     try:
@@ -193,47 +195,18 @@ def check_duplicate_case_match(case, external_id):
 
 def create_patient(requests, info, case_config):
 
-    def get_name():
-        return {
-            property_: value_source.get_value(info)
-            for property_, value_source in case_config.person_preferred_name.items()
-            if (
-                property_ in NAME_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
-        }
-
-    def get_address():
-        return {
-            property_: value_source.get_value(info)
-            for property_, value_source in case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
-        }
-
-    def get_properties():
-        return {
-            property_: value_source.get_value(info)
-            for property_, value_source in case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
-        }
-
     def get_identifiers():
         identifiers = []
-        for patient_identifier_type, value_source in case_config.patient_identifiers.items():
+        for patient_identifier_type, value_source_config in case_config.patient_identifiers.items():
+            value_source = as_value_source(value_source_config)
             if (
-                patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and
-                value_source.check_direction(DIRECTION_EXPORT)
+                patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
+                and value_source.can_export
             ):
-                identifier = value_source.get_value(info) or generate_identifier(requests, patient_identifier_type)
+                identifier = (
+                    value_source.get_value(info)
+                    or generate_identifier(requests, patient_identifier_type)
+                )
                 if identifier:
                     identifiers.append({
                         'identifierType': patient_identifier_type,
@@ -242,13 +215,25 @@ def create_patient(requests, info, case_config):
         return identifiers
 
     person = {}
-    name = get_name()
+    name = get_export_data(
+        case_config.person_preferred_name,
+        NAME_PROPERTIES,
+        info,
+    )
     if name:
         person['names'] = [name]
-    address = get_address()
+    address = get_export_data(
+        case_config.person_preferred_address,
+        ADDRESS_PROPERTIES,
+        info,
+    )
     if address:
         person['addresses'] = [address]
-    properties = get_properties()
+    properties = get_export_data(
+        case_config.person_properties,
+        PERSON_PROPERTIES,
+        info,
+    )
     if properties:
         person.update(properties)
     if person:
@@ -261,11 +246,11 @@ def create_patient(requests, info, case_config):
         response = requests.post(
             '/ws/rest/v1/patient/',
             json=patient,
+            raise_for_status=True,
         )
-        if 200 <= response.status_code < 300:
-            # response.json() is not the full patient record. We need
-            # the patient's identifiers and attributes.
-            return get_patient_by_uuid(requests, response.json()['uuid'])
+        # response.json() is not the full patient record. We need
+        # the patient's identifiers and attributes.
+        return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
 def authenticate_session(requests):
@@ -378,8 +363,14 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients
-    elif not patients and patient_finder.create_missing.get_value(info):
+    elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient is None:
+            # ``create_patient()`` will return None without an error
+            # if the case has no basic data, not even a name. It
+            # seems unlikely that the case is meant to be forwarded.
+            # The user will get a warning, but not an error.
+            return None
     else:
         # If PatientFinder can't narrow down the number of candidate
         # patients, don't guess. Just admit that we don't know.
@@ -400,10 +391,11 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 def get_patient(requests, domain, info, openmrs_config):
     patient = None
     for id_ in openmrs_config.case_config.match_on_ids:
-        identifier = openmrs_config.case_config.patient_identifiers[id_]
-        # identifier.case_property must be in info.extra_fields because OpenmrsRepeater put it there
-        assert identifier.case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
-        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier.case_property])
+        identifier_config = openmrs_config.case_config.patient_identifiers[id_]  # type: JsonDict
+        identifier_case_property = identifier_config["case_property"]
+        # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
+        assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
+        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
             break
     else:
@@ -441,6 +433,19 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values=form_question_values or {},
             ))
     return result
+
+
+def get_export_data(config, properties, case_trigger_info):
+    export_data = {}
+    for property_, value_source_config in config.items():
+        value_source = as_value_source(value_source_config)
+        if (
+            property_ in properties
+            and value_source.can_export
+            and value_source.get_value(case_trigger_info)
+        ):
+            export_data[property_] = value_source.get_value(case_trigger_info)
+    return export_data
 
 
 @quickcache(['requests.base_url'])

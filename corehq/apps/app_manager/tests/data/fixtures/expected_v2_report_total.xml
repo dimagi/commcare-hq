@@ -1,0 +1,24 @@
+<restore>
+  <fixture id="commcare-reports-filters:c0ffee">
+    <filters/>
+  </fixture>
+  <fixture id="commcare-reports:c0ffee" user_id="mock-user-id" report_id="deadbeef" indexed="true">
+    <rows last_sync="2017-09-11T06:35:20">
+      <row index="0" is_total_row="False">
+        <bar>2</bar>
+        <baz>3</baz>
+        <foo>1</foo>
+      </row>
+      <row index="1" is_total_row="False">
+        <baz>3</baz>
+        <ham>1</ham>
+        <spam>2</spam>
+      </row>
+      <row index="2" is_total_row="True">
+        <bar></bar>
+        <baz>6</baz>
+        <foo>Total</foo>
+      </row>
+    </rows>
+  </fixture>
+</restore>

@@ -7,6 +7,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,18 +45,14 @@ from django.views.generic.base import View
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from urllib.parse import urlparse
-
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -87,6 +84,7 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
 )
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,
@@ -360,8 +358,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, custom_login_page):
-
+def _login(req, domain_name, custom_login_page, extra_context=None):
+    extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -385,6 +383,7 @@ def _login(req, domain_name, custom_login_page):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -434,7 +433,7 @@ def login(req):
 
 
 @location_safe
-def domain_login(req, domain, custom_template_name=None):
+def domain_login(req, domain, custom_template_name=None, extra_context=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -445,7 +444,7 @@ def domain_login(req, domain, custom_template_name=None):
     req.project = project
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
-    return _login(req, domain, custom_template_name)
+    return _login(req, domain, custom_template_name, extra_context)
 
 
 class HQLoginView(LoginView):
@@ -472,7 +471,7 @@ class CloudCareLoginView(HQLoginView):
 
 
 @two_factor_exempt
-def logout(req):
+def logout(req, default_domain_redirect='domain_login'):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
@@ -480,7 +479,7 @@ def logout(req):
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
 
     if referer and domain:
-        domain_login_url = reverse('domain_login', kwargs={'domain': domain})
+        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))

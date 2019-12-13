@@ -26,7 +26,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
@@ -37,6 +36,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
+from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -250,13 +250,11 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            # domain hides Dashboard tab if user is non-admin
-            if not user_has_custom_top_menu(self.domain, self.couch_user):
-                if self.couch_user.is_commcare_user():
-                    # never show the dashboard for mobile workers
-                    return False
-                else:
-                    return domain_has_apps(self.domain)
+            if self.couch_user.is_commcare_user():
+                # never show the dashboard for mobile workers
+                return False
+            else:
+                return domain_has_apps(self.domain)
         return False
 
     @property
@@ -337,7 +335,6 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
-            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -403,11 +400,6 @@ class SetupTab(UITab):
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
             ]
-            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
-                commcare_supply_setup.append({
-                    'title': _(StockLevelsView.page_title),
-                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -931,9 +923,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
-                # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class CloudcareTab(UITab):
@@ -1603,7 +1593,9 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech():
-            items.append((_('Integration'), _get_integration_section(self.domain)))
+            integration_nav = _get_integration_section(self.domain)
+            if integration_nav:
+                items.append((_('Integration'), integration_nav))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
         if feature_flag_items and user_is_admin:
@@ -1760,26 +1752,29 @@ def _get_integration_section(domain):
         elif repeater_type == 'CaseRepeater':
             return _("Forward Cases")
 
-    integration = [
-        {
-            'title': _('Data Forwarding'),
-            'url': reverse('domain_forwarding', args=[domain]),
-            'subpages': [
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_repeater',
-                },
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_form_repeater',
-                },
-            ]
-        },
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ]
+    integration = []
+
+    if domain_has_privilege(domain, privileges.DATA_FORWARDING):
+        integration.extend([
+            {
+                'title': _('Data Forwarding'),
+                'url': reverse('domain_forwarding', args=[domain]),
+                'subpages': [
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_repeater',
+                    },
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_form_repeater',
+                    },
+                ]
+            },
+            {
+                'title': _('Data Forwarding Records'),
+                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+            }
+        ])
 
     if toggles.BIOMETRIC_INTEGRATION.enabled(domain):
         from corehq.apps.integration.views import BiometricIntegrationView
@@ -2051,6 +2046,9 @@ class AdminTab(UITab):
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
+                {'title': GlobalThresholds.page_title,
+                 'url': reverse(GlobalThresholds.urlname),
+                 'icon': 'fa fa-fire'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

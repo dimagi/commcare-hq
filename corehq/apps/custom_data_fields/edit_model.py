@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy
 from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
+from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataField,
@@ -84,7 +84,6 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
-    is_multiple_choice = forms.BooleanField(required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
 
@@ -156,14 +155,10 @@ class CustomDataModelMixin(object):
     def get_field(self, field):
         if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
             choices = []
-            is_multiple_choice = False
             regex = field.get('regex')
             regex_msg = field.get('regex_msg')
         else:
             choices = field.get('choices')
-            is_multiple_choice = (field.get('is_multiple_choice')
-                                  if MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
-                                  else False)
             regex = None
             regex_msg = None
         return CustomDataField(
@@ -171,7 +166,6 @@ class CustomDataModelMixin(object):
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=choices,
-            is_multiple_choice=is_multiple_choice,
             regex=regex,
             regex_msg=regex_msg,
         )
