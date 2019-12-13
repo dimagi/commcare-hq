@@ -150,7 +150,7 @@ MapOrSectorController.$inject = ['$location', 'storageService', 'locationsServic
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView', function () {
+window.angular.module('icdsApp').directive('mapOrSectorView',  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -160,9 +160,11 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function () {
             location: '=',
             label: '=',
         },
-        templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('map-or-sector-view.directive');
+        },
         bindToController: true,
         controller: MapOrSectorController,
         controllerAs: '$ctrl',
     };
-});
+}]);
