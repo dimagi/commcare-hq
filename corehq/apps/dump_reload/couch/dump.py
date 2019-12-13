@@ -24,7 +24,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['CommtrackConfig']),
     DocTypeIDProvider(['DefaultConsumption']),
     DocTypeIDProvider(['MobileAuthKeyRecord']),
-    DocTypeIDProvider(['Product']),
     DocTypeIDProvider(['Program']),
     UserIDProvider(include_mobile_users=False),
     DocTypeIDProvider(['CommCareUser']),
