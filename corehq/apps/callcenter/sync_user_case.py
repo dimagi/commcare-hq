@@ -29,7 +29,7 @@ class _UserCaseHelper(object):
 
     @classmethod
     def commit(cls, helpers):
-        case_blocks = list(chain(h.case_blocks for h in helpers))
+        case_blocks = list(chain.from_iterable([h.case_blocks for h in helpers]))
         if not case_blocks:
             assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
             return
@@ -38,7 +38,7 @@ class _UserCaseHelper(object):
 
         case_blocks = [cb.as_text() for cb in case_blocks]
         submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
-        for task, task_args in chain(h.tasks for h in helpers):
+        for task, task_args in chain.from_iterable([h.tasks for h in helpers]):
             task.delay(*task_args)
 
     @staticmethod
