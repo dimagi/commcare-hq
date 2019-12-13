@@ -336,7 +336,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
+        # ('call', HQPhoneNumberForm),
         ('validation', HQDeviceValidationForm),
     )
 
