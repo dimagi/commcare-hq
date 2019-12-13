@@ -102,20 +102,25 @@ def _worker_pool(worker_args, processes):
 
     procs = {start_worker() for x in range(processes)}
     assert processes == len(procs), (processes, procs)
-    while procs:
-        for proc in gevent.wait(procs, count=1):
-            procs.remove(proc)
-            if proc.get() == _Stop:
-                continue
-            procs.add(start_worker())
-            log.debug("replaced worker")
-    log.debug("all workers stopped")
+    try:
+        while procs:
+            for proc in gevent.wait(procs, count=1):
+                procs.remove(proc)
+                if proc.get() == _Stop:
+                    continue
+                procs.add(start_worker())
+                log.debug("replaced worker")
+        log.debug("all workers stopped")
+    finally:
+        for proc in procs:
+            proc.kill()
 
 
 def _init_worker():
     pass
 
 
+@gipc_process_error_handler()
 def _worker(init, initargs, maxtasksperchild, func, itemq, resultq):
     init(*initargs)
     if maxtasksperchild is None:
@@ -157,26 +162,32 @@ def _thread(target, *args):
     try:
         yield
     finally:
+        if greenlet:
+            greenlet.kill()
         greenlet.join()
 
 
 def _process(target, args):
     *args, itemq, resultq = args
-    with gipc.pipe() as (i_send, items), gipc.pipe() as (results, r_send):
-        args = tuple(args) + (i_send, r_send)
-        proc = gipc.start_process(target=target, args=args)
-        log.debug("start worker: %s", proc.pid)
-        try:
-            with gipc_process_error_handler():
-                result = None
-                while result is not _Stop:
-                    items.put(itemq.get())
-                    result = results.get()
-                    resultq.put(result)
-                log.debug("worker stopped: %s", proc.pid)
-                return _Stop
-        except ProcessError:
-            log.error("process error %s", proc.pid)
-        finally:
+    proc = None
+    try:
+        with gipc_process_error_handler(), \
+                gipc.pipe() as (i_send, items), \
+                gipc.pipe() as (results, r_send):
+            args = tuple(args) + (i_send, r_send)
+            proc = gipc.start_process(target=target, args=args)
+            log.debug("start worker: %s", proc.pid)
+            result = None
+            while result is not _Stop:
+                items.put(itemq.get())
+                result = results.get()
+                resultq.put(result)
+            log.debug("worker stopped: %s", proc.pid)
+            return _Stop
+    except ProcessError:
+        log.error("process error %s", proc.pid)
+        if proc.is_alive():
             proc.terminate()
+    finally:
+        if proc is not None:
             proc.join()

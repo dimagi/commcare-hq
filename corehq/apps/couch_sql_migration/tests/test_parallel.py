@@ -66,6 +66,17 @@ def test_pool_processes_validator():
         mod.Pool(processes=0)
 
 
+@timelimit
+def test_consume_error():
+    class Error(Exception):
+        pass
+
+    with assert_raises(Error):
+        for result in mod.Pool().imap_unordered(square, range(10)):
+            raise Error
+            # error should not cause deadlock
+
+
 def square(value):
     return value ** 2
 
