@@ -68,7 +68,7 @@ class _UserCaseHelper(object):
             case_name=fields.pop('name', CaseBlock.undefined),
             close=close,
             update=fields
-        )
+        ))
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
