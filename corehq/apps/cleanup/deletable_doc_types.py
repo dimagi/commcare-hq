@@ -14,4 +14,5 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CaseReminder': (MAIN_DB,),
     'CaseReminderHandler': (MAIN_DB,),
     'CaseReminderEvent': (MAIN_DB,),
+    'Product': (MAIN_DB,),
 }
