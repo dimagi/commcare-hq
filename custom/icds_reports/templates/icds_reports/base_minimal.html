@@ -18,6 +18,9 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     {% block head %}{% endblock head %}
+    {% if less_debug %}
+      <script src="{% static 'icds_reports/mobile/css/less.min.js' %}" ></script>
+    {% endif %}
   </head>
   <body>
     {% block body %}{% endblock body %}
