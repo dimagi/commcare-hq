@@ -91,7 +91,7 @@ class _Importer(object):
         # Add 1 to smooth / prevent denominator from ever being zero
         active_duration_per_case = active_duration / (rows_created + rows_updated + rows_failed + 1)
         active_duration_per_case_bucket = bucket_value(
-            active_duration_per_case, [1, 4, 9, 16, 25, 36, 49], unit='ms')
+            active_duration_per_case * 1000, [1, 4, 9, 16, 25, 36, 49], unit='ms')
 
         for rows, status in ((rows_created, 'created'),
                              (rows_updated, 'updated'),
