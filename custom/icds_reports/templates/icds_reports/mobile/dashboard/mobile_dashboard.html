@@ -10,14 +10,11 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
   {% endcompress %}
-
-  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
-  <script src="{% static 'icds_reports/mobile/css/less.min.js' %}" ></script>
 
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
