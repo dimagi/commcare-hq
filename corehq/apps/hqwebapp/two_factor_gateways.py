@@ -10,10 +10,12 @@ from tastypie.http import HttpTooManyRequests
 from twilio.http.http_client import TwilioHttpClient
 from twilio.rest import Client
 
+import settings
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from dimagi.utils.web import get_ip
 
@@ -70,6 +72,9 @@ def validate_voice_locale(locale):
                                       'supported by Twilio' % voice_locale)
 
 
+@run_only_when(not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING)
+@silence_and_report_error("Exception raised in the two factor setup rate limiter",
+                          'commcare.two_factor.setup_rate_limiter_errors')
 def rate_limit_two_factor_setup(method):
     """
     This holds attempts per user AND attempts per IP below limits
