@@ -1388,6 +1388,13 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+ICDS_MOBILE_DASHBOARD_MAPS = DynamicallyPredictablyRandomToggle(
+    'icds_mobile_dashboard_maps',
+    'ICDS: Enable Maps on the Mobile Dashboard',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+)
+
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
