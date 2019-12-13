@@ -165,9 +165,10 @@ class _Importer(object):
             # For a fully throttled domain, this will up to double
             # the amount of time the case import takes
             datadog_counter(
-                'commcare.case_importer.import_delayed_duration',
-                self._last_submission_duration, tags=[
-                    'domain:{}'.format(self.domain)
+                'commcare.case_importer.import_delays', tags=[
+                    'domain:{}'.format(self.domain),
+                    'duration:{}'.format(bucket_value(
+                        self._last_submission_duration, [.5, 1, 2, 4, 8, 16, 32], unit='s'))
                 ]
             )
             self._total_delayed_duration += self._last_submission_duration
