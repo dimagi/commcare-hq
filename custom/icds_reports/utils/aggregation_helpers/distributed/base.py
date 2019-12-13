@@ -166,6 +166,9 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
+        logger.info(f"Creating temporary distributed table for {self.helper_key}")
+        cursor.execute(self.drop_temporary_table())
+        cursor.execute(self.create_temporary_table())
         logger.info(f"Creating staging table for {self.helper_key}")
         self.cleanup(cursor)
         cursor.execute(f"""
