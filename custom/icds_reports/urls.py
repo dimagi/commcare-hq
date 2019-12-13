@@ -134,6 +134,7 @@ awc_infrastructure_urls = [
 
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
+    url(r'^logout/$', mobile_views.logout, name="cas_mobile_dashboard_logout"),
     url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
