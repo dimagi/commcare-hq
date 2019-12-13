@@ -168,6 +168,9 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
     def _get_values_for_concept(self, form_config):
         values_for_concept = {}
         for obs in form_config.openmrs_observations:
+            if not obs.concept:
+                # Skip ObservationMappings for importing all observations.
+                continue
             value_source = as_value_source(obs.value)
             if value_source.can_export and not is_blank(value_source.get_value(self.info)):
                 values_for_concept[obs.concept] = [value_source.get_value(self.info)]

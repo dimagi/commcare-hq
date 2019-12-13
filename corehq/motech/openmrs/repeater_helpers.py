@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 
+from jsonobject.containers import JsonDict
 from lxml import html
 from requests import RequestException
 from urllib3.exceptions import HTTPError
@@ -245,11 +246,11 @@ def create_patient(requests, info, case_config):
         response = requests.post(
             '/ws/rest/v1/patient/',
             json=patient,
+            raise_for_status=True,
         )
-        if 200 <= response.status_code < 300:
-            # response.json() is not the full patient record. We need
-            # the patient's identifiers and attributes.
-            return get_patient_by_uuid(requests, response.json()['uuid'])
+        # response.json() is not the full patient record. We need
+        # the patient's identifiers and attributes.
+        return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
 def authenticate_session(requests):
@@ -364,6 +365,12 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         patient, = patients
     elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient is None:
+            # ``create_patient()`` will return None without an error
+            # if the case has no basic data, not even a name. It
+            # seems unlikely that the case is meant to be forwarded.
+            # The user will get a warning, but not an error.
+            return None
     else:
         # If PatientFinder can't narrow down the number of candidate
         # patients, don't guess. Just admit that we don't know.
@@ -384,10 +391,11 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 def get_patient(requests, domain, info, openmrs_config):
     patient = None
     for id_ in openmrs_config.case_config.match_on_ids:
-        identifier = openmrs_config.case_config.patient_identifiers[id_]
-        # identifier.case_property must be in info.extra_fields because OpenmrsRepeater put it there
-        assert identifier.case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
-        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier.case_property])
+        identifier_config = openmrs_config.case_config.patient_identifiers[id_]  # type: JsonDict
+        identifier_case_property = identifier_config["case_property"]
+        # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
+        assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
+        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
             break
     else:

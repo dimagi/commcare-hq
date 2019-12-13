@@ -13,7 +13,7 @@ from django.utils.functional import cached_property
 
 class DashBoardUsage:
 
-    title = 'Dashboard usage'
+    title = 'Dashboard Activity'
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
     location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
@@ -133,7 +133,7 @@ class DashBoardUsage:
         filters = [['Generated at', india_now()]]
 
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
-                   'Launched?', 'Last Login  Activity ', 'Activity in the last 7 days?']
+                   'Launched?', 'Last Activity ', 'Activity in the last 7 days?']
         serial_count = 0
 
         location_type_filter = {
@@ -171,7 +171,8 @@ class DashBoardUsage:
             date -= relativedelta(days=1)
 
         for record in usage_data:
-            last_activity, activity_in_last_week = self.check_if_date_in_last_week(record.last_activity)
+            user_activity = record.last_activity if record.location_launched else None
+            last_activity, activity_in_last_week = self.check_if_date_in_last_week(user_activity)
 
             state_name = self.get_location_name_from_id(record.state_id)
             district_name = self.get_location_name_from_id(record.district_id)

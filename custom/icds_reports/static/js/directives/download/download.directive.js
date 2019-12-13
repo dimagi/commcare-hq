@@ -143,7 +143,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (vm.haveAccessToFeatures && vm.userLocationType.toLowerCase() !== 'block') {
-        vm.indicators.push({id: 11, name: 'Dashboard usage(Last 7 days)'});
+        vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
     var ALL_OPTION = {

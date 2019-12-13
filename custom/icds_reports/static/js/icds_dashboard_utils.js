@@ -114,9 +114,24 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<awcs-covered></awcs-covered>",
             });
     }
+    function addAWCReportRoutes($routeProvider) {
+        $routeProvider.when("/awc_reports", {
+                redirectTo: "/awc_reports/pse",
+            })
+            .when("/awc_reports/:step", {
+                template: "<awc-reports></awc-reports>",
+            });
+    }
+    function addSharedRoutes($routeProvider) {
+        addMaternalChildRoutes($routeProvider);
+        addCasReachRoutes($routeProvider);
+        addAWCReportRoutes($routeProvider);
+    }
     return {
         populateDashboardConstants: populateDashboardConstants,
         addMaternalChildRoutes: addMaternalChildRoutes,
         addCasReachRoutes: addCasReachRoutes,
+        addAWCReportRoutes: addAWCReportRoutes,
+        addSharedRoutes: addSharedRoutes,
     };
 });

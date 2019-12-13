@@ -4,6 +4,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView
 
+from corehq.apps.domain.decorators import two_factor_exempt
 from corehq.apps.hqwebapp import views as hqwebapp_views
 from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -22,6 +23,13 @@ def login(request, domain):
             'next': reverse('cas_mobile_dashboard', args=[domain])
         }
     )
+
+
+@xframe_options_exempt
+@two_factor_exempt
+def logout(req, domain):
+    # override logout so you are redirected to the right login page afterwards
+    return hqwebapp_views.logout(req, default_domain_redirect='cas_mobile_dashboard_login')
 
 
 @location_safe

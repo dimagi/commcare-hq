@@ -57,6 +57,5 @@ def reprocess_archive_stubs():
             else:
                 FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
         except Exception:
-            stub.attempts = F('attempts') + 1
-            stub.save()
+            # Errors should not prevent processing other stubs
             notify_exception(None, "Error processing UnfinishedArchiveStub")
