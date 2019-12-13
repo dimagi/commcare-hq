@@ -122,9 +122,10 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '1')
-            self.assertEqual(tech_issue_delegate.owner_id, 'district_id')
 
+            update_case(self.domain, tech_issue.case_id, case_properties={'ticket_level': 'block'})
             tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
+
             result = rule.run_actions_when_case_matches(tech_issue)
             self.assertEqual(result.num_updates, 1)
             self.assertEqual(result.num_creates, 0)
@@ -135,7 +136,6 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '2')
-            self.assertEqual(tech_issue_delegate.owner_id, 'state_id')
 
 
 @use_sql_backend
