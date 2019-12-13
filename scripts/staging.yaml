@@ -62,5 +62,4 @@ branches:
   - je/sql-products-v2  # Emord Dec 12
   #- jls/non-unique-form-ids  # Jenny Nov 24
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - cz/less-css  # cz dec 13
 submodules: {}
