@@ -132,7 +132,6 @@ redis==2.10.6
 reportlab==3.0
 requests==2.22.0
 rjsmin==1.0.12            # via django-compressor
-schema==0.7.1
 s3transfer==0.2.1         # via boto3
 schema==0.7.1
 sentry-sdk==0.13.5
