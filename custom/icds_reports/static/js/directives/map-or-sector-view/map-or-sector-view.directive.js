@@ -1,7 +1,8 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, isMobile) {
+function MapOrSectorController($location, storageService, locationsService, isMobile, mobileMapsEnabled) {
     var vm = this;
+    vm.mobileMapsEnabled = mobileMapsEnabled;
     var location_id = $location.search().location_id;
 
     if (['null', 'undefined', ''].indexOf(location_id) === -1) {
@@ -146,7 +147,9 @@ function MapOrSectorController($location, storageService, locationsService, isMo
     };
 }
 
-MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService', 'isMobile'];
+MapOrSectorController.$inject = [
+    '$location', 'storageService', 'locationsService', 'isMobile', 'mobileMapsEnabled',
+];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
