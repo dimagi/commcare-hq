@@ -93,9 +93,9 @@ class DashboardActivityReportAggregate(BaseICDSAggregationDistributedHelper):
         user_locations = list()
         for user in self.dashboard_users:
             state_id, district_id, block_id, user_level = None, None, None, None
-            usr_assinged_actual_loc = user['location_id'] and user['location_id'] in self.transformed_locations
+            usr_assigned_actual_loc = user['location_id'] and user['location_id'] in self.transformed_locations
 
-            if usr_assinged_actual_loc and user.get('is_active'):
+            if usr_assigned_actual_loc and user.get('is_active'):
                 user_level = self.transformed_locations.get(user['location_id'])['loc_level']
 
                 if user_level == 1:
