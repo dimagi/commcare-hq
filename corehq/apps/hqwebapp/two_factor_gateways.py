@@ -123,7 +123,7 @@ def rate_limit_two_factor_setup(method):
 
 two_factor_setup_rate_limiter = RateLimiter(
     feature_key='two_factor_setup_attempts',
-    get_rate_limits=lambda: get_dynamic_rate_definition(
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
         'two_factor_setup_attempts',
         default=RateDefinition(
             per_week=15,
