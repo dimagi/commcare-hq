@@ -107,7 +107,11 @@ class _ExportWriter(object):
         :param row: An ExportRow
         """
         return self.writer.write([
-            (table, [FormattedRow(data=row.data, hyperlink_column_indices=row.hyperlink_column_indices)])
+            (table, [FormattedRow(
+                data=row.data,
+                hyperlink_column_indices=row.hyperlink_column_indices,
+                data_types=row.data_types
+            )])
         ])
 
     def get_preview(self):
