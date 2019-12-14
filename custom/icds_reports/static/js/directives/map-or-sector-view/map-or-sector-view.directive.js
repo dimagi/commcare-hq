@@ -121,10 +121,6 @@ function MapOrSectorController($location, storageService, locationsService) {
                                     break;    
                                 }
                             }
-                            // PSE is the deafult tab
-                            if (awcReportPath === 'awc_reports') {
-                                awcReportPath += '/pse';
-                            }
                             $location.path(awcReportPath);
                         }
                     });
