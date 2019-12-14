@@ -108,6 +108,7 @@ def rate_limit_two_factor_setup(method):
                 and global_two_factor_setup_rate_limiter.allow_usage():
             two_factor_setup_rate_limiter.report_usage('ip:{}'.format(ip_address))
             two_factor_setup_rate_limiter.report_usage('user:{}'.format(username))
+            global_two_factor_setup_rate_limiter.report_usage()
             status = _status_accepted
         else:
             status = _status_rate_limited
