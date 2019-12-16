@@ -62,6 +62,5 @@ branches:
   - je/sql-products-v2  # Emord Dec 12
   #- jls/non-unique-form-ids  # Jenny Nov 24
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - dmr/rate-limit-two-factor-setup  # Danny Dec 13
   - bmb/SAASP-10184  # Biyeun Dec 16
 submodules: {}
