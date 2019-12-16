@@ -45,7 +45,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                   navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
                   isMobile) {
             BaseFilterController.call(
-                this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService,
+                this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
             );
             var vm = this;
 

@@ -498,7 +498,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
 LocationFilterController.$inject = [
     '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
-    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'
+    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
 ];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
