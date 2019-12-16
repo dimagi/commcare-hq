@@ -3,7 +3,7 @@
 function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
-
+    var useNewMaps = haveAccessToFeatures || isMobile;
     $scope.$watch(function () {
         return vm.data;
     }, function (newValue, oldValue) {
@@ -255,7 +255,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        if (location.location_type === 'district') {
+        if (useNewMaps && location.location_type === 'district') {
             topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
                 mapConfiguration(location, resp.topojson);
             });
