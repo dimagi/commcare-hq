@@ -42,7 +42,7 @@ describe('Indie Map Directive', function () {
     };
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false)
+        utils.provideDefaultConstants($provide, false, false);
         $provide.constant('haveAccessToFeatures', false);
 
     }));
