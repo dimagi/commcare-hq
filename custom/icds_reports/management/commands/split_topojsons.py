@@ -73,14 +73,12 @@ class Command(BaseCommand):
                 district_data['height'] = block_topojson['objects'][district]['height']
                 district_data['scale'] = block_topojson['objects'][district]['scale']
 
-
             state_topojson_js = json.dumps(state_topojson_js_json)
 
             with open(output_file_path, 'w+') as state_topojson_js_file:
                 state_topojson_js_file.write(state_topojson_js)
 
             data['file_name'] = output_filename
-
 
         # saving the state district data with file name of topojson for each state
         state_district_map_file = open(os.path.join(output_dir, 'district_topojson_data.json'), 'w+')

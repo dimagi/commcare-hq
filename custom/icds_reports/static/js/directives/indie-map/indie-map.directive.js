@@ -47,16 +47,16 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.mapHeight = 0;
     vm.scalingFactor = 1;
 
-    vm.initTopoJson = function (location_level, location, topojson) {
-        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+    vm.initTopoJson = function (locationLevel, location, topojson) {
+        if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
-        } else if (location_level === 0) {
+        } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-        } else if (location_level === 1) {
+        } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             if (useNewMaps) {
@@ -122,14 +122,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     var mapConfiguration = function (location, topojson) {
 
-        var location_level = -1;
+        var locationLevel = -1;
 
-        if (location.location_type === 'state') location_level = 0;
-        else if (location.location_type === 'district') location_level = 1;
-        else if (location.location_type === 'block') location_level = 2;
-        else location_level = -1;
+        if (location.location_type === 'state') locationLevel = 0;
+        else if (location.location_type === 'district') locationLevel = 1;
+        else if (location.location_type === 'block') locationLevel = 2;
+        else locationLevel = -1;
 
-        vm.initTopoJson(location_level, location, topojson);
+        vm.initTopoJson(locationLevel, location, topojson);
 
         vm.map = {
             scope: vm.scope,
