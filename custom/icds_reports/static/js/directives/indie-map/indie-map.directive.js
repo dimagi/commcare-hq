@@ -124,10 +124,18 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
         var locationLevel = -1;
 
-        if (location.location_type === 'state') locationLevel = 0;
-        else if (location.location_type === 'district') locationLevel = 1;
-        else if (location.location_type === 'block') locationLevel = 2;
-        else locationLevel = -1;
+        if (location.location_type === 'state') {
+            locationLevel = 0;
+        }
+        else if (location.location_type === 'district') {
+            locationLevel = 1;
+        }
+        else if (location.location_type === 'block') {
+            locationLevel = 2;
+        }
+        else {
+            locationLevel = -1;
+        }
 
         vm.initTopoJson(locationLevel, location, topojson);
 
