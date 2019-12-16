@@ -46,14 +46,20 @@ class CreditsAutomatedReport(object):
         format_dict = Format.FORMAT_DICT[Format.XLS_2007]
 
         file_attachment = {
-            'title': 'Credits_on_hq_{}'.format(yesterday.isoformat()),
+            'title': 'Credits_on_hq_{}_{}'.format(
+                yesterday.isoformat(),
+                settings.SERVER_ENVIRONMENT,
+            ),
             'mimetype': format_dict['mimetype'],
             'file_obj': file_to_attach,
         }
 
         from_email = "Dimagi Finance <{}>".format(settings.DEFAULT_FROM_EMAIL)
         send_HTML_email(
-            "Credits on HQ as of {}".format(yesterday_string),
+            "{} Credits on HQ on {}".format(
+                yesterday_string,
+                settings.SERVER_ENVIRONMENT,
+            ),
             recipient,
             email_content,
             email_from=from_email,
