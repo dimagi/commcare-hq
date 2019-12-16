@@ -9,7 +9,7 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function($
                     return response.data;
                 },
                 function() {
-                    $log.error(error);
+                    console.error(error);
                 }
             );
         },
