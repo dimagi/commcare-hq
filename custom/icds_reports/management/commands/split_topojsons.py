@@ -18,7 +18,13 @@ class Command(BaseCommand):
         block_topojson_file = open(block_topojson_filename)
         block_topojson_file_content = block_topojson_file.read()
         # strip off 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+        block_topojson_text = block_topojson_file_content[21:][:-2]
         block_topojson = json.loads(block_topojson_file_content[21:][:-2])
+
+        # the mapshaper command needs the variable assignment removed, so save it to a temporary file
+        tmp_block_filename = os.path.join(input_dir, 'blocks_tmp.topojson')
+        with open(tmp_block_filename, 'w+') as f:
+            f.write(block_topojson_text)
 
         # loading district topojson object
         district_topojson_filename = os.path.join(input_dir, 'districts_v2.topojson.js')
@@ -57,7 +63,7 @@ class Command(BaseCommand):
 
             # breaking block topojson for each state using mapshaper : https://www.npmjs.com/package/mapshaper
             mapshaper_command = "mapshaper {} -o target='{}' {}".format(
-                block_topojson_filename, districts, output_file_path
+                tmp_block_filename, districts, output_file_path
             )
             subprocess.call(mapshaper_command, shell=True)
 
@@ -87,4 +93,5 @@ class Command(BaseCommand):
 
         block_topojson_file.close()
         district_topojson_file.close()
+        os.remove(tmp_block_filename)
         print('done')
