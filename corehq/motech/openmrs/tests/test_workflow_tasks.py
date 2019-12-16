@@ -15,10 +15,6 @@ def test_concept_directions():
     }
     form_config_dict = get_form_config_dict()
     form_config = OpenmrsFormConfig.wrap(form_config_dict)
-    openmrs_config = OpenmrsConfig.wrap({
-        "case_config": {},
-        "form_configs": [form_config_dict]
-    })
     info = CaseTriggerInfo(
         domain="test-domain",
         case_id="c0ffee",
@@ -27,14 +23,7 @@ def test_concept_directions():
             "/data/malnutrition": "no",
         }
     )
-    task = CreateVisitsEncountersObsTask(
-        requests=None,
-        domain="test-domain",
-        info=info,
-        form_json=form_json,
-        openmrs_config=openmrs_config,
-        person_uuid="test-person_uuid",
-    )
+    task = get_task(info, form_json, form_config_dict)
     values_for_concept = task._get_values_for_concept(form_config)
     eq(values_for_concept, {
         # "direction": "out"
@@ -66,17 +55,7 @@ def test_start_stop_datetime_export():
             "/metadata/timeEnd": "2019-12-16T12:36:00.00000Z",
         }
     )
-    task = CreateVisitsEncountersObsTask(
-        requests=None,
-        domain="test-domain",
-        info=info,
-        form_json=form_json,
-        openmrs_config=OpenmrsConfig.wrap({
-            "case_config": {},
-            "form_configs": [form_config_dict],
-        }),
-        person_uuid="test-person_uuid",
-    )
+    task = get_task(info, form_json, form_config_dict)
     start_datetime, stop_datetime = task._get_start_stop_datetime(
         OpenmrsFormConfig.wrap(form_config_dict)
     )
@@ -100,17 +79,7 @@ def test_start_stop_datetime_import():
         }
     }
     info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
-    task = CreateVisitsEncountersObsTask(
-        requests=None,
-        domain="test-domain",
-        info=info,
-        form_json=form_json,
-        openmrs_config=OpenmrsConfig.wrap({
-            "case_config": {},
-            "form_configs": [form_config_dict],
-        }),
-        person_uuid="test-person_uuid",
-    )
+    task = get_task(info, form_json, form_config_dict)
     start_datetime, stop_datetime = task._get_start_stop_datetime(
         OpenmrsFormConfig.wrap(form_config_dict)
     )
@@ -165,3 +134,17 @@ def get_form_config_dict():
             },
         ],
     }
+
+
+def get_task(info, form_json, form_config_dict):
+    return CreateVisitsEncountersObsTask(
+        requests=None,
+        domain="test-domain",
+        info=info,
+        form_json=form_json,
+        openmrs_config=OpenmrsConfig.wrap({
+            "case_config": {},
+            "form_configs": [form_config_dict],
+        }),
+        person_uuid="test-person_uuid",
+    )
