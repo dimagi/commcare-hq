@@ -124,7 +124,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 }
 
 
-function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
+function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService,
+                                  storageService, navigationService, userLocationId, haveAccessToAllLocations,
+                                  allUserLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -253,18 +255,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             }
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
-                var awcReportPath = 'awc_reports';
-                if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
-                    awcReportPath += '/maternal_child';
-                } else if ($location.path().indexOf('demographics') !== -1) {
-                    awcReportPath += '/demographics';
-                } else if ($location.path().indexOf('awc_infrastructure') !== -1) {
-                    awcReportPath += '/awc_infrastructure';
-                } else if ($location.path().indexOf('beneficiary') !== -1) {
-                    awcReportPath += '/beneficiary';
-                } else {
-                    awcReportPath += '/pse';
-                }
+                var awcReportPath = navigationService.getAWCTabFromPagePath($location.path());
                 $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');
@@ -505,7 +496,10 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     init();
 }
 
-LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
+LocationFilterController.$inject = [
+    '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
+    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
+];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {

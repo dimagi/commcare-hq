@@ -72,7 +72,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 {% if mobile_maps_enabled %}
   <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
   <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
-  <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
+  {# no need to load blocks because they are loaded just in time by topoJsonService #}
 {% endif %}
 {% endblock head %}
 {% block body %}
