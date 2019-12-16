@@ -505,7 +505,9 @@ class TableConfiguration(DocumentSchema):
             doc, row_index = doc_row.doc, doc_row.row
 
             row_data = {} if as_json else []
+            row_data_types = []
             for col in self.selected_columns:
+                data_type = col.item.datatype
                 val = col.get_value(
                     domain,
                     document_id,
@@ -523,13 +525,17 @@ class TableConfiguration(DocumentSchema):
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
+                    row_data_types.extend([data_type] * len(val))
                 else:
                     row_data.append(val)
+                    row_data_types.append(data_type)
             if as_json:
                 rows.append(row_data)
             else:
                 rows.append(ExportRow(
-                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                    data=row_data,
+                    hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns),
+                    data_types=row_data_types,
                 ))
         return rows
 
@@ -1319,9 +1325,10 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data, hyperlink_column_indices=()):
+    def __init__(self, data, hyperlink_column_indices=(), data_types=()):
         self.data = data
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.data_types = data_types
 
 
 class ScalarItem(ExportItem):
