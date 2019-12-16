@@ -85,7 +85,6 @@ class Command(BaseCommand):
         state_district_map_file.write(json.dumps(state_district_map, indent=2))
         state_district_map_file.close()
 
-
         block_topojson_file.close()
         district_topojson_file.close()
         print('done')
