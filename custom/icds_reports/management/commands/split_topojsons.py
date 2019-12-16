@@ -12,18 +12,30 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         input_dir = os.path.join(Path(__file__).parent.parent.parent, 'static', 'js', 'topojsons')
+        output_dir = os.path.join(Path(__file__).parent.parent.parent, 'utils', 'topojson_util', 'static')
         # loading block topojson object
-        block_topojson_file = open(os.path.join(input_dir, 'blocks_v3.topojson.js'))
+        block_topojson_filename = os.path.join(input_dir, 'blocks_v3.topojson.js')
+        block_topojson_file = open(block_topojson_filename)
         block_topojson_file_content = block_topojson_file.read()
-        block_topojson = json.loads(block_topojson_file_content[21:])
-
+        # strip off 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+        block_topojson = json.loads(block_topojson_file_content[21:][:-2])
 
         # loading district topojson object
-        district_topojson_file = open(os.path.join('districts_v2.topojson.js'))
+        district_topojson_filename = os.path.join(input_dir, 'districts_v2.topojson.js')
+        district_topojson_file = open(district_topojson_filename)
         district_topojson_file_content = district_topojson_file.read()
-        district_topojson = json.loads(district_topojson_file_content[24:])
+        # strip off 'var DISTRICT_TOPOJSON = ' from the front of the file
+        district_topojson = json.loads(district_topojson_file_content[24:][:-2])
 
-        # creating state district map for mapping
+        # create state district map. end result will look like this:
+        # {
+        #   "state name": {
+        #     "districts": [
+        #       "district name",
+        #       "district name 2",
+        #     ]
+        #   }
+        # }
         state_district_map = {}
         for district in block_topojson['objects'].keys():
             for state, data in district_topojson['objects'].items():
@@ -31,26 +43,27 @@ class Command(BaseCommand):
                     if district == district2['id']:
                         if state in state_district_map:
                             state_district_map[state]['districts'].append(district)
-                            state_district_map[state]['districts'].append(district)
                         else:
                             state_district_map[state] = {}
                             state_district_map[state]['districts'] = [district]
 
-
-        # creating files for each of the state
+        # create actual shape data files for each of the states
         for state, data in state_district_map.items():
             district_list = data['districts']
             districts = ','.join(district_list)
             file_name_part = state.replace(' &', '').replace('&', '').replace(' ', '_').lower()
-            file_path = '"topojson/' + file_name_part + '_blocks_v3.topojson"'
+            output_filename = '{}_blocks_v3.topojson'.format(file_name_part)
+            output_file_path = os.path.join(output_dir, 'blocks', output_filename)
 
             # breaking block topojson for each state using mapshaper : https://www.npmjs.com/package/mapshaper
-            subprocess.call("mapshaper block_topojson.topojson -o target='" + districts + "' " + file_path, shell=True)
+            mapshaper_command = "mapshaper {} -o target='{}' {}".format(
+                block_topojson_filename, districts, output_file_path
+            )
+            subprocess.call(mapshaper_command, shell=True)
 
             # create new topojson file using the topojson created above
-            state_file_name = 'topojson/' + file_name_part + '_blocks_v3.topojson'
-            state_topojson = open(state_file_name)
-            state_topojson_file_content = state_topojson.read()
+            with open(output_file_path) as state_topojson:
+                state_topojson_file_content = state_topojson.read()
 
             # copy center, height and scale data into new topojson from orginal block topojson
             state_topojson_js_json = json.loads(state_topojson_file_content)
@@ -63,16 +76,15 @@ class Command(BaseCommand):
 
             state_topojson_js = json.dumps(state_topojson_js_json)
 
-            state_topojson_js_file = open('topojson/js/' + file_name_part + '_blocks_v3.topojson', 'w+')
-            state_topojson_js_file.write(state_topojson_js)
-            state_topojson_js_file.close()
+            with open(output_file_path, 'w+') as state_topojson_js_file:
+                state_topojson_js_file.write(state_topojson_js)
 
-            data['file_name'] = state_file_name
+            data['file_name'] = output_filename
 
 
         # saving the state district data with file name of topojson for each state
-        state_district_map_file = open('district_topojson_data.json', 'w+')
-        state_district_map_file.write(json.dumps(state_district_map))
+        state_district_map_file = open(os.path.join(output_dir, 'district_topojson_data.json'), 'w+')
+        state_district_map_file.write(json.dumps(state_district_map, indent=2))
         state_district_map_file.close()
 
 
