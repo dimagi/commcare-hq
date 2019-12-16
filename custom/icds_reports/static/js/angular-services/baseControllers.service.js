@@ -1,7 +1,8 @@
 /* global d3, moment */
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
-    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService) {
+    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
+                                         navigationService) {
         var vm = this;
         vm.moveToLocation = function(loc, index) {
             if (loc === 'national') {
@@ -25,8 +26,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.filtersOpen = false;
             if (!data.location) {
                 vm.moveToLocation('national', -1);
+
             } else {
                 vm.moveToLocation(data.location, data.locationLevel);
+            }
+            if (data.locationLevel === 4 && $location.path().indexOf('awc_reports') === -1) {
+                // jump to AWC reports if an AWC is selected
+                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
             }
             dateHelperService.updateSelectedMonth(data['month'], data['year']);
             storageService.setKey('search', $location.search());
@@ -38,7 +44,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
                   navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
                   isMobile) {
-            BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
+            BaseFilterController.call(
+                this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
+            );
             var vm = this;
 
             if (Object.keys($location.search()).length === 0) {
