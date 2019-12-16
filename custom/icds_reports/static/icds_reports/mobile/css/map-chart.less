@@ -6,9 +6,21 @@
   .float-unset;
   .p-3;
   .rounded-border;
-  max-height: calc(100vh - 170px);
+  max-height: ~"calc(100vh - 170px)";
   overflow: auto;
 }
+
+.mapView {
+  .shadow;
+  .bg-white;
+  .mx-auto;
+  .float-unset;
+  .p-3;
+  .rounded-border;
+  height: ~"calc(100vh - 170px)";
+  overflow: auto;
+}
+
 .location-names {
   .font-montserrat;
   .font-weight-600;
@@ -31,5 +43,5 @@ a:active, a:hover, a:focus {
   display: flex;
   -ms-flex-align: center;
   align-items: center;
-  min-height: calc(100% - (.5rem * 2));
+  min-height: ~"calc(100% - (.5rem * 2))";
 }

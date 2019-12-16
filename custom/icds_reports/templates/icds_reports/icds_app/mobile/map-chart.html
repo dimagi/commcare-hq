@@ -1,31 +1,19 @@
 {% load staticfiles %}
-<div class="app-bg min-vh-100">
+<div class="app-bg min-vh-100" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
   <div ng-show="!$ctrl.filtersOpen">
-    <div class="bg-white">
-      <div class="filter-header">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="d-flex align-items-center">
-            <a href="{$ $ctrl.getBackArrowLink() $}">
-              <img src="{% static "icds_reports/mobile/images/back-icon.png" %}" class="mr-2">
-            </a>
-            <p class="font-montserrat font-weight-600 font-16 text-white mb-0" ng-bind="$ctrl.label"></p>
-          </div>
-          <filter-opener></filter-opener>
-        </div>
-        <p class="font-montserrat font-weight-600 font-16 text-white" style="padding-left: 40px;">
-          {$ $ctrl.selectedMonthDisplay $} | National
-          <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                      &gt; {$ loc.name $}
-          </span>
-        </p>
-      </div>
+    <div class="top-section p-3">
+      {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
+    </div>
+    <div class="bg-white" id="map-chart-header">
       <div class="d-flex align-items-center" >
         <div class="col-xs-6 section-heading" ng-class="{'selectedSection': $ctrl.step === stepId}" ng-bind="step.label" ng-click="$ctrl.goToRoute(step.route)" ng-repeat="(stepId, step) in $ctrl.steps"></div>
       </div>
     </div>
     <div ng-if="$ctrl.step === 'map'" style="padding-top: 10px">
-      <div class="chartView col-xs-11">
-        I'm a Map!
+      <div class="mapView col-xs-11">
+        <map-or-sector-view label="$ctrl.label" template-popup="$ctrl.templatePopup(loc, row)"
+                            mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location">
+        </map-or-sector-view>
       </div>
     </div>
     <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">

@@ -187,12 +187,28 @@ of the primary node.
 
 In order to maintain the SQL function naming the new plproxy cluster must be in a separate database.
 
-Steps to setup:
+.. image:: images/django_db_sharded_standbys.png
+
+**Example usage**
+
+.. code-block:: python
+
+    # this will connect to the shard standby node directly
+    case = CommCareCaseSQL.objects.partitioned_get(case_id)
+
+    # this will call the `get_cases_by_id` function on the 'standby' proxy which in turn
+    # will query the shard standby nodes
+    cases = CaseAccessor(domain).get_cases(case_ids)
+
+These examples assume the standby routing is active as described in the `Routing queries to standbys`_
+section below.
+
+**Steps to setup**
 
 1. Add all the standby shard databases to the Django `DATABASES` setting as described above.
 
-2. Create a new database for the standby plproxy cluster configuration and functions and add it to `DATABASES`
-as shown below:
+2. Create a new database for the standby plproxy cluster configuration and SQL accessor functions
+and add it to `DATABASES` as shown below:
 
 .. code-block:: python
 
@@ -205,7 +221,8 @@ as shown below:
         }
     }
 
-3. Run the Django migrations to create the SQL functions in the new standby proxy database.
+3. Run the `configure_pl_proxy_cluster` management command to create the config on the 'standby' database.
+4. Run the Django migrations to create the tables and SQL functions in the new standby proxy database.
 
 Routing queries to standbys
 ---------------------------
@@ -218,7 +235,8 @@ route queries to them the DB router must be told to do so. This can be done it o
 
     export READ_FROM_PLPROXY_STANDBYS=1
 
-This will route ALL read queries to the shard standbys.
+This will route ALL read queries to the shard standbys. This is mostly useful when running a process like
+pillowtop that does is asynchronous.
 
 2. Via a Django decorator / context manager
 

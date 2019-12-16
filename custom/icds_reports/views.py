@@ -361,6 +361,7 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
+        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -372,17 +373,19 @@ class DashboardView(TemplateView):
 
 
 @location_safe
-class IcdsDynamicTemplateView(TemplateView):
+class IcdsDynamicTemplateViewBase(TemplateView):
+    template_directory = None
 
     def get_template_names(self):
-        return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+        return [f'{self.template_directory}/%s.html' % self.kwargs['template']]
 
 
-@location_safe
-class IcdsDynamicMobileTemplateView(TemplateView):
+class IcdsDynamicTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app'
 
-    def get_template_names(self):
-        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
+
+class IcdsDynamicMobileTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app/mobile'
 
 
 @location_safe

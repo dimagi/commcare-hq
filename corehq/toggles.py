@@ -1388,6 +1388,13 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+ICDS_MOBILE_DASHBOARD_MAPS = DynamicallyPredictablyRandomToggle(
+    'icds_mobile_dashboard_maps',
+    'ICDS: Enable Maps on the Mobile Dashboard',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+)
+
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
@@ -1781,4 +1788,15 @@ USE_NEW_GET_COLUMN = StaticToggle(
     '(strictly for QA right now).',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+    'livequery_read_from_standbys',
+    'Allow livequery restore to read data from plproxy standbys if they are available',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description="""
+    To allow a gradual rollout and testing of using the standby
+    databases to generate restore payloads.
+    """
 )

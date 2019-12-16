@@ -8,27 +8,40 @@
   {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
   {% endcompress %}
-
-  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
-  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
 
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
 {% compress js %}
   <script src="{% static 'autotrack/autotrack.js' %}"></script>
   <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
+  <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
+  <script src="{% static 'topojson/topojson.js' %}"></script>
+  <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
+
   <script src="{% static 'angular/angular.js' %}"></script>
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+  <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+{% endcompress %}
+{% comment %}
+Split up compression due to a weird js dependency bug that makes it not work without this.
+{% endcomment %}
+{% compress js %}
+  <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
   {# only needed for importing location directive - not actually referenced by mobile dashboard #}
   <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+  {# only needed for importing awc report directive - not actually referenced by mobile dashboard #}
+  <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
+  <script src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
+  <script src="{% static 'angular-datatables/dist/plugins/fixedheader/angular-datatables.fixedheader.js' %}"></script>
 
 
   <script src="{% static 'js/icds_app_mobile.js' %}"></script>
@@ -50,9 +63,17 @@
   <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
 
-  {% include 'icds_reports/partials/shared_report_directives.html' %}
-
+  {# maps #}
+  <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
+  <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
 {% endcompress %}
+
+  {% include 'icds_reports/partials/shared_report_directives.html' %}
+{% if mobile_maps_enabled %}
+  <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
+  <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
+  <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
+{% endif %}
 {% endblock head %}
 {% block body %}
 <div class="hidden">
@@ -80,11 +101,9 @@
   hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
   angular.module(appName).value('cgBusyDefaults', {
     message:'Loading data',
-    backdrop: true,
-    templateUrl: url('icds-ng-template', 'busy'),
+    templateUrl: url('icds-ng-template-mobile', 'busy'),
     delay: 300,
     minDuration: 700,
-    wrapperClass: 'my-class my-class2'
   });
   angular.bootstrap(document.getElementById('app'), [appName]);
 </script>
