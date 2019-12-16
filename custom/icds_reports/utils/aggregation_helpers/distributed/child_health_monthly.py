@@ -322,8 +322,6 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("state_id", "child_health.state_id")
         )
         return """
-        DROP TABLE IF EXISTS "{child_tablename}";
-        CREATE TABLE "{child_tablename}" PARTITION OF "{tablename}" FOR VALUES IN (%(state_id)s);
         INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
@@ -361,7 +359,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
-            child_tablename='{}_{}'.format(self.temporary_tablename, state_id),
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
             tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -391,6 +389,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
+
+    def drop_partition(self, state_id):
+        return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
+
+    def create_partition(self, state_id):
+        return "CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" PARTITION OF \"{tmp_tablename}\" FOR VALUES IN ('{state_id}')".format(
+            tmp_tablename=self.temporary_tablename,
+            state_id_last_5=state_id[-5:],
+            state_id=state_id
+        )
 
     def aggregation_query(self):
         return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(

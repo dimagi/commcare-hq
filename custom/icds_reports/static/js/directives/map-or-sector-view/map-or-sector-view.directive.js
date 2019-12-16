@@ -1,7 +1,9 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, isMobile) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
+                               mobileMapsEnabled) {
     var vm = this;
+    vm.mobileMapsEnabled = mobileMapsEnabled;
     var location_id = $location.search().location_id;
 
     if (['null', 'undefined', ''].indexOf(location_id) === -1) {
@@ -108,10 +110,9 @@ function MapOrSectorController($location, storageService, locationsService, isMo
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                         }
                     });
                 });
@@ -146,11 +147,13 @@ function MapOrSectorController($location, storageService, locationsService, isMo
     };
 }
 
-MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService', 'isMobile'];
+MapOrSectorController.$inject = [
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
+];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView', function () {
+window.angular.module('icdsApp').directive('mapOrSectorView',  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -160,9 +163,11 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function () {
             location: '=',
             label: '=',
         },
-        templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('map-or-sector-view.directive');
+        },
         bindToController: true,
         controller: MapOrSectorController,
         controllerAs: '$ctrl',
     };
-});
+}]);
