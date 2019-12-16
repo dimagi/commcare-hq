@@ -21,6 +21,7 @@ from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
 
+from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -658,6 +659,17 @@ def update_exchange_rates():
                 "Error updating exchange rates: %s" % str(e),
                 show_stack_trace=True,
             )
+
+
+# Email this out on the first day and first hour of each month
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
+def send_credits_on_hq_report():
+    if settings.SAAS_REPORTING_EMAIL:
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        credits_report = CreditsAutomatedReport()
+        credits_report.send_report(settings.SAAS_REPORTING_EMAIL)
+        log_accounting_info("Sent credits on hq report as of {}".format(
+            yesterday.isoformat()))
 
 
 def ensure_explicit_community_subscription(domain_name, from_date, method, web_user=None):

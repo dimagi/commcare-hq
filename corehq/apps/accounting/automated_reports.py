@@ -13,21 +13,31 @@ from couchexport.models import Format
 
 
 class CreditsAutomatedReport(object):
+    """
+    This report gets sent to the finance team to determine how many credits
+    are still active on subscriptions and billing accounts on HQ.
+
+    But why base the report on 'yesterday'?
+    It is much more difficult to trigger a report on the last day of the month
+    (which changes) vs. the first day of the month.
+    Since this report is generally run of the first hour on the first day
+    of the month, the report is really about the previous day's credits.
+    """
 
     def send_report(self, recipient):
-        today = datetime.date.today()
-        today_string = today.strftime("%d %b %Y")
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        yesterday_string = yesterday.strftime("%d %b %Y")
         table = self._generate_report_table()
 
         file_to_attach = io.BytesIO()
         export_from_tables(
-            [[today_string, table]],
+            [[yesterday_string, table]],
             file_to_attach,
             Format.XLS_2007
         )
 
         email_context = {
-            'today': today_string,
+            'date_of_report': yesterday_string,
         }
         email_content = render_to_string(
             'accounting/email/credits_on_hq.html', email_context)
@@ -36,14 +46,14 @@ class CreditsAutomatedReport(object):
         format_dict = Format.FORMAT_DICT[Format.XLS_2007]
 
         file_attachment = {
-            'title': 'Credits_on_hq_{}'.format(today.isoformat()),
+            'title': 'Credits_on_hq_{}'.format(yesterday.isoformat()),
             'mimetype': format_dict['mimetype'],
             'file_obj': file_to_attach,
         }
 
         from_email = "Dimagi Finance <{}>".format(settings.DEFAULT_FROM_EMAIL)
         send_HTML_email(
-            "Credits on HQ as of {}".format(today_string),
+            "Credits on HQ as of {}".format(yesterday_string),
             recipient,
             email_content,
             email_from=from_email,
