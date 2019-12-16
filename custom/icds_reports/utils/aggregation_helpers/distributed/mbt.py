@@ -146,6 +146,7 @@ class CcsMbtDistributedHelper(MBTDistributedHelper):
                 'valid_visits',
                 'dob',
                 'date_death',
+                'person_name',
                 'husband_name',
                 'lmp',
                 'migration_status',
