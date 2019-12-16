@@ -36,7 +36,7 @@ class ProductForm(forms.Form):
     def __init__(self, product, *args, **kwargs):
         self.product = product
 
-        kwargs['initial'] = self.product._doc
+        kwargs['initial'] = self.product.to_dict()
         kwargs['initial']['code'] = self.product.code
 
         super(ProductForm, self).__init__(*args, **kwargs)
