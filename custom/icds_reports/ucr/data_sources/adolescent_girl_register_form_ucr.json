@@ -58,21 +58,20 @@
     ],
     "configured_indicators": [
       {
-        "column_id": "timeend",
         "datatype": "datetime",
-        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "timeend",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "type": "property_path",
-            "datatype": "datetime",
-            "property_path": [
-              "form",
-              "meta",
-              "timeEnd"
-            ]
-          }
-        }
+          "datatype": "datetime",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        },
+        "type": "expression"
       },
       {
         "column_id": "state_id",
