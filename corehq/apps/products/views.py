@@ -35,7 +35,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.forms import ProductForm
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.products.tasks import import_products_async
 from corehq.apps.programs.models import Program
 from corehq.util.files import file_extention_from_filename
@@ -47,7 +47,7 @@ def archive_product(request, domain, prod_id, archive=True):
     """
     Archive product
     """
-    product = Product.get(prod_id)
+    product = SQLProduct.objects.get(product_id=prod_id)
     product.archive()
     return json_response({
         'success': True,
@@ -64,7 +64,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
     """
     Unarchive product
     """
-    product = Product.get(prod_id)
+    product = SQLProduct.objects.get(product_id=prod_id)
     try:
         product.unarchive()
     except DuplicateProductCodeException:
@@ -220,7 +220,7 @@ class NewProductView(BaseCommTrackManageView):
     @property
     @memoized
     def product(self):
-        return Product(domain=self.domain)
+        return SQLProduct(domain=self.domain)
 
     @property
     def parent_pages(self):
@@ -374,13 +374,6 @@ def download_products(request, domain):
 
         return model_data, uncategorized_data
 
-    def _get_products(domain):
-        product_ids = SQLProduct.objects.filter(domain=domain).product_ids()
-        for p_doc in iter_docs(Product.get_db(), product_ids):
-            # filter out archived products from export
-            if not ('is_archived' in p_doc and p_doc['is_archived']):
-                yield Product.wrap(p_doc)
-
     def _build_row(keys, product):
         row = []
         for key in keys:
@@ -406,7 +399,9 @@ def download_products(request, domain):
     uncategorized_data = set()
     products = []
 
-    for product in _get_products(domain):
+    sql_products = SQLProduct.active_objects.filter(domain=domain)
+
+    for product in sql_products:
         product_dict = product.to_dict()
 
         product_model, product_uncategorized = _parse_custom_properties(product)
@@ -454,8 +449,8 @@ class EditProductView(NewProductView):
     @memoized
     def product(self):
         try:
-            return Product.get(self.product_id)
-        except ResourceNotFound:
+            return SQLProduct.objects.get(product_id=self.product_id)
+        except SQLProduct.DoesNotExist:
             raise Http404()
 
     @property

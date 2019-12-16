@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from lxml import etree
@@ -10,7 +11,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.parsers.ledgers.helpers import (
@@ -102,14 +103,16 @@ def bootstrap_location_types(domain):
         previous = location_type
 
 
-def make_product(domain, name, code, program_id):
-    p = Product()
-    p.domain = domain
-    p.name = name
-    p.code = code.lower()
-    p.program_id = program_id
-    p.save()
-    return p
+def make_product(domain, name, code, program_id=None, product_id=None, unit=None, product_data=None):
+    return SQLProduct.objects.create(
+        domain=domain,
+        name=name,
+        code=code.lower(),
+        program_id=program_id,
+        product_data=product_data,
+        units=unit,
+        product_id=product_id or uuid.uuid4().hex
+    )
 
 
 def bootstrap_products(domain):

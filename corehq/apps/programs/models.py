@@ -10,7 +10,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.apps.groups.models import dt_no_Z_re
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 
 class Program(Document):
@@ -70,19 +70,6 @@ class Program(Document):
 
         sql_products = SQLProduct.objects.filter(domain=self.domain,
                                                  program_id=self.get_id)
-        to_save = []
-        for product in sql_products.couch_products():
-            product['program_id'] = default._id
-            to_save.append(product)
-
-            # break up saving in case there are many products
-            if len(to_save) > 500:
-                Product.bulk_save(to_save)
-                to_save = []
-
-        Product.bulk_save(to_save)
-
-        # bulk update sqlproducts
         sql_products.update(program_id=default._id)
 
         super(Program, self).delete()

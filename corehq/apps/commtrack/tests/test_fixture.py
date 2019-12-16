@@ -21,7 +21,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.commtrack.tests import util
 from corehq.apps.products.fixtures import product_fixture_generator
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.programs.models import Program
 
@@ -56,10 +56,10 @@ class FixtureTest(TestCase, TestXmlMixin):
 
     def generate_product_xml(self, user, randomize_data=True):
         products = []
-        product_list = Product.by_domain(user.domain)
+        product_list = SQLProduct.active_objects.filter(domain=user.domain)
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
-            product_id = product._id
+            product_id = product.product_id
             product_name = next(self.product_names)
             product_unit = self._random_string(20)
             product_code = self._random_string(20)
@@ -108,7 +108,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             )
 
             product.name = product_name
-            product.unit = product_unit
+            product.units = product_unit
             product.code = product_code
             product.description = product_description
             product.category = product_category
@@ -166,7 +166,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         expected_xml = self.generate_product_fixture_xml(user)
 
-        product_list = Product.by_domain(user.domain)
+        product_list = SQLProduct.objects.filter(domain=user.domain)
         self._initialize_product_names(len(product_list))
 
         fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
@@ -331,28 +331,30 @@ class SimpleFixtureGeneratorTests(TestCase):
 
     def test_product_decimal_value(self):
         products = [
-            Product(
-                _id="1",
+            SQLProduct(
+                product_id="1",
                 domain="test-domain",
                 name="Foo",
-                code_="foo",
+                code="foo",
                 cost=10,
             ),
-            Product(
-                _id="2",
+            SQLProduct(
+                product_id="2",
                 domain="test-domain",
                 name="Bar",
-                code_="bar",
+                code="bar",
                 cost=9.99,
             ),
-            Product(
-                _id="3",
+            SQLProduct(
+                product_id="3",
                 domain="test-domain",
                 name="Baz",
-                code_="baz",
+                code="baz",
                 cost=10.0,
             ),
         ]
+        SQLProduct.objects.bulk_create(products)
+        products = list(SQLProduct.objects.filter(domain='test-domain').order_by('product_id').all())
         fixtures = simple_fixture_generator(
             restore_user=MockUser(user_id="123456"),
             id="7890ab",
