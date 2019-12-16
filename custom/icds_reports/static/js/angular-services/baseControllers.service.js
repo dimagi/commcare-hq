@@ -331,7 +331,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     if (location.location_type_name === 'awc') {
                         $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                     }
-
                 });
             };
         },
