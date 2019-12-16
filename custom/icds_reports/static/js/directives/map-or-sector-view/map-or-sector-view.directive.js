@@ -1,6 +1,7 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, isMobile, mobileMapsEnabled) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
+                               mobileMapsEnabled) {
     var vm = this;
     vm.mobileMapsEnabled = mobileMapsEnabled;
     var location_id = $location.search().location_id;
@@ -111,22 +112,7 @@ function MapOrSectorController($location, storageService, locationsService, isMo
                         $location.search('location_id', location.location_id);
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            var awcReportPath = 'awc_reports';
-                            // Routes for various tabs on PS page
-                            var tabRoutes = {
-                                'maternal_child': '/maternal_child',
-                                'maternal_and_child': '/maternal_child',
-                                'demographics': '/demographics',
-                                'awc_infrastructure': '/awc_infrastructure',
-                                'icds_cas_reach': '/pse',
-                            };
-                            for (var tab in tabRoutes) {
-                                if ($location.path().indexOf(tab) !== -1) {
-                                    awcReportPath += tabRoutes[tab];
-                                    break;    
-                                }
-                            }
-                            $location.path(awcReportPath);
+                            $location.path(navigationService.getAWCTabFromProgramSummaryTab($location.path()));
                         }
                     });
                 });
@@ -162,7 +148,7 @@ function MapOrSectorController($location, storageService, locationsService, isMo
 }
 
 MapOrSectorController.$inject = [
-    '$location', 'storageService', 'locationsService', 'isMobile', 'mobileMapsEnabled',
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
 ];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
