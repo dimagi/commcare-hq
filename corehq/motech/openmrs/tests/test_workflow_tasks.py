@@ -45,6 +45,79 @@ def test_concept_directions():
     })
 
 
+def test_start_stop_datetime_export():
+    form_config_dict = get_form_config_dict()
+    form_config_dict["openmrs_start_datetime"] = {
+        "form_question": "/data/visit_datetime",
+        "external_data_type": "omrs_datetime",
+    }
+    form_json = {
+        "form": {
+            "@xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+            "visit_datetime": "2018-01-01T12:00:00.00000Z",
+            "meta": {"timeEnd": "2019-12-16T12:36:00.00000Z"},
+        }
+    }
+    info = CaseTriggerInfo(
+        domain="test-domain",
+        case_id="c0ffee",
+        form_question_values={
+            "/data/visit_datetime": "2018-01-01T12:00:00.00000Z",
+            "/metadata/timeEnd": "2019-12-16T12:36:00.00000Z",
+        }
+    )
+    task = CreateVisitsEncountersObsTask(
+        requests=None,
+        domain="test-domain",
+        info=info,
+        form_json=form_json,
+        openmrs_config=OpenmrsConfig.wrap({
+            "case_config": {},
+            "form_configs": [form_config_dict],
+        }),
+        person_uuid="test-person_uuid",
+    )
+    start_datetime, stop_datetime = task._get_start_stop_datetime(
+        OpenmrsFormConfig.wrap(form_config_dict)
+    )
+    eq(start_datetime, "2018-01-01T12:00:00.000+0000")
+    eq(stop_datetime, "2018-01-02T11:59:59.000+0000")
+
+
+def test_start_stop_datetime_import():
+    form_config_dict = get_form_config_dict()
+    form_config_dict['openmrs_start_datetime'] = {
+        "direction": "in",
+        "case_property": "ehr_last_visit_date",
+        "external_data_type": "omrs_datetime",
+        "commcare_data_type": "cc_date",
+        "jsonpath": "encounterDateTime",
+    }
+    form_json = {
+        "form": {
+            "@xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+            "meta": {"timeEnd": "2019-12-16T12:36:00.00000Z"},
+        }
+    }
+    info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
+    task = CreateVisitsEncountersObsTask(
+        requests=None,
+        domain="test-domain",
+        info=info,
+        form_json=form_json,
+        openmrs_config=OpenmrsConfig.wrap({
+            "case_config": {},
+            "form_configs": [form_config_dict],
+        }),
+        person_uuid="test-person_uuid",
+    )
+    start_datetime, stop_datetime = task._get_start_stop_datetime(
+        OpenmrsFormConfig.wrap(form_config_dict)
+    )
+    eq(start_datetime, "2019-12-16T12:36:00.000+0000")
+    eq(stop_datetime, "2019-12-17T12:35:59.000+0000")
+
+
 def get_form_config_dict():
     return {
         "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
