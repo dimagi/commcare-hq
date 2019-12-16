@@ -1,0 +1,6 @@
+Dear Finance Team,
+
+Attached is a report of all Credits on HQ as of {{ today }}.
+
+Cheers,
+--The CommCareHQ Team
