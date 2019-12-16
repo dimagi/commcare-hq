@@ -1492,7 +1492,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = "Dashboard Usage"
+    worksheet.title = "Dashboard Activity"
     bold_font = Font(size=11, color="FFFFFF", bold=True)
     cell_pattern_blue = PatternFill("solid", fgColor="3387E3")
     text_alignment = Alignment(horizontal="left", vertical='center', wrap_text=True)

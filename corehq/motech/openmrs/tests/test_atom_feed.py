@@ -346,7 +346,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
             get_observation_mappings(self.repeater),
-            None, None, None
+            (None, None, None)
         )
         self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
         self.assertEqual(case_blocks, [])
@@ -358,7 +358,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
             get_diagnosis_mappings(self.repeater),
-            None, None, None
+            (None, None, None)
         )
         self.assertEqual(case_block_kwargs, {
             'owner_id': 'emergency_room_user_id',
@@ -376,9 +376,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
             get_observation_mappings(self.repeater),
-            'test-case-id',
-            'patient',
-            'default-owner-id'
+            ('test-case-id', 'patient', 'default-owner-id')
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -411,9 +409,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
             get_diagnosis_mappings(self.repeater),
-            'test-case-id',
-            'patient',
-            'default-owner-id'
+            ('test-case-id', 'patient', 'default-owner-id')
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)

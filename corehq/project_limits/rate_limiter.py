@@ -3,7 +3,6 @@ import time
 
 import attr
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.users.models import CommCareUser
 from corehq.project_limits.models import DynamicRateDefinition
 from corehq.project_limits.rate_counter.presets import (
@@ -112,6 +111,7 @@ def _get_user_count(domain):
 
 
 def _get_users_included_in_subscription(domain):
+    from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
         plan_version = subscription.plan_version

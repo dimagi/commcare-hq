@@ -45,7 +45,7 @@ class TestAlembicDiffs(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.metadata.drop_all(cls.engine)
-        connection_manager.dispose_engine()
+        connection_manager.dispose_engines()
         super(TestAlembicDiffs, cls).tearDownClass()
 
     def setUp(self):
