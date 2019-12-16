@@ -1,4 +1,3 @@
-
 COPY (
 select district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name,
 SUM(pse_eligible) as pse_eligible,
@@ -22,7 +21,7 @@ from  awc_location left join
     )
 WHERE child_health.age_in_months>36 and aggregation_level=5
 group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
-) To '/tmp/pse_JULY_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/pse_NOV_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
 
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
@@ -74,7 +73,7 @@ from  awc_location left join
     )
 WHERE child_health.age_in_months>60 and aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
-) To '/tmp/pse_JULY_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/pse_NOV_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
    Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
@@ -122,7 +121,7 @@ from  awc_location left join
     )
 WHERE child_health.age_in_months>36 and aggregation_level=5
 group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
-) To '/tmp/lunch_Sept_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/lunch_NOV_3_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
@@ -147,7 +146,7 @@ from  awc_location left join
     )
 WHERE child_health.age_in_months>60 and awc_location.aggregation_level=5
 group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
-) To '/tmp/lunch_Sept_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/lunch_NOV_5_6.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
@@ -182,7 +181,7 @@ from  awc_location inner join
     )
 WHERE awc_location.aggregation_level=5
 group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
-) To '/tmp/thr_preg_Sept.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/thr_preg_NOV.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
    Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
@@ -238,7 +237,7 @@ from  awc_location inner join
     )
 WHERE awc_location.aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
-) To '/tmp/thr_lact_Sept.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/thr_lact_NOV.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
 
 
@@ -265,7 +264,7 @@ from  awc_location left join
     )
 WHERE thr_eligible=1 and awc_location.aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
-) To '/tmp/thr_child_July.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+) To '/tmp/thr_child_NOV.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
    Group Key: remote_scan.district_name, remote_scan.block_name, remote_scan.supervisor_name, remote_scan.supervisor_id, remote_scan.awc_name, remote_scan.month
@@ -304,7 +303,7 @@ LEFT JOIN (
                         ) cbe_table on  awc_location.doc_id = cbe_table.awc_id
 WHERE awc_location.aggregation_level = 5 and awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039'
 
-)To '/tmp/cbe_conduction.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+)To '/tmp/cbe_conduction_NOV.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 /*
  Gather  (cost=47400.10..197120.62 rows=55578 width=74)
    Workers Planned: 4
