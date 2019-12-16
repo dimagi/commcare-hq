@@ -1,5 +1,7 @@
+import csv
 import itertools
 import uuid
+from io import StringIO
 from collections import Counter
 from datetime import datetime, timedelta
 
@@ -8,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
+from django.db.models import Q, Case, When, BooleanField
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -31,6 +34,7 @@ from lxml.builder import E
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
@@ -112,7 +116,8 @@ class SuperuserManagement(UserAdministration):
         # render validation errors if rendered after POST
         args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
         return {
-            'form': SuperuserManagementForm(*args)
+            'form': SuperuserManagementForm(*args),
+            'users': annotated_superusers(),
         }
 
     def post(self, request, *args, **kwargs):
@@ -139,6 +144,41 @@ class SuperuserManagement(UserAdministration):
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+
+@require_superuser
+def superuser_table(request):
+    superusers = annotated_superusers()
+    f = StringIO()
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Two Factor Enabled'])
+    for user in superusers:
+        csv_writer.writerow([
+            user.username, user.is_staff, user.is_superuser, user.two_factor_enabled])
+    response = HttpResponse(content_type=Format.from_format('csv').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="superuser_table.csv"'
+    response.write(f.getvalue())
+    return response
+
+
+def annotated_superusers():
+    return _annotate_user_queryset_with_two_factor_enabled(User.objects.filter(
+        Q(is_superuser=True) | Q(is_staff=True)
+    ))
+
+
+def _annotate_user_queryset_with_two_factor_enabled(user_queryset):
+    """Annotate a User queryset with a two_factor_enabled field"""
+    return user_queryset.annotate(
+        two_factor_enabled=Case(
+            When(
+                Q(totpdevice__isnull=True, phonedevice__isnull=True, staticdevice__isnull=True),
+                then=False
+            ),
+            default=True,
+            output_field=BooleanField(),
+        )
+    )
 
 
 class AdminRestoreView(TemplateView):
