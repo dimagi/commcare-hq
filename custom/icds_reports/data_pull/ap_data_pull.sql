@@ -18,7 +18,7 @@ from  awc_location left join
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
     awc_location.supervisor_id = child_health.supervisor_id AND
     district_is_test<>1 and
-    child_health.month='2019-10-01'
+    child_health.month='2019-11-01'
     )
 WHERE child_health.age_in_months>36 and aggregation_level=5
 group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
@@ -40,7 +40,7 @@ group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,
                                  Workers Planned: 5
                                  ->  Nested Loop  (cost=1.11..465745.87 rows=1 width=110)
                                        ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=61099 width=78)
-                                             Index Cond: (month = '2019-10-01'::date)
+                                             Index Cond: (month = '2019-11-01'::date)
                                              Filter: (age_in_months > 36)
                                        ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..0.87 rows=1 width=129)
                                              Index Cond: (doc_id = child_health.awc_id)
@@ -70,7 +70,7 @@ from  awc_location left join
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
     awc_location.supervisor_id = child_health.supervisor_id AND
     district_is_test=0 AND
-    child_health.month='2019-10-01'
+    child_health.month='2019-11-01'
     )
 WHERE child_health.age_in_months>60 and aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
@@ -91,7 +91,7 @@ group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id
                                  Workers Planned: 5
                                  ->  Nested Loop  (cost=1.11..443645.21 rows=1 width=110)
                                        ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=24200 width=78)
-                                             Index Cond: (month = '2019-10-01'::date)
+                                             Index Cond: (month = '2019-11-01'::date)
                                              Filter: (age_in_months > 60)
                                        ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..1.30 rows=1 width=129)
                                              Index Cond: (doc_id = child_health.awc_id)
@@ -118,7 +118,7 @@ month
 from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
+    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-11-01'
     )
 WHERE child_health.age_in_months>36 and aggregation_level=5
 group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
@@ -143,7 +143,7 @@ month
 from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
+    district_is_test=0 AND awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-11-01'
     )
 WHERE child_health.age_in_months>60 and awc_location.aggregation_level=5
 group by  district_name, block_name,supervisor_name,awc_location.supervisor_id,awc_name,month
@@ -178,7 +178,7 @@ from  awc_location inner join
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
     district_is_test=0  AND
     awc_location.supervisor_id = ccs_record.supervisor_id AND
-    pregnant=1 and lactating=0 and ccs_record.month = '2019-10-01'
+    pregnant=1 and lactating=0 and ccs_record.month = '2019-11-01'
     )
 WHERE awc_location.aggregation_level=5
 group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,awc_name, month
@@ -199,7 +199,7 @@ group by  district_name, block_name, supervisor_name,awc_location.supervisor_id,
                                  Workers Planned: 5
                                  ->  Nested Loop  (cost=0.55..105719.20 rows=1 width=110)
                                        ->  Parallel Seq Scan on ccs_record_monthly_102712 ccs_record  (cost=0.00..100622.41 rows=2083 width=78)
-                                             Filter: ((pregnant = 1) AND (lactating = 0) AND (month = '2019-10-01'::date))
+                                             Filter: ((pregnant = 1) AND (lactating = 0) AND (month = '2019-11-01'::date))
                                        ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..2.44 rows=1 width=129)
                                              Index Cond: (doc_id = ccs_record.awc_id)
                                              Filter: ((district_is_test = 0) AND (aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (ccs_record.supervisor_id = supervisor_id))
@@ -234,7 +234,7 @@ from  awc_location inner join
 "ccs_record_monthly" ccs_record on (awc_location.doc_id=ccs_record.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
     district_is_test=0 and awc_location.supervisor_id = ccs_record.supervisor_id AND
-    pregnant=0 and lactating=1 and ccs_record.month = '2019-10-01'
+    pregnant=0 and lactating=1 and ccs_record.month = '2019-11-01'
     )
 WHERE awc_location.aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
@@ -261,7 +261,7 @@ month
 from  awc_location left join
 "child_health_monthly" child_health on (awc_location.doc_id=child_health.awc_id and
     awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039' and
-    district_is_test=0 and awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-10-01'
+    district_is_test=0 and awc_location.supervisor_id = child_health.supervisor_id AND child_health.month='2019-11-01'
     )
 WHERE thr_eligible=1 and awc_location.aggregation_level=5
 group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id,awc_name,month
@@ -282,7 +282,7 @@ group by  district_name, block_name,  supervisor_name,awc_location.supervisor_id
                                  Workers Planned: 5
                                  ->  Nested Loop  (cost=1.11..454172.94 rows=1 width=110)
                                        ->  Parallel Index Scan using chm_month_supervisor_id_102648 on child_health_monthly_102648 child_health  (cost=0.56..411985.61 rows=41400 width=78)
-                                             Index Cond: (month = '2019-10-01'::date)
+                                             Index Cond: (month = '2019-11-01'::date)
                                              Filter: (thr_eligible = 1)
                                        ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc_location  (cost=0.55..1.01 rows=1 width=129)
                                              Index Cond: (doc_id = child_health.awc_id)
@@ -299,7 +299,7 @@ LEFT JOIN (
                         select awc_id,
                                count(*) as cbe_conducted from
                             "ucr_icds-cas_static-cbe_form_f7988a04"
-                                WHERE date_cbe_organise>='2019-10-01' and date_cbe_organise<'2019-11-01'
+                                WHERE date_cbe_organise>='2019-11-01' and date_cbe_organise<'2019-11-01'
                                 GROUP BY awc_id
                         ) cbe_table on  awc_location.doc_id = cbe_table.awc_id
 WHERE awc_location.aggregation_level = 5 and awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039'
@@ -320,6 +320,6 @@ WHERE awc_location.aggregation_level = 5 and awc_location.state_id='f98e91aa003a
          ->  GroupAggregate  (cost=0.43..141406.63 rows=211011 width=41)
                Group Key: "ucr_icds-cas_static-cbe_form_f7988a04".awc_id
                ->  Index Scan using "ix_ucr_icds-cas_static-cbe_form_f7988a04_awc_id" on "ucr_icds-cas_static-cbe_form_f7988a04"  (cost=0.43..136808.60 rows=497584 width=33)
-                     Filter: ((date_cbe_organise >= '2019-10-01'::date) AND (date_cbe_organise < '2019-11-01'::date))
+                     Filter: ((date_cbe_organise >= '2019-11-01'::date) AND (date_cbe_organise < '2019-11-01'::date))
 (15 rows)
 */
