@@ -109,10 +109,24 @@ function MapOrSectorController($location, storageService, locationsService, isMo
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            var awcReportPath = 'awc_reports';
+                            // Routes for various tabs on PS page
+                            var tabRoutes = {
+                                'maternal_child': '/maternal_child',
+                                'maternal_and_child': '/maternal_child',
+                                'demographics': '/demographics',
+                                'awc_infrastructure': '/awc_infrastructure',
+                                'icds_cas_reach': '/pse',
+                            };
+                            for (var tab in tabRoutes) {
+                                if ($location.path().indexOf(tab) !== -1) {
+                                    awcReportPath += tabRoutes[tab];
+                                    break;    
+                                }
+                            }
+                            $location.path(awcReportPath);
                         }
                     });
                 });
