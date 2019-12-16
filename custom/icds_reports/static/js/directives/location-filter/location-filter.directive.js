@@ -255,7 +255,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             }
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
-                var awcReportPath = navigationService.getAWCTabFromProgramSummaryTab($location.path());
+                var awcReportPath = navigationService.getAWCTabFromPagePath($location.path());
                 $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');

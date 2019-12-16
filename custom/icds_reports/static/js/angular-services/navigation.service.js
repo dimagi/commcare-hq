@@ -16,7 +16,7 @@ window.angular.module('icdsApp').factory('navigationService', function () {
             });
             return page_path;
         },
-        getAWCTabFromProgramSummaryTab: function (path) {
+        getAWCTabFromPagePath: function (path) {
             var awcReportPath = 'awc_reports';
             // Routes for various tabs on PS page
             var tabRoutes = {

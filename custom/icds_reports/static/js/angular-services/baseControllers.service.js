@@ -32,7 +32,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             }
             if (data.locationLevel === 4 && $location.path().indexOf('awc_reports') === -1) {
                 // jump to AWC reports if an AWC is selected
-                $location.path(navigationService.getAWCTabFromProgramSummaryTab($location.path()));
+                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
             }
             dateHelperService.updateSelectedMonth(data['month'], data['year']);
             storageService.setKey('search', $location.search());

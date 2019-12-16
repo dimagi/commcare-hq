@@ -112,7 +112,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
                         $location.search('location_id', location.location_id);
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path(navigationService.getAWCTabFromProgramSummaryTab($location.path()));
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                         }
                     });
                 });
