@@ -126,14 +126,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
         if (location.location_type === 'state') {
             locationLevel = 0;
-        }
-        else if (location.location_type === 'district') {
+        } else if (location.location_type === 'district') {
             locationLevel = 1;
-        }
-        else if (location.location_type === 'block') {
+        } else if (location.location_type === 'block') {
             locationLevel = 2;
-        }
-        else {
+        } else {
             locationLevel = -1;
         }
 
