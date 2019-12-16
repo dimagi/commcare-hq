@@ -33,7 +33,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            queryset = queryset.exclude(age_tranche__lt=72)
+            queryset = queryset.filter(age_tranche__lt=72)
         return queryset
 
     data_for_map = defaultdict(lambda: {
