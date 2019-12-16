@@ -299,7 +299,7 @@ LEFT JOIN (
                         select awc_id,
                                count(*) as cbe_conducted from
                             "ucr_icds-cas_static-cbe_form_f7988a04"
-                                WHERE date_cbe_organise>='2019-11-01' and date_cbe_organise<'2019-11-01'
+                                WHERE date_cbe_organise>='2019-11-01' and date_cbe_organise<'2019-12-01'
                                 GROUP BY awc_id
                         ) cbe_table on  awc_location.doc_id = cbe_table.awc_id
 WHERE awc_location.aggregation_level = 5 and awc_location.state_id='f98e91aa003accb7b849a0f18ebd7039'
@@ -320,6 +320,6 @@ WHERE awc_location.aggregation_level = 5 and awc_location.state_id='f98e91aa003a
          ->  GroupAggregate  (cost=0.43..141406.63 rows=211011 width=41)
                Group Key: "ucr_icds-cas_static-cbe_form_f7988a04".awc_id
                ->  Index Scan using "ix_ucr_icds-cas_static-cbe_form_f7988a04_awc_id" on "ucr_icds-cas_static-cbe_form_f7988a04"  (cost=0.43..136808.60 rows=497584 width=33)
-                     Filter: ((date_cbe_organise >= '2019-11-01'::date) AND (date_cbe_organise < '2019-11-01'::date))
+                     Filter: ((date_cbe_organise >= '2019-11-01'::date) AND (date_cbe_organise < '2019-12-01'::date))
 (15 rows)
 */
