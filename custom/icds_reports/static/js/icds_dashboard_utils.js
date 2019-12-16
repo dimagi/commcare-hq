@@ -36,6 +36,7 @@ hqDefine("js/icds_dashboard_utils", function () {
             {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
             {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
         ]);
+        angular.module(appName).constant('mobileMapsEnabled', initialPageData.get("mobile_maps_enabled"));
     }
 
     function addMaternalChildRoutes($routeProvider) {
@@ -114,9 +115,24 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<awcs-covered></awcs-covered>",
             });
     }
+    function addAWCReportRoutes($routeProvider) {
+        $routeProvider.when("/awc_reports", {
+                redirectTo: "/awc_reports/pse",
+            })
+            .when("/awc_reports/:step", {
+                template: "<awc-reports></awc-reports>",
+            });
+    }
+    function addSharedRoutes($routeProvider) {
+        addMaternalChildRoutes($routeProvider);
+        addCasReachRoutes($routeProvider);
+        addAWCReportRoutes($routeProvider);
+    }
     return {
         populateDashboardConstants: populateDashboardConstants,
         addMaternalChildRoutes: addMaternalChildRoutes,
         addCasReachRoutes: addCasReachRoutes,
+        addAWCReportRoutes: addAWCReportRoutes,
+        addSharedRoutes: addSharedRoutes,
     };
 });

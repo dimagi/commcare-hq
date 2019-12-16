@@ -49,7 +49,7 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     if errors:
         raise ResourceOverrideError("""
             Cannot update overrides for domain {}, app {}, errors:\n{}
-        """.strip().format(domain, app_id, "\n".join(errors)))
+        """.strip().format(domain, app_id, "\n".join(["\t{}".format(e) for e in errors])))
 
 
 @quickcache(['domain', 'app_id'], timeout=1 * 60 * 60)

@@ -619,7 +619,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         self.cc_user.delete()
         self.cc_domain.delete()
 
-        connection_manager.dispose_engine('ucr')
+        connection_manager.dispose_engines('ucr')
         self.db_context.__exit__(None, None, None)
 
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',

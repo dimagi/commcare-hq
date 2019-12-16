@@ -82,6 +82,7 @@ hqDefine('icds_reports/js/spec/utils', function () {
         provideOverrideOrDefault("isAlertActive", false);
         provideOverrideOrDefault("haveAccessToAllLocations", false);
         provideOverrideOrDefault("isMobile", false);
+        provideOverrideOrDefault("mobileMapsEnabled", false);
     };
     return module;
 });
