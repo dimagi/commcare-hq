@@ -56,7 +56,7 @@ class CreditsAutomatedReport(object):
 
         from_email = "Dimagi Finance <{}>".format(settings.DEFAULT_FROM_EMAIL)
         send_HTML_email(
-            "{} Credits on HQ on {}".format(
+            "{} Credits on HQ {}".format(
                 yesterday_string,
                 settings.SERVER_ENVIRONMENT,
             ),
