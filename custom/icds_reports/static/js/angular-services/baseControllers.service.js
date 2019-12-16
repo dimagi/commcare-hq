@@ -329,7 +329,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
 
                     storageService.setKey('search', $location.search());
                     if (location.location_type_name === 'awc') {
-                        $location.path('awc_reports');
+                        $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                     }
 
                 });
