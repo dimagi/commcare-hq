@@ -434,6 +434,16 @@ class ProgramSummaryView(BaseReportView):
         )
         return JsonResponse(data=data)
 
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class TopoJsonView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        district = request.GET.get('district')
+        topojson = getTopoJsonForDistrict(district)
+        data = {'topojson': topojson}
+        return JsonResponse(data=data)
+
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class LadySupervisorView(BaseReportView):

@@ -1,6 +1,7 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+                            topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -46,8 +47,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.mapHeight = 0;
     vm.scalingFactor = 1;
 
-    vm.initTopoJson = function (location_level, location) {
-        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+    vm.initTopoJson = function (location_level, location, topojson) {
+        if (location_level === void (0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
@@ -58,9 +59,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         } else if (location_level === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            if (haveAccessToFeatures) {
+                Datamap.prototype[vm.type] = topojson;
+            } else {
+                Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            }
         }
-        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
+        if (Datamap.prototype[vm.type].objects[vm.scope] !== void (0)) {
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
@@ -115,22 +120,23 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return vm.scalingFactor * options.scale;
     };
 
-    var mapConfiguration = function (location) {
+    var mapConfiguration = function (location, topojson) {
 
         var location_level = -1;
+
         if (location.location_type === 'state') location_level = 0;
         else if (location.location_type === 'district') location_level = 1;
         else if (location.location_type === 'block') location_level = 2;
         else location_level = -1;
 
-        vm.initTopoJson(location_level, location);
+        vm.initTopoJson(location_level, location, topojson);
 
         vm.map = {
             scope: vm.scope,
-            rightLegend: vm.data && vm.data !== void(0) ? vm.data.rightLegend : null,
-            label: vm.data && vm.data !== void(0) ? vm.data.label : null,
+            rightLegend: vm.data && vm.data !== void (0) ? vm.data.rightLegend : null,
+            label: vm.data && vm.data !== void (0) ? vm.data.label : null,
             data: getData(vm.data),
-            fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
+            fills: vm.data && vm.data !== void (0) ? vm.data.fills : null,
             height: vm.mapHeight,
             geographyConfig: {
                 highlightFillColor: '#00f8ff',
@@ -199,10 +205,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         html.push('<hr/></div>');
 
                         var locName = 'National';
-                        if (storageService.getKey('selectedLocation') !== void(0)) {
+                        if (storageService.getKey('selectedLocation') !== void (0)) {
                             locName = storageService.getKey('selectedLocation')['name'];
                         }
-                        if (this.options.rightLegend['average'] !== void(0)) {
+                        if (this.options.rightLegend['average'] !== void (0)) {
                             html.push('<div class="row no-margin">');
                             if (this.options.rightLegend['average_format'] === 'number') {
                                 html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
@@ -249,10 +255,16 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        mapConfiguration(location);
+        if (location.location_type === 'district') {
+                topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
+                    mapConfiguration(location, resp.topojson);
+                });
+        } else {
+            mapConfiguration(location);
+        }
     });
 
-    vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
+    vm.indicator = vm.data && vm.data !== void (0) ? vm.data.slug : null;
 
     vm.changeIndicator = function (value) {
         window.angular.forEach(vm.data, function (row) {
@@ -266,7 +278,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     var getData = function (data) {
-        var mapData = data && data !== void(0) ? data.data : null;
+        var mapData = data && data !== void (0) ? data.data : null;
         if (!mapData) {
             return null;
         }
@@ -277,9 +289,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += "<div class=\"modal-header\">";
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
-                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+            'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html +="<div class=\"modal-body\">";
+        html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
@@ -293,7 +305,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     vm.updateMap = function (geography) {
-        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+        if (geography.id !== void (0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             var html = vm.getHtmlContent(geography);
             var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
 
@@ -305,7 +317,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             $compile(popup[0])($scope);
         } else {
             var location = geography.id || geography;
-            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+            if (geography.id !== void (0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
                 location = vm.data.data[geography.id].original_name[0];
             }
             locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
@@ -324,7 +336,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    'haveAccessToFeatures', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('indieMap', function () {
