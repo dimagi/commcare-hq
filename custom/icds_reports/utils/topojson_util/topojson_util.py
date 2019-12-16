@@ -2,7 +2,7 @@ import json
 import os
 
 
-def getTopoJsonForDistrict(district):
+def get_topojson_for_district(district):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
     district_topojson_data_path = os.path.join(path, 'district_topojson_data.json')
