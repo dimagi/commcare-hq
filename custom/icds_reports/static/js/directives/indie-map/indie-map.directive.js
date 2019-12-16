@@ -48,7 +48,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.scalingFactor = 1;
 
     vm.initTopoJson = function (location_level, location, topojson) {
-        if (location_level === void (0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
@@ -65,7 +65,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
             }
         }
-        if (Datamap.prototype[vm.type].objects[vm.scope] !== void (0)) {
+        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
@@ -133,10 +133,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
         vm.map = {
             scope: vm.scope,
-            rightLegend: vm.data && vm.data !== void (0) ? vm.data.rightLegend : null,
-            label: vm.data && vm.data !== void (0) ? vm.data.label : null,
+            rightLegend: vm.data && vm.data !== void(0) ? vm.data.rightLegend : null,
+            label: vm.data && vm.data !== void(0) ? vm.data.label : null,
             data: getData(vm.data),
-            fills: vm.data && vm.data !== void (0) ? vm.data.fills : null,
+            fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
             height: vm.mapHeight,
             geographyConfig: {
                 highlightFillColor: '#00f8ff',
@@ -205,10 +205,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         html.push('<hr/></div>');
 
                         var locName = 'National';
-                        if (storageService.getKey('selectedLocation') !== void (0)) {
+                        if (storageService.getKey('selectedLocation') !== void(0)) {
                             locName = storageService.getKey('selectedLocation')['name'];
                         }
-                        if (this.options.rightLegend['average'] !== void (0)) {
+                        if (this.options.rightLegend['average'] !== void(0)) {
                             html.push('<div class="row no-margin">');
                             if (this.options.rightLegend['average_format'] === 'number') {
                                 html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
@@ -264,7 +264,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     });
 
-    vm.indicator = vm.data && vm.data !== void (0) ? vm.data.slug : null;
+    vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
 
     vm.changeIndicator = function (value) {
         window.angular.forEach(vm.data, function (row) {
@@ -278,7 +278,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     var getData = function (data) {
-        var mapData = data && data !== void (0) ? data.data : null;
+        var mapData = data && data !== void(0) ? data.data : null;
         if (!mapData) {
             return null;
         }
@@ -305,7 +305,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     vm.updateMap = function (geography) {
-        if (geography.id !== void (0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             var html = vm.getHtmlContent(geography);
             var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
 
@@ -317,7 +317,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             $compile(popup[0])($scope);
         } else {
             var location = geography.id || geography;
-            if (geography.id !== void (0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
                 location = vm.data.data[geography.id].original_name[0];
             }
             locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
