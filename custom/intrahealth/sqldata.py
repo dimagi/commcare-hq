@@ -3958,7 +3958,59 @@ class LocationLevelMixin:
         return "{}_name".format(self.loc_type_to_get)
 
 
-class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
+class ProductsAndProgramsMixin:
+    config = {}
+
+    @property
+    @memoized
+    def program_and_products(self):
+        rows = {}
+        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
+        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
+
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
+
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in product_ids:
+                    product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
+
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
+            rows[program_id] = [
+                p['product_id'] for p in products_list
+                if program_name if p['product_name'] is not None
+            ]
+
+        return rows
+
+    def is_product_in_program(self, product_info, program):
+        if product_info[0] in self.program_and_products[program] or \
+                product_info[1] in self.program_and_products[program]:
+            return True
+
+        return False
+
+
+class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin, ProductsAndProgramsMixin):
     slug = 'disponibilite'
     comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
     title = 'Disponibilité'
@@ -4018,47 +4070,6 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
         return columns
 
     @property
-    @memoized
-    def program_and_products(self):
-        rows = {}
-        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
-        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
-
-        all_data = sorted(all_data, key=lambda x: x['program_name'])
-        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
-
-        for data in all_data:
-            program_name = data['program_name']
-            program_id = data['program_id']
-            product_ids = data['product_ids']
-            length = len(product_ids)
-            index = 0
-            while index < length:
-                product_id = product_ids[index]
-                if product_id not in product_ids:
-                    product_ids.pop(index)
-                    index -= 1
-                    length -= 1
-                index += 1
-
-            products_list = []
-            for product_data in all_products_data:
-                product_id = product_data['product_id']
-                product_name = product_data['product_name']
-                if product_id in product_ids:
-                    products_list.append({
-                        'product_id': product_id,
-                        'product_name': product_name,
-                    })
-
-            rows[program_id] = [
-                p['product_id'] for p in products_list
-                if program_name if p['product_name'] is not None
-            ]
-
-        return rows
-
-    @property
     def rows(self):
         rows_to_return = []
         rows = self.get_data()
@@ -4082,8 +4093,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                 program_id = stock['program_id'].split(' ')
                 if len(program_id) > 1:
                     for program in program_id:
-                        if (program == wanted_program and product_id in self.program_and_products[program]) \
-                                or not wanted_program:
+                        if self.is_product_in_program((product_id, product_name), program) and \
+                                (program == wanted_program or not wanted_program):
                             stock['program_id'] = program
                             stocks.append(stock.copy())
                 else:
@@ -4135,8 +4146,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                                (self.is_product_in_program((product_id, product_name), program_id) and
+                                (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -4183,7 +4194,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
         return clean_data
 
 
-class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
+class TauxDeRuptureRateData(SqlData, LocationLevelMixin, ProductsAndProgramsMixin):
     slug = 'taux_de_rupture_par_pps'
     comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
     title = 'Taux de Rupture par PPS'
@@ -4245,47 +4256,6 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
         return columns
 
     @property
-    @memoized
-    def program_and_products(self):
-        rows = {}
-        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
-        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
-
-        all_data = sorted(all_data, key=lambda x: x['program_name'])
-        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
-
-        for data in all_data:
-            program_name = data['program_name']
-            program_id = data['program_id']
-            product_ids = data['product_ids']
-            length = len(product_ids)
-            index = 0
-            while index < length:
-                product_id = product_ids[index]
-                if product_id not in product_ids:
-                    product_ids.pop(index)
-                    index -= 1
-                    length -= 1
-                index += 1
-
-            products_list = []
-            for product_data in all_products_data:
-                product_id = product_data['product_id']
-                product_name = product_data['product_name']
-                if product_id in product_ids:
-                    products_list.append({
-                        'product_id': product_id,
-                        'product_name': product_name,
-                    })
-
-            rows[program_id] = [
-                p['product_id'] for p in products_list
-                if program_name if p['product_name'] is not None
-            ]
-
-        return rows
-
-    @property
     def rows(self):
         rows_to_return = []
         rows = self.get_data()
@@ -4309,8 +4279,8 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                 program_id = stock['program_id'].split(' ')
                 if len(program_id) > 1:
                     for program in program_id:
-                        if (program == wanted_program and product_id in self.program_and_products[program]) \
-                                or not wanted_program:
+                        if self.is_product_in_program((product_id, product_name), program) and \
+                                (program == wanted_program or not wanted_program):
                             stock['program_id'] = program
                             stocks.append(stock.copy())
                 else:
@@ -4362,8 +4332,8 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                                (self.is_product_in_program((product_id, product_name), program_id) and
+                                (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -4410,7 +4380,7 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
         return clean_data
 
 
-class ConsommationPerProductData(SqlData, LocationLevelMixin):
+class ConsommationPerProductData(SqlData, LocationLevelMixin, ProductsAndProgramsMixin):
     slug = 'consommation_per_product'
     comment = ''
     title = 'Consommation per product'
@@ -4472,47 +4442,6 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
         return columns
 
     @property
-    @memoized
-    def program_and_products(self):
-        rows = {}
-        all_data = ProductsInProgramWithNameData(config={'domain': self.config['domain']}).rows
-        all_products_data = ProductData(config={'domain': self.config['domain']}).rows
-
-        all_data = sorted(all_data, key=lambda x: x['program_name'])
-        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
-
-        for data in all_data:
-            program_name = data['program_name']
-            program_id = data['program_id']
-            product_ids = data['product_ids']
-            length = len(product_ids)
-            index = 0
-            while index < length:
-                product_id = product_ids[index]
-                if product_id not in product_ids:
-                    product_ids.pop(index)
-                    index -= 1
-                    length -= 1
-                index += 1
-
-            products_list = []
-            for product_data in all_products_data:
-                product_id = product_data['product_id']
-                product_name = product_data['product_name']
-                if product_id in product_ids:
-                    products_list.append({
-                        'product_id': product_id,
-                        'product_name': product_name,
-                    })
-
-            rows[program_id] = [
-                p['product_id'] for p in products_list
-                if program_name if p['product_name'] is not None
-            ]
-
-        return rows
-
-    @property
     def rows(self):
         rows = self.get_data()
 
@@ -4536,8 +4465,8 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
                 actual_consumption = consumption['actual_consumption']
                 if len(program_id) > 1:
                     for program in program_id:
-                        if (program == wanted_program and product_id in self.program_and_products[program]) \
-                                or not wanted_program:
+                        if self.is_product_in_program((product_id, product_name), program) and \
+                                (program == wanted_program or not wanted_program):
                             consumption['program_id'] = program
                             consumptions.append(consumption.copy())
                 else:
@@ -4575,8 +4504,8 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                                (self.is_product_in_program((product_id, product_name), program_id) and
+                                (program_id == wanted_program or not wanted_program)):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -5990,6 +5919,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                           add_sum_of_visits_column=False, add_availability_column=False):
         rows = []
         data = self.recap_rows
+        total_row = ['SYNTHESE']
+        values_for_total_row = {}
+        average_availability = {}
+
+        if add_amount_owed_column or add_latest_visit_column:
+            add_total_row = True
+        else:
+            add_total_row = False
 
         for pps in data.keys():
             pps_data = data[pps]
@@ -6000,10 +5937,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             pps_product_values = self.get_row_product_values(pps_data, displayed_values)
             for name in self.product_names:
                 product_value = pps_product_values.get(name, {'html': 0})
+                if add_total_row:
+                    self._collect_value(values_for_total_row, name, product_value)
+
                 row.append(product_value)
 
             if add_amount_owed_column:
                 amount_sum = self._get_amount_owed(pps_data)
+                self._collect_value(values_for_total_row, 'Recouvrement PPS Net à Payer', amount_sum)
 
                 row.append(amount_sum)
 
@@ -6018,18 +5959,29 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 row.append(visits_for_pps)
 
             if add_availability_column:
-                availability = self._get_availability(most_recent_pps_data)
-
-                row.append(availability)
+                self._collect_availability(average_availability, pps_data)
 
             rows.append(row)
+
+        if add_total_row:
+            for key, value in values_for_total_row.items():
+                total_row.append({'html': value})
+            rows.append(total_row)
+
+        if add_availability_column:
+            self._append_availability_to_rows(rows, average_availability)
 
         return rows
 
     def get_row_product_values(self, pps_data, column):
         product_value = {}
         for row in pps_data:
-            product_value[row['product_name']] = row.get(column, {'html': 0})
+            key = row['product_name']
+            value = row.get(column, {'html': 0})['html']
+            if key in product_value:
+                product_value[key]['html'] += value
+            else:
+                product_value[key] = {'html': value}
         return product_value
 
     def create_row_with_column_values_sum(self, row_name, rows, title_column=True):
@@ -6091,16 +6043,21 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
         return {'html': len(visits)}
 
-    def _get_availability(self, data):
-        products_available = 0
-        for record in data:
-            products_available += 1 if record['total_stock']['html'] else 0
-        availability = round((float(products_available / len(self.product_names)) * 100), 2)
-
-        return {
-            'html': f'{availability}%',
-            'percent': True,
-        }
+    def _collect_availability(self, availability_dict, data):
+        products_amount = len(self.product_names)
+        for row in data:
+            date_repeat = row['real_date_repeat'].strftime('%Y/%m/%d')
+            pps_name = row['pps_name']
+            in_stock = 1 if row['total_stock']['html'] else 0
+            if availability_dict.get(pps_name):
+                if availability_dict[pps_name].get(date_repeat):
+                    availability_dict[pps_name][date_repeat][0] += in_stock
+                else:
+                    availability_dict[pps_name][date_repeat] = [in_stock, products_amount]
+            else:
+                availability_dict[pps_name] = {
+                    date_repeat: [in_stock, products_amount]
+                }
 
     @staticmethod
     def _get_amount_owed(ppses_data):
@@ -6117,6 +6074,28 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 to_return += amount
 
         return {'html': to_return}
+
+    @staticmethod
+    def _collect_value(values_dict, key, product_value):
+        value = product_value['html']
+        if values_dict.get(key, None):
+            values_dict[key] += value
+        else:
+            values_dict[key] = value
+
+    @staticmethod
+    def _append_availability_to_rows(collected_rows, availability_dict):
+        for row in collected_rows:
+            pps_name = row[0]
+            dates = availability_dict[pps_name]
+            average = 0
+            for date, availability in dates.items():
+                average += (availability[0] / availability[1]) * 100
+            average = round((float(average) / len(dates)), 2)
+            row.append({
+                'html': f'{average}%',
+                'percent': True,
+            })
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):

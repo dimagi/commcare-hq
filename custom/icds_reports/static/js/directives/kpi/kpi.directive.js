@@ -1,17 +1,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
-function KpiController($location, haveAccessToFeatures) {
+function KpiController($rootScope, $location, navigationService, haveAccessToFeatures) {
     this.haveAccessToFeatures = haveAccessToFeatures;
     this.goToStep = function(path) {
-        var page_path = "#/" + path;
-        if (Object.keys($location.search()).length > 0) {
-            page_path += '?';
-        }
-        window.angular.forEach($location.search(), function(v, k) {
-            page_path += (k + '=' + v + '&');
-        });
-        return page_path;
+        return navigationService.getPagePath(path, $location.search());
     };
 
     this.showPercentInfo = function () {
@@ -24,9 +17,19 @@ function KpiController($location, haveAccessToFeatures) {
     };
 
     this.isNumber = window.angular.isNumber;
+
+    // Added to hide Infantometer and Stadiometer cards in the UI. To be removed post testing
+    this.toShowInKpi = function (cellLabel) {
+        return !cellLabel.includes('Infantometer') && !cellLabel.includes('Stadiometer');
+    };
+
+    // used by mobile dashboard only
+    this.showHelp = function (heading, help) {
+        $rootScope.$broadcast('showHelp', heading, help);
+    };
 }
 
-KpiController.$inject = ['$location', 'haveAccessToFeatures'];
+KpiController.$inject = ['$rootScope', '$location', 'navigationService', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
     return {

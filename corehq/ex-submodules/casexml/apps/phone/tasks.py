@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from django.db.models import Min
+from django.db import connections, router
 
 from celery import current_task, current_app
 from celery.schedules import crontab
@@ -9,7 +10,6 @@ from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
-from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
@@ -103,5 +103,7 @@ def prune_synclogs():
             week="%02d" % week
         )
         drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
-        get_cursor(SyncLogSQL).execute(drop_query)
+        db = router.db_for_write(SyncLogSQL)
+        with connections[db].cursor() as cursor:
+            cursor.execute(drop_query)
         oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']

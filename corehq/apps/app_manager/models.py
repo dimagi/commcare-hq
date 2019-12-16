@@ -1202,11 +1202,6 @@ class FormBase(DocumentSchema):
             return key
         return format_key
 
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         try:
@@ -2336,13 +2331,6 @@ class ModuleDetailsMixin(object):
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -3042,7 +3030,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.requires_case() for form in self.forms)
+        return all(form.requires_case() for form in self.get_forms())
 
     @property
     def search_detail(self):
@@ -3064,7 +3052,7 @@ class AdvancedModule(ModuleBase):
         return AdvancedModuleValidator(self)
 
     def _uses_case_type(self, case_type, invert_match=False):
-        return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
+        return any(form.uses_case_type(case_type, invert_match) for form in self.get_forms())
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
@@ -4133,8 +4121,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
 
+    def heartbeat_url(self, build_profile_id=None):
+        return self.base_heartbeat_url + '?build_profile_id=%s' % (build_profile_id or '')
+
     @absolute_url_property
-    def heartbeat_url(self):
+    def base_heartbeat_url(self):
         return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
@@ -4587,7 +4578,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
     def has_modules(self):
-        return len(self.modules) > 0 and not self.is_remote_app()
+        return len(self.get_modules()) > 0 and not self.is_remote_app()
 
     @property
     @memoized
@@ -4846,8 +4837,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
-
-        apk_heartbeat_url = self.heartbeat_url
+        apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
@@ -5059,7 +5049,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         raise ModuleNotFoundException(error)
 
     def get_report_modules(self):
-        for module in self.modules:
+        for module in self.get_modules():
             if isinstance(module, ReportModule):
                 yield module
 
@@ -5185,7 +5175,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         from_module = self.get_module_by_unique_id(from_module_uid)
         to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[from_index].pre_move_hook(from_module, to_module)
+            from_module.get_form(from_index).pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
@@ -5207,10 +5197,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def move_child_modules_after_parents(self):
         # This makes the module ordering compatible with the front-end display
         modules_by_parent_id = OrderedDict(
-            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+            (m.unique_id, [m]) for m in self.get_modules() if not m.root_module_id
         )
         orphaned_modules = []
-        for module in self.modules:
+        for module in self.get_modules():
             if module.root_module_id:
                 if module.root_module_id in modules_by_parent_id:
                     modules_by_parent_id[module.root_module_id].append(module)
@@ -5713,6 +5703,20 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
+class SQLGlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
 class GlobalAppConfig(Document):
     # this should be the unique id of the app (not of a versioned copy)
     app_id = StringProperty()
@@ -5755,6 +5759,20 @@ class GlobalAppConfig(Document):
 
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
+
+        # Save to SQL
+        model, created = SQLGlobalAppConfig.objects.update_or_create(
+            domain=self.domain,
+            app_id=self.app_id,
+            defaults={
+                'apk_prompt': self.apk_prompt,
+                'app_prompt': self.app_prompt,
+                'apk_version': self.apk_version or LATEST_APK_VALUE,
+                'app_version': self.app_version or LATEST_APP_VALUE,
+            }
+        )
+
+        # Save to couch
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 

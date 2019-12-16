@@ -318,7 +318,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             """),
             ("mother_phone_number", "child_health.mother_phone_number"),
             ("date_death", "child_health.date_death"),
-            ("mother_case_id", "child_health.mother_case_id")
+            ("mother_case_id", "child_health.mother_case_id"),
+            ("state_id", "child_health.state_id")
         )
         return """
         INSERT INTO "{tablename}" (
@@ -381,7 +382,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def create_temporary_table(self):
         return """
-        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly INCLUDING INDEXES);
+        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly, PRIMARY KEY (supervisor_id, case_id, month));
         SELECT create_distributed_table('{table}', 'supervisor_id');
         """.format(table=self.temporary_tablename)
 

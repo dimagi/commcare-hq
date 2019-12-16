@@ -95,8 +95,9 @@ PARTITION_CONFIG_WITH_STANDBYS = databases = _get_partition_config({
     'db2': [2, 3],
 })
 PARTITION_CONFIG_WITH_STANDBYS.update({
-    'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
-    'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+    'proxy_standby': {'NAME': 'proxy', 'PLPROXY': {'PROXY_FOR_STANDBYS': True}},
+    'db1_standby': {'NAME': 'db1', 'STANDBY': {'MASTER': 'db1'}},
+    'db2_standby': {'NAME': 'db2', 'STANDBY': {'MASTER': 'db2'}},
 })
 
 
@@ -148,8 +149,8 @@ class TestPartitionConfig(SimpleTestCase):
         primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
         with override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS):
             standby_config = _get_standby_plproxy_config(primary_config)
-        self.assertEqual('commcarehq_standby', standby_config.cluster_name)
-        self.assertEqual('proxy', standby_config.proxy_db)
+        self.assertEqual('commcarehq', standby_config.cluster_name)
+        self.assertEqual('proxy_standby', standby_config.proxy_db)
         self.assertEqual({'db1_standby', 'db2_standby'}, set(standby_config.form_processing_dbs))
         self.assertEqual(primary_config.shard_count, standby_config.shard_count)
 
@@ -168,6 +169,20 @@ class TestPartitionConfig(SimpleTestCase):
         primary_config = PlProxyConfig.from_dict(databases)
         with override_settings(DATABASES=databases), self.assertRaises(PartitionValidationError):
             _get_standby_plproxy_config(primary_config)
+
+    def test_get_standby_plproxy_config_legacy_format(self):
+        config = PlProxyConfig.from_legacy_dict(TEST_LEGACY_FORMAT)
+        self.assertEqual('proxy', config.proxy_db)
+        self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
+
+        databases = copy.deepcopy(TEST_DATABASES)
+        databases.update({
+            'db1_standby': {'STANDBY': {'MASTER': 'db1'}},
+            'db2_standby': {'STANDBY': {'MASTER': 'db2'}},
+        })
+
+        with override_settings(DATABASES=databases):
+            _get_standby_plproxy_config(config)
 
 
 def test_partition_config_validation():

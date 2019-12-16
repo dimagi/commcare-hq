@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-22 02:18+0000\n"
+"POT-Creation-Date: 2019-12-11 22:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,7 +125,7 @@ msgid "You have unsaved changes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:33
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:56
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
@@ -2801,12 +2801,12 @@ msgstr ""
 msgid "User Registration"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:297
+#: corehq/apps/export/static/export/js/create_export.js:305
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:333
+#: corehq/apps/export/static/export/js/create_export.js:341
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
@@ -3335,15 +3335,14 @@ msgid "An error occurred emailing you report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:14
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:69
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:96
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:117
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:206
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:232
 msgid "Success!"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:17
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:23
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:72
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:209
 msgid "Failed"
 msgstr ""
 
@@ -3748,16 +3747,15 @@ msgstr ""
 msgid "HQ was unable to make the request: "
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:44
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:49
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:80
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:217
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:101
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:122
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:237
 msgid "Failed to cancel"
 msgstr ""
 

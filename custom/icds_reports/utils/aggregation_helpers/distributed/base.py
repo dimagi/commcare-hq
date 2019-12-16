@@ -1,10 +1,11 @@
 import hashlib
 import logging
 
-from django.db import transaction
+from django.db import transaction, router
+
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import (
     AggregationHelper,
@@ -61,20 +62,40 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
 
 class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    """Helper for tables distributed across Citus with no partitioning
+
+    Attributes:
+        months_required - The number of months that the table should keep in the table.
+    """
+    months_required = None
+
     def aggregate(self, cursor):
-        delete_query, delete_params = self.delete_old_data_query()
+        delete_query, delete_params = self.delete_previous_run_query()
         agg_query, agg_params = self.aggregation_query()
 
-        logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
+        logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
+        if self.months_required:
+            cursor.execute(*self.delete_old_data_query())
+        logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(delete_query, delete_params)
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
         logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
-    def delete_old_data_query(self):
+    def delete_previous_run_query(self):
         return (
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
+        )
+
+    def delete_old_data_query(self):
+        if self.months_required is None:
+            return
+
+        month = self.month - relativedelta(months=self.months_required)
+        return (
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s AND state_id = %(state)s',
+            {'month': month_formatter(month), 'state': self.state_id}
         )
 
 
@@ -145,6 +166,9 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
+        logger.info(f"Creating temporary distributed table for {self.helper_key}")
+        cursor.execute(self.drop_temporary_table())
+        cursor.execute(self.create_temporary_table())
         logger.info(f"Creating staging table for {self.helper_key}")
         self.cleanup(cursor)
         cursor.execute(f"""
@@ -182,7 +206,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         for index_query in self.indexes():
             cursor.execute(index_query)
 
-        db_alias = db_for_read_write(self.model)
+        db_alias = router.db_for_write(self.model)
         with transaction.atomic(using=db_alias):
             logger.info(f"Dropping legacy tables for {self.helper_key} {self.month}")
             for i in range(1, 6):
