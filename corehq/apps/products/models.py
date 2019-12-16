@@ -154,7 +154,7 @@ class SQLProduct(models.Model):
         id = row.get('id')
         if id:
             try:
-                product = cls.objects.get(location_id=id)
+                product = cls.objects.get(product_id=id)
             except ResourceNotFound:
                 raise InvalidProductException(
                     _("Product with ID '{product_id}' could not be found!").format(product_id=id)
