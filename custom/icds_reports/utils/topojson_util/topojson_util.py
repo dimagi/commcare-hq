@@ -1,5 +1,10 @@
 import json
 import os
+from pathlib import Path
+
+
+def get_topojson_directory():
+    return os.path.join(Path(__file__).parent.parent.parent, 'static', 'js', 'topojsons')
 
 
 def get_topojson_for_district(district):

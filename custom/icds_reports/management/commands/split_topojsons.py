@@ -6,13 +6,16 @@ from pathlib import Path
 import os
 from django.core.management import BaseCommand
 
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory
+
 
 class Command(BaseCommand):
     help = "Create Split TopoJSON files for districts and blocks"
 
     def handle(self, *args, **kwargs):
-        input_dir = os.path.join(Path(__file__).parent.parent.parent, 'static', 'js', 'topojsons')
+        input_dir = get_topojson_directory()
         output_dir = os.path.join(Path(__file__).parent.parent.parent, 'utils', 'topojson_util', 'static')
+
         # loading block topojson object
         block_topojson_filename = os.path.join(input_dir, 'blocks_v3.topojson.js')
         block_topojson_file = open(block_topojson_filename)
