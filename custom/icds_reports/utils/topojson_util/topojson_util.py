@@ -54,6 +54,14 @@ def get_topojson_file_for_level(level):
 
     return level_function_map[level]()
 
+
+def copy_custom_metadata(from_topojson, to_topojson):
+    for location_name, location_data in to_topojson['objects'].items():
+        location_data['center'] = from_topojson['objects'][location_name]['center']
+        location_data['height'] = from_topojson['objects'][location_name]['height']
+        location_data['scale'] = from_topojson['objects'][location_name]['scale']
+
+
 def get_topojson_for_district(district):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 

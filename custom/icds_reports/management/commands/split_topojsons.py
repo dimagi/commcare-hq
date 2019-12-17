@@ -7,7 +7,7 @@ import os
 from django.core.management import BaseCommand
 
 from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory, get_block_topojson_file, \
-    get_district_topojson_file
+    get_district_topojson_file, copy_custom_metadata
 
 
 class Command(BaseCommand):
@@ -71,12 +71,7 @@ class Command(BaseCommand):
 
             # copy center, height and scale data into new topojson from orginal block topojson
             state_topojson_js_json = json.loads(state_topojson_file_content)
-            for district in state_topojson_js_json['objects'].keys():
-                district_data = state_topojson_js_json['objects'][district]
-                district_data['center'] = block_topojson['objects'][district]['center']
-                district_data['height'] = block_topojson['objects'][district]['height']
-                district_data['scale'] = block_topojson['objects'][district]['scale']
-
+            copy_custom_metadata(block_topojson, state_topojson_js_json)
             state_topojson_js = json.dumps(state_topojson_js_json)
 
             with open(output_file_path, 'w+') as state_topojson_js_file:
