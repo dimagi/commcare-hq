@@ -293,6 +293,14 @@ class AWWVHNDSurveyIndicator(AWWIndicator):
             return []
 
 
+def _get_last_submission_dates(awc_ids):
+    return {
+        row['awc_id']: row['last_submission']
+        for row in AggregateInactiveAWW.objects.filter(
+        awc_id__in=awc_ids).values('awc_id', 'last_submission').all()
+    }
+
+
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
     slug = 'ls_6'
@@ -300,11 +308,7 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_dates = {
-            row['awc_id']: row['last_submission']
-            for row in AggregateInactiveAWW.objects.filter(
-                awc_id__in=set(self.awc_locations)).values('awc_id', 'last_submission').all()
-        }
+        self.last_submission_dates = _get_last_submission_dates(awc_ids=set(self.awc_locations))
 
     def get_messages(self, language_code=None):
         messages = []
