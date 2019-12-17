@@ -161,45 +161,6 @@ window.angular.module('icdsApp', [
             .when("/health_tabular_report", {
                 template: "health_tabular_report",
             })
-            .when("/demographics", {
-                redirectTo: "/demographics/registered_household/map",
-            })
-            .when("/demographics/registered_household", {
-                redirectTo: "/demographics/registered_household/map",
-            })
-            .when("/demographics/registered_household/:step", {
-                template: "<registered-household></registered-household>",
-            })
-            .when("/demographics/enrolled_children", {
-                redirectTo: "/demographics/enrolled_children/map",
-            })
-            .when("/demographics/enrolled_children/:step", {
-                template: "<enrolled-children></enrolled-children>",
-            })
-            .when("/demographics/enrolled_women", {
-                redirectTo: "/demographics/enrolled_women/map",
-            })
-            .when("/demographics/enrolled_women/:step", {
-                template: "<enrolled-women></enrolled-women>",
-            })
-            .when("/demographics/lactating_enrolled_women", {
-                redirectTo: "/demographics/lactating_enrolled_women/map",
-            })
-            .when("/demographics/lactating_enrolled_women/:step", {
-                template: "<lactating-enrolled-women></lactating-enrolled-women>",
-            })
-            .when("/demographics/adolescent_girls", {
-                redirectTo: "/demographics/adolescent_girls/map",
-            })
-            .when("/demographics/adolescent_girls/:step", {
-                template: "<adolescent-girls></adolescent-girls>",
-            })
-            .when("/demographics/adhaar", {
-                redirectTo: "/demographics/adhaar/map",
-            })
-            .when("/demographics/adhaar/:step", {
-                template: "<adhaar-beneficiary></adhaar-beneficiary>",
-            })
             .when("/awc_infrastructure", {
                 redirectTo: "/awc_infrastructure/clean_water/map",
             })

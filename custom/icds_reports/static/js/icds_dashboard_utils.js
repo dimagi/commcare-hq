@@ -115,6 +115,47 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<awcs-covered></awcs-covered>",
             });
     }
+    function addDemographicsRoutes($routeProvider, defaultStep) {
+        return $routeProvider.when("/demographics", {
+            redirectTo: "/demographics/registered_household/" + defaultStep,
+        })
+        .when("/demographics/registered_household", {
+            redirectTo: "/demographics/registered_household/" + defaultStep,
+        })
+        .when("/demographics/registered_household/:step", {
+            template: "<registered-household></registered-household>",
+        })
+        .when("/demographics/enrolled_children", {
+            redirectTo: "/demographics/enrolled_children/" + defaultStep,
+        })
+        .when("/demographics/enrolled_children/:step", {
+            template: "<enrolled-children></enrolled-children>",
+        })
+        .when("/demographics/enrolled_women", {
+            redirectTo: "/demographics/enrolled_women/" + defaultStep,
+        })
+        .when("/demographics/enrolled_women/:step", {
+            template: "<enrolled-women></enrolled-women>",
+        })
+        .when("/demographics/lactating_enrolled_women", {
+            redirectTo: "/demographics/lactating_enrolled_women/" + defaultStep,
+        })
+        .when("/demographics/lactating_enrolled_women/:step", {
+            template: "<lactating-enrolled-women></lactating-enrolled-women>",
+        })
+        .when("/demographics/adolescent_girls", {
+            redirectTo: "/demographics/adolescent_girls/" + defaultStep,
+        })
+        .when("/demographics/adolescent_girls/:step", {
+            template: "<adolescent-girls></adolescent-girls>",
+        })
+        .when("/demographics/adhaar", {
+            redirectTo: "/demographics/adhaar/" + defaultStep,
+        })
+        .when("/demographics/adhaar/:step", {
+            template: "<adhaar-beneficiary></adhaar-beneficiary>",
+        });
+    }
     function addAWCReportRoutes($routeProvider) {
         $routeProvider.when("/awc_reports", {
                 redirectTo: "/awc_reports/pse",
@@ -126,6 +167,7 @@ hqDefine("js/icds_dashboard_utils", function () {
     function addSharedRoutes($routeProvider, defaultStep) {
         addMaternalChildRoutes($routeProvider, defaultStep);
         addCasReachRoutes($routeProvider, defaultStep);
+        addDemographicsRoutes($routeProvider, defaultStep);
         addAWCReportRoutes($routeProvider);
     }
     return {
