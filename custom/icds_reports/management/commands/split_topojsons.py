@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from django.core.management import BaseCommand
 
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory, get_block_topojson_file
 
 
 class Command(BaseCommand):
@@ -17,17 +17,13 @@ class Command(BaseCommand):
         output_dir = os.path.join(Path(__file__).parent.parent.parent, 'utils', 'topojson_util', 'static')
 
         # loading block topojson object
-        block_topojson_filename = os.path.join(input_dir, 'blocks_v3.topojson.js')
-        block_topojson_file = open(block_topojson_filename)
-        block_topojson_file_content = block_topojson_file.read()
-        # strip off 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
-        block_topojson_text = block_topojson_file_content[21:][:-2]
-        block_topojson = json.loads(block_topojson_file_content[21:][:-2])
+        block_topojson_file = get_block_topojson_file()
+        block_topojson = block_topojson_file.topojson
 
         # the mapshaper command needs the variable assignment removed, so save it to a temporary file
         tmp_block_filename = os.path.join(input_dir, 'blocks_tmp.topojson')
         with open(tmp_block_filename, 'w+') as f:
-            f.write(block_topojson_text)
+            f.write(block_topojson_file.topojson_text)
 
         # loading district topojson object
         district_topojson_filename = os.path.join(input_dir, 'districts_v2.topojson.js')
@@ -88,13 +84,13 @@ class Command(BaseCommand):
                 state_topojson_js_file.write(state_topojson_js)
 
             data['file_name'] = output_filename
+            break
 
         # saving the state district data with file name of topojson for each state
         state_district_map_file = open(os.path.join(output_dir, 'district_topojson_data.json'), 'w+')
         state_district_map_file.write(json.dumps(state_district_map, indent=2))
         state_district_map_file.close()
 
-        block_topojson_file.close()
         district_topojson_file.close()
         os.remove(tmp_block_filename)
         print('done')
