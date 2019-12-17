@@ -3,12 +3,16 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function LactatingEnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,
-    haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Lactating Mothers enrolled for Anganwadi Services";
+    vm.serviceDataFunction = demographicsService.getLactatingEnrolledWomenData;
+    vm.usePercentage = false;
+
     vm.steps = {
         'map': {route: '/demographics/lactating_enrolled_women/map', label: 'Map View'},
         'chart': {route: '/demographics/lactating_enrolled_women/chart', label: 'Chart View'},
@@ -22,13 +26,12 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         info: 'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Number of lactating women who are enrolled for Anganwadi Services: ',
                 indicator_value: valid,
             },
@@ -39,17 +42,8 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
             {
                 indicator_name: 'Percentage of registered lactating women who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = false;
-        vm.myPromise = demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -97,13 +91,13 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
 LactatingEnrolledWomenController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
-    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('lactatingEnrolledWomen', function() {
+window.angular.module('icdsApp').directive('lactatingEnrolledWomen', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -111,4 +105,4 @@ window.angular.module('icdsApp').directive('lactatingEnrolledWomen', function() 
         controller: LactatingEnrolledWomenController,
         controllerAs: '$ctrl',
     };
-});
+}]);
