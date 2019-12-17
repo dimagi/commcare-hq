@@ -9,9 +9,8 @@ class TestMigrationForms(BaseFormsTest):
     ucr_name = "static-migration_form"
 
     def test_migration_form(self):
-        pass
         self._test_data_source_results(
-            'migration_form',
+            'migration_form_v31895',
             [{
                 "timeend": None,
                 "migration_status": "migrated",
