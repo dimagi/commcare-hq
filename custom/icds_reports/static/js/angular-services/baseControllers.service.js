@@ -303,9 +303,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.goToRoute = function (route) {
                 $location.path(route);
             };
-            vm.getBackArrowLink = function () {
-                return navigationService.getPagePath('program_summary/' + vm.sectionSlug, $location.search());
-            };
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
 

@@ -9,7 +9,6 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getInstitutionalDeliveriesData;
 
     vm.label = "Institutional deliveries";

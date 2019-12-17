@@ -9,7 +9,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.earlyInitiationBreastfeeding;
 
     var genderIndex = _.findIndex(genders, function (x) {
