@@ -55,6 +55,10 @@
               {$ indicatorData.indicator_name $}
               <span class="font-weight-600" ng-bind="indicatorData.indicator_value"></span>
             </p>
+            <p>
+              <a ng-click="$ctrl.drilldownToLocationWithName($ctrl.mobilePopupLocation.name)"
+                 class="font-montserrat">See more</a>
+            </p>
           </div>
         </div>
       </div>

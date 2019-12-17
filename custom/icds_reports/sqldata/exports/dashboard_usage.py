@@ -13,7 +13,7 @@ from django.utils.functional import cached_property
 
 class DashBoardUsage:
 
-    title = 'Dashboard Activity'
+    title = 'Dashboard Activity Report'
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
     location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
@@ -91,9 +91,8 @@ class DashBoardUsage:
         date = self.convert_utc_to_ist(date)
         date_formatted = datetime.datetime.strftime(date, "%d/%m/%Y, %I:%M %p")
         now = datetime.datetime.now(INDIA_TIMEZONE)
-        yesterday_date = (now - relativedelta(days=1)).date()
-        seven_days_before_date = (now - relativedelta(days=8)).date()
-        return date_formatted, seven_days_before_date <= date.date() <= yesterday_date
+        seven_days_before_date = (now - relativedelta(days=7)).date()
+        return date_formatted, seven_days_before_date <= date.date() < now.date()
 
     def convert_utc_to_ist(self, utc_date):
         """
