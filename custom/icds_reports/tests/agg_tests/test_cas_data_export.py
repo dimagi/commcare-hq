@@ -7,9 +7,7 @@ import csv
 from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 
 
-class TestLocationView(CSVTestCase):
-    always_include_columns = {'awc_id', 'case_id'}
-
+class TestCasDataExport(CSVTestCase):
     def _get_data_from_blobdb(self, indicator, state_id, month):
         sync, _ = get_cas_data_blob_file(indicator, state_id, month)
         with sync.get_file_from_blobdb() as fileobj:
@@ -20,6 +18,10 @@ class TestLocationView(CSVTestCase):
         for row_count, row in enumerate(rows):
             rows[row_count] = dict(zip(headers, row))
         return rows
+
+
+class TestBeneficiaryDataExport(TestCasDataExport):
+    always_include_columns = {'awc_id', 'case_id'}
 
     def test_child_health_monthly_cas_data(self):
         indicator = 'child_health_monthly'
@@ -58,6 +60,10 @@ class TestLocationView(CSVTestCase):
                 key=lambda x: x['case_id']
             ),
         )
+
+
+class TestAwcExport(TestCasDataExport):
+    always_include_columns = {'awc_id'}
 
     def test_agg_awc_cas_data(self):
         indicator = 'agg_awc'
