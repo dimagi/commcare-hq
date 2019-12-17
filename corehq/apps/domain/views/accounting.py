@@ -986,9 +986,9 @@ class SelectPlanView(DomainAccountingSettings):
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("For programs with facility-based workflows, distributed "
-                  "field staff, and advanced security needs. Also for M&E "
-                  "teams integrating data with 3rd party analytics."),
+                _("For programs with distributed field staff, facility-based "
+                  "workflows, and advanced security needs. Also for M&E teams "
+                  "integrating data with 3rd party analytics."),
                 _("Includes all Pro Features."),
             ),
             PlanOption(

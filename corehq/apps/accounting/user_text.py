@@ -10,32 +10,31 @@ DESC_BY_EDITION = {
     },
     SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For programs with one-time data collection needs and "
-                         "simple case management workflows, and for M&E teams "
-                         "that need basic data tools like Excel-based "
-                         "dashboards. ({} mobile workers included)"),
+        'description': _("For programs with one-time data collection needs, "
+                         "simple case management workflows, and basic M&E "
+                         "requirements. "
+                         "({} mobile workers included)"),
     },
     SoftwarePlanEdition.PRO: {
         'name': _("Pro"),
-        'description': _("For programs with complex case management workflows "
-                         "where field teams collaborate on tasks, and for M&E "
-                         "teams that need to clean and report on their data. "
-                         " ({} mobile workers included)"),
+        'description': _("For programs with complex case management needs, "
+                         "field staff collaborating on tasks, and M&E teams "
+                         "that need to clean and report on data. "
+                         "({} mobile workers included)"),
     },
     SoftwarePlanEdition.ADVANCED: {
         'name': _("Advanced"),
-        'description': _("For programs with facility-based workflows and field "
-                         "staff organized by location, as well as advanced "
-                         "security needs. Also for M&E teams integrating "
-                         "data capture with analytical tools like Power BI "
-                         "and Tableau. ({} mobile workers included)")
+        'description': _("For programs with distributed field staff, "
+                         "facility-based workflows, and advanced security "
+                         "needs. Also for M&E teams integrating data with "
+                         "3rd party analytics. "
+                         "({} mobile workers included)")
     },
     SoftwarePlanEdition.ENTERPRISE: {
         'name': _("Enterprise"),
-        'description': _("For organizations who want a sustainable path "
-                         "towards improving last-mile mobile data collection "
-                         "and service delivery practices across multiple "
-                         "programs.")
+        'description': _("For organizations that need a sustainable path to "
+                         "scale mobile data collection and service delivery "
+                         "across multiple teams, programs, or countries.")
     },
     SoftwarePlanEdition.PAUSED: {
         'name': _("Paused"),
