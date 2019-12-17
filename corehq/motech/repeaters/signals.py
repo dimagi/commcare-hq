@@ -41,10 +41,10 @@ def create_repeat_records(repeater_cls, payload):
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
     domain = payload.domain
-    if domain and domain_has_privilege(domain, DATA_FORWARDING):
-        repeaters = repeater_cls.by_domain(domain)
-        for repeater in repeaters:
-            repeater.register(payload)
+    
+    repeaters = repeater_cls.by_domain(domain)
+    for repeater in repeaters:
+        repeater.register(payload)
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
