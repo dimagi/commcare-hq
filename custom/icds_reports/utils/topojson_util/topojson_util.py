@@ -1,10 +1,17 @@
 import json
 import os
-from collections import namedtuple
 from pathlib import Path
 
+import attr
 
-TopojsonFile = namedtuple('TopojsonFile', ['path', 'topojson_text', 'topojson'])
+@attr.s
+class TopojsonFile:
+    path = attr.ib()
+    topojson_text = attr.ib()
+    topojson = attr.ib()
+
+    def get_formatted_topojson(self):
+        return json.dumps(self.topojson, indent=2)
 
 
 def get_topojson_directory():
@@ -26,6 +33,10 @@ def get_block_topojson_file():
 
 def get_district_topojson_file():
     return _get_topojson_file('districts_v2.topojson.js', truncate_before=24)
+
+
+def get_state_topojson_file():
+    return _get_topojson_file('states_v2.topojson.js', truncate_before=21)
 
 
 def get_topojson_for_district(district):
