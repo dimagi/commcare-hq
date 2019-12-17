@@ -16,8 +16,13 @@ from corehq.util.couchdb_management import couch_config
 
 
 class KafkaProcessor(PillowProcessor):
-    """
-    Processor that pushes changes to Kafka
+    """Generic processor for CouchDB changes to put those changes in a kafka topic
+
+    Reads from:
+      - CouchDB change feed
+
+    Writes to:
+      - Specified kafka topic
     """
 
     def __init__(self, data_source_type, data_source_name, default_topic):

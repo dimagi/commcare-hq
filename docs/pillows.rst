@@ -137,3 +137,27 @@ It also won't be clear what documents the pillows has and has not processed. To
 fix this the safest thing will be to force the pillow to go through all relevant
 docs. Once this process is started you can move the checkpoint for that pillow
 to the most recent offset for its topic.
+
+
+Processors
+==========
+
+.. autoclass:: corehq.pillows.user.UnknownUsersProcessor
+
+.. autoclass:: corehq.apps.change_feed.pillow.KafkaProcessor
+
+.. autoclass:: corehq.pillows.group_to_user.GroupsToUsersProcessor
+
+.. autofunction:: corehq.pillows.group.get_group_to_elasticsearch_processor
+
+.. autoclass:: corehq.pillows.ledger.LedgerProcessor
+
+.. autoclass:: corehq.pillows.cacheinvalidate.CacheInvalidateProcessor
+
+.. autoclass:: corehq.pillows.synclog.UserSyncHistoryProcessor
+
+.. autoclass:: pillowtop.form.FormSubmissionMetadataTrackerProcessor
+
+.. autoclass:: pillowtop.processors.elastic.ElasticProcessor
+
+.. autoclass:: pillowtop.processors.elastic.BulkElasticProcessor

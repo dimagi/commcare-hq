@@ -36,6 +36,15 @@ class FakeCheckpoint(PillowCheckpoint):
 
 
 class CacheInvalidateProcessor(PillowProcessor):
+    """Invalidates cached CouchDB documents
+
+    Reads from:
+      - CouchDB
+
+    Writes to:
+      - Redis
+    """
+
     def __init__(self):
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 

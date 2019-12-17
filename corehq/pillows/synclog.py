@@ -56,6 +56,19 @@ def get_user_sync_history_pillow(
 
 
 class UserSyncHistoryProcessor(PillowProcessor):
+    """Updates the user document with reporting metadata when a user syncs
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately.
+
+    Reads from:
+      - CouchDB (user)
+      - SynclogSQL table
+
+    Writes to:
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
+    """
 
     def process_change(self, change):
         synclog = change.get_document()

@@ -14,6 +14,15 @@ from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, Reindex
 
 
 class GroupsToUsersProcessor(PillowProcessor):
+    """When a group changes, this updates the user doc in UserES
+
+    Reads from:
+      - Kafka topics: group
+      - Group data source (CouchDB)
+
+    Writes to:
+      - UserES index
+    """
 
     def __init__(self):
         self._es = get_es_new()

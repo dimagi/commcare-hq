@@ -65,6 +65,16 @@ def _get_ledger_section_combinations(domain):
 
 
 class LedgerProcessor(PillowProcessor):
+    """Updates ledger section and entry combinations (exports), daily consumption and case location ids
+
+    Reads from:
+      - Kafka topics: ledger
+      - Ledger data source
+
+    Writes to:
+      - LedgerSectionEntry postgres table
+      - Ledger data source
+    """
 
     def process_change(self, change):
         ledger = change.get_document()

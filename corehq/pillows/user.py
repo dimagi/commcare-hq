@@ -28,13 +28,9 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
 
     user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc_dict)
 
-    if user_id in WEIRD_USER_IDS:
-        user_id = None
-
-    if not user_id:
-        return
-
-    if _user_exists_in_couch(user_id):
+    if (not user_id
+            or user_id in WEIRD_USER_IDS
+            or _user_exists_in_couch(user_id)):
         return
 
     if not doc_exists_in_es(USER_INDEX_INFO, user_id):
@@ -86,6 +82,15 @@ def _get_user_fields_from_form_doc(form_doc):
 
 
 class UnknownUsersProcessor(PillowProcessor):
+    """Monitors forms for user_ids we don't know about and creates an entry in ES for the user.
+
+    Reads from:
+      - Kafka topics: form-sql, form
+      - XForm data source
+
+    Writes to:
+      - UserES index
+    """
 
     def __init__(self):
         self._es = get_es_new()
