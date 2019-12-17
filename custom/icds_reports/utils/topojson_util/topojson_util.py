@@ -4,6 +4,7 @@ from pathlib import Path
 
 import attr
 
+
 @attr.s
 class TopojsonFile:
     path = attr.ib()

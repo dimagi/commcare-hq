@@ -6,8 +6,12 @@ from pathlib import Path
 import os
 from django.core.management import BaseCommand
 
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory, get_block_topojson_file, \
-    get_district_topojson_file, copy_custom_metadata
+from custom.icds_reports.utils.topojson_util.topojson_util import (
+    get_topojson_directory,
+    get_block_topojson_file,
+    get_district_topojson_file,
+    copy_custom_metadata,
+)
 
 
 class Command(BaseCommand):
