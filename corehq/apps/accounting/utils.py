@@ -407,10 +407,9 @@ def get_paused_plan_context(request, domain):
     from corehq.apps.domain.views import SelectPlanView
 
     current_sub = Subscription.get_active_subscription_by_domain(domain)
-    if not current_sub.plan_version.is_paused:
-        return {}
-
-    if not current_sub.previous_subscription:
+    if (not current_sub
+            or not current_sub.plan_version.is_paused
+            or not current_sub.previous_subscription):
         return {}
 
     previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
