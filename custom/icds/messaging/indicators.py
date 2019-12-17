@@ -167,29 +167,6 @@ class LSIndicator(SMSIndicator):
     def awc_locations(self):
         return {l.location_id: l.name for l in self.child_locations}
 
-    @property
-    @memoized
-    def locations_by_user_id(self):
-        return get_user_ids_from_primary_location_ids(self.domain, set(self.awc_locations))
-
-    @property
-    @memoized
-    def aww_user_ids(self):
-        return set(self.locations_by_user_id.keys())
-
-    @property
-    @memoized
-    def user_ids_by_location_id(self):
-        user_ids_by_location_id = defaultdict(set)
-        for u_id, loc_id in self.locations_by_user_id.items():
-            user_ids_by_location_id[loc_id].add(u_id)
-
-        return user_ids_by_location_id
-
-    def location_names_from_user_id(self, user_ids):
-        loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
-        return {self.awc_locations[l] for l in loc_ids}
-
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
