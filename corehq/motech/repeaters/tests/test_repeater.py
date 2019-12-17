@@ -10,11 +10,14 @@ from mock import Mock, patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.domain.models import Domain
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.receiverwrapper.exceptions import (
     DuplicateFormatException,
@@ -79,11 +82,12 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 """
 
 
-class BaseRepeaterTest(TestCase):
+class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
+    domain = 'base-domain'
 
     @classmethod
     def setUpClass(cls):
-        super(BaseRepeaterTest, cls).setUpClass()
+        super().setUpClass()
         case_block = CaseBlock(
             case_id=CASE_ID,
             create=True,
@@ -111,6 +115,19 @@ class BaseRepeaterTest(TestCase):
             update_case_block,
         )
 
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscriptions()
+        cls.domain_obj.delete()
+        clear_plan_version_cache()
+        super().tearDownClass()
+
     @classmethod
     def post_xml(cls, xml, domain_name):
         return submit_form_locally(xml, domain_name)
@@ -123,11 +140,10 @@ class BaseRepeaterTest(TestCase):
 
 
 class RepeaterTest(BaseRepeaterTest):
+    domain = "repeater-test-domain"
 
     def setUp(self):
         super(RepeaterTest, self).setUp()
-        self.domain = "test-domain"
-        create_domain(self.domain)
         self.case_repeater = CaseRepeater(
             domain=self.domain,
             url='case-repeater-url',
@@ -324,15 +340,13 @@ class RepeaterTest(BaseRepeaterTest):
 
 
 class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "form-payload-test-domain"
 
     @classmethod
     def setUpClass(cls):
-        super(FormPayloadGeneratorTest, cls).setUpClass()
-
-        cls.domain_name = "test-domain"
-        cls.domain = create_domain(cls.domain_name)
+        super().setUpClass()
         cls.repeater = FormRepeater(
-            domain=cls.domain_name,
+            domain=cls.domain,
             url="form-repeater-url",
         )
         cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
@@ -342,85 +356,79 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.repeater.delete()
-        super(FormPayloadGeneratorTest, cls).tearDownClass()
+        super().tearDownClass()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain_name)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
-        super(FormPayloadGeneratorTest, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_get_payload(self):
-        self.post_xml(self.xform_xml, self.domain_name)
-        payload_doc = FormAccessors(self.domain_name).get_form(self.instance_id)
+        self.post_xml(self.xform_xml, self.domain)
+        payload_doc = FormAccessors(self.domain).get_form(self.instance_id)
         payload = self.repeatergenerator.get_payload(None, payload_doc)
         self.assertXmlEqual(self.xform_xml, payload)
 
 
 class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "form-repeater-test-domain"
 
     @classmethod
     def setUpClass(cls):
         super(FormRepeaterTest, cls).setUpClass()
-
-        cls.domain_name = "test-domain"
-        cls.domain = create_domain(cls.domain_name)
         cls.repeater = FormRepeater(
-            domain=cls.domain_name,
+            domain=cls.domain,
             url="form-repeater-url",
         )
         cls.repeater.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.repeater.delete()
         super(FormRepeaterTest, cls).tearDownClass()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         delete_all_repeat_records()
         super(FormRepeaterTest, self).tearDown()
 
     @run_with_all_backends
     def test_payload(self):
-        self.post_xml(self.xform_xml, self.domain_name)
-        repeat_records = self.repeat_records(self.domain_name).all()
+        self.post_xml(self.xform_xml, self.domain)
+        repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload().decode('utf-8')
         self.assertXMLEqual(self.xform_xml, payload)
 
 
 class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "short-form-repeater-test-domain"
 
     @classmethod
     def setUpClass(cls):
-        super(ShortFormRepeaterTest, cls).setUpClass()
+        super().setUpClass()
 
-        cls.domain_name = "test-domain"
-        cls.domain = create_domain(cls.domain_name)
         cls.repeater = ShortFormRepeater(
-            domain=cls.domain_name,
+            domain=cls.domain,
             url="short-form-repeater-url",
         )
         cls.repeater.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.repeater.delete()
-        super(ShortFormRepeaterTest, cls).tearDownClass()
+        super().tearDownClass()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         delete_all_repeat_records()
-        super(ShortFormRepeaterTest, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_payload(self):
-        form = self.post_xml(self.xform_xml, self.domain_name).xform
-        repeat_records = self.repeat_records(self.domain_name).all()
+        form = self.post_xml(self.xform_xml, self.domain).xform
+        repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload()
         self.assertEqual(json.loads(payload), {
             'received_on': json_format_datetime(form.received_on),
@@ -430,42 +438,40 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "case-repeater-test-domain"
 
     @classmethod
     def setUpClass(cls):
-        super(CaseRepeaterTest, cls).setUpClass()
+        super().setUpClass()
 
-        cls.domain_name = "test-domain"
-        cls.domain = create_domain(cls.domain_name)
         cls.repeater = CaseRepeater(
-            domain=cls.domain_name,
+            domain=cls.domain,
             url="case-repeater-url",
         )
         cls.repeater.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.repeater.delete()
-        super(CaseRepeaterTest, cls).tearDownClass()
+        super().tearDownClass()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         delete_all_repeat_records()
-        super(CaseRepeaterTest, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_case_close_format(self):
         # create a case
-        self.post_xml(self.xform_xml, self.domain_name)
-        repeat_records = self.repeat_records(self.domain_name).all()
+        self.post_xml(self.xform_xml, self.domain)
+        repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload()
         self.assertXmlHasXpath(payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(payload, '//*[local-name()="create"]')
 
         # close the case
         CaseFactory().close_case(CASE_ID)
-        close_payload = self.repeat_records(self.domain_name).all()[1].get_payload()
+        close_payload = self.repeat_records(self.domain).all()[1].get_payload()
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
 
@@ -479,16 +485,16 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             create=True,
             case_type="planet",
         ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([white_listed_case])
-        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+        CaseFactory(self.domain).post_case_blocks([white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         non_white_listed_case = CaseBlock(
             case_id="b_case_id",
             create=True,
             case_type="cat",
         ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([non_white_listed_case])
-        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+        CaseFactory(self.domain).post_case_blocks([non_white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
     @run_with_all_backends
     def test_black_listed_user_cases_do_not_forward(self):
@@ -510,9 +516,9 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '1234',
             black_listed_user_case,
         )
-        self.post_xml(xform_xml, self.domain_name)
+        self.post_xml(xform_xml, self.domain)
 
-        self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
+        self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
         normal_user_case = CaseBlock(
@@ -528,9 +534,9 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '6789',
             normal_user_case,
         )
-        self.post_xml(xform_xml, self.domain_name)
+        self.post_xml(xform_xml, self.domain)
 
-        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
@@ -545,8 +551,8 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '2345',
             black_listed_user_case,
         )
-        self.post_xml(xform_xml, self.domain_name)
-        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+        self.post_xml(xform_xml, self.domain)
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
         normal_user_case = CaseBlock(
@@ -561,33 +567,31 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '3456',
             normal_user_case,
         )
-        self.post_xml(xform_xml, self.domain_name)
-        self.assertEqual(2, len(self.repeat_records(self.domain_name).all()))
+        self.post_xml(xform_xml, self.domain)
+        self.assertEqual(2, len(self.repeat_records(self.domain).all()))
 
 
 class RepeaterFailureTest(BaseRepeaterTest):
+    domain = 'repeater-failure-test-domain'
 
     def setUp(self):
-        super(RepeaterFailureTest, self).setUp()
-        self.domain_name = "test-domain"
-        self.domain = create_domain(self.domain_name)
+        super().setUp()
 
         self.repeater = CaseRepeater(
-            domain=self.domain_name,
+            domain=self.domain,
             url='case-repeater-url',
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain_name)
+        self.post_xml(self.xform_xml, self.domain)
 
     def tearDown(self):
-        self.domain.delete()
         self.repeater.delete()
         delete_all_repeat_records()
-        super(RepeaterFailureTest, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_get_payload_exception(self):
-        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with self.assertRaises(Exception):
             with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
                 repeat_record.fire()
@@ -597,7 +601,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
     @run_with_all_backends
     def test_failure(self):
-        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
@@ -613,6 +617,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):
+    domain = 'ignore-document-test-domain'
 
     @classmethod
     def setUpClass(cls):
@@ -628,9 +633,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
         RegisterGenerator.get_collection(FormRepeater).add_new_format(NewFormGenerator)
 
     def setUp(self):
-        super(IgnoreDocumentTest, self).setUp()
-        self.domain = "test-domain"
-        create_domain(self.domain)
+        super().setUp()
 
         self.repeater = FormRepeater(
             domain=self.domain,
@@ -642,7 +645,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
     def tearDown(self):
         self.repeater.delete()
         delete_all_repeat_records()
-        super(IgnoreDocumentTest, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_ignore_document(self):
@@ -660,6 +663,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
 
 
 class TestRepeaterFormat(BaseRepeaterTest):
+    domain = 'test-repeater-format-domain'
 
     @classmethod
     def setUpClass(cls):
@@ -679,8 +683,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
     def setUp(self):
         super(TestRepeaterFormat, self).setUp()
-        self.domain = "test-domain"
-        create_domain(self.domain)
+
         self.post_xml(self.xform_xml, self.domain)
 
         self.repeater = CaseRepeater(
@@ -694,7 +697,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
         self.repeater.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
-        super(TestRepeaterFormat, self).tearDown()
+        super().tearDown()
 
     def test_new_format_same_name(self):
         class NewCaseGenerator(BasePayloadGenerator):
@@ -744,7 +747,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class UserRepeaterTest(TestCase):
-    domain = 'user-repeater'
+    domain = 'user-repeater-test-domain'
 
     def setUp(self):
         super(UserRepeaterTest, self).setUp()
@@ -798,11 +801,10 @@ class UserRepeaterTest(TestCase):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LocationRepeaterTest(TestCase):
-    domain = 'location-repeater'
+    domain = 'location-repeater-test-domain'
 
     def setUp(self):
-        super(LocationRepeaterTest, self).setUp()
-        self.domain_obj = create_domain(self.domain)
+        super().setUp()
         self.repeater = LocationRepeater(
             domain=self.domain,
             url='super-cool-url',
@@ -814,7 +816,7 @@ class LocationRepeaterTest(TestCase):
         )
 
     def tearDown(self):
-        super(LocationRepeaterTest, self).tearDown()
+        super().tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
         self.domain_obj.delete()
@@ -864,17 +866,16 @@ class LocationRepeaterTest(TestCase):
 
 
 class TestRepeaterPause(BaseRepeaterTest):
-    def setUp(self):
-        super(TestRepeaterPause, self).setUp()
-        self.domain_name = "test-domain"
-        self.domain = create_domain(self.domain_name)
+    domain = 'test-repeater-pause'
 
+    def setUp(self):
+        super().setUp()
         self.repeater = CaseRepeater(
-            domain=self.domain_name,
+            domain=self.domain,
             url='case-repeater-url',
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain_name)
+        self.post_xml(self.xform_xml, self.domain)
 
     @run_with_all_backends
     def test_trigger_when_paused(self):
@@ -882,7 +883,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
                 # calls process_repeat_record():
-                self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+                self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 0)
 
@@ -905,37 +906,35 @@ class TestRepeaterPause(BaseRepeaterTest):
                 self.assertEqual(mock_postpone_fire.call_count, 1)
 
     def tearDown(self):
-        self.domain.delete()
         self.repeater.delete()
         delete_all_repeat_records()
         super(TestRepeaterPause, self).tearDown()
 
 
 class TestRepeaterDeleted(BaseRepeaterTest):
+    domain = 'test-repeater-deleted'
+
     def setUp(self):
-        super(TestRepeaterDeleted, self).setUp()
-        self.domain_name = "test-domain"
-        self.domain = create_domain(self.domain_name)
+        super().setUp()
 
         self.repeater = CaseRepeater(
-            domain=self.domain_name,
+            domain=self.domain,
             url='case-repeater-url',
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain_name)
+        self.post_xml(self.xform_xml, self.domain)
 
     def tearDown(self):
-        self.domain.delete()
         self.repeater.delete()
         delete_all_repeat_records()
-        super(TestRepeaterDeleted, self).tearDown()
+        super().tearDown()
 
     @run_with_all_backends
     def test_trigger_when_deleted(self):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
             process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -946,7 +945,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
             process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -975,10 +974,11 @@ class DummyRepeater(Repeater):
 
 
 class HandleResponseTests(SimpleTestCase):
+    domain = 'handle-response'
 
     def setUp(self):
         self.repeater = DummyRepeater(
-            domain="test-domain",
+            domain=self.domain,
             url="https://example.com/api/",
         )
         self.repeat_record = Mock()
