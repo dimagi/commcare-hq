@@ -116,6 +116,10 @@ def _get_helper_sql(helper_cls):
         return_value=[])
     distributed_patch.start()
 
+    if hasattr(helper, 'pre_aggregation_queries'):
+        queries = helper.pre_aggregation_queries()
+        for query in queries:
+            mock_cursor.execute(query[0], query[1])
     if hasattr(helper, 'aggregate'):
         try:
             helper.aggregate(mock_cursor)
