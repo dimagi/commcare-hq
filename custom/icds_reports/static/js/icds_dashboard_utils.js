@@ -221,9 +221,6 @@ hqDefine("js/icds_dashboard_utils", function () {
     }
     return {
         populateDashboardConstants: populateDashboardConstants,
-        addMaternalChildRoutes: addMaternalChildRoutes,
-        addCasReachRoutes: addCasReachRoutes,
-        addAWCReportRoutes: addAWCReportRoutes,
         addSharedRoutes: addSharedRoutes,
     };
 });
