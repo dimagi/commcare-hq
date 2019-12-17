@@ -39,6 +39,21 @@ def get_state_topojson_file():
     return _get_topojson_file('states_v2.topojson.js', truncate_before=21)
 
 
+def get_state_v3_topojson_file():
+    return _get_topojson_file('states_v3_small.topojson.js', truncate_before=21)
+
+
+def get_topojson_file_for_level(level):
+    level_function_map = {
+        "state": get_state_topojson_file,
+        "district": get_district_topojson_file,
+        "block": get_block_topojson_file,
+    }
+    if level not in level_function_map:
+        raise ValueError("Level must be one of: {}".format(', '.join(level_function_map.keys())))
+
+    return level_function_map[level]()
+
 def get_topojson_for_district(district):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
