@@ -110,8 +110,8 @@ A pillow is falling behind
 A pillow can fall behind for two reasons:
 
 1. The processor is too slow for the number of changes that are coming in. (i.e. `change_lag` for that pillow is very high)
-2. There has been an issue with the change feed that has caused the checkpoint
-   to be "rewound"
+2. There has been an issue with the change feed that has caused the checkpoint to be "rewound"
+3. Many exceptions happen during the day which requires pillows to process the same changes later.
 
 Optimizing a processor
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -152,6 +152,17 @@ to process changes that have already been processed. This usually happens when
 a couch node fails over to another. If this occurs, stop the pillow, wait for
 confirmation that the couch nodes are up, and fix the checkpoint using:
 `./manage.py fix_checkpoint_after_rewind <pillow_name>`
+
+Many pillow exceptions
+~~~~~~~~~~~~~~~~~~~~~~
+
+`commcare.change_feed.changes.exceptions` has tag `exception_type` that reports the name and path of the exception encountered.
+These exceptions could be from coding errors or from infrastructure issues.
+If they are from infrastructure issues (e.g. ES timeouts) some solutions could be:
+    - Scale ES cluster (more nodes, shards, etc)
+    - Reduce number of pillow processes that are writing to ES
+    - Reduce other usages of ES if possible (e.g. if some custom code relies on ES, could it use UCRs, https://github.com/dimagi/commcare-hq/pull/26241)
+
 
 Problem with checkpoint for pillow name: First available topic offset for topic is num1 but needed num2
 --------------------------------------------------------------------------------------------------------
