@@ -125,6 +125,12 @@ hqDefine("js/icds_dashboard_utils", function () {
         .when("/demographics/registered_household/:step", {
             template: "<registered-household></registered-household>",
         })
+        .when("/demographics/adhaar", {
+            redirectTo: "/demographics/adhaar/" + defaultStep,
+        })
+        .when("/demographics/adhaar/:step", {
+            template: "<adhaar-beneficiary></adhaar-beneficiary>",
+        })
         .when("/demographics/enrolled_children", {
             redirectTo: "/demographics/enrolled_children/" + defaultStep,
         })
@@ -148,12 +154,6 @@ hqDefine("js/icds_dashboard_utils", function () {
         })
         .when("/demographics/adolescent_girls/:step", {
             template: "<adolescent-girls></adolescent-girls>",
-        })
-        .when("/demographics/adhaar", {
-            redirectTo: "/demographics/adhaar/" + defaultStep,
-        })
-        .when("/demographics/adhaar/:step", {
-            template: "<adhaar-beneficiary></adhaar-beneficiary>",
         });
     }
     function addAWCInfrastructureRoutes($routeProvider, defaultStep) {
