@@ -11,10 +11,27 @@ class AggregateSQLProfileAdmin(admin.ModelAdmin):
     list_filter = ('name', 'date')
 
 
+class VerifiedListFilter(admin.SimpleListFilter):
+    title = 'Verified'
+    parameter_name = 'verified'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('verified', 'Verified to have been fully processed'),
+            ('not_verified', 'Not verified to have been processed'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'verified':
+            return queryset.filter(verified_date__isnull=False)
+        elif self.value() == 'not_verified':
+            return queryset.filter(verified_date__isnull=True)
+
+
 @admin.register(UcrReconciliationStatus)
 class UcrReconciliationStatusAdmin(admin.ModelAdmin):
     list_display = ('db_alias', 'day', 'table_id', 'last_processed_date', 'verified_date')
-    list_filter = ('db_alias', 'day', 'table_id')
+    list_filter = ('db_alias', 'day', 'table_id', VerifiedListFilter)
     actions = ['queue_reconciliation']
 
     def queue_reconciliation(self, request, queryset):
