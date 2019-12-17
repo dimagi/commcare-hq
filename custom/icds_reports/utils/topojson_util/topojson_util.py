@@ -24,6 +24,10 @@ def get_block_topojson_file():
     return _get_topojson_file('blocks_v3.topojson.js', truncate_before=21)
 
 
+def get_district_topojson_file():
+    return _get_topojson_file('districts_v2.topojson.js', truncate_before=24)
+
+
 def get_topojson_for_district(district):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 

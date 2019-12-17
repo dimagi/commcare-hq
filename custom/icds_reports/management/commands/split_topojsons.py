@@ -6,7 +6,8 @@ from pathlib import Path
 import os
 from django.core.management import BaseCommand
 
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory, get_block_topojson_file
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_directory, get_block_topojson_file, \
+    get_district_topojson_file
 
 
 class Command(BaseCommand):
@@ -26,11 +27,9 @@ class Command(BaseCommand):
             f.write(block_topojson_file.topojson_text)
 
         # loading district topojson object
-        district_topojson_filename = os.path.join(input_dir, 'districts_v2.topojson.js')
-        district_topojson_file = open(district_topojson_filename)
-        district_topojson_file_content = district_topojson_file.read()
+        district_topojson_file = get_district_topojson_file()
         # strip off 'var DISTRICT_TOPOJSON = ' from the front of the file
-        district_topojson = json.loads(district_topojson_file_content[24:][:-2])
+        district_topojson = district_topojson_file.topojson
 
         # create state district map. end result will look like this:
         # {
@@ -91,6 +90,5 @@ class Command(BaseCommand):
         state_district_map_file.write(json.dumps(state_district_map, indent=2))
         state_district_map_file.close()
 
-        district_topojson_file.close()
         os.remove(tmp_block_filename)
         print('done')
