@@ -190,7 +190,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
            cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all,
            cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
            cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
-           cases_person_referred = ut.cases_person_referred
+           cases_person_referred = ut.cases_person_referred,
+           cases_person_adolescent_girls_11_14_out_of_school = ut.girls_out_of_schoool,
+           cases_person_adolescent_girls_11_14_all_new = ut.cases_person_adolescent_girls_11_14_all_new
         FROM (
         SELECT
             ucr.awc_id,
@@ -657,6 +659,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_adolescent_girls_15_18',),
             ('cases_person_adolescent_girls_11_14_all',),
             ('cases_person_adolescent_girls_15_18_all',),
+            ('cases_person_adolescent_girls_11_14_out_of_school',),
+            ('cases_person_adolescent_girls_11_14_all_new',),
             ('infra_infant_weighing_scale',),
             ('cases_person_referred', 'NULL'),
             ('awc_days_pse_conducted', 'NULL'),
