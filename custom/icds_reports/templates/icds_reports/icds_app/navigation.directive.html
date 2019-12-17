@@ -113,7 +113,19 @@
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/functional_toilet') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/functional_toilet', $location.search()) $}" >{% trans "AWCs Reported functional toilet" %}
+                        <a href="{$ goToStep('awc_infrastructure/functional_toilet', $location.search()) $}" >{% trans "AWCs Reported Functional Toilet" %}
+                        </a>
+                    </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infants_weight_scale') !== -1}">
+                        <a href="{$ goToStep('awc_infrastructure/infants_weight_scale', $location.search()) $}" >{% trans "AWCs Reported Weighing Scale: Infants" %}
+                        </a>
+                    </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/adult_weight_scale') !== -1}">
+                        <a href="{$ goToStep('awc_infrastructure/adult_weight_scale', $location.search()) $}" >{% trans "AWCs Reported Weighing Scale: Mother and Child" %}
+                        </a>
+                    </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/medicine_kit') !== -1}">
+                        <a href="{$ goToStep('awc_infrastructure/medicine_kit', $location.search()) $}" >{% trans "AWCs Reported Medicine Kit" %}
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infantometer') !== -1}">
@@ -122,18 +134,6 @@
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/stadiometer') !== -1}">
                         <a href="{$ goToStep('awc_infrastructure/stadiometer', $location.search()) $}" >{% trans "AWCs Reported Stadiometer" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/medicine_kit') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/medicine_kit', $location.search()) $}" >{% trans "AWCs Reported medicine kits" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infants_weight_scale') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/infants_weight_scale', $location.search()) $}" >{% trans "AWCs Reported Weighing Scale: Infants" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/adult_weight_scale') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/adult_weight_scale', $location.search()) $}" >{% trans "AWCs Reported mother and child weighing scale" %}
                         </a>
                     </li>
                 </ul>

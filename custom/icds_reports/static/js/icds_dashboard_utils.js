@@ -172,6 +172,18 @@ hqDefine("js/icds_dashboard_utils", function () {
         .when("/awc_infrastructure/functional_toilet/:step", {
             template: "<functional-toilet></functional-toilet>",
         })
+        .when("/awc_infrastructure/infants_weight_scale", {
+            redirectTo: "/awc_infrastructure/infants_weight_scale/" + defaultStep,
+        })
+        .when("/awc_infrastructure/infants_weight_scale/:step", {
+            template: "<infants-weight-scale></infants-weight-scale>",
+        })
+        .when("/awc_infrastructure/adult_weight_scale", {
+            redirectTo: "/awc_infrastructure/adult_weight_scale/" + defaultStep,
+        })
+        .when("/awc_infrastructure/adult_weight_scale/:step", {
+            template: "<adult-weight-scale></adult-weight-scale>",
+        })
         .when("/awc_infrastructure/medicine_kit", {
             redirectTo: "/awc_infrastructure/medicine_kit/" + defaultStep,
         })
@@ -189,20 +201,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         })
         .when("/awc_infrastructure/stadiometer/:step", {
             template: "<stadiometer></stadiometer>",
-        })
-        .when("/awc_infrastructure/infants_weight_scale", {
-            redirectTo: "/awc_infrastructure/infants_weight_scale/" + defaultStep,
-        })
-        .when("/awc_infrastructure/infants_weight_scale/:step", {
-            template: "<infants-weight-scale></infants-weight-scale>",
-        })
-        .when("/awc_infrastructure/adult_weight_scale", {
-            redirectTo: "/awc_infrastructure/adult_weight_scale/" + defaultStep,
-        })
-        .when("/awc_infrastructure/adult_weight_scale/:step", {
-            template: "<adult-weight-scale></adult-weight-scale>",
         });
-
     }
     function addAWCReportRoutes($routeProvider) {
         $routeProvider.when("/awc_reports", {
