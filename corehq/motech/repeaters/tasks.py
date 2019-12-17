@@ -7,7 +7,7 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import DATA_FORWARDING
+from corehq.privileges import ZAPIER_INTEGRATION
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -82,7 +82,10 @@ def process_repeat_record(repeat_record):
     # A RepeatRecord should ideally never get into this state, as the
     # domain_has_privilege check is also triggered in the create_repeat_records
     # in signals.py. But if it gets here, forcefully cancel the RepeatRecord.
-    if not domain_has_privilege(repeat_record.domain, DATA_FORWARDING):
+    # todo reconcile ZAPIER_INTEGRATION and DATA_FORWARDING
+    #  they each do two separate things and are priced differently,
+    #  but use the same infrastructure
+    if not domain_has_privilege(repeat_record.domain, ZAPIER_INTEGRATION):
         repeat_record.cancel()
         repeat_record.save()
 
