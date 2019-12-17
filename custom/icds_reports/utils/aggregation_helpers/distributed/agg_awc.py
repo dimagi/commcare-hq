@@ -1,3 +1,5 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
@@ -6,6 +8,8 @@ from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+
+logger = logging.getLogger(__name__)
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -35,12 +39,21 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
         cursor.execute(self.create_temporary_table())
         cursor.execute(agg_query, agg_params)
+        i = 0
         for query, params in update_queries:
+            logger.info(f"running update {i}")
             cursor.execute(query, params)
+            i += 1
+        i = 0
         for query in rollup_queries:
+            logger.info(f"running rollup {i}")
             cursor.execute(query)
+            i += 1
+        i = 0
         for query in index_queries:
+            logger.info(f"creating index {i}")
             cursor.execute(query)
+            i += 1
 
 
     def _tablename_func(self, agg_level):
