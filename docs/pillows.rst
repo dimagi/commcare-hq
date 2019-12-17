@@ -63,11 +63,43 @@ reads from this model and retries any errors on the pillow.
 Monitoring
 ==========
 
-There are several datadog metrics with the prefix `commcare.change_feed` that
-can be helpful for monitoring pillows.
+There are several datadog metrics with the prefix `commcare.change_feed` that can be helpful for monitoring pillows.
+Generally these metrics will have tags for pillow name, topic and partition to filter on
 
-For UCR pillows the pillow log will contain any data sources and docs that
-have exceeded a threshold and can be used to find expensive data sources.
+.. list-table::
+   :header-rows: 1
+
+   * - Metric (not including commcare.change_feed)
+     - Description
+   * - change_lag
+     - The current time - when the last change processed was put into the queue
+   * - changes.count
+     - Number of changes processed
+   * - changes.success
+     - Number of changes processed successfully
+   * - changes.exceptions
+     - Number of changes processed with an exception
+   * - processor.timing
+     - Time spent in processing a document.
+       Different tags for extract/transform/load steps.
+   * - processed_offsets
+     - Latest offset that has been processed by the pillow
+   * - current_offsets
+     - The current offsets of each partition in kafka (useful for math in dashboards)
+   * - need_processing
+     - current_offsets - processed_offsets
+
+Generally when planning for pillows, you should:
+    - Minimize change_lag
+        - for up to date reports for users
+    - Minimize changes.exceptions
+        - for consistency between primary and reporting databases
+        - because exceptions mean that they must be reprocessed at a later time (effectively adding more load and lag later)
+    - Minimize number of pillows running
+        - for fewer server resources needed
+
+The ideal setup would have 1 pillow with no exceptions and 0 second lag.
+
 
 Troubleshooting
 ===============
@@ -77,7 +109,7 @@ A pillow is falling behind
 
 A pillow can fall behind for two reasons:
 
-1. The processor is too slow for the number of changes that are coming in.
+1. The processor is too slow for the number of changes that are coming in. (i.e. `change_lag` for that pillow is very high)
 2. There has been an issue with the change feed that has caused the checkpoint
    to be "rewound"
 
@@ -85,6 +117,7 @@ Optimizing a processor
 ~~~~~~~~~~~~~~~~~~~~~~
 To solve #1 you should use any monitors that have been set up to attempt to
 pinpoint the issue.
+`commcare.change_feed.processor.timing` can help determine what processors/pillows are the root cause of slow processing.
 
 If this is a UCR pillow use the `profile_data_source` management command to
 profile the expensive data sources.
