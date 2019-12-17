@@ -3,11 +3,13 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function StadiometerController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive) {
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = infrastructureService.getStadiometerData;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -26,29 +28,19 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Stadiometer. ',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Number of AWCs that reported having a Stadiometer: ',
                 indicator_value: total,
             },
             {
                 indicator_name: '% of AWCs that reported having a Stadiometer: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = infrastructureService.getStadiometerData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -79,13 +71,13 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
 StadiometerController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
-    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('stadiometer', function() {
+window.angular.module('icdsApp').directive('stadiometer', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -93,4 +85,4 @@ window.angular.module('icdsApp').directive('stadiometer', function() {
         controller: StadiometerController,
         controllerAs: '$ctrl',
     };
-});
+}]);
