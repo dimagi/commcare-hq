@@ -47,7 +47,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'awc_location': 'awc_location',
     'awc_location_local': 'awc_location_local',
     'agg_awc': 'agg_awc',
-    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school')
+    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school'),
+    'adolescent_girls_reg_form': get_table_name('icds-cas', 'static-adolescent_girls_reg_form')
 }
 
 
