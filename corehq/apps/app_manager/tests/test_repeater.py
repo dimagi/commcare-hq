@@ -26,7 +26,8 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
 
-        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
 
     @classmethod
     def tearDownClass(cls):

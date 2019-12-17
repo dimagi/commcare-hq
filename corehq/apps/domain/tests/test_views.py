@@ -26,7 +26,9 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
         self.domain = Domain(name="fandago", is_active=True)
         self.domain.save()
 
-        self.setup_subscription(self.domain.name, SoftwarePlanEdition.ADVANCED)
+        # DATA_FORWARDING is on PRO and above,
+        # which is needed by test_add_repeater
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.PRO)
 
         self.username = 'bananafana'
         self.password = '*******'
