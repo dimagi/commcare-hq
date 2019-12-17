@@ -39,77 +39,77 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('mobileMapsEnabled', initialPageData.get("mobile_maps_enabled"));
     }
 
-    function addMaternalChildRoutes($routeProvider) {
+    function addMaternalChildRoutes($routeProvider, defaultStep) {
         return $routeProvider.when("/maternal_and_child", {
-                redirectTo: "/maternal_and_child/underweight_children/map",
+                redirectTo: "/maternal_and_child/underweight_children/" + defaultStep,
             })
             .when("/maternal_and_child/underweight_children", {
-                redirectTo: "/maternal_and_child/underweight_children/map",
+                redirectTo: "/maternal_and_child/underweight_children/" + defaultStep,
             })
             .when("/maternal_and_child/underweight_children/:step", {
                 template: "<underweight-children-report></underweight-children-report>",
             })
             .when("/maternal_and_child/wasting", {
-                redirectTo: "/maternal_and_child/wasting/map",
+                redirectTo: "/maternal_and_child/wasting/" + defaultStep,
             })
             .when("/maternal_and_child/wasting/:step", {
                 template: "<prevalence-of-severe></prevalence-of-severe>",
             })
             .when("/maternal_and_child/stunting", {
-                redirectTo: "/maternal_and_child/stunting/map",
+                redirectTo: "/maternal_and_child/stunting/" + defaultStep,
             })
             .when("/maternal_and_child/stunting/:step", {
                 template: "<prevalence-of-stunting></prevalence-of-stunting>",
             })
             .when("/maternal_and_child/low_birth", {
-                redirectTo: "/maternal_and_child/low_birth/map",
+                redirectTo: "/maternal_and_child/low_birth/" + defaultStep,
             })
             .when("/maternal_and_child/low_birth/:step", {
                 template: "<newborn-low-weight></newborn-low-weight>",
             })
             .when("/maternal_and_child/early_initiation", {
-                redirectTo: "/maternal_and_child/early_initiation/map",
+                redirectTo: "/maternal_and_child/early_initiation/" + defaultStep,
             })
             .when("/maternal_and_child/early_initiation/:step", {
                 template: "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
             })
             .when("/maternal_and_child/exclusive_breastfeeding", {
-                redirectTo: "/maternal_and_child/exclusive_breastfeeding/map",
+                redirectTo: "/maternal_and_child/exclusive_breastfeeding/" + defaultStep,
             })
             .when("/maternal_and_child/exclusive_breastfeeding/:step", {
                 template: "<exclusive-breastfeeding></exclusive-breastfeeding>",
             })
             .when("/maternal_and_child/children_initiated", {
-                redirectTo: "/maternal_and_child/children_initiated/map",
+                redirectTo: "/maternal_and_child/children_initiated/" + defaultStep,
             })
             .when("/maternal_and_child/children_initiated/:step", {
                 template: "<children-initiated></children-initiated>",
             })
             .when("/maternal_and_child/institutional_deliveries", {
-                redirectTo: "/maternal_and_child/institutional_deliveries/map",
+                redirectTo: "/maternal_and_child/institutional_deliveries/" + defaultStep,
             })
             .when("/maternal_and_child/institutional_deliveries/:step", {
                 template: "<institutional-deliveries></institutional-deliveries>",
             })
             .when("/maternal_and_child/immunization_coverage", {
-                redirectTo: "/maternal_and_child/immunization_coverage/map",
+                redirectTo: "/maternal_and_child/immunization_coverage/" + defaultStep,
             })
             .when("/maternal_and_child/immunization_coverage/:step", {
                 template: "<immunization-coverage></immunization-coverage>",
             });
     }
-    function addCasReachRoutes($routeProvider) {
+    function addCasReachRoutes($routeProvider, defaultStep) {
         return $routeProvider.when("/icds_cas_reach", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
+                redirectTo: "/icds_cas_reach/awc_daily_status/" + defaultStep,
             })
             .when("/icds_cas_reach/awc_daily_status", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/map",
+                redirectTo: "/icds_cas_reach/awc_daily_status/" + defaultStep,
             })
             .when("/icds_cas_reach/awc_daily_status/:step", {
                 template: "<awc-daily-status></awc-daily-status>",
             })
             .when("/icds_cas_reach/awcs_covered", {
-                redirectTo: "/icds_cas_reach/awcs_covered/map",
+                redirectTo: "/icds_cas_reach/awcs_covered/" + defaultStep,
             })
             .when("/icds_cas_reach/awcs_covered/:step", {
                 template: "<awcs-covered></awcs-covered>",
@@ -123,9 +123,9 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<awc-reports></awc-reports>",
             });
     }
-    function addSharedRoutes($routeProvider) {
-        addMaternalChildRoutes($routeProvider);
-        addCasReachRoutes($routeProvider);
+    function addSharedRoutes($routeProvider, defaultStep) {
+        addMaternalChildRoutes($routeProvider, defaultStep);
+        addCasReachRoutes($routeProvider, defaultStep);
         addAWCReportRoutes($routeProvider);
     }
     return {
