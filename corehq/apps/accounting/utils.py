@@ -410,6 +410,9 @@ def get_paused_plan_context(request, domain):
     if not current_sub.plan_version.is_paused:
         return {}
 
+    if not current_sub.previous_subscription:
+        return {}
+
     previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
                         if current_sub.previous_subscription else "")
     return {
