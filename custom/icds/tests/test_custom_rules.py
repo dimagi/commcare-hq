@@ -18,6 +18,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tests.util import create_user_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.util.test_utils import flag_enabled
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.rules.util import todays_date
 from datetime import datetime, date
@@ -96,6 +97,7 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(result.num_updates, 0)
             self.assertEqual(result.num_creates, 0)
 
+    @flag_enabled('ICDS_AUTO_ESCALATION_QA')
     def test_when_delegate_exists(self):
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
@@ -122,10 +124,9 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '1')
+            self.assertEqual(tech_issue_delegate.owner_id, 'district_id')
 
-            update_case(self.domain, tech_issue.case_id, case_properties={'ticket_level': 'block'})
             tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
-
             result = rule.run_actions_when_case_matches(tech_issue)
             self.assertEqual(result.num_updates, 1)
             self.assertEqual(result.num_creates, 0)
@@ -136,6 +137,7 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '2')
+            self.assertEqual(tech_issue_delegate.owner_id, 'state_id')
 
 
 @use_sql_backend
