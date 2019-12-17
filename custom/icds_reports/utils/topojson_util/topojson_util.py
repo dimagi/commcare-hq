@@ -11,13 +11,17 @@ def get_topojson_directory():
     return os.path.join(Path(__file__).parent.parent.parent, 'static', 'js', 'topojsons')
 
 
-def get_block_topojson_file():
-    path = os.path.join(get_topojson_directory(), 'blocks_v3.topojson.js')
+def _get_topojson_file(filename, truncate_before):
+    path = os.path.join(get_topojson_directory(), filename)
     with open(path) as f:
         content = f.read()
-        # strip off 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
-        topojson_text = content[21:][:-2]
+        # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+        topojson_text = content[truncate_before:][:-2]
         return TopojsonFile(path, topojson_text, json.loads(topojson_text))
+
+
+def get_block_topojson_file():
+    return _get_topojson_file('blocks_v3.topojson.js', truncate_before=21)
 
 
 def get_topojson_for_district(district):
