@@ -139,6 +139,35 @@ docs. Once this process is started you can move the checkpoint for that pillow
 to the most recent offset for its topic.
 
 
+Pillows
+=======
+
+.. autofunction:: corehq.apps.change_feed.pillow.get_change_feed_pillow_for_db
+
+.. autofunction:: corehq.pillows.case.get_case_pillow
+
+.. autofunction:: corehq.pillows.xform.get_xform_pillow
+
+.. autofunction:: corehq.pillows.user.get_user_pillow
+
+.. autofunction:: corehq.apps.userreports.pillow.get_location_pillow
+
+.. autofunction:: corehq.pillows.groups_to_user.get_group_pillow
+
+.. autofunction:: corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow
+
+.. autofunction:: corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow
+
+.. autofunction:: corehq.pillows.sms.get_sql_sms_pillow
+
+.. autofunction:: corehq.pillows.cacheinvalidate._get_cache_invalidation_pillow
+
+.. autofunction:: corehq.pillows.synclog.get_user_sync_history_pillow
+
+.. autofunction:: corehq.pillows.application.get_app_to_elasticsearch_pillow
+
+
+
 Processors
 ==========
 
@@ -146,7 +175,7 @@ Processors
 
 .. autoclass:: corehq.apps.change_feed.pillow.KafkaProcessor
 
-.. autoclass:: corehq.pillows.group_to_user.GroupsToUsersProcessor
+.. autoclass:: corehq.pillows.groups_to_user.GroupsToUsersProcessor
 
 .. autofunction:: corehq.pillows.group.get_group_to_elasticsearch_processor
 
@@ -158,6 +187,12 @@ Processors
 
 .. autoclass:: pillowtop.form.FormSubmissionMetadataTrackerProcessor
 
+.. autoclass:: corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor
+
 .. autoclass:: pillowtop.processors.elastic.ElasticProcessor
 
 .. autoclass:: pillowtop.processors.elastic.BulkElasticProcessor
+
+.. autofunction:: corehq.pillows.case_search.get_case_search_processor
+
+.. autoclass:: corehq.messaging.pillow.CaseMessagingSyncProcessor

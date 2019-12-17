@@ -37,8 +37,10 @@ SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
 def get_user_sync_history_pillow(
         pillow_id='UpdateUserSyncHistoryPillow', num_processes=1, process_num=0, **kwargs):
-    """
-    This gets a pillow which iterates through all synclogs
+    """Synclog pillow
+
+    Processors:
+      - :py:func:`corehq.pillows.synclog.UserSyncHistoryProcessor`
     """
     change_feed = KafkaChangeFeed(
         topics=[topics.SYNCLOG_SQL], client_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,

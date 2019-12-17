@@ -139,6 +139,12 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
 
 def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """Processes users and sends them to ES and UCRs.
+
+    Processors:
+      - :py:func:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)

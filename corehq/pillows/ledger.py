@@ -93,9 +93,13 @@ class LedgerProcessor(PillowProcessor):
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,
                                        process_num=0, **kwargs):
-    """
-    This pillow's id references Elasticsearch, but it no longer saves to ES.
+    """Ledger pillow
+
+    Note that this pillow's id references Elasticsearch, but it no longer saves to ES.
     It has been kept to keep the checkpoint consistent, and can be changed at any time.
+
+    Processors:
+      - :py:class:`corehq.pillows.ledger.LedgerProcessor`
     """
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
     IndexInfo = namedtuple('IndexInfo', ['index'])

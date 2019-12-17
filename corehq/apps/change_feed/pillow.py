@@ -71,6 +71,14 @@ def get_application_db_kafka_pillow(pillow_id, **kwargs):
 
 
 def get_change_feed_pillow_for_db(pillow_id, couch_db, default_topic=None):
+    """Generic pillow for inserting Couch documents into Kafka.
+
+    Reads from:
+      - CouchDB
+
+    Writes to:
+      - Kafka
+    """
     processor = KafkaProcessor(
         data_source_type=data_sources.SOURCE_COUCH,
         data_source_name=couch_db.dbname,
