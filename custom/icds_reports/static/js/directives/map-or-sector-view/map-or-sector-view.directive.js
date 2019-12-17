@@ -1,6 +1,7 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, isMobile, mobileMapsEnabled) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
+                               mobileMapsEnabled) {
     var vm = this;
     vm.mobileMapsEnabled = mobileMapsEnabled;
     var location_id = $location.search().location_id;
@@ -109,10 +110,9 @@ function MapOrSectorController($location, storageService, locationsService, isMo
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                         }
                     });
                 });
@@ -148,7 +148,7 @@ function MapOrSectorController($location, storageService, locationsService, isMo
 }
 
 MapOrSectorController.$inject = [
-    '$location', 'storageService', 'locationsService', 'isMobile', 'mobileMapsEnabled',
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
 ];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;

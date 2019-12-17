@@ -1,8 +1,9 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+                            topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
-
+    var useNewMaps = haveAccessToFeatures || isMobile;
     $scope.$watch(function () {
         return vm.data;
     }, function (newValue, oldValue) {
@@ -46,19 +47,23 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.mapHeight = 0;
     vm.scalingFactor = 1;
 
-    vm.initTopoJson = function (location_level, location) {
-        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+    vm.initTopoJson = function (locationLevel, location, topojson) {
+        if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
-        } else if (location_level === 0) {
+        } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-        } else if (location_level === 1) {
+        } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            if (useNewMaps) {
+                Datamap.prototype[vm.type] = topojson;
+            } else {
+                Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            }
         }
         if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
@@ -115,15 +120,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return vm.scalingFactor * options.scale;
     };
 
-    var mapConfiguration = function (location) {
+    var mapConfiguration = function (location, topojson) {
 
-        var location_level = -1;
-        if (location.location_type === 'state') location_level = 0;
-        else if (location.location_type === 'district') location_level = 1;
-        else if (location.location_type === 'block') location_level = 2;
-        else location_level = -1;
+        var locationLevel = -1;
 
-        vm.initTopoJson(location_level, location);
+        if (location.location_type === 'state') {
+            locationLevel = 0;
+        } else if (location.location_type === 'district') {
+            locationLevel = 1;
+        } else if (location.location_type === 'block') {
+            locationLevel = 2;
+        } else {
+            locationLevel = -1;
+        }
+
+        vm.initTopoJson(locationLevel, location, topojson);
 
         vm.map = {
             scope: vm.scope,
@@ -249,7 +260,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        mapConfiguration(location);
+        if (useNewMaps && location.location_type === 'district') {
+            topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
+                mapConfiguration(location, resp.topojson);
+            });
+        } else {
+            mapConfiguration(location);
+        }
     });
 
     vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
@@ -277,9 +294,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += "<div class=\"modal-header\">";
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
-                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+            'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html +="<div class=\"modal-body\">";
+        html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
@@ -324,7 +341,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    'haveAccessToFeatures', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('indieMap', function () {

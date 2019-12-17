@@ -562,6 +562,9 @@ def _child_health_monthly_data(state_ids, day):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
+        for state in state_ids:
+            cursor.execute(helper.drop_partition(state))
+            cursor.execute(helper.create_partition(state))
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
@@ -1527,6 +1530,9 @@ def _child_health_monthly_aggregation(day, state_ids):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
+        for state in state_ids:
+            cursor.execute(helper.drop_partition(state))
+            cursor.execute(helper.create_partition(state))
 
     greenlets = []
     pool = Pool(20)
@@ -1684,7 +1690,7 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
 
 @periodic_task_on_envs(
     settings.ICDS_ENVS,
-    run_every=crontab(minute=30, hour=12),  # To run on 6PM IST
+    run_every=crontab(minute=30, hour=0),  # To run on 6AM IST
     acks_late=True,
     queue='icds_aggregation_queue'
 )

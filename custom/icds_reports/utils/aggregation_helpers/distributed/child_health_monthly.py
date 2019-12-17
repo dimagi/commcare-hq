@@ -79,7 +79,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND person_cases.migration_status IS DISTINCT FROM 1)"
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -142,7 +142,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(
+                "CASE WHEN {} AND {} AND {} <= 72 AND person_cases.migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
                     open_in_month, alive_in_month, age_in_months
             )),
             ("person_name", "child_health.person_name"),
@@ -322,7 +322,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("state_id", "child_health.state_id")
         )
         return """
-        INSERT INTO "{tablename}" (
+        INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
             {calculations}
@@ -359,6 +359,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
             tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -382,12 +383,22 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def create_temporary_table(self):
         return """
-        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly, PRIMARY KEY (supervisor_id, case_id, month));
+        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly) PARTITION BY LIST (state_id);
         SELECT create_distributed_table('{table}', 'supervisor_id');
         """.format(table=self.temporary_tablename)
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
+
+    def drop_partition(self, state_id):
+        return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
+
+    def create_partition(self, state_id):
+        return "CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" PARTITION OF \"{tmp_tablename}\" FOR VALUES IN ('{state_id}')".format(
+            tmp_tablename=self.temporary_tablename,
+            state_id_last_5=state_id[-5:],
+            state_id=state_id
+        )
 
     def aggregation_query(self):
         return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
