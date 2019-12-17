@@ -58,5 +58,9 @@ branches:
   - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
-  - jls/non-unique-form-ids  # Jenny Nov 24
+  - bmb/SAASP-10149  # Biyeun Dec 11
+  - je/sql-products-v2  # Emord Dec 12
+  #- jls/non-unique-form-ids  # Jenny Nov 24
+  - dmr/throttle-and-measure-case-imports  # Danny Dec 12
+  - bmb/SAASP-10184  # Biyeun Dec 16
 submodules: {}

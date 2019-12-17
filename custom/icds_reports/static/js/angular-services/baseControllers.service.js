@@ -1,7 +1,8 @@
 /* global d3, moment */
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
-    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService) {
+    var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
+                                         navigationService) {
         var vm = this;
         vm.moveToLocation = function(loc, index) {
             if (loc === 'national') {
@@ -25,8 +26,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.filtersOpen = false;
             if (!data.location) {
                 vm.moveToLocation('national', -1);
+
             } else {
                 vm.moveToLocation(data.location, data.locationLevel);
+            }
+            if (data.locationLevel === 4 && $location.path().indexOf('awc_reports') === -1) {
+                // jump to AWC reports if an AWC is selected
+                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
             }
             dateHelperService.updateSelectedMonth(data['month'], data['year']);
             storageService.setKey('search', $location.search());
@@ -38,7 +44,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
                   navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
                   isMobile) {
-            BaseFilterController.call(this, $scope, $routeParams, $location, dateHelperService, storageService);
+            BaseFilterController.call(
+                this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
+            );
             var vm = this;
 
             if (Object.keys($location.search()).length === 0) {
@@ -303,10 +311,27 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
 
             // popup support on rankings pages
             vm.displayMobilePopup = function (location) {
-                var locationData = vm.data.mapData.data[location.loc_name];
+                // data is stored in .data for the first three location levels, but then moves to tooltips_data
+                var dataSource = vm.data.mapData.data || vm.data.mapData.tooltips_data;
+                var locationData = dataSource[location.loc_name];
                 var data = vm.getPopupData(locationData);
                 vm.mobilePopupLocation = location;
                 vm.mobilePopupData = data;
+            };
+            vm.drilldownToLocationWithName = function (locationName) {
+                // todo: this is heavily copied from map-or-sector-view's handling of the map click event
+                // but there's not a great place to share the code since they're managed by separate controllers
+                var currentLocationId = $location.search().location_id;
+                locationsService.getLocationByNameAndParent(locationName, currentLocationId).then(function (locations) {
+                    var location = locations[0];
+                    $location.search('location_name', location.name);
+                    $location.search('location_id', location.location_id);
+
+                    storageService.setKey('search', $location.search());
+                    if (location.location_type_name === 'awc') {
+                        $location.path(navigationService.getAWCTabFromPagePath($location.path()));
+                    }
+                });
             };
         },
         BaseFilterController: BaseFilterController,

@@ -1,7 +1,9 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
+                               mobileMapsEnabled) {
     var vm = this;
+    vm.mobileMapsEnabled = mobileMapsEnabled;
     var location_id = $location.search().location_id;
 
     if (['null', 'undefined', ''].indexOf(location_id) === -1) {
@@ -40,13 +42,17 @@ function MapOrSectorController($location, storageService, locationsService) {
         });
     }
 
+    // reduce caption width to fit screen up to 900px on mobile view
+    var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
+    var leftMargin = isMobile ? 20 : 150;
+
     vm.chartOptions = {
 
         chart: {
             type: 'multiBarHorizontalChart',
             margin: {
                 bottom: 40,
-                left: 150,
+                left: leftMargin,
             },
             x: function (d) {
                 return d[0];
@@ -104,10 +110,9 @@ function MapOrSectorController($location, storageService, locationsService) {
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                         }
                     });
                 });
@@ -128,7 +133,7 @@ function MapOrSectorController($location, storageService, locationsService) {
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
-                'width': '900px',
+                'width': captionWidth + 'px',
             },
         },
         title: {
@@ -142,11 +147,13 @@ function MapOrSectorController($location, storageService, locationsService) {
     };
 }
 
-MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService'];
+MapOrSectorController.$inject = [
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
+];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView', function () {
+window.angular.module('icdsApp').directive('mapOrSectorView',  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -156,9 +163,11 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function () {
             location: '=',
             label: '=',
         },
-        templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('map-or-sector-view.directive');
+        },
         bindToController: true,
         controller: MapOrSectorController,
         controllerAs: '$ctrl',
     };
-});
+}]);

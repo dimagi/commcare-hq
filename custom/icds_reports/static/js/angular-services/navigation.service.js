@@ -16,5 +16,23 @@ window.angular.module('icdsApp').factory('navigationService', function () {
             });
             return page_path;
         },
+        getAWCTabFromPagePath: function (path) {
+            var awcReportPath = 'awc_reports';
+            // Routes for various tabs on PS page
+            var tabRoutes = {
+                'maternal_child': 'maternal_child',
+                'maternal_and_child': 'maternal_child',
+                'demographics': 'demographics',
+                'awc_infrastructure': 'awc_infrastructure',
+                'icds_cas_reach': 'pse',
+            };
+            for (var tab in tabRoutes) {
+                if (path.indexOf(tab) !== -1) {
+                    awcReportPath += '/' + tabRoutes[tab];
+                    break;
+                }
+            }
+            return awcReportPath;
+        },
     };
 });

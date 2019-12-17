@@ -1,13 +1,13 @@
 {% extends "icds_reports/base_minimal.html" %}
 {% load i18n %}
-{% load staticfiles %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% block title %}{% trans "Login to ICDS-CAS Mobile Dashboard" %}{% endblock %}
 {% block head %}
   <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
-  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
+  {% compress css %}
+  <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+  {% endcompress %}
 {% endblock head %}
 {% block body %}
 {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}

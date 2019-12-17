@@ -123,9 +123,13 @@ MainController.$inject = [
     'isAlertActive',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
+window.angular.module('icdsApp', [
+        'ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3',
+        'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader',
+        'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+        var utils = hqImport("js/icds_dashboard_utils");
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
         $routeProvider
@@ -241,17 +245,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_infrastructure/adult_weight_scale/:step", {
                 template: "<adult-weight-scale></adult-weight-scale>",
             })
-            .when("/awc_reports", {
-                redirectTo: "/awc_reports/pse",
-            })
             .when("/service_delivery_dashboard", {
                 redirectTo: "/service_delivery_dashboard/pw_lw_children",
             })
             .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
-            })
-            .when("/awc_reports/:step", {
-                template: "<awc-reports></awc-reports>",
             })
             .when("/lady_supervisor", {
                 template: "<lady-supervisor></lady-supervisor>",
@@ -271,7 +269,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
-        hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
-        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
+        utils.addSharedRoutes($routeProvider, 'map');
     }]);
 

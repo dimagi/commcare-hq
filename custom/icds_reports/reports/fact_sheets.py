@@ -657,8 +657,9 @@ class FactSheetsReport(object):
                         row['data'].append({'html': 0})
 
                     if 'average' in row:
-                        row['average'] = self.get_data_for_national_aggregatation(
+                        data = self.get_data_for_national_aggregatation(
                             row['data_source']
-                        )[0][row['slug']]
+                        )
+                        row['average'] = data[0][row['slug']] if data else ''
 
         return {'config': config}

@@ -1,0 +1,170 @@
+{
+  "auditInfo": {
+    "changedBy": {
+      "display": "utsav",
+      "links": [
+        {
+          "rel": "self",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+        }
+      ],
+      "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+    },
+    "creator": {
+      "display": "utsav",
+      "links": [
+        {
+          "rel": "self",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+        }
+      ],
+      "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+    },
+    "dateChanged": "2019-07-08T15:34:06.000+0545",
+    "dateCreated": "2019-07-04T14:23:03.000+0545",
+    "dateVoided": "2019-07-08T15:34:06.000+0545",
+    "voidReason": "Merged with patient #3554",
+    "voidedBy": {
+      "display": "utsav",
+      "links": [
+        {
+          "rel": "self",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+        }
+      ],
+      "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+    }
+  },
+  "display": "",
+  "identifiers": [],
+  "links": [
+    {
+      "rel": "self",
+      "uri": "http://127.0.0.1/openmrs/ws/rest/v1/patient/94d60c79-59b5-4a2c-90a5-325d6e32b3db"
+    }
+  ],
+  "person": {
+    "addresses": [],
+    "age": 21,
+    "attributes": [],
+    "auditInfo": {
+      "changedBy": {
+        "display": "utsav",
+        "links": [
+          {
+            "rel": "self",
+            "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+          }
+        ],
+        "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+      },
+      "creator": {
+        "display": "utsav",
+        "links": [
+          {
+            "rel": "self",
+            "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+          }
+        ],
+        "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+      },
+      "dateChanged": "2019-07-08T15:34:06.000+0545",
+      "dateCreated": "2019-07-04T14:23:03.000+0545",
+      "dateVoided": "2019-07-08T15:34:06.000+0545",
+      "voidReason": "Merged with patient #3554",
+      "voidedBy": {
+        "display": "utsav",
+        "links": [
+          {
+            "rel": "self",
+            "uri": "http://127.0.0.1/openmrs/ws/rest/v1/user/57e96d2a-424d-4256-8386-0276bced9658"
+          }
+        ],
+        "uuid": "57e96d2a-424d-4256-8386-0276bced9658"
+      }
+    },
+    "birthdate": "1998-07-03T00:00:00.000+0545",
+    "birthdateEstimated": true,
+    "birthtime": null,
+    "causeOfDeath": null,
+    "dead": false,
+    "deathDate": null,
+    "deathdateEstimated": false,
+    "display": "hira saud",
+    "gender": "F",
+    "links": [
+      {
+        "rel": "self",
+        "uri": "http://127.0.0.1/openmrs/ws/rest/v1/person/94d60c79-59b5-4a2c-90a5-325d6e32b3db"
+      }
+    ],
+    "names": [],
+    "preferredAddress": {
+      "address1": "01",
+      "address10": null,
+      "address11": null,
+      "address12": null,
+      "address13": null,
+      "address14": null,
+      "address15": null,
+      "address2": null,
+      "address3": null,
+      "address4": null,
+      "address5": null,
+      "address6": null,
+      "address7": null,
+      "address8": null,
+      "address9": null,
+      "cityVillage": "Chaurpati Rural Municipality",
+      "country": "Nepal",
+      "countyDistrict": "Achham",
+      "display": "01",
+      "endDate": null,
+      "latitude": null,
+      "links": [
+        {
+          "rel": "self",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/person/94d60c79-59b5-4a2c-90a5-325d6e32b3db/address/fc17f806-bbde-4805-91a4-a1622dec8486"
+        },
+        {
+          "rel": "full",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/person/94d60c79-59b5-4a2c-90a5-325d6e32b3db/address/fc17f806-bbde-4805-91a4-a1622dec8486?v=full"
+        }
+      ],
+      "longitude": null,
+      "postalCode": null,
+      "preferred": false,
+      "resourceVersion": "2.0",
+      "startDate": null,
+      "stateProvince": "Province No. 7",
+      "uuid": "fc17f806-bbde-4805-91a4-a1622dec8486",
+      "voided": true
+    },
+    "preferredName": {
+      "display": "hira saud",
+      "familyName": "saud",
+      "familyName2": null,
+      "givenName": "hira",
+      "links": [
+        {
+          "rel": "self",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/person/94d60c79-59b5-4a2c-90a5-325d6e32b3db/name/db8e2c7d-a2ca-4818-b9d1-9c5025c7f348"
+        },
+        {
+          "rel": "full",
+          "uri": "http://127.0.0.1/openmrs/ws/rest/v1/person/94d60c79-59b5-4a2c-90a5-325d6e32b3db/name/db8e2c7d-a2ca-4818-b9d1-9c5025c7f348?v=full"
+        }
+      ],
+      "middleName": null,
+      "resourceVersion": "1.8",
+      "uuid": "db8e2c7d-a2ca-4818-b9d1-9c5025c7f348",
+      "voided": true
+    },
+    "resourceVersion": "1.11",
+    "uuid": "94d60c79-59b5-4a2c-90a5-325d6e32b3db",
+    "voided": true
+  },
+  "resourceVersion": "1.8",
+  "uuid": "94d60c79-59b5-4a2c-90a5-325d6e32b3db",
+  "voided": true
+}

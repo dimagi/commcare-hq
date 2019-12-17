@@ -316,6 +316,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -776,6 +777,7 @@ class DailyAttendance(models.Model, AggregateMixin):
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
+    state_id = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -784,6 +786,7 @@ class DailyAttendance(models.Model, AggregateMixin):
         indexes = [
             models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
         ]
+        index_together = ('month', 'state_id')
 
     _agg_helper_cls = DailyAttendanceAggregationDistributedHelper
     _agg_atomic = False

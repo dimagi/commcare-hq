@@ -12,8 +12,7 @@ describe('Map Or Sector View Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, false, false);
     }));
 
     beforeEach(inject(function ($controller, _$location_, storageService, locationsService) {

@@ -1172,6 +1172,13 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_AUTO_ESCALATION_QA = StaticToggle(
+    'icds_auto_escalation_qa',
+    "Temporary flag to support QA of changes to ICDS's auto escalation workflow",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1386,6 +1393,13 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
+)
+
+ICDS_MOBILE_DASHBOARD_MAPS = DynamicallyPredictablyRandomToggle(
+    'icds_mobile_dashboard_maps',
+    'ICDS: Enable Maps on the Mobile Dashboard',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
 )
 
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
@@ -1774,4 +1788,15 @@ USE_NEW_GET_COLUMN = StaticToggle(
     '(strictly for QA right now).',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+    'livequery_read_from_standbys',
+    'Allow livequery restore to read data from plproxy standbys if they are available',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description="""
+    To allow a gradual rollout and testing of using the standby
+    databases to generate restore payloads.
+    """
 )
