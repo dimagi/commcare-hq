@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import ZAPIER_INTEGRATION
+from corehq.privileges import ZAPIER_INTEGRATION, DATA_FORWARDING
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -45,7 +45,8 @@ def create_repeat_records(repeater_cls, payload):
     # todo reconcile ZAPIER_INTEGRATION and DATA_FORWARDING
     #  they each do two separate things and are priced differently,
     #  but use the same infrastructure
-    if domain and domain_has_privilege(domain, ZAPIER_INTEGRATION):
+    if domain and (domain_has_privilege(domain, ZAPIER_INTEGRATION)
+                   or domain_has_privilege(domain, DATA_FORWARDING)):
         repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
             repeater.register(payload)
