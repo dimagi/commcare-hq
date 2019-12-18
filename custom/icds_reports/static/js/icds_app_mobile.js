@@ -66,5 +66,5 @@ window.angular.module('icdsApp', [
             }).when("/program_summary/:step", {
                 template: "<program-summary></program-summary>",
             });
-        hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider, 'chart');
+        hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider, 'map');
     }]);
