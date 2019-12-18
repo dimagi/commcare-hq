@@ -2,9 +2,6 @@ from django.test.testcases import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
 
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
@@ -14,14 +11,12 @@ import json
 import mock
 
 
-class TestLocationView(TestCase, DomainSubscriptionMixin):
+class TestLocationView(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestLocationView, cls).setUpClass()
         cls.domain = create_domain('icds-test')
-        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ENTERPRISE)
-
         state = LocationType.objects.create(
             domain=cls.domain.name,
             name='state',
@@ -167,9 +162,7 @@ class TestLocationView(TestCase, DomainSubscriptionMixin):
         cls.state_3.delete()
         cls.state_2.delete()
         cls.state.delete()
-        cls.teardown_subscriptions()
         cls.domain.delete()
-        clear_plan_version_cache()
         super(TestLocationView, cls).tearDownClass()
 
     def test_request_without_location_id(self):

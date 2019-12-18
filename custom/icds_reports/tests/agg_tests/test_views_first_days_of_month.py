@@ -6,9 +6,6 @@ import json
 import mock
 import datetime
 
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.toggles import DASHBOARD_ICDS_REPORT
 from custom.icds_reports.views import PrevalenceOfUndernutritionView, AwcReportsView, \
     PrevalenceOfSevereView, PrevalenceOfStuntingView, NewbornsWithLowBirthWeightView, \
@@ -45,25 +42,8 @@ class ThirdDayOfJuly(datetime.datetime):
         return datetime.datetime(2017, 6, 3)
 
 
-class Base(TestCase, DomainSubscriptionMixin):
+class Base(TestCase):
     DOMAIN_NAME = 'icds-test'
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        cls.domain_obj = Domain.get_or_create_with_name(cls.DOMAIN_NAME)
-        cls.domain_obj.is_active = True
-        cls.domain_obj.save()
-
-        cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ENTERPRISE)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.teardown_subscriptions()
-        cls.domain_obj.delete()
-        clear_plan_version_cache()
-        super().tearDownClass()
 
     def setUp(self):
         self.factory = None
@@ -72,7 +52,7 @@ class Base(TestCase, DomainSubscriptionMixin):
         self.url = None
         self.run_july_third_test = False
 
-    def _setup_user(self):
+    def _setup_domain_and_user(self):
         domain = Domain.get_or_create_with_name(self.DOMAIN_NAME)
         domain.is_active = True
         domain.save()
@@ -218,7 +198,7 @@ class TestPrevalenceOfUndernutritionView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = PrevalenceOfUndernutritionView.as_view()
         self.url = 'underweight_children'
 
@@ -228,7 +208,7 @@ class TestAwcReportsView(Base):
     def setUp(self):
         self.run_july_third_test = False
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = AwcReportsView.as_view()
         self.url = 'awc_reports'
 
@@ -238,7 +218,7 @@ class TestPrevalenceOfSevereView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = PrevalenceOfSevereView.as_view()
         self.url = 'prevalence_of_severe'
 
@@ -248,7 +228,7 @@ class TestPrevalenceOfStuntingView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = PrevalenceOfStuntingView.as_view()
         self.url = 'prevalence_of_stunting'
 
@@ -258,7 +238,7 @@ class TestNewbornsWithLowBirthWeightView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = NewbornsWithLowBirthWeightView.as_view()
         self.url = 'low_birth'
 
@@ -268,7 +248,7 @@ class TestEarlyInitiationBreastfeeding(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = EarlyInitiationBreastfeeding.as_view()
         self.url = 'early_initiation'
 
@@ -278,7 +258,7 @@ class TestExclusiveBreastfeedingView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = ExclusiveBreastfeedingView.as_view()
         self.url = 'exclusive-breastfeeding'
 
@@ -288,7 +268,7 @@ class TestChildrenInitiatedView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = ChildrenInitiatedView.as_view()
         self.url = 'children_initiated'
 
@@ -298,7 +278,7 @@ class TestInstitutionalDeliveriesView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = InstitutionalDeliveriesView.as_view()
         self.url = 'institutional_deliveries'
 
@@ -308,7 +288,7 @@ class TestImmunizationCoverageView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = ImmunizationCoverageView.as_view()
         self.url = 'immunization_coverage'
 
@@ -318,7 +298,7 @@ class TestAWCsCoveredView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = AWCsCoveredView.as_view()
         self.url = 'awcs_covered'
 
@@ -328,7 +308,7 @@ class TestRegisteredHouseholdView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = RegisteredHouseholdView.as_view()
         self.url = 'registered_household'
 
@@ -338,7 +318,7 @@ class TestEnrolledChildrenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = EnrolledChildrenView.as_view()
         self.url = 'enrolled_children'
 
@@ -348,7 +328,7 @@ class TestEnrolledWomenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = EnrolledWomenView.as_view()
         self.url = 'enrolled_women'
 
@@ -358,7 +338,7 @@ class TestLactatingEnrolledWomenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = LactatingEnrolledWomenView.as_view()
         self.url = 'lactating_enrolled_women'
 
@@ -368,7 +348,7 @@ class TestAdolescentGirlsView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = AdolescentGirlsView.as_view()
         self.url = 'adolescent_girls'
 
@@ -378,7 +358,7 @@ class TestAdhaarBeneficiariesView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = AdhaarBeneficiariesView.as_view()
         self.url = 'adhaar'
 
@@ -388,7 +368,7 @@ class TestCleanWaterView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = CleanWaterView.as_view()
         self.url = 'clean_water'
 
@@ -398,7 +378,7 @@ class TestFunctionalToiletView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = FunctionalToiletView.as_view()
         self.url = 'functional_toilet'
 
@@ -408,7 +388,7 @@ class TestMedicineKitView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = MedicineKitView.as_view()
         self.url = 'medicine_kit'
 
@@ -418,7 +398,7 @@ class TestInfantometerView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = InfantometerView.as_view()
         self.url = 'infantometer'
 
@@ -428,7 +408,7 @@ class TestStadiometerView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = StadiometerView.as_view()
         self.url = 'stadiometer'
 
@@ -438,7 +418,7 @@ class TestInfantsWeightScaleView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = InfantsWeightScaleView.as_view()
         self.url = 'infants_weight_scale'
 
@@ -448,6 +428,6 @@ class TestAdultWeightScaleView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        self._setup_user()
+        self._setup_domain_and_user()
         self.view = AdultWeightScaleView.as_view()
         self.url = 'adult_weight_scale'
