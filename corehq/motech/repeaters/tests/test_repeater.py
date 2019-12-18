@@ -800,8 +800,18 @@ class UserRepeaterTest(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class LocationRepeaterTest(TestCase):
-    domain = 'location-repeater-test-domain'
+class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'location-repeater-test-domain'
+
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
 
     def setUp(self):
         super().setUp()
@@ -814,6 +824,13 @@ class LocationRepeaterTest(TestCase):
             domain=self.domain,
             name="city",
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscriptions()
+        cls.domain_obj.delete()
+        clear_plan_version_cache()
+        super().tearDownClass()
 
     def tearDown(self):
         super().tearDown()
