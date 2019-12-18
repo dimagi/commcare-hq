@@ -49,30 +49,53 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                'st1': {'moderate': 4,
-                        'severe': 0,
-                        'normal': 3,
-                        'total_weighed': 317,
-                        'total_measured': 7,
-                        'total_height_eligible': 454,
-                        'original_name': ['st1'],
-                        'fillKey': '7%-100%'},
-                'st2': {'moderate': 4,
-                        'severe': 0,
-                        'normal': 16,
-                        'total_weighed': 378,
-                        'total_measured': 20,
-                        'total_height_eligible': 496,
-                        'original_name': ['st2'],
-                        'fillKey': '7%-100%'},
-                'st7': {'moderate': 0,
-                        'severe': 0,
+                'st1': {'moderately_underweight': 320,
+                     'severely_underweight': 40,
+                     'normal': 1225,
+                     'weighed': 1585,
+                     'total': 2375,
+                     'original_name': ['st1'],
+                     'fillKey': '20%-35%'},
+                'st2': {'moderately_underweight': 325,
+                     'severely_underweight': 60,
+                     'normal': 1505,
+                     'weighed': 1890,
+                     'total': 2565,
+                     'original_name': ['st2'],
+                     'fillKey': '20%-35%'},
+                'st3': {'moderately_underweight': 0,
+                     'severely_underweight': 0,
+                     'normal': 0,
+                     'weighed': 0,
+                     'total': 1,
+                     'original_name': ['st3'],
+                     'fillKey': '0%-20%'},
+                'st4': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
                         'normal': 0,
-                        'total_weighed': 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 1,
-                        'original_name': ['st7'],
-                        'fillKey': '0%-5%'}
+                        'weighed': 0,
+                        'total': 2,
+                        'original_name': ['st4'],
+                        'fillKey': '0%-20%'},
+                'st5': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 3,
+                        'original_name': ['st5'],
+                        'fillKey': '0%-20%'},
+                'st6': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 4,
+                        'original_name': ['st6'], 'fillKey': '0%-20%'},
+                'st7': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 5,
+                        'original_name': ['st7'], 'fillKey': '0%-20%'}
             }
         )
 
@@ -224,6 +247,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
@@ -241,9 +266,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.0},
-                {'loc_name': 'st1', 'percent': 57.142857142857146}
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0}
             ]
         )
 
@@ -400,6 +427,10 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}

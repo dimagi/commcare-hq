@@ -162,7 +162,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         chart_data = apply_exclude(domain, chart_data)
 
     if 'age_tranche' not in config:
-        chart_data = chart_data.exclude(age_tranche__lt=72)
+        chart_data = chart_data.filter(age_tranche__lt=72)
 
     data = {
         'peach': OrderedDict(),
@@ -287,7 +287,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         data = apply_exclude(domain, data)
 
     if 'age_tranche' not in config:
-        data = data.exclude(age_tranche__lt=72)
+        data = data.filter(age_tranche__lt=72)
 
     chart_data = {
         'blue': []
