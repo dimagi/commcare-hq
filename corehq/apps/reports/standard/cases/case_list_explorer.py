@@ -11,7 +11,6 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -27,6 +26,7 @@ from corehq.apps.reports.standard.cases.filters import (
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.util.datadog.gauges import datadog_bucket_timer
+from corehq.util.soft_assert import soft_assert
 
 
 class CaseListExplorer(CaseListReport):
@@ -193,22 +193,12 @@ def send_email_to_dev_more(domain, user, query, total_results):
 
     ¯\_(ツ)_/¯
     """
-
-    message = """
-    Hi Dev! Someone just performed a query with the case list explorer. Cool!
-
-    Domain: {}
-    User: {}
-    Query: {}
-    Total Results: {}
-
-    Yours truly,
-    CLEBOT
-    """.format(domain, user, query if query else "Empty Query", total_results)
-
-    send_mail_async.delay(
-        subject="Case List Explorer Query Performed",
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=["@".join(['dmore', 'dimagi.com'])],
-    )
+    _assert = soft_assert(["@".join(['dmore', 'dimagi.com'])],
+                          exponential_backoff=False, send_to_ops=False)
+    _assert(False, "Case List Explorer Query Performed", {
+        'Note': "Hi Dev! Someone just performed a query with the case list explorer. Cool!  -CLEBOT",
+        'Domain': domain,
+        'User': user,
+        'Query': query if query else "Empty Query",
+        'Total Results': total_results,
+    })
