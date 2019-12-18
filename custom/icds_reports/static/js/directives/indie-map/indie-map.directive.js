@@ -260,7 +260,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        if (useNewMaps && location.location_type === 'district') {
+        var locationLevel = getLocationLevelFromType(location.location_type);
+        if (useNewMaps && locationLevel === 1) {
             topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
                 mapConfiguration(location, resp.topojson);
             });
