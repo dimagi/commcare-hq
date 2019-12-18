@@ -472,7 +472,7 @@ class AggAwc(models.Model, AggregateMixin):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(null=True)
-    cases_person_adolescent_girls_11_14_all_new = models.IntegerField(null=True)
+    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(null=True)
     infra_infant_weighing_scale = models.IntegerField(null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
