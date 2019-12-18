@@ -1,7 +1,16 @@
 Setting up CommCare HQ for Developers
 -------------------------------------
 
-Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
+This document describes setting up a development environment for working on
+CommCareHQ. Such an environment is not suitable for real projects. Production
+environments should be deployed and managed [using
+commcare-cloud](https://dimagi.github.io/commcare-cloud/)
+
+These instructions are for Mac or Linux computers. For Windows, consider using
+an Ubuntu virtual machine.
+
+Common issues and their solutions can be found at the end
+of this document.
 
 ### (Optional) Copying data from an existing HQ install
 
