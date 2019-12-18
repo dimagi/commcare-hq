@@ -80,24 +80,24 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
-    // this function was copied ~without modification from
+    // this function was copied with minor modification (inputs and variable names) from
     // https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html
     function calculateScaleCenter(path, features, width, height) {
         // Get the bounding box of the paths (in pixels!) and calculate a
         // scale factor based on the size of the bounding box and the map
         // size.
-        var bbox_path = path.bounds(features),
+        var bboxPath = path.bounds(features),
             scale = 0.95 / Math.max(
-                (bbox_path[1][0] - bbox_path[0][0]) / width,
-                (bbox_path[1][1] - bbox_path[0][1]) / height
+                (bboxPath[1][0] - bboxPath[0][0]) / width,
+                (bboxPath[1][1] - bboxPath[0][1]) / height
             );
 
         // Get the bounding box of the features (in map units!) and use it
         // to calculate the center of the features.
-        var bbox_feature = d3.geo.bounds(features),
+        var bboxFeature = d3.geo.bounds(features),
             center = [
-                (bbox_feature[1][0] + bbox_feature[0][0]) / 2,
-                (bbox_feature[1][1] + bbox_feature[0][1]) / 2];
+                (bboxFeature[1][0] + bboxFeature[0][0]) / 2,
+                (bboxFeature[1][1] + bboxFeature[0][1]) / 2];
 
         return {
             'scale': scale,
