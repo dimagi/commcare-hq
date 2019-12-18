@@ -6,8 +6,7 @@
   .dark-background;
   .h-100vh;
   .position-fixed;
-  .pl-3;
-  .pr-3;
+  padding-bottom: 2rem;
   padding-top: 2rem;
   left: -(@nav-menu-width);
   z-index: 1000;
@@ -20,14 +19,16 @@
   .font-16;
   .font-montserrat;
   .text-white;
+  .pt-3;
+  .pb-3;
 }
 
 .menu-options {
   .d-flex;
   .align-items-center;
   .mb-3;
-  .pt-2;
-  .pb-2;
+  .pl-3;
+  .pr-3;
 }
 .menu-options:hover, .close-icon:hover {
   background-color: #363c51!important;
@@ -37,4 +38,15 @@
   width: 15px;
   top: 15px;
   right: 15px;
+}
+#nutrition, #reach, #demographics, #infrastructure {
+  overflow: auto;
+}
+.sub-links:active, .sub-links:hover, .sub-links:focus, .sub-links {
+  .text-white;
+  text-decoration: none;
+}
+.active-mobile-link {
+  background: #363c51;
+  border-right: 4px solid #00a8c6;
 }
