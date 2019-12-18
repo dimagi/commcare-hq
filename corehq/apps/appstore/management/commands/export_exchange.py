@@ -8,8 +8,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
 
-logger = logging.getLogger(__name__)
-
 
 class Command(BaseCommand):
     help = """
@@ -25,7 +23,7 @@ class Command(BaseCommand):
         rows = [
             (
                 s['title'],
-                s['organization'],
+                s['author'] or Domain.wrap(s).name_of_publisher,
                 s['short_description'],
                 s['project_type'],
                 CouchUser.get_by_user_id(s['cda']['user_id']).username if s['cda']['user_id'] and CouchUser.get_by_user_id(s['cda']['user_id']) else None,
