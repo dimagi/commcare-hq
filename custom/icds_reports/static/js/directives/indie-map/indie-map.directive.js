@@ -128,12 +128,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return vm.scalingFactor * options.scale;
     };
 
-    function getLocationLevelFromType(location_type) {
-        if (location_type === 'state') {
+    function getLocationLevelFromType(locationType) {
+        if (locationType === 'state') {
             return 0;
-        } else if (location_type === 'district') {
+        } else if (locationType === 'district') {
             return 1;
-        } else if (location_type === 'block') {
+        } else if (locationType === 'block') {
             return 2;
         } else {
             return -1;
