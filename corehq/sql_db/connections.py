@@ -223,8 +223,8 @@ class ConnectionManager(object):
         for session_key in list(self._session_helpers):
             self.__dispose(session_key)
 
-    def get_connection_string(self, engine_id):
-        db_alias = self.engine_id_django_db_map.get(engine_id, DEFAULT_DB_ALIAS)
+    def get_connection_string(self, engine_id_or_db_alias):
+        db_alias = self.engine_id_django_db_map.get(engine_id_or_db_alias, engine_id_or_db_alias)
         return self._connection_string_from_django(db_alias)
 
     def _populate_connection_map(self):
@@ -286,7 +286,7 @@ def override_engine(engine_id, connection_url, db_alias=None):
     get_connection_string = connection_manager.get_connection_string
 
     def _get_conn_string(e_id):
-        if e_id == engine_id:
+        if e_id in (engine_id, db_alias):
             return connection_url
         else:
             return get_connection_string(e_id)
