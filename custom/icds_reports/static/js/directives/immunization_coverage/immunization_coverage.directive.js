@@ -9,7 +9,6 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getImmunizationCoverageData;
 
     var genderIndex = _.findIndex(genders, function (x) {

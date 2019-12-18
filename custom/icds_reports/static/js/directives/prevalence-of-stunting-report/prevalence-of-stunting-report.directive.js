@@ -10,7 +10,6 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getPrevalenceOfStuntingData;
 
     var ageIndex = _.findIndex(ages, function (x) {
