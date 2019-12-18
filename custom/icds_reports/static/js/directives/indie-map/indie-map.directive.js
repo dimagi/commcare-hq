@@ -51,7 +51,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = STATES_TOPOJSON;
+            if (useNewMaps) {
+                Datamap.prototype[vm.type] = topojson;
+            } else {
+                Datamap.prototype[vm.type] = STATES_TOPOJSON;
+            }
+
         } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
@@ -261,7 +266,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     locationsService.getLocation(location_id).then(function (location) {
         var locationLevel = getLocationLevelFromType(location.location_type);
-        if (useNewMaps && locationLevel === 1) {
+        if (useNewMaps && locationLevel === -1) {
+            topojsonService.getStateTopoJson().then(function (resp) {
+                mapConfiguration(location, resp);
+            });
+        } else if (useNewMaps && locationLevel === 1) {
             topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
                 mapConfiguration(location, resp.topojson);
             });
