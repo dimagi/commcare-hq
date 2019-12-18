@@ -113,6 +113,38 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+    @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
+    def test_read_load_balancing_session(self, *args):
+        reporting_dbs = {
+            'ucr': {
+                'WRITE': 'ucr',
+                'READ': [('ucr', 8), ('other', 1), ('default', 1)]
+            },
+        }
+        with override_settings(REPORTING_DATABASES=reporting_dbs):
+            manager = ConnectionManager()
+            self.assertEqual(manager.engine_id_django_db_map, {
+                'default': 'default',
+                'ucr': 'ucr',
+            })
+
+            urls = {
+                manager.get_connection_string(alias)
+                for alias, _ in reporting_dbs['ucr']['READ']
+            }
+            self.assertEqual(len(urls), 3)
+            # withing 50 iterations we should have seen all 3 databases at least once
+            for i in range(50):
+                url = manager.get_session_helper('ucr', readonly=True).url
+                if url in urls:
+                    urls.remove(url)
+                if not urls:
+                    break
+
+            if urls:
+                self.fail(f'DBs skipped in load balancing: {urls}')
+
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'other': 4}[x])
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'other'})
     def test_standby_filtering(self, *args):

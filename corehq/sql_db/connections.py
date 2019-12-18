@@ -98,6 +98,7 @@ class SessionHelper(object):
     """
 
     def __init__(self, connection_url: str, connect_args: dict = None):
+        self.url = connection_url
         self.engine = create_engine(connection_url, connect_args)
         self._session_factory = sessionmaker(bind=self.engine)
         # Session is the actual constructor object
