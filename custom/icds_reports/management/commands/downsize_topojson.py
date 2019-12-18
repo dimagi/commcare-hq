@@ -20,7 +20,7 @@ class Command(BaseCommand):
         output_dir = get_topojson_directory()
         output_file_path = os.path.join(output_dir, output_file)
         tmp_input_filename = os.path.join(output_dir, 'topojson_tmp_in.topojson')
-        with open(tmp_input_filename , 'w+') as f:
+        with open(tmp_input_filename, 'w+') as f:
             f.write(topojson_file.get_formatted_topojson())
 
         tmp_output_filename = os.path.join(output_dir, 'topojson_tmp_out.topojson')
