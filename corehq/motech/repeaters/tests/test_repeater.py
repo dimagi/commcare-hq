@@ -139,7 +139,7 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
 
 
 class RepeaterTest(BaseRepeaterTest):
-    domain = "repeater-test-domain"
+    domain = "repeater-test"
 
     def setUp(self):
         super(RepeaterTest, self).setUp()
@@ -339,7 +339,7 @@ class RepeaterTest(BaseRepeaterTest):
 
 
 class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
-    domain = "form-payload-test-domain"
+    domain = "form-payload"
 
     @classmethod
     def setUpClass(cls):
@@ -372,7 +372,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
 
 
 class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
-    domain = "form-repeater-test-domain"
+    domain = "form-repeater"
 
     @classmethod
     def setUpClass(cls):
@@ -402,7 +402,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
 
 class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
-    domain = "short-form-repeater-test-domain"
+    domain = "sh-form-rep"
 
     @classmethod
     def setUpClass(cls):
@@ -437,7 +437,7 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
-    domain = "case-repeater-test-domain"
+    domain = "case-rep"
 
     @classmethod
     def setUpClass(cls):
@@ -571,7 +571,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
 
 class RepeaterFailureTest(BaseRepeaterTest):
-    domain = 'repeater-failure-test-domain'
+    domain = 'repeat-fail'
 
     def setUp(self):
         super().setUp()
@@ -616,7 +616,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):
-    domain = 'ignore-document-test-domain'
+    domain = 'ignore-doc'
 
     @classmethod
     def setUpClass(cls):
@@ -662,7 +662,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
 
 
 class TestRepeaterFormat(BaseRepeaterTest):
-    domain = 'test-repeater-format-domain'
+    domain = 'test-fmt'
 
     @classmethod
     def setUpClass(cls):
@@ -820,7 +820,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = 'location-repeater-test-domain'
+        cls.domain = 'loc-repeat'
 
         cls.domain_obj = create_domain(name=cls.domain)
 
@@ -896,7 +896,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
 
 
 class TestRepeaterPause(BaseRepeaterTest):
-    domain = 'test-repeater-pause'
+    domain = 'rep-pause'
 
     def setUp(self):
         super().setUp()
@@ -942,7 +942,7 @@ class TestRepeaterPause(BaseRepeaterTest):
 
 
 class TestRepeaterDeleted(BaseRepeaterTest):
-    domain = 'test-repeater-deleted'
+    domain = 'rep-deleted'
 
     def setUp(self):
         super().setUp()
@@ -1004,7 +1004,7 @@ class DummyRepeater(Repeater):
 
 
 class HandleResponseTests(SimpleTestCase):
-    domain = 'handle-response'
+    domain = 'handle-resp'
 
     def setUp(self):
         self.repeater = DummyRepeater(
