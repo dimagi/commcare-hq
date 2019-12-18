@@ -56,11 +56,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             } else {
                 Datamap.prototype[vm.type] = STATES_TOPOJSON;
             }
-
         } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
+            if (useNewMaps) {
+                Datamap.prototype[vm.type] = topojson;
+            } else {
+                Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
+            }
         } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
