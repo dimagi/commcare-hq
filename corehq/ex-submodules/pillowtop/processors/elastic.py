@@ -41,6 +41,17 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 
 class ElasticProcessor(PillowProcessor):
+    """Generic processor to transform documents and insert into ES.
+
+    Processes one document at a time.
+
+    Reads from:
+      - Usually Couch
+      - Sometimes SQL
+
+    Writes to:
+      - ES
+    """
 
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
         self.doc_filter_fn = doc_filter_fn or noop_filter
@@ -101,6 +112,18 @@ class ElasticProcessor(PillowProcessor):
 
 
 class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
+    """Generic processor to transform documents and insert into ES.
+
+    Processes one "chunk" of changes at a time (chunk size specified by pillow).
+
+    Reads from:
+      - Usually Couch
+      - Sometimes SQL
+
+    Writes to:
+      - ES
+    """
+
     def process_changes_chunk(self, changes_chunk):
         with self._datadog_timing('bulk_extract'):
             bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)

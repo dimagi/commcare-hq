@@ -256,6 +256,16 @@ class ConfigurableReportTableManagerMixin(object):
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
+    """Generic processor for UCR.
+
+    Reads from:
+      - SQLLocation
+      - Form data source
+      - Case data source
+
+    Writes to:
+      - UCR database
+    """
 
     domain_timing_context = Counter()
 
@@ -520,7 +530,13 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, ucr_configs=None, **kwargs):
-    # Todo; is ucr_division needed?
+    """Processes updates to locations for UCR
+
+    Note this is only applicable if a domain on the environment has `LOCATIONS_IN_UCR` flag enabled.
+
+    Processors:
+      - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     change_feed = KafkaChangeFeed(
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )

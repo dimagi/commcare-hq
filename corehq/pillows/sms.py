@@ -14,6 +14,11 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFacto
 
 def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
                        processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """SMS Pillow
+
+    Processors:
+      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+    """
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
     processor = BulkElasticProcessor(
