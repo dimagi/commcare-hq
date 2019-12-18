@@ -464,6 +464,7 @@ BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SAAS_REPORTING_EMAIL = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
 

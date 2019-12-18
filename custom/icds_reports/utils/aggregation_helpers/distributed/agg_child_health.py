@@ -192,14 +192,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     def update_queries(self):
         yield f"""
-            CREATE TABLE "local_tmp_agg_child_health" AS SELECT * FROM "{self.temporary_tablename}";
-            INSERT INTO "{self.staging_tablename}" SELECT * from "local_tmp_agg_child_health";
-            DROP TABLE "local_tmp_agg_child_health";
-        """, {
-        }
-
-        yield f"""
-        UPDATE "{self.staging_tablename}" agg SET
+            UPDATE "{self.temporary_tablename}" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
@@ -213,8 +206,8 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                     MAX(block_is_test) as block_is_test,
                     MAX(supervisor_is_test) as supervisor_is_test,
                     MAX(awc_is_test) as awc_is_test
-                FROM "awc_location_local"
-                GROUP BY awc_id
+                FROM "awc_location"
+                GROUP BY awc_id, supervisor_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -231,6 +224,13 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                   ut.awc_is_test != agg.awc_is_test
                 )
             );
+        """, {
+        }
+
+        yield f"""
+            CREATE TABLE "local_tmp_agg_child_health" AS SELECT * FROM "{self.temporary_tablename}";
+            INSERT INTO "{self.staging_tablename}" SELECT * from "local_tmp_agg_child_health";
+            DROP TABLE "local_tmp_agg_child_health";
         """, {
         }
 
