@@ -45,7 +45,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
-    vm.scalingFactor = 1;
 
     vm.initTopoJson = function (locationLevel, location, topojson) {
         if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
@@ -75,15 +74,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 // take window height and subtract height of the header plus 44px of additional padding / margins
                 var availableHeight = window.innerHeight - headerHeight - 44;
                 if (availableHeight < vm.mapHeight) {
-                    // how much we have downscaled so we can also scale the map itself
-                    vm.scalingFactor = availableHeight / vm.mapHeight;
-                    // this approximates additional scaling based on the width of the device.
-                    // the factor was determined from a few samples and is not perfect.
-                    var factor = 1.1;
-                    var aspectRatio = window.innerHeight / window.innerWidth;
-                    if (aspectRatio > factor) {
-                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / factor);
-                    }
                     vm.mapHeight = availableHeight;
                 }
             }
@@ -114,34 +104,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         'center': center
       };
     }
-
-    vm.getCenter = function (options) {
-        if (isMobile) {
-            // adjust center for mobile maps, because web maps are intentionally offset to leave
-            // room for the legend.
-            function getLatAdjustmentForScale(scale) {
-                // this is a very rough approximation made with a few data points for a first pass
-                // basically the further zoomed in we are the less we should adjust
-                if (scale < 5000) {
-                    return 2;
-                } else if (scale < 8000) {
-                    return 1.5;
-                } else if (scale < 12000) {
-                    return 1;
-                } else {
-                    return .5;
-                }
-            }
-            return [options.center[0] + getLatAdjustmentForScale(options.scale), options.center[1]];
-        } else {
-            return options.center;
-        }
-    };
-
-    vm.getScale = function (options) {
-        // apply additional scaling if necessary (used by mobile maps)
-        return vm.scalingFactor * options.scale;
-    };
 
     function getLocationLevelFromType(locationType) {
         if (locationType === 'state') {
@@ -199,8 +161,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                 } else {
                     projection = d3.geo.equirectangular()
-                        .center(vm.getCenter(options))
-                        .scale(vm.getScale(options))
+                        .center(options.center)
+                        .scale(options.scale)
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                     path = d3.geo.path().projection(projection);
                 }
