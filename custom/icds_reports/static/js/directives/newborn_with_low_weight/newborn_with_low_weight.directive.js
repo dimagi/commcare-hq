@@ -10,7 +10,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         null, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
 
     var genderIndex = _.findIndex(genders, function (x) {

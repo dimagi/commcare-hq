@@ -9,7 +9,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         null, isMobile);
     var vm = this;
 
-    vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
     // where the data for this report comes from
     vm.serviceDataFunction = maternalChildService.getUnderweightChildrenData;
 
