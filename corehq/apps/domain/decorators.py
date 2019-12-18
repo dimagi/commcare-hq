@@ -87,6 +87,9 @@ def _page_is_whitelist(path, domain):
 
 
 def _can_access_project_page(request):
+    # always allow for non-SaaS deployments
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return True
     return has_privilege(request, privileges.PROJECT_ACCESS) or (
         hasattr(request, 'always_allow_project_access') and request.always_allow_project_access
     )
