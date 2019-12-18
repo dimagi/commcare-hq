@@ -39,7 +39,7 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
                     function (response) {
                         CACHE['blocks'][district] = response.data;
                         return response.data;
-                    },
+                    }
                 );
             }
         },
