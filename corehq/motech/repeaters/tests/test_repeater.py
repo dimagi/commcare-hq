@@ -585,6 +585,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super().tearDown()
 
