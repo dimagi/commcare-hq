@@ -19,7 +19,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         input_dir = get_topojson_directory()
-        output_dir = os.path.join(Path(__file__).parent.parent.parent, 'utils', 'topojson_util', 'static')
 
         # loading block topojson object
         block_topojson_file = get_block_topojson_file()
@@ -61,7 +60,7 @@ class Command(BaseCommand):
             districts = ','.join(district_list)
             file_name_part = state.replace(' &', '').replace('&', '').replace(' ', '_').lower()
             output_filename = '{}_blocks_v3.topojson'.format(file_name_part)
-            output_file_path = os.path.join(output_dir, 'blocks', output_filename)
+            output_file_path = os.path.join(input_dir, 'blocks', output_filename)
 
             # breaking block topojson for each state using mapshaper : https://www.npmjs.com/package/mapshaper
             mapshaper_command = "mapshaper {} -o target='{}' {}".format(
@@ -85,7 +84,7 @@ class Command(BaseCommand):
             break
 
         # saving the state district data with file name of topojson for each state
-        state_district_map_file = open(os.path.join(output_dir, 'district_topojson_data.json'), 'w+')
+        state_district_map_file = open(os.path.join(input_dir, 'district_topojson_data.json'), 'w+')
         state_district_map_file.write(json.dumps(state_district_map, indent=2))
         state_district_map_file.close()
 
