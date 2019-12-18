@@ -90,6 +90,31 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
+    // this function was copied ~without modification from
+    // https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html
+    function calculateScaleCenter(path, features, width, height) {
+      // Get the bounding box of the paths (in pixels!) and calculate a
+      // scale factor based on the size of the bounding box and the map
+      // size.
+      var bbox_path = path.bounds(features),
+          scale = 0.95 / Math.max(
+            (bbox_path[1][0] - bbox_path[0][0]) / width,
+            (bbox_path[1][1] - bbox_path[0][1]) / height
+          );
+
+      // Get the bounding box of the features (in map units!) and use it
+      // to calculate the center of the features.
+      var bbox_feature = d3.geo.bounds(features),
+          center = [
+            (bbox_feature[1][0] + bbox_feature[0][0]) / 2,
+            (bbox_feature[1][1] + bbox_feature[0][1]) / 2];
+
+      return {
+        'scale': scale,
+        'center': center
+      };
+    }
+
     vm.getCenter = function (options) {
         if (isMobile) {
             // adjust center for mobile maps, because web maps are intentionally offset to leave
@@ -157,14 +182,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 4;
-                var options = Datamap.prototype[vm.type].objects[vm.scope];
-                var projection = d3.geo.equirectangular()
-                    .center(vm.getCenter(options))
-                    .scale(vm.getScale(options))
-                    .translate([element.offsetWidth / 2, element.offsetHeight / div]);
-                var path = d3.geo.path()
-                    .projection(projection);
-
+                var options = vm.rawTopojson.objects[vm.scope];
+                var projection, path;
+                if (useNewMaps) {
+                    // load a dummy projection so we can calculate the true size
+                    // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
+                    projection = d3.geo.equirectangular().scale(1);
+                    path = d3.geo.path().projection(projection);
+                    var feature = window.topojson.feature(vm.rawTopojson, options);
+                    var scaleCenter = calculateScaleCenter(
+                        path, feature,
+                        element.offsetWidth, element.offsetHeight
+                    );
+                    projection.scale(scaleCenter.scale)
+                        .center(scaleCenter.center)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                } else {
+                    projection = d3.geo.equirectangular()
+                        .center(vm.getCenter(options))
+                        .scale(vm.getScale(options))
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                    path = d3.geo.path().projection(projection);
+                }
                 return {path: path, projection: projection};
             },
         };
