@@ -8,11 +8,9 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
     };
     function getStaticTopojson(topojsonUrl, cacheKey) {
         if (cacheKey in CACHE) {
-            console.log("cache hit");
             // https://javascript.info/promise-api#promise-resolve-reject
             return Promise.resolve(CACHE["states"]);
         } else {
-            console.log("cache misss");
             return $http.get(topojsonUrl).then(
                 function (response) {
                     console.log('http get response');
@@ -22,7 +20,6 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
             );
         }
     }
-
     return {
         getStateTopoJson: function () {
             return getStaticTopojson(stateTopoJsonUrl, 'states');
