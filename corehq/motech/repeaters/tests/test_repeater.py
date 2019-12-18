@@ -836,7 +836,6 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
         super().tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
-        self.domain_obj.delete()
 
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
