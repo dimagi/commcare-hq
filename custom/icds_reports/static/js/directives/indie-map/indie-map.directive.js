@@ -120,20 +120,20 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return vm.scalingFactor * options.scale;
     };
 
-    var mapConfiguration = function (location, topojson) {
-
-        var locationLevel = -1;
-
-        if (location.location_type === 'state') {
-            locationLevel = 0;
-        } else if (location.location_type === 'district') {
-            locationLevel = 1;
-        } else if (location.location_type === 'block') {
-            locationLevel = 2;
+    function getLocationLevelFromType(location_type) {
+        if (location_type === 'state') {
+            return 0;
+        } else if (location_type === 'district') {
+            return 1;
+        } else if (location_type === 'block') {
+            return 2;
         } else {
-            locationLevel = -1;
+            return -1;
         }
+    }
 
+    var mapConfiguration = function (location, topojson) {
+        var locationLevel = getLocationLevelFromType(location.location_type);
         vm.initTopoJson(locationLevel, location, topojson);
 
         vm.map = {
