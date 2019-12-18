@@ -81,7 +81,6 @@ class Command(BaseCommand):
                 state_topojson_js_file.write(state_topojson_js)
 
             data['file_name'] = output_filename
-            break
 
         # saving the state district data with file name of topojson for each state
         state_district_map_file = open(os.path.join(input_dir, 'district_topojson_data.json'), 'w+')
