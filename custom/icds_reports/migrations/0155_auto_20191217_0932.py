@@ -8,11 +8,15 @@ from django.db import migrations, models
 from custom.icds_reports.utils.migrations import (
     get_composite_primary_key_migrations,
 )
+from corehq.sql_db.operations import RawSQLMigration
 from corehq.sql_db.connections import is_citus_db
 from custom.icds_reports.const import AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.migrations import (
     create_citus_distributed_table
 )
+
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 def _distribute_citus_tables(apps, schema_editor):
@@ -53,7 +57,8 @@ class Migration(migrations.Migration):
             unique_together=set([('supervisor_id', 'person_case_id', 'month')]),
         ),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_out_of_school INTEGER"),
-        migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all_v2 INTEGER")
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all_v2 INTEGER"),
+        migrator.get_migration('agg_awc_monthly.sql')
     ]
 
     operations.extend(get_composite_primary_key_migrations(['aggregateadolescentgirlsregistrationforms']))
