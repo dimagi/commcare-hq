@@ -14,7 +14,7 @@ from custom.icds_reports.const import AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.migrations import (
     create_citus_distributed_table
 )
-
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
@@ -58,9 +58,11 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_out_of_school INTEGER"),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all_v2 INTEGER"),
-        migrator.get_migration('agg_awc_monthly.sql')
     ]
 
     operations.extend(get_composite_primary_key_migrations(['aggregateadolescentgirlsregistrationforms']))
     operations.append(migrations.RunPython(_distribute_citus_tables, migrations.RunPython.noop))
+
+    operations.extend(get_view_migrations())
+
 
