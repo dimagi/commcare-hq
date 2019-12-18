@@ -470,7 +470,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(payload, '//*[local-name()="create"]')
 
         # close the case
-        CaseFactory().close_case(CASE_ID)
+        CaseFactory(self.domain).close_case(CASE_ID)
         close_payload = self.repeat_records(self.domain).all()[1].get_payload()
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
