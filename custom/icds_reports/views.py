@@ -21,6 +21,7 @@ import requests
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
 from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
@@ -239,6 +240,7 @@ DASHBOARD_CHECKS = [
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
+    always_allow_project_access,
     login_and_domain_required,
 ]
 
