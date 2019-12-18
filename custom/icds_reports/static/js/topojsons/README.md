@@ -1,6 +1,7 @@
 # State of Topojson files as of Decemer 2019
 
-| --- File Name --- | --- Description --- | --- Used by --- | Format |
+| File Name | Description | Used by | Format |
+| --------- | ----------- | ------- | ------ |
 | states_v2.topojson.js | Raw state shapes for the entire country | Web dashboard and also as master file | JavaScript | 
 | states_v3_small.topojson.js | Optimized state shapes for the entire country | Mobile dashboard and feature flag for new maps | topojson |
 | districts_v2.topojson.js | Raw district shapes for the entire country | Web dashboard and also as master file | JavaScript | 
