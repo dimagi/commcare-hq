@@ -745,8 +745,17 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class UserRepeaterTest(TestCase):
-    domain = 'user-repeater-test-domain'
+class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'user-repeater'
+
+        cls.domain_obj = create_domain(name=cls.domain)
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
 
     def setUp(self):
         super(UserRepeaterTest, self).setUp()
@@ -756,8 +765,15 @@ class UserRepeaterTest(TestCase):
         )
         self.repeater.save()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscriptions()
+        cls.domain_obj.delete()
+        clear_plan_version_cache()
+        super().tearDownClass()
+
     def tearDown(self):
-        super(UserRepeaterTest, self).tearDown()
+        super().tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
 
