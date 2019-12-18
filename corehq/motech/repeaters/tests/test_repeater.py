@@ -644,6 +644,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super().tearDown()
 
@@ -938,6 +939,7 @@ class TestRepeaterPause(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super(TestRepeaterPause, self).tearDown()
 
@@ -957,6 +959,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super().tearDown()
 
