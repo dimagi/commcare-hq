@@ -51,29 +51,19 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
-            if (useNewMaps) {
-                Datamap.prototype[vm.type] = topojson;
-            } else {
-                Datamap.prototype[vm.type] = STATES_TOPOJSON;
-            }
+            vm.rawTopojson = useNewMaps ? topojson : STATES_TOPOJSON;
         } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            if (useNewMaps) {
-                Datamap.prototype[vm.type] = topojson;
-            } else {
-                Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-            }
+            vm.rawTopojson = useNewMaps ? topojson : DISTRICT_TOPOJSON;
         } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            if (useNewMaps) {
-                Datamap.prototype[vm.type] = topojson;
-            } else {
-                Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
-            }
+            vm.rawTopojson = useNewMaps ? topojson : BLOCK_TOPOJSON;
         }
-        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
+
+        if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
+            Datamap.prototype[vm.type] = vm.rawTopojson;
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
