@@ -306,13 +306,7 @@ DROP TABLE IF EXISTS staging_agg_child_health
             
 {"start_date": "2019-01-01T00:00:00"}
 
-            CREATE TABLE "local_tmp_agg_child_health" AS SELECT * FROM "tmp_agg_child_health_5";
-            INSERT INTO "staging_agg_child_health" SELECT * from "local_tmp_agg_child_health";
-            DROP TABLE "local_tmp_agg_child_health";
-        
-{}
-
-        UPDATE "staging_agg_child_health" agg SET
+            UPDATE "tmp_agg_child_health_5" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
@@ -326,8 +320,8 @@ DROP TABLE IF EXISTS staging_agg_child_health
                     MAX(block_is_test) as block_is_test,
                     MAX(supervisor_is_test) as supervisor_is_test,
                     MAX(awc_is_test) as awc_is_test
-                FROM "awc_location_local"
-                GROUP BY awc_id
+                FROM "awc_location"
+                GROUP BY awc_id, supervisor_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -344,6 +338,12 @@ DROP TABLE IF EXISTS staging_agg_child_health
                   ut.awc_is_test != agg.awc_is_test
                 )
             );
+        
+{}
+
+            CREATE TABLE "local_tmp_agg_child_health" AS SELECT * FROM "tmp_agg_child_health_5";
+            INSERT INTO "staging_agg_child_health" SELECT * from "local_tmp_agg_child_health";
+            DROP TABLE "local_tmp_agg_child_health";
         
 {}
 
