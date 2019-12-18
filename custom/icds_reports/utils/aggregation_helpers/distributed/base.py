@@ -180,16 +180,25 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         """)
 
         logger.info(f"Inserting inital data into staging table for {self.helper_key}")
+        i = 0
         for staging_query, params in staging_queries:
+            logger.info(f"Running staging query {i}")
             cursor.execute(staging_query, params)
+            i += 1
 
         logger.info(f"Updating data into staging table for {self.helper_key}")
+        i = 0
         for query, params in update_queries:
+            logger.info(f"Running update query {i}")
             cursor.execute(query, params)
+            i += 1
 
         logger.info(f"Rolling up data into staging table for {self.helper_key}")
+        i = 0
         for query in rollup_queries:
+            logger.info(f"Running rollup query {i}")
             cursor.execute(query)
+            i += 1
 
         logger.info(f"Creating new table for {self.helper_key} {self.month}")
         cursor.execute(f"""
@@ -203,8 +212,11 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         cursor.execute(f'DROP TABLE IF EXISTS "{self.previous_agg_table_name}"')
 
         logger.info(f"Creating indexes for {self.helper_key} {self.month}")
+        i = 0
         for index_query in self.indexes():
+            logger.info(f"creating index {i}")
             cursor.execute(index_query)
+            i += 1
 
         db_alias = router.db_for_write(self.model)
         with transaction.atomic(using=db_alias):

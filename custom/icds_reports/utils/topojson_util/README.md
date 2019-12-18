@@ -30,6 +30,17 @@ The `get_topojson_for_district` function first looks up the appropriate state fi
 for the district by matching on the district name. 
 Then returns the appropriate topojson file for the whole state.
 
+## Downsizing Topojsons
+
+To downsize topojsons, do the following:
+
+1. Export raw topojson to a file using `./manage.py format_topojson [level]`
+2. Open the file in [mapshaper](https://mapshaper.org/) and adjust the resolution until desired.
+3. Export the file from mapshaper.
+4. Run `./manage.py merge_topojsons [level] [new filename]`
+5. Add the JS variable declaration to the file (e.g. `STATES_TOPOJSON = [topojson];`) and save 
+   it somewhere
+
 ## Todos
 
 The following is a brain dump of todos to improve this setup:
