@@ -13,7 +13,7 @@ from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
 
@@ -115,8 +115,7 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
             update_case_block,
         )
 
-        cls.domain_obj = Domain(name=cls.domain)
-        cls.domain_obj.save()
+        cls.domain_obj = create_domain(cls.domain)
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
@@ -807,8 +806,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
         super().setUpClass()
         cls.domain = 'location-repeater-test-domain'
 
-        cls.domain_obj = Domain(name=cls.domain)
-        cls.domain_obj.save()
+        cls.domain_obj = create_domain(name=cls.domain)
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
