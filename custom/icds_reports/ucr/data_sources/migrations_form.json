@@ -132,10 +132,10 @@
 				"type": "expression",
 				"expression": {
 					"type": "property_path",
-					"property_path": ["form", "case_load_person_0", "case", "case_id"]
+					"property_path": ["form", "case_load_person_0", "case", "@case_id"]
 				},
 				"is_nullable": true,
-        "is_primary_key": false,
+        "is_primary_key": false
 			},
 			{
 				"column_id": "migration_status",
@@ -154,7 +154,7 @@
 				},
 				"is_nullable": true,
         "is_primary_key": false
-			},
+			}
 		],
 		"named_expressions": {
 			"user_location_id": {
