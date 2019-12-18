@@ -256,7 +256,7 @@ class TestExpandedColumn(TestCase):
     def tearDown(self):
         adapter = get_indicator_adapter(self.data_source_config)
         adapter.drop_table()
-        connection_manager.dispose_engines(UCR_ENGINE_ID)
+        connection_manager.dispose_engine(UCR_ENGINE_ID)
         super(TestExpandedColumn, self).tearDown()
 
     def test_getting_distinct_values(self):

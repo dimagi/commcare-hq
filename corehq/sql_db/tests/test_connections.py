@@ -9,9 +9,7 @@ import mock
 from corehq.sql_db.connections import (
     ICDS_UCR_CITUS_ENGINE_ID,
     ConnectionManager,
-    allow_read_from_citus_standbys,
     connection_manager,
-    read_from_citus_standbys,
 )
 from corehq.sql_db.tests.test_partition_config import (
     PARTITION_CONFIG_WITH_STANDBYS,
@@ -177,36 +175,6 @@ class ConnectionManagerTests(SimpleTestCase):
             get_databases_for_read_query({'ucr', 'other'}),
             {'ucr', 'other'}
         )
-
-
-def test_read_from_citus_standbys_context_manager():
-    @read_from_citus_standbys()
-    def read():
-        eq(allow_read_from_citus_standbys(), True)
-
-    eq(allow_read_from_citus_standbys(), False)
-    read()
-    eq(allow_read_from_citus_standbys(), False)
-
-
-class TestReadFromCitusStandbys(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        helper = connection_manager.get_session_helper(ICDS_UCR_CITUS_ENGINE_ID)
-        if not helper.is_citus_db:
-            raise SkipTest('Test only applies when CitusDB is in use')
-
-    def test_citus_reads_from_standby(self):
-        def _assert_use_secondary_nodes(expected_value):
-            engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
-            results = list(engine.execute('show citus.use_secondary_nodes'))
-            eq(results[0][0], expected_value)
-
-        _assert_use_secondary_nodes('never')
-        with read_from_citus_standbys():
-            _assert_use_secondary_nodes('always')
-        _assert_use_secondary_nodes('never')
 
 
 @override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
