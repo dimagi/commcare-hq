@@ -269,6 +269,6 @@ window.angular.module('icdsApp', [
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
-        utils.addSharedRoutes($routeProvider);
+        utils.addSharedRoutes($routeProvider, 'map');
     }]);
 
