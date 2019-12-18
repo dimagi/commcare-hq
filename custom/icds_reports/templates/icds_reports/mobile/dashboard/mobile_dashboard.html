@@ -69,10 +69,6 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 {% endcompress %}
 
   {% include 'icds_reports/partials/shared_report_directives.html' %}
-{% if mobile_maps_enabled %}
-  <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
-  {# no need to load states or blocks because they are loaded just in time by topoJsonService #}
-{% endif %}
 {% endblock head %}
 {% block body %}
 <div class="hidden">
