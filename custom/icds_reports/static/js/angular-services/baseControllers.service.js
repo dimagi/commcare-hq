@@ -115,7 +115,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading, footer) {
+            vm.createTemplatePopup = function(header, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
                 if (subheading) {
