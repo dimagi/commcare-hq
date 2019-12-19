@@ -117,6 +117,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     }
 
+    function getPopupForGeography(geography) {
+        return vm.templatePopup({
+            loc: {
+                loc: geography,
+                row: vm.map.data[geography.id],
+            },
+        });
+    }
+
     var mapConfiguration = function (location, topojson) {
         var locationLevel = getLocationLevelFromType(location.location_type);
         vm.initTopoJson(locationLevel, location, topojson);
@@ -134,12 +143,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 highlightBorderWidth: 1,
                 highlightBorderOpacity: 1,
                 popupTemplate: function (geography, data) {
-                    return vm.templatePopup({
-                        loc: {
-                            loc: geography,
-                            row: vm.map.data[geography.id],
-                        },
-                    });
+                    return getPopupForGeography(geography);
                 },
             },
             setProjection: function (element) {
