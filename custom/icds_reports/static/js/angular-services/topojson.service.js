@@ -11,7 +11,7 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
     function getStaticTopojson(topojsonUrl, cacheKey) {
         if (cacheKey in CACHE) {
             // https://javascript.info/promise-api#promise-resolve-reject
-            return Promise.resolve(CACHE["states"]);
+            return Promise.resolve(CACHE[cacheKey]);
         } else {
             return $http.get(topojsonUrl).then(
                 function (response) {
