@@ -10,7 +10,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         null, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
 
     var genderIndex = _.findIndex(genders, function (x) {
@@ -21,10 +20,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     }
 
     vm.label = "Newborns with Low Birth Weight";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/low_birth/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/low_birth/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/low_birth/');
     vm.data = {
         legendTitle: '% Newborns',
     };

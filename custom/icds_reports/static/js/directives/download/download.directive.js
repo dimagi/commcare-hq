@@ -142,8 +142,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 10, name: 'Take Home Ration (THR)'},
     ];
 
-    if (vm.haveAccessToFeatures && vm.userLocationType.toLowerCase() !== 'block') {
-        vm.indicators.push({id: 11, name: 'Dashboard usage(Last 7 days)'});
+    if (vm.userLocationType.toLowerCase() !== 'block') {
+        vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
     var ALL_OPTION = {

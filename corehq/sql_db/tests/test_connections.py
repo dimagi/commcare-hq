@@ -1,14 +1,16 @@
 from collections import Counter
+from unittest import SkipTest
 
 from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
-from django.test.testcases import SimpleTestCase
+from django.test.testcases import SimpleTestCase, TestCase
 
 import mock
-from decorator import contextmanager
-from testil import eq
-
-from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.connections import (
+    ICDS_UCR_CITUS_ENGINE_ID,
+    ConnectionManager,
+    connection_manager,
+)
 from corehq.sql_db.tests.test_partition_config import (
     PARTITION_CONFIG_WITH_STANDBYS,
 )
@@ -18,6 +20,8 @@ from corehq.sql_db.util import (
     get_replication_delay_for_shard_standbys,
     get_standbys_with_acceptible_delay,
 )
+from decorator import contextmanager
+from testil import eq
 
 
 def _get_db_config(db_name, master=None, delay=None):
@@ -106,6 +110,38 @@ class ConnectionManagerTests(SimpleTestCase):
                 [DEFAULT_DB_ALIAS] * 3,
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
+
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+    @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
+    def test_read_load_balancing_session(self, *args):
+        reporting_dbs = {
+            'ucr': {
+                'WRITE': 'ucr',
+                'READ': [('ucr', 8), ('other', 1), ('default', 1)]
+            },
+        }
+        with override_settings(REPORTING_DATABASES=reporting_dbs):
+            manager = ConnectionManager()
+            self.assertEqual(manager.engine_id_django_db_map, {
+                'default': 'default',
+                'ucr': 'ucr',
+            })
+
+            urls = {
+                manager.get_connection_string(alias)
+                for alias, _ in reporting_dbs['ucr']['READ']
+            }
+            self.assertEqual(len(urls), 3)
+            # withing 50 iterations we should have seen all 3 databases at least once
+            for i in range(50):
+                url = manager.get_session_helper('ucr', readonly=True).url
+                if url in urls:
+                    urls.remove(url)
+                if not urls:
+                    break
+
+            if urls:
+                self.fail(f'DBs skipped in load balancing: {urls}')
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'other': 4}[x])
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'other'})

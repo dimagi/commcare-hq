@@ -562,6 +562,9 @@ def _child_health_monthly_data(state_ids, day):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
+        for state in state_ids:
+            cursor.execute(helper.drop_partition(state))
+            cursor.execute(helper.create_partition(state))
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
@@ -875,7 +878,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
+        data_type = 'Dashboard Activity Report__{}'.format(formatted_timestamp)
         if file_format == 'xlsx':
             cache_key = get_dashboard_usage_excel_file(
                 excel_data,
@@ -1527,6 +1530,9 @@ def _child_health_monthly_aggregation(day, state_ids):
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
+        for state in state_ids:
+            cursor.execute(helper.drop_partition(state))
+            cursor.execute(helper.create_partition(state))
 
     greenlets = []
     pool = Pool(20)
@@ -1580,6 +1586,8 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
+    for status in UcrReconciliationStatus.objects.filter(verified_date__isnull=True):
+        reconcile_data_not_in_ucr.delay(status.pk)
 
 
 @task(queue='background_queue')
@@ -1684,7 +1692,7 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
 
 @periodic_task_on_envs(
     settings.ICDS_ENVS,
-    run_every=crontab(minute=30, hour=12),  # To run on 6PM IST
+    run_every=crontab(minute=30, hour=0),  # To run on 6AM IST
     acks_late=True,
     queue='icds_aggregation_queue'
 )

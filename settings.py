@@ -258,6 +258,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -463,6 +464,7 @@ BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SAAS_REPORTING_EMAIL = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
 
@@ -1011,6 +1013,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
+                'corehq.util.context_processors.banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1869,6 +1872,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),

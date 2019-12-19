@@ -1,8 +1,9 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+                            topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
-
+    var useNewMaps = haveAccessToFeatures || isMobile;
     $scope.$watch(function () {
         return vm.data;
     }, function (newValue, oldValue) {
@@ -44,23 +45,24 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
-    vm.scalingFactor = 1;
 
-    vm.initTopoJson = function (location_level, location) {
-        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+    vm.initTopoJson = function (locationLevel, location, topojson) {
+        if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = STATES_TOPOJSON;
-        } else if (location_level === 0) {
+            vm.rawTopojson = useNewMaps ? topojson : STATES_TOPOJSON;
+        } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-        } else if (location_level === 1) {
+            vm.rawTopojson = useNewMaps ? topojson : DISTRICT_TOPOJSON;
+        } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            vm.rawTopojson = useNewMaps ? topojson : BLOCK_TOPOJSON;
         }
-        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
+
+        if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
+            Datamap.prototype[vm.type] = vm.rawTopojson;
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
@@ -72,58 +74,52 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 // take window height and subtract height of the header plus 44px of additional padding / margins
                 var availableHeight = window.innerHeight - headerHeight - 44;
                 if (availableHeight < vm.mapHeight) {
-                    // how much we have downscaled so we can also scale the map itself
-                    vm.scalingFactor = availableHeight / vm.mapHeight;
-                    // this approximates additional scaling based on the width of the device.
-                    // the factor was determined from a few samples and is not perfect.
-                    var factor = 1.1;
-                    var aspectRatio = window.innerHeight / window.innerWidth;
-                    if (aspectRatio > factor) {
-                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / factor);
-                    }
                     vm.mapHeight = availableHeight;
                 }
             }
         }
     };
 
-    vm.getCenter = function (options) {
-        if (isMobile) {
-            // adjust center for mobile maps, because web maps are intentionally offset to leave
-            // room for the legend.
-            function getLatAdjustmentForScale(scale) {
-                // this is a very rough approximation made with a few data points for a first pass
-                // basically the further zoomed in we are the less we should adjust
-                if (scale < 5000) {
-                    return 2;
-                } else if (scale < 8000) {
-                    return 1.5;
-                } else if (scale < 12000) {
-                    return 1;
-                } else {
-                    return .5;
-                }
-            }
-            return [options.center[0] + getLatAdjustmentForScale(options.scale), options.center[1]];
+    // this function was copied with minor modification (inputs and variable names) from
+    // https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html
+    function calculateScaleCenter(path, features, width, height) {
+        // Get the bounding box of the paths (in pixels!) and calculate a
+        // scale factor based on the size of the bounding box and the map
+        // size.
+        var bboxPath = path.bounds(features),
+            scale = 0.95 / Math.max(
+                (bboxPath[1][0] - bboxPath[0][0]) / width,
+                (bboxPath[1][1] - bboxPath[0][1]) / height
+            );
+
+        // Get the bounding box of the features (in map units!) and use it
+        // to calculate the center of the features.
+        var bboxFeature = d3.geo.bounds(features),
+            center = [
+                (bboxFeature[1][0] + bboxFeature[0][0]) / 2,
+                (bboxFeature[1][1] + bboxFeature[0][1]) / 2];
+
+        return {
+            'scale': scale,
+            'center': center,
+        };
+    }
+
+    function getLocationLevelFromType(locationType) {
+        if (locationType === 'state') {
+            return 0;
+        } else if (locationType === 'district') {
+            return 1;
+        } else if (locationType === 'block') {
+            return 2;
         } else {
-            return options.center;
+            return -1;
         }
-    };
+    }
 
-    vm.getScale = function (options) {
-        // apply additional scaling if necessary (used by mobile maps)
-        return vm.scalingFactor * options.scale;
-    };
-
-    var mapConfiguration = function (location) {
-
-        var location_level = -1;
-        if (location.location_type === 'state') location_level = 0;
-        else if (location.location_type === 'district') location_level = 1;
-        else if (location.location_type === 'block') location_level = 2;
-        else location_level = -1;
-
-        vm.initTopoJson(location_level, location);
+    var mapConfiguration = function (location, topojson) {
+        var locationLevel = getLocationLevelFromType(location.location_type);
+        vm.initTopoJson(locationLevel, location, topojson);
 
         vm.map = {
             scope: vm.scope,
@@ -148,14 +144,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 4;
-                var options = Datamap.prototype[vm.type].objects[vm.scope];
-                var projection = d3.geo.equirectangular()
-                    .center(vm.getCenter(options))
-                    .scale(vm.getScale(options))
-                    .translate([element.offsetWidth / 2, element.offsetHeight / div]);
-                var path = d3.geo.path()
-                    .projection(projection);
-
+                var options = vm.rawTopojson.objects[vm.scope];
+                var projection, path;
+                if (isMobile) {
+                    // load a dummy projection so we can calculate the true size
+                    // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
+                    projection = d3.geo.equirectangular().scale(1);
+                    path = d3.geo.path().projection(projection);
+                    var feature = window.topojson.feature(vm.rawTopojson, options);
+                    var scaleCenter = calculateScaleCenter(
+                        path, feature,
+                        element.offsetWidth, element.offsetHeight
+                    );
+                    projection.scale(scaleCenter.scale)
+                        .center(scaleCenter.center)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                } else {
+                    projection = d3.geo.equirectangular()
+                        .center(options.center)
+                        .scale(options.scale)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                    path = d3.geo.path().projection(projection);
+                }
                 return {path: path, projection: projection};
             },
         };
@@ -249,7 +259,22 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        mapConfiguration(location);
+        var locationLevel = getLocationLevelFromType(location.location_type);
+        if (useNewMaps && locationLevel === -1) {
+            topojsonService.getStateTopoJson().then(function (resp) {
+                mapConfiguration(location, resp);
+            });
+        } else if (useNewMaps && locationLevel === 0) {
+            topojsonService.getDistrictTopoJson().then(function (resp) {
+                mapConfiguration(location, resp);
+            });
+        } else if (useNewMaps && locationLevel === 1) {
+            topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
+                mapConfiguration(location, resp.topojson);
+            });
+        } else {
+            mapConfiguration(location);
+        }
     });
 
     vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
@@ -277,9 +302,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += "<div class=\"modal-header\">";
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
-                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+            'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html +="<div class=\"modal-body\">";
+        html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
@@ -324,7 +349,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    'haveAccessToFeatures', 'isMobile',
 ];
 
 window.angular.module('icdsApp').directive('indieMap', function () {

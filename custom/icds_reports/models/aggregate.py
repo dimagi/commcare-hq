@@ -178,6 +178,21 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
     person_case_id = models.TextField(blank=True, null=True)
+    husband_name = models.TextField(blank=True, null=True)
+    lmp = models.DateField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children alive"
+    )
 
     class Meta(object):
         managed = False
@@ -316,6 +331,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -776,6 +792,7 @@ class DailyAttendance(models.Model, AggregateMixin):
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
+    state_id = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -784,6 +801,7 @@ class DailyAttendance(models.Model, AggregateMixin):
         indexes = [
             models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
         ]
+        index_together = ('month', 'state_id')
 
     _agg_helper_cls = DailyAttendanceAggregationDistributedHelper
     _agg_atomic = False
@@ -1303,6 +1321,14 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     where_born = models.PositiveSmallIntegerField(
         null=True,
         help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children alive"
     )
 
     class Meta(object):

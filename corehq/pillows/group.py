@@ -12,8 +12,14 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFacto
 
 
 def get_group_to_elasticsearch_processor():
-    """
-    This processor adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    """Inserts group changes into ES
+
+    Reads from:
+      - Kafka topics: group
+      - Group data source (CouchDB)
+
+    Writes to:
+      - GroupES index
     """
     return ElasticProcessor(
         elasticsearch=get_es_new(),

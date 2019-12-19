@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -361,6 +362,7 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
+        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -372,17 +374,19 @@ class DashboardView(TemplateView):
 
 
 @location_safe
-class IcdsDynamicTemplateView(TemplateView):
+class IcdsDynamicTemplateViewBase(TemplateView):
+    template_directory = None
 
     def get_template_names(self):
-        return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+        return [f'{self.template_directory}/%s.html' % self.kwargs['template']]
 
 
-@location_safe
-class IcdsDynamicMobileTemplateView(TemplateView):
+class IcdsDynamicTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app'
 
-    def get_template_names(self):
-        return ['icds_reports/icds_app/mobile/%s.html' % self.kwargs['template']]
+
+class IcdsDynamicMobileTemplateView(IcdsDynamicTemplateViewBase):
+    template_directory = 'icds_reports/icds_app/mobile'
 
 
 @location_safe
@@ -429,6 +433,17 @@ class ProgramSummaryView(BaseReportView):
         data = get_program_summary_data_with_retrying(
             step, domain, config, now, include_test, pre_release_features
         )
+        return JsonResponse(data=data)
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class TopoJsonView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        district = request.GET.get('district')
+        topojson = get_topojson_for_district(district)
+        data = {'topojson': topojson}
         return JsonResponse(data=data)
 
 

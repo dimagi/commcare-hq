@@ -58,6 +58,9 @@ from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+)
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -186,6 +189,7 @@ def not_found(request, template_name='404.html'):
 
 @require_GET
 @location_safe
+@always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
         if domain != None:
@@ -471,7 +475,7 @@ class CloudCareLoginView(HQLoginView):
 
 
 @two_factor_exempt
-def logout(req):
+def logout(req, default_domain_redirect='domain_login'):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
@@ -479,7 +483,7 @@ def logout(req):
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
 
     if referer and domain:
-        domain_login_url = reverse('domain_login', kwargs={'domain': domain})
+        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))

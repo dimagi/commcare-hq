@@ -16,7 +16,6 @@ def get_view_migrations():
         'daily_attendance.sql',
         'child_health_monthly.sql',
         'disha_indicators.sql',
-        'ccs_record_monthly_view.sql',
         'agg_ls_monthly.sql',
         'service_delivery_monthly.sql',
         'aww_incentive_report_monthly.sql',
@@ -110,3 +109,12 @@ def create_citus_reference_table(connection, table):
         res = list(connection)
     if not list(res):
         connection.execute("select create_reference_table(%s)", [table])
+
+
+def create_index_migration(table_name, index_name, columns):
+    create_index_sql = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
+        index_name, table_name, ','.join(columns)
+    )
+    drop_index_sql = "DROP INDEX CONCURRENTLY {}".format(index_name)
+
+    return create_index_sql, drop_index_sql
