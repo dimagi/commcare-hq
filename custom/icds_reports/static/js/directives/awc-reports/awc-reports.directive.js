@@ -2567,6 +2567,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             id: 'pse',
             route: "/awc_reports/pse",
             label: "Pre School Education",
+            image: "/static/icds_reports/mobile/images/statistics.png",
+            isMobile: true,
         },
         {
             id: 'maternal_child',
