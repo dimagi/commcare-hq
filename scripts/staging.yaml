@@ -55,7 +55,6 @@ branches:
   - nh/dhis2/te  # Norman Oct 2
   - sr-session-audit  # Sravan Oct 15
   - jls/kill-exchange # Jenny Nov 13
-  - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
   - bmb/SAASP-10149  # Biyeun Dec 11
