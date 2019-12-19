@@ -45,3 +45,21 @@ a:active, a:hover, a:focus {
   align-items: center;
   min-height: ~"calc(100% - (.5rem * 2))";
 }
+
+
+// nvd3 chart customizations
+
+// reduce font size of x-axis labels
+.nvd3 text {
+  font-size: 10px;
+}
+
+// reduce width of tooltip
+.nvtooltip .hoverinfo {
+  width: 160px !important;
+}
+
+// move tooltip 40px to the left to accommodate margins
+.nvtooltip {
+  margin-left: -40px;
+}
