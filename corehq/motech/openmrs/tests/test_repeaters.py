@@ -42,9 +42,9 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_patient,
     get_patient_by_identifier,
     get_patient_by_uuid,
-    get_relevant_case_updates_from_form_json,
     save_match_ids,
 )
+from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
 from corehq.motech.value_source import CaseTriggerInfo, get_case_location
