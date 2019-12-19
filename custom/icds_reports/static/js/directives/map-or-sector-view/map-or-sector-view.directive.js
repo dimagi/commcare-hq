@@ -2,8 +2,12 @@
 
 function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
                                mobileMapsEnabled) {
+
     var vm = this;
     vm.mobileMapsEnabled = mobileMapsEnabled;
+    var leftMargin = isMobile ? 70 : 150;
+    var truncateAmount = isMobile ? 70 : 100;  // used in cropping the x-axis labels
+
     var location_id = $location.search().location_id;
 
     if (['null', 'undefined', ''].indexOf(location_id) === -1) {
@@ -31,7 +35,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
             while (word) {
                 line.push(word);
                 tspan.text(line.join(" "));
-                if (tspan.node().getComputedTextLength() > 100) {
+                if (tspan.node().getComputedTextLength() > truncateAmount) {
                     line.pop();
                     tspan.text(line.join(" "));
                     line = [word];
@@ -44,8 +48,6 @@ function MapOrSectorController($location, storageService, locationsService, navi
 
     // reduce caption width to fit screen up to 900px on mobile view
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
-    var leftMargin = isMobile ? 20 : 150;
-
     vm.chartOptions = {
 
         chart: {
