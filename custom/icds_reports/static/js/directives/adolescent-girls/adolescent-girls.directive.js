@@ -12,10 +12,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.label = "Adolescent Girls (11-14 years)";
     vm.serviceDataFunction = demographicsService.getAdolescentGirlsData;
     vm.usePercentage = false;
-    vm.steps = {
-        'map': {route: '/demographics/adolescent_girls/map', label: 'Map View'},
-        'chart': {route: '/demographics/adolescent_girls/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/adolescent_girls/');
     vm.data = {
         legendTitle: 'Number of Women',
     };

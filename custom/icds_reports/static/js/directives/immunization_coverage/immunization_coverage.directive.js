@@ -19,10 +19,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }
 
     vm.label = "Immunization coverage (at age 1 year)";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/immunization_coverage/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/immunization_coverage/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/immunization_coverage/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };

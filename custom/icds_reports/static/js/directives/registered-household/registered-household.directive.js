@@ -12,10 +12,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.label = "Registered Household";
     vm.usePercentage = false;
     vm.serviceDataFunction = demographicsService.getRegisteredHouseholdData;
-    vm.steps = {
-        'map': {route: '/demographics/registered_household/map', label: 'Map View'},
-        'chart': {route: '/demographics/registered_household/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/registered_household/');
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };

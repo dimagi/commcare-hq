@@ -11,10 +11,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Functional Toilet";
     vm.serviceDataFunction = infrastructureService.getFunctionalToiletData;
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/functional_toilet/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/functional_toilet/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/functional_toilet/');
     vm.data = {
         legendTitle: 'Percentage',
     };

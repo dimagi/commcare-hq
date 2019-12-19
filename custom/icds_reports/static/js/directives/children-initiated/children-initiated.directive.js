@@ -19,10 +19,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }
 
     vm.label = "Children initiated appropriate complementary feeding";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/children_initiated/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/children_initiated/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/children_initiated/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };

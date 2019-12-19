@@ -11,10 +11,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Medicine Kit";
     vm.serviceDataFunction = infrastructureService.getMedicineKitData;
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/medicine_kit/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/medicine_kit/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/medicine_kit/');
     vm.data = {
         legendTitle: 'Percentage',
     };

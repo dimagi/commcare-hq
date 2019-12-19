@@ -16,10 +16,7 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
         storageService.setKey('search', $location.search());
     }
     vm.label = "AWCs that reported having a Stadiometer";
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/stadiometer/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/stadiometer/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/stadiometer/');
     vm.data = {
         legendTitle: 'Percentage',
     };
