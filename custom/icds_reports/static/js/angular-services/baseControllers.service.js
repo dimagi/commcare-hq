@@ -94,7 +94,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.getSteps = function (baseRoute) {
                 return {
                     'map': {route: baseRoute + 'map', label: 'Map View'},
-                    'chart': {route: baseRoute + 'chart', label: 'Chart View'},
+                    'chart': {route: baseRoute + 'chart', label: isMobile ? 'Rankings View' : 'Chart View'},
                 };
             };
 
