@@ -306,7 +306,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         html += "</div>";
         html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.handleMapClick(\'' + value + '\')">' + value + '</button>';
+            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.attemptToDrillToLocation(\'' + value + '\')">' + value + '</button>';
         });
         html += "</div>";
         return html;
