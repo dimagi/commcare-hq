@@ -355,7 +355,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             $location.search('location_id', location.location_id);
             storageService.setKey('search', $location.search());
         });
-    }
+    };
 
     vm.handleMapClick = function (geography) {
         if (isMobile) {
