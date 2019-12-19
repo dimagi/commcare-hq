@@ -4,6 +4,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
     var useNewMaps = haveAccessToFeatures || isMobile;
+
     $scope.$watch(function () {
         return vm.data;
     }, function (newValue, oldValue) {
@@ -138,6 +139,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
             height: vm.mapHeight,
             geographyConfig: {
+                popupOnHover: !isMobile,
                 highlightFillColor: '#00f8ff',
                 highlightBorderColor: '#000000',
                 highlightBorderWidth: 1,
@@ -356,7 +358,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     }
 
     vm.handleMapClick = function (geography) {
-        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+        if (isMobile) {
+            var popupHtml = getPopupForGeography(geography);
+            renderPopup(popupHtml);
+        } else if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             showSecondaryLocationSelectionPopup(geography);
         } else {
             vm.attemptToDrillToLocation(geography);
