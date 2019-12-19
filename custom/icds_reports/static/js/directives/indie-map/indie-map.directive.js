@@ -321,14 +321,17 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         popup.classed("hidden", true);
     };
 
-    function showSecondaryLocationSelectionPopup(geography) {
-        var html = vm.getSecondaryLocationSelectionHtml(geography);
+    function renderPopup(html) {
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-
         var popup = d3.select('#locPopup');
         popup.classed("hidden", false);
         popup.attr('style', css).html(html);
         $compile(popup[0])($scope);
+    }
+
+    function showSecondaryLocationSelectionPopup(geography) {
+        var html = vm.getSecondaryLocationSelectionHtml(geography);
+        renderPopup(html);
     }
 
     vm.attemptToDrillToLocation = function (geography) {
