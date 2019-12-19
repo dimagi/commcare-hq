@@ -108,14 +108,14 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 // subclasses that don't override this must implement vm.getPopupData
                 // See UnderweightChildrenReportController for an example
                 var popupData = vm.getPopupData(row);
-                return vm.createTemplatePopup(
+                return vm.createMapPopupTemplate(
                     loc.properties.name,
                     popupData,
                     vm.getPopupSubheading()
                 );
             };
 
-            vm.createTemplatePopup = function(locationName, lines, subheading) {
+            vm.createMapPopupTemplate = function(locationName, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + locationName + '</p>';
                 if (subheading) {
