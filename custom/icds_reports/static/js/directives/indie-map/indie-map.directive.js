@@ -327,25 +327,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         $compile(popup[0])($scope);
     }
 
+    vm.attemptToDrillToLocation = function (geography) {
+        var location = geography.id || geography;
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+            location = vm.data.data[geography.id].original_name[0];
+        }
+        locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
+            var location = locations[0];
+            if (!location) {
+                return;
+            }
+            $location.search('location_name', (geography.id || geography));
+            $location.search('location_id', location.location_id);
+            storageService.setKey('search', $location.search());
+        });
+    }
+
     vm.handleMapClick = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             showSecondaryLocationSelectionPopup(geography);
         } else {
-            var location = geography.id || geography;
-            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
-                location = vm.data.data[geography.id].original_name[0];
-            }
-            locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-                var location = locations[0];
-                if (!location) {
-                    return;
-                }
-                $location.search('location_name', (geography.id || geography));
-                $location.search('location_id', location.location_id);
-                storageService.setKey('search', $location.search());
-            });
+            vm.attemptToDrillToLocation(geography);
         }
-
     };
 
 }
