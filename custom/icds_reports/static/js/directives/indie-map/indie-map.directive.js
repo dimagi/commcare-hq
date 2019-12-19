@@ -298,7 +298,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return mapData;
     };
 
-    vm.getHtmlContent = function (geography) {
+    vm.getSecondaryLocationSelectionHtml = function (geography) {
         var html = "";
         html += "<div class=\"modal-header\">";
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
@@ -318,7 +318,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     function showSecondaryLocationSelectionPopup(geography) {
-        var html = vm.getHtmlContent(geography);
+        var html = vm.getSecondaryLocationSelectionHtml(geography);
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
 
         var popup = d3.select('#locPopup');

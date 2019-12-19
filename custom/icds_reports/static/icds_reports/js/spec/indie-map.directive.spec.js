@@ -149,7 +149,7 @@ describe('Indie Map Directive', function () {
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
             'ng-click="$ctrl.handleMapClick(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
 
-        var result = controller.getHtmlContent(mockGeography);
+        var result = controller.getSecondaryLocationSelectionHtml(mockGeography);
         assert.equal(expected, result);
     });
 
