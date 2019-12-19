@@ -115,9 +115,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading) {
+            vm.createTemplatePopup = function(locationName, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-                    '<p>' + header + '</p>';
+                    '<p>' + locationName + '</p>';
                 if (subheading) {
                     template += '<p>' + subheading + '</p>';
                 }
@@ -125,7 +125,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }
                 if (isMobile) {
-                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + header + '\')">see more</a>';
+                    // assume called in the context of a map which has this function.
+                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + locationName + '\')">see more</a>';
                 }
                 template += '</div>';
                 return template;
