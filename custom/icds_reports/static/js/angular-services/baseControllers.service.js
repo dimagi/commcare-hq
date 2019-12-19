@@ -91,6 +91,13 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
+            vm.getSteps = function (baseRoute) {
+                return {
+                    'map': {route: baseRoute + 'map', label: 'Map View'},
+                    'chart': {route: baseRoute + 'chart', label: 'Chart View'},
+                };
+            };
+
             vm.getPopupSubheading = function () {
                 // if the map popup should have a subheading, then implement this function in a subclass
                 // this is inserted before the indicators. see `AWCSCoveredController` for an example usage.
