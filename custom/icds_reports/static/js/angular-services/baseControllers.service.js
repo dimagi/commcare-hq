@@ -115,7 +115,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading) {
+            vm.createTemplatePopup = function(header, lines, subheading, footer) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
                     '<p>' + header + '</p>';
                 if (subheading) {
@@ -123,6 +123,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                if (isMobile) {
+                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + header + '\')">see more</a>';
                 }
                 template += '</div>';
                 return template;
