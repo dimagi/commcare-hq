@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from corehq.apps.formplayer_api.smsforms.api import current_question
+from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -41,7 +41,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
                     workflow=session.workflow,
                     xforms_session_couch_id=session._id,
                 )
-                resp = current_question(session.session_id, domain)
+                resp = FormplayerInterface(session.session_id, domain).current_question()
                 send_sms_to_verified_number(
                     p,
                     resp.event.text_prompt,

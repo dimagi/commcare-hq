@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -41,9 +42,7 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
-from corehq.util.queries import paginated_queryset
 from corehq.util.quickcache import quickcache
-from corehq.warehouse.models.facts import ApplicationStatusFact
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -67,12 +66,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     primary_sort_prop = None
 
     @property
-    def warehouse(self):
-        return toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request)
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(
+    def _columns(self):
+        return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
@@ -97,9 +92,24 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
-        )
+        ]
+
+    @property
+    def headers(self):
+        columns = self._columns
+        if self.show_build_profile:
+            columns.append(
+                DataTablesColumn(_("Build Profile"),
+                                 help_text=_("The build profile from the user's last hearbeat request."),
+                                 sortable=False)
+            )
+        headers = DataTablesHeader(*columns)
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    @cached_property
+    def show_build_profile(self):
+        return toggles.SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS.enabled(self.domain)
 
     @property
     def default_sort(self):
@@ -165,13 +175,20 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
     @quickcache(['app_id'], timeout=60 * 60)
-    def get_app_name(self, app_id):
+    def _get_app_details(self, app_id):
         try:
             app = get_app(self.domain, app_id)
         except ResourceNotFound:
-            pass
-        else:
-            return app.name
+            return {}
+        return {
+            'name': app.name,
+            'build_profiles': {
+                profile_id: profile.name for profile_id, profile in app.build_profiles.items()
+            }
+        }
+
+    def get_app_name(self, app_id):
+        return self._get_app_details(app_id).get('name')
 
     def get_data_for_app(self, options, app_id):
         try:
@@ -280,6 +297,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
+            last_build_profile_name = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -314,6 +332,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
+                if self.show_build_profile:
+                    last_build_profile_id = last_build.get('build_profile_id')
+                    if last_build_profile_id:
+                        last_build_profile_name = _("Unknown")
+                        build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
+                        if last_build_profile_id in build_profiles:
+                            last_build_profile_name = build_profiles[last_build_profile_id]
 
             row_data = [
                 user_display_string(user.get('username', ''),
@@ -322,6 +347,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---'
             ]
+            if self.show_build_profile:
+                row_data.append(last_build_profile_name)
 
             if self.include_location_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
@@ -379,22 +406,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def rows(self):
-        if self.warehouse:
-            user_ids = self.get_user_ids()
-            sort_clause = self.get_sql_sort()
-            rows = ApplicationStatusFact.objects.filter(
-                user_dim__user_id__in=user_ids
-            ).order_by(sort_clause).select_related('user_dim', 'app_dim')
-            if self.selected_app_id:
-                rows = rows.filter(app_dim__application_id=self.selected_app_id)
-            self._total_records = rows.count()
-            first = self.pagination.start
-            last = first + self.pagination.count
-            return self.process_facts(rows[first:last])
-        else:
-            users = self.user_query().run()
-            self._total_records = users.total
-            return self.process_rows(users.hits)
+        users = self.user_query().run()
+        self._total_records = users.total
+        return self.process_rows(users.hits)
 
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
@@ -411,19 +425,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def get_all_rows(self):
-        if self.warehouse:
-            user_ids = self.get_user_ids()
-            rows = ApplicationStatusFact.objects.filter(
-                user_dim__user_id__in=user_ids
-            ).select_related('user_dim', 'app_dim')
-            if self.selected_app_id:
-                rows = rows.filter(app_dim__application_id=self.selected_app_id)
-            self._total_records = rows.count()
-            return self.process_facts(paginated_queryset(rows, 10000))
-        else:
-            users = self.user_query(False).scroll()
-            self._total_records = self.user_query(False).count()
-            return self.process_rows(users, True)
+        users = self.user_query(False).scroll()
+        self._total_records = self.user_query(False).count()
+        return self.process_rows(users, True)
 
     @property
     def export_table(self):

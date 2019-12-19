@@ -200,6 +200,7 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
 
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
+    @softer_assert()
     def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub, *_):
         user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml')
@@ -215,6 +216,23 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         response = self._submit('invalid_form_xml.xml')
         self.assertTrue(response.status_code, 422)
         self.assertTrue("There was an error processing the form: Invalid XML" in response.content.decode('utf-8'))
+
+    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @patch('corehq.apps.receiverwrapper.util._notify_ignored_form_submission')
+    @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
+    def test_notification(self, user_stub, notification, *_):
+        user_stub.return_value = self.couch_user
+        self.couch_user.is_demo_user = True
+
+        response = self._submit('simple_form_before_2.44.0.xml')
+        self.assertFalse('X-CommCareHQ-FormID' in response,
+                         'Practice mobile worker form processed in non-demo mode')
+        self.assertFalse(notification.called)
+
+        response = self._submit('simple_form.xml')
+        self.assertFalse('X-CommCareHQ-FormID' in response,
+                         'Practice mobile worker form processed in non-demo mode')
+        self.assertTrue(notification.called)
 
 
 @use_sql_backend

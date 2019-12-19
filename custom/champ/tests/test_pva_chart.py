@@ -28,7 +28,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -59,7 +59,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -91,7 +91,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -123,7 +123,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -155,7 +155,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -187,7 +187,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -218,7 +218,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 2, 'x': 'KP_PREV'}
@@ -238,7 +238,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 400, 'x': 'KP_PREV'}
@@ -258,7 +258,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 2343, 'x': 'KP_PREV'}
@@ -278,7 +278,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 2058, 'x': 'KP_PREV'}
@@ -298,7 +298,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 1302, 'x': 'KP_PREV'}
@@ -318,7 +318,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 145, 'x': 'KP_PREV'}
@@ -338,7 +338,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['336ba1e522dcaf023f006e376b530725', 'a2c9a0848d7806b76e2ed0ae7ea89c97']
@@ -362,7 +362,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 682, 'x': 'KP_PREV'}
@@ -382,7 +382,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 169, 'x': 'HTC_TST'}
@@ -402,7 +402,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 3, 'x': 'HTC_TST'}
@@ -422,7 +422,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 596, 'x': 'HTC_TST'}
@@ -441,7 +441,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['336ba1e522dcaf023f006e376b530725', 'a2c9a0848d7806b76e2ed0ae7ea89c97']
@@ -465,7 +465,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 678, 'x': 'HTC_TST'}
@@ -485,7 +485,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 606, 'x': 'HTC_TST'}
@@ -505,7 +505,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 6, 'x': 'HTC_POS'}
@@ -525,7 +525,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 3, 'x': 'HTC_POS'}
@@ -545,7 +545,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 72, 'x': 'HTC_POS'}
@@ -564,7 +564,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['336ba1e522dcaf023f006e376b530725', 'a2c9a0848d7806b76e2ed0ae7ea89c97']
@@ -588,7 +588,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 33, 'x': 'HTC_POS'}
@@ -608,7 +608,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 34, 'x': 'HTC_POS'}
@@ -628,7 +628,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 18, 'x': 'CARE_NEW'}
@@ -648,7 +648,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 4, 'x': 'CARE_NEW'}
@@ -668,7 +668,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 53, 'x': 'CARE_NEW'}
@@ -687,7 +687,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['cc3f2de870bb43229d188904127e1923', 'c8c65f9a814f4f5f99ee8a4cbad9f17e']
@@ -711,7 +711,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 210, 'x': 'CARE_NEW'}
@@ -731,7 +731,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 116, 'x': 'CARE_NEW'}
@@ -751,7 +751,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 6, 'x': 'TX_NEW'}
@@ -771,7 +771,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 5, 'x': 'TX_NEW'}
@@ -791,7 +791,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 33, 'x': 'TX_NEW'}
@@ -810,7 +810,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['336ba1e522dcaf023f006e376b530725', 'a2c9a0848d7806b76e2ed0ae7ea89c97']
@@ -834,7 +834,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 91, 'x': 'TX_NEW'}
@@ -854,7 +854,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 2, 'x': 'TX_NEW'}
@@ -874,7 +874,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 1, 'x': 'TX_UNDETECT'}
@@ -894,7 +894,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 7, 'x': 'TX_UNDETECT'}
@@ -914,7 +914,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 90, 'x': 'TX_UNDETECT'}
@@ -933,7 +933,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['336ba1e522dcaf023f006e376b530725', 'a2c9a0848d7806b76e2ed0ae7ea89c97']
@@ -957,7 +957,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 141, 'x': 'TX_UNDETECT'}
@@ -977,7 +977,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 29, 'x': 'TX_UNDETECT'}
@@ -997,7 +997,7 @@ class TestPVAChart(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {'y': 141, 'x': 'TX_UNDETECT'}

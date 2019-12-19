@@ -61,10 +61,10 @@ class ExportPermissionsTest(SimpleTestCase):
                 permissions=test_self.permissions
             )
 
+        assert hasattr(WebUser.has_permission, "get_cache"), "not memoized?"
         patches = [
             mock.patch.object(DomainMembership, 'role', property(get_role)),
-            mock.patch.object(Memoized, '__call__',
-                              lambda self, *args, **kwargs: self.func(*args, **kwargs))
+            mock.patch.object(WebUser, 'has_permission', WebUser.has_permission.__wrapped__),
         ]
         for patch in patches:
             patch.start()

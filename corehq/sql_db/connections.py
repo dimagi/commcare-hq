@@ -1,4 +1,5 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, ContextDecorator
+from threading import local
 
 from django.conf import settings
 from django.core import signals
@@ -36,11 +37,41 @@ def _get_db_alias_or_none(enigne_id):
         return None
 
 
-def create_engine(connection_string):
+def is_citus_db(connection):
+    """
+    :param connection: either a sqlalchemy connection or a Django cursor
+    """
+    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
+    if res is None:
+        res = list(connection)
+    return bool(list(res))
+
+
+_IS_CITUS_URLS = {}
+
+
+def is_citus(connection_url: str, engine=None):
+    if connection_url not in _IS_CITUS_URLS:
+        dispose = False
+        if not engine:
+            engine = create_engine(connection_url)
+            dispose = True
+
+        try:
+            _IS_CITUS_URLS[connection_url] = is_citus_db(engine)
+        finally:
+            if dispose:
+                engine.dispose()
+
+    return _IS_CITUS_URLS[connection_url]
+
+
+def create_engine(connection_url: str, connect_args: dict = None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
-    return sqlalchemy.create_engine(connection_string, paramstyle='format')
+    connect_args = connect_args or {}
+    return sqlalchemy.create_engine(connection_url, paramstyle='format', connect_args=connect_args)
 
 
 class SessionHelper(object):
@@ -48,8 +79,9 @@ class SessionHelper(object):
     Shim class helper for a single connection/session factory
     """
 
-    def __init__(self, connection_string):
-        self.engine = create_engine(connection_string)
+    def __init__(self, connection_url: str, connect_args: dict = None):
+        self.url = connection_url
+        self.engine = create_engine(connection_url, connect_args)
         self._session_factory = sessionmaker(bind=self.engine)
         # Session is the actual constructor object
         self.Session = scoped_session(self._session_factory)
@@ -73,8 +105,7 @@ class SessionHelper(object):
 
     @cached_property
     def is_citus_db(self):
-        with self.engine.begin() as connection:
-            return is_citus_db(connection)
+        return is_citus(self.engine.url, engine=self.engine)
 
 
 class ConnectionManager(object):
@@ -91,10 +122,11 @@ class ConnectionManager(object):
         self.engine_id_django_db_map = {}
         self._populate_connection_map()
 
-    def _get_or_create_helper(self, connection_string):
-        if connection_string not in self._session_helpers:
-            self._session_helpers[connection_string] = SessionHelper(connection_string)
-        return self._session_helpers[connection_string]
+    def _get_or_create_helper(self, connection_url: str):
+        if connection_url not in self._session_helpers:
+            self._session_helpers[connection_url] = SessionHelper(connection_url)
+
+        return self._session_helpers[connection_url]
 
     def get_django_db_alias(self, engine_id):
         return self.engine_id_django_db_map[engine_id]
@@ -140,7 +172,7 @@ class ConnectionManager(object):
         for helper in self._session_helpers.values():
             helper.Session.remove()
 
-    def dispose_engine(self, engine_id=DEFAULT_ENGINE_ID):
+    def dispose_engine(self, engine_id):
         """
         If found, closes the active sessions associated with an an engine and disposes it.
         Also removes it from the session manager.
@@ -148,9 +180,9 @@ class ConnectionManager(object):
         """
         self._dispose_engine(self.get_connection_string(engine_id))
 
-    def _dispose_engine(self, connection_string):
-        if connection_string in self._session_helpers:
-            helper = self._session_helpers.pop(connection_string)
+    def _dispose_engine(self, connection_url):
+        helper = self._session_helpers.pop(connection_url, None)
+        if helper:
             helper.Session.remove()
             helper.engine.dispose()
 
@@ -158,11 +190,11 @@ class ConnectionManager(object):
         """
         Dispose all engines associated with this. Useful for tests.
         """
-        for connection_string in list(self._session_helpers.keys()):
-            self._dispose_engine(connection_string)
+        for session_key in list(self._session_helpers):
+            self._dispose_engine(session_key)
 
-    def get_connection_string(self, engine_id):
-        db_alias = self.engine_id_django_db_map.get(engine_id, DEFAULT_DB_ALIAS)
+    def get_connection_string(self, engine_id_or_db_alias):
+        db_alias = self.engine_id_django_db_map.get(engine_id_or_db_alias, engine_id_or_db_alias)
         return self._connection_string_from_django(db_alias)
 
     def _populate_connection_map(self):
@@ -224,7 +256,7 @@ def override_engine(engine_id, connection_url, db_alias=None):
     get_connection_string = connection_manager.get_connection_string
 
     def _get_conn_string(e_id):
-        if e_id == engine_id:
+        if e_id in (engine_id, db_alias):
             return connection_url
         else:
             return get_connection_string(e_id)
@@ -239,13 +271,3 @@ def override_engine(engine_id, connection_url, db_alias=None):
         connection_manager.dispose_engine(engine_id)
         connection_manager.get_connection_string = get_connection_string
         connection_manager.engine_id_django_db_map[engine_id] = original_alias
-
-
-def is_citus_db(connection):
-    """
-    :param connection: either a sqlalchemy connection or a Django cursor
-    """
-    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
-    if res is None:
-        res = list(connection)
-    return bool(list(res))

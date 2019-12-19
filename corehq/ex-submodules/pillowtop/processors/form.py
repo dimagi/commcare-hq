@@ -14,6 +14,7 @@ from corehq.apps.users.models import (
     UserReportingMetadataStaging,
 )
 from corehq.apps.users.util import (
+    WEIRD_USER_IDS,
     filter_by_app,
     update_device_meta,
     update_latest_builds,
@@ -23,11 +24,25 @@ from corehq.util.quickcache import quickcache
 
 from .interface import PillowProcessor
 
+ONE_DAY = 24 * 60 * 60
+
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
-    """
-    Processor used to process each form and mark the corresponding application as
-    having submissions (has_submissions = True).
+    """Updates the user document with reporting metadata when a user submits a form
+
+    Also marks the application as having submissions.
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately
+
+    Reads from:
+      - CouchDB (user and app)
+      - XForm data source
+
+    Writes to:
+      - CouchDB (app)
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
     """
 
     def process_change(self, change):
@@ -48,12 +63,15 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
+        user_id = doc.get('form', {}).get('meta', {}).get('userID')
+        if user_id in WEIRD_USER_IDS:
+            return
+
         try:
             received_on = string_to_utc_datetime(doc.get('received_on'))
         except ValueError:
             return
 
-        user_id = doc.get('form', {}).get('meta', {}).get('userID')
         app_id = doc.get('app_id')
         version = doc.get('version')
 
@@ -68,12 +86,16 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                     domain, user_id, app_id, build_id, version, metadata, received_on
                 )
             else:
+                user = CouchUser.get_by_user_id(user_id, domain)
+                if not user or user.is_deleted():
+                    return
+
                 mark_latest_submission(
-                    domain, user_id, app_id, build_id, version, metadata, received_on
+                    domain, user, app_id, build_id, version, metadata, received_on
                 )
 
 
-@quickcache(['domain', 'build_id'], timeout=60 * 60)
+@quickcache(['domain', 'build_id'], timeout=ONE_DAY, memoize_timeout=ONE_DAY)
 def mark_has_submission(domain, build_id):
     app = None
     try:
@@ -110,16 +132,11 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
-    user = CouchUser.get_by_user_id(user_id, domain)
-
-    if not user or user.is_deleted():
-        return
-
+def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on, save_user=True):
     try:
         received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:
-        return
+        return False
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
@@ -169,4 +186,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        user.save()
+        if save_user:
+            user.save(fire_signals=False)
+        return True
+    return False

@@ -199,12 +199,10 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         message = """
             Duration: {dur},
             Total rows: {total},
-            Warehouse Enabled: {enabled},
             User List: {users}
             """.format(
             dur=report_end - report_start,
             total=report.total_records,
-            enabled=report.warehouse,
             users=recipient_list
         )
         send_mail_async.delay(
