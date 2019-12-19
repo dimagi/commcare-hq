@@ -146,7 +146,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 var div = vm.scope === "ind" ? 3 : 4;
                 var options = vm.rawTopojson.objects[vm.scope];
                 var projection, path;
-                if (useNewMaps) {
+                if (isMobile) {
                     // load a dummy projection so we can calculate the true size
                     // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
                     projection = d3.geo.equirectangular().scale(1);
