@@ -16,10 +16,7 @@ function InfantometerController($scope, $routeParams, $location, $filter, infras
         storageService.setKey('search', $location.search());
     }
     vm.label = "AWCs that reported having an Infantometer";
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/infantometer/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/infantometer/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/infantometer/');
     vm.data = {
         legendTitle: 'Percentage',
     };

@@ -16,10 +16,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
         storageService.setKey('search', $location.search());
     }
     vm.label = "AWCs that reported having a source of clean drinking water";
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/clean_water/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/clean_water/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/clean_water/');
     vm.data = {
         legendTitle: 'Percentage',
     };
