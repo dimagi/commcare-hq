@@ -48,6 +48,18 @@ a:active, a:hover, a:focus {
 
 
 // nvd3 chart customizations
+
+// reduce font size of x-axis labels
 .nvd3 text {
   font-size: 10px;
+}
+
+// reduce width of tooltip
+.nvtooltip .hoverinfo {
+  width: 160px !important;
+}
+
+// move tooltip 40px to the left to accommodate margins
+.nvtooltip {
+  margin-left: -40px;
 }
