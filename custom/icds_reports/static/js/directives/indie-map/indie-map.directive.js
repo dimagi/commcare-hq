@@ -317,17 +317,19 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         popup.classed("hidden", true);
     };
 
+    function showSecondaryLocationSelectionPopup(geography) {
+        var html = vm.getHtmlContent(geography);
+        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+
+        var popup = d3.select('#locPopup');
+        popup.classed("hidden", false);
+        popup.attr('style', css).html(html);
+        $compile(popup[0])($scope);
+    }
+
     vm.handleMapClick = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            var html = vm.getHtmlContent(geography);
-            var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-
-            var popup = d3.select('#locPopup');
-            popup.classed("hidden", false);
-            popup.attr('style', css)
-                .html(html);
-
-            $compile(popup[0])($scope);
+            showSecondaryLocationSelectionPopup(geography);
         } else {
             var location = geography.id || geography;
             if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
