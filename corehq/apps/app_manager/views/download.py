@@ -209,7 +209,11 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     @property
     def zip_name(self):
-        return 'commcare_v{}.ccz'.format(self.app.version)
+        return '{} - {} - v{}.ccz'.format(
+            self.app.domain,
+            self.app.name,
+            self.app.version,
+        )
 
     def check_before_zipping(self):
         if self.app.is_remote_app():
