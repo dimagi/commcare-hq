@@ -36,7 +36,7 @@ from corehq.apps.locations.tasks import (
     download_locations_async,
     import_locations_async,
 )
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.users.forms import MultipleSelectionForm
@@ -684,10 +684,10 @@ class EditLocationView(BaseEditLocationView):
     @property
     def consumption(self):
         consumptions = []
-        for product in Product.by_domain(self.domain):
+        for product in SQLProduct.active_objects.filter(domain=self.domain):
             consumption = get_default_monthly_consumption(
                 self.domain,
-                product._id,
+                product.product_id,
                 self.location.location_type_name,
                 self.location.supply_point_id or None,
             )
