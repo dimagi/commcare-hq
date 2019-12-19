@@ -187,13 +187,14 @@ def _handle_duplicate(new_doc):
 
         existing_md5 = existing_doc.xml_md5()
     except MissingFormXml:
-        existing_md5 = None
+        existing_md5 = new_md5 = None
         if not existing_doc.is_error:
             existing_doc.problem = 'Missing form.xml'
+    else:
+        # only do this if we need to do the comparison
+        new_md5 = new_doc.xml_md5()
 
-    new_md5 = new_doc.xml_md5()
-
-    if existing_md5 != new_md5:
+    if existing_md5 is None or existing_md5 != new_md5:
         _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
         if new_doc.xmlns != existing_doc.xmlns:
             # if the XMLNS has changed this probably isn't a form edit
