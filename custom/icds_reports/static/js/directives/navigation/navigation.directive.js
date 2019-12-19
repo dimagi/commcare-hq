@@ -13,6 +13,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.haveAccessToFeatures = haveAccessToFeatures;
     $scope.userFullName = userFullName;
     $scope.userUsername = userUsername;
+    $scope.expandedSectionId = '';
 
     var checkCollapse = function (reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
