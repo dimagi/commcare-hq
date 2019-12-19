@@ -306,7 +306,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         html += "</div>";
         html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
+            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.handleMapClick(\'' + value + '\')">' + value + '</button>';
         });
         html += "</div>";
         return html;
@@ -317,7 +317,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         popup.classed("hidden", true);
     };
 
-    vm.updateMap = function (geography) {
+    vm.handleMapClick = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             var html = vm.getHtmlContent(geography);
             var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
@@ -362,7 +362,7 @@ window.angular.module('icdsApp').directive('indieMap', function () {
             bubbles: '=?',
             templatePopup: '&',
         },
-        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.handleMapClick" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',
