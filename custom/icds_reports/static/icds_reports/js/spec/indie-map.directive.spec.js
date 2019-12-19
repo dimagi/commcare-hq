@@ -5,6 +5,7 @@ var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Indie Map Directive', function () {
+    this.timeout(10000);  // bump timeout for maps tests because they are slow...
 
     var $scope, $location, controller, $httpBackend, $storageService;
 

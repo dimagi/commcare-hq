@@ -166,6 +166,14 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
                      include_ucrs=None, exclude_ucrs=None,
                      num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
                      processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
+    """Generic XForm change processor
+
+    Processors:
+      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
+      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
+      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+    """
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     from corehq.pillows.mappings.user_mapping import USER_INDEX

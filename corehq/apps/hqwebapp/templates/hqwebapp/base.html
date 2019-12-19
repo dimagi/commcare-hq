@@ -183,8 +183,11 @@
     {% endif %}
     {% block background_content %}{% endblock %}
     {% maintenance_alert request %}
-    {% if request.user.is_authenticated and is_demo_visible %}
-      {% include "hqwebapp/partials/get_demo_banner.html" %}
+    {% if show_trial_banner %}
+      {% include "hqwebapp/partials/trial_banner.html" %}
+    {% endif %}
+    {% if show_community_banner %}
+      {% include "hqwebapp/partials/community_banner.html" %}
     {% endif %}
     <div class="hq-container">
       {% block navigation %}

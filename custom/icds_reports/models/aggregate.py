@@ -180,6 +180,21 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
     person_case_id = models.TextField(blank=True, null=True)
+    husband_name = models.TextField(blank=True, null=True)
+    lmp = models.DateField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children alive"
+    )
 
     class Meta(object):
         managed = False
@@ -1310,6 +1325,14 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     where_born = models.PositiveSmallIntegerField(
         null=True,
         help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children alive"
     )
 
     class Meta(object):

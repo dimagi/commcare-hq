@@ -11,18 +11,18 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
 from corehq.apps.domain.models import Domain
 
 
-class TestExplicitCommunitySubscriptions(TestCase):
+class TestExplicitUnpaidSubscriptions(TestCase):
 
     domain = None
     from_date = None
 
     @classmethod
     def setUpClass(cls):
-        super(TestExplicitCommunitySubscriptions, cls).setUpClass()
+        super(TestExplicitUnpaidSubscriptions, cls).setUpClass()
 
         cls.domain = Domain(name=str(uuid.uuid4()))
         cls.domain.save()
@@ -31,10 +31,10 @@ class TestExplicitCommunitySubscriptions(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        super(TestExplicitCommunitySubscriptions, cls).tearDownClass()
+        super(TestExplicitUnpaidSubscriptions, cls).tearDownClass()
 
     def test_no_preexisting_subscription(self):
-        self._assign_community_subscriptions()
+        self._assign_unpaid_subscriptions()
 
         self.assertEqual(Subscription.visible_objects.count(), 1)
         subscription = Subscription.visible_objects.all()[0]
@@ -51,7 +51,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
             self._random_plan_version,
         )
 
-        self._assign_community_subscriptions()
+        self._assign_unpaid_subscriptions()
 
         self.assertEqual(Subscription.visible_objects.count(), 1)
         self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
@@ -67,14 +67,14 @@ class TestExplicitCommunitySubscriptions(TestCase):
             date_start=future_subscription_start_date,
         )
 
-        self._assign_community_subscriptions()
+        self._assign_unpaid_subscriptions()
 
         self.assertEqual(Subscription.visible_objects.count(), 2)
         self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
         self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=self.from_date,
             date_end=future_subscription_start_date,
-            plan_version=self._most_recently_created_community_plan_version,
+            plan_version=self._most_recently_created_paused_plan_version,
             skip_invoicing_if_no_feature_charges=True,
         ))
         self.assertIsNotNone(Subscription.visible_objects.get(
@@ -94,14 +94,14 @@ class TestExplicitCommunitySubscriptions(TestCase):
             date_end=past_subscription_end_date,
         )
 
-        self._assign_community_subscriptions()
+        self._assign_unpaid_subscriptions()
 
         self.assertEqual(Subscription.visible_objects.count(), 2)
         self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
         self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=self.from_date,
             date_end=None,
-            plan_version=self._most_recently_created_community_plan_version,
+            plan_version=self._most_recently_created_paused_plan_version,
             skip_invoicing_if_no_feature_charges=True,
         ))
         self.assertIsNotNone(Subscription.visible_objects.get(
@@ -110,8 +110,8 @@ class TestExplicitCommunitySubscriptions(TestCase):
             plan_version=plan_version,
         ))
 
-    def _assign_community_subscriptions(self):
-        ensure_explicit_community_subscription(
+    def _assign_unpaid_subscriptions(self):
+        ensure_community_or_paused_subscription(
             self.domain.name, self.from_date, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY
         )
 
@@ -120,9 +120,13 @@ class TestExplicitCommunitySubscriptions(TestCase):
         return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
 
     @property
+    def _most_recently_created_paused_plan_version(self):
+        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PAUSED)
+
+    @property
     def _random_plan_version(self):
         return DefaultProductPlan.get_default_plan_version(
-            edition=random.choice(SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]),
+            edition=random.choice(SoftwarePlanEdition.SELF_SERVICE_ORDER[2:] + [SoftwarePlanEdition.ENTERPRISE]),
         )
 
     @property

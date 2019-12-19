@@ -192,11 +192,12 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 // that takes in the current step and filters and returns the appropriate data from the relevant
                 // service. See UnderweightChildrenReportController for an example
                 vm.setStepsMapLabel();
-                // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
-                // note: it would be better to not load this data on both step pages but instead save it in the JS, but
-                // doing that now would be a bit complicated and the server-side caching should make the switching
-                // relatively painless
-                var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+                // mobile dashboard requires map data on the chart pages, whereas web just requires the current
+                // step's data.
+                // note: it would be better to not load this data on both step pages but instead save it in the
+                // JS, but doing that now would be a bit complicated and the server-side caching should make the
+                // switching relatively painless
+                var allSteps = (isMobile && vm.step === 'chart') ? ['map', 'chart'] : [vm.step];
                 for (var i = 0; i < allSteps.length; i++) {
                     var currentStep = allSteps[i];
                     vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
@@ -302,9 +303,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // subsection navigation support
             vm.goToRoute = function (route) {
                 $location.path(route);
-            };
-            vm.getBackArrowLink = function () {
-                return navigationService.getPagePath('program_summary/' + vm.sectionSlug, $location.search());
             };
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();

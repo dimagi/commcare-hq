@@ -2,6 +2,7 @@ import random
 import re
 import uuid
 from collections import defaultdict
+from distutils.version import LooseVersion
 from functools import wraps
 
 from django.conf import settings
@@ -17,6 +18,28 @@ from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
+
+PG_V10 = LooseVersion('10.0.0')
+
+REPLICATION_SQL_10 = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
+        WHEN pg_last_wal_receive_lsn() = pg_last_wal_replay_lsn() THEN 0
+        ELSE GREATEST(0, EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp()))
+    END
+    AS replication_lag;
+    """
+
+REPLICATION_SQL_9_6 = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
+        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+    END
+    AS replication_lag;
+    """
 
 
 def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
@@ -253,6 +276,15 @@ def get_standby_databases():
     return standby_dbs
 
 
+@memoized
+def get_db_version(db_alias):
+    with connections[db_alias].cursor() as cursor:
+        cursor.execute('SHOW SERVER_VERSION;')
+        raw_version = cursor.fetchone()[0]
+
+    return LooseVersion(raw_version.split(' ')[0])
+
+
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
@@ -262,15 +294,7 @@ def get_replication_delay_for_standby(db_alias):
     """
     # used to indicate that the wal_receiver process on standby is not running
     try:
-        sql = """
-        SELECT
-        CASE
-            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
-            WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
-            ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
-        END
-        AS replication_lag;
-        """
+        sql = REPLICATION_SQL_10 if get_db_version(db_alias) >= PG_V10 else REPLICATION_SQL_9_6
         with connections[db_alias].cursor() as cursor:
             cursor.execute(sql)
             [(delay, )] = cursor.fetchall()

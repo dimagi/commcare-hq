@@ -37,8 +37,10 @@ SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
 def get_user_sync_history_pillow(
         pillow_id='UpdateUserSyncHistoryPillow', num_processes=1, process_num=0, **kwargs):
-    """
-    This gets a pillow which iterates through all synclogs
+    """Synclog pillow
+
+    Processors:
+      - :py:func:`corehq.pillows.synclog.UserSyncHistoryProcessor`
     """
     change_feed = KafkaChangeFeed(
         topics=[topics.SYNCLOG_SQL], client_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
@@ -56,6 +58,19 @@ def get_user_sync_history_pillow(
 
 
 class UserSyncHistoryProcessor(PillowProcessor):
+    """Updates the user document with reporting metadata when a user syncs
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately.
+
+    Reads from:
+      - CouchDB (user)
+      - SynclogSQL table
+
+    Writes to:
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
+    """
 
     def process_change(self, change):
         synclog = change.get_document()

@@ -10,7 +10,6 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getExclusiveBreastfeedingData;
 
     var genderIndex = _.findIndex(genders, function (x) {

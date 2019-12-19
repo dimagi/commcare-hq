@@ -28,9 +28,21 @@ ONE_DAY = 24 * 60 * 60
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
-    """
-    Processor used to process each form and mark the corresponding application as
-    having submissions (has_submissions = True).
+    """Updates the user document with reporting metadata when a user submits a form
+
+    Also marks the application as having submissions.
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately
+
+    Reads from:
+      - CouchDB (user and app)
+      - XForm data source
+
+    Writes to:
+      - CouchDB (app)
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
     """
 
     def process_change(self, change):

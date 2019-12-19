@@ -26,6 +26,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
@@ -144,6 +145,7 @@ class BaseUserSettingsView(BaseDomainView):
         return context
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
     urlname = "users_default"
@@ -152,18 +154,21 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     @memoized
     def redirect(self):
         redirect = None
+        has_project_access = has_privilege(self.request, privileges.PROJECT_ACCESS)
         user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
         if user:
-            if (user.has_permission(self.domain, 'edit_commcare_users')
-                    or user.has_permission(self.domain, 'view_commcare_users')):
+            if ((user.has_permission(self.domain, 'edit_commcare_users')
+                    or user.has_permission(self.domain, 'view_commcare_users'))
+                    and has_project_access):
                 from corehq.apps.users.views.mobile import MobileWorkerListView
                 redirect = reverse(
                     MobileWorkerListView.urlname,
                     args=[self.domain]
                 )
 
-            elif (user.has_permission(self.domain, 'edit_groups')
-                    or user.has_permission(self.domain, 'view_groups')):
+            elif ((user.has_permission(self.domain, 'edit_groups')
+                    or user.has_permission(self.domain, 'view_groups'))
+                    and has_project_access):
                 from corehq.apps.users.views.mobile import GroupsListView
                 redirect = reverse(
                     GroupsListView.urlname,
@@ -177,15 +182,17 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                     args=[self.domain]
                 )
 
-            elif user.has_permission(self.domain, 'view_roles'):
+            elif (user.has_permission(self.domain, 'view_roles')
+                    and has_project_access):
                 from corehq.apps.users.views import ListRolesView
                 redirect = reverse(
                     ListRolesView.urlname,
                     args=[self.domain]
                 )
 
-            elif (user.has_permission(self.domain, 'edit_locations')
-                    or user.has_permission(self.domain, 'view_locations')):
+            elif ((user.has_permission(self.domain, 'edit_locations')
+                    or user.has_permission(self.domain, 'view_locations'))
+                    and has_project_access):
                 from corehq.apps.locations.views import LocationsListView
                 redirect = reverse(
                     LocationsListView.urlname,
@@ -392,6 +399,7 @@ class EditWebUserView(BaseEditUserView):
 
         return ctx
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
@@ -473,14 +481,12 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return user_roles
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users")
     urlname = 'web_users'
-
-    @method_decorator(require_can_edit_or_view_web_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -562,6 +568,7 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
+@always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
@@ -619,6 +626,7 @@ def paginate_web_users(request, domain):
     })
 
 
+@always_allow_project_access
 @require_can_edit_web_users
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
@@ -643,6 +651,7 @@ def remove_web_user(request, domain, couch_user_id):
         reverse(ListWebUsersView.urlname, args=[domain]))
 
 
+@always_allow_project_access
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
@@ -874,12 +883,14 @@ class UserInvitationView(object):
                              location_id=invitation.supply_point, program_id=invitation.program)
 
 
+@always_allow_project_access
 @location_safe
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
 
 
+@always_allow_project_access
 @require_POST
 @require_can_edit_web_users
 def reinvite_web_user(request, domain):
@@ -894,6 +905,7 @@ def reinvite_web_user(request, domain):
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
 
+@always_allow_project_access
 @require_POST
 @require_can_edit_web_users
 def delete_invitation(request, domain):
@@ -903,6 +915,7 @@ def delete_invitation(request, domain):
     return json_response({'status': 'ok'})
 
 
+@always_allow_project_access
 @require_POST
 @require_can_edit_web_users
 def delete_request(request, domain):
@@ -912,6 +925,7 @@ def delete_request(request, domain):
 
 class BaseManageWebUserView(BaseUserSettingsView):
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseManageWebUserView, self).dispatch(request, *args, **kwargs)
@@ -1005,6 +1019,7 @@ class InviteWebUserView(BaseManageWebUserView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = ugettext_lazy("Request Access")
@@ -1053,6 +1068,7 @@ class DomainRequestView(BasePageView):
 
 
 @require_POST
+@always_allow_project_access
 @require_permission_to_edit_user
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
@@ -1070,6 +1086,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
 
 @require_POST
+@always_allow_project_access
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
@@ -1086,6 +1103,7 @@ def delete_phone_number(request, domain, couch_user_id):
     return HttpResponseRedirect(redirect)
 
 
+@always_allow_project_access
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
     """
@@ -1116,6 +1134,7 @@ def verify_phone_number(request, domain, couch_user_id):
     return HttpResponseRedirect(redirect)
 
 
+@always_allow_project_access
 @require_superuser
 @login_and_domain_required
 def domain_accounts(request, domain, couch_user_id, template="users/domain_accounts.html"):
@@ -1130,6 +1149,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
     return render(request, template, context)
 
 
+@always_allow_project_access
 @require_POST
 @require_superuser
 def add_domain_membership(request, domain, couch_user_id, domain_name):
@@ -1140,6 +1160,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 
+@always_allow_project_access
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 @location_safe
@@ -1173,6 +1194,7 @@ def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 
+@always_allow_project_access
 @csrf_exempt
 @require_POST
 @require_superuser

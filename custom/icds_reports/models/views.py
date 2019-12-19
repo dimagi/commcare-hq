@@ -780,6 +780,12 @@ class CcsRecordMonthlyView(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
+    husband_name = models.TextField(blank=True, null=True)
+    lmp = models.DateField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(blank=True, null=True)
+    num_children_del = models.PositiveSmallIntegerField(blank=True, null=True)
+    still_live_birth = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

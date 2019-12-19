@@ -8,7 +8,6 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
         false, isMobile);
     var vm = this;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getChildrenInitiatedData;
 
     vm.isAlertActive = isAlertActive;

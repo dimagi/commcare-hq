@@ -28,7 +28,7 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
         return """
         INSERT INTO "{tablename}" (
           case_id, state_id, supervisor_id, month, latest_time_end_processed,
-          breastfed_at_birth, valid_visits, where_born
+          breastfed_at_birth, valid_visits, where_born, num_children_del, still_live_birth
         ) (
           SELECT
             DISTINCT case_load_ccs_record0 AS case_id,
@@ -40,7 +40,9 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
             SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
                           (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END
                 ) OVER w as valid_visits,
-            LAST_VALUE(where_born) OVER w AS where_born
+            LAST_VALUE(where_born) OVER w AS where_born,
+            LAST_VALUE(num_children_del) OVER w AS num_children_del,
+            LAST_VALUE(still_live_birth) OVER w AS still_live_birth
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

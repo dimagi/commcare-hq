@@ -1600,6 +1600,8 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
+    for status in UcrReconciliationStatus.objects.filter(verified_date__isnull=True):
+        reconcile_data_not_in_ucr.delay(status.pk)
 
 
 @task(queue='background_queue')

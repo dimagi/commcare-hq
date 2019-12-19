@@ -81,8 +81,6 @@ related to angular not being defined. But if we split it here it works fine.
 {% compress js %}
         <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
         <script src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/demographics.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
         <script src="{% static 'js/angular-services/download.service.js' %}"></script>
 {% endcompress %}
   {% include 'icds_reports/partials/shared_component_directives.html' %}
@@ -102,19 +100,6 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
         <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
         <script src="{% static 'js/directives/print/print.directive.js' %}"></script>
-        <script src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
-        <script src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
-        <script src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
-        <script src="{% static 'js/directives/lactating-enrolled-women/lactating-enrolled-women.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adolescent-girls/adolescent-girls.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adhaar-beneficiary/adhaar-beneficiary.directive.js' %}"></script>
-        <script src="{% static 'js/directives/clean-water/clean-water.directive.js' %}"></script>
-        <script src="{% static 'js/directives/functional-toilet/functional-toilet.directive.js' %}"></script>
-        <script src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
-        <script src="{% static 'js/directives/infantometer/infantometer.directive.js' %}"></script>
-        <script src="{% static 'js/directives/stadiometer/stadiometer.directive.js' %}"></script>
-        <script src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
         <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>

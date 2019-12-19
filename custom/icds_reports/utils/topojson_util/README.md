@@ -19,16 +19,34 @@ npm install -g mapshaper
 
 ## File structure
 
-`static/district_topojson_data.json` is a mapping of States to their relevant districts and blocks.
-
-`static/blocks/<state>_blocks_v3.toposon` is the actual block-level topojson data for that 
-state's blocks, keyed by district.
+[See here for details](https://github.com/dimagi/commcare-hq/blob/master/custom/icds_reports/static/js/topojsons/README.md)
 
 ## Functionality
 
 The `get_topojson_for_district` function first looks up the appropriate state file
 for the district by matching on the district name. 
 Then returns the appropriate topojson file for the whole state.
+
+## Downsizing Topojsons
+
+To downsize topojsons simply run:
+
+`./manage.py downsize_topojson [level] [output_file] [pct]`
+
+This will output a *topojson* file to the same directory with all metadata from the original file included.
+
+Note that we are in the process of attempting to phase out the JavaScript versions of these files.
+
+**Advanced Editing Only***
+
+If you need more advanced options you can follow these instructions instead:
+
+1. Export raw topojson to a file using `./manage.py format_topojson [level]`
+2. Open the file in [mapshaper](https://mapshaper.org/) and adjust the resolution until desired.
+3. Export the file from mapshaper.
+4. Run `./manage.py merge_topojsons [level] [new filename]`
+5. Add the JS variable declaration to the file (e.g. `STATES_TOPOJSON = [topojson];`) and save 
+   it somewhere
 
 ## Todos
 

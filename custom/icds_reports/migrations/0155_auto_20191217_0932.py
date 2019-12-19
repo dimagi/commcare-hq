@@ -31,7 +31,7 @@ def _distribute_citus_tables(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0154_child_health_state'),
+        ('icds_reports', '0155_added_new_fields_css_record_monthly_and_delivery_forms'),
     ]
 
     operations = [

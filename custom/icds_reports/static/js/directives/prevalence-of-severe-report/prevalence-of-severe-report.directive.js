@@ -11,7 +11,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
     vm.serviceDataFunction = maternalChildService.getPrevalenceOfSevereData;
 
     var ageIndex = _.findIndex(ages,function (x) {
