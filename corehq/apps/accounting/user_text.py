@@ -5,30 +5,40 @@ from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {
         'name': _("Community"),
-        'description': _("For projects in a pilot phase with a small group (up to %d) of "
+        'description': _("For projects in a pilot phase with a small group (up to {}) of "
                          "mobile users that only need very basic CommCare features."),
     },
     SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For projects with a medium set (up to %d) of mobile users that want to "
-                         "build in limited SMS workflows and have increased data security needs."),
+        'description': _("For programs with one-time data collection needs, "
+                         "simple case management workflows, and basic M&E "
+                         "requirements. "
+                         "({} mobile workers included)"),
     },
     SoftwarePlanEdition.PRO: {
         'name': _("Pro"),
-        'description': _("For projects with a large group (up to %d) of mobile users that want to "
-                         "build in comprehensive SMS workflows and have increased reporting needs."),
+        'description': _("For programs with complex case management needs, "
+                         "field staff collaborating on tasks, and M&E teams "
+                         "that need to clean and report on data. "
+                         "({} mobile workers included)"),
     },
     SoftwarePlanEdition.ADVANCED: {
         'name': _("Advanced"),
-        'description': _("For projects scaling to an even larger group (up to %d) of mobile users "
-                         "that want the full CommCare feature set and dedicated support from Dimagi "
-                         "staff.")
+        'description': _("For programs with distributed field staff, "
+                         "facility-based workflows, and advanced security "
+                         "needs. Also for M&E teams integrating data with "
+                         "3rd party analytics. "
+                         "({} mobile workers included)")
     },
     SoftwarePlanEdition.ENTERPRISE: {
         'name': _("Enterprise"),
-        'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
-                         "the full CommCare feature set. Your organization will receive discounted "
-                         "pricing and dedicated enterprise-level support from Dimagi.")
+        'description': _("For organizations that need a sustainable path to "
+                         "scale mobile data collection and service delivery "
+                         "across multiple teams, programs, or countries.")
+    },
+    SoftwarePlanEdition.PAUSED: {
+        'name': _("Paused"),
+        'description': _("Paused"),
     },
     SoftwarePlanEdition.RESELLER: {
         'name': _("Reseller"),
