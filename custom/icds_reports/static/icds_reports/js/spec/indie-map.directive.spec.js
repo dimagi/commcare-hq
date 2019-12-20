@@ -147,7 +147,7 @@ describe('Indie Map Directive', function () {
         var expected = '<div class="modal-header"><button type="button" class="close" ' +
             'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
-            'ng-click="$ctrl.handleMapClick(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
+            'ng-click="$ctrl.attemptToDrillToLocation(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
 
         var result = controller.getSecondaryLocationSelectionHtml(mockGeography);
         assert.equal(expected, result);
