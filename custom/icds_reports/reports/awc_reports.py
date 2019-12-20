@@ -28,7 +28,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
-ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2, ADOLESCENT_GIRLS_DATA_THRESHOLD
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2, ADOLESCENT_GIRLS_DATA_THRESHOLD
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -681,20 +681,21 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         ]
     }
 
+
 def get_adolescent_girls_data(domain, filters, show_test):
     queryset = AggAwcMonthly.objects.filter(
         **filters
     ).values(
-            'aggregation_level'
-        ).annotate(
+        'aggregation_level'
+    ).annotate(
         person_adolescent=Sum('cases_person_adolescent_girls_11_14_out_of_school'),
-        person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2'),
-
-        )
+        person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2')
+    )
     if not show_test:
         queryset = apply_exclude(domain, queryset)
 
     return queryset
+
 
 @icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
