@@ -113,56 +113,57 @@ def login_and_domain_required(view_func):
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
-        if user.is_authenticated and user.is_active:
-            if not domain_obj.is_active:
-                msg = _(
-                    'The project space "{domain}" has not yet been activated. '
-                    'Please report an issue if you think this is a mistake.'
-                ).format(domain=domain_name)
-                messages.info(req, msg)
-                return HttpResponseRedirect(reverse("domain_select"))
-            couch_user = _ensure_request_couch_user(req)
-            if couch_user.is_member_of(domain_obj):
-                # If the two factor toggle is on, require it for all users.
-                if (
-                    _two_factor_required(view_func, domain_obj, couch_user)
-                    and not getattr(req, 'bypass_two_factor', False)
-                    and not user.is_verified()
-                ):
-                    return TemplateResponse(
-                        request=req,
-                        template='two_factor/core/otp_required.html',
-                        status=403,
-                    )
-                elif not _can_access_project_page(req):
-                    return _redirect_to_project_access_upgrade(req)
-                else:
-                    return call_view()
-
-            elif (
-                _page_is_whitelist(req.path, domain_name) or
-                not domain_obj.restrict_superusers
-            ) and user.is_superuser:
-                # superusers can circumvent domain permissions.
-                if not _can_access_project_page(req):
-                    return _redirect_to_project_access_upgrade(req)
+        if not (user.is_authenticated and user.is_active):
+            if (
+                req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
+                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
+            ):
                 return call_view()
-            elif domain_obj.is_snapshot:
-                # snapshots are publicly viewable
-                return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-            elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
-                from corehq.apps.users.views import DomainRequestView
-                return DomainRequestView.as_view()(req, *args, **kwargs)
             else:
-                raise Http404
+                login_url = reverse('domain_login', kwargs={'domain': domain_name})
+                return redirect_for_login_or_domain(req, login_url=login_url)
+
+        if not domain_obj.is_active:
+            msg = _(
+                'The project space "{domain}" has not yet been activated. '
+                'Please report an issue if you think this is a mistake.'
+            ).format(domain=domain_name)
+            messages.info(req, msg)
+            return HttpResponseRedirect(reverse("domain_select"))
+        couch_user = _ensure_request_couch_user(req)
+        if couch_user.is_member_of(domain_obj):
+            # If the two factor toggle is on, require it for all users.
+            if (
+                _two_factor_required(view_func, domain_obj, couch_user)
+                and not getattr(req, 'bypass_two_factor', False)
+                and not user.is_verified()
+            ):
+                return TemplateResponse(
+                    request=req,
+                    template='two_factor/core/otp_required.html',
+                    status=403,
+                )
+            elif not _can_access_project_page(req):
+                return _redirect_to_project_access_upgrade(req)
+            else:
+                return call_view()
+
         elif (
-            req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
-            PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
-        ):
+            _page_is_whitelist(req.path, domain_name) or
+            not domain_obj.restrict_superusers
+        ) and user.is_superuser:
+            # superusers can circumvent domain permissions.
+            if not _can_access_project_page(req):
+                return _redirect_to_project_access_upgrade(req)
             return call_view()
+        elif domain_obj.is_snapshot:
+            # snapshots are publicly viewable
+            return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+        elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
+            from corehq.apps.users.views import DomainRequestView
+            return DomainRequestView.as_view()(req, *args, **kwargs)
         else:
-            login_url = reverse('domain_login', kwargs={'domain': domain_name})
-            return redirect_for_login_or_domain(req, login_url=login_url)
+            raise Http404
 
     return _inner
 
