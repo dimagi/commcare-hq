@@ -304,6 +304,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.getSecondaryLocationSelectionHtml = function (geography) {
         var html = "";
+        html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
@@ -312,6 +313,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.attemptToDrillToLocation(\'' + value + '\')">' + value + '</button>';
         });
+        html += "</div>";
         html += "</div>";
         return html;
     };
