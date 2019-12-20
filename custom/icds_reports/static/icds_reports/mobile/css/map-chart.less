@@ -1,4 +1,6 @@
 @import "app";
+@import "variables";
+
 .chartView {
   .shadow;
   .bg-white;
@@ -50,7 +52,7 @@ a:active, a:hover, a:focus {
 // maps popup handling. modified from datamaps css.
 .locPopup {
     position: absolute;
-    z-index: 10001;
+    z-index: @zindexMapsPopup;
 }
 
 .locPopup .hoverinfo {
