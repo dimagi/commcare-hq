@@ -182,7 +182,8 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
             ),
             DatabaseColumn(
                 'num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr',
-                SumColumn('cases_person_adolescent_girls_11_14_all_v2' if self.beta else 'cases_person_adolescent_girls_11_14_all'),
+                SumColumn('cases_person_adolescent_girls_11_14_all_v2' if self.beta else
+                          'cases_person_adolescent_girls_11_14_all'),
                 slug='num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr'
             ),
             DatabaseColumn(
@@ -191,9 +192,12 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
                 slug='num_adolescent_girls_15yr18yr'
             ),
             DatabaseColumn(
-                'num_adolescent_girls_11yr14yr_oos' if self.beta else 'num_adolescent_girls_11yr14yr_enrolled_for_services',
-                SumColumn('cases_person_adolescent_girls_11_14_out_of_school' if self.beta else 'cases_person_adolescent_girls_11_14'),
-                slug='num_adolescent_girls_11yr14yr_oos' if self.beta else 'num_adolescent_girls_11yr14yr_enrolled_for_services'
+                'num_adolescent_girls_11yr14yr_oos' if self.beta else
+                'num_adolescent_girls_11yr14yr_enrolled_for_services',
+                SumColumn('cases_person_adolescent_girls_11_14_out_of_school' if self.beta else
+                          'cases_person_adolescent_girls_11_14'),
+                slug='num_adolescent_girls_11yr14yr_oos' if self.beta else
+                'num_adolescent_girls_11yr14yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr_enrolled_for_services',

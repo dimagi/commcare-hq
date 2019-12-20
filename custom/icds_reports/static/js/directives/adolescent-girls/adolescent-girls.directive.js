@@ -140,7 +140,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 AdolescentWomenController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
-    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile','haveAccessToFeatures'
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile','haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('adolescentGirls', ['templateProviderService', function (templateProviderService) {
