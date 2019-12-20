@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        false, isMobile, haveAccessToFeatures);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Adolescent Girls (11-14 years)";
@@ -17,28 +17,57 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         legendTitle: 'Number of Women',
     };
     vm.filters = ['age', 'gender'];
-    vm.rightLegend = {
-        info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
-    };
+
+    if (haveAccessToFeatures) {
+        vm.rightLegend = {
+            info: 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school',
+        };
+    } else {
+        vm.rightLegend = {
+            info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
+        };
+    }
+
 
     vm.getPopupData = function (row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return [
-            {
-                indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                indicator_value: valid,
-            },
-            {
-                indicator_name: 'Total number of adolescent girls (11 - 14 years) who are registered: ',
-                indicator_value: all,
-            },
-            {
-                indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                indicator_value: percent,
-            }
-        ];
+
+        var data = [];
+        if (haveAccessToFeatures) {
+            data = [
+                {
+                    indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
+                    indicator_value: valid,
+                },
+                {
+                    indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
+                    indicator_value: all,
+                },
+                {
+                    indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
+                    indicator_value: percent,
+                },
+            ];
+        } else {
+            data = [
+                {
+                    indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
+                    indicator_value: valid,
+                },
+                {
+                    indicator_name: 'Total number of adolescent girls (11 - 14 years) who are registered: ',
+                    indicator_value: all,
+                },
+                {
+                    indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
+                    indicator_value: percent,
+                },
+            ];
+        }
+
+        return data;
     };
 
     vm.init();
@@ -46,8 +75,13 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services' ,
     };
+
+    if (haveAccessToFeatures) {
+        options['captionContent'] = 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school';
+    }
+
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
@@ -65,9 +99,23 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
 
     vm.tooltipContent = function (monthName, day) {
-        return vm.createTooltipContent(
-            monthName,
-            [{
+        var tooltipdata;
+        if (haveAccessToFeatures) {
+            tooltipdata = [{
+                indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
+                indicator_value: $filter('indiaNumbers')(day.y),
+            },
+            {
+                indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
+                indicator_value: $filter('indiaNumbers')(day.all),
+            },
+            {
+                indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
+                indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
+            }];
+
+        } else {
+            tooltipdata = [{
                 indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
                 indicator_value: $filter('indiaNumbers')(day.y),
             },
@@ -78,7 +126,13 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
             {
                 indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
                 indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
-            }]
+            }];
+        }
+
+
+        return vm.createTooltipContent(
+            monthName,
+            tooltipdata
         );
     };
 }
@@ -86,7 +140,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 AdolescentWomenController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
-    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile','haveAccessToFeatures'
 ];
 
 window.angular.module('icdsApp').directive('adolescentGirls', ['templateProviderService', function (templateProviderService) {
