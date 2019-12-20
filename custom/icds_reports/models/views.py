@@ -457,6 +457,8 @@ class AggAwcMonthly(models.Model):
         blank=True, null=True,
         help_text="Number of cases_person_all that are female between 15 and 18 years"
     )
+    cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(null=True)
+    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(null=True)
     cases_person_referred = models.IntegerField(
         blank=True, null=True,
         help_text="Number of person cases whose last_referral_date is in this month"
