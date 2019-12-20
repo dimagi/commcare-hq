@@ -1,6 +1,6 @@
 {
-	"domains": [
-		"icds-dashboard-qa",
+  "domains": [
+    "icds-dashboard-qa",
     "sankalp_cas",
     "zohaib-sandbox",
     "akshita-sandbox",
@@ -19,46 +19,46 @@
     "icds-cas",
     "icds-cas-sandbox",
     "cas-lab"
-	],
-	"server_environment": [
-		"india",
-		"icds"
-	],
-	"config": {
-		"table_id": "static-migration_form",
-		"display_name": "Migration Forms (Static)",
-		"referenced_doc_type": "XFormInstance",
-		"description": "",
-		"base_item_expression": {},
-		"configured_filter": {
-			"operator": "eq",
-			"expression": {
-				"type": "property_name",
-				"property_name": "xmlns"
-			},
-			"type": "boolean_expression",
-			"property_value": "http://openrosa.org/formdesigner/ca72a6b77b7b122c090667f8ec6e94e8adaf0609"
-		},
-		"validations": [
-			{
-				"name": "submitted_by_aww",
-				"error_message": "Form not submitted by AWW",
-				"expression": {
-					"type": "boolean_expression",
-					"operator": "eq",
-					"expression": {
-						"location_id_expression": {
-							"type": "named",
-							"name": "user_location_id"
-						},
-						"type": "location_type_name"
-					},
-					"property_value": "awc"
-				}
-			}
-		],
-		"configured_indicators": [
-			{
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "static-migration_form",
+    "display_name": "Migration Forms (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "property_value": "http://openrosa.org/formdesigner/ca72a6b77b7b122c090667f8ec6e94e8adaf0609"
+    },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
         "display_name": "AWC ID",
         "transform": {},
         "datatype": "string",
@@ -109,71 +109,94 @@
         "column_id": "state_id",
         "type": "expression"
       },
-			{
-				"column_id": "timeend",
-				"datatype": "datetime",
-				"type": "expression",
-				"expression": {
-					"type": "root_doc",
-					"expression": {
-						"datatype": "date",
-						"type": "property_path",
-						"property_path": [
-							"form",
-							"meta",
-							"timeEnd"
-						]
-					}
-				}
-			},
-			{
-				"column_id": "person_case_id",
-				"datatype": "string",
-				"type": "expression",
-				"expression": {
-					"type": "property_path",
-					"property_path": ["form", "case_load_person_0", "case", "@case_id"]
-				},
-				"is_nullable": true,
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "case_load_person_0",
+            "case",
+            "@case_id"
+          ]
+        },
+        "is_nullable": true,
         "is_primary_key": false
-			},
-			{
-				"column_id": "migration_status",
-				"datatype": "string",
-				"type": "expression",
-				"expression": {
-					"type": "root_doc",
-					"expression": {
-						"datatype": "string",
-						"type": "property_path",
-						"property_path": [
-							"form",
-							"migration_status"
-						]
-					}
-				},
-				"is_nullable": true,
+      },
+      {
+        "column_id": "migration_status",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "migration_status"
+            ]
+          }
+        },
+        "is_nullable": true,
         "is_primary_key": false
-			}
-		],
-		"named_expressions": {
-			"user_location_id": {
-				"type": "icds_user_location",
-				"user_id_expression": {
-					"type": "root_doc",
-					"expression": {
-						"type": "property_path",
-						"property_path": [
-							"form",
-							"meta",
-							"userID"
-						]
-					}
-				}
-			}
-		},
-		"named_filters": {},
-		"engine_id": "icds-ucr-citus",
-		"disable_destructive_rebuild": true
-	}
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "icds-ucr-citus",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": [
+        "supervisor_id",
+        "doc_id"
+      ]
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "state_id",
+          "timeend"
+        ]
+      }
+    ],
+    "disable_destructive_rebuild": true
+  }
 }
