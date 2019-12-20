@@ -108,9 +108,9 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         *group_by
     ).annotate(
         valid=Sum('cases_person_adolescent_girls_11_14_out_of_school') if beta else
-              Sum('cases_person_adolescent_girls_11_14'),
+        Sum('cases_person_adolescent_girls_11_14'),
         all=Sum('cases_person_adolescent_girls_11_14_all_v2') if beta else
-            Sum('cases_person_adolescent_girls_11_14_all'),
+        Sum('cases_person_adolescent_girls_11_14_all'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -148,7 +148,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": percent_adolescent_girls_enrolled_help_text_v2() if beta else
-                percent_adolescent_girls_enrolled_help_text(),
+        percent_adolescent_girls_enrolled_help_text(),
         "chart_data": [
             {
                 "values": chart_data['blue'],

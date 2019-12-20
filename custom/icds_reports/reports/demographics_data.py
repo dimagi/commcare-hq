@@ -28,7 +28,7 @@ def get_adolescent_girls_data(domain, filters, show_test):
     ).annotate(
         person_adolescent=Sum('cases_person_adolescent_girls_11_14_out_of_school'),
         person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2')
-        )
+    )
     if not show_test:
         queryset = apply_exclude(domain, queryset)
 
