@@ -51,12 +51,29 @@ a:active, a:hover, a:focus {
 
 // maps popup handling. modified from datamaps css.
 .locPopup {
-    position: absolute;
-    z-index: @zindexMapsPopup;
+  position: absolute;
+  z-index: @zindexMapsPopup;
 }
 
 .locPopup .hoverinfo {
   background-color: rgba(255, 255, 255, 0.9);
+}
+
+.locPopup .secondary-location-selector {
+  background-color: white;
+  box-shadow: 1px 1px 5px #888;
+}
+
+.locPopup .secondary-location-selector .modal-header {
+    padding: 5px;
+}
+
+.locPopup .secondary-location-selector .modal-body {
+    display: grid;
+}
+
+.locPopup .secondary-location-selector .modal-body button {
+    margin: 0 0 8px 0;
 }
 
 // nvd3 chart customizations
