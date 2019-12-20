@@ -54,6 +54,7 @@ describe('Indie Map Directive', function () {
         $httpBackend = _$httpBackend_;
         $storageService = storageService;
 
+        $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
 
         var element = window.angular.element("<indie-map data='test'></indie-map>");

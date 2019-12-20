@@ -373,7 +373,9 @@ IndieMapController.$inject = [
     'haveAccessToFeatures', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('indieMap', function () {
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
+window.angular.module('icdsApp').directive('indieMap', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -382,9 +384,9 @@ window.angular.module('icdsApp').directive('indieMap', function () {
             bubbles: '=?',
             templatePopup: '&',
         },
-        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.handleMapClick" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',
     };
-});
+}]);
