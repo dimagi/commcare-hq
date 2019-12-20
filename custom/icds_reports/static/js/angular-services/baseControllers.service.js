@@ -104,25 +104,29 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return '';
             };
 
-            vm.templatePopup = function(loc, row) {
+            vm.templatePopup = function (loc, row) {
                 // subclasses that don't override this must implement vm.getPopupData
                 // See UnderweightChildrenReportController for an example
                 var popupData = vm.getPopupData(row);
-                return vm.createTemplatePopup(
+                return vm.createMapPopupTemplate(
                     loc.properties.name,
                     popupData,
                     vm.getPopupSubheading()
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading) {
+            vm.createMapPopupTemplate = function (locationName, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-                    '<p>' + header + '</p>';
+                    '<p>' + locationName + '</p>';
                 if (subheading) {
                     template += '<p>' + subheading + '</p>';
                 }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                if (isMobile) {
+                    // assume called in the context of a map which has this function.
+                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + locationName + '\')">see more</a>';
                 }
                 template += '</div>';
                 return template;

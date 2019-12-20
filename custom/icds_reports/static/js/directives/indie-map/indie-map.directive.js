@@ -4,6 +4,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
     var useNewMaps = haveAccessToFeatures || isMobile;
+
     $scope.$watch(function () {
         return vm.data;
     }, function (newValue, oldValue) {
@@ -60,13 +61,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.type = vm.scope + "Topo";
             vm.rawTopojson = useNewMaps ? topojson : BLOCK_TOPOJSON;
         }
-
         if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
             Datamap.prototype[vm.type] = vm.rawTopojson;
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
-                vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+                vm.mapHeight = vm.rawTopojson.objects[vm.scope].height;
             }
             if (isMobile) {
                 // scale maps based on space available on device.
@@ -117,10 +117,18 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     }
 
+    function getPopupForGeography(geography) {
+        return vm.templatePopup({
+            loc: {
+                loc: geography,
+                row: vm.map.data[geography.id],
+            },
+        });
+    }
+
     var mapConfiguration = function (location, topojson) {
         var locationLevel = getLocationLevelFromType(location.location_type);
         vm.initTopoJson(locationLevel, location, topojson);
-
         vm.map = {
             scope: vm.scope,
             rightLegend: vm.data && vm.data !== void(0) ? vm.data.rightLegend : null,
@@ -129,17 +137,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
             height: vm.mapHeight,
             geographyConfig: {
+                popupOnHover: !isMobile,
                 highlightFillColor: '#00f8ff',
                 highlightBorderColor: '#000000',
                 highlightBorderWidth: 1,
                 highlightBorderOpacity: 1,
                 popupTemplate: function (geography, data) {
-                    return vm.templatePopup({
-                        loc: {
-                            loc: geography,
-                            row: vm.map.data[geography.id],
-                        },
-                    });
+                    return getPopupForGeography(geography);
                 },
             },
             setProjection: function (element) {
@@ -298,7 +302,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return mapData;
     };
 
-    vm.getHtmlContent = function (geography) {
+    vm.getSecondaryLocationSelectionHtml = function (geography) {
         var html = "";
         html += "<div class=\"modal-header\">";
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
@@ -306,7 +310,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         html += "</div>";
         html += "<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
+            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.attemptToDrillToLocation(\'' + value + '\')">' + value + '</button>';
         });
         html += "</div>";
         return html;
@@ -317,33 +321,49 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         popup.classed("hidden", true);
     };
 
-    vm.updateMap = function (geography) {
-        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            var html = vm.getHtmlContent(geography);
-            var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+    function renderPopup(html) {
+        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+        var popup = d3.select('#locPopup');
+        popup.classed("hidden", false);
+        popup.attr('style', css).html(html);
+        $compile(popup[0])($scope);
+    }
 
-            var popup = d3.select('#locPopup');
-            popup.classed("hidden", false);
-            popup.attr('style', css)
-                .html(html);
+    function showSecondaryLocationSelectionPopup(geography) {
+        var html = vm.getSecondaryLocationSelectionHtml(geography);
+        renderPopup(html);
+    }
 
-            $compile(popup[0])($scope);
-        } else {
-            var location = geography.id || geography;
-            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
-                location = vm.data.data[geography.id].original_name[0];
-            }
-            locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-                var location = locations[0];
-                if (!location) {
-                    return;
-                }
-                $location.search('location_name', (geography.id || geography));
-                $location.search('location_id', location.location_id);
-                storageService.setKey('search', $location.search());
-            });
+    function getLocationNameFromGeography(geography) {
+        var location = geography.id || geography;
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+            location = vm.data.data[geography.id].original_name[0];
         }
+        return location;
+    }
 
+    vm.attemptToDrillToLocation = function (geography) {
+        var location = getLocationNameFromGeography(geography);
+        locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
+            var location = locations[0];
+            if (!location) {
+                return;
+            }
+            $location.search('location_name', (geography.id || geography));
+            $location.search('location_id', location.location_id);
+            storageService.setKey('search', $location.search());
+        });
+    };
+
+    vm.handleMapClick = function (geography) {
+        if (isMobile) {
+            var popupHtml = getPopupForGeography(geography);
+            renderPopup(popupHtml);
+        } else if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+            showSecondaryLocationSelectionPopup(geography);
+        } else {
+            vm.attemptToDrillToLocation(geography);
+        }
     };
 
 }
@@ -362,7 +382,7 @@ window.angular.module('icdsApp').directive('indieMap', function () {
             bubbles: '=?',
             templatePopup: '&',
         },
-        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.handleMapClick" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',

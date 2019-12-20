@@ -1,4 +1,6 @@
 @import "app";
+@import "variables";
+
 .chartView {
   .shadow;
   .bg-white;
@@ -46,6 +48,16 @@ a:active, a:hover, a:focus {
   min-height: ~"calc(100% - (.5rem * 2))";
 }
 
+
+// maps popup handling. modified from datamaps css.
+.locPopup {
+    position: absolute;
+    z-index: @zindexMapsPopup;
+}
+
+.locPopup .hoverinfo {
+  background-color: rgba(255, 255, 255, 0.9);
+}
 
 // nvd3 chart customizations
 
