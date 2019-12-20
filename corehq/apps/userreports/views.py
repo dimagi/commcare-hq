@@ -1094,6 +1094,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 ])
                 _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
                     report._id, self.domain
+                ))
         return ret
 
     def get(self, request, *args, **kwargs):
