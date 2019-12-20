@@ -29,21 +29,31 @@ class Command(BaseCommand):
         user_ids_with_forms = get_users_with_forms(domain, all_user_id)
 
         for username, user_ids in duplicate_users.items():
+            print(f'Checking {username}')
             users_by_id = {
                 user_id: CommCareUser.get_by_user_id(user_id)
                 for user_id in user_ids
             }
-            safe_user_ids = set(user_ids) - set(user_ids_with_forms)
 
-            if not safe_user_ids:
-                print(f'All users for {username} have forms. Skipping user IDs {user_ids}')
+            users_with_no_forms = sorted(
+                [user for user_id, user in users_by_id.items() if user_id not in user_ids_with_forms],
+                key=lambda u: u.created_on
+            )
 
-            if len(safe_user_ids) == 1:
-                user_id_to_delete = list(safe_user_ids)[0]
-                users_to_delete = [users_by_id[user_id_to_delete]]
+            if not users_with_no_forms:
+                print(f'\tAll users for {username} have forms. Skipping user IDs {user_ids}')
+                break
+
+            with_forms = set(user_ids) & set(user_ids_with_forms)
+            for user_id in with_forms:
+                print(f'\tUser {username}({user_id}) has data. Not deleting')
+
+            if not with_forms:
+                # all users have no data - keep the oldest one
+                users_to_delete = users_with_no_forms[1:]
             else:
-                safe_users = sorted([users_by_id[user_id] for user_id in safe_user_ids], key=lambda u: u.created_on)
-                users_to_delete = safe_users[1:]
+                users_to_delete = users_with_no_forms
+                assert len(users_to_delete) < len(user_ids)
 
             delete_duplicate_users(list(users_by_id.values()), users_to_delete)
 
