@@ -355,14 +355,20 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         });
     };
 
+    vm.handleDrillDownClick = function (geography) {
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+            showSecondaryLocationSelectionPopup(geography);
+        } else {
+            vm.attemptToDrillToLocation(geography);
+        }
+    };
+
     vm.handleMapClick = function (geography) {
         if (isMobile) {
             var popupHtml = getPopupForGeography(geography);
             renderPopup(popupHtml);
-        } else if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            showSecondaryLocationSelectionPopup(geography);
         } else {
-            vm.attemptToDrillToLocation(geography);
+            vm.handleDrillDownClick(geography);
         }
     };
 
