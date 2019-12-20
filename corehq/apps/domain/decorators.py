@@ -1,8 +1,6 @@
-# Standard Library imports
 import logging
 from functools import wraps
 
-# Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -17,20 +15,18 @@ from django.http import (
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.decorators import available_attrs, method_decorator
-from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views import View
 
 from django_otp import match_token
+from django_prbac.utils import has_privilege
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
-from django_prbac.utils import has_privilege
 
-# External imports
-from corehq import privileges
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
+from corehq import privileges
 from corehq.apps.domain.auth import (
     API_KEY,
     BASIC,
@@ -43,12 +39,11 @@ from corehq.apps.domain.auth import (
     formplayer_auth,
     get_username_and_password_from_request,
 )
-# CCHQ imports
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.users.models import CouchUser
-########################################################################################################
 from corehq.toggles import (
     DATA_MIGRATION,
     IS_CONTRACTOR,
@@ -70,8 +65,6 @@ def load_domain(req, domain):
     domain_obj = Domain.get_by_name(domain_name)
     req.project = domain_obj
     return domain_name, domain_obj
-
-########################################################################################################
 
 
 def redirect_for_login_or_domain(request, login_url=None):
@@ -114,7 +107,8 @@ def login_and_domain_required(view_func):
                 return call_view()
         elif user.is_superuser:
             if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
-                raise Http404()
+                msg = "This project space restricts superuser access.  You must request an invite to access it."
+                return no_permissions(req, message=msg)
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             return call_view()
