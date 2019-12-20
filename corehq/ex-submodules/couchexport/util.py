@@ -267,19 +267,22 @@ def get_excel_format_value(value):
 
     # decimal-separated Euro-style '#.##0,00' (regexlib.com
     if re.match(r"^(\d|-)?(\d|\.)*,?\d*$", value):
-        return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED2, float(value.replace('.', '').replace(',', '.')))
+        return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED2,
+                                float(value.replace('.', '').replace(',', '.')))
 
     # USD with leading zeros (regexlib.com)
     if re.match(r"^(-)?\$([1-9]{1}[0-9]{0,2}(\,[0-9]{3})*(\.[0-9]{0,2})?"
                 r"|[1-9]{1}[0-9]{0,}(\.[0-9]{0,2})?|0(\.[0-9]{0,2})?"
                 r"|(\.[0-9]{1,2})?)$", value):
-        return ExcelFormatValue(numbers.FORMAT_CURRENCY_USD_SIMPLE, float(value.replace(',', '').replace('$', '')))
+        return ExcelFormatValue(numbers.FORMAT_CURRENCY_USD_SIMPLE,
+                                float(value.replace(',', '').replace('$', '')))
 
     # EURO with leading zeros (regexlib.com)
     if re.match(r"^(-)?\€([1-9]{1}[0-9]{0,2}(\.[0-9]{3})*(\,[0-9]{0,2})?"
                 r"|[1-9]{1}[0-9]{0,}(\,[0-9]{0,2})?|0(\,[0-9]{0,2})?"
                 r"|(\,[0-9]{1,2})?)$", value):
-        return ExcelFormatValue(numbers.FORMAT_CURRENCY_EUR_SIMPLE, float(value.replace('.', '').replace(',', '.').replace('€', '')))
+        return ExcelFormatValue(numbers.FORMAT_CURRENCY_EUR_SIMPLE,
+                                float(value.replace('.', '').replace(',', '.').replace('€', '')))
 
     # no formats matched...clean and return as text
     dirty_chars = re.compile(
