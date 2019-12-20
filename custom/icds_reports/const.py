@@ -153,3 +153,5 @@ CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Serv
 PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
 LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
 ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'
+
+GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION = 10000
