@@ -355,6 +355,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         });
     };
 
+    vm.handleMobileDrilldown = function () {
+        vm.handleDrillDownClick(vm.selectedGeography);
+    };
+
     vm.handleDrillDownClick = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             showSecondaryLocationSelectionPopup(geography);
@@ -365,6 +369,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.handleMapClick = function (geography) {
         if (isMobile) {
+            vm.selectedGeography = geography;
             var popupHtml = getPopupForGeography(geography);
             renderPopup(popupHtml);
         } else {
