@@ -9,7 +9,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.earlyInitiationBreastfeeding;
 
     var genderIndex = _.findIndex(genders, function (x) {
@@ -20,10 +19,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     }
 
     vm.label = "Early Initiation of Breastfeeding";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/early_initiation/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/early_initiation/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/early_initiation/');
     vm.data = {
         legendTitle: '% Newborns',
     };

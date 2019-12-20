@@ -21,7 +21,14 @@ $ eslint path/to/file.js
 ```
 
 ### PyCharm
-https://www.jetbrains.com/help/pycharm/2016.1/using-javascript-code-quality-tools.html?origin=old_help#ESLint
+
+PyCharm has different ways of setting this up depending on the version.
+
+- [Instructions for 2016.1](https://www.jetbrains.com/help/pycharm/2016.1/using-javascript-code-quality-tools.html?origin=old_help#ESLint)
+- [Instructions for 2017.3](https://www.jetbrains.com/help/pycharm/2017.3/eslint.html)
+
+If you get errors you may need to [downgrade ESLint to version 5](https://intellij-support.jetbrains.com/hc/en-us/community/posts/360004195120-TypeError-this-cliEngine-is-not-a-constructor).
+This appears to be an issue on all versions of PyCharm prior to 2019.1.3.
 
 ### Vim
 #### NeoMake

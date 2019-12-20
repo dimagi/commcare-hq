@@ -145,7 +145,15 @@ class CcsMbtDistributedHelper(MBTDistributedHelper):
                 'opened_on',
                 'valid_visits',
                 'dob',
-                'date_death')
+                'date_death',
+                'person_name',
+                'husband_name',
+                'lmp',
+                'migration_status',
+                'where_born',
+                'num_children_del',
+                'still_live_birth'
+                )
 
 
 class ChildHealthMbtDistributedHelper(MBTDistributedHelper):

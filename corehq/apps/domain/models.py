@@ -1147,7 +1147,6 @@ class TransferDomainRequest(models.Model):
     TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
     TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
-    DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
     class Meta(object):
         app_label = 'domain'
@@ -1265,9 +1264,8 @@ class TransferDomainRequest(models.Model):
             self.as_dict())
 
         send_html_email_async.delay(
-            _('There has been a transfer of ownership of {domain}').format(
-                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
-            html_content, text_content=text_content
+            _('There has been a transfer of ownership of {domain}').format(domain=self.domain),
+            settings.SUPPORT_EMAIL, html_content, text_content=text_content,
         )
 
     def as_dict(self):

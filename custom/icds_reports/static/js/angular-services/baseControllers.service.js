@@ -91,31 +91,42 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return newValue;
             }, true);
 
+            vm.getSteps = function (baseRoute) {
+                return {
+                    'map': {route: baseRoute + 'map', label: 'Map View'},
+                    'chart': {route: baseRoute + 'chart', label: isMobile ? 'Rankings' : 'Chart View'},
+                };
+            };
+
             vm.getPopupSubheading = function () {
                 // if the map popup should have a subheading, then implement this function in a subclass
                 // this is inserted before the indicators. see `AWCSCoveredController` for an example usage.
                 return '';
             };
 
-            vm.templatePopup = function(loc, row) {
+            vm.templatePopup = function (loc, row) {
                 // subclasses that don't override this must implement vm.getPopupData
                 // See UnderweightChildrenReportController for an example
                 var popupData = vm.getPopupData(row);
-                return vm.createTemplatePopup(
+                return vm.createMapPopupTemplate(
                     loc.properties.name,
                     popupData,
                     vm.getPopupSubheading()
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading) {
+            vm.createMapPopupTemplate = function (locationName, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-                    '<p>' + header + '</p>';
+                    '<p>' + locationName + '</p>';
                 if (subheading) {
                     template += '<p>' + subheading + '</p>';
                 }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                if (isMobile) {
+                    // assume called in the context of a map which has this function.
+                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + locationName + '\')">see more</a>';
                 }
                 template += '</div>';
                 return template;
@@ -192,11 +203,12 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 // that takes in the current step and filters and returns the appropriate data from the relevant
                 // service. See UnderweightChildrenReportController for an example
                 vm.setStepsMapLabel();
-                // mobile dashboard requires all data on both pages, whereas web just requires the current step's data
-                // note: it would be better to not load this data on both step pages but instead save it in the JS, but
-                // doing that now would be a bit complicated and the server-side caching should make the switching
-                // relatively painless
-                var allSteps = isMobile ? ['map', 'chart'] : [vm.step];
+                // mobile dashboard requires map data on the chart pages, whereas web just requires the current
+                // step's data.
+                // note: it would be better to not load this data on both step pages but instead save it in the
+                // JS, but doing that now would be a bit complicated and the server-side caching should make the
+                // switching relatively painless
+                var allSteps = (isMobile && vm.step === 'chart') ? ['map', 'chart'] : [vm.step];
                 for (var i = 0; i < allSteps.length; i++) {
                     var currentStep = allSteps[i];
                     vm.myPromise = vm.serviceDataFunction(currentStep, vm.filtersData).then(
@@ -302,9 +314,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // subsection navigation support
             vm.goToRoute = function (route) {
                 $location.path(route);
-            };
-            vm.getBackArrowLink = function () {
-                return navigationService.getPagePath('program_summary/' + vm.sectionSlug, $location.search());
             };
             // month filter support
             vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();

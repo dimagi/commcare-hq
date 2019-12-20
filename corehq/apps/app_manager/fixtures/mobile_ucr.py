@@ -36,7 +36,6 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.sql_db.connections import read_from_citus_standbys
 from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -240,8 +239,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
 
         rows_elem = E.rows()
         row_index = 0
-        with read_from_citus_standbys():
-            data = data_source.get_data()
+        data = data_source.get_data()
         for row_index, row in enumerate(data):
             rows_elem.append(_row_to_row_elem(row, row_index))
             total_row_calculator.update_totals(row)
@@ -430,8 +428,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
-        with read_from_citus_standbys():
-            data = data_source.get_data()
+        data = data_source.get_data()
         for row_index, row in enumerate(data):
             rows_elem.append(_row_to_row_elem(row, row_index))
             total_row_calculator.update_totals(row)

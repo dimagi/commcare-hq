@@ -64,7 +64,7 @@ def copy_custom_metadata(from_topojson, to_topojson):
 
 
 def get_topojson_for_district(district):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    path = get_topojson_directory()
 
     district_topojson_data_path = os.path.join(path, 'district_topojson_data.json')
     district_topojson_data = json.loads(open(district_topojson_data_path, encoding='utf-8').read())

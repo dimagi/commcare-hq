@@ -9,9 +9,7 @@ import mock
 from corehq.sql_db.connections import (
     ICDS_UCR_CITUS_ENGINE_ID,
     ConnectionManager,
-    allow_read_from_citus_standbys,
     connection_manager,
-    read_from_citus_standbys,
 )
 from corehq.sql_db.tests.test_partition_config import (
     PARTITION_CONFIG_WITH_STANDBYS,
@@ -113,6 +111,38 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+    @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
+    def test_read_load_balancing_session(self, *args):
+        reporting_dbs = {
+            'ucr': {
+                'WRITE': 'ucr',
+                'READ': [('ucr', 8), ('other', 1), ('default', 1)]
+            },
+        }
+        with override_settings(REPORTING_DATABASES=reporting_dbs):
+            manager = ConnectionManager()
+            self.assertEqual(manager.engine_id_django_db_map, {
+                'default': 'default',
+                'ucr': 'ucr',
+            })
+
+            urls = {
+                manager.get_connection_string(alias)
+                for alias, _ in reporting_dbs['ucr']['READ']
+            }
+            self.assertEqual(len(urls), 3)
+            # withing 50 iterations we should have seen all 3 databases at least once
+            for i in range(50):
+                url = manager.get_session_helper('ucr', readonly=True).url
+                if url in urls:
+                    urls.remove(url)
+                if not urls:
+                    break
+
+            if urls:
+                self.fail(f'DBs skipped in load balancing: {urls}')
+
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'other': 4}[x])
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'other'})
     def test_standby_filtering(self, *args):
@@ -145,36 +175,6 @@ class ConnectionManagerTests(SimpleTestCase):
             get_databases_for_read_query({'ucr', 'other'}),
             {'ucr', 'other'}
         )
-
-
-def test_read_from_citus_standbys_context_manager():
-    @read_from_citus_standbys()
-    def read():
-        eq(allow_read_from_citus_standbys(), True)
-
-    eq(allow_read_from_citus_standbys(), False)
-    read()
-    eq(allow_read_from_citus_standbys(), False)
-
-
-class TestReadFromCitusStandbys(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        helper = connection_manager.get_session_helper(ICDS_UCR_CITUS_ENGINE_ID)
-        if not helper.is_citus_db:
-            raise SkipTest('Test only applies when CitusDB is in use')
-
-    def test_citus_reads_from_standby(self):
-        def _assert_use_secondary_nodes(expected_value):
-            engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
-            results = list(engine.execute('show citus.use_secondary_nodes'))
-            eq(results[0][0], expected_value)
-
-        _assert_use_secondary_nodes('never')
-        with read_from_citus_standbys():
-            _assert_use_secondary_nodes('always')
-        _assert_use_secondary_nodes('never')
 
 
 @override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)

@@ -1,4 +1,6 @@
 @import "app";
+@import "variables";
+
 .chartView {
   .shadow;
   .bg-white;
@@ -44,4 +46,32 @@ a:active, a:hover, a:focus {
   -ms-flex-align: center;
   align-items: center;
   min-height: ~"calc(100% - (.5rem * 2))";
+}
+
+
+// maps popup handling. modified from datamaps css.
+.locPopup {
+    position: absolute;
+    z-index: @zindexMapsPopup;
+}
+
+.locPopup .hoverinfo {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+// nvd3 chart customizations
+
+// reduce font size of x-axis labels
+.nvd3 text {
+  font-size: 10px;
+}
+
+// reduce width of tooltip
+.nvtooltip .hoverinfo {
+  width: 160px !important;
+}
+
+// move tooltip 40px to the left to accommodate margins
+.nvtooltip {
+  margin-left: -40px;
 }

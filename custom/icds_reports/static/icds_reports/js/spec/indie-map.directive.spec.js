@@ -5,6 +5,7 @@ var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Indie Map Directive', function () {
+    this.timeout(10000);  // bump timeout for maps tests because they are slow...
 
     var $scope, $location, controller, $httpBackend, $storageService;
 
@@ -146,9 +147,9 @@ describe('Indie Map Directive', function () {
         var expected = '<div class="modal-header"><button type="button" class="close" ' +
             'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
-            'ng-click="$ctrl.updateMap(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
+            'ng-click="$ctrl.attemptToDrillToLocation(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
 
-        var result = controller.getHtmlContent(mockGeography);
+        var result = controller.getSecondaryLocationSelectionHtml(mockGeography);
         assert.equal(expected, result);
     });
 
@@ -164,7 +165,7 @@ describe('Indie Map Directive', function () {
         });
 
         $httpBackend.expectGET('icds_locations?name=test-id').respond(200, mockLocations);
-        controller.updateMap(mockGeography);
+        controller.handleMapClick(mockGeography);
         $httpBackend.flush();
 
         expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "test-id"};
