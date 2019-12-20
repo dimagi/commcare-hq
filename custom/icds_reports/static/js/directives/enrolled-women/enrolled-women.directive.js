@@ -12,10 +12,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
     vm.serviceDataFunction = demographicsService.getEnrolledWomenData;
     vm.usePercentage = false;
-    vm.steps = {
-        'map': {route: '/demographics/enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/demographics/enrolled_women/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/enrolled_women/');
     vm.data = {
         legendTitle: 'Number of Women',
     };

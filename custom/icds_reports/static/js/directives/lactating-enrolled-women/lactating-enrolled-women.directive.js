@@ -13,10 +13,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.serviceDataFunction = demographicsService.getLactatingEnrolledWomenData;
     vm.usePercentage = false;
 
-    vm.steps = {
-        'map': {route: '/demographics/lactating_enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/demographics/lactating_enrolled_women/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/lactating_enrolled_women/');
     vm.data = {
         legendTitle: 'Number of Women',
     };

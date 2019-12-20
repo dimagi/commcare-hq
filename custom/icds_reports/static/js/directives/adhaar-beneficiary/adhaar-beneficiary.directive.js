@@ -11,10 +11,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.isAlertActive = isAlertActive;
     vm.label = "Aadhaar-seeded Beneficiaries";
     vm.serviceDataFunction = demographicsService.getAdhaarData;
-    vm.steps = {
-        'map': {route: '/demographics/adhaar/map', label: 'Map View'},
-        'chart': {route: '/demographics/adhaar/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/adhaar/');
     vm.data = {
         legendTitle: 'Percentage beneficiary',
     };

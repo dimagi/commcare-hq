@@ -97,6 +97,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
     // used by mobile dashboard
     vm.selectedDate = dateHelperService.getSelectedDate();
+    vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function() {
         return dateHelperService.getSelectedMonthDisplay();
     };

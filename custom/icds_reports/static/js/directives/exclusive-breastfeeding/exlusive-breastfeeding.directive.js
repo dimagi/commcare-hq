@@ -20,10 +20,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     }
 
     vm.label = "Exclusive Breastfeeding";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/exclusive_breastfeeding/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/exclusive_breastfeeding/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/exclusive_breastfeeding/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };

@@ -26,6 +26,14 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
             "state_id": self.state_id,
         }
 
+        # This query has a strange query plan so there's a few things to note.
+        # This is joined on the daily_attendance table.
+        # The daily_attendance aggregation only includes the most recently submitted form for each day.
+        # Often an AWW may submit multiple daily attendance forms in a day,
+        #   so we choose the last form for each AWW's day.
+        # Because the result set of docs is actually coming from daily_attendance,
+        #   the JOIN uses the primary key (supervisor_id, doc_id, repeat_iteration).
+        # Because of this, the UCR does not have an index on (state_id, timeend)
         return f"""
         INSERT INTO "{self.aggregate_parent_table}" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
@@ -39,7 +47,8 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
             MAX(ucr.timeend) OVER w AS latest_time_end_processed,
             SUM(ucr.attended_child_ids) OVER w AS sum_attended_child_ids,
             SUM(ucr.lunch) OVER w AS lunch_count
-          FROM "{self.ucr_tablename}" ucr INNER JOIN daily_attendance ON (
+          FROM "{self.ucr_tablename}" ucr
+          INNER JOIN daily_attendance ON (
             ucr.doc_id = daily_attendance.doc_id AND
             ucr.supervisor_id = daily_attendance.supervisor_id AND
             ucr.state_id = daily_attendance.state_id AND

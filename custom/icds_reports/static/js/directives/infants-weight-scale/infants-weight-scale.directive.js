@@ -11,10 +11,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Weighing Scale: Infants";
     vm.serviceDataFunction = infrastructureService.getInfantsWeightScaleData;
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/infants_weight_scale/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/infants_weight_scale/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/infants_weight_scale/');
     vm.data = {
         legendTitle: 'Percentage',
     };
