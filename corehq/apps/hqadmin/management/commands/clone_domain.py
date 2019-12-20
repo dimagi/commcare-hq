@@ -185,7 +185,7 @@ class Command(BaseCommand):
             self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_products(self):
-        from corehq.apps.products.models import Product
+        from corehq.apps.products.models import SQLProduct
         from corehq.apps.programs.models import Program
         from corehq.apps.products.views import ProductFieldsView
 
@@ -197,14 +197,14 @@ class Command(BaseCommand):
             old_id, new_id = self.save_couch_copy(program, self.new_domain)
             program_map[old_id] = new_id
 
-        products = Product.by_domain(self.existing_domain)
+        products = SQLProduct.by_domain(self.existing_domain)
         for product in products:
             if product.program_id:
                 try:
                     product.program_id = program_map[product.program_id]
                 except:
                     self.stderr('Missing program {} for product {}'.format(product.program_id, product._id))
-            self.save_couch_copy(product, self.new_domain)
+            self.save_sql_copy(product, self.new_domain)
 
     @property
     def report_map(self):
