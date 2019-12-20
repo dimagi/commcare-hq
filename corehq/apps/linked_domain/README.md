@@ -45,7 +45,7 @@ When a linked/downstream app is pulled from its master/upstream app:
 - Corresponding forms in the master and linked app will have the **same** XMLNS.
 - Corresponding forms in the master and linked app may have either the same or different unique ids, depending on how old the linked app is.
    - Older linked apps will have differing ids, while linked apps created after the deploy of [#25998](https://github.com/dimagi/commcare-hq/pull/25998) in December 2019 will use the same ids in both the linked and master apps.
-   - Linked apps that do not having form ids that match their master app have a mapping of master app form unique id => linked app form unique id, stored as [ResourceOverride](https://github.com/dimagi/commcare-hq/blob/15ceabdccf0ed49ed306462b3a154fe14886bf27/corehq/apps/app_manager/suite_xml/post_process/resources.py#L11) objects.
+   - Linked apps that do not have form ids that match their master app have a mapping of master app form unique id => linked app form unique id, stored as [ResourceOverride](https://github.com/dimagi/commcare-hq/blob/15ceabdccf0ed49ed306462b3a154fe14886bf27/corehq/apps/app_manager/suite_xml/post_process/resources.py#L11) objects.
    - See [#25718](https://github.com/dimagi/commcare-hq/issues/25718) for context around why this change was made.
 
 ## Exclusions
