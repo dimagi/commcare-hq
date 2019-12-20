@@ -17,5 +17,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN state_id text"),
-        migrator.get_migration('child_health_monthly.sql')
     ]

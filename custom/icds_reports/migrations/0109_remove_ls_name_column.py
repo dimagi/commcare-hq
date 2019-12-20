@@ -14,5 +14,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0108_child_cases_ccs_record_supervisor_id'),
     ]
 
-    operations = get_view_migrations()
-    operations.append(migrator.get_migration('update_tables45.sql'))
+    operations=[migrator.get_migration('update_tables45.sql')]
