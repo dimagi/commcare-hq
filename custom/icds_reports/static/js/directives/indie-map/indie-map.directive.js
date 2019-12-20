@@ -304,14 +304,16 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.getSecondaryLocationSelectionHtml = function (geography) {
         var html = "";
-        html += "<div class=\"modal-header\">";
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
-            'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+        html += '<div class="secondary-location-selector">';
+        html += '<div class="modal-header">';
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html += "<div class=\"modal-body\">";
+        html += '<div class="modal-body">';
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.attemptToDrillToLocation(\'' + value + '\')">' + value + '</button>';
         });
+        html += "</div>";
         html += "</div>";
         return html;
     };
@@ -355,14 +357,25 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         });
     };
 
-    vm.handleMapClick = function (geography) {
-        if (isMobile) {
-            var popupHtml = getPopupForGeography(geography);
-            renderPopup(popupHtml);
-        } else if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+    vm.handleMobileDrilldown = function () {
+        vm.handleDrillDownClick(vm.selectedGeography);
+    };
+
+    vm.handleDrillDownClick = function (geography) {
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             showSecondaryLocationSelectionPopup(geography);
         } else {
             vm.attemptToDrillToLocation(geography);
+        }
+    };
+
+    vm.handleMapClick = function (geography) {
+        if (isMobile) {
+            vm.selectedGeography = geography;
+            var popupHtml = getPopupForGeography(geography);
+            renderPopup(popupHtml);
+        } else {
+            vm.handleDrillDownClick(geography);
         }
     };
 
