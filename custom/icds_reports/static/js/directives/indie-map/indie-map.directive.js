@@ -375,7 +375,7 @@ IndieMapController.$inject = [
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('indieMap', function () {
+window.angular.module('icdsApp').directive('indieMap', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -384,9 +384,9 @@ window.angular.module('icdsApp').directive('indieMap', function () {
             bubbles: '=?',
             templatePopup: '&',
         },
-        templateUrl: url('icds-ng-template', 'indie-map.directive'),
+        templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',
     };
-});
+}]);
