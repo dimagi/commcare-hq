@@ -23,27 +23,28 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
         }
-
         return """
         INSERT INTO "{tablename}" (
-        	case_id, state_id, supervisor_id, month, latest_time_end_processed,
-			migration_status
-		) (
-		  SELECT DISTINCT ON (person_case_id)
-		    %(state_id)s AS state_id,
-		    supervisor_id,
-		    %(month)s AS month,
-		    person_case_id as case_id,
-		  FROM "{ucr_tablename}"
-		  WHERE state_id = %(state_id)s AND
-				timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
-				person_case_id IS NOT NULL
-		  WINDOW w AS (
-		    PARTITION BY supervisor_id, person_case_id
-		    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-		  )
-		)
-		""".format(
+          state_id, supervisor_id, month, person_case_id, latest_time_end_processed,
+          migration_status
+        ) (
+          SELECT DISTINCT ON (person_case_id)
+            %(state_id)s AS state_id,
+            supervisor_id,
+            %(month)s AS month,
+            person_case_id as person_case_id,
+            migration_status as migration_status,
+            MAX(timeend) over w AS latest_time_end_processed
+          FROM "{ucr_tablename}"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                person_case_id IS NOT NULL
+          WINDOW w AS (
+            PARTITION BY supervisor_id, person_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
+        )
+        """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.aggregate_parent_table,
         ), query_params

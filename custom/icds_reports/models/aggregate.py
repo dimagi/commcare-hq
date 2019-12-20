@@ -1571,7 +1571,7 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # not the real pkey - see unique_together
-    case_id = models.CharField(max_length=40, primary_key=True)
+    person_case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
         help_text="The latest form.meta.timeEnd that has been processed for this case"
