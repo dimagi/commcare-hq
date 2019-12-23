@@ -733,24 +733,31 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
         return queryset
 
     previous_month = selected_month - relativedelta(months=1)
-    if selected_month.month == now_date.month and selected_month.year == now_date.year:
-        config['date'] = now_date.date()
-        data = None
-        # keep the record in searched - current - month
-        while data is None or (not data and config['date'].day != 1):
-            config['date'] -= relativedelta(days=1)
-            data = get_data_for(AggAwcDailyView, config)
-        prev_data = None
-        while prev_data is None or (not prev_data and config['date'].day != 1):
-            config['date'] -= relativedelta(days=1)
-            prev_data = get_data_for(AggAwcDailyView, config)
-        frequency = 'day'
-    else:
+    if beta:
         config['month'] = selected_month
         data = get_data_for(AggAwcMonthly, config)
         config['month'] = previous_month
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
+    else:
+        if selected_month.month == now_date.month and selected_month.year == now_date.year:
+            config['date'] = now_date.date()
+            data = None
+            # keep the record in searched - current - month
+            while data is None or (not data and config['date'].day != 1):
+                config['date'] -= relativedelta(days=1)
+                data = get_data_for(AggAwcDailyView, config)
+            prev_data = None
+            while prev_data is None or (not prev_data and config['date'].day != 1):
+                config['date'] -= relativedelta(days=1)
+                prev_data = get_data_for(AggAwcDailyView, config)
+            frequency = 'day'
+        else:
+            config['month'] = selected_month
+            data = get_data_for(AggAwcMonthly, config)
+            config['month'] = previous_month
+            prev_data = get_data_for(AggAwcMonthly, config)
+            frequency = 'month'
 
     return {
         'chart': [
