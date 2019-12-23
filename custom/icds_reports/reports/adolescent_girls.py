@@ -40,8 +40,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum(valid_col_name),
-            all=Sum(all_col_name) if beta else Sum(
-                ),
+            all=Sum(all_col_name),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
