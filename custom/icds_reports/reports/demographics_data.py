@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 
 from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2, \
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, \
     ADOLESCENT_GIRLS_DATA_THRESHOLD
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text, \
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
@@ -190,7 +190,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
     # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
     if (not beta) or current_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
         adolescent_girls = {
-            'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2 if beta else
+            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
                        ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
             'help_text': percent_adolescent_girls_enrolled_help_text_v2() if beta else percent_adolescent_girls_enrolled_help_text(),
             'percent': percent_diff(

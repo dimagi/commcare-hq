@@ -28,7 +28,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2, ADOLESCENT_GIRLS_DATA_THRESHOLD
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, ADOLESCENT_GIRLS_DATA_THRESHOLD
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -885,7 +885,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
     # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
     if (not beta) or selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
         adolescent_girls = {
-            'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2 if beta else
+            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
                        ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
             'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
                 "Of the total number of adolescent girls (aged 11-14 years), the percentage "
