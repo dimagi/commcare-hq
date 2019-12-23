@@ -184,7 +184,10 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             ]
         ]
     }
-
+    # Add below data to response only if "FF is turned off or the month accessed is later
+    # then the ADOLESCENT_GIRLS_DATA_THRESHOLD"
+    # After QA this statement will be simplified to
+    # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
     if (not beta) or current_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
         adolescent_girls = {
             'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES_V2 if beta else

@@ -17,6 +17,21 @@ from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, beta=False):
 
+    if beta:
+        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+        valid_num_title = 'Number of adolescent girls (11-14 years) who are out of school:'
+        all_num_title = 'Total Number of adolescent girls (11-14 years) who are registered:'
+        percent_title = 'Percentage of adolescent girls (11-14 years) who are out of school:'
+        info_text = percent_adolescent_girls_enrolled_help_text_v2()
+    else:
+        valid_col_name = 'cases_person_adolescent_girls_11_14'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all'
+        valid_num_title = 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
+        all_num_title = 'Total number of adolescent girls (11 - 14 years) who are registered:'
+        percent_title = 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
+        info_text = percent_adolescent_girls_enrolled_help_text()
+
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
         queryset = AggAwcMonthly.objects.filter(
@@ -24,10 +39,9 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            valid=Sum('cases_person_adolescent_girls_11_14_out_of_school') if beta else Sum(
-                'cases_person_adolescent_girls_11_14'),
-            all=Sum('cases_person_adolescent_girls_11_14_all_v2') if beta else Sum(
-                'cases_person_adolescent_girls_11_14_all'),
+            valid=Sum(valid_col_name),
+            all=Sum(all_col_name) if beta else Sum(
+                ),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -67,28 +81,18 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
         "fills": fills,
         "rightLegend": {
             "average": '%.2f' % (total_valid * 100 / float(total or 1)),
-            "info": percent_adolescent_girls_enrolled_help_text_v2() if beta else
-            percent_adolescent_girls_enrolled_help_text(),
+            "info": info_text,
             "extended_info": [
                 {
-                    'indicator': (
-                        'Number of adolescent girls (11-14 years) who are out of school:' if beta else
-                        'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
-                    ),
+                    'indicator': valid_num_title,
                     'value': indian_formatted_number(total_valid)
                 },
                 {
-                    'indicator': (
-                        'Total Number of adolescent girls (11-14 years) who are registered:' if beta else
-                        'Total number of adolescent girls (11 - 14 years) who are registered:'
-                    ),
+                    'indicator': all_num_title,
                     'value': indian_formatted_number(total)
                 },
                 {
-                    'indicator': (
-                        'Percentage of adolescent girls (11-14 years) who are out of school:' if beta else
-                        'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
-                    ),
+                    'indicator': percent_title,
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
             ]
@@ -99,18 +103,25 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
-    group_by = ['%s_name' % loc_level]
 
+    if beta:
+        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+        info_text = percent_adolescent_girls_enrolled_help_text_v2()
+    else:
+        valid_col_name = 'cases_person_adolescent_girls_11_14'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all'
+        info_text = percent_adolescent_girls_enrolled_help_text()
+
+    group_by = ['%s_name' % loc_level]
     config['month'] = datetime(*config['month'])
     data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         *group_by
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14_out_of_school') if beta else
-        Sum('cases_person_adolescent_girls_11_14'),
-        all=Sum('cases_person_adolescent_girls_11_14_all_v2') if beta else
-        Sum('cases_person_adolescent_girls_11_14_all'),
+        valid=Sum(valid_col_name),
+        all=Sum(all_col_name),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -147,8 +158,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     return {
         "tooltips_data": dict(tooltips_data),
         "format": "number",
-        "info": percent_adolescent_girls_enrolled_help_text_v2() if beta else
-        percent_adolescent_girls_enrolled_help_text(),
+        "info": info_text,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -163,6 +173,17 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, beta=False):
+
+    if beta:
+        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+        indicator_key = "Number of adolescent girls (11-14 years) who are out of school"
+    else:
+        valid_col_name = 'cases_person_adolescent_girls_11_14'
+        all_col_name = 'cases_person_adolescent_girls_11_14_all'
+        indicator_key = "Total number of adolescent girls who are enrolled for Anganwadi Services"
+
+
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -174,10 +195,8 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, 
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14_out_of_school') if beta else Sum(
-            'cases_person_adolescent_girls_11_14'),
-        all=Sum('cases_person_adolescent_girls_11_14_all_v2') if beta else Sum(
-            'cases_person_adolescent_girls_11_14_all'),
+        valid=Sum(valid_col_name),
+        all=Sum(all_col_name),
     ).order_by('month')
 
     if not show_test:
@@ -232,8 +251,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, 
                         'all': value['all']
                     } for key, value in data['blue'].items()
                 ],
-                "key": "Number of adolescent girls (11-14 years) who are out of school" if beta else
-                       "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                "key":  indicator_key,
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
