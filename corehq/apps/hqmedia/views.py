@@ -2,11 +2,13 @@ import io
 import itertools
 import json
 import logging
+import openpyxl
 import os
 import shutil
 import uuid
 import zipfile
 from collections import defaultdict
+from datetime import datetime
 from mimetypes import guess_all_extensions, guess_type
 
 from django.conf import settings
@@ -78,6 +80,7 @@ from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
@@ -463,7 +466,19 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
     def get(self, request, *args, **kwargs):
         lang = request.GET.get('lang')
         if lang:
-            messages.success(request, "TODO")
+            wb = openpyxl.Workbook()
+            ws = wb.worksheets[0]
+            ws.title = "translations"
+            mem_file = io.BytesIO()
+            with zipfile.ZipFile(mem_file, "w", zipfile.ZIP_DEFLATED) as zip_content:
+                zip_content.writestr("bulkupload.xlsx", get_file_content_from_workbook(wb))
+                zip_content.writestr("excel_for_translator.xlsx", get_file_content_from_workbook(wb))
+            today = datetime.strftime(datetime.utcnow(), "%Y-%m-%d")
+            filename = "Audio Translator Files {} {}.zip".format(lang, today)
+            mem_file.seek(0)
+            response = HttpResponse(mem_file.read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+            return response
         return super().get(request, *args, **kwargs)
 
 
