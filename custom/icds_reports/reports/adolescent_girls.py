@@ -73,21 +73,21 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
                 {
                     'indicator': (
                         'Number of adolescent girls (11-14 years) who are out of school:' if beta else
-                        'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: '
+                        'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
                     ),
                     'value': indian_formatted_number(total_valid)
                 },
                 {
                     'indicator': (
                         'Total Number of adolescent girls (11-14 years) who are registered:' if beta else
-                        'Total number of adolescent girls (11 - 14 years) who are registered: '
+                        'Total number of adolescent girls (11 - 14 years) who are registered:'
                     ),
                     'value': indian_formatted_number(total)
                 },
                 {
                     'indicator': (
                         'Percentage of adolescent girls (11-14 years) who are out of school:' if beta else
-                        'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: '
+                        'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
