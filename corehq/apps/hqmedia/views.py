@@ -117,7 +117,9 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
             views.append(ManageMultimediaPathsView)
             if len(self.app.langs) > 1:
+                views.append(MultimediaAudioTranslatorFileView)
                 views.append(MultimediaTranslationsCoverageView)
+        views = sorted(views, key=lambda v: v.page_title)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -442,6 +444,27 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
                                      extra_tags='html')
 
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
+    urlname = "multimedia_audio_translator"
+    template_name = "hqmedia/audio_translator.html"
+    page_title = ugettext_noop("Download Audio Translator Files")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
+
+    def get(self, request, *args, **kwargs):
+        lang = request.GET.get('lang')
+        if lang:
+            messages.success(request, "TODO")
+        return super().get(request, *args, **kwargs)
 
 
 class BaseProcessUploadedView(BaseMultimediaView):

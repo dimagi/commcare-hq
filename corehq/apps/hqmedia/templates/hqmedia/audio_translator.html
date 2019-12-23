@@ -1,0 +1,60 @@
+{% extends "hqmedia/uploader_base.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+  {% endcompress js %}
+{% endblock js %}
+
+{% block page_content %}
+  <p class="lead">{{ current_page.page_name }}</p>
+
+  {% url "app_settings" domain app.get_id as app_settings_url %}
+  {% blocktrans %}
+    <p class="help-block">
+      This page generates files to assist in working with audio translation vendors. It generates a zip file that
+      contains two Excel files:
+    </p>
+    <p class="help-block">
+      The first file is for the translator's use. It contains one row for each audio file to create, with columns
+      for the text and the desired filename. This file will contain a row for each question that has an audio filename
+      specified but has not yet had an audio file uploaded. If multiple questions use have identical text, the file
+      will contain only one row for that set of questions. It will arbitrarily select one of the questions' filenames.
+    </p>
+    <p class="help-block">
+      The second file is for updating audio paths for questions with duplicate text. This file will contain a row for
+      each question that should have its audio path changed due to the de-duplication described above. After downloading
+      and sanity checking, re-upload this file in <a href="{{ app_settings_url }} " target="_blank">Bulk Application Translations</a>.
+    </p>
+  {% endblocktrans %}
+
+  <form class="form-horizontal" method="get">
+    <div class="form-group">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Language" %}
+      </label>
+      <div class="{% css_field_class %} controls">
+        <select name="lang" class="form-control hqwebapp-select2" data-placeholder="{% trans_html_attr "Select a language" %}">
+          <option></option>
+          {% for lang in app.langs %}
+            {% if lang != app.default_language %}
+              <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="{% css_action_class %} controls">
+        <button class="btn btn-primary" type="submit">
+          <i class="fa fa-cloud-download"></i>
+          {% trans "Download" %}
+        </button>
+      </div>
+    </div>
+  </form>
+  <div id="results"></div>
+{% endblock %}
