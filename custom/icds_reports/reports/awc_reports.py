@@ -335,7 +335,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche': 60} if icds_feature_flag else {'age_tranche__in': [0, 60]}
 
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},
