@@ -1727,6 +1727,14 @@ mwcd_indicators = StaticToggle(
     [NAMESPACE_USER],
 )
 
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'governance_apis',
+    'ICDS: Dashboard Governance dashboard API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
 MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
     'mobile_ucr_total_row_iterative_calculation',
     'Calculate total rows for mobile UCR during iteration instead of using a DB query',

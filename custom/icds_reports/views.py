@@ -232,7 +232,7 @@ from custom.icds_reports.utils.data_accessor import (
     get_program_summary_data_with_retrying,
 )
 
-from custom.icds_reports.reports.governance_apis.home_visit import (
+from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
 )
 
@@ -2190,7 +2190,7 @@ class BaseGovernanceAPIView(View):
         return step, start, month, year
 
 
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
 class GovernanceAPIView(BaseGovernanceAPIView):
 
     def get(self, request, *args, **kwargs):
@@ -2198,7 +2198,7 @@ class GovernanceAPIView(BaseGovernanceAPIView):
 
         if step == 'home_visit':
             length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            location_filters = {'aggregation_level': 5}
+            query_filters = {'aggregation_level': 5}
             order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
 
             data = get_home_visit_data(

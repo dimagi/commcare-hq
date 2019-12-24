@@ -586,9 +586,9 @@ class AggAwcMonthly(models.Model):
     infantometer = models.IntegerField(blank=True, null=True)
     stadiometer = models.IntegerField(blank=True, null=True)
     valid_visits = models.ImageField(blank=True, null=True,
-                                     help_text="num of valid awc visits")
+                                     help_text="num of valid home visits")
     expected_visits = models.ImageField(blank=True, null=True,
-                                        help_text="num of expected awc visits")
+                                        help_text="num of expected home visits")
 
     class Meta(object):
         app_label = 'icds_reports'
