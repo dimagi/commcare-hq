@@ -11,7 +11,8 @@ def get_home_visit_data(start, length, year, month, order, location_filters):
         month=date(year, month, 1),
         **location_filters
     ).order_by(*order).values(
-        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'valid_visits', 'expected_visits'
+        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'valid_visits',
+        'expected_visits'
     )
     config = {
         'data': [],
