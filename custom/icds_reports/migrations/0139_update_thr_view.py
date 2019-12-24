@@ -16,4 +16,4 @@ class Migration(migrations.Migration):
 
     replaces = [('icds_reports', '0138_update_thr_view'), ]
 
-    operations = [migrator.get_migration('thr_report_view.sql'),]
+    operations = []

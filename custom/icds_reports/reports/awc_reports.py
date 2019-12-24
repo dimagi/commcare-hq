@@ -13,7 +13,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
-    percent_children_enrolled_help_text
+    percent_children_enrolled_help_text, percent_adolescent_girls_enrolled_help_text_v2
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.models.views import CcsRecordMonthlyView
@@ -27,7 +27,8 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     get_color_with_red_positive
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, ADOLESCENT_GIRLS_DATA_THRESHOLD
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -681,6 +682,21 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
+def get_adolescent_girls_data(domain, filters, show_test):
+    queryset = AggAwcMonthly.objects.filter(
+        **filters
+    ).values(
+        'aggregation_level'
+    ).annotate(
+        person_adolescent=Sum('cases_person_adolescent_girls_11_14_out_of_school'),
+        person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2')
+    )
+    if not show_test:
+        queryset = apply_exclude(domain, queryset)
+
+    return queryset
+
+
 @icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
     selected_month = datetime(*month)
@@ -733,26 +749,41 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
         return queryset
 
     previous_month = selected_month - relativedelta(months=1)
-    if selected_month.month == now_date.month and selected_month.year == now_date.year:
-        config['date'] = now_date.date()
-        data = None
-        # keep the record in searched - current - month
-        while data is None or (not data and config['date'].day != 1):
-            config['date'] -= relativedelta(days=1)
-            data = get_data_for(AggAwcDailyView, config)
-        prev_data = None
-        while prev_data is None or (not prev_data and config['date'].day != 1):
-            config['date'] -= relativedelta(days=1)
-            prev_data = get_data_for(AggAwcDailyView, config)
-        frequency = 'day'
-    else:
+    if beta:
         config['month'] = selected_month
         data = get_data_for(AggAwcMonthly, config)
         config['month'] = previous_month
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
+    else:
+        if selected_month.month == now_date.month and selected_month.year == now_date.year:
+            config['date'] = now_date.date()
+            data = None
+            # keep the record in searched - current - month
+            while data is None or (not data and config['date'].day != 1):
+                config['date'] -= relativedelta(days=1)
+                data = get_data_for(AggAwcDailyView, config)
+            prev_data = None
+            while prev_data is None or (not prev_data and config['date'].day != 1):
+                config['date'] -= relativedelta(days=1)
+                prev_data = get_data_for(AggAwcDailyView, config)
+            frequency = 'day'
+        else:
+            config['month'] = selected_month
+            data = get_data_for(AggAwcMonthly, config)
+            config['month'] = previous_month
+            prev_data = get_data_for(AggAwcMonthly, config)
+            frequency = 'month'
 
-    return {
+    if beta:
+        if 'date' in config:
+            del config['date']
+        config['month'] = selected_month
+        ag_data = get_adolescent_girls_data(domain, config, show_test)
+        config['month'] = previous_month
+        ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
+
+    demographics_data = {
         'chart': [
             {
                 'key': 'Children (0-6 years)',
@@ -851,33 +882,42 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency
-                },
-                {
-                    'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-                    'help_text': _((
-                        "Of the total number of adolescent girls (aged 11-14 years), the percentage "
-                        "of girls enrolled for Anganwadi Services"
-                    )),
-                    'percent': percent_diff(
-                        'person_adolescent',
-                        data,
-                        prev_data,
-                        'person_adolescent_all'
-                    ),
-                    'color': get_color_with_green_positive(percent_diff(
-                        'person_adolescent',
-                        data,
-                        prev_data,
-                        'person_adolescent_all'
-                    )),
-                    'value': get_value(data, 'person_adolescent'),
-                    'all': get_value(data, 'person_adolescent_all'),
-                    'format': 'percent_and_div',
-                    'frequency': frequency
                 }
             ]
         ]
     }
+    # Add below data to response when FF is turned off or the month accessed is later
+    # then the ADOLESCENT_GIRLS_DATA_THRESHOLD
+    # After QA this statement will be simplified to
+    # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
+    if (not beta) or selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
+        adolescent_girls = {
+            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
+                       ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
+            'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
+                "Of the total number of adolescent girls (aged 11-14 years), the percentage "
+                "of girls enrolled for Anganwadi Services"
+            )),
+            'percent': percent_diff(
+                'person_adolescent',
+                ag_data if beta else data,
+                ag_data_prev_data if beta else prev_data,
+                'person_adolescent_all'
+            ),
+            'color': get_color_with_green_positive(percent_diff(
+                'person_adolescent',
+                ag_data if beta else data,
+                ag_data_prev_data if beta else prev_data,
+                'person_adolescent_all'
+            )),
+            'value': get_value(ag_data if beta else data, 'person_adolescent'),
+            'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
+            'format': 'percent_and_div',
+            'frequency': frequency
+        }
+        demographics_data['kpi'][-1].append(adolescent_girls)
+
+    return demographics_data
 
 
 @icds_quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)

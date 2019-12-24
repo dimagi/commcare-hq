@@ -6,7 +6,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_start_6m = self.month_start - relativedelta(months=6)
         self.month_end_11yr = self.month_end - relativedelta(years=11)
         self.month_start_15yr = self.month_start - relativedelta(years=15)
+        self.month_start_14yr = self.month_start - relativedelta(years=14)
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
 
@@ -202,11 +203,13 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
            cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all,
            cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
            cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
-           cases_person_referred = ut.cases_person_referred
+           cases_person_referred = ut.cases_person_referred,
+           cases_person_adolescent_girls_11_14_out_of_school = ut.girls_out_of_schoool,
+           cases_person_adolescent_girls_11_14_all_v2 = ut.cases_person_adolescent_girls_11_14_all_v2
         FROM (
         SELECT
-            awc_id,
-            supervisor_id,
+            ucr.awc_id,
+            ucr.supervisor_id,
             sum({seeking_services}) AS cases_person,
             count(*) AS cases_person_all,
             sum(CASE WHEN
@@ -217,6 +220,13 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all,
+            SUM(CASE WHEN ( (out_of_school or re_out_of_school) AND
+                                 (not admitted_in_school )AND  migration_status<>1) THEN 1 ELSE 0 END ) as girls_out_of_schoool,
+            sum(
+                CASE WHEN %(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob AND sex = 'F'
+                    AND migration_status<>1
+                THEN 1 ELSE 0 END
+            ) as cases_person_adolescent_girls_11_14_all_v2,
             sum(
                 CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
                 THEN ({seeking_services}) ELSE 0 END
@@ -229,9 +239,16 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "{ucr_tablename}"
-        WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
-        GROUP BY awc_id, supervisor_id) ut
+        FROM "{ucr_tablename}" ucr LEFT JOIN
+             "{adolescent_girls_table}" adolescent_girls_table ON
+                ucr.doc_id = adolescent_girls_table.person_case_id AND
+                ucr.awc_id = adolescent_girls_table.awc_id AND
+                ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
+                adolescent_girls_table.month= %(start_date)s
+        WHERE (opened_on <= %(end_date)s AND
+              (closed_on IS NULL OR closed_on >= %(start_date)s ))
+
+        GROUP BY ucr.awc_id, ucr.supervisor_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
@@ -240,12 +257,14 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 "CASE WHEN "
                 "registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 "
                 "THEN 1 ELSE 0 END"
-            )
+            ),
+            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end,
             'month_end_11yr': self.month_end_11yr,
             'month_start_15yr': self.month_start_15yr,
+            'month_start_14yr': self.month_start_14yr,
             'month_end_15yr': self.month_end_15yr,
             'month_start_18yr': self.month_start_18yr,
         }
@@ -653,6 +672,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_adolescent_girls_15_18',),
             ('cases_person_adolescent_girls_11_14_all',),
             ('cases_person_adolescent_girls_15_18_all',),
+            ('cases_person_adolescent_girls_11_14_out_of_school',),
+            ('cases_person_adolescent_girls_11_14_all_v2',),
             ('infra_infant_weighing_scale',),
             ('cases_person_referred', 'NULL'),
             ('awc_days_pse_conducted', 'NULL'),

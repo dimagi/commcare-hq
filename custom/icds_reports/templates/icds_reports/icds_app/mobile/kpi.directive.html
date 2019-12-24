@@ -25,8 +25,10 @@
         </div>
         <div ng-show="cell.percent !== null && $ctrl.isNumber(cell.percent) && $ctrl.showPercentInfo()">
           <p class="font-weight-500 font-montserrat font-14" >
-            <img src="{% static "icds_reports/mobile/images/up-arrow.png" %}" ng-if="cell.percent > 0">
-            <img src="{% static "icds_reports/mobile/images/down-arrow.png" %}" ng-if="cell.percent < 0">
+            <img src="{% static "icds_reports/mobile/images/red-up-arrow.png" %}" ng-if="cell.percent > 0 && cell.color === 'red'">
+            <img src="{% static "icds_reports/mobile/images/green-up-arrow.png" %}" ng-if="cell.percent > 0 && cell.color === 'green'">
+            <img src="{% static "icds_reports/mobile/images/red-down-arrow.png" %}" ng-if="cell.percent < 0 && cell.color === 'red'">
+            <img src="{% static "icds_reports/mobile/images/green-down-arrow.png" %}" ng-if="cell.percent < 0 && cell.color === 'green'">
             <span ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
           </p>
         </div>
