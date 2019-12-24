@@ -2207,6 +2207,6 @@ class GovernanceAPIView(BaseGovernanceAPIView):
                 year,
                 month,
                 order,
-                location_filters
+                query_filters
             )
         return JsonResponse(data=data)

@@ -5,11 +5,11 @@ from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import DATA_NOT_ENTERED
 
 
-@icds_quickcache(['start', 'length', 'year', 'month', 'order', 'location_filters'], timeout=30 * 60)
-def get_home_visit_data(start, length, year, month, order, location_filters):
+@icds_quickcache(['start', 'length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
+def get_home_visit_data(start, length, year, month, order, query_filters):
     data = AggAwcMonthly.objects.filter(
         month=date(year, month, 1),
-        **location_filters
+        **query_filters
     ).order_by(*order).values(
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'valid_visits',
         'expected_visits'
