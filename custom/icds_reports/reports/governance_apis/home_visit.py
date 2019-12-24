@@ -19,7 +19,8 @@ def get_home_visit_data(start, length, year, month, order, location_filters):
         'filter_params': {
             'start': start,
             'month': month,
-            'year': year
+            'year': year,
+            'count': data.count()
         }
     }
 
@@ -42,7 +43,6 @@ def get_home_visit_data(start, length, year, month, order, location_filters):
 
     for row in data:
         config['data'].append(base_data(row))
-
-    config['data'] = config['data'][start:(start + length)]
+    config['data'] = config['data'][int(start):(int(start) + length)]
 
     return config
