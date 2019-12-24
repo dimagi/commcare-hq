@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis.home_visit import get_home_visit_data
+from custom.icds_reports.reports.governance_apis import get_home_visit_data
 
 
 class GovernanceApiTest(TestCase):
@@ -11,22 +11,22 @@ class GovernanceApiTest(TestCase):
         test to check the total count of records that are returned from the home visit api
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        location_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data = get_home_visit_data(0, limit,
-                                   2017, 5, order, location_filters)
+                                   2017, 5, order, query_filters)
         expected_count = 55
         self.assertEqual(data['filter_params']['count'], expected_count)
 
-    def test_data_fetching_with_start_for_home_visit_api(self):
+    def test_data_fetching_without_start_for_home_visit_api(self):
         """
         test to check the first record that is returned from the home visit api without start parameter
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        location_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data = get_home_visit_data(0, limit,
-                                   2017, 5, order, location_filters)
+                                   2017, 5, order, query_filters)
         expected_first_row = {
             'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a1',
             'valid_visits': 0, 'expected_visits': 4
@@ -38,10 +38,10 @@ class GovernanceApiTest(TestCase):
         test to check the first record that is returned from the home visit api with start parameter
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        location_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data = get_home_visit_data(1, limit,
-                                   2017, 5, order, location_filters)
+                                   2017, 5, order, query_filters)
         expected_first_row = {
             'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a17',
             'valid_visits': 0, 'expected_visits': 3
@@ -53,10 +53,10 @@ class GovernanceApiTest(TestCase):
         test to check the filter params are returned from the home visit api with start parameter
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        location_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data = get_home_visit_data(1, limit,
-                                   2017, 5, order, location_filters)
+                                   2017, 5, order, query_filters)
         expected = {
             'start': 1,
             'month': 5,
@@ -70,12 +70,10 @@ class GovernanceApiTest(TestCase):
         test to check the no records are returned from the home visit api
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        location_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data = get_home_visit_data(0, limit,
-                                   2017, 6, order, location_filters)
+                                   2017, 6, order, query_filters)
         expected_count = 0
         self.assertEqual(data['filter_params']['count'], expected_count)
         self.assertEqual(data['data'], [])
-
-
