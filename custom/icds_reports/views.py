@@ -64,6 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
+    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
@@ -230,6 +231,11 @@ from custom.icds_reports.utils.data_accessor import (
     get_inc_indicator_api_data,
     get_program_summary_data_with_retrying,
 )
+
+from custom.icds_reports.reports.governance_apis.home_visit import (
+    get_home_visit_data,
+)
+
 
 from . import const
 from .exceptions import TableauTokenException
@@ -2164,3 +2170,43 @@ class MWCDDataView(View):
         except Exception:
             response = dict(isSuccess=False, message='Unknown Error occured')
             return JsonResponse(response, status=500)
+
+
+@location_safe
+class BaseGovernanceAPIView(View):
+    def get_settings(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
+
+        start = request.GET.get('start', 0)
+
+        return step, start, month, year
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class GovernanceAPIView(BaseGovernanceAPIView):
+
+    def get(self, request, *args, **kwargs):
+        step, start, month, year = self.get_settings(request, *args, **kwargs)
+
+        if step == 'home_visit':
+            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+            location_filters = {'aggregation_level': 5}
+            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+
+            data = get_home_visit_data(
+                start,
+                length,
+                year,
+                month,
+                order,
+                location_filters
+            )
+        return JsonResponse(data=data)
