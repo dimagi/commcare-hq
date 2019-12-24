@@ -221,10 +221,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all,
             SUM(CASE WHEN ( (out_of_school or re_out_of_school) AND
-                                 (not admitted_in_school )AND  migration_status<>1) THEN 1 ELSE 0 END ) as girls_out_of_schoool,
+                                 (not admitted_in_school )AND  migration_status IS DISTINCT FROM 1) THEN 1 ELSE 0 END ) as girls_out_of_schoool,
             sum(
                 CASE WHEN %(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob AND sex = 'F'
-                    AND migration_status<>1
+                    AND migration_status IS DISTINCT FROM 1
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all_v2,
             sum(
@@ -242,7 +242,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         FROM "{ucr_tablename}" ucr LEFT JOIN
              "{adolescent_girls_table}" adolescent_girls_table ON
                 ucr.doc_id = adolescent_girls_table.person_case_id AND
-                ucr.awc_id = adolescent_girls_table.awc_id AND
                 ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
                 adolescent_girls_table.month= %(start_date)s
         WHERE (opened_on <= %(end_date)s AND
