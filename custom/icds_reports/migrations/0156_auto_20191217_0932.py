@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='aggregateadolescentgirlsregistrationforms',
-            unique_together=set([('supervisor_id', 'person_case_id', 'month')]),
+            unique_together=set([('month', 'supervisor_id', 'person_case_id')]),
         ),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_out_of_school INTEGER"),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all_v2 INTEGER"),
