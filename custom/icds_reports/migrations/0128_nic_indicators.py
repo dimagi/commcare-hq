@@ -12,6 +12,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0127_thr_report_view'),
     ]
 
-    operations = [
-        migrator.get_migration('nic_indicators.sql')
-    ]
+    operations = []

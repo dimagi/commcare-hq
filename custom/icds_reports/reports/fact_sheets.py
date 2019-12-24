@@ -4,7 +4,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
 
-from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, ADOLESCENT_GIRLS_DATA_THRESHOLD
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
@@ -26,7 +26,7 @@ class FactSheetsReport(object):
 
     @property
     def new_table_config(self):
-        return [
+        fact_sheet_data_config = [
             {
                 'category': 'maternal_and_child_nutrition',
                 'title': 'Maternal and Child Nutrition',
@@ -497,40 +497,71 @@ class FactSheetsReport(object):
                                 'slug': 'four',
                                 'average': [],
 
-                            },
-                            {
-                                'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (11-14 years)',
-                                'slug': 'cases_person_adolescent_girls_11_14_all',
-                                'average': [],
-
-                            },
-                            {
-                                'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (15-18 years)',
-                                'slug': 'cases_person_adolescent_girls_15_18_all',
-                                'average': [],
-
-                            },
-                            {
-                                'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
-                                'slug': 'cases_person_adolescent_girls_11_14',
-                                'average': [],
-
-                            },
-                            {
-                                'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
-                                'slug': 'cases_person_adolescent_girls_15_18',
-                                'average': [],
-
                             }
                         ]
                     },
                 ]
             }
         ]
+
+        if not self.beta:
+            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend([
+                {
+                    'data_source': 'AggAWCMonthlyDataSource',
+                    'header': 'Adolescent girls (11-14 years)',
+                    'slug': 'cases_person_adolescent_girls_11_14_all',
+                    'average': [],
+
+                },
+                {
+                    'data_source': 'AggAWCMonthlyDataSource',
+                    'header': 'Adolescent girls (15-18 years)',
+                    'slug': 'cases_person_adolescent_girls_15_18_all',
+                    'average': [],
+
+                },
+                {
+                    'data_source': 'AggAWCMonthlyDataSource',
+                    'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
+                    'slug': 'cases_person_adolescent_girls_11_14',
+                    'average': [],
+
+                },
+                {
+                    'data_source': 'AggAWCMonthlyDataSource',
+                    'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
+                    'slug': 'cases_person_adolescent_girls_15_18',
+                    'average': [],
+
+                }
+            ]
+            )
+        elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
+            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend(
+                [
+                    {
+                        'data_source': 'AggAWCMonthlyDataSource',
+                        'header': 'Adolescent girls (11-14 years)',
+                        'slug': 'cases_person_adolescent_girls_11_14_all_v2',
+                        'average': [],
+
+                    },
+                    {
+                        'data_source': 'AggAWCMonthlyDataSource',
+                        'header': 'Out of School Adolescent girls (11-14 years)',
+                        'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
+                        'average': []
+                    },
+                    {
+                        'data_source': 'AggAWCMonthlyDataSource',
+                        'header': 'Adolescent girls (15-18 years)',
+                        'slug': 'cases_person_adolescent_girls_15_18_all',
+                        'average': []
+                    }
+                ]
+            )
+
+        return fact_sheet_data_config
 
     def data_sources(self, config):
         return {

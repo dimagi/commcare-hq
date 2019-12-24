@@ -26,6 +26,7 @@ from .thr_forms_child_health import THRFormsChildHealthAggregationDistributedHel
 from .thr_forms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
 from .thr_form_v2 import THRFormV2AggDistributedHelper
 from .agg_dashboard_activity import DashboardActivityReportAggregate
+from .adolescent_girls_registration import  AggAdolescentGirlsRegistrationAggregate
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -57,5 +58,6 @@ __all__ = (
     'THRFormsCcsRecordAggregationDistributedHelper',
     'THRFormsChildHealthAggregationDistributedHelper',
     'THRFormV2AggDistributedHelper',
-    'DashboardActivityReportAggregate'
+    'DashboardActivityReportAggregate',
+    'AggAdolescentGirlsRegistrationAggregate'
 )

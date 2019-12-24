@@ -48,7 +48,7 @@ MainMobileController.$inject = [
 ];
 
 window.angular.module('icdsApp', [
-    'ngRoute', 'cgBusy', 'datamaps', 'nvd3',
+    'ngRoute', 'ngSanitize', 'cgBusy', 'datamaps', 'nvd3',
     // these libraries aren't truly needed but do to code sharing with the web dashboard,
     // some directives depend on them to compile.
     // in the future, ideally those directives would be refactored such that the web dependencies

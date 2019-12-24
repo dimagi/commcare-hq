@@ -126,7 +126,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 if (isMobile) {
                     // assume called in the context of a map which has this function.
-                    template += '<a ng-click="$ctrl.attemptToDrillToLocation(\'' + locationName + '\')">see more</a>';
+                    template += '<a ng-click="$ctrl.handleMobileDrilldown()">see more</a>';
                 }
                 template += '</div>';
                 return template;

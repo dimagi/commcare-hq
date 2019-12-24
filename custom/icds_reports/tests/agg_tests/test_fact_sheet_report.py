@@ -1004,13 +1004,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 962,
-                    'sort_key': 962
+                    'html': 966,
+                    'sort_key': 966
                 },
                 'data': [
                     {'html': 'Total Number of Household Members'},
-                    {'html': 954, 'sort_key': 954},
-                    {'html': 962, 'sort_key': 962},
+                    {'html': 958, 'sort_key': 958},
+                    {'html': 966, 'sort_key': 966},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1285,13 +1285,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][15],
             {
                 'average': {
-                    'html': 34,
-                    'sort_key': 34
+                    'html': 38,
+                    'sort_key': 38
                 },
                 'data': [
                     {'html': 'Adolescent girls (11-14 years)'},
+                    {'html': 42, 'sort_key': 42},
                     {'html': 38, 'sort_key': 38},
-                    {'html': 34, 'sort_key': 34},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
