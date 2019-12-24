@@ -512,7 +512,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
-            tablename=self.tablename,
+            tablename=self.temporary_tablename,
             agg_child_temp_tablename=self.agg_child_temp_tablename,
         ), {
             'start_date': self.month_start
