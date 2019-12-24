@@ -34,6 +34,7 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     setup_aggregation,
     update_child_health_monthly_table,
+    _agg_adolescent_girls_registration_table
 )
 
 
@@ -54,6 +55,7 @@ STATE_TASKS = {
     'agg_ls_vhnd_form': _agg_ls_vhnd_form,
     'agg_beneficiary_form': _agg_beneficiary_form,
     'aggregate_df_forms': _aggregate_df_forms,
+    'aggregate_ag_forms': _agg_adolescent_girls_registration_table
 }
 
 ALL_STATES_TASKS = {
