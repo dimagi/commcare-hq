@@ -619,12 +619,14 @@ def _agg_child_health_table(day):
 
 def agg_child_health_temp(day):
     helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
-    helper.aggregate_temp()
+    with get_cursor(AggChildHealth) as cursor:
+        helper.aggregate_temp(cursor)
 
 
 def update_agg_child_health(day):
     helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
-    helper.update_table()
+    with get_cursor(AggChildHealth) as cursor:
+        helper.update_table(cursor)
 
 
 @track_time
