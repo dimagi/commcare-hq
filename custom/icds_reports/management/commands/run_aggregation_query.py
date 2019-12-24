@@ -11,7 +11,6 @@ from custom.icds_reports.tasks import (
     _agg_awc_table,
     _agg_beneficiary_form,
     _agg_ccs_record_table,
-    _agg_child_health_table,
     _agg_ls_awc_mgt_form,
     _agg_ls_table,
     _agg_ls_vhnd_form,
@@ -30,9 +29,11 @@ from custom.icds_reports.tasks import (
     _child_health_monthly_aggregation,
     _daily_attendance_table,
     _update_months_table,
+    agg_child_health_temp,
     aggregate_awc_daily,
     create_all_mbt,
     setup_aggregation,
+    update_agg_child_health,
     update_child_health_monthly_table,
 )
 
@@ -67,11 +68,12 @@ NORMAL_TASKS = {
     'agg_ls_table': _agg_ls_table,
     'update_months_table': _update_months_table,
     'daily_attendance': _daily_attendance_table,
-    'agg_child_health': _agg_child_health_table,
+    'agg_child_health_temp': agg_child_health_temp,
     'ccs_record_monthly': _ccs_record_monthly_table,
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
+    'update_agg_child_health': update_agg_child_health,
 }
 
 
