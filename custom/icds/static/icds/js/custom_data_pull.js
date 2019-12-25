@@ -13,12 +13,12 @@ hqDefine('icds/js/custom_data_pull', [
         $('#month_select').datepicker({
             dateFormat: "yy-mm-dd",
             beforeShowDay: function (date) {
-               //getDate() returns the day (0-31)
-               if (date.getDate() == 1) {
-                   return [true, ''];
-               }
-               return [false, ''];
-            }
+                //getDate() returns the day (0-31)
+                if (date.getDate() === 1) {
+                    return [true, ''];
+                }
+                return [false, ''];
+            },
         });
     });
 });

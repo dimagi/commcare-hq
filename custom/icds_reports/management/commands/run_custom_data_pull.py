@@ -66,7 +66,7 @@ class Command(BaseCommand):
             self._log(data_pull.get_queries())
         if skip_confirmation or self._get_confirmation():
             return data_pull.run()
-        return []   
+        return []
 
     def run_via_sql_file(self, sql_query_file_path, db_alias, month, location_id, skip_confirmation, log_progress):
         filepath = 'custom/icds_reports/data_pull/sql_queries/%s.sql' % sql_query_file_path

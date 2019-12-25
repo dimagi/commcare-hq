@@ -1,5 +1,3 @@
-from datetime import date, timedelta
-
 from django.db import connections
 from django.utils.dateparse import parse_date
 from django.utils.functional import cached_property
@@ -34,7 +32,7 @@ class BaseQuery:
         return sql
 
     def sql_query(self):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class MonthBasedQuery(BaseQuery):
