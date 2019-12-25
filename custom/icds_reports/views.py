@@ -1505,18 +1505,21 @@ class AdolescentGirlsView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        pre_release_features = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test)
+                data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test,
+                                                        pre_release_features)
             else:
-                data = get_adolescent_girls_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_adolescent_girls_data_map(domain, config.copy(), loc_level, include_test,
+                                                     pre_release_features)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_adolescent_girls_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, pre_release_features
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
+            data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test, pre_release_features)
 
         return JsonResponse(data={
             'report_data': data,
