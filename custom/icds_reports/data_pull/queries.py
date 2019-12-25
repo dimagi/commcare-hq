@@ -1,5 +1,10 @@
+from datetime import date, timedelta
+
 from django.db import connections
+from django.utils.dateparse import parse_date
 from django.utils.functional import cached_property
+
+from dateutil.relativedelta import relativedelta
 
 
 class BaseQuery:
@@ -57,3 +62,49 @@ class LocationAndMonthBasedQuery(MonthBasedQuery):
     @cached_property
     def sql_query(self):
         return self.raw_query.format(location_id=self.location_id, month=self.month)
+
+
+class PSEAbove3Years(Loc ationAndMonthBasedQuery):
+    name = "PSE above 3 years"
+    query_file_path = "pse_above_3_years"
+
+
+class PSEAbove5Years(LocationAndMonthBasedQuery):
+    name = "PSE above 5 years"
+    query_file_path = "pse_above_5_years"
+
+
+class LunchAbove3Years(LocationAndMonthBasedQuery):
+    name = "Lunch above 3 years"
+    query_file_path = "lunch_above_3_years"
+
+
+class LunchAbove5Years(LocationAndMonthBasedQuery):
+    name = "Lunch above 5 years"
+    query_file_path = "lunch_above_5_years"
+
+
+class THRPregnant(LocationAndMonthBasedQuery):
+    name = "THR pregnant"
+    query_file_path = "thr_pregnant"
+
+
+class THRLactating(LocationAndMonthBasedQuery):
+    name = "THR lactating"
+    query_file_path = "thr_lactating"
+
+
+class THRChildren(LocationAndMonthBasedQuery):
+    name = "THR children"
+    query_file_path = "thr_children"
+
+
+class CBEConducted(LocationAndMonthBasedQuery):
+    name = "CBE conducted"
+    query_file_path = "cbe_conducted"
+
+    @cached_property
+    def sql_query(self):
+        from_date = self.month
+        till_date = str(parse_date(from_date) + relativedelta(months=1))
+        return self.raw_query.format(location_id=self.location_id, from_date=from_date, till_date=till_date)

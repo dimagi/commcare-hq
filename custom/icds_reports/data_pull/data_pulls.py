@@ -1,4 +1,14 @@
 from custom.icds_reports.data_pull.exceptions import UnboundDataPull
+from custom.icds_reports.data_pull.queries import (
+    CBEConducted,
+    LunchAbove3Years,
+    LunchAbove5Years,
+    PSEAbove3Years,
+    PSEAbove5Years,
+    THRChildren,
+    THRLactating,
+    THRPregnant,
+)
 
 
 class BaseDataPull:
@@ -41,3 +51,17 @@ class LocationAndMonthBasedDataPull(MonthlyDataPull):
         if not self.location_id:
             raise UnboundDataPull("Location not defined")
         return [query_class(self.location_id, self.month).run(self.db_alias) for query_class in self.queries]
+
+
+class MonthlyPerformance(LocationAndMonthBasedDataPull):
+    slug = "monthly_performance"
+    queries = [
+        CBEConducted,
+        LunchAbove3Years,
+        LunchAbove5Years,
+        PSEAbove3Years,
+        PSEAbove5Years,
+        THRChildren,
+        THRLactating,
+        THRPregnant,
+    ]

@@ -1,5 +1,8 @@
-import pytz
 from django.conf import settings
+
+import pytz
+
+from custom.icds_reports.data_pull.data_pulls import MonthlyPerformance
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
@@ -154,3 +157,7 @@ CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Serv
 PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
 LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
 ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'
+
+CUSTOM_DATA_PULLS = {
+    MonthlyPerformance.slug: MonthlyPerformance
+}
