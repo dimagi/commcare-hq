@@ -9,6 +9,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from custom.icds.forms import CustomDataPullForm
+from custom.icds.utils.data_pull import data_pull_is_in_progress
 
 
 @location_safe
@@ -30,11 +31,12 @@ class CustomDataPull(BaseProjectDataView):
     @property
     def page_context(self):
         return {
+            'data_pull_is_in_progress': data_pull_is_in_progress(),
             'form': self.form
         }
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
+        if not data_pull_is_in_progress() and self.form.is_valid():
             self.form.submit(request.user.email)
             messages.success(request, _("Request Initiated. You will receive an email on completion."))
             return redirect(self.urlname, self.domain)

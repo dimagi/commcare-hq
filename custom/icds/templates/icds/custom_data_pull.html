@@ -16,6 +16,11 @@
     </div>
   </div>
   <div class="row">
+    {% if data_pull_is_in_progress %}
+      <div class="alert alert-danger">
+        <p>Data pull already in progress. New requests wont be accepted.</p>
+      </div>
+    {% endif %}
     <div>
       <div class="panel panel-modern-gray panel-form-only">
         <div class="panel-body">

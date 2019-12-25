@@ -9,6 +9,11 @@ from django.core.management.base import (
 from django.db import connections
 
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
+from custom.icds.utils.data_pull import (
+    data_pull_is_in_progress,
+    reset_data_pull_in_progress,
+    set_data_pull_in_progress,
+)
 
 
 class Command(BaseCommand):
@@ -33,6 +38,9 @@ class Command(BaseCommand):
         log_progress = options.get('log_progress')
         if db_alias not in settings.DATABASES:
             raise CommandError("Unexpected db alias")
+        if data_pull_is_in_progress():
+            raise CommandError("Data Pull is in progress")
+        set_data_pull_in_progress()
         if name in CUSTOM_DATA_PULLS:
             generated_files = self.run_via_class(name, db_alias, month, location_id, skip_confirmation,
                                                  log_progress)
@@ -49,6 +57,7 @@ class Command(BaseCommand):
                     z.write(generated_file)
                     os.remove(generated_file)
             return zip_file_name
+        reset_data_pull_in_progress()
 
     def run_via_class(self, slug, db_alias, month, location_id, skip_confirmation, log_progress):
         data_pull_class = CUSTOM_DATA_PULLS[slug]
