@@ -13,6 +13,7 @@ from custom.icds_reports.data_pull.queries import (
 
 class BaseDataPull:
     slug = ""
+    name = ""
     queries = []
 
     def __init__(self, db_alias, *args, **kwargs):
@@ -55,6 +56,7 @@ class LocationAndMonthBasedDataPull(MonthlyDataPull):
 
 class MonthlyPerformance(LocationAndMonthBasedDataPull):
     slug = "monthly_performance"
+    name = "Monthly Performance"
     queries = [
         CBEConducted,
         LunchAbove3Years,
