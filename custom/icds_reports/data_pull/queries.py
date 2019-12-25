@@ -64,7 +64,7 @@ class LocationAndMonthBasedQuery(MonthBasedQuery):
         return self.raw_query.format(location_id=self.location_id, month=self.month)
 
 
-class PSEAbove3Years(Loc ationAndMonthBasedQuery):
+class PSEAbove3Years(LocationAndMonthBasedQuery):
     name = "PSE above 3 years"
     query_file_path = "pse_above_3_years"
 
