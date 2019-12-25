@@ -604,7 +604,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60,
-        memoize_timeout=10, session_function=icds_conditional_session_key)
+        memoize_timeout=10, session_function=icds_conditional_session_key())
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
