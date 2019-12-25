@@ -36,15 +36,16 @@ class Command(BaseCommand):
         else:
             generated_files = self.run_via_sql_file(name, db_alias, month, location_id, skip_confirmation,
                                                     log_progress)
-        if len(generated_files) > 1:
-            zip_file_name = "%s-DataPull.zip" % name
+        if generated_files:
+            if name in CUSTOM_DATA_PULLS:
+                zip_file_name = "%s-DataPull.zip" % CUSTOM_DATA_PULLS[name].name
+            else:
+                zip_file_name = "%s-DataPull.zip" % name
             with zipfile.ZipFile(zip_file_name, mode='a') as z:
                 for generated_file in generated_files:
                     z.write(generated_file)
                     os.remove(generated_file)
             return zip_file_name
-        else:    
-            return generated_files[0] if generated_files else None
 
     def run_via_class(self, slug, db_alias, month, location_id, skip_confirmation, log_progress):
         data_pull_class = CUSTOM_DATA_PULLS[slug]
