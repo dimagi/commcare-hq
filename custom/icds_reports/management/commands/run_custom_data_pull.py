@@ -25,6 +25,9 @@ class Command(BaseCommand):
     def handle(self, name, db_alias, *arg, **options):
         generated_files = []
         month = options.get('month')
+        if month:
+            # convert to string if date object received
+            month = str(month)
         location_id = options.get('location_id')
         skip_confirmation = options.get('skip_confirmation')
         log_progress = options.get('log_progress')
