@@ -1798,3 +1798,11 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     databases to generate restore payloads.
     """
 )
+
+
+RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
+    'run_custom_data_pull_requests',
+    '[ICDS] Initiate custom data pull requests from UI',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
