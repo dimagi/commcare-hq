@@ -16,6 +16,11 @@
     </div>
   </div>
   <div class="row">
+    <div class="alert alert-info">
+        <p>Data pull permitted between
+          {{data_pull_permitted_start_hour}}:00-{{data_pull_permitted_end_hour}}:00
+        </p>
+      </div>
     {% if data_pull_is_in_progress %}
       <div class="alert alert-danger">
         <p>Data pull already in progress. New requests wont be accepted.</p>

@@ -8,8 +8,15 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
+from custom.icds.const import (
+    DATA_PULL_PERMITTED_END_HOUR,
+    DATA_PULL_PERMITTED_START_HOUR,
+)
 from custom.icds.forms import CustomDataPullForm
-from custom.icds.utils.data_pull import data_pull_is_in_progress
+from custom.icds.utils.data_pull import (
+    can_initiate_data_pull,
+    data_pull_is_in_progress,
+)
 
 
 @location_safe
@@ -31,14 +38,17 @@ class CustomDataPull(BaseProjectDataView):
     @property
     def page_context(self):
         return {
+            'data_pull_permitted_start_hour': DATA_PULL_PERMITTED_START_HOUR,
+            'data_pull_permitted_end_hour': DATA_PULL_PERMITTED_END_HOUR,
             'data_pull_is_in_progress': data_pull_is_in_progress(),
             'form': self.form
         }
 
     def post(self, request, *args, **kwargs):
-        if not data_pull_is_in_progress() and self.form.is_valid():
+        if not can_initiate_data_pull():
+            messages.warning(request, _("Request Ignored."))
+        elif not data_pull_is_in_progress() and self.form.is_valid():
             self.form.submit(request.user.email)
             messages.success(request, _("Request Initiated. You will receive an email on completion."))
             return redirect(self.urlname, self.domain)
-        else:
-            return self.get(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
