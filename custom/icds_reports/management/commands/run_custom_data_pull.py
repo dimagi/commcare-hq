@@ -52,7 +52,7 @@ class Command(BaseCommand):
         data_pull = data_pull_class(db_alias, month=month, location_id=location_id)
         if log_progress:
             self._log(data_pull.get_queries())
-        if not skip_confirmation and self._get_confirmation():
+        if skip_confirmation or self._get_confirmation():
             return data_pull.run()
         return []   
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
             sql = sql.format(month=month, location_id=location_id)
         if log_progress:
             self._log([sql])
-        if not skip_confirmation and self._get_confirmation():
+        if skip_confirmation or self._get_confirmation():
             sql = sql.replace('\n', ' ')
             result_file = "%s-%s-%s.csv" % (sql_query_file_path.split('/')[-1], month, location_id)
             with open(result_file, "w") as output:
