@@ -1538,7 +1538,7 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
-        unique_together = ('supervisor_id', 'person_case_id', 'month')  # pkey
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
 
     _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
     _agg_atomic = False
