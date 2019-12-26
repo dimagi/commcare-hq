@@ -146,11 +146,20 @@ def download_audio_translator_files(domain, app, lang):
             sheet0.append([text, filename])
             sheet1.append(rows[0])
 
-    # Create output files
-    wb = openpyxl.Workbook()
-    ws = wb.worksheets[0]
-    ws.title = "translations"
+    # Create file for re-upload to HQ's bulk app translations
+    upload_workbook = openpyxl.Workbook()
+    sheet = upload_workbook.worksheets[0]
+    sheet.title = SINGLE_SHEET_NAME
+    sheet.append(headers)
+
+    for text, rows in rows_by_text.items():
+        filename = _get_filename_from_duplicate_rows(rows)
+        for row in rows:
+            if row[audio_index] != filename:
+                row[audio_index] = filename
+                sheet.append(row)
+
     return {
-        "bulkupload.xlsx": get_file_content_from_workbook(wb),
+        "bulk_upload.xlsx": get_file_content_from_workbook(upload_workbook),
         "excel_for_translator.xlsx": get_file_content_from_workbook(translator_workbook),
     }
