@@ -535,7 +535,7 @@ def load_app_from_slug(domain, username, slug):
 def _build_sample_app(app):
     errors = app.validate_app()
     if not errors:
-        comment = _("A sample application you can try out in Web Apps")
+        comment = _("A sample CommCare application for you to explore")
         copy = app.make_build(comment=comment)
         copy.is_released = True
         copy.save(increment_version=False)
