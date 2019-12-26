@@ -1,4 +1,5 @@
 from collections import defaultdict
+import openpyxl
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -6,6 +7,9 @@ from django.utils.translation import ugettext as _
 from lxml import etree
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+from corehq.apps.translations.app_translations.download import get_bulk_app_single_sheet_by_name
+from corehq.apps.translations.const import SINGLE_SHEET_NAME
+from corehq.apps.translations.utils import get_file_content_from_workbook
 
 
 def download_multimedia_paths_rows(app, only_missing=False):
@@ -106,3 +110,22 @@ def update_multimedia_paths(app, paths):
                                  "{} > {}".format(module.default_name(), form.default_name())))
 
     return successes
+
+
+def download_audio_translator_files(domain, app, lang):
+    # Get bulk app translation single sheet data
+    sheets = get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=True)
+    translations = sheets[SINGLE_SHEET_NAME]
+
+    # Get missing multimedia data
+    missing_media_rows = download_multimedia_paths_rows(app, only_missing=True)
+    missing_media_paths = [row[0] for (sheet_name, row) in missing_media_rows]
+
+    # Create output files
+    wb = openpyxl.Workbook()
+    ws = wb.worksheets[0]
+    ws.title = "translations"
+    return {
+        "bulkupload.xlsx": get_file_content_from_workbook(wb),
+        "excel_for_translator.xlsx": get_file_content_from_workbook(wb),
+    }

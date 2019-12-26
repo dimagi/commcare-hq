@@ -2,7 +2,6 @@ import io
 import itertools
 import json
 import logging
-import openpyxl
 import os
 import shutil
 import uuid
@@ -81,7 +80,6 @@ from corehq.apps.hqmedia.tasks import (
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
@@ -474,17 +472,16 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
     def get(self, request, *args, **kwargs):
         lang = request.GET.get('lang')
         if lang:
-            wb = openpyxl.Workbook()
-            ws = wb.worksheets[0]
-            ws.title = "translations"
-            mem_file = io.BytesIO()
-            with zipfile.ZipFile(mem_file, "w", zipfile.ZIP_DEFLATED) as zip_content:
-                zip_content.writestr("bulkupload.xlsx", get_file_content_from_workbook(wb))
-                zip_content.writestr("excel_for_translator.xlsx", get_file_content_from_workbook(wb))
+            from corehq.apps.hqmedia.view_helpers import download_audio_translator_files
+            files = download_audio_translator_files(self.domain, self.app, lang)
+            zip_in_memory = io.BytesIO()
+            with zipfile.ZipFile(zip_in_memory, "w", zipfile.ZIP_DEFLATED) as zip_content:
+                for filename, content in files.items():
+                    zip_content.writestr(filename, content)
             today = datetime.strftime(datetime.utcnow(), "%Y-%m-%d")
             filename = "Audio Translator Files {} {}.zip".format(lang, today)
-            mem_file.seek(0)
-            response = HttpResponse(mem_file.read(), content_type='application/zip')
+            zip_in_memory.seek(0)
+            response = HttpResponse(zip_in_memory.read(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
             return response
         return super().get(request, *args, **kwargs)
