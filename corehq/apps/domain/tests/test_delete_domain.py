@@ -429,7 +429,7 @@ class TestDeleteDomain(TestCase):
             LatestEnabledBuildProfiles.objects.create(domain=domain_name)
             SQLGlobalAppConfig.objects.create(domain=domain_name)
             ResourceOverride.objects.create(domain=domain_name)
-            self._assert_case_search_counts(domain_name, 1)
+            self._assert_app_manager_counts(domain_name, 1)
 
         self.domain.delete()
 
