@@ -190,6 +190,8 @@ def get_excel_format_value(value):
         return ExcelFormatValue(numbers.FORMAT_NUMBER, value)
     if isinstance(value, float):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, value)
+    if isinstance(value, bool):
+        return ExcelFormatValue(numbers.FORMAT_GENERAL, value)
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is None:
@@ -199,7 +201,7 @@ def get_excel_format_value(value):
         return ExcelFormatValue(numbers.FORMAT_TEXT, value)
 
     if value.lower() in ['true', 'false']:
-        return ExcelFormatValue(numbers.FORMAT_GENERAL, bool(value))
+        return ExcelFormatValue(numbers.FORMAT_GENERAL, bool(value.lower() == 'true'))
 
     # make sure value is string and strip whitespace
     value = str(value).strip()
