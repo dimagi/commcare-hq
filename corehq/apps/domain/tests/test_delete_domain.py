@@ -33,6 +33,12 @@ from corehq.apps.aggregate_ucrs.models import (
     SecondaryColumn,
     SecondaryTableDefinition,
 )
+from corehq.apps.app_manager.models import (
+    AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
+    SQLGlobalAppConfig,
+)
+from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverride
 from corehq.apps.case_importer.tracking.models import (
     CaseUploadFormRecord,
     CaseUploadRecord,
@@ -408,6 +414,27 @@ class TestDeleteDomain(TestCase):
             CaseUploadFormRecord.objects.filter(case_upload_record__domain=self.domain2.name).count(),
             1
         )
+
+    def _assert_app_manager_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            AppReleaseByLocation.objects.filter(domain=domain_name),
+            LatestEnabledBuildProfiles.objects.filter(domain=domain_name),
+            SQLGlobalAppConfig.objects.filter(domain=domain_name),
+            ResourceOverride.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_app_manager(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            AppReleaseByLocation.objects.create(domain=domain_name)
+            LatestEnabledBuildProfiles.objects.create(domain=domain_name)
+            SQLGlobalAppConfig.objects.create(domain=domain_name)
+            ResourceOverride.objects.create(domain=domain_name)
+            self._assert_case_search_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_app_manager_counts(self.domain.name, 0)
+        self._assert_app_manager_counts(self.domain2.name, 1)
 
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
