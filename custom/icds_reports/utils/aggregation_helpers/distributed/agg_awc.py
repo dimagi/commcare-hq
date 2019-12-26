@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -30,6 +30,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     @property
     def child_temp_tablename(self):
         return get_child_health_temp_tablename(self.month_start)
+
+    @property
+    def agg_child_temp_tablename(self):
+        return get_agg_child_temp_tablename()
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -479,17 +483,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        DROP TABLE IF EXISTS "tmp_agg_awc_5";
-        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "{temporary_tablename}";
-        INSERT INTO "{tablename}" (SELECT * FROM "tmp_agg_awc_5");
-        DROP TABLE "tmp_agg_awc_5";
-        """.format(
-            tablename=self.tablename,
-            temporary_tablename=self.temporary_tablename,
-        ), {
-        }
-
-        yield """
         UPDATE "{tablename}" agg_awc SET
             cases_child_health = ut.cases_child_health,
             cases_child_health_all = ut.cases_child_health_all,
@@ -513,14 +506,26 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
                 sum(rations_21_plus_distributed) as rations_21_plus_distributed
-            FROM agg_child_health
+            FROM {agg_child_temp_tablename}
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
-            tablename=self.tablename,
+            tablename=self.temporary_tablename,
+            agg_child_temp_tablename=self.agg_child_temp_tablename,
         ), {
             'start_date': self.month_start
+        }
+
+        yield """
+        DROP TABLE IF EXISTS "tmp_agg_awc_5";
+        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "{temporary_tablename}";
+        INSERT INTO "{tablename}" (SELECT * FROM "tmp_agg_awc_5");
+        DROP TABLE "tmp_agg_awc_5";
+        """.format(
+            tablename=self.tablename,
+            temporary_tablename=self.temporary_tablename,
+        ), {
         }
 
         yield """

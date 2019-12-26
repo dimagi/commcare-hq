@@ -331,14 +331,7 @@
         
 {}
 
-        DROP TABLE IF EXISTS "tmp_agg_awc_5";
-        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "tmp_agg_awc_2019-01-01_5";
-        INSERT INTO "agg_awc_2019-01-01_5" (SELECT * FROM "tmp_agg_awc_5");
-        DROP TABLE "tmp_agg_awc_5";
-        
-{}
-
-        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+        UPDATE "tmp_agg_awc_2019-01-01_5" agg_awc SET
             cases_child_health = ut.cases_child_health,
             cases_child_health_all = ut.cases_child_health_all,
             wer_weighed = ut.wer_weighed,
@@ -361,12 +354,19 @@
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
                 sum(rations_21_plus_distributed) as rations_21_plus_distributed
-            FROM agg_child_health
+            FROM tmp_agg_child_health_5
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         
 {"start_date": "2019-01-01T00:00:00"}
+
+        DROP TABLE IF EXISTS "tmp_agg_awc_5";
+        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "tmp_agg_awc_2019-01-01_5";
+        INSERT INTO "agg_awc_2019-01-01_5" (SELECT * FROM "tmp_agg_awc_5");
+        DROP TABLE "tmp_agg_awc_5";
+        
+{}
 
         DROP TABLE IF EXISTS "tmp_home_visit";
         CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
