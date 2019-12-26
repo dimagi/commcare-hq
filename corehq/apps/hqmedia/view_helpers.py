@@ -8,6 +8,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.translations.app_translations.download import get_bulk_app_single_sheet_by_name
+from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
 from corehq.apps.translations.const import SINGLE_SHEET_NAME
 from corehq.apps.translations.utils import get_file_content_from_workbook
 
@@ -114,12 +115,36 @@ def update_multimedia_paths(app, paths):
 
 def download_audio_translator_files(domain, app, lang):
     # Get bulk app translation single sheet data
+    headers = get_bulk_app_sheet_headers(app, single_sheet=True, lang=lang, eligible_for_transifex_only=True)
+    headers = headers[0]    # There's only one row since these are the headers for the single-sheet format
+    headers = headers[1]    # Drop the first element (sheet name), leaving the second (list of header names)
+    text_index = headers.index('default_' + lang)
+    audio_index = headers.index('audio_' + lang)
     sheets = get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=True)
-    translations = sheets[SINGLE_SHEET_NAME]
+    audio_rows = [row for row in sheets[SINGLE_SHEET_NAME] if row[audio_index]]
 
-    # Get missing multimedia data
-    missing_media_rows = download_multimedia_paths_rows(app, only_missing=True)
-    missing_media_paths = [row[0] for (sheet_name, row) in missing_media_rows]
+    # Create dict of rows, keyed by label text for de-duplication
+    rows_by_text = defaultdict(list)
+    for row in audio_rows:
+        rows_by_text[row[text_index]].append(row)
+
+    # Create file for translator
+    translator_workbook = openpyxl.Workbook()
+    sheet0 = translator_workbook.worksheets[0]
+    sheet0.title = "filepaths"
+    sheet0.append([lang, "audio"])
+    sheet1 = translator_workbook.create_sheet("verif")
+    sheet1.append(headers)
+
+    def _get_filename_from_duplicate_rows(rows):
+        return rows[0][audio_index]
+
+    # Add a row for each unique text label.
+    for text, rows in rows_by_text.items():
+        if not any([row[audio_index] in app.multimedia_map for row in rows]):
+            filename = _get_filename_from_duplicate_rows(rows)
+            sheet0.append([text, filename])
+            sheet1.append(rows[0])
 
     # Create output files
     wb = openpyxl.Workbook()
@@ -127,5 +152,5 @@ def download_audio_translator_files(domain, app, lang):
     ws.title = "translations"
     return {
         "bulkupload.xlsx": get_file_content_from_workbook(wb),
-        "excel_for_translator.xlsx": get_file_content_from_workbook(wb),
+        "excel_for_translator.xlsx": get_file_content_from_workbook(translator_workbook),
     }
