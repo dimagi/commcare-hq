@@ -2794,6 +2794,14 @@ class UserReportingMetadataStaging(models.Model):
     device_id = models.TextField(null=True)
     sync_date = models.DateTimeField(null=True)
 
+    # The following properties are set when a mobile heartbeat occurs
+    app_version = models.IntegerField(null=True)
+    num_unsent_forms = models.IntegerField(null=True)
+    num_quarantined_forms = models.IntegerField(null=True)
+    commcare_version = models.TextField(null=True)
+    build_profile_id = models.TextField(null=True)
+    last_heartbeat = models.DateTimeField(null=True)
+
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
         params = {
@@ -2853,6 +2861,52 @@ class UserReportingMetadataStaging(models.Model):
                     build_id = EXCLUDED.build_id,
                     sync_date = EXCLUDED.sync_date,
                     device_id = EXCLUDED.device_id
+                WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
+                """, params)
+
+    @classmethod
+    def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
+        app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id):
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'sync_date': sync_date,
+            'device_id': device_id,
+            'app_version': app_version,
+            'num_unsent_forms': num_unsent_forms,
+            'num_quarantined_forms': num_quarantined_forms,
+            'commcare_version': commcare_version,
+            'build_profile_id': build_profile_id,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on,
+                    build_id,
+                    sync_date, device_id,
+                    app_version, num_unsent_forms, num_quarantined_forms,
+                    commcare_version, build_profile_id, last_heartbeat
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(sync_date)s, %(device_id)s,
+                    %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
+                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP()
+                )
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    sync_date = EXCLUDED.sync_date,
+                    device_id = EXCLUDED.device_id,
+                    app_version = EXCLUDED.app_version,
+                    num_unsent_forms = EXCLUDED.num_unsent_forms,
+                    num_quarantined_forms = EXCLUDED.num_quarantined_forms,
+                    commcare_version = EXCLUDED.commcare_version,
+                    build_profile_id = EXCLUDED.build_profile_id,
+                    last_heartbeat = CLOCK_TIMESTAMP()
                 WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
                 """, params)
 
