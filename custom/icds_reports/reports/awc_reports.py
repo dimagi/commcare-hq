@@ -335,42 +335,42 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche__lte': 60}
 
-        moderately_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        moderately_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_moderately_underweight'
         )
-        severely_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        severely_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_severely_underweight'
         )
         wasting_moderate = include_records_by_age_for_column(
-            {'age_tranche__lt': 60},
+            age_filters,
             wasting_moderate_column(icds_feature_flag)
         )
         wasting_severe = include_records_by_age_for_column(
-            {'age_tranche__lt': 60},
+            age_filters,
             wasting_severe_column(icds_feature_flag)
         )
-        stunting_moderate = exclude_records_by_age_for_column(
+        stunting_moderate = include_records_by_age_for_column(
             age_filters,
             stunting_moderate_column(icds_feature_flag)
         )
-        stunting_severe = exclude_records_by_age_for_column(
+        stunting_severe = include_records_by_age_for_column(
             age_filters,
             stunting_severe_column(icds_feature_flag)
         )
-        nutrition_status_weighed = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        nutrition_status_weighed = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_weighed'
         )
-        height_measured_in_month = exclude_records_by_age_for_column(
+        height_measured_in_month = include_records_by_age_for_column(
             age_filters,
             hfa_recorded_in_month_column(icds_feature_flag)
         )
         weighed_and_height_measured_in_month = include_records_by_age_for_column(
-            {'age_tranche__lt': 60},
+            age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
 
@@ -1012,7 +1012,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
     if filters.get('age_in_months__range') is None:
-        filters['age_in_months__lte'] = 60
+        filters['age_in_months__lte'] = 72
     data = ChildHealthMonthlyView.objects.filter(
         **filters
     ).order_by(order)
