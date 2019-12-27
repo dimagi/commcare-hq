@@ -2172,13 +2172,22 @@ class MWCDDataView(View):
             return JsonResponse(response, status=500)
 
 
-@location_safe
-class BaseGovernanceAPIView(View):
-    def get_settings(self, request, *args, **kwargs):
+@method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
+class GovernanceAPIView(View):
+
+    @staticmethod
+    def get_state_id_from_state_code(state_code):
+        return AwcLocation.objects.get(aggregation_level=AggregationLevels.STATE,
+                                       state_site_code=state_code, state_is_test=0).state_id
+
+    def get_gov_api_params(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
+        state_id = request.GET.get('state_site_code')
+        if state_id is not None:
+            state_id = GovernanceAPIView.get_state_id_from_state_code()
 
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             prev_month = now - relativedelta(months=1)
@@ -2187,18 +2196,16 @@ class BaseGovernanceAPIView(View):
 
         start = request.GET.get('start', 0)
 
-        return step, start, month, year
-
-
-@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
-class GovernanceAPIView(BaseGovernanceAPIView):
+        return step, start, month, year, state_id
 
     def get(self, request, *args, **kwargs):
-        step, start, month, year = self.get_settings(request, *args, **kwargs)
+        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
 
         if step == 'home_visit':
             length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            query_filters = {'aggregation_level': 5}
+            query_filters = {'aggregation_level': AggregationLevels.AWC}
+            if state_id is not None:
+                query_filters['state_id'] = state_id
             order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
 
             data = get_home_visit_data(

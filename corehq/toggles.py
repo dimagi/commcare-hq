@@ -1727,7 +1727,7 @@ mwcd_indicators = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ICDS_NIC_INDICATOR_API = StaticToggle(
+ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     'governance_apis',
     'ICDS: Dashboard Governance dashboard API',
     TAG_CUSTOM,
