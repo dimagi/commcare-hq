@@ -26,12 +26,7 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
 
         INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
             state_id, supervisor_id, month, case_id, latest_time_end_processed,
-            weight_child, weight_child_last_recorded,
-            height_child, height_child_last_recorded,
-            zscore_grading_wfa, zscore_grading_wfa_last_recorded,
-            zscore_grading_hfa, zscore_grading_hfa_last_recorded,
-            zscore_grading_wfh, zscore_grading_wfh_last_recorded,
-            muac_grading, muac_grading_last_recorded
+            weight_child, weight_child_last_recorded
         ) (
           SELECT
             %(state_id)s,
@@ -40,111 +35,31 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
             ucr.case_id AS case_id,
             GREATEST(
                 ucr.weight_child_last_recorded,
-                ucr.height_child_last_recorded,
-                ucr.zscore_grading_wfa_last_recorded,
-                ucr.zscore_grading_hfa_last_recorded,
-                ucr.zscore_grading_wfh_last_recorded,
-                ucr.muac_grading_last_recorded,
                 '1970-01-01'
             ) AS latest_time_end_processed,
             ucr.weight_child,
-            ucr.weight_child_last_recorded,
-            ucr.height_child,
-            ucr.height_child_last_recorded,
-            ucr.zscore_grading_wfa,
-            ucr.zscore_grading_wfa_last_recorded,
-            ucr.zscore_grading_hfa,
-            ucr.zscore_grading_hfa_last_recorded,
-            ucr.zscore_grading_wfh,
-            ucr.zscore_grading_wfh_last_recorded,
-            ucr.muac_grading,
-            ucr.muac_grading_last_recorded
+            ucr.weight_child_last_recorded
           FROM (
             SELECT
                 DISTINCT child_health_case_id AS case_id,
                 supervisor_id AS supervisor_id,
                 %(current_month_start)s AS month,
-                LAST_VALUE(weight_child) OVER weight_child AS weight_child,
                 CASE
-                    WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER weight_child
-                END AS weight_child_last_recorded,
-                LAST_VALUE(height_child) OVER height_child AS height_child,
+                    WHEN LAST_VALUE(weight_child) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(weight_child) OVER W
+                END AS weight_child,
                 CASE
-                    WHEN LAST_VALUE(height_child) OVER height_child IS NULL THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER height_child
-                END AS height_child_last_recorded,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa
-                END AS zscore_grading_wfa,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfa
-                END AS zscore_grading_wfa_last_recorded,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa
-                END AS zscore_grading_hfa,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER zscore_grading_hfa
-                END AS zscore_grading_hfa_last_recorded,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh
-                END AS zscore_grading_wfh,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfh
-                END AS zscore_grading_wfh_last_recorded,
-                CASE
-                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
-                    ELSE LAST_VALUE(muac_grading) OVER muac_grading
-                END AS muac_grading,
-                CASE
-                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) OVER muac_grading
-                END AS muac_grading_last_recorded
+                    WHEN LAST_VALUE(weight_child) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS weight_child_last_recorded
             FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
             WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
                 AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND weight_child IS NOT NULL AND weight_child != 0
             WINDOW
-                weight_child AS (
+                W AS (
                     PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN weight_child IS NULL THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                ),
-                height_child AS (
-                    PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN height_child IS NULL THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                ),
-                zscore_grading_wfa AS (
-                    PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN zscore_grading_wfa = 0 THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                ),
-                zscore_grading_hfa AS (
-                    PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN zscore_grading_hfa = 0 THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                ),
-                zscore_grading_wfh AS (
-                    PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN zscore_grading_wfh = 0 THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                ),
-                muac_grading AS (
-                    PARTITION BY supervisor_id, child_health_case_id
-                    ORDER BY
-                        CASE WHEN muac_grading = 0 THEN 0 ELSE 1 END ASC,
-                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 )
         ) ucr
         )
@@ -153,22 +68,247 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
                 EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             weight_child = COALESCE(EXCLUDED.weight_child, gm_forms.weight_child),
             weight_child_last_recorded = GREATEST(
-                EXCLUDED.weight_child_last_recorded, gm_forms.weight_child_last_recorded),
+                EXCLUDED.weight_child_last_recorded, gm_forms.weight_child_last_recorded)
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+
+        INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            height_child, height_child_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
+            %(month)s AS month,
+            ucr.case_id AS case_id,
+            GREATEST(
+                ucr.height_child_last_recorded,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            ucr.height_child,
+            ucr.height_child_last_recorded
+          FROM (
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
+                CASE
+                    WHEN LAST_VALUE(height_child) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(height_child) OVER W
+                END AS height_child,
+                CASE
+                    WHEN LAST_VALUE(height_child) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS height_child_last_recorded
+            FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND height_child IS NOT NULL AND height_child != 0
+            WINDOW
+                W AS (
+                    PARTITION BY supervisor_id, child_health_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ucr
+        )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             height_child = COALESCE(EXCLUDED.height_child, gm_forms.height_child),
             height_child_last_recorded = GREATEST(
-                EXCLUDED.height_child_last_recorded, gm_forms.height_child_last_recorded),
+                EXCLUDED.height_child_last_recorded, gm_forms.height_child_last_recorded)
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+
+        INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            zscore_grading_wfa, zscore_grading_wfa_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
+            %(month)s AS month,
+            ucr.case_id AS case_id,
+            GREATEST(
+                ucr.zscore_grading_wfa_last_recorded,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            ucr.zscore_grading_wfa,
+            ucr.zscore_grading_wfa_last_recorded
+          FROM (
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfa) OVER W
+                END AS zscore_grading_wfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS zscore_grading_wfa_last_recorded
+            FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND zscore_grading_wfa IS NOT NULL AND zscore_grading_wfa != 0
+            WINDOW
+                W AS (
+                    PARTITION BY supervisor_id, child_health_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ucr
+        )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             zscore_grading_wfa= COALESCE(
                 EXCLUDED.zscore_grading_wfa, gm_forms.zscore_grading_wfa),
             zscore_grading_wfa_last_recorded = GREATEST(
-                EXCLUDED.zscore_grading_wfa_last_recorded, gm_forms.zscore_grading_wfa_last_recorded),
+                EXCLUDED.zscore_grading_wfa_last_recorded, gm_forms.zscore_grading_wfa_last_recorded)
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+
+        INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            zscore_grading_hfa, zscore_grading_hfa_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
+            %(month)s AS month,
+            ucr.case_id AS case_id,
+            GREATEST(
+                ucr.zscore_grading_hfa_last_recorded,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            ucr.zscore_grading_hfa,
+            ucr.zscore_grading_hfa_last_recorded
+          FROM (
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_hfa) OVER W
+                END AS zscore_grading_hfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS zscore_grading_hfa_last_recorded
+            FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND zscore_grading_hfa IS NOT NULL AND zscore_grading_hfa != 0
+            WINDOW
+                W AS (
+                    PARTITION BY supervisor_id, child_health_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ucr
+        )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             zscore_grading_hfa = COALESCE(
                 EXCLUDED.zscore_grading_hfa, gm_forms.zscore_grading_hfa),
             zscore_grading_hfa_last_recorded = GREATEST(
-                EXCLUDED.zscore_grading_hfa_last_recorded, gm_forms.zscore_grading_hfa_last_recorded),
+                EXCLUDED.zscore_grading_hfa_last_recorded, gm_forms.zscore_grading_hfa_last_recorded)
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+
+        INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            zscore_grading_wfh, zscore_grading_wfh_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
+            %(month)s AS month,
+            ucr.case_id AS case_id,
+            GREATEST(
+                ucr.zscore_grading_wfh_last_recorded,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            ucr.zscore_grading_wfh,
+            ucr.zscore_grading_wfh_last_recorded
+          FROM (
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfh) OVER W
+                END AS zscore_grading_wfh,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS zscore_grading_wfh_last_recorded
+            FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND zscore_grading_wfh IS NOT NULL AND zscore_grading_wfh != 0
+            WINDOW
+                W AS (
+                    PARTITION BY supervisor_id, child_health_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ucr
+        )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             zscore_grading_wfh = COALESCE(
                 EXCLUDED.zscore_grading_wfh, gm_forms.zscore_grading_wfh),
             zscore_grading_wfh_last_recorded = GREATEST(
-                EXCLUDED.zscore_grading_wfh_last_recorded, gm_forms.zscore_grading_wfh_last_recorded),
+                EXCLUDED.zscore_grading_wfh_last_recorded, gm_forms.zscore_grading_wfh_last_recorded)
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+
+        INSERT INTO "icds_dashboard_growth_monitoring_forms" as gm_forms (
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
+            muac_grading, muac_grading_last_recorded
+        ) (
+          SELECT
+            %(state_id)s,
+            supervisor_id,
+            %(month)s AS month,
+            ucr.case_id AS case_id,
+            GREATEST(
+                ucr.muac_grading_last_recorded,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            ucr.muac_grading,
+            ucr.muac_grading_last_recorded
+          FROM (
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(muac_grading) OVER W
+                END AS muac_grading,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER W = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER W
+                END AS muac_grading_last_recorded
+            FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND muac_grading IS NOT NULL AND muac_grading != 0
+            WINDOW
+                W AS (
+                    PARTITION BY supervisor_id, child_health_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ucr
+        )
+        ON CONFLICT (supervisor_id, case_id, month) DO UPDATE SET
+            latest_time_end_processed = GREATEST(
+                EXCLUDED.latest_time_end_processed, gm_forms.latest_time_end_processed),
             muac_grading = COALESCE(EXCLUDED.muac_grading, gm_forms.muac_grading),
             muac_grading_last_recorded = GREATEST(
                 EXCLUDED.muac_grading_last_recorded, gm_forms.muac_grading_last_recorded)

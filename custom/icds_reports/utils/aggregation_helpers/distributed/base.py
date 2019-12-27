@@ -71,7 +71,9 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
         logger.info(f'Updating data for {self.helper_key} month {self.month} and state {self.state_id}')
-        for query, params in update_queries:
+        for index, query_info in enumerate(update_queries):
+            logger.info(f"Updating data for {self.helper_key} update {index}")
+            query, params = query_info
             cursor.execute(query, params)
         logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
