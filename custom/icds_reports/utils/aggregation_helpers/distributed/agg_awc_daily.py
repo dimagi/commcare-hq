@@ -131,7 +131,6 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         FROM ( SELECT
             owner_id,
             supervisor_id,
-            sum(open_count) AS cases_household,
             count(*) AS all_cases_household
             FROM "{household_cases}"
             WHERE opened_on<= %(end_date)s
