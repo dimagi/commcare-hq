@@ -21,7 +21,7 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
             'month': month,
             'year': year,
             'count': data.count(),
-            'timestamp':  india_now()
+            'timestamp': india_now()
         }
     }
 
