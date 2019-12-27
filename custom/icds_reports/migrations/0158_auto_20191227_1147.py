@@ -14,66 +14,20 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='DailyIndicatorsView',
-            fields=[
-                ('state_id', models.TextField(primary_key=True, serialize=False)),
-                ('state_name', models.TextField(blank=True, null=True)),
-                ('date', models.DateField(blank=True, null=True)),
-                ('pse_eligible', models.IntegerField(blank=True, null=True)),
-                ('total_attended_pse', models.IntegerField(blank=True, null=True)),
-                ('num_launched_awcs', models.IntegerField(blank=True, null=True)),
-                ('daily_attendance_open', models.IntegerField(blank=True, null=True)),
-            ],
-            options={
-                'db_table': 'daily_indicators',
-                'managed': False,
-            },
-        ),
-        migrations.CreateModel(
-            name='MWCDReportView',
-            fields=[
-                ('state_id', models.TextField(primary_key=True, serialize=False)),
-                ('state_name', models.TextField(blank=True, null=True)),
-                ('state_site_code', models.TextField(blank=True, null=True)),
-                ('month', models.DateField(blank=True, null=True)),
-                ('num_launched_awcs', models.IntegerField(blank=True, null=True)),
-                ('num_launched_districts', models.IntegerField(blank=True, null=True)),
-                ('num_launched_states', models.IntegerField(blank=True, null=True)),
-                ('awc_with_gm_devices', models.IntegerField(blank=True, null=True)),
-                ('cases_household', models.IntegerField(blank=True, null=True)),
-                ('cases_child_health', models.IntegerField(blank=True, null=True)),
-                ('total_mothers', models.IntegerField(blank=True, null=True)),
-                ('num_ls_launched', models.IntegerField(blank=True, null=True)),
-            ],
-            options={
-                'db_table': 'mwcd_report',
-                'managed': False,
-            },
-        ),
-        migrations.CreateModel(
             name='AggregateMigrationForms',
             fields=[
                 ('state_id', models.CharField(max_length=40)),
                 ('supervisor_id', models.TextField(null=True)),
                 ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
                 ('person_case_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('latest_time_end_processed', models.DateTimeField(help_text='The latest form.meta.timeEnd that has been processed for this case')),
+                ('latest_time_end_processed', models.DateTimeField(
+                    help_text='The latest form.meta.timeEnd that has been processed for this case')),
                 ('migration_status', models.CharField(help_text='Status of the Migration', max_length=40)),
             ],
             options={
                 'db_table': 'icds_dashboard_migration_forms',
             },
             bases=(models.Model, custom.icds_reports.models.aggregate.AggregateMixin),
-        ),
-        migrations.AddField(
-            model_name='aggregateccsrecorddeliveryforms',
-            name='num_children_del',
-            field=models.PositiveSmallIntegerField(help_text='Number of children born', null=True),
-        ),
-        migrations.AddField(
-            model_name='aggregateccsrecorddeliveryforms',
-            name='still_live_birth',
-            field=models.PositiveSmallIntegerField(help_text='Number of children alive', null=True),
         ),
         migrations.AlterUniqueTogether(
             name='aggregatemigrationforms',
