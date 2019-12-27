@@ -431,6 +431,7 @@ class TestDeleteDomain(TestCase):
                     name='test',
                 location_type='facility'
             )
+            location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location_id=location.id)
             LatestEnabledBuildProfiles.objects.create(domain=domain_name)
@@ -443,6 +444,8 @@ class TestDeleteDomain(TestCase):
 
         self._assert_app_manager_counts(self.domain.name, 0)
         self._assert_app_manager_counts(self.domain2.name, 1)
+        
+        location.delete()
 
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
