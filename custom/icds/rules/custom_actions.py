@@ -1,7 +1,6 @@
 import pytz
 import uuid
 from casexml.apps.case.mock import CaseBlock
-from corehq import toggles
 from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
 from corehq.apps.hqcase.utils import submit_case_blocks, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -37,17 +36,15 @@ def _update_existing_tech_issue_delegate(tech_issue_delegate, owner_id):
     else:
         change_in_level = '1'
 
-    kwargs = {
-        "case_properties": {'change_in_level': change_in_level},
-        "close": False,
-        "xmlns": AUTO_UPDATE_XMLNS,
-        "device_id": __name__ + "._update_existing_tech_issue_delegate",
-    }
-    if toggles.ICDS_AUTO_ESCALATION_QA.enabled(tech_issue_delegate.domain):
-        kwargs.update({
-            "owner_id": owner_id,
-        })
-    return update_case(tech_issue_delegate.domain, tech_issue_delegate.case_id, **kwargs)
+    return update_case(
+        tech_issue_delegate.domain,
+        tech_issue_delegate.case_id,
+        case_properties={'change_in_level': change_in_level},
+        close=False,
+        xmlns=AUTO_UPDATE_XMLNS,
+        device_id=__name__ + "._update_existing_tech_issue_delegate",
+        owner_id=owner_id,
+    )
 
 
 def _update_tech_issue_for_escalation(case, escalated_ticket_level):
@@ -114,10 +111,7 @@ def escalate_tech_issue(case, rule):
 
     num_creates = 0
     num_related_updates = 0
-    if toggles.ICDS_AUTO_ESCALATION_QA.enabled(case.domain):
-        tech_issue_delegate = _get_escalated_tech_issue_delegate(case, current_location_id)
-    else:
-        tech_issue_delegate = _get_escalated_tech_issue_delegate(case, escalated_location_id)
+    tech_issue_delegate = _get_escalated_tech_issue_delegate(case, current_location_id)
 
     if tech_issue_delegate:
         delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate, escalated_location_id)
