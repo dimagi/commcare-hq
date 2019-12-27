@@ -2172,6 +2172,7 @@ class MWCDDataView(View):
             return JsonResponse(response, status=500)
 
 
+@location_safe
 @method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
 class GovernanceAPIView(View):
 
