@@ -161,14 +161,23 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
-    def aggregate(self, cursor):
+    def aggregate_temp(self, cursor):
         staging_queries = self.staging_queries()
-        update_queries = self.update_queries()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
-
         logger.info(f"Creating temporary distributed table for {self.helper_key}")
         cursor.execute(self.drop_temporary_table())
         cursor.execute(self.create_temporary_table())
+
+        logger.info(f"Inserting inital data into distributed temp table for {self.helper_key}")
+        i = 0
+        for staging_query, params in staging_queries:
+            logger.info(f"Running staging query {i}")
+            cursor.execute(staging_query, params)
+            i += 1
+
+    def update_table(self, cursor):
+        update_queries = self.update_queries()
+        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+
         logger.info(f"Creating staging table for {self.helper_key}")
         self.cleanup(cursor)
         cursor.execute(f"""
@@ -178,13 +187,6 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
         )
         """)
-
-        logger.info(f"Inserting inital data into staging table for {self.helper_key}")
-        i = 0
-        for staging_query, params in staging_queries:
-            logger.info(f"Running staging query {i}")
-            cursor.execute(staging_query, params)
-            i += 1
 
         logger.info(f"Updating data into staging table for {self.helper_key}")
         i = 0
@@ -238,6 +240,11 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
 
         self.cleanup(cursor)
+
+    def aggregate(self, cursor):
+        self.aggregate_temp(cursor)
+        self.update_table(cursor)
+
 
     def cleanup(self, cursor):
         logger.info(f'Start {self.helper_key} cleanup')

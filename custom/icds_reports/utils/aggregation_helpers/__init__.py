@@ -17,6 +17,10 @@ def get_child_health_temp_tablename(month):
     return f"tmp_{base_tablename}_{month_string}"
 
 
+def get_agg_child_temp_tablename():
+    return 'tmp_agg_child_health_5'
+
+
 class AggregationHelper(object):
     """Base class used to tag aggregation helpers
 
