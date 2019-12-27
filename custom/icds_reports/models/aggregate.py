@@ -1580,7 +1580,7 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_MIGRATION_TABLE
-        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
 
     _agg_helper_cls = MigrationFormsAggregationDistributedHelper
     _agg_atomic = False
