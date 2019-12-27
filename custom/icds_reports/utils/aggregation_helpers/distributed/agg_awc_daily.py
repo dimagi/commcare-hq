@@ -124,7 +124,6 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             'date': self.date
         }
 
-
     def update_launched_query(self):
         return """
         CREATE TEMPORARY TABLE "{temp_table}" AS
