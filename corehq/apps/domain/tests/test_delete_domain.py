@@ -425,10 +425,11 @@ class TestDeleteDomain(TestCase):
 
     def test_app_manager(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            AppReleaseByLocation.objects.create(domain=domain_name)
+            AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456', version=23)
             LatestEnabledBuildProfiles.objects.create(domain=domain_name)
-            SQLGlobalAppConfig.objects.create(domain=domain_name)
-            ResourceOverride.objects.create(domain=domain_name)
+            SQLGlobalAppConfig.objects.create(domain=domain_name, app_id='123')
+            ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
+                                            pre_id='456', post_id='789')
             self._assert_app_manager_counts(domain_name, 1)
 
         self.domain.delete()
