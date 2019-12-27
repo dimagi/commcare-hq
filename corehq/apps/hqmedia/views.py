@@ -18,7 +18,7 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -372,6 +372,27 @@ def update_multimedia_paths(request, domain, app_id):
         'successes': successes,
         'warnings': warnings,
     })
+
+
+@toggles.MULTI_MASTER_LINKED_DOMAINS.required_decorator()
+@require_can_edit_apps
+@require_POST
+def copy_multimedia(request, domain, app_id):
+    app = get_app(domain, app_id)
+    other_app_id = request.POST.get("app_id")
+    other_app = get_app(domain, other_app_id)
+
+    paths = app.all_media_paths()
+    count = 0
+    for path in paths:
+        if path not in app.multimedia_map:
+            app.multimedia_map[path] = other_app.multimedia_map[path]
+            count += 1
+    if count:
+        app.save()
+
+    messages.success(request, "Copied {} multimedia items.".format(count))
+    return redirect("app_settings", domain=domain, app_id=app_id)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
