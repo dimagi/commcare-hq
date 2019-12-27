@@ -428,7 +428,7 @@ class TestDeleteDomain(TestCase):
             location = make_location(
                 domain=domain_name,
                 site_code='testcode',
-                    name='test',
+                name='test',
                 location_type='facility'
             )
             location.save()
