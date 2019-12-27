@@ -6,8 +6,7 @@ from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.sync_user_case import (
-    sync_call_center_user_case,
-    sync_usercase,
+    sync_user_cases
 )
 from corehq.apps.callcenter.utils import (
     get_call_center_cases,
@@ -59,5 +58,4 @@ def sync_user_cases_if_applicable(user, spawn_task):
 @task(serializer='pickle', queue='background_queue')
 def sync_user_cases_task(user_id):
     user = CommCareUser.get_by_user_id(user_id)
-    sync_call_center_user_case(user)
-    sync_usercase(user)
+    sync_user_cases(user)

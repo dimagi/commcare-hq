@@ -2,16 +2,17 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
-    vm.steps = {
-        'map': {route: '/demographics/enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/demographics/enrolled_women/chart', label: 'Chart View'},
-    };
+    vm.serviceDataFunction = demographicsService.getEnrolledWomenData;
+    vm.usePercentage = false;
+    vm.steps = vm.getSteps('/demographics/enrolled_women/');
     vm.data = {
         legendTitle: 'Number of Women',
     };
@@ -21,13 +22,12 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         info: 'Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Number of pregnant women who are enrolled for Anganwadi Services: ',
                 indicator_value: valid,
             },
@@ -38,17 +38,8 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             {
                 indicator_name: 'Percentage of registered pregnant women who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = false;
-        vm.myPromise = demographicsService.getEnrolledWomenData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -93,12 +84,16 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     };
 }
 
-EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+EnrolledWomenController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('enrolledWomen', function() {
+window.angular.module('icdsApp').directive('enrolledWomen', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -106,4 +101,4 @@ window.angular.module('icdsApp').directive('enrolledWomen', function() {
         controller: EnrolledWomenController,
         controllerAs: '$ctrl',
     };
-});
+}]);

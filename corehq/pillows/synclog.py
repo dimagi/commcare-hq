@@ -37,8 +37,10 @@ SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
 def get_user_sync_history_pillow(
         pillow_id='UpdateUserSyncHistoryPillow', num_processes=1, process_num=0, **kwargs):
-    """
-    This gets a pillow which iterates through all synclogs
+    """Synclog pillow
+
+    Processors:
+      - :py:func:`corehq.pillows.synclog.UserSyncHistoryProcessor`
     """
     change_feed = KafkaChangeFeed(
         topics=[topics.SYNCLOG_SQL], client_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
@@ -56,6 +58,19 @@ def get_user_sync_history_pillow(
 
 
 class UserSyncHistoryProcessor(PillowProcessor):
+    """Updates the user document with reporting metadata when a user syncs
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately.
+
+    Reads from:
+      - CouchDB (user)
+      - SynclogSQL table
+
+    Writes to:
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
+    """
 
     def process_change(self, change):
         synclog = change.get_document()
@@ -88,7 +103,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
             mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id)
 
 
-def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, save=True):
+def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, save_user=True):
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
@@ -103,7 +118,7 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, save
             app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
         local_save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
 
-    if local_save and save:
+    if local_save and save_user:
         user.save(fire_signals=False)
     return local_save
 

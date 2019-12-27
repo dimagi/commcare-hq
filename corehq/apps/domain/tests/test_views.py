@@ -6,6 +6,9 @@ from django.urls import reverse
 from bs4 import BeautifulSoup
 from mock import patch
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import APP_V1, Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.exchange import CreateNewExchangeSnapshotView
@@ -14,13 +17,18 @@ from corehq.motech.repeaters.models import AppStructureRepeater
 from corehq.util.test_utils import teardown
 
 
-class TestDomainViews(TestCase):
+class TestDomainViews(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
+        super().setUp()
         self.client = Client()
 
         self.domain = Domain(name="fandago", is_active=True)
         self.domain.save()
+
+        # DATA_FORWARDING is on PRO and above,
+        # which is needed by test_add_repeater
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.PRO)
 
         self.username = 'bananafana'
         self.password = '*******'
@@ -32,8 +40,11 @@ class TestDomainViews(TestCase):
         self.app.save()
 
     def tearDown(self):
+        self.teardown_subscriptions()
         self.user.delete()
         self.domain.delete()
+        clear_plan_version_cache()
+        super().tearDown()
         
     def test_allow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)

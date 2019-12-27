@@ -1,17 +1,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
-function KpiController($location, haveAccessToFeatures) {
-    this.haveAccessToFeatures = haveAccessToFeatures;
+function KpiController($rootScope, $location, navigationService) {
     this.goToStep = function(path) {
-        var page_path = "#/" + path;
-        if (Object.keys($location.search()).length > 0) {
-            page_path += '?';
-        }
-        window.angular.forEach($location.search(), function(v, k) {
-            page_path += (k + '=' + v + '&');
-        });
-        return page_path;
+        return navigationService.getPagePath(path, $location.search());
     };
 
     this.showPercentInfo = function () {
@@ -24,9 +16,14 @@ function KpiController($location, haveAccessToFeatures) {
     };
 
     this.isNumber = window.angular.isNumber;
+
+    // used by mobile dashboard only
+    this.showHelp = function (heading, help) {
+        $rootScope.$broadcast('showHelp', heading, help);
+    };
 }
 
-KpiController.$inject = ['$location', 'haveAccessToFeatures'];
+KpiController.$inject = ['$rootScope', '$location', 'navigationService'];
 
 window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
     return {

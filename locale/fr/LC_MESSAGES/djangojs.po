@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-05 22:28+0000\n"
+"POT-Creation-Date: 2019-12-18 15:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,35 @@ msgid ""
 "href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:90
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:103
+msgid "Downgrading?"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:105
+msgid "Pausing Subscription?"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:107
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
+"Edition Plan subscription to be paused on <%= date %>.</p><p>If you have "
+"questions or if you would like to speak to us about your subscription, "
+"please reach out to <%= email %>.</p>"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:120
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
+"be paused on <%= date %>.</p><p>Continuing ahead will allow you to schedule "
+"your current <%= oldPlan %> Edition Plan subscription to be downgraded to "
+"the <%= newPlan %> Edition Plan on <%= date %>.</p><p>If you have questions "
+"or if you would like to speak to us about your subscription, please reach "
+"out to <%= email %>.</p>"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:136
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
 "p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
@@ -77,7 +105,7 @@ msgid ""
 "speak to us about your subscription, please reach out to <%= email %>.</p>"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:107
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:153
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
 "p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
@@ -86,12 +114,12 @@ msgid ""
 "to us about your subscription, please reach out to <%= email %>."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:183
-msgid "Billed Monthly"
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:247
+msgid "Billed Annually"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:185
-msgid "Billed Annually"
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:249
+msgid "Billed Monthly"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js:70
@@ -126,6 +154,7 @@ msgid "You have unsaved changes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:56
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
@@ -724,7 +753,7 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js:20
+#: corehq/apps/app_manager/static/app_manager/js/source_files.js:22
 msgid "Please enter a version to compare"
 msgstr ""
 
@@ -3139,12 +3168,12 @@ msgstr ""
 msgid "User Registration"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:297
+#: corehq/apps/export/static/export/js/create_export.js:305
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:333
+#: corehq/apps/export/static/export/js/create_export.js:341
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
@@ -3673,15 +3702,14 @@ msgid "An error occurred emailing you report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:14
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:69
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:96
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:117
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:206
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:232
 msgid "Success!"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:17
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:23
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:72
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:209
 msgid "Failed"
 msgstr ""
 
@@ -3893,23 +3921,23 @@ msgstr ""
 msgid "Select location"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:137
+#: corehq/apps/users/static/users/js/roles.js:136
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:137
+#: corehq/apps/users/static/users/js/roles.js:136
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:138
+#: corehq/apps/users/static/users/js/roles.js:137
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:149
+#: corehq/apps/users/static/users/js/roles.js:148
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:152
+#: corehq/apps/users/static/users/js/roles.js:151
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
@@ -4086,16 +4114,15 @@ msgstr ""
 msgid "HQ was unable to make the request: "
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:44
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:49
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:80
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:217
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:101
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:122
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:237
 msgid "Failed to cancel"
 msgstr ""
 

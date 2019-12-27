@@ -33,7 +33,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            queryset = queryset.exclude(age_tranche=72)
+            queryset = queryset.filter(age_tranche__lt=72)
         return queryset
 
     data_for_map = defaultdict(lambda: {
@@ -175,7 +175,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         chart_data = apply_exclude(domain, chart_data)
 
     if 'age_tranche' not in config:
-        chart_data = chart_data.exclude(age_tranche=72)
+        chart_data = chart_data.filter(age_tranche__lt=72)
 
     data = {
         'red': OrderedDict(),
@@ -295,7 +295,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
     if not show_test:
         data = apply_exclude(domain, data)
     if 'age_tranche' not in config:
-        data = data.exclude(age_tranche=72)
+        data = data.filter(age_tranche__lt=72)
 
     chart_data = {
         'blue': [],

@@ -1,6 +1,9 @@
 from django.core.management.base import BaseCommand
 
 import attr
+import logging
+import sys
+
 from gevent.pool import Pool
 
 from custom.icds_reports.models.util import AggregationRecord
@@ -8,7 +11,6 @@ from custom.icds_reports.tasks import (
     _agg_awc_table,
     _agg_beneficiary_form,
     _agg_ccs_record_table,
-    _agg_child_health_table,
     _agg_ls_awc_mgt_form,
     _agg_ls_table,
     _agg_ls_vhnd_form,
@@ -27,11 +29,17 @@ from custom.icds_reports.tasks import (
     _child_health_monthly_aggregation,
     _daily_attendance_table,
     _update_months_table,
+    agg_child_health_temp,
     aggregate_awc_daily,
     create_all_mbt,
     setup_aggregation,
+    update_agg_child_health,
     update_child_health_monthly_table,
+    _agg_adolescent_girls_registration_table
 )
+
+
+logger = logging.getLogger(__name__)
 
 STATE_TASKS = {
     'aggregate_gm_forms': _aggregate_gm_forms,
@@ -48,6 +56,7 @@ STATE_TASKS = {
     'agg_ls_vhnd_form': _agg_ls_vhnd_form,
     'agg_beneficiary_form': _agg_beneficiary_form,
     'aggregate_df_forms': _aggregate_df_forms,
+    'aggregate_ag_forms': _agg_adolescent_girls_registration_table
 }
 
 ALL_STATES_TASKS = {
@@ -61,11 +70,12 @@ NORMAL_TASKS = {
     'agg_ls_table': _agg_ls_table,
     'update_months_table': _update_months_table,
     'daily_attendance': _daily_attendance_table,
-    'agg_child_health': _agg_child_health_table,
+    'agg_child_health_temp': agg_child_health_temp,
     'ccs_record_monthly': _ccs_record_monthly_table,
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
+    'update_agg_child_health': update_agg_child_health,
 }
 
 
@@ -98,12 +108,18 @@ def run_task(agg_record, query_name):
     query = function_map[query_name]
     if query.by_state == SINGLE_STATE:
         greenlets = []
-        pool = Pool(10)
+        pool = Pool(15)
+        logger.info('Spawning greenlets')
         for state in state_ids:
             greenlets.append(pool.spawn(query.func, state, agg_date))
+        logger.info('Joining greenlets')
         pool.join(raise_error=True)
+        logger.info('Getting greenlets')
         for g in greenlets:
+            logger.info('getting {}'.format(g))
             g.get()
+            logger.info('got {}'.format(g))
+        logger.info('Done getting greenlets')
     elif query.by_state == NO_STATES:
         query.func(agg_date)
     else:
@@ -125,3 +141,5 @@ class Command(BaseCommand):
             return
 
         run_task(agg_record, query_name)
+        logger.info('Done with task')
+        sys.stdout.flush()

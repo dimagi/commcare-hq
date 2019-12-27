@@ -106,10 +106,10 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            if toggles.USER_API_USE_ES_BACKEND.enabled_for_request(bundle.request):
-                return UserQuerySetAdapterES(domain, show_archived=show_archived)
-            else:
+            if toggles.USER_API_USE_COUCH_BACKEND.enabled_for_request(bundle.request):
                 return UserQuerySetAdapterCouch(domain, show_archived=show_archived)
+            else:
+                return UserQuerySetAdapterES(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):

@@ -283,6 +283,7 @@
           "location_property": "_id",
           "type": "ancestor_location"
         },
+        "create_index": true,
         "column_id": "state_id"
       },
       {

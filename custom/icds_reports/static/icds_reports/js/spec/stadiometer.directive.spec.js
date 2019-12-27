@@ -15,9 +15,7 @@ describe('Stadiometer Directive', function () {
 
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, false, false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -88,8 +86,8 @@ describe('Stadiometer Directive', function () {
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, all: 100});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
-            '<div>Number of AWCs that reported having an Stadiometer: <strong>10</strong></div>' +
-            '<div>% of AWCs that reported having an Stadiometer: <strong>10.00%</strong></div></div>';
+            '<div>Number of AWCs that reported having a Stadiometer: <strong>10</strong></div>' +
+            '<div>% of AWCs that reported having a Stadiometer: <strong>10.00%</strong></div></div>';
 
         assert.equal(result, expected);
     });
@@ -160,7 +158,7 @@ describe('Stadiometer Directive', function () {
             'width': '900px',
         });
         assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having an Stadiometer. '
+            '<i class="fa fa-info-circle"></i> Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Stadiometer. '
         );
     });
 
@@ -169,8 +167,8 @@ describe('Stadiometer Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
-            '<div>Number of AWCs that reported having an Stadiometer: <strong>10</strong></div>' +
-            '<div>% of AWCs that reported having an Stadiometer: <strong>50.00%</strong></div>';
+            '<div>Number of AWCs that reported having a Stadiometer: <strong>10</strong></div>' +
+            '<div>% of AWCs that reported having a Stadiometer: <strong>50.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
@@ -179,8 +177,8 @@ describe('Stadiometer Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Number of AWCs that reported having an Stadiometer: <strong>0</strong></div>' +
-            '<div>% of AWCs that reported having an Stadiometer: <strong>0.00%</strong></div></div>';
+            '<div>Number of AWCs that reported having a Stadiometer: <strong>0</strong></div>' +
+            '<div>% of AWCs that reported having a Stadiometer: <strong>0.00%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

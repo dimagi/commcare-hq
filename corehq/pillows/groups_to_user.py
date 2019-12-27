@@ -14,6 +14,15 @@ from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, Reindex
 
 
 class GroupsToUsersProcessor(PillowProcessor):
+    """When a group changes, this updates the user doc in UserES
+
+    Reads from:
+      - Kafka topics: group
+      - Group data source (CouchDB)
+
+    Writes to:
+      - UserES index
+    """
 
     def __init__(self):
         self._es = get_es_new()
@@ -45,6 +54,12 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
 
 
 def get_group_pillow(pillow_id='group-pillow', num_processes=1, process_num=0, **kwargs):
+    """Group pillow
+
+    Processors:
+      - :py:class:`corehq.pillows.groups_to_user.GroupsToUsersProcessor`
+      - :py:func:`corehq.pillows.group.get_group_to_elasticsearch_processor`
+    """
     assert pillow_id == 'group-pillow', 'Pillow ID is not allowed to change'
     to_user_es_processor = GroupsToUsersProcessor()
     to_group_es_processor = get_group_to_elasticsearch_processor()

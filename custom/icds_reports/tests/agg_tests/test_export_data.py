@@ -613,11 +613,11 @@ class TestExportData(TestCase):
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0]
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0]
                 ]],
                 [
                     'Export Info',
@@ -2241,7 +2241,7 @@ class TestExportData(TestCase):
                     ['Disclaimer',
                      'The information in the report is based on the self-reported '
                      'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data syncs.']
+                     ' and is subject to timely data submissions.']
                 ]
              ]
         ]

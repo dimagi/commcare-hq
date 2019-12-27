@@ -871,15 +871,15 @@ table.dataTable.fixedHeader-locked {
     width: 100%;
 }
 
-.locPopup > .modal-header {
+.locPopup .modal-header {
     padding: 5px;
 }
 
-.locPopup > .modal-body {
+.locPopup .modal-body {
     display: grid;
 }
 
-.locPopup > .modal-body > button {
+.locPopup .modal-body > button {
     margin: 2px;
 }
 

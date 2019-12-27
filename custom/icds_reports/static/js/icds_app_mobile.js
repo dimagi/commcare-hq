@@ -47,7 +47,15 @@ MainMobileController.$inject = [
     'userLocationId',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'cgBusy'])
+window.angular.module('icdsApp', [
+    'ngRoute', 'ngSanitize', 'cgBusy', 'datamaps', 'nvd3',
+    // these libraries aren't truly needed but do to code sharing with the web dashboard,
+    // some directives depend on them to compile.
+    // in the future, ideally those directives would be refactored such that the web dependencies
+    // don't leak into mobile
+    'ui.bootstrap',  // location directive depends on this
+    'datatables', 'datatables.fixedheader', // awc reports depend on these (tabular views)
+])
     .controller('MainMobileController', MainMobileController)
     .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -58,4 +66,5 @@ window.angular.module('icdsApp', ['ngRoute', 'cgBusy'])
             }).when("/program_summary/:step", {
                 template: "<program-summary></program-summary>",
             });
+        hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider, 'map');
     }]);

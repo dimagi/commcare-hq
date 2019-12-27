@@ -21,6 +21,7 @@ from corehq.apps.app_manager.tests.test_report_config import (
     mock_report_configuration_get,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.util.test_utils import flag_enabled
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
@@ -32,7 +33,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         data_source_mock = Mock()
         data_source_mock.get_data.return_value = [
             {'foo': 1, 'bar': 2, 'baz': 3},
-            {'ham': 1, 'spam': 2, 'eggs': 3},
+            {'ham': 1, 'spam': 2, 'baz': 3},
         ]
         data_source_mock.has_total_row = False
         return data_source_mock
@@ -79,6 +80,35 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             self.assertXMLEqual(
                 etree.tostring(report, pretty_print=True).decode('utf-8'),
                 self.get_xml('expected_v2_report').decode('utf-8')
+            )
+
+    @flag_enabled('MOBILE_UCR_TOTAL_ROW_ITERATIVE')
+    def test_v2_report_fixtures_provider_iterative_total_row(self):
+        report_id = 'deadbeef'
+        provider = ReportFixturesProviderV2()
+        report_app_config = ReportAppConfig(
+            uuid='c0ffee',
+            report_id=report_id,
+            filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
+        )
+        user = Mock(user_id='mock-user-id')
+
+        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
+             patch(
+                 'corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
+            patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
+            mock = self.get_data_source_mock()
+            mock.has_total_row = True
+            mock.total_column_ids = ['baz']
+            mock.final_column_ids = ['foo', 'bar', 'baz']
+            report_datasource.from_spec.return_value = mock
+            last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
+            fixtures = provider.report_config_to_v2_fixture(report_app_config, user)
+            report = E.restore()
+            report.extend(fixtures)
+            self.assertXMLEqual(
+                etree.tostring(report, pretty_print=True).decode('utf-8'),
+                self.get_xml('expected_v2_report_total').decode('utf-8')
             )
 
     def test_v2_report_fixtures_provider_caching(self):
