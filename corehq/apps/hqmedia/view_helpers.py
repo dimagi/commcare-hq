@@ -10,7 +10,6 @@ from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.translations.app_translations.download import get_bulk_app_single_sheet_by_name
 from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
 from corehq.apps.translations.const import SINGLE_SHEET_NAME
-from corehq.apps.translations.utils import get_file_content_from_workbook
 
 
 def download_multimedia_paths_rows(app, only_missing=False):
@@ -160,6 +159,6 @@ def download_audio_translator_files(domain, app, lang):
                 sheet.append(row)
 
     return {
-        "bulk_upload.xlsx": get_file_content_from_workbook(upload_workbook),
-        "excel_for_translator.xlsx": get_file_content_from_workbook(translator_workbook),
+        "bulk_upload.xlsx": upload_workbook,
+        "excel_for_translator.xlsx": translator_workbook,
     }

@@ -80,6 +80,7 @@ from corehq.apps.hqmedia.tasks import (
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
@@ -476,8 +477,8 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
             files = download_audio_translator_files(self.domain, self.app, lang)
             zip_in_memory = io.BytesIO()
             with zipfile.ZipFile(zip_in_memory, "w", zipfile.ZIP_DEFLATED) as zip_content:
-                for filename, content in files.items():
-                    zip_content.writestr(filename, content)
+                for filename, workbook in files.items():
+                    zip_content.writestr(filename, get_file_content_from_workbook(workbook))
             today = datetime.strftime(datetime.utcnow(), "%Y-%m-%d")
             filename = "Audio Translator Files {} {}.zip".format(lang, today)
             zip_in_memory.seek(0)
