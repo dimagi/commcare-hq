@@ -225,7 +225,7 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-)
+    india_now)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -2183,7 +2183,6 @@ class GovernanceAPIView(View):
             .values_list('state_id', flat=True)
         return awc_location[0] if len(awc_location) > 0 else None
 
-
     def get_gov_api_params(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
@@ -2234,7 +2233,7 @@ class GovernanceAPIView(View):
                 query_filters['state_id'] = state_id
             order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
 
-            data = get_home_visit_data(
+            data, count = get_home_visit_data(
                 start,
                 length,
                 year,
@@ -2242,4 +2241,14 @@ class GovernanceAPIView(View):
                 order,
                 query_filters
             )
-        return JsonResponse(data=data)
+            response_json = {
+                'data': data,
+                'metadata': {
+                    'start': start,
+                    'month': month,
+                    'year': year,
+                    'count': count,
+                    'timestamp': india_now()
+                }
+            }
+        return JsonResponse(data=response_json)
