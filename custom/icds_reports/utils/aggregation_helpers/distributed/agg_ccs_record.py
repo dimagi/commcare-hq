@@ -54,9 +54,11 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             ('lactating', 'sum(crm.lactating)'),
             ('pregnant', 'sum(crm.pregnant)'),
             ('lactating_registered_in_month',
-                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN crm.lactating ELSE 0 END)"),
+                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN "
+                "crm.lactating ELSE 0 END)"),
             ('pregnant_registered_in_month',
-                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN crm.pregnant ELSE 0 END)"),
+                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN "
+                "crm.pregnant ELSE 0 END)"),
             ('thr_eligible', 'sum(crm.thr_eligible)'),
             ('rations_21_plus_distributed', 'SUM(CASE WHEN crm.num_rations_distributed>=21 THEN 1 ELSE 0 END)'),
             ('tetanus_complete', 'sum(crm.tetanus_complete)'),
@@ -97,9 +99,11 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             ('lactating_all', 'sum(crm.lactating_all)'),
             ('pregnant_all', 'sum(crm.pregnant_all)'),
             ('lactating_all_registered_in_month',
-                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN crm.lactating_all ELSE 0 END)"),
+                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN "
+                "crm.lactating_all ELSE 0 END)"),
             ('pregnant_all_registered_in_month',
-                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN crm.pregnant_all ELSE 0 END)"),
+                "sum(CASE WHEN (date_trunc('month',crm.opened_on)=%(start_date)s) THEN "
+                "crm.pregnant_all ELSE 0 END)"),
             ('valid_visits', 'sum(crm.valid_visits)'),
             ('expected_visits', 'sum( '
              'CASE '
