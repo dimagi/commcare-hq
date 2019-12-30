@@ -14,6 +14,7 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'month', 'valid_visits',
         'expected_visits'
     )
+    paginated_data = data[int(start):(int(start) + length)]
 
     def get_value_or_data_not_entered(source, field):
         value = source.get(field)
@@ -34,8 +35,6 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
         )
 
     data_rows = []
-    for row in data:
+    for row in paginated_data:
         data_rows.append(base_data(row))
-    data_rows = data_rows[int(start):(int(start) + length)]
-
     return data_rows, data.count()
