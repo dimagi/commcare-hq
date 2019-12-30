@@ -26,6 +26,20 @@ class SQLApplicationAccess(models.Model):
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
 
+    def user_can_access_app(self, user, app):
+        user_id = user['_id']
+        app_id = app['_id']
+        if not self.restrict or user['doc_type'] == 'WebUser':
+            return True
+        app_group = None
+        for app_group in self.app_groups:
+            if app_group.app_id in (app_id, app['copy_of'] or ()):
+                break
+        if app_group:
+            return Group.user_in_group(user_id, app_group.group_id)
+        else:
+            return False
+
 
 class SQLAppGroup(models.Model):
     app_id = models.CharField(max_length=255, null=False)
@@ -84,20 +98,6 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
-
-    def user_can_access_app(self, user, app):
-        user_id = user['_id']
-        app_id = app['_id']
-        if not self.restrict or user['doc_type'] == 'WebUser':
-            return True
-        app_group = None
-        for app_group in self.app_groups:
-            if app_group.app_id in (app_id, app['copy_of'] or ()):
-                break
-        if app_group:
-            return Group.user_in_group(user_id, app_group.group_id)
-        else:
-            return False
 
     @classmethod
     def get_template_json(cls, domain, apps):
