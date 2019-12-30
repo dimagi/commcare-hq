@@ -1561,7 +1561,7 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
 
     A migration table exists for each state_id and month.
 
-    A row exists for every child_health case that has had a THR Form
+    A row exists for every person case that has had a record of migration
     submitted against it this month.
     """
 
@@ -1573,9 +1573,6 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
     # not the real pkey - see unique_together
     person_case_id = models.CharField(max_length=40, primary_key=True)
 
-    latest_time_end_processed = models.DateTimeField(
-        help_text="The latest form.meta.timeEnd that has been processed for this case"
-    )
     migration_status = models.CharField(max_length=40, help_text="Status of the Migration")
 
     class Meta(object):
