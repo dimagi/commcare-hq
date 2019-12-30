@@ -1171,13 +1171,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ICDS_AUTO_ESCALATION_QA = StaticToggle(
-    'icds_auto_escalation_qa',
-    "Temporary flag to support QA of changes to ICDS's auto escalation workflow",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
