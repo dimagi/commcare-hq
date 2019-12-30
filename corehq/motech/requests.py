@@ -139,17 +139,19 @@ class Requests(object):
     def notify_error(self, message, details=None):
         if not self.notify_addresses:
             return
-        message_body = '\r\n'.join((
+        message_lines = [
             message,
             f'Project space: {self.domain_name}',
             f'Remote API base URL: {self.base_url}',
             f'Remote API username: {self.username}',
-        ))
+        ]
+        if self.payload_id:
+            message_lines.append(f'Payload ID: {self.payload_id}')
         if details:
-            message_body += f'\r\n\r\n{details}'
+            message_lines.extend(['', '', details])
         send_mail_async.delay(
             'MOTECH Error',
-            message_body,
+            '\r\n'.join(message_lines),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
