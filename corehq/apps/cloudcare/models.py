@@ -115,21 +115,3 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
             })
         j['app_groups'] = merged_access_list
         return j
-
-    def save(self, *args, **kwargs):
-        # Save to SQL
-        with transaction.atomic():
-            model, created = SQLApplicationAccess.objects.update_or_create(
-                domain=self.domain,
-                defaults={
-                    'restrict': self.restrict,
-                }
-            )
-            model.sqlappgroup_set.set([
-                SQLAppGroup.objects.update_or_create(app_id=group.app_id, defaults={'group_id': group.group_id})[0]
-                for group in self.app_groups
-            ], bulk=False)
-            model.save()
-
-        # Save to couch
-        super().save(*args, **kwargs)

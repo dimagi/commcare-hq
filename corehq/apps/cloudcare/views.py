@@ -55,7 +55,7 @@ from corehq.apps.cloudcare.const import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
-from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.cloudcare.models import ApplicationAccess, SQLApplicationAccess, SQLAppGroup
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -451,16 +451,13 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         }
 
     def put(self, request, *args, **kwargs):
-        j = json.loads(request.body.decode('utf-8'))
-        old = ApplicationAccess.get_by_domain(self.domain)
-        new = ApplicationAccess.wrap(j)
-        old.restrict = new.restrict
-        old.app_groups = new.app_groups
-        try:
-            if old._rev != new._rev or old._id != new._id:
-                raise ResourceConflict()
-            old.save()
-        except ResourceConflict:
-            return HttpResponseConflict()
-        else:
-            return json_response({'_rev': old._rev})
+        body = json.loads(request.body.decode('utf-8'))
+        access = get_application_access_for_domain(self.domain)
+        access.restrict = body['restrict']
+        access.sqlappgroup_set.all().delete()
+        access.sqlappgroup_set.set([
+            SQLAppGroup(app_id=app_group['app_id'], group_id=app_group.get('group_id'))
+            for app_group in body['app_groups']
+        ], bulk=False)
+        access.save()
+        return json_response({'success': 1})
