@@ -555,6 +555,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             cases_person_beneficiary_v2 = (
                 COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
             ),
+            cases_ccs_lactating_reg_in_month = ut.lactating_registered_in_month,
+            cases_ccs_pregnant_reg_in_month = ut.pregnant_registered_in_month,
+            cases_ccs_lactating_all_reg_in_month = ut.lactating_all_registered_in_month,
+            cases_ccs_pregnant_all_reg_in_month = ut.pregnant_all_registered_in_month,
             valid_visits = ut.valid_visits,
             expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits
                 THEN ut.valid_visits ELSE ut.expected_visits END
@@ -566,6 +570,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.lactating_registered_in_month) as lactating_registered_in_month,
+                sum(agg_ccs_record_monthly.pregnant_registered_in_month) as pregnant_registered_in_month,
+                sum(agg_ccs_record_monthly.lactating_all_registered_in_month) as lactating_all_registered_in_month,
+                sum(agg_ccs_record_monthly.pregnant_all_registered_in_month) as pregnant_all_registered_in_month,
                 sum(agg_ccs_record_monthly.rations_21_plus_distributed) AS rations_21_plus_distributed,
                 sum(agg_ccs_record_monthly.thr_eligible) AS thr_eligible,
                 sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
@@ -669,6 +677,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_all',),
             ('cases_ccs_pregnant_all',),
             ('cases_ccs_lactating_all',),
+            ('cases_ccs_lactating_reg_in_month',),
+            ('cases_ccs_pregnant_reg_in_month',),
+            ('cases_ccs_lactating_all_reg_in_month',),
+            ('cases_ccs_pregnant_all_reg_in_month',),
             ('num_mother_thr_21_days',),
             ('num_mother_thr_eligible',),
             ('cases_child_health_all',),
