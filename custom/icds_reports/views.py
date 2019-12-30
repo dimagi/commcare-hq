@@ -64,8 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
-    GOVERNANCE_API_STEPS)
+    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -234,6 +233,7 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
+    get_beneficiary_data
 )
 
 
@@ -2189,7 +2189,7 @@ class GovernanceAPIView(View):
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
         state_site_code = request.GET.get('state_site_code')
-        state_id = ''
+        state_id = None
         if state_site_code is not None:
             state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
 
@@ -2216,9 +2216,6 @@ class GovernanceAPIView(View):
         if year > present_year or (year == present_year and month > present_month):
             is_valid = False
             exception_message = 'Date should be less than present date'
-        if step not in GOVERNANCE_API_STEPS:
-            is_valid = False
-            exception_message = 'Invalid step ' + step
         if state_id is None:
             is_valid = False
             exception_message = 'Invalid state site code'
@@ -2226,13 +2223,14 @@ class GovernanceAPIView(View):
         if not is_valid:
             return HttpResponse(exception_message, status=400)
 
-        if step == 'home_visit':
-            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
-            if state_id != '':
-                query_filters['state_id'] = state_id
-            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+        query_filters = {'aggregation_level': AggregationLevels.AWC,
+                         'num_launched_awcs': 1,
+                         'state_id': state_id}
 
+        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+
+        if step == 'home_visit':
             data, count = get_home_visit_data(
                 start,
                 length,
@@ -2241,14 +2239,28 @@ class GovernanceAPIView(View):
                 order,
                 query_filters
             )
-            response_json = {
-                'data': data,
-                'metadata': {
-                    'start': start,
-                    'month': month,
-                    'year': year,
-                    'count': count,
-                    'timestamp': india_now()
-                }
+        elif step == 'beneficiary':
+            data, count = get_beneficiary_data(
+                start,
+                length,
+                year,
+                month,
+                order,
+                query_filters
+            )
+        else:
+            exception_message = 'Invalid step ' + step
+            return HttpResponse(exception_message, status=400)
+
+        response_json = {
+            'data': data,
+            'metadata': {
+                'start': start,
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
             }
+        }
+
         return JsonResponse(data=response_json)

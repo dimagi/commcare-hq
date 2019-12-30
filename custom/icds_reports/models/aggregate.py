@@ -512,7 +512,6 @@ class AggAwc(models.Model, AggregateMixin):
     valid_all_0_3_male = models.IntegerField(blank=True, null=True)
     open_all_0_3_female = models.IntegerField(blank=True, null=True)
     open_all_0_3_male = models.IntegerField(blank=True, null=True)
-
     valid_all_3_6_female = models.IntegerField(blank=True, null=True)
     valid_all_3_6_male = models.IntegerField(blank=True, null=True)
     open_all_3_6_female = models.IntegerField(blank=True, null=True)
