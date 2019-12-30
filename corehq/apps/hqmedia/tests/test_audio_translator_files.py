@@ -20,9 +20,13 @@ class AudioTranslatorFilesTest(TestCase, TestXmlMixin):
 
         '''
             This form has two text questions, one with French audio present and one with it missing.
+
             It then has three select questions, each with two choices that share text and all
             have French audio specified. One set of choices has audio present for both, one has
             it missing for both, and one has it present for oone choice and missing for the other.
+
+            Lastly, it has two select questions, each with three choices that all have different
+            text but use the same audio path. One of these two audio files is missing.
         '''
         form.source = self.get_xml('duplicate_text_questions').decode('utf-8')
         for path in form.wrapped_xform().audio_references():
@@ -41,28 +45,40 @@ class AudioTranslatorFilesTest(TestCase, TestXmlMixin):
         translator_workbook = files['excel_for_translator.xlsx']
         bulk_upload_workbook = files['bulk_upload.xlsx']
 
-        # Translator sheet should contain rows for the 2 audio files that need to be recorded: the text
-        # question with missing audio and the select question where both choices are missing audio.
+        # Translator sheet should contain rows for the files that need to be recorded
+        # - the text question with missing audio
+        # - the select question where both choices are missing audio.
+        # - each of the three choices for different_text_same_missing_audio
         self.assertEqual(2, len(translator_workbook.worksheets))
         rows = self._worksheet_data(translator_workbook, 0)
-        self.assertEqual(3, len(rows))
+        self.assertEqual(6, len(rows))
         self.assertEqual(rows[0], ['fra', 'audio'])
         self.assertEqual(rows[1][0], 'This question has an audio file that is missing.')
         self.assertIn('missing_audio', rows[1][1])
         self.assertEqual(rows[2][0], 'choices_both_missing')
         self.assertIn('choices_both_missing', rows[2][1])
         choices_both_missing_path = rows[2][1]
+        self.assertEqual(rows[3][0], 'different_text_same_missing_audio')
+        self.assertIn('different_text_same_missing_audio', rows[3][1])
+        self.assertEqual(rows[4][0], 'different_text_same_missing_audio2')
+        self.assertRegex(rows[4][1], 'different_text_same_missing_audio1.*_2.mp3$')
+        self.assertEqual(rows[5][0], 'different_text_same_missing_audio3')
+        self.assertRegex(rows[5][1], 'different_text_same_missing_audio1.*_3.mp3$')
 
-        # Upload sheet should rename one of each of the choioce pairs, which have different paths but the same text
-        # Order of rows in this file is non-deterministic.
+        # Upload sheet should rename one of each of the choice pairs, which have different paths but the same text,
+        # and two of the three choices that have different text but shared the same missing audio path
         rows = self._worksheet_data(bulk_upload_workbook, 0)
+        self.assertEqual(6, len(rows))
         headers = rows[0]
         text_index = headers.index('default_fra')
         audio_index = headers.index('audio_fra')
+
+        # Order of rows in this file is non-deterministic, so test based on a text => audio path dict
         audio_by_text = {row[text_index]: row[audio_index] for row in rows[1:]}
-        self.assertEqual(3, len(audio_by_text))
-        for key in ('choices_both_present', 'choices_both_missing', 'choices_one_of_each'):
-            self.assertIn(key, audio_by_text[key])
+
+        # For the question with two choices with the same text, each with an audio file, one of those choices
+        # should get renamed to share the other one's path, but it doesn't matter which one.
+        self.assertIn('choices_both_present', audio_by_text['choices_both_present'])
 
         # Verify that the path being used for the select question with both choices missing
         # is the same path that the translator is being asked to use in the other file.
@@ -72,3 +88,9 @@ class AudioTranslatorFilesTest(TestCase, TestXmlMixin):
         # is the path that already exists in the application.
         choices_one_of_each_path = [key for key in app.multimedia_map.keys() if 'choices_one_of_each' in key][0]
         self.assertEquals(audio_by_text['choices_one_of_each'], choices_one_of_each_path)
+
+        # Verify the new paths, created due to different text sharing the same audio path
+        self.assertRegex(audio_by_text['different_text_same_missing_audio2'],
+                         'different_text_same_missing_audio1.*_2.mp3$')
+        self.assertRegex(audio_by_text['different_text_same_missing_audio3'],
+                         'different_text_same_missing_audio1.*_3.mp3$')

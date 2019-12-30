@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
 	<h:head>
-		<h:title>Survey</h:title>
+		<h:title>Duplicate Text Questions</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4295C83C-6B85-436D-8C2C-EB0B7A0C23EB" uiVersion="1" version="1" name="Survey">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4295C83C-6B85-436D-8C2C-EB0B7A0C23EB" uiVersion="1" version="1" name="Duplicate Text Questions">
 					<this_question_has_an_audio_file_that_is_present />
 					<missing_audio />
 					<choices_both_present />
 					<choices_both_missing />
 					<choices_one_of_each />
+					<different_text_same_missing_audio />
+					<different_text_same_present_audio />
 				</data>
 			</instance>
 			<bind vellum:nodeset="#form/this_question_has_an_audio_file_that_is_present" nodeset="/data/this_question_has_an_audio_file_that_is_present" type="xsd:string" />
@@ -17,6 +19,8 @@
 			<bind vellum:nodeset="#form/choices_both_present" nodeset="/data/choices_both_present" />
 			<bind vellum:nodeset="#form/choices_both_missing" nodeset="/data/choices_both_missing" />
 			<bind vellum:nodeset="#form/choices_one_of_each" nodeset="/data/choices_one_of_each" />
+			<bind vellum:nodeset="#form/different_text_same_missing_audio" nodeset="/data/different_text_same_missing_audio" />
+			<bind vellum:nodeset="#form/different_text_same_present_audio" nodeset="/data/different_text_same_present_audio" />
 			<itext>
 				<translation lang="en" default="">
 					<text id="this_question_has_an_audio_file_that_is_present-label">
@@ -54,6 +58,30 @@
 					</text>
 					<text id="choices_one_of_each-choices_one_of_each2-label">
 						<value>choices_one_of_each</value>
+					</text>
+					<text id="different_text_same_missing_audio-label">
+						<value>These choices have different text but the same missing audio path.</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio1-label">
+						<value>different_text_same_missing_audio</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio2-label">
+						<value>different_text_same_missing_audio2</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio3-label">
+						<value>different_text_same_missing_audio3</value>
+					</text>
+					<text id="different_text_same_present_audio-label">
+						<value>These choices have different text but the same present audio</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio1-label">
+						<value>different_text_same_present_audio</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio2-label">
+						<value>different_text_same_present_audio2</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio3-label">
+						<value>different_text_same_present_audio3</value>
 					</text>
 				</translation>
 				<translation lang="fra">
@@ -101,6 +129,36 @@
 						<value>choices_one_of_each</value>
 						<value form="audio">jr://file/commcare/audio/data/choices_one_of_each-choices_one_of_each2-p5g10r.mp3</value>
 					</text>
+					<text id="different_text_same_missing_audio-label">
+						<value>These choices have different text but the same missing audio path.</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio1-label">
+						<value>different_text_same_missing_audio</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_missing_audio1-tl1w4b.mp3</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio2-label">
+						<value>different_text_same_missing_audio2</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_missing_audio1-tl1w4b.mp3</value>
+					</text>
+					<text id="different_text_same_missing_audio-different_text_same_missing_audio3-label">
+						<value>different_text_same_missing_audio3</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_missing_audio1-tl1w4b.mp3</value>
+					</text>
+					<text id="different_text_same_present_audio-label">
+						<value>These choices have different text but the same present audio</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio1-label">
+						<value>different_text_same_present_audio</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_present_audio-different_text_same_present_audio1-4w2j2u.mp3</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio2-label">
+						<value>different_text_same_present_audio2</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_present_audio-different_text_same_present_audio1-4w2j2u.mp3</value>
+					</text>
+					<text id="different_text_same_present_audio-different_text_same_present_audio3-label">
+						<value>different_text_same_present_audio3</value>
+						<value form="audio">jr://file/commcare/audio/data/different_text_same_present_audio-different_text_same_present_audio1-4w2j2u.mp3</value>
+					</text>
 				</translation>
 			</itext>
 		</model>
@@ -144,6 +202,36 @@
 			<item>
 				<label ref="jr:itext('choices_one_of_each-choices_one_of_each2-label')" />
 				<value>choices_one_of_each2</value>
+			</item>
+		</select1>
+		<select1 vellum:ref="#form/different_text_same_missing_audio" ref="/data/different_text_same_missing_audio">
+			<label ref="jr:itext('different_text_same_missing_audio-label')" />
+			<item>
+				<label ref="jr:itext('different_text_same_missing_audio-different_text_same_missing_audio1-label')" />
+				<value>different_text_same_missing_audio1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('different_text_same_missing_audio-different_text_same_missing_audio2-label')" />
+				<value>different_text_same_missing_audio2</value>
+			</item>
+			<item>
+				<label ref="jr:itext('different_text_same_missing_audio-different_text_same_missing_audio3-label')" />
+				<value>different_text_same_missing_audio3</value>
+			</item>
+		</select1>
+		<select1 vellum:ref="#form/different_text_same_present_audio" ref="/data/different_text_same_present_audio">
+			<label ref="jr:itext('different_text_same_present_audio-label')" />
+			<item>
+				<label ref="jr:itext('different_text_same_present_audio-different_text_same_present_audio1-label')" />
+				<value>different_text_same_present_audio1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('different_text_same_present_audio-different_text_same_present_audio2-label')" />
+				<value>different_text_same_present_audio2</value>
+			</item>
+			<item>
+				<label ref="jr:itext('different_text_same_present_audio-different_text_same_present_audio3-label')" />
+				<value>different_text_same_present_audio3</value>
 			</item>
 		</select1>
 	</h:body>
