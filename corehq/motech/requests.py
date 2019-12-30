@@ -36,8 +36,16 @@ def log_request(func):
             # args will be Requests method, url, and optionally params, data or json.
             # kwargs may include Requests method kwargs and raise_for_status.
             kwargs.pop('raise_for_status', None)
-            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
-                           *args, **kwargs)
+            RequestLog.log(
+                log_level,
+                self.domain_name,
+                self.payload_id,
+                request_error,
+                response_status,
+                response_body,
+                *args,
+                **kwargs
+            )
 
     return request_wrapper
 
@@ -54,7 +62,7 @@ class Requests(object):
     """
 
     def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None):
+                 verify=True, notify_addresses=None, payload_id=None):
         """
         Initialise instance
 
@@ -65,6 +73,8 @@ class Requests(object):
         :param verify: Verify SSL certificate?
         :param notify_addresses: A list of email addresses to notify of
             errors.
+        :param payload_id: The ID of the case or form submission
+            associated with this request
         """
         self.domain_name = domain_name
         self.base_url = base_url
@@ -72,6 +82,7 @@ class Requests(object):
         self.password = password
         self.verify = verify
         self.notify_addresses = [] if notify_addresses is None else notify_addresses
+        self.payload_id = payload_id
         self._session = None
 
     def __enter__(self):

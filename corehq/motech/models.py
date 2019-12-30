@@ -11,6 +11,7 @@ class RequestLog(models.Model):
     domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
     timestamp = models.DateTimeField(auto_now_add=True)
     log_level = models.IntegerField(null=True)
+    payload_id = models.CharField(max_length=126, blank=True, null=True)
     request_method = models.CharField(max_length=12)
     request_url = models.CharField(max_length=255)
     request_headers = jsonfield.JSONField(blank=True)
@@ -46,8 +47,18 @@ class RequestLog(models.Model):
         return params, data, headers
 
     @staticmethod
-    def log(log_level, domain_name, request_error, response_status, response_body,
-            request_method, request_url, *args, **kwargs):
+    def log(
+        log_level,
+        domain_name,
+        payload_id,
+        request_error,
+        response_status,
+        response_body,
+        request_method,
+        request_url,
+        *args,
+        **kwargs,
+    ):
         # The order of arguments is important: `request_method`,
         # `request_url` and `*args` are the positional arguments of
         # `Requests.send_request()`. Having these at the end of this
@@ -56,6 +67,7 @@ class RequestLog(models.Model):
         RequestLog.objects.create(
             domain=domain_name,
             log_level=log_level,
+            payload_id=payload_id,
             request_method=request_method,
             request_url=request_url,
             request_headers=headers,
