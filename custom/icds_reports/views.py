@@ -2210,7 +2210,7 @@ class GovernanceAPIView(View):
         is_valid = True
 
         # input validations
-        if 1 <= year <= 2019 or 1 <= month <= 12:
+        if not (1 <= year <= present_year and 1 <= month <= 12):
             is_valid = False
             exception_message = 'Invalid date'
         if year > present_year or (year == present_year and month > present_month):
