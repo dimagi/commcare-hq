@@ -12,7 +12,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
     ucr_date_source_id = 'static-migration_form'
     aggregate_parent_table = AGG_MIGRATION_TABLE
 
-    def aggergation_query(self):
+    def data_from_ucr_query(self):
         month = self.month.replace(day=1)
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(month=1))
@@ -24,14 +24,10 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             "next_month_start": next_month_start,
         }
         return """
-        INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, person_case_id, latest_time_end_processed,
-          migration_status
-        ) (
-          SELECT DISTINCT ON (person_case_id)
+        SELECT DISTINCT ON (person_case_id)
             %(state_id)s AS state_id,
             supervisor_id,
-            %(month)s AS month,
+            %(month)s::DATE AS month,
             person_case_id as person_case_id,
             migration_status as migration_status,
             MAX(timeend) over w AS latest_time_end_processed
@@ -42,9 +38,45 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
           WINDOW w AS (
             PARTITION BY supervisor_id, person_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-          )
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.aggregate_parent_table,
+        ), query_params
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+            "previous_month": month_formatter(month - relativedelta(months=1)),
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, supervisor_id, month, person_case_id, migration_status
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
+            %(month)s::DATE AS month,
+            COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
+            COALESCE(ucr.migration_status, prev_month.migration_status) as migration_status
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN (
+             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             ) prev_month
+            ON ucr.person_case_id = prev_month.person_case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            WHERE coalesce(ucr.month, %(month)s) = %(month)s
+                AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+                AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            tablename=self.aggregate_parent_table,
+            ucr_table_query=ucr_query
         ), query_params

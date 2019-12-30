@@ -20,8 +20,6 @@ class Migration(migrations.Migration):
                 ('supervisor_id', models.TextField(null=True)),
                 ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
                 ('person_case_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('latest_time_end_processed', models.DateTimeField(
-                    help_text='The latest form.meta.timeEnd that has been processed for this case')),
                 ('migration_status', models.CharField(help_text='Status of the Migration', max_length=40)),
             ],
             options={
