@@ -89,7 +89,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."infantometer" AS "infantometer",
         "agg_awc"."stadiometer" AS "stadiometer",
         "agg_awc"."valid_visits" AS "valid_visits",
-        "agg_awc"."expected_visits" AS "expected_visits"
+        "agg_awc"."expected_visits" AS "expected_visits",
         COALESCE("agg_awc"."cases_ccs_pregnant_reg_in_month", 0) AS "cases_ccs_pregnant_reg_in_month",
         COALESCE("agg_awc"."cases_ccs_lactating_reg_in_month", 0) AS "cases_ccs_lactating_reg_in_month",
         COALESCE("agg_awc"."cases_ccs_pregnant_all_reg_in_month", 0) AS "cases_ccs_pregnant_all_reg_in_month",
@@ -102,10 +102,7 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."valid_all_3_6_male", 0) AS "valid_all_3_6_male",
         COALESCE("agg_awc"."open_all_3_6_female", 0) AS "open_all_3_6_female",
         COALESCE("agg_awc"."open_all_3_6_male", 0) AS "open_all_3_6_male",
-        COALESCE("agg_awc"."valid_all_0_3_female", 0) AS "valid_all_0_3_female",
-        COALESCE("agg_awc"."valid_all_0_3_male", 0) AS "valid_all_0_3_male",
-        COALESCE("agg_awc"."open_all_0_3_female", 0) AS "open_all_0_3_female",
-        COALESCE("agg_awc"."open_all_0_3_male", 0) AS "open_all_0_3_male",
+
         COALESCE("agg_awc"."valid_reg_in_month_0_3_female", 0) AS "valid_reg_in_month_0_3_female",
         COALESCE("agg_awc"."valid_reg_in_month_0_3_male", 0) AS "valid_reg_in_month_0_3_male",
         COALESCE("agg_awc"."open_reg_in_month_0_3_male", 0) AS "open_reg_in_month_0_3_male",
