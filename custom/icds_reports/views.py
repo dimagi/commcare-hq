@@ -225,7 +225,7 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-)
+    india_now)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -2178,8 +2178,10 @@ class GovernanceAPIView(View):
 
     @staticmethod
     def get_state_id_from_state_site_code(state_code):
-        return AwcLocation.objects.get(aggregation_level=AggregationLevels.STATE,
-                                       state_site_code=state_code, state_is_test=0).state_id
+        awc_location = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                                  state_site_code=state_code, state_is_test=0)\
+            .values_list('state_id', flat=True)
+        return awc_location[0] if len(awc_location) > 0 else None
 
     def get_gov_api_params(self, request, *args, **kwargs):
         step = kwargs.get('step')
@@ -2189,10 +2191,8 @@ class GovernanceAPIView(View):
         state_site_code = request.GET.get('state_site_code')
         state_id = ''
         if state_site_code is not None:
-            try:
-                state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
-            except:
-                state_id = None
+            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             prev_month = now - relativedelta(months=1)
             month = prev_month.month
@@ -2233,7 +2233,7 @@ class GovernanceAPIView(View):
                 query_filters['state_id'] = state_id
             order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
 
-            data = get_home_visit_data(
+            data, count = get_home_visit_data(
                 start,
                 length,
                 year,
@@ -2241,4 +2241,14 @@ class GovernanceAPIView(View):
                 order,
                 query_filters
             )
-        return JsonResponse(data=data)
+            response_json = {
+                'data': data,
+                'metadata': {
+                    'start': start,
+                    'month': month,
+                    'year': year,
+                    'count': count,
+                    'timestamp': india_now()
+                }
+            }
+        return JsonResponse(data=response_json)
