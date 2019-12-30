@@ -414,7 +414,7 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
             "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
                             for t in CommCareMultimedia.get_doc_types()},
             "selected_langs": self.request.POST.getlist('langs', []),
-            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio', 'CommCareVideo']),
+            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio']),
             "selected_build_id": selected_build_id,
             "selected_build_text": selected_build_text,
         })
