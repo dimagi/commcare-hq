@@ -24,7 +24,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
     chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
     get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED, get_delivery_nature, get_color_with_green_positive,\
-    get_color_with_red_positive
+    get_color_with_red_positive, include_records_by_age_for_column
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
@@ -336,41 +336,41 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche__lte': 60}
 
-        moderately_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        moderately_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_moderately_underweight'
         )
-        severely_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        severely_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_severely_underweight'
         )
-        wasting_moderate = exclude_records_by_age_for_column(
+        wasting_moderate = include_records_by_age_for_column(
             age_filters,
             wasting_moderate_column(icds_feature_flag)
         )
-        wasting_severe = exclude_records_by_age_for_column(
+        wasting_severe = include_records_by_age_for_column(
             age_filters,
             wasting_severe_column(icds_feature_flag)
         )
-        stunting_moderate = exclude_records_by_age_for_column(
+        stunting_moderate = include_records_by_age_for_column(
             age_filters,
             stunting_moderate_column(icds_feature_flag)
         )
-        stunting_severe = exclude_records_by_age_for_column(
+        stunting_severe = include_records_by_age_for_column(
             age_filters,
             stunting_severe_column(icds_feature_flag)
         )
-        nutrition_status_weighed = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        nutrition_status_weighed = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_weighed'
         )
-        height_measured_in_month = exclude_records_by_age_for_column(
+        height_measured_in_month = include_records_by_age_for_column(
             age_filters,
             hfa_recorded_in_month_column(icds_feature_flag)
         )
-        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+        weighed_and_height_measured_in_month = include_records_by_age_for_column(
             age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
