@@ -334,6 +334,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
+    opened_on = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -506,6 +507,27 @@ class AggAwc(models.Model, AggregateMixin):
     cases_ccs_lactating_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
+
+    valid_all_0_3_female = models.IntegerField(blank=True, null=True)
+    valid_all_0_3_male = models.IntegerField(blank=True, null=True)
+    open_all_0_3_female = models.IntegerField(blank=True, null=True)
+    open_all_0_3_male = models.IntegerField(blank=True, null=True)
+
+    valid_all_3_6_female = models.IntegerField(blank=True, null=True)
+    valid_all_3_6_male = models.IntegerField(blank=True, null=True)
+    open_all_3_6_female = models.IntegerField(blank=True, null=True)
+    open_all_3_6_male = models.IntegerField(blank=True, null=True)
+
+
+    valid_reg_in_month_0_3_female = models.IntegerField(blank=True, null=True)
+    valid_reg_in_month_0_3_male = models.IntegerField(blank=True, null=True)
+    open_reg_in_month_0_3_male = models.IntegerField(blank=True, null=True)
+    open_reg_in_month_0_3_female = models.IntegerField(blank=True, null=True)
+    valid_reg_in_month_3_6_female = models.IntegerField(blank=True, null=True)
+    valid_reg_in_month_3_6_male = models.IntegerField(blank=True, null=True)
+    open_reg_in_month_3_6_male = models.IntegerField(blank=True, null=True)
+    open_reg_in_month_3_6_female = models.IntegerField(blank=True, null=True)
+
 
     class Meta:
         managed = False
@@ -736,6 +758,8 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
+    open_all_created_in_month = models.IntegerField(blank=True, null=True)
+    valid_all_created_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
