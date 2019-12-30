@@ -444,7 +444,7 @@ class TestDeleteDomain(TestCase):
 
         self._assert_app_manager_counts(self.domain.name, 0)
         self._assert_app_manager_counts(self.domain2.name, 1)
-        
+
         location.delete()
 
     def _assert_case_search_counts(self, domain_name, count):
