@@ -492,7 +492,24 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             wer_weighed_0_2 = ut.wer_weighed_0_2,
             cases_person_beneficiary_v2 = ut.cases_child_health,
             thr_eligible_child = thr_eligible,
-            thr_rations_21_plus_distributed_child = rations_21_plus_distributed
+            thr_rations_21_plus_distributed_child = rations_21_plus_distributed,
+            valid_all_0_3_female = ut.valid_all_0_3_female,
+            valid_all_0_3_male = ut.valid_all_0_3_male,
+            open_all_0_3_female = ut.open_all_0_3_female,
+            open_all_0_3_male = ut.open_all_0_3_male,
+            valid_all_3_6_female = ut.valid_all_3_6_female,
+            valid_all_3_6_male = ut.valid_all_3_6_male,
+            open_all_3_6_female = ut.open_all_3_6_female,
+            open_all_3_6_male = ut.open_all_3_6_male,
+
+            valid_reg_in_month_0_3_female = ut.valid_reg_in_month_0_3_female,
+            valid_reg_in_month_0_3_male = ut.valid_reg_in_month_0_3_male,
+            open_reg_in_month_0_3_male = ut.open_reg_in_month_0_3_male,
+            open_reg_in_month_0_3_female = ut.open_reg_in_month_0_3_female,
+            valid_reg_in_month_3_6_female = ut.valid_reg_in_month_3_6_female,
+            valid_reg_in_month_3_6_male = ut.valid_reg_in_month_3_6_male,
+            open_reg_in_month_3_6_male = ut.open_reg_in_month_3_6_male,
+            open_reg_in_month_3_6_female = ut.open_reg_in_month_3_6_female
         FROM (
             SELECT
                 awc_id,
@@ -505,7 +522,26 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
-                sum(rations_21_plus_distributed) as rations_21_plus_distributed
+                sum(rations_21_plus_distributed) as rations_21_plus_distributed,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_in_month ELSE 0 END ) as valid_all_0_3_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_in_month ELSE 0 END ) as valid_all_0_3_male,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_all_registered_in_month ELSE 0 END ) as open_all_0_3_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_all_registered_in_month ELSE 0 END ) as open_all_0_3_male,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_in_month ELSE 0 END ) as valid_all_3_6_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_in_month ELSE 0 END ) as valid_all_3_6_male,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72then valid_all_registered_in_month ELSE 0 END ) as open_all_3_6_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_registered_in_month ELSE 0 END ) as open_all_3_6_male,
+                
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_0_3_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_0_3_male,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_0_3_male,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_0_3_female,
+
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_3_6_female,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_3_6_male,
+                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_3_6_male,
+                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_3_6_female
+
             FROM {agg_child_temp_tablename}
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id
         ) ut
@@ -705,6 +741,22 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('awc_with_gm_devices', 'COALESCE(sum(awc_with_gm_devices), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
+            ('valid_all_0_3_female',),
+            ('valid_all_0_3_male',),
+            ('open_all_0_3_female',),
+            ('open_all_0_3_male',),
+            ('valid_all_3_6_female',),
+            ('valid_all_3_6_male',),
+            ('open_all_3_6_female',),
+            ('open_all_3_6_male',),
+            ('valid_reg_in_month_0_3_female',),
+            ('valid_reg_in_month_0_3_male',),
+            ('open_reg_in_month_0_3_male',),
+            ('open_reg_in_month_0_3_female',),
+            ('valid_reg_in_month_3_6_female',),
+            ('valid_reg_in_month_3_6_male',),
+            ('open_reg_in_month_3_6_male',),
+            ('open_reg_in_month_3_6_female',),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',
