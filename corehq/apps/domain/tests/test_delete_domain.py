@@ -432,7 +432,7 @@ class TestDeleteDomain(TestCase):
                 location_type='facility'
             )
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
-                                                version=23, location_id=location.id)
+                                                version=23, location=location)
             LatestEnabledBuildProfiles.objects.create(domain=domain_name)
             SQLGlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
