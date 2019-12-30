@@ -78,12 +78,6 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
 
-    @classmethod
-    def get_by_domain(cls, domain):
-        from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
-        self = get_application_access_for_domain(domain)
-        return self or cls(domain=domain)
-
     def clear_caches(self):
         from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
         get_application_access_for_domain.clear(self.domain)
@@ -106,7 +100,7 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
     @classmethod
     def get_template_json(cls, domain, apps):
         app_ids = dict([(app['_id'], app) for app in apps])
-        self = ApplicationAccess.get_by_domain(domain)
+        self = get_application_access_for_domain(domain)
         j = self.to_json()
         merged_access_list = []
         for a in j['app_groups']:

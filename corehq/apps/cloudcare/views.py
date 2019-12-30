@@ -52,7 +52,7 @@ from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -110,7 +110,7 @@ class FormplayerMain(View):
             return get_latest_released_app_doc(domain, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
-        app_access = ApplicationAccess.get_by_domain(domain)
+        app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
         apps = list(map(
@@ -223,7 +223,7 @@ class FormplayerPreviewSingleApp(View):
         return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, domain, app_id, **kwargs):
-        app_access = ApplicationAccess.get_by_domain(domain)
+        app_access = get_application_access_for_domain(domain)
 
         app = get_current_app(domain, app_id)
 
