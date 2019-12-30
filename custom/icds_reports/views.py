@@ -2178,8 +2178,9 @@ class GovernanceAPIView(View):
 
     @staticmethod
     def get_state_id_from_state_site_code(state_code):
-        return AwcLocation.objects.get(aggregation_level=AggregationLevels.STATE,
-                                       state_site_code=state_code, state_is_test=0).state_id
+        return AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                          state_site_code=state_code, state_is_test=0).values(
+            'state_id')[0]['state_id']
 
     def get_gov_api_params(self, request, *args, **kwargs):
         step = kwargs.get('step')
@@ -2189,10 +2190,10 @@ class GovernanceAPIView(View):
         state_site_code = request.GET.get('state_site_code')
         state_id = ''
         if state_site_code is not None:
-            try:
-                state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
-            except:
-                state_id = None
+            # try:
+            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+            # except:
+            #     state_id = None
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             prev_month = now - relativedelta(months=1)
             month = prev_month.month
