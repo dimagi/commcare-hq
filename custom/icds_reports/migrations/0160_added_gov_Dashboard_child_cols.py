@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE child_health_monthly ADD COLUMN opened_on TIMESTAMP'),
+        migrations.RunSQL('ALTER TABLE child_health_monthly ADD COLUMN opened_on DATE'),
         migrations.RunSQL('ALTER TABLE agg_child_health ADD COLUMN open_all_created_in_month INTEGER'),
         migrations.RunSQL('ALTER TABLE agg_child_health ADD COLUMN valid_all_created_in_month INTEGER'),
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_all_0_3_female INTEGER'),
