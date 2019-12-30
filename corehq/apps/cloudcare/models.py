@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-from django.db import models, transaction
+from django.db import DEFAULT_DB_ALIAS, models, transaction
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -18,6 +18,13 @@ from corehq.apps.groups.models import Group
 class SQLApplicationAccess(models.Model):
     domain = models.CharField(max_length=255, null=False, unique=True)
     restrict = models.BooleanField(default=False)
+
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
+        from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
+        get_application_access_for_domain.clear(self.domain)
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
 
 class SQLAppGroup(models.Model):
@@ -77,11 +84,6 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
-
-    def clear_caches(self):
-        from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
-        get_application_access_for_domain.clear(self.domain)
-        super(ApplicationAccess, self).clear_caches()
 
     def user_can_access_app(self, user, app):
         user_id = user['_id']
