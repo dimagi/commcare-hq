@@ -102,7 +102,6 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."valid_all_3_6_male", 0) AS "valid_all_3_6_male",
         COALESCE("agg_awc"."open_all_3_6_female", 0) AS "open_all_3_6_female",
         COALESCE("agg_awc"."open_all_3_6_male", 0) AS "open_all_3_6_male",
-
         COALESCE("agg_awc"."valid_reg_in_month_0_3_female", 0) AS "valid_reg_in_month_0_3_female",
         COALESCE("agg_awc"."valid_reg_in_month_0_3_male", 0) AS "valid_reg_in_month_0_3_male",
         COALESCE("agg_awc"."open_reg_in_month_0_3_male", 0) AS "open_reg_in_month_0_3_male",

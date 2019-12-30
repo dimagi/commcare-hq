@@ -550,24 +550,39 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
                 sum(rations_21_plus_distributed) as rations_21_plus_distributed,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_in_month ELSE 0 END ) as valid_all_0_3_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_in_month ELSE 0 END ) as valid_all_0_3_male,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_all_registered_in_month ELSE 0 END ) as open_all_0_3_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_all_registered_in_month ELSE 0 END ) as open_all_0_3_male,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_in_month ELSE 0 END ) as valid_all_3_6_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_in_month ELSE 0 END ) as valid_all_3_6_male,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72then valid_all_registered_in_month ELSE 0 END ) as open_all_3_6_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_registered_in_month ELSE 0 END ) as open_all_3_6_male,
-                
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_0_3_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_0_3_male,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER<=36 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_0_3_male,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER<=36 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_0_3_female,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER<=36 THEN
+                    valid_in_month ELSE 0 END ) AS valid_all_0_3_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER<=36 THEN
+                    valid_in_month ELSE 0 END ) AS valid_all_0_3_male,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER<=36 THEN
+                    valid_all_registered_in_month ELSE 0 END ) AS open_all_0_3_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER<=36 THEN
+                    valid_all_registered_in_month ELSE 0 END ) AS open_all_0_3_male,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_in_month ELSE 0 END ) AS valid_all_3_6_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_in_month ELSE 0 END ) AS valid_all_3_6_male,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_all_registered_in_month ELSE 0 END ) AS open_all_3_6_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_all_registered_in_month ELSE 0 END ) AS open_all_3_6_male,
 
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_3_6_female,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then valid_all_created_in_month ELSE 0 END ) as valid_reg_in_month_3_6_male,
-                sum(CASE WHEN gender='F' and age_tranche::INTEGER BETWEEN 37 AND 72 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_3_6_male,
-                sum(CASE WHEN gender='M' and age_tranche::INTEGER BETWEEN 37 AND 72 then open_all_created_in_month ELSE 0 END ) as open_reg_in_month_3_6_female
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER<=36 THEN
+                    valid_all_created_in_month ELSE 0 END ) AS valid_reg_in_month_0_3_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER<=36 THEN
+                    valid_all_created_in_month ELSE 0 END ) AS valid_reg_in_month_0_3_male,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER<=36 THEN
+                    open_all_created_in_month ELSE 0 END ) AS open_reg_in_month_0_3_male,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER<=36 THEN
+                    open_all_created_in_month ELSE 0 END ) AS open_reg_in_month_0_3_female,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_all_created_in_month ELSE 0 END ) AS valid_reg_in_month_3_6_female,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    valid_all_created_in_month ELSE 0 END ) AS valid_reg_in_month_3_6_male,
+                sum(CASE WHEN gender='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    open_all_created_in_month ELSE 0 END ) AS open_reg_in_month_3_6_male,
+                sum(CASE WHEN gender='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
+                    open_all_created_in_month ELSE 0 END ) AS open_reg_in_month_3_6_female
 
             FROM {agg_child_temp_tablename}
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id

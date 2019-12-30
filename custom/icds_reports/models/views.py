@@ -618,7 +618,6 @@ class AggAwcMonthly(models.Model):
     open_reg_in_month_3_6_male = models.IntegerField(blank=True, null=True)
     open_reg_in_month_3_6_female = models.IntegerField(blank=True, null=True)
 
-
     class Meta(object):
         app_label = 'icds_reports'
         managed = False

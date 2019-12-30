@@ -38,4 +38,3 @@ class Migration(migrations.Migration):
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_3_6_female INTEGER'),
         migrator.get_migration('agg_awc_monthly.sql')
     ]
-
