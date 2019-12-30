@@ -52,6 +52,7 @@
         <table class="table table-striped">
           <thead>
           <th>{% trans "Timestamp" %}</th>
+          <th>{% trans "Payload" %}</th>
           <th>{% trans "Request" %}</th>
           <th>{% trans "Status" %}</th>
           </thead>
@@ -60,6 +61,9 @@
             <tr>
               <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
                 {{ log.timestamp }}
+              </a></td>
+              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+                {% if log.payload_id %}{{ log.payload_id }}{% else %}&nbsp;{% endif %}
               </a></td>
               <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
                 {{ log.request_method }} {{ log.request_url }}

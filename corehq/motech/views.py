@@ -49,6 +49,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
 
         return queryset.order_by('-timestamp').only(
             'timestamp',
+            'payload_id',
             'request_method',
             'request_url',
             'response_status',
