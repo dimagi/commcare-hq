@@ -2190,10 +2190,10 @@ class GovernanceAPIView(View):
         state_site_code = request.GET.get('state_site_code')
         state_id = ''
         if state_site_code is not None:
-            # try:
-            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
-            # except:
-            #     state_id = None
+            try:
+                state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+            except:
+                state_id = None
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             prev_month = now - relativedelta(months=1)
             month = prev_month.month
