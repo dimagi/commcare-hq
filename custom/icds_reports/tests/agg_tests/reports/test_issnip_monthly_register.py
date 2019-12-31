@@ -209,7 +209,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a3['infra_type_of_building'], 'pucca')
         self.assertEqual(data_a3['infra_clean_water'], 1)
         self.assertEqual(data_a3['cases_ccs_pregnant_all'], 2)
-        self.assertEqual(data_a3['cases_ccs_lactating_all'], 2)
+        self.assertEqual(data_a3['cases_ccs_lactating_all'], 3)
         self.assertEqual(data_a3['awc_days_open'], 23)
         self.assertIsNone(data_a3['awc_days_pse_conducted'])
         self.assertEqual(data_a3['usage_num_home_visit'], 2)
