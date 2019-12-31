@@ -2198,12 +2198,38 @@ class GovernanceAPIView(View):
             month = prev_month.month
             year = prev_month.year
 
-        start = request.GET.get('start', 0)
+        last_awc_id = request.GET.get('last_awc_id', '')
 
-        return step, start, month, year, state_id
+        return step, last_awc_id, month, year, state_id
+
+    @staticmethod
+    def get_awc_details(awc_id):
+        awc_details = AwcLocation.objects.filter(doc_id=awc_id, aggregation_level=5).values('state_name',
+                                                                                            'district_name',
+                                                                                            'block_name',
+                                                                                            'supervisor_name',
+                                                                                            'awc_name',
+                                                                                            )
+        return awc_details[0] if len(awc_details) > 0 else dict()
+
+    @staticmethod
+    def prepare_pagination_filters(last_awc_details):
+        exclude = {}
+        query_filters = {}
+        for key, value in last_awc_details.items():
+            if key != 'awc_name':
+                query_filters['{}__gte'.format(key)] = value
+
+            # To exclude all which are already given in previous page
+            # Reference : https://use-the-index-luke.com/sql/partial-results/fetch-next-page
+            # Not using row value constructors as I could not find a way to implement that in django.
+            # Also, this method gave lesser cost.
+            exclude['{}__lte'.format(key)] = value
+
+        return query_filters, exclude
 
     def get(self, request, *args, **kwargs):
-        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
+        step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
         present_year = datetime.now().year
         present_month = datetime.now().month
 
@@ -2223,28 +2249,39 @@ class GovernanceAPIView(View):
             is_valid = False
             exception_message = 'Invalid state site code'
 
+        awc_details = GovernanceAPIView.get_awc_details(last_awc_id)
+
+        if last_awc_id != '' and not awc_details:
+            is_valid = False
+            exception_message = 'Invalid awc_id ' + last_awc_id
+
+
         if not is_valid:
             return HttpResponse(exception_message, status=400)
 
+        length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+        query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
+        inclusion_filter, exclusion_filter = GovernanceAPIView.prepare_pagination_filters(awc_details)
+        query_filters.update(inclusion_filter)
+
+        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name','awc_id']
+
         if step == 'home_visit':
-            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
+
             if state_id != '':
                 query_filters['state_id'] = state_id
-            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
 
             data, count = get_home_visit_data(
-                start,
                 length,
                 year,
                 month,
                 order,
-                query_filters
+                query_filters,
+                exclusion_filter
             )
             response_json = {
                 'data': data,
                 'metadata': {
-                    'start': start,
                     'month': month,
                     'year': year,
                     'count': count,
