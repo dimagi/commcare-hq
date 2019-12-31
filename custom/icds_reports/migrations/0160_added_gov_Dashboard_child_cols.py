@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from corehq.sql_db.operations import RawSQLMigration
 from django.db import migrations
 from custom.icds_reports.utils.migrations import get_view_migrations
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
@@ -38,3 +39,4 @@ class Migration(migrations.Migration):
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_3_6_female INTEGER'),
         migrator.get_migration('agg_awc_monthly.sql')
     ]
+    operations.extend(get_view_migrations())
