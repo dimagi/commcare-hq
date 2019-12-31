@@ -1573,7 +1573,7 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
     # not the real pkey - see unique_together
     person_case_id = models.CharField(max_length=40, primary_key=True)
 
-    migration_status = models.CharField(max_length=40, help_text="Status of the Migration")
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Migration")
 
     class Meta(object):
         db_table = AGG_MIGRATION_TABLE
