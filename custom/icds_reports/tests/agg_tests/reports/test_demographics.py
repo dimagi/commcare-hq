@@ -132,10 +132,10 @@ class TestDemographics(TestCase):
         )
         expected = {
             'redirect': 'demographics/lactating_enrolled_women',
-            "all": 167,
+            "all": 196,
             "format": "percent_and_div",
-            "color": "red",
-            "percent": 0.0,
+            "color": "green",
+            "percent": 0.6473214285714213,
             "value": 167,
             "label": LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "month",
@@ -289,7 +289,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/lactating_enrolled_women",
-            "all": 167,
+            "all": 196,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -446,7 +446,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/lactating_enrolled_women",
-            "all": 167,
+            "all": 196,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
