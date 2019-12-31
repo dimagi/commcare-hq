@@ -40,6 +40,32 @@ class SQLApplicationAccess(models.Model):
         else:
             return False
 
+    def get_template_json(self, apps):
+        apps_by_id = {a.get_id: a for a in apps}
+
+        # Filter self's apps down to those given
+        group_id_by_app_id = {
+            app_group.app_id: app_group.group_id
+            for app_group in self.sqlappgroup_set.all()
+            if app_group.app_id in apps_by_id.keys()
+        }
+
+        # Add any apps passed in that aren't known to self
+        for app_id in apps_by_id.keys():
+            if app_id not in group_id_by_app_id:
+                group_id_by_app_id[app_id] = None
+
+        return {
+            'domain': self.domain,
+            'restrict': self.restrict,
+            'app_groups': sorted([
+                {
+                    'app_id': app_id,
+                    'group_id': group_id,
+                } for app_id, group_id in group_id_by_app_id.items()
+            ], key=lambda app_group: apps_by_id[app_group['app_id']].name),
+        }
+
 
 class SQLAppGroup(models.Model):
     app_id = models.CharField(max_length=255, null=False)
@@ -98,22 +124,3 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
-
-    @classmethod
-    def get_template_json(cls, domain, apps):
-        app_ids = dict([(app['_id'], app) for app in apps])
-        self = get_application_access_for_domain(domain)
-        j = self.to_json()
-        merged_access_list = []
-        for a in j['app_groups']:
-            app_id = a['app_id']
-            if app_id in app_ids:
-                merged_access_list.append(a)
-                del app_ids[app_id]
-        for app in app_ids.values():
-            merged_access_list.append({
-                'app_id': app['_id'],
-                'group_id': None
-            })
-        j['app_groups'] = merged_access_list
-        return j

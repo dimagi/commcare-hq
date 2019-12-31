@@ -55,7 +55,7 @@ from corehq.apps.cloudcare.const import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
-from corehq.apps.cloudcare.models import ApplicationAccess, SQLApplicationAccess, SQLAppGroup
+from corehq.apps.cloudcare.models import SQLApplicationAccess, SQLAppGroup
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -442,12 +442,12 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     @property
     def page_context(self):
         apps = get_cloudcare_apps(self.domain)
-        access = ApplicationAccess.get_template_json(self.domain, apps)
+        access = get_application_access_for_domain(self.domain)
         groups = Group.by_domain(self.domain)
         return {
             'apps': apps,
             'groups': groups,
-            'access': access,
+            'access': access.get_template_json(apps),
         }
 
     def put(self, request, *args, **kwargs):
