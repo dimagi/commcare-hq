@@ -55,7 +55,7 @@ from corehq.apps.cloudcare.const import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
-from corehq.apps.cloudcare.models import SQLApplicationAccess, SQLAppGroup
+from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,

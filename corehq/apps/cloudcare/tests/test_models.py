@@ -1,8 +1,6 @@
 import uuid
-from collections import namedtuple
 from django.test import TestCase
 
-from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import SQLApplicationAccess, SQLAppGroup
 
@@ -28,7 +26,6 @@ class ModelsTest(TestCase):
         super().tearDownClass()
 
     def test_application_access(self):
-        application_access_objects = []
         app1 = MockApplication(self.domain, "One")
         app2 = MockApplication(self.domain, "Two")
         app3 = MockApplication(self.domain, "Three")

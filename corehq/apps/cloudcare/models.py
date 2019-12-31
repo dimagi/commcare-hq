@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-from django.db import DEFAULT_DB_ALIAS, models, transaction
+from django.db import DEFAULT_DB_ALIAS, models
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
