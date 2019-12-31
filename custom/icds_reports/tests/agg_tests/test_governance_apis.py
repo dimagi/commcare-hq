@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis import get_home_visit_data
+from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names
 from custom.icds_reports.utils import india_now
 
 
@@ -75,3 +75,11 @@ class GovernanceApiTest(TestCase):
                                           2017, 5, order, query_filters)
         expected_count = 26
         self.assertEqual(count, expected_count)
+
+    def test_data_fetching_state_names_api(self):
+        """
+        test to check if state names are getting retreived from the api
+        """
+        data = get_state_names()
+        expected_count = 6
+        self.assertEqual(len(data), expected_count)
