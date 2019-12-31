@@ -29,8 +29,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             supervisor_id,
             %(month)s::DATE AS month,
             person_case_id as person_case_id,
-            migration_status as migration_status,
-            MAX(timeend) over w AS latest_time_end_processed
+            migration_status as migration_status
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
