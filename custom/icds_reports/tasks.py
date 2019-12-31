@@ -142,7 +142,9 @@ from custom.icds_reports.utils import (
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
     AggAwcDistributedHelper,
-    AggChildHealthAggregationDistributedHelper
+    AggChildHealthAggregationDistributedHelper,
+    GrowthMonitoringFormsAggregationDistributedHelper,
+    DailyFeedingFormsChildHealthAggregationDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -214,6 +216,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
 
+            drop_df_indices(monthly_date)
             stage_1_tasks = [
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
                 for state_id in state_ids
@@ -281,6 +284,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             for stage_1_task_result in stage_1_task_results:
                 stage_1_task_result.get(disable_sync_subtasks=False)
 
+            create_df_indices(monthly_date)
             res_child = chain(
                 icds_state_aggregation_task.si(
                     state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table'
@@ -1729,3 +1733,18 @@ def update_dashboard_activity_report(target_date=None):
     db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
+
+
+def create_df_indices(agg_date):
+    helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateChildHealthDailyFeedingForms) as cursor:
+        for query in helper.create_index_queries():
+            cursor.execute(query)
+
+def drop_df_indices(agg_date):
+    helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateChildHealthDailyFeedingForms) as cursor:
+        for query, params in helper.delete_queries():
+            cursor.execute(query, params)
+        for query in helper.drop_index_queries():
+            cursor.execute(query)
