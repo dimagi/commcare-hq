@@ -17,14 +17,12 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(StateBasedAggrega
 
     def drop_index_queries(self):
         return [
-            'DROP INDEX IF EXISTS "icds_dashboard_daily_feeding_forms_case_id_114445ac_like"',
             'DROP INDEX IF EXISTS "icds_dashboard_daily_feeding_forms_state_id_month_273d19dd_idx"',
         ]
 
     def create_index_queries(self):
         return [
             'CREATE INDEX IF NOT EXISTS "icds_dashboard_daily_feeding_forms_state_id_month_273d19dd_idx" ON "{}" (state_id, month)'.format(self.aggregate_parent_table),
-            'CREATE INDEX IF NOT EXISTS "icds_dashboard_daily_feeding_forms_case_id_114445ac_like" ON "{}" (case_id varchar_pattern_ops)'.format(self.aggregate_parent_table),
         ]
 
     def aggregation_query(self):
