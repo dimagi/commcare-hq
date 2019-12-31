@@ -5,6 +5,27 @@ from __future__ import unicode_literals
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
+from custom.icds_reports.utils.migrations import (
+    get_composite_primary_key_migrations,
+)
+from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.connections import is_citus_db
+from custom.icds_reports.const import AGG_MIGRATION_TABLE
+from custom.icds_reports.utils.migrations import (
+    create_citus_distributed_table
+)
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
+
+
+def _distribute_citus_tables(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        if not is_citus_db(cursor):
+            return
+
+        for table, col in [(AGG_MIGRATION_TABLE, 'supervisor_id')]:
+            create_citus_distributed_table(cursor, table, col)
+
 
 class Migration(migrations.Migration):
 
@@ -33,3 +54,6 @@ class Migration(migrations.Migration):
             unique_together=set([('month', 'supervisor_id', 'person_case_id')]),
         ),
     ]
+
+    operations.extend(get_composite_primary_key_migrations(['aggregatemigrationforms']))
+    operations.append(migrations.RunPython(_distribute_citus_tables, migrations.RunPython.noop))
