@@ -33,7 +33,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sqlappgroup',
             name='application_access',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cloudcare.SQLApplicationAccess'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='cloudcare.SQLApplicationAccess'),
         ),
         migrations.AlterUniqueTogether(
             name='sqlappgroup',

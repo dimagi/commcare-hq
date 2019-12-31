@@ -132,7 +132,7 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
                 }
             )
             model.sqlappgroup_set.set([
-                SQLAppGroup.objects.update_or_create(app_id=group.app_id, defaults={'group_id':group.group_id})[0]
+                SQLAppGroup.objects.update_or_create(app_id=group.app_id, defaults={'group_id': group.group_id})[0]
                 for group in self.app_groups
             ], bulk=False)
             model.save()

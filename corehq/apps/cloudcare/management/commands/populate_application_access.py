@@ -32,7 +32,7 @@ class Command(BaseCommand):
         log_prefix = "[DRY RUN] " if dry_run else ""
 
         try:
-            from corehq.apps.cloudcare.models import ApplicationAccess, AppGroup
+            from corehq.apps.cloudcare.models import ApplicationAccess
         except ImportError:
             return
 
