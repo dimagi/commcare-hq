@@ -20,7 +20,8 @@ class Migration(migrations.Migration):
                 ('supervisor_id', models.TextField(null=True)),
                 ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
                 ('person_case_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('migration_status', models.CharField(help_text='Status of the Migration', max_length=40)),
+                ('migration_status', models.SmallIntegerField(blank=True, null=True,
+                                                              help_text='Status of the Migration')),
             ],
             options={
                 'db_table': 'icds_dashboard_migration_forms',
