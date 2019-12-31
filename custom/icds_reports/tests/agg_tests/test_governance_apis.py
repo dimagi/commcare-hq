@@ -4,8 +4,7 @@ from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
 from custom.icds_reports.reports.governance_apis import get_home_visit_data
-from custom.icds_reports.utils import india_now
-from custom.icds_reports.views import GovernanceAPIView
+
 
 class GovernanceApiTest(TestCase):
 
@@ -17,7 +16,7 @@ class GovernanceApiTest(TestCase):
         query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data, count = get_home_visit_data(limit,
-                                          2017, 5, order, query_filters, {})
+                                          2017, 5, order, query_filters)
         expected_count = 55
         self.assertEqual(count, expected_count)
 
@@ -29,7 +28,7 @@ class GovernanceApiTest(TestCase):
         query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data, count = get_home_visit_data(limit,
-                                          2017, 5, order, query_filters, {})
+                                          2017, 5, order, query_filters)
         expected_first_row = {
             'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a1', 'awc_id':'a1',
             'month': datetime.date(2017, 5, 1), 'valid_visits': 0, 'expected_visits': 4,
@@ -41,16 +40,11 @@ class GovernanceApiTest(TestCase):
         test to check the first record that is returned from the home visit api with start parameter
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-        query_filters = {'aggregation_level': 5}
+        query_filters = {'aggregation_level': 5, 'awc_id__gt': 'a1'}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
-        last_awc_id = 'a1'
-        awc_details = GovernanceAPIView.get_awc_details(last_awc_id)
-        inclusion_filter, exclusion_filter = GovernanceAPIView.prepare_pagination_filters(awc_details)
-
-        query_filters.update(inclusion_filter)
 
         data, count = get_home_visit_data(limit,
-                                          2017, 5, order, query_filters, exclusion_filter)
+                                          2017, 5, order, query_filters)
         expected_first_row = {
             'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a17', 'awc_id': 'a17',
             'month': datetime.date(2017, 5, 1), 'valid_visits': 0, 'expected_visits': 3
@@ -65,7 +59,7 @@ class GovernanceApiTest(TestCase):
         query_filters = {'aggregation_level': 5}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data, count = get_home_visit_data(limit,
-                                          2017, 6, order, query_filters, {})
+                                          2017, 6, order, query_filters)
         expected_count = 0
         self.assertEqual(count, expected_count)
         self.assertEqual(data, [])
@@ -78,6 +72,6 @@ class GovernanceApiTest(TestCase):
         query_filters = {'aggregation_level': 5, 'state_id': 'st1'}
         order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
         data, count = get_home_visit_data(limit,
-                                          2017, 5, order, query_filters, {})
+                                          2017, 5, order, query_filters)
         expected_count = 26
         self.assertEqual(count, expected_count)

@@ -5,18 +5,16 @@ from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import DATA_NOT_ENTERED
 
 
-
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
-def get_home_visit_data(length, year, month, order, query_filters, exclude_param):
+def get_home_visit_data(length, year, month, order, query_filters):
     data = AggAwcMonthly.objects.filter(
         month=date(year, month, 1),
         **query_filters
-    ).exclude(**exclude_param).order_by(*order).values(
+    ).order_by(*order).values(
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'awc_id', 'month', 'valid_visits',
         'expected_visits'
     )
     paginated_data = data[:length]
-
     def get_value_or_data_not_entered(source, field):
         value = source.get(field)
         if value is None:
