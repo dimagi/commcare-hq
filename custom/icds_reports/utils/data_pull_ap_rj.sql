@@ -196,13 +196,22 @@ COPY(
     SUM(CASE WHEN month='2019-11-01' THEN num_awcs_conducted_vhnd ELSE 0 END) as conducted_vhnd_nov,
 
     SUM(CASE WHEN month='2019-04-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_april,
+    SUM(CASE WHEN month='2019-04-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_april,
+
     SUM(CASE WHEN month='2019-05-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_may,
+    SUM(CASE WHEN month='2019-05-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_may,
     SUM(CASE WHEN month='2019-06-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_june,
+    SUM(CASE WHEN month='2019-06-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_june,
     SUM(CASE WHEN month='2019-07-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_july,
+    SUM(CASE WHEN month='2019-07-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_july,
     SUM(CASE WHEN month='2019-08-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_aug,
+    SUM(CASE WHEN month='2019-08-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_aug,
     SUM(CASE WHEN month='2019-09-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_sept,
+    SUM(CASE WHEN month='2019-09-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_sept,
     SUM(CASE WHEN month='2019-10-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_oct,
-    SUM(CASE WHEN month='2019-11-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_nov
+    SUM(CASE WHEN month='2019-10-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_oct,
+    SUM(CASE WHEN month='2019-11-01' THEN COALESCE(thr_rations_21_plus_distributed_child,0) + COALESCE(num_mother_thr_21_days,0) ELSE 0 end) as thr_21_total_nov,
+    SUM(CASE WHEN month='2019-11-01' THEN COALESCE(thr_eligible_child,0) + COALESCE(num_mother_thr_eligible,0) ELSE 0 end) as total_eligible_eligible_nov
 
     from awc_location_local awc_location
     left join agg_awc ON(
