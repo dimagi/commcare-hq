@@ -109,9 +109,9 @@ def run_task(agg_record, query_name):
     state_ids = agg_record.state_ids
     query = function_map[query_name]
     pre_query, agg_query, post_query = query.funcs
-    if pre:
+    if pre_query:
         logger.info('Running pre aggregration queries')
-        pre(agg_date)
+        pre_query(agg_date)
         logger.info('Finished pre aggregration queries')
     if query.by_state == SINGLE_STATE:
         greenlets = []
@@ -131,9 +131,9 @@ def run_task(agg_record, query_name):
         agg_query(agg_date)
     else:
         agg_query(agg_date, state_ids)
-    if post:
+    if post_query:
         logger.info('Running post aggregration queries')
-        post(agg_date)
+        post_query(agg_date)
         logger.info('Finished post aggregration queries')
 
 
