@@ -4,8 +4,6 @@ from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
 from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names
-from custom.icds_reports.utils import india_now
-
 
 class GovernanceApiTest(TestCase):
 
