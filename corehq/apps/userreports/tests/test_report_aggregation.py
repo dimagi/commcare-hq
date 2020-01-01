@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 from django.test import TestCase
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
