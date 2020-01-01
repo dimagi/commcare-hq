@@ -82,7 +82,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 vm.months = vm.monthsCopy;
                 vm.selectedYear === latest.getFullYear() - 1;
             } else {
-               vm.months.pop();
+                vm.months.pop();
             }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
