@@ -562,9 +562,8 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
 
 class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
-    def _relative_date(cls, month, day, year_offset=0):
-        year = datetime.utcnow().year + year_offset
-        return f"{year}-{month:02}-{day:02}"
+    def _relative_date(cls, days_offset):
+        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m-%d")
 
     @classmethod
     def _relative_month(cls, month, year_offset=0):
@@ -579,27 +578,27 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 "city": "Boston",
                 "number": 4,
                 "age_at_registration": 1,
-                "date": cls._relative_date(1, 3, year_offset=-1),
+                "date": cls._relative_date(379),
             },
             {
                 "state": "MA",
                 "city": "Boston", "number": 3,
                 "age_at_registration": 5,
-                "date": cls._relative_date(2, 18, year_offset=-1),
+                "date": cls._relative_date(400),
             },
             {
                 "state": "MA",
                 "city": "Cambridge",
                 "number": 2,
                 "age_at_registration": 8,
-                "date": cls._relative_date(1, 22, year_offset=-1),
+                "date": cls._relative_date(369),
             },
             {
                 "state": "TN",
                 "city": "Nashville",
                 "number": 1,
                 "age_at_registration": 14,
-                "date": cls._relative_date(1, 3, year_offset=-2),
+                "date": cls._relative_date(733),
             },
         ]:
             cls._new_case(row).save()
