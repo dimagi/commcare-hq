@@ -81,8 +81,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 // For January, reset to Dec last year
                 vm.months = vm.monthsCopy;
                 vm.selectedYear === latest.getFullYear() - 1;
-            }
-            else {
+            } else {
                vm.months.pop();
             }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
