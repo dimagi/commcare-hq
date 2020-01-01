@@ -7,16 +7,6 @@
         SELECT create_distributed_table('tmp_agg_child_health_5', 'supervisor_id');
         
 {}
-DROP TABLE IF EXISTS staging_agg_child_health
-{}
-
-        CREATE TABLE staging_agg_child_health (
-            LIKE agg_child_health
-            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
-            CHECK (month = DATE '2019-01-01')
-        )
-        
-{}
 
             INSERT INTO "tmp_agg_child_health_5" (state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, days_ration_given_child)
             SELECT
@@ -305,6 +295,16 @@ DROP TABLE IF EXISTS staging_agg_child_health
                          coalesce_disabled, coalesce_minority, coalesce_resident;
             
 {"start_date": "2019-01-01T00:00:00"}
+DROP TABLE IF EXISTS staging_agg_child_health
+{}
+
+        CREATE TABLE staging_agg_child_health (
+            LIKE agg_child_health
+            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
+            CHECK (month = DATE '2019-01-01')
+        )
+        
+{}
 
             UPDATE "tmp_agg_child_health_5" agg SET
               state_is_test = ut.state_is_test,

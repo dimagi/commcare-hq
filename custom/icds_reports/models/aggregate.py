@@ -502,6 +502,10 @@ class AggAwc(models.Model, AggregateMixin):
     preschool_kit_available = models.IntegerField(blank=True, null=True)
     preschool_kit_usable = models.IntegerField(blank=True, null=True)
     awc_with_gm_devices = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -609,6 +613,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     valid_in_month = models.IntegerField()
     lactating = models.IntegerField()
     pregnant = models.IntegerField()
+    lactating_registered_in_month = models.IntegerField()
+    pregnant_registered_in_month = models.IntegerField()
     thr_eligible = models.IntegerField()
     rations_21_plus_distributed = models.IntegerField()
     tetanus_complete = models.IntegerField()
@@ -645,6 +651,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     institutional_delivery_in_month = models.IntegerField(null=True)
     lactating_all = models.IntegerField(null=True)
     pregnant_all = models.IntegerField(null=True)
+    lactating_all_registered_in_month = models.IntegerField(null=True)
+    pregnant_all_registered_in_month = models.IntegerField(null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
 
@@ -1538,7 +1546,7 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
-        unique_together = ('supervisor_id', 'person_case_id', 'month')  # pkey
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
 
     _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
     _agg_atomic = False

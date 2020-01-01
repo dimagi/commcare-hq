@@ -64,7 +64,8 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-)
+    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+    GOVERNANCE_API_STEPS)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -224,12 +225,17 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-)
+    india_now)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
     get_program_summary_data_with_retrying,
 )
+
+from custom.icds_reports.reports.governance_apis import (
+    get_home_visit_data,
+)
+
 
 from . import const
 from .exceptions import TableauTokenException
@@ -2164,3 +2170,85 @@ class MWCDDataView(View):
         except Exception:
             response = dict(isSuccess=False, message='Unknown Error occured')
             return JsonResponse(response, status=500)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
+class GovernanceAPIView(View):
+
+    @staticmethod
+    def get_state_id_from_state_site_code(state_code):
+        awc_location = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                                  state_site_code=state_code, state_is_test=0)\
+            .values_list('state_id', flat=True)
+        return awc_location[0] if len(awc_location) > 0 else None
+
+    def get_gov_api_params(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        state_site_code = request.GET.get('state_site_code')
+        state_id = ''
+        if state_site_code is not None:
+            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+
+        if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
+
+        start = request.GET.get('start', 0)
+
+        return step, start, month, year, state_id
+
+    def get(self, request, *args, **kwargs):
+        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
+        present_year = datetime.now().year
+        present_month = datetime.now().month
+
+        is_valid = True
+
+        # input validations
+        if not (1 <= year <= present_year and 1 <= month <= 12):
+            is_valid = False
+            exception_message = 'Invalid date'
+        if year > present_year or (year == present_year and month > present_month):
+            is_valid = False
+            exception_message = 'Date should be less than present date'
+        if step not in GOVERNANCE_API_STEPS:
+            is_valid = False
+            exception_message = 'Invalid step ' + step
+        if state_id is None:
+            is_valid = False
+            exception_message = 'Invalid state site code'
+
+        if not is_valid:
+            return HttpResponse(exception_message, status=400)
+
+        if step == 'home_visit':
+            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+            query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
+            if state_id != '':
+                query_filters['state_id'] = state_id
+            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+
+            data, count = get_home_visit_data(
+                start,
+                length,
+                year,
+                month,
+                order,
+                query_filters
+            )
+            response_json = {
+                'data': data,
+                'metadata': {
+                    'start': start,
+                    'month': month,
+                    'year': year,
+                    'count': count,
+                    'timestamp': india_now()
+                }
+            }
+        return JsonResponse(data=response_json)
