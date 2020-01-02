@@ -7,11 +7,12 @@ from threading import Event
 import attr
 import gevent
 import gipc
-from gevent.queue import Queue
+from gevent.queue import Empty, Queue
 
 from .util import ProcessError, gipc_process_error_handler
 
 log = logging.getLogger(__name__)
+RESULT_TIMEOUT = 5  # seconds
 
 
 def _check_processes(obj, attrib, value):
@@ -84,7 +85,10 @@ def _produce_items(iterable, itemq, running, stop):
 
 def _consume_results(resultq, running):
     while running:
-        result = resultq.get()
+        try:
+            result = resultq.get(timeout=RESULT_TIMEOUT)
+        except Empty:
+            continue
         if result is _Stop:
             log.debug("got worker stop token")
             running.pop()
