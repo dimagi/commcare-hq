@@ -7,7 +7,7 @@ from corehq.util.quickcache import quickcache
 def get_application_access_for_domain(domain):
     """
     There should only be one of these per domain,
-    return it if found, otherwise None.
+     return it if found, otherwise create it.
     """
     return SQLApplicationAccess.objects.get_or_create(domain=domain)[0]
 
