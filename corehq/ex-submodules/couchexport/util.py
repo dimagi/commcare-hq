@@ -252,39 +252,58 @@ def get_excel_format_value(value):
     if re.match(r"^[+-]?\d+(,)\d*$", value):
         try:
             return ExcelFormatValue(numbers.FORMAT_NUMBER_00, float(value.replace(',', '.')))
-        except ValueError:
+        except (ValueError, OverflowError):
             pass
 
     # percentage without decimals
     if re.match(r"^[+-]?\d+%$", value):
-        return ExcelFormatValue(numbers.FORMAT_PERCENTAGE, int(value.replace('%', '')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE, int(value.replace('%', '')))
+        except (ValueError, OverflowError):
+            pass
 
     # percentage with decimals
     if re.match(r"^[+-]?\d+(\.)\d*%$", value):
-        return ExcelFormatValue(numbers.FORMAT_PERCENTAGE_00, float(value.replace('%', '')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE_00, float(value.replace('%', '')))
+        except (ValueError, OverflowError):
+            pass
 
     # comma-separated US-style '#,##0.00' (regexlib.com)
     if re.match(r"^(\d|-)?(\d|,)*\.?\d*$", value):
-        return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED1, float(value.replace(',', '')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED1,
+                                    float(value.replace(',', '')))
+        except (ValueError, OverflowError):
+            pass
 
     # decimal-separated Euro-style '#.##0,00' (regexlib.com
     if re.match(r"^(\d|-)?(\d|\.)*,?\d*$", value):
-        return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED2,
-                                float(value.replace('.', '').replace(',', '.')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_NUMBER_COMMA_SEPARATED2,
+                                    float(value.replace('.', '').replace(',', '.')))
+        except (ValueError, OverflowError):
+            pass
 
     # USD with leading zeros (regexlib.com)
     if re.match(r"^(-)?\$([1-9]{1}[0-9]{0,2}(\,[0-9]{3})*(\.[0-9]{0,2})?"
                 r"|[1-9]{1}[0-9]{0,}(\.[0-9]{0,2})?|0(\.[0-9]{0,2})?"
                 r"|(\.[0-9]{1,2})?)$", value):
-        return ExcelFormatValue(numbers.FORMAT_CURRENCY_USD_SIMPLE,
-                                float(value.replace(',', '').replace('$', '')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_CURRENCY_USD_SIMPLE,
+                                    float(value.replace(',', '').replace('$', '')))
+        except (ValueError, OverflowError):
+            pass
 
     # EURO with leading zeros (regexlib.com)
     if re.match(r"^(-)?\€([1-9]{1}[0-9]{0,2}(\.[0-9]{3})*(\,[0-9]{0,2})?"
                 r"|[1-9]{1}[0-9]{0,}(\,[0-9]{0,2})?|0(\,[0-9]{0,2})?"
                 r"|(\,[0-9]{1,2})?)$", value):
-        return ExcelFormatValue(numbers.FORMAT_CURRENCY_EUR_SIMPLE,
-                                float(value.replace('.', '').replace(',', '.').replace('€', '')))
+        try:
+            return ExcelFormatValue(numbers.FORMAT_CURRENCY_EUR_SIMPLE,
+                                    float(value.replace('.', '').replace(',', '.').replace('€', '')))
+        except (ValueError, OverflowError):
+            pass
 
     # no formats matched...clean and return as text
     dirty_chars = re.compile(
