@@ -14,7 +14,7 @@ from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     if beta:
@@ -100,7 +100,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
 
     if beta:
@@ -170,7 +170,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, beta=False):
 
     if beta:

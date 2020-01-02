@@ -63,6 +63,5 @@ class Migration(migrations.Migration):
     operations.extend(get_composite_primary_key_migrations(['aggregateadolescentgirlsregistrationforms']))
     operations.append(migrations.RunPython(_distribute_citus_tables, migrations.RunPython.noop))
 
-    operations.extend(get_view_migrations())
 
 
