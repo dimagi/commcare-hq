@@ -38,13 +38,14 @@ from custom.icds_reports.tasks import (
     _agg_adolescent_girls_registration_table,
     create_df_indices,
     drop_df_indices,
+    drop_gm_indices,
 )
 
 
 logger = logging.getLogger(__name__)
 
 STATE_TASKS = {
-    'aggregate_gm_forms': (None, _aggregate_gm_forms, None),
+    'aggregate_gm_forms': (drop_gm_indices, _aggregate_gm_forms, None),
     'aggregate_cf_forms': (None, _aggregate_cf_forms, None),
     'aggregate_ccs_cf_forms': (None, _aggregate_ccs_cf_forms, None),
     'aggregate_child_health_thr_forms': (None, _aggregate_child_health_thr_forms, None),

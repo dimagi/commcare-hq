@@ -216,6 +216,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
 
+            drop_gm_indices(monthly_date)
             drop_df_indices(monthly_date)
             stage_1_tasks = [
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
@@ -1735,11 +1736,19 @@ def update_dashboard_activity_report(target_date=None):
         DashboardUserActivityReport().aggregate(target_date)
 
 
+def drop_gm_indices(agg_date):
+    helper = GrowthMonitoringFormsAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateGrowthMonitoringForms) as cursor:
+        for query, params in helper.delete_queries():
+            cursor.execute(query, params)
+
+
 def create_df_indices(agg_date):
     helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
     with get_cursor(AggregateChildHealthDailyFeedingForms) as cursor:
         for query in helper.create_index_queries():
             cursor.execute(query)
+
 
 def drop_df_indices(agg_date):
     helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
