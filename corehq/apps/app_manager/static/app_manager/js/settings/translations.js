@@ -34,7 +34,7 @@ hqDefine("app_manager/js/settings/translations", function () {
                 baseUrl: $translationsPanel.find("#download_link").attr("href"),
                 format: $translationsPanel.find("#sheet_format").val(),
                 lang: $translationsPanel.find("select").val() || '',
-                skipBlacklisted: $translationsPanel.find("#skip_blacklisted").val() === "on",
+                skipBlacklisted: $translationsPanel.find("#skip_blacklisted").val(),
             }));
         }
     });

@@ -45,7 +45,21 @@
         {% trans "Download only translations eligible for Transifex?" %}
       </p>
       <p>
-        <input type="checkbox" id="skip_blacklisted" data-bind="checked: skipBlacklisted"/>
+        <select-toggle data-apply-bindings="false"
+                       params="
+                         value: skipBlacklisted,
+                         id: 'skip_blacklisted',
+                         options: [
+                           {
+                             id: 'true',
+                             text: '{% trans_html_attr 'Only Transifex references' %}',
+                           },
+                           {
+                             id: 'false',
+                             text: '{% trans_html_attr 'All translations' %}',
+                           },
+                         ],
+                       "></select-toggle>
       </p>
     </li>
     {% endif %}
