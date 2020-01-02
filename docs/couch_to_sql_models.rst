@@ -59,6 +59,7 @@ This should contain:
 * A django migration to create the new model
 * A standalone management command that fetches all couch docs and creates a corresponding SQL model if it doesn't already exist. This command should support being run repeatedly.
 * Updates to all code that saves the couch document to also update the SQL model (and creeate it if necessary). If it isn't feasible to update all couch-saving code in this PR, the migration command will need to not only create new SQL models but also update existing models if they've deviated from their couch document.
+* Code to delete the new model when the domain is deleted. Add the new model to `DOMAIN_DELETE_OPERATIONS <https://github.com/dimagi/commcare-hq/blob/522294560cee0f3ac1ddeae0501d653b1ea0f215/corehq/apps/domain/deletion.py#L179>`_ and update tests in `test_delete_domain.py <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/domain/tests/test_delete_domain.py>`_.
 
 Once this PR is deployed, run the migration command in any environments where it's likely to take more than a trivial amoount of time.
 

@@ -141,7 +141,8 @@ from custom.icds_reports.utils import (
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
-    AggAwcDistributedHelper
+    AggAwcDistributedHelper,
+    AggChildHealthAggregationDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -614,6 +615,18 @@ def _daily_attendance_table(day):
 @track_time
 def _agg_child_health_table(day):
     AggChildHealth.aggregate(force_to_date(day))
+
+
+def agg_child_health_temp(day):
+    helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
+    with get_cursor(AggChildHealth) as cursor:
+        helper.aggregate_temp(cursor)
+
+
+def update_agg_child_health(day):
+    helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
+    with get_cursor(AggChildHealth) as cursor:
+        helper.update_table(cursor)
 
 
 @track_time

@@ -400,14 +400,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/billing/statements/',
-    '/a/%(domain)s/settings/project/billing_information/',
-    '/a/%(domain)s/settings/project/flags/',
-    '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/internal/info/',
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/project_limits/',
-    '/a/%(domain)s/settings/project/subscription/',
+    '/a/{domain}/settings/project/billing/statements/',
+    '/a/{domain}/settings/project/billing_information/',
+    '/a/{domain}/settings/project/flags/',
+    '/a/{domain}/settings/project/internal/calculations/',
+    '/a/{domain}/settings/project/internal/info/',
+    '/a/{domain}/settings/project/internal_subscription_management/',
+    '/a/{domain}/settings/project/project_limits/',
+    '/a/{domain}/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -1885,6 +1885,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'migrations_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
