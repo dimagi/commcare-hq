@@ -11,6 +11,11 @@ class RequestLog(models.Model):
     domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
     timestamp = models.DateTimeField(auto_now_add=True)
     log_level = models.IntegerField(null=True)
+    # payload_id is set for requests that are caused by a payload (e.g.
+    # a form submission -- in which case payload_id will have the value
+    # of XFormInstanceSQL.form_id). It also uniquely identifies a Repeat
+    # Record, so it can be used to link a Repeat Record with the
+    # requests to send its payload.
     payload_id = models.CharField(max_length=126, blank=True, null=True)
     request_method = models.CharField(max_length=12)
     request_url = models.CharField(max_length=255)
