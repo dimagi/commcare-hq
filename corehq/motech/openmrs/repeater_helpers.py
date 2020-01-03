@@ -323,11 +323,15 @@ def generate_identifier(requests, identifier_type):
     """
     identifier = None
     source_id = None
-    with Requests(domain_name=requests.domain_name,
-                  base_url=requests.base_url,
-                  username=requests.username,
-                  password=requests.password,
-                  verify=requests.verify) as requests_session:
+    with Requests(
+        domain_name=requests.domain_name,
+        base_url=requests.base_url,
+        username=requests.username,
+        password=requests.password,
+        verify=requests.verify,
+        notify_addresses=requests.notify_addresses,
+        payload_id=requests.payload_id,
+    ) as requests_session:
         authenticate_session(requests_session)
         try:
             source_id = get_identifier_source_id(requests_session, identifier_type)
