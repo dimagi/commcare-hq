@@ -15,6 +15,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     LedgerAccessorSQL,
@@ -243,13 +244,20 @@ def diff_cases(case_ids, log_cases=False):
     return data
 
 
-def diff_case(sql_case, couch_case, fix=True):
-    sql_case_json = sql_case.to_json()
-    diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-    diffs = filter_case_diffs(couch_case, sql_case_json, diffs, _state)
-    if fix and diffs and should_sort_sql_transactions(sql_case, couch_case):
-        sql_case = rebuild_case_with_couch_action_order(sql_case)
-        diffs = diff_case(sql_case, couch_case, fix=False)
+def diff_case(sql_case, couch_case):
+    def diff(couch_json, sql_json):
+        diffs = json_diff(couch_json, sql_json, track_list_indices=False)
+        return filter_case_diffs(couch_json, sql_json, diffs, _state)
+    sql_json = sql_case.to_json()
+    diffs = diff(couch_case, sql_json)
+    if diffs:
+        couch_case = FormProcessorCouch.hard_rebuild_case(
+            couch_case["domain"], couch_case['_id'], None, save=False, lock=False
+        ).to_json()
+        diffs = diff(couch_case, sql_json)
+        if diffs and should_sort_sql_transactions(sql_case, couch_case):
+            sql_case = rebuild_case_with_couch_action_order(sql_case)
+            diffs = diff(couch_case, sql_case.to_json())
     return diffs
 
 
