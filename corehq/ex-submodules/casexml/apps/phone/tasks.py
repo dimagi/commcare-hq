@@ -102,8 +102,10 @@ def prune_synclogs():
             year=year,
             week="%02d" % week
         )
+        truncate_query = "TRUNCATE TABLE {}".format(table_name)
         drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
         db = router.db_for_write(SyncLogSQL)
         with connections[db].cursor() as cursor:
+            cursor.execute(truncate_query)
             cursor.execute(drop_query)
         oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
