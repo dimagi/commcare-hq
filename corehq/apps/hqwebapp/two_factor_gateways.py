@@ -9,6 +9,7 @@ from six.moves.urllib.parse import urlencode
 from tastypie.http import HttpTooManyRequests
 from twilio.http.http_client import TwilioHttpClient
 from twilio.rest import Client
+from two_factor.models import PhoneDevice
 
 import settings
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -82,7 +83,9 @@ def rate_limit_two_factor_setup(device):
     given by two_factor_setup_rate_limiter.
     And keeps total requests below limits given by global_two_factor_setup_rate_limiter.
 
-    Requests without a username or IP are rejected (unusual).
+    Requests without an IP are rejected (unusual).
+    If a device has no username attached or if it is not a PhoneDevice,
+    then those requests are also rejected.
 
     """
     _status_rate_limited = 'rate_limited'
@@ -100,9 +103,9 @@ def rate_limit_two_factor_setup(device):
 
     ip_address = get_ip_address()
     username = device.user.username
-    method = device.method
+    method = device.method if isinstance(device, PhoneDevice) else None
 
-    if ip_address and username:
+    if ip_address and username and method:
         if two_factor_setup_rate_limiter.allow_usage('ip:{}'.format(ip_address)) \
                 and two_factor_setup_rate_limiter.allow_usage('user:{}'.format(username)) \
                 and global_two_factor_setup_rate_limiter.allow_usage():
