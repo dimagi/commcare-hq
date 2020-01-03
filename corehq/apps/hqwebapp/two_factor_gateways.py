@@ -88,6 +88,7 @@ def rate_limit_two_factor_setup(method):
     _status_rate_limited = 'rate_limited'
     _status_bad_request = 'bad_request'
     _status_accepted = 'accepted'
+    _status_missing_username = 'missing_username:ip:{}'
 
     def get_ip_and_username():
         request = get_request()
@@ -112,6 +113,8 @@ def rate_limit_two_factor_setup(method):
             status = _status_accepted
         else:
             status = _status_rate_limited
+    elif ip_address:
+        status = _status_missing_username.format(ip_address)
     else:
         status = _status_bad_request
 
