@@ -9,7 +9,6 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
-from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     from custom.icds.tasks.sms import send_monthly_sms_report
