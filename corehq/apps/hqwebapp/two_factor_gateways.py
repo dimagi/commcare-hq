@@ -41,7 +41,7 @@ class Gateway(object):
         return Client(sid, token, http_client=proxy_client)
 
     def send_sms(self, device, token):
-        if rate_limit_two_factor_setup(method='sms'):
+        if rate_limit_two_factor_setup(device):
             return HttpTooManyRequests()
 
         message = _('Your authentication token is %s') % token
@@ -51,7 +51,7 @@ class Gateway(object):
             body=message)
 
     def make_call(self, device, token):
-        if rate_limit_two_factor_setup(method='call'):
+        if rate_limit_two_factor_setup(device):
             return HttpTooManyRequests()
 
         locale = translation.get_language()
@@ -75,7 +75,7 @@ def validate_voice_locale(locale):
 @run_only_when(not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING)
 @silence_and_report_error("Exception raised in the two factor setup rate limiter",
                           'commcare.two_factor.setup_rate_limiter_errors')
-def rate_limit_two_factor_setup(method):
+def rate_limit_two_factor_setup(device):
     """
     This holds attempts per user AND attempts per IP below limits
 
@@ -88,20 +88,19 @@ def rate_limit_two_factor_setup(method):
     _status_rate_limited = 'rate_limited'
     _status_bad_request = 'bad_request'
     _status_accepted = 'accepted'
-    _status_missing_username = 'missing_username:ip:{}'
 
-    def get_ip_and_username():
+    def get_ip_address():
         request = get_request()
         if request:
-            ip_address = get_ip(request)
-            username = request.user.username if getattr(request, 'user', None) else None
-            return ip_address, username
+            return get_ip(request)
         else:
-            return None, None
+            return None
 
     _report_current_global_two_factor_setup_rate_limiter()
 
-    ip_address, username = get_ip_and_username()
+    ip_address = get_ip_address()
+    username = device.user.username
+    method = device.method
 
     if ip_address and username:
         if two_factor_setup_rate_limiter.allow_usage('ip:{}'.format(ip_address)) \
@@ -113,8 +112,6 @@ def rate_limit_two_factor_setup(method):
             status = _status_accepted
         else:
             status = _status_rate_limited
-    elif ip_address:
-        status = _status_missing_username.format(ip_address)
     else:
         status = _status_bad_request
 
