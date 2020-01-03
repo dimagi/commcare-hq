@@ -12,6 +12,7 @@ from corehq.util.datadog.gauges import datadog_counter
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    from custom.icds.tasks.sms import send_monthly_sms_report
     @periodic_task(run_every=crontab(minute=0, hour='22'))
     def delete_old_images(cutoff=None):
         cutoff = cutoff or datetime.utcnow()
