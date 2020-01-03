@@ -186,12 +186,12 @@ class SerializableFunctionProperty(Property):
 def get_excel_format_value(value):
     from corehq.apps.export.models.new import ExcelFormatValue
 
+    if isinstance(value, bool):
+        return ExcelFormatValue(numbers.FORMAT_GENERAL, value)
     if isinstance(value, int):
         return ExcelFormatValue(numbers.FORMAT_NUMBER, value)
     if isinstance(value, float):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, value)
-    if isinstance(value, bool):
-        return ExcelFormatValue(numbers.FORMAT_GENERAL, value)
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is None:
@@ -215,7 +215,8 @@ def get_excel_format_value(value):
             pass
 
     # potential time of any format
-    if re.search(r"^(\d+(:))+\d+(\.\d+(-\d+)?)?(( )*[ap]m)?$", value.lower()):
+    if re.search(r"^((\d+(:))+)\d+(\.\d+((-+)((\d+(:))*)\d+)?)?(( )*[ap]m)?$",
+                 value.lower()):
         try:
             # we are not returning this as a datetime object, otherwise
             # it will try to attach today's date to the value and also
@@ -225,7 +226,9 @@ def get_excel_format_value(value):
             pass
 
     # potential datetime format
-    if re.match(r"^\d+(/|-|\.)\d+(/|-|\.)\d+ (\d+(:))+\d+(\.\d+(-\d+)?)?(( )*[ap]m)?$", value.lower()):
+    if re.match(r"^\d+(/|-|\.)\d+(/|-|\.)\d+ "
+                r"((\d+(:))+)\d+(\.\d+((-+)((\d+(:))*)\d+)?)?(( )*[ap]m)?$",
+                value.lower()):
         try:
             # always use standard yyy-mm-dd h:mm:ss format for excel
             return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, dateutil.parser.parse(value))
@@ -286,9 +289,7 @@ def get_excel_format_value(value):
             pass
 
     # USD with leading zeros (regexlib.com)
-    if re.match(r"^(-)?\$([1-9]{1}[0-9]{0,2}(\,[0-9]{3})*(\.[0-9]{0,2})?"
-                r"|[1-9]{1}[0-9]{0,}(\.[0-9]{0,2})?|0(\.[0-9]{0,2})?"
-                r"|(\.[0-9]{1,2})?)$", value):
+    if re.match(r"^(-)?\$([1-9]{1}[0-9]{0,2}(\,[0-9]{3})*(\.\d*)?)$", value):
         try:
             return ExcelFormatValue(numbers.FORMAT_CURRENCY_USD_SIMPLE,
                                     float(value.replace(',', '').replace('$', '')))
@@ -296,9 +297,7 @@ def get_excel_format_value(value):
             pass
 
     # EURO with leading zeros (regexlib.com)
-    if re.match(r"^(-)?\€([1-9]{1}[0-9]{0,2}(\.[0-9]{3})*(\,[0-9]{0,2})?"
-                r"|[1-9]{1}[0-9]{0,}(\,[0-9]{0,2})?|0(\,[0-9]{0,2})?"
-                r"|(\,[0-9]{1,2})?)$", value):
+    if re.match(r"^(-)?\€([1-9]{1}[0-9]{0,2}(\.[0-9]{3})*(\,\d*)?)$", value):
         try:
             return ExcelFormatValue(numbers.FORMAT_CURRENCY_EUR_SIMPLE,
                                     float(value.replace('.', '').replace(',', '.').replace('€', '')))
