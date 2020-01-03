@@ -157,7 +157,7 @@ class CouchSqlDomainMigrator:
             domain=self.domain,
             state=self.statedb.unique_id,
         ))
-        patch = patch_case_property_validators()
+        patch = migration_patches()
         with self.counter, patch, self.case_diff_queue, self.stopper:
             if self.forms:
                 self._process_forms_subset(self.forms)
@@ -452,6 +452,12 @@ NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 
 
 
 @contextmanager
+def migration_patches():
+    with patch_case_property_validators(), patch_XFormInstance_get_xml():
+        yield
+
+
+@contextmanager
 def patch_case_property_validators():
     def truncate_255(value):
         return value[:255]
@@ -468,6 +474,33 @@ def patch_case_property_validators():
         yield
     finally:
         PROPERTY_TYPE_MAPPING.update(original)
+
+
+@contextmanager
+def patch_XFormInstance_get_xml():
+    @memoized
+    def get_xml(self):
+        try:
+            return self._unsafe_get_xml()
+        except MissingFormXml as err:
+            try:
+                data = self.to_json()
+            except Exception:
+                raise err
+            return convert_form_to_xml(data["form"]).encode('utf-8')
+
+    if hasattr(XFormInstance, "_unsafe_get_xml"):
+        # noop when already patched
+        yield
+        return
+
+    XFormInstance._unsafe_get_xml = XFormInstance.get_xml
+    XFormInstance.get_xml = get_xml
+    try:
+        yield
+    finally:
+        XFormInstance.get_xml = XFormInstance._unsafe_get_xml
+        del XFormInstance._unsafe_get_xml
 
 
 def _wrap_form(doc):
@@ -553,7 +586,7 @@ def _migrate_form_attachments(sql_form, couch_form):
 
     def get_form_xml_metadata(meta):
         try:
-            couch_form.get_xml()
+            couch_form._unsafe_get_xml()
             assert meta is not None, couch_form.form_id
             return meta
         except MissingFormXml:
@@ -757,12 +790,9 @@ def _get_case_and_ledger_updates(domain, sql_form):
             case_db.mark_changed(case)
         cases = case_result.cases
 
-        try:
-            stock_result = process_stock(xforms, case_db)
-            cases = case_db.get_cases_for_saving(sql_form.received_on)
-            stock_result.populate_models()
-        except MissingFormXml:
-            stock_result = None
+        stock_result = process_stock(xforms, case_db)
+        cases = case_db.get_cases_for_saving(sql_form.received_on)
+        stock_result.populate_models()
 
     return CaseStockProcessingResult(
         case_result=case_result,

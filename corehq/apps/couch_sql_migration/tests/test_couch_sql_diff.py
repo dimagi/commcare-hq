@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import timedelta
 
+import attr
 from gevent.pool import Pool
 from mock import patch
 
@@ -147,8 +148,18 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
 
 def MockPool(initializer=lambda: None, initargs=(), maxtasksperchild=None):
-    initializer(*initargs)
-    return Pool()
+    return NoProcessPool(initializer, initargs)
+
+
+@attr.s
+class NoProcessPool:
+    initializer = attr.ib()
+    initargs = attr.ib()
+    pool = attr.ib(factory=Pool, init=False)
+
+    def imap_unordered(self, *args, **kw):
+        with self.initializer(*self.initargs):
+            yield from self.pool.imap_unordered(*args, **kw)
 
 
 THING_FORM = """

@@ -28,6 +28,7 @@ from ...casediff import ProcessNotAllowed, filter_missing_cases, get_casediff_st
 from ...couchsqlmigration import (
     CouchSqlDomainMigrator,
     get_main_forms_iteration_stop_date,
+    migration_patches,
     setup_logging,
 )
 from ...diff import filter_case_diffs, filter_ledger_diffs
@@ -163,9 +164,9 @@ class CaseDiffTool:
     def iter_diff_specific_cases(self):
         case_ids = get_ids_from_string_or_file(self.cases)
         batches = chunked(case_ids, DIFF_BATCH_SIZE, list)
-        init_worker(*self.initargs)
-        for batch in batches:
-            yield diff_cases(batch, log_cases=True)
+        with init_worker(*self.initargs):
+            for batch in batches:
+                yield diff_cases(batch, log_cases=True)
 
     def resumable_iter_diff_cases(self):
         batches = chunked(self.iter_case_ids(), DIFF_BATCH_SIZE, self.diff_batch)
@@ -306,6 +307,7 @@ def init_worker(domain, *args):
     clean_break = False
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
+    return migration_patches()
 
 
 @attr.s

@@ -1417,7 +1417,8 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        mod._migrate_form_attachments(sql_form, couch_form)
+        with mod.patch_XFormInstance_get_xml():
+            mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()
         self.assertEqual(convert_xform_to_json(xml), couch_form.form_data)
