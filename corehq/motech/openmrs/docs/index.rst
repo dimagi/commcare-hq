@@ -223,36 +223,30 @@ to OpenMRS's fields:
 * person_preferred_name
 * person_preferred_address
 
-Each of those assigns values to a patient one of three ways, and each
-way is configured in an ``OpenmrsCaseConfig`` using a subclass of
-``ValueSource``:
+Each of those assigns values to a patient one of three ways:
 
-1. It can assign a constant. This uses the ``ConstantString`` subclass
-   of ``ValueSource``. e.g. ::
+1. It can assign a constant. This uses the "value" key. e.g. ::
 
        "person_properties": {
          "birthdate": {
-           "doc_type": "ConstantString",
            "value": "Oct 7, 3761 BCE"
          }
        }
 
-2. It can assign a case property value. Use ``CaseProperty`` for this.
+2. It can assign a case property value. Use "case_property" for this.
    e.g. ::
 
        "person_properties": {
          "birthdate": {
-           "doc_type": "CaseProperty",
            "case_property": "dob"
          }
        }
 
-3. It can map a case property value to a concept UUID.
-   ``CasePropertyMap`` does this. e.g. ::
+3. It can map a case property value to a concept UUID. Use
+   "case_property" with "value_map" to do this. e.g. ::
 
        "person_attributes": {
          "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-           "doc_type": "CasePropertyMap",
            "case_property": "class",
            "value_map": {
              "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
@@ -370,7 +364,6 @@ An example value of Form configs might look like this::
         "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
         "openmrs_start_datetime": {
           "form_question": "/metadata/timeStart",
-          "doc_type": "FormQuestion",
           "external_data_type": "omrs_date"
         },
         "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
@@ -380,8 +373,7 @@ An example value of Form configs might look like this::
             "doc_type": "ObservationMapping",
             "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             "value": {
-              "form_question": "/data/height",
-              "doc_type": "FormQuestion"
+              "form_question": "/data/height"
             }
           },
           {
@@ -389,7 +381,6 @@ An example value of Form configs might look like this::
             "concept": "e1e055a2-1d5f-11e0-b929-000c29ad1d07",
             "value": {
               "form_question": "/data/lost_follow_up/visit_type",
-              "doc_type": "FormQuestionMap",
               "value_map": {
                 "Search": "e1e20e4c-1d5f-11e0-b929-000c29ad1d07",
                 "Support": "e1e20f5a-1d5f-11e0-b929-000c29ad1d07"

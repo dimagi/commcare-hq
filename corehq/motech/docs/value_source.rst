@@ -24,7 +24,6 @@ type not to be set. e.g. ::
 
     {
       "expectedDeliveryDate": {
-        "doc_type": "CaseProperty",
         "case_property": "edd",
         "commcare_data_type": null,
         "external_data_type": null
@@ -36,7 +35,6 @@ datetime for example, use the following::
 
     {
       "expectedDeliveryDate": {
-        "doc_type": "CaseProperty",
         "case_property": "edd",
         "commcare_data_type": "cc_date",
         "external_data_type": "omrs_datetime"
@@ -69,7 +67,6 @@ property named "hiv_status" but not export it, use
 
     {
       "hivStatus": {
-        "doc_type": "CaseProperty",
         "case_property": "hiv_status",
         "direction": "in"
       }
@@ -80,7 +77,6 @@ To export a form question, for example, but not import it, use
 
     {
       "hivStatus": {
-        "doc_type": "FormQuestion",
         "case_property": "hiv_status",
         "direction": "out"
       }
