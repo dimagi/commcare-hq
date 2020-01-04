@@ -73,7 +73,9 @@ An OpenMRS Patient
 
 The way we map case properties to an OpenMRS patient is based on how
 OpenMRS represents a patient. Here is an example of an OpenMRS patient
-(with some fields removed)::
+(with some fields removed):
+
+.. code-block:: javascript
 
     {
       "uuid": "d95bf6c9-d1c6-41dc-aecf-1c06bd71386c",
@@ -225,7 +227,9 @@ to OpenMRS's fields:
 
 Each of those assigns values to a patient one of three ways:
 
-1. It can assign a constant. This uses the "value" key. e.g. ::
+1. It can assign a constant. This uses the "value" key. e.g.
+
+.. code-block:: javascript
 
        "person_properties": {
          "birthdate": {
@@ -234,7 +238,9 @@ Each of those assigns values to a patient one of three ways:
        }
 
 2. It can assign a case property value. Use "case_property" for this.
-   e.g. ::
+   e.g.
+
+.. code-block:: javascript
 
        "person_properties": {
          "birthdate": {
@@ -243,7 +249,9 @@ Each of those assigns values to a patient one of three ways:
        }
 
 3. It can map a case property value to a concept UUID. Use
-   "case_property" with "value_map" to do this. e.g. ::
+   "case_property" with "value_map" to do this. e.g.
+
+.. code-block:: javascript
 
        "person_attributes": {
          "c1f455e7-3f10-11e4-adec-0800271c1b75": {
@@ -319,16 +327,18 @@ OpenMRS. This is managed with the optional ``create_missing`` property.
 Its value defaults to ``false``. If it is set to ``true``, then it will
 create a new patient if none are found.
 
-For example::
+For example:
+
+.. code-block:: javascript
 
     "patient_finder": {
-        "doc_type": "WeightedPropertyPatientFinder",
-        "property_weights": [
-            {"case_property": "given_name", "weight": 0.5},
-            {"case_property": "family_name", "weight": 0.6}
-        ],
-        "searchable_properties": ["family_name"],
-        "create_missing": true
+      "doc_type": "WeightedPropertyPatientFinder",
+      "property_weights": [
+        {"case_property": "given_name", "weight": 0.5},
+        {"case_property": "family_name", "weight": 0.6}
+      ],
+      "searchable_properties": ["family_name"],
+      "create_missing": true
     }
 
 If more than one matching patient is found, a new patient will not be
@@ -356,7 +366,9 @@ Observations in OpenMRS.
 Configure this in the "Form configs" section of the OpenMRS Forwarder
 configuration.
 
-An example value of Form configs might look like this::
+An example value of Form configs might look like this:
+
+.. code-block:: javascript
 
     [
       {
@@ -508,7 +520,9 @@ feed adheres to the
 An example URL for the patient feed would be like
 "http://www.example.com/openmrs/ws/atomfeed/patient/recent".
 
-Example content::
+Example content:
+
+.. code-block:: xml
 
     <?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
@@ -551,7 +565,9 @@ Example content::
 Similarly, an encounter feed URL would be like
 "http://www.example.com/openmrs/ws/atomfeed/encounter/recent".
 
-Example content::
+Example content:
+
+.. code-block:: xml
 
     <?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
