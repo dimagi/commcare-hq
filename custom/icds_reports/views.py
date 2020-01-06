@@ -234,7 +234,7 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
-)
+    get_state_names)
 
 
 from . import const
@@ -2251,4 +2251,7 @@ class GovernanceAPIView(View):
                     'timestamp': india_now()
                 }
             }
+        elif step == 'state_names':
+            response_json = {'data': get_state_names()}
+
         return JsonResponse(data=response_json)
