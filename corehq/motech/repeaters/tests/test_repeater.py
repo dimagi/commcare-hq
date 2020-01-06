@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
@@ -10,14 +11,14 @@ from mock import Mock, patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.domain.shortcuts import create_domain
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.receiverwrapper.exceptions import (
     DuplicateFormatException,
@@ -34,6 +35,7 @@ from corehq.form_processor.tests.utils import (
     run_with_all_backends,
 )
 from corehq.motech.repeaters.const import (
+    MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     POST_TIMEOUT,
     RECORD_SUCCESS_STATE,
@@ -50,6 +52,7 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
+    _get_retry_interval,
 )
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator,
@@ -1131,3 +1134,37 @@ class NotifyAddressesTests(SimpleTestCase):
         })
         self.assertEqual(repeater.notify_addresses, ["admin@example.com",
                                                      "user@example.com"])
+
+
+class TestGetRetryInterval(SimpleTestCase):
+
+    def test_min_interval(self):
+        last_checked = fromisoformat("2020-01-01 00:00:00")
+        now = fromisoformat("2020-01-01 00:05:00")
+        interval = _get_retry_interval(last_checked, now)
+        self.assertEqual(interval, MIN_RETRY_WAIT)
+
+    def test_max_interval(self):
+        last_checked = fromisoformat("2020-01-01 00:00:00")
+        now = fromisoformat("2020-02-01 00:00:00")
+        interval = _get_retry_interval(last_checked, now)
+        self.assertEqual(interval, MAX_RETRY_WAIT)
+
+    def test_three_times_interval(self):
+        last_checked = fromisoformat("2020-01-01 00:00:00")
+        now = fromisoformat("2020-01-01 01:00:00")
+        interval = _get_retry_interval(last_checked, now)
+        self.assertEqual(interval, timedelta(hours=3))
+
+
+# TODO: When we upgrade to Python 3.7, use datetime.fromisoformat() instead
+def fromisoformat(isoformat):
+    """
+    Return a datetime from a string in ISO 8601 date time format
+
+    >>> fromisoformat("2019-12-31 23:59:59")
+    datetime.datetime(2019, 12, 31, 23, 59, 59)
+
+    """
+    args = [int(x) for x in re.split("[ :-]", isoformat)]
+    return datetime(*args)

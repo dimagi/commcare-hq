@@ -729,27 +729,15 @@ class RepeatRecord(Document):
         self.save()
 
     def make_set_next_try_attempt(self, failure_reason):
-        # we use an exponential back-off to avoid submitting to bad urls
-        # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
-        window = timedelta(minutes=0)
-        if self.last_checked:
-            window = now - self.last_checked
-            window *= 3
-        if window < MIN_RETRY_WAIT:
-            window = MIN_RETRY_WAIT
-        elif window > MAX_RETRY_WAIT:
-            window = MAX_RETRY_WAIT
-        # Retries will typically be after 1h, 3h, 9h, 27h, 81h -- 5d 3h total
-
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=failure_reason,
             success_response=None,
-            next_check=now + window,
+            next_check=now + _get_retry_interval(self.last_checked, now),
             succeeded=False,
         )
 
@@ -893,6 +881,27 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+
+def _get_retry_interval(last_checked, now):
+    """
+    Returns a timedelta between MIN_RETRY_WAIT and MAX_RETRY_WAIT that
+    is roughly three times as long as the previous interval.
+
+    We use an exponential back-off to avoid submitting to bad URLs
+    too frequently. Retries will typically be after 1h, 3h, 9h, 27h,
+    81h, so that the last attempt will be at least 5d 1h after the
+    first attempt.
+    """
+    interval = timedelta(minutes=0)
+    if last_checked:
+        interval = now - last_checked
+        interval *= 3
+    if interval < MIN_RETRY_WAIT:
+        interval = MIN_RETRY_WAIT
+    elif interval > MAX_RETRY_WAIT:
+        interval = MAX_RETRY_WAIT
+    return interval
 
 
 def _is_response(duck):
