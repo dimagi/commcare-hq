@@ -22,7 +22,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 
 from corehq.apps.accounting.models import SubscriptionAdjustmentMethod
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
 from corehq.apps.app_manager.views.apps import clear_app_cache
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.domain.decorators import require_superuser
@@ -377,7 +377,7 @@ def copy_snapshot(request, snapshot):
                                                       user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
-                    ensure_explicit_community_subscription(
+                    ensure_community_or_paused_subscription(
                         new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
                         web_user=user.username,
                     )

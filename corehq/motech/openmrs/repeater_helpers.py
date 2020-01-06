@@ -1,3 +1,4 @@
+import inspect
 import re
 from collections import defaultdict
 
@@ -321,11 +322,15 @@ def generate_identifier(requests, identifier_type):
     """
     identifier = None
     source_id = None
-    with Requests(domain_name=requests.domain_name,
-                  base_url=requests.base_url,
-                  username=requests.username,
-                  password=requests.password,
-                  verify=requests.verify) as requests_session:
+    with Requests(
+        domain_name=requests.domain_name,
+        base_url=requests.base_url,
+        username=requests.username,
+        password=requests.password,
+        verify=requests.verify,
+        notify_addresses=requests.notify_addresses,
+        payload_id=requests.payload_id,
+    ) as requests_session:
         authenticate_session(requests_session)
         try:
             source_id = get_identifier_source_id(requests_session, identifier_type)
@@ -388,22 +393,44 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 
 
 def get_patient(requests, domain, info, openmrs_config):
-    patient = None
     for id_ in openmrs_config.case_config.match_on_ids:
-        identifier_config = openmrs_config.case_config.patient_identifiers[id_]  # type: JsonDict
+        identifier_config: JsonDict = openmrs_config.case_config.patient_identifiers[id_]
         identifier_case_property = identifier_config["case_property"]
         # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
         assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
         patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
-            break
-    else:
-        # Definitive IDs did not match a patient in OpenMRS.
-        if openmrs_config.case_config.patient_finder:
-            # Search for patients based on other case properties
-            patient = find_or_create_patient(requests, domain, info, openmrs_config)
+            if patient["voided"]:
+                # The patient associated with the case has been merged with
+                # another patient in OpenMRS, or deleted. Delete the OpenMRS
+                # identifier on the case, and try again.
+                delete_case_property(domain, info.case_id, identifier_case_property)
+                info.extra_fields[identifier_case_property] = None
+                return get_patient(requests, domain, info, openmrs_config)
+            return patient
 
-    return patient
+    # Definitive IDs did not match a patient in OpenMRS.
+    if openmrs_config.case_config.patient_finder:
+        # Search for patients based on other case properties
+        return find_or_create_patient(requests, domain, info, openmrs_config)
+
+
+def delete_case_property(
+    domain: str,
+    case_id: str,
+    case_property: str,
+):
+    """
+    Delete the OpenMRS identifier on the case.
+    """
+    members = dict(inspect.getmembers(CaseBlock.__init__.__code__))
+    case_block_args = members['co_varnames']
+    if case_property in case_block_args:
+        case_block_kwargs = {case_property: None}
+    else:
+        case_block_kwargs = {"update": {case_property: None}}
+    case_block = CaseBlock(case_id=case_id, create=False, **case_block_kwargs)
+    submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_OPENMRS)
 
 
 def get_export_data(config, properties, case_trigger_info):

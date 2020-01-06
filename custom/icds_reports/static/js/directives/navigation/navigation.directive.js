@@ -13,6 +13,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.haveAccessToFeatures = haveAccessToFeatures;
     $scope.userFullName = userFullName;
     $scope.userUsername = userUsername;
+    $scope.expandedSectionId = '';
 
     var checkCollapse = function (reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
@@ -32,6 +33,12 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.goToStep = function(path, params) {
         return navigationService.getPagePath(path, params);
 
+    };
+    $scope.toShowOnNavigation = function () {
+        var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
+
+        return haveAccessToFeatures && (selectedYear >= 2019 && selectedMonth >= 4);
     };
 
     // used by mobile only

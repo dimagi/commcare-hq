@@ -295,6 +295,11 @@
     },
     "engine_id": "icds-ucr-citus",
     "disable_destructive_rebuild": true,
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      }
+    ],
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",

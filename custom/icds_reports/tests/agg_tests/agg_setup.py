@@ -13,7 +13,8 @@ from custom.icds_reports.utils.migrations import create_citus_reference_table, c
 from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
-    _aggregate_gm_forms
+    _aggregate_gm_forms,
+    drop_gm_indices
 )
 
 
@@ -47,7 +48,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'awc_location': 'awc_location',
     'awc_location_local': 'awc_location_local',
     'agg_awc': 'agg_awc',
-    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school')
+    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school'),
+    'adolescent_girls_reg_form': get_table_name('icds-cas', 'static-adolescent_girls_reg_form')
 }
 
 
@@ -221,6 +223,7 @@ def _distribute_tables_for_citus(engine):
 
 
 def aggregate_state_form_data():
+    drop_gm_indices(datetime(2017, 3, 31))
     for state_id in ('st1', 'st2'):
         _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
         _aggregate_gm_forms(state_id, datetime(2017, 3, 31))

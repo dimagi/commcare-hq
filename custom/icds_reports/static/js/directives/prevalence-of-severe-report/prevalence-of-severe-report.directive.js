@@ -11,7 +11,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';  // maps to the section of program summary this page lives on
     vm.serviceDataFunction = maternalChildService.getPrevalenceOfSevereData;
 
     var ageIndex = _.findIndex(ages,function (x) {
@@ -29,10 +28,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     }
 
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/wasting/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/wasting/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/wasting/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };

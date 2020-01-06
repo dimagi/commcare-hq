@@ -8,8 +8,9 @@ from custom.icds_reports.tasks import update_dashboard_activity_report
 
 
 @patch('custom.icds_reports.utils.aggregation_helpers.distributed.agg_dashboard_activity.DashboardActivityReportAggregate.dashboard_users',  [
-    {'username': '12.test@icds-cas.commcarehq.org', 'location_id': 'st1'},
-    {'username': '23.test@icds-cas.commcarehq.org', 'location_id': 'd1'},
+    {'username': '12.test@icds-cas.commcarehq.org', 'location_id': 'st1', 'is_active': True},
+    {'username': '23.test@icds-cas.commcarehq.org', 'location_id': 'd1', 'is_active': True},
+    {'username': '23.test@icds-cas.commcarehq.org', 'location_id': 'd1', 'is_active': False},
 ])
 class DashboardActivityReport(TestCase):
     always_include_columns = {'username', 'state_id', 'district_id', 'block_id',

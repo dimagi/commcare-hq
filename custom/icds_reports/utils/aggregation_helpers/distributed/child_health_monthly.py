@@ -39,6 +39,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         drop_query, drop_params = self.drop_table_query()
 
         cursor.execute(drop_query, drop_params)
+        for query in self.drop_indices():
+            cursor.execute(query)
         cursor.execute(self.aggregation_query())
         for query in self.indexes():
             cursor.execute(query)
@@ -79,7 +81,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND person_cases.migration_status IS DISTINCT FROM 1)"
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -142,7 +144,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(
+                "CASE WHEN {} AND {} AND {} <= 72 AND person_cases.migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
                     open_in_month, alive_in_month, age_in_months
             )),
             ("person_name", "child_health.person_name"),
@@ -322,8 +324,6 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("state_id", "child_health.state_id")
         )
         return """
-        DROP TABLE IF EXISTS "{child_tablename}";
-        CREATE TABLE "{child_tablename}" PARTITION OF "{tablename}" FOR VALUES IN (%(state_id)s);
         INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
@@ -361,7 +361,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
-            child_tablename='{}_{}'.format(self.temporary_tablename, state_id),
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
             tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -392,9 +392,27 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
+    def drop_partition(self, state_id):
+        return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
+
+    def create_partition(self, state_id):
+        return "CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" PARTITION OF \"{tmp_tablename}\" FOR VALUES IN ('{state_id}')".format(
+            tmp_tablename=self.temporary_tablename,
+            state_id_last_5=state_id[-5:],
+            state_id=state_id
+        )
+
     def aggregation_query(self):
         return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
             tablename=self.tablename, tmp_tablename=self.temporary_tablename)
+
+    def drop_indices(self):
+        return [
+            'DROP INDEX IF EXISTS chm_case_idx',
+            'DROP INDEX IF EXISTS chm_awc_idx',
+            'DROP INDEX IF EXISTS chm_mother_dob',
+            'DROP INDEX IF EXISTS chm_month_supervisor_id',
+        ]
 
     def indexes(self):
         return [

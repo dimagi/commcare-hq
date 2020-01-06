@@ -1,7 +1,13 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, isMobile) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
+                               mobileMapsEnabled) {
+
     var vm = this;
+    vm.mobileMapsEnabled = mobileMapsEnabled;
+    var leftMargin = isMobile ? 70 : 150;
+    var truncateAmount = isMobile ? 70 : 100;  // used in cropping the x-axis labels
+
     var location_id = $location.search().location_id;
 
     if (['null', 'undefined', ''].indexOf(location_id) === -1) {
@@ -29,7 +35,7 @@ function MapOrSectorController($location, storageService, locationsService, isMo
             while (word) {
                 line.push(word);
                 tspan.text(line.join(" "));
-                if (tspan.node().getComputedTextLength() > 100) {
+                if (tspan.node().getComputedTextLength() > truncateAmount) {
                     line.pop();
                     tspan.text(line.join(" "));
                     line = [word];
@@ -42,8 +48,6 @@ function MapOrSectorController($location, storageService, locationsService, isMo
 
     // reduce caption width to fit screen up to 900px on mobile view
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
-    var leftMargin = isMobile ? 20 : 150;
-
     vm.chartOptions = {
 
         chart: {
@@ -108,10 +112,9 @@ function MapOrSectorController($location, storageService, locationsService, isMo
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
-
                         storageService.setKey('search', $location.search());
                         if (location.location_type_name === 'awc') {
-                            $location.path('awc_reports');
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
                         }
                     });
                 });
@@ -146,11 +149,13 @@ function MapOrSectorController($location, storageService, locationsService, isMo
     };
 }
 
-MapOrSectorController.$inject = ['$location', 'storageService', 'locationsService', 'isMobile'];
+MapOrSectorController.$inject = [
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
+];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView', function () {
+window.angular.module('icdsApp').directive('mapOrSectorView',  ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -160,9 +165,11 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function () {
             location: '=',
             label: '=',
         },
-        templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('map-or-sector-view.directive');
+        },
         bindToController: true,
         controller: MapOrSectorController,
         controllerAs: '$ctrl',
     };
-});
+}]);

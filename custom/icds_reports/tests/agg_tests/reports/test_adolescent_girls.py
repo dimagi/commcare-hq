@@ -23,7 +23,7 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
                             "enrolled for Anganwadi Services",
-                    "average": '100.00',
+                    "average": '89.47',
                     'extended_info': [
                         {
                             'indicator': (
@@ -34,14 +34,14 @@ class TestAdolescentGirls(TestCase):
                         },
                         {
                             'indicator': 'Total number of adolescent girls (11 - 14 years) who are registered:',
-                            'value': "34"
+                            'value': "38"
                         },
                         {
                             'indicator': (
                                 'Percentage of registered adolescent girls (11 - 14 years) '
                                 'who are enrolled for Anganwadi Services:'
                             ),
-                            'value': '100.00%'
+                            'value': '89.47%'
                         }
                     ]
                 },
@@ -50,10 +50,10 @@ class TestAdolescentGirls(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Adolescent Girls'}, 
-                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Adolescent Girls'}, 
-                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Adolescent Girls'}, 
-                    'st7': {'all': 0, 'valid': 0, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'}, 
+                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Adolescent Girls'},
+                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Adolescent Girls'},
+                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Adolescent Girls'},
+                    'st7': {'all': 4, 'valid': 0, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'},
                     'st1': {'all': 17, 'valid': 17, 'original_name': ['st1'], 'fillKey': 'Adolescent Girls'},
                     'st2': {'all': 17, 'valid': 17, 'original_name': ['st2'], 'fillKey': 'Adolescent Girls'},
                     'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Adolescent Girls'}},
@@ -150,8 +150,8 @@ class TestAdolescentGirls(TestCase):
                         "values": [
                             {'y': 0, 'x': 1485907200000, 'all': 0},
                             {'y': 0, 'x': 1488326400000, 'all': 0},
-                            {'y': 38, 'x': 1491004800000, 'all': 38},
-                            {'y': 34, 'x': 1493596800000, 'all': 34}
+                            {'y': 38, 'x': 1491004800000, 'all': 42},
+                            {'y': 34, 'x': 1493596800000, 'all': 38}
                         ],
                         "key": "Total number of adolescent girls who are enrolled for Anganwadi Services"
                     }

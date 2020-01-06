@@ -400,14 +400,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/billing/statements/',
-    '/a/%(domain)s/settings/project/billing_information/',
-    '/a/%(domain)s/settings/project/flags/',
-    '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/internal/info/',
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/project_limits/',
-    '/a/%(domain)s/settings/project/subscription/',
+    '/a/{domain}/settings/project/billing/statements/',
+    '/a/{domain}/settings/project/billing_information/',
+    '/a/{domain}/settings/project/flags/',
+    '/a/{domain}/settings/project/internal/calculations/',
+    '/a/{domain}/settings/project/internal/info/',
+    '/a/{domain}/settings/project/internal_subscription_management/',
+    '/a/{domain}/settings/project/project_limits/',
+    '/a/{domain}/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -464,8 +464,10 @@ BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SAAS_REPORTING_EMAIL = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
+IS_DIMAGI_ENVIRONMENT = True
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds',)
@@ -1012,6 +1014,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
+                'corehq.util.context_processors.banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1870,6 +1873,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
@@ -1882,6 +1886,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'migrations_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),

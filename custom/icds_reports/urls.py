@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 
 from . import mobile_views
 from custom.icds_reports.views import (
-    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView,
+    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, TopoJsonView,
     PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView,
     ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView,
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding,
@@ -13,8 +13,8 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView
-)
+    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
+    GovernanceAPIView)
 
 
 dashboard_urls = [
@@ -134,6 +134,7 @@ awc_infrastructure_urls = [
 
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
+    url(r'^logout/$', mobile_views.logout, name="cas_mobile_dashboard_logout"),
     url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
@@ -160,6 +161,7 @@ urlpatterns = [
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
     url(r'^locations$', LocationView.as_view(), name='icds_locations'),
     url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
+    url(r'^topojson$', TopoJsonView.as_view(), name='topojson'),
     url(r'^icds_export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
     url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
@@ -178,6 +180,7 @@ urlpatterns = [
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
     url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
+    url(r'^governance_apis/(?P<step>[\w-]+)/', GovernanceAPIView.as_view(), name='governance_apis'),
 
 ]
 

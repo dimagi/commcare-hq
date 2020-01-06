@@ -130,6 +130,11 @@ class OpenmrsRepeater(CaseRepeater):
 
     @cached_property
     def requests(self):
+        # Used by atom_feed module and views that don't have a payload
+        # associated with the request
+        return self.get_requests()
+
+    def get_requests(self, payload_id=None):
         return Requests(
             self.domain,
             self.url,
@@ -137,6 +142,7 @@ class OpenmrsRepeater(CaseRepeater):
             self.plaintext_password,
             verify=self.verify,
             notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
         )
 
     @cached_property
@@ -198,29 +204,29 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_source_configs = chain(
+        value_source_configs: Iterable[JsonDict] = chain(
             self.openmrs_config.case_config.patient_identifiers.values(),
             self.openmrs_config.case_config.person_properties.values(),
             self.openmrs_config.case_config.person_preferred_name.values(),
             self.openmrs_config.case_config.person_preferred_address.values(),
             self.openmrs_config.case_config.person_attributes.values(),
-        )  # type: Iterable[JsonDict]
+        )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-
+        requests = self.get_requests(payload_id=repeat_record.payload_id)
         try:
             response = send_openmrs_data(
-                self.requests,
+                requests,
                 self.domain,
                 payload,
                 self.openmrs_config,
                 case_trigger_infos,
             )
         except Exception as err:
-            self.requests.notify_exception(str(err))
+            requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 

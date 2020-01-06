@@ -77,7 +77,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var latest = new Date();
         if (latest.getDate() <= 3 && vm.months[vm.months.length - 1].id === latest.getMonth() + 1 &&
             vm.selectedYear === latest.getFullYear()) {
-            vm.months.pop();
+            if (vm.months.length === 1) {
+                // For January, reset to Dec last year
+                vm.months = vm.monthsCopy;
+                vm.selectedYear = latest.getFullYear() - 1;
+            } else {
+                vm.months.pop();
+            }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
     };
@@ -142,7 +148,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 10, name: 'Take Home Ration (THR)'},
     ];
 
-    if (vm.haveAccessToFeatures && vm.userLocationType.toLowerCase() !== 'block') {
+    if (vm.userLocationType.toLowerCase() !== 'block') {
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 

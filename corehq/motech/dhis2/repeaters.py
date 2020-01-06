@@ -81,7 +81,7 @@ class Dhis2EntityRepeater(CaseRepeater):
             extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
             form_question_values=get_form_question_values(payload),
         )
-        requests = get_requests(self)
+        requests = get_requests(self, repeat_record.payload_id)
         return send_dhis2_entities(requests, self, case_trigger_infos)
 
 
@@ -153,7 +153,7 @@ class Dhis2Repeater(FormRepeater):
         If ``payload`` is a form that isn't configured to be forwarded,
         returns True.
         """
-        requests = get_requests(self)
+        requests = get_requests(self, repeat_record.payload_id)
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:
@@ -196,7 +196,7 @@ def get_minor_component(version_number):
     return minor_component
 
 
-def get_requests(repeater):
+def get_requests(repeater, payload_id=None):
     return Requests(
         repeater.domain,
         repeater.url,
@@ -204,6 +204,7 @@ def get_requests(repeater):
         repeater.plaintext_password,
         verify=repeater.verify,
         notify_addresses=repeater.notify_addresses,
+        payload_id=payload_id,
     )
 
 

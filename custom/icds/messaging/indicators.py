@@ -167,29 +167,6 @@ class LSIndicator(SMSIndicator):
     def awc_locations(self):
         return {l.location_id: l.name for l in self.child_locations}
 
-    @property
-    @memoized
-    def locations_by_user_id(self):
-        return get_user_ids_from_primary_location_ids(self.domain, set(self.awc_locations))
-
-    @property
-    @memoized
-    def aww_user_ids(self):
-        return set(self.locations_by_user_id.keys())
-
-    @property
-    @memoized
-    def user_ids_by_location_id(self):
-        user_ids_by_location_id = defaultdict(set)
-        for u_id, loc_id in self.locations_by_user_id.items():
-            user_ids_by_location_id[loc_id].add(u_id)
-
-        return user_ids_by_location_id
-
-    def location_names_from_user_id(self, user_ids):
-        loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
-        return {self.awc_locations[l] for l in loc_ids}
-
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
@@ -316,6 +293,14 @@ class AWWVHNDSurveyIndicator(AWWIndicator):
             return []
 
 
+def _get_last_submission_dates(awc_ids):
+    return {
+        row['awc_id']: row['last_submission']
+        for row in AggregateInactiveAWW.objects.filter(
+        awc_id__in=awc_ids).values('awc_id', 'last_submission').all()
+    }
+
+
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
     slug = 'ls_6'
@@ -323,38 +308,30 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_dates = get_last_submission_time_for_users(
-            self.domain, self.aww_user_ids, self.get_datespan()
-        )
-
-    def get_datespan(self):
-        today = datetime(self.now.year, self.now.month, self.now.day)
-        end_date = today + timedelta(days=1)
-        start_date = today - timedelta(days=30)
-        return DateSpan(start_date, end_date, timezone=self.timezone)
+        self.last_submission_dates = _get_last_submission_dates(awc_ids=set(self.awc_locations))
 
     def get_messages(self, language_code=None):
         messages = []
-        one_week_user_ids = []
-        one_month_user_ids = []
+        one_week_loc_ids = []
+        one_month_loc_ids = []
 
         now_date = self.now.date()
-        for user_id in self.aww_user_ids:
-            last_sub_date = self.last_submission_dates.get(user_id)
+        for loc_id in self.awc_locations:
+            last_sub_date = self.last_submission_dates.get(loc_id)
             if not last_sub_date:
-                one_month_user_ids.append(user_id)
+                one_month_loc_ids.append(loc_id)
             else:
                 days_since_submission = (now_date - last_sub_date).days
                 if days_since_submission > 7:
-                    one_week_user_ids.append(user_id)
+                    one_week_loc_ids.append(loc_id)
 
-        if one_week_user_ids:
-            one_week_loc_names = self.location_names_from_user_id(one_week_user_ids)
+        if one_week_loc_ids:
+            one_week_loc_names = {self.awc_locations[loc_id] for loc_id in one_week_loc_ids}
             week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
             messages.append(self.render_template(week_context, language_code=language_code))
 
-        if one_month_user_ids:
-            one_month_loc_names = self.location_names_from_user_id(one_month_user_ids)
+        if one_month_loc_ids:
+            one_month_loc_names = {self.awc_locations[loc_id] for loc_id in one_month_loc_ids}
             month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
             messages.append(self.render_template(month_context, language_code=language_code))
 
@@ -370,7 +347,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
         self.awc_ids_not_in_timeframe = get_awcs_with_old_vhnd_date(
             domain,
-            self.user_ids_by_location_id.keys()
+            set(self.awc_locations)
         )
 
     def get_messages(self, language_code=None):

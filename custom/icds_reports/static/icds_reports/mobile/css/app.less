@@ -1,6 +1,6 @@
 @font-face {
   font-family: Montserrat;
-  src: url("/static/icds_reports/mobile/fonts/Montserrat-Regular.otf");
+  src: url("../fonts/Montserrat-Regular.otf");
 }
 
 .app-bg {
@@ -117,6 +117,9 @@
 .font-30 {
   font-size: 30px;
 }
+.font-48 {
+  font-size: 48px;
+}
 .mb-3 {
   margin-bottom: 1rem;
 }
@@ -225,7 +228,7 @@
     background: linear-gradient(180deg, #F2EA25 0%, #C65B1F 100%);
 }
 
-.green-gradient, .icds_cas_reach {
+.green-gradient, .icds_cas_reach, .pse {
     background: linear-gradient(180deg, #F8F26D 0%, #07EDA8 100%);
 }
 .red-gradient, .demographics {
@@ -249,11 +252,14 @@
   top: 0;
   z-index: 1;
 }
+
 .summary-list {
   margin-top: -25vh;
-  height: calc(100vh - 200px);
+  height: ~"calc(100vh - 200px)";
   overflow: auto;
+  padding-bottom: 25px;
 }
+
 .dark-background {
   background: #2C3648;
 }

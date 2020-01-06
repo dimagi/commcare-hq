@@ -60,14 +60,14 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         ).format(end_month_string, start_month_string)
 
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
-        seeking_services = "(case_list.is_availing = 1 AND case_list.is_migrated = 0)"
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND person_cases.migration_status IS DISTINCT FROM 1)"
         ccs_lactating = (
             "({} AND {} AND case_list.add is not null AND {}-case_list.add>=0"
             " AND {}-case_list.add<=183)"
         ).format(open_in_month, alive_in_month, end_month_string, start_month_string)
 
         lactating = "({} AND {})".format(ccs_lactating, seeking_services)
-        lactating_all = "({} AND  case_list.is_migrated=0)".format(ccs_lactating)
+        lactating_all = "({} AND  person_cases.migration_status IS DISTINCT FROM 1)".format(ccs_lactating)
 
         ccs_pregnant = (
             "({} AND {} AND case_list.edd is not null and"
@@ -78,7 +78,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ccs_pregnant, seeking_services, open_in_month, alive_in_month
         )
 
-        pregnant_all = "({} AND  case_list.is_migrated=0)".format(ccs_pregnant)
+        pregnant_all = "({} AND  person_cases.migration_status IS DISTINCT FROM 1)".format(ccs_pregnant)
 
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
@@ -241,7 +241,14 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
             ('date_death', 'person_cases.date_death'),
             ('person_case_id', 'case_list.person_case_id'),
-            ('child_name', 'case_list.child_name')
+            ('child_name', 'case_list.child_name'),
+            ('husband_name', 'person_cases.husband_name'),
+            ('lmp', 'case_list.lmp'),
+            ('migration_status', 'person_cases.migration_status'),
+            ('where_born', 'agg_delivery.where_born'),
+            ('num_children_del', 'agg_delivery.num_children_del'),
+            ('still_live_birth', 'agg_delivery.still_live_birth'),
+
         )
         return """
         INSERT INTO "{tablename}" (
