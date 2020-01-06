@@ -977,6 +977,69 @@ a "posix_milliseconds" value looks like ``1516218309000``
 The only way to know that is to inspect the JSON data returned by the
 OpenMRS API.
 
+The last part of the configuration deals with Bahmni diagnoses:
+
+.. code-block:: javascript
+
+    "bahmni_diagnoses": [
+      {
+        "doc_type": "ObservationMapping",
+        "concept": "all",
+        "value": {
+          "direction": "in",
+          "case_property": "[unused when direction = 'in']"
+        },
+        "case_property": null,
+        "indexed_case_mapping": {
+          "doc_type": "IndexedCaseMapping",
+          "identifier": "parent",
+          "case_type": "diagnosis",
+          "relationship": "extension",
+          "case_properties": [
+            {
+              "jsonpath": "codedAnswer.name",
+              "case_property": "case_name"
+            },
+            {
+              "jsonpath": "certainty",
+              "case_property": "certainty"
+            },
+            {
+              "jsonpath": "order",
+              "case_property": "is_primary",
+              "value_map": {
+                "yes": "PRIMARY",
+                "no": "SECONDARY"
+              }
+            },
+            {
+              "jsonpath": "diagnosisDateTime",
+              "case_property": "diagnosis_datetime"
+            }
+          ]
+        }
+      }
+    ]
+
+At a glance, it is clear that like the configuration for referrals, this
+configuration also uses extension cases. There are a few important
+differences.
+
+``"concept": "all"`` tells MOTECH to import all Bahmni diagnosis
+concepts, not just those that are explicitly configured.
+
+``"value": {"direction": "in"`` ... The OpenMRS API does not offer the
+ability to add or modify a diagnosis. "direction" will always be set to
+"in".
+
+The case type of the extension case is "diagnosis". This configuration
+sets four case properties. "case_name" should be considered a mandatory
+case property. It is set to the name of the diagnosis. The value of
+"jsonpath" is determined by inspecting the JSON data of an example
+diagnosis. The next section gives instructions for how to do that.
+Follow the instructions, and as a useful exercise, try to see how the
+JSON path "codedAnswer.name" was determined from the sample JSON data
+of a Bahmni diagnosis given by the OpenMRS API.
 
 
 .. _how_to_inspect-label:
