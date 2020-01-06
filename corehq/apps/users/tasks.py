@@ -341,7 +341,7 @@ def process_reporting_metadata_staging():
                 save |= mark_last_synclog(
                     record.domain, user, record.app_id, record.build_id,
                     record.sync_date, record.device_id, device_app_meta,
-                    build_profile_id=record.build_profile_id, save_user=False
+                    commcare_version=record.commcare_version, build_profile_id=record.build_profile_id, save_user=False
                 )
             if save:
                 user.save(fire_signals=False)

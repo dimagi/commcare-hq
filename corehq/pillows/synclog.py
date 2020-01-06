@@ -107,7 +107,8 @@ class UserSyncHistoryProcessor(PillowProcessor):
             mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, device_app_meta)
 
 
-def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, device_app_meta, build_profile_id=None, save_user=True):
+def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id,
+        device_app_meta, commcare_version=None, build_profile_id=None, save_user=True):
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
@@ -117,7 +118,8 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, devi
         local_save |= update_latest_builds(user, app_id, sync_date, version, build_profile_id=build_profile_id)
 
     if device_id:
-        local_save |= update_device_meta(user, device_id, device_app_meta=device_app_meta, save=False)
+        local_save |= update_device_meta(user, device_id, commcare_version=commcare_version,
+            device_app_meta=device_app_meta, save=False)
 
     if local_save and save_user:
         user.save(fire_signals=False)
