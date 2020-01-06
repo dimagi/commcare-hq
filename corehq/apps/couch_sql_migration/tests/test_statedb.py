@@ -206,20 +206,28 @@ def test_replace_case_diffs():
     with init_db() as db:
         case_id = "865413246874321"
         # add old diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(0)])
-        db.replace_case_diffs("CommCareCase", "unaffected", [make_diff(1)])
-        db.add_diffs("stock state", case_id + "/x/y", [make_diff(2)])
-        db.add_diffs("stock state", "unaffected/x/y", [make_diff(3)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(0)]),
+            ("stock state", case_id + "/x/y", [make_diff(1)]),
+            ("CommCareCase", "unaffected", [make_diff(2)]),
+            ("stock state", "unaffected/x/y", [make_diff(3)]),
+            ("CommCareCase", "stock-only", [make_diff(4)]),
+            ("stock state", "stock-only/x/y", [make_diff(5)]),
+        ])
         # add new diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(4)])
-        db.add_diffs("stock state", case_id + "/y/z", [make_diff(5)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(6)]),
+            ("stock state", case_id + "/y/z", [make_diff(7)]),
+            ("stock state", "stock-only/y/z", [make_diff(8)]),
+        ])
         eq(
             {(d.kind, d.doc_id, d.json_diff) for d in db.get_diffs()},
             {(kind, doc_id, make_diff(x)) for kind, doc_id, x in [
-                ("CommCareCase", "unaffected", 1),
+                ("CommCareCase", "unaffected", 2),
                 ("stock state", "unaffected/x/y", 3),
-                ("CommCareCase", case_id, 4),
-                ("stock state", case_id + "/y/z", 5),
+                ("CommCareCase", case_id, 6),
+                ("stock state", case_id + "/y/z", 7),
+                ("stock state", "stock-only/y/z", 8),
             ]},
         )
 
@@ -286,8 +294,8 @@ def test_clone_casediff_data_from():
                     Config(id="c", total_forms=2, processed_forms=1),
                 ])
                 cddb.add_missing_docs("CommCareCase-couch", ["missing"])
-                cddb.replace_case_diffs("CommCareCase", "a", [diffs[0]])
-                cddb.replace_case_diffs("CommCareCase-Deleted", "b", [diffs[1]])
+                cddb.add_diffs("CommCareCase", "a", [diffs[0]])
+                cddb.add_diffs("CommCareCase-Deleted", "b", [diffs[1]])
                 cddb.add_diffs("stock state", "c/ledger", [diffs[2]])
                 cddb.increment_counter("CommCareCase", 3)           # case, a, c
                 cddb.increment_counter("CommCareCase-Deleted", 1)   # b

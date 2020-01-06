@@ -106,11 +106,7 @@ def do_case_diffs(migrator, cases):
         log.debug(data)
         add_cases(len(data.doc_ids))
         statedb.add_diffed_cases(data.doc_ids)
-        for doc_type, doc_id, diffs in data.diffs:
-            if doc_type == "stock state":
-                statedb.add_diffs(doc_type, doc_id, diffs)
-            else:
-                statedb.replace_case_diffs(doc_type, doc_id, diffs)
+        statedb.replace_case_diffs(data.diffs)
         for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
 

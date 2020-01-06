@@ -19,6 +19,7 @@ from sqlalchemy import (
     func,
     or_,
 )
+from sqlalchemy.event import listen
 from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
@@ -70,6 +71,7 @@ class StateDB(DiffDB):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        listen(self.engine, "connect", case_sensitive_like)
         self.is_rebuild = False
 
     def __enter__(self):
@@ -314,19 +316,33 @@ class StateDB(DiffDB):
         if diffs:
             self.add_diffs(doc_type, doc_id, diffs)
 
-    def replace_case_diffs(self, kind, case_id, diffs):
+    def replace_case_diffs(self, case_diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
-        assert kind in CASE_DOC_TYPES, kind
-        with self.session() as session:
-            (
-                session.query(Diff)
-                .filter(or_(
-                    and_(Diff.kind == "CommCareCase", Diff.doc_id == case_id),
+        new_diffs = []
+        conditions = []
+        seen = set()
+        for kind, case_id, diffs in case_diffs:
+            if diffs:
+                new_diffs.append((kind, case_id, diffs))
+            if kind == "stock state":
+                assert case_id.count("/") == 2, case_id
+                case_id = case_id.split("/", 1)[0]
+                kind = "CommCareCase"
+            else:
+                assert kind in CASE_DOC_TYPES, kind
+            if case_id in seen:
+                continue
+            seen.add(case_id)
+            # optimized for one index scan per condition; profile after editing
+            conditions.append(
+                and_(Diff.doc_id.startswith(case_id), or_(
+                    and_(Diff.kind == kind, Diff.doc_id == case_id),
                     and_(Diff.kind == "stock state", Diff.doc_id.startswith(case_id + "/")),
                 ))
-                .delete(synchronize_session=False)
             )
-        if diffs:
+        with self.session() as session:
+            session.query(Diff).filter(or_(*conditions)).delete(synchronize_session=False)
+        for kind, case_id, diffs in new_diffs:
             self.add_diffs(kind, case_id, diffs)
 
     def increment_counter(self, kind, value):
@@ -515,3 +531,10 @@ def iter_large(query, pk_attr, maxrq=1000):
         if rec is None:
             break
         first_id = getattr(rec, pk_attr.name)
+
+
+def case_sensitive_like(dbapi_connection, connection_record):
+    # so replace_case_diffs queries use diff_doc_id_idx
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA case_sensitive_like = ON")
+    cursor.close()
