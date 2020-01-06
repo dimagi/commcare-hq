@@ -25,7 +25,7 @@ from corehq.motech.dhis2.finders import TrackedEntityInstanceFinder
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import CaseTriggerInfo, get_value
 
 
 def send_dhis2_entities(requests, repeater, case_trigger_infos):
@@ -94,7 +94,7 @@ def get_tracked_entity_instance_id(case_trigger_info, case_config):
     other value source like a form question or a constant).
     """
     tei_id_value_source = case_config.tei_id
-    return tei_id_value_source.get_value(case_trigger_info)
+    return get_value(tei_id_value_source, case_trigger_info)
 
 
 def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info):
@@ -123,11 +123,11 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
 
 
 def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config, attempt=1):
-    for attr_id, value_source in case_config.attributes.items():
+    for attr_id, value_source_config in case_config.attributes.items():
         set_te_attr(
             tracked_entity["attributes"],
             attr_id,
-            value_source.get_value(case_trigger_info),
+            get_value(value_source_config, case_trigger_info),
         )
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
@@ -154,14 +154,14 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     tracked_entity = {
         "trackedEntityType": case_config.te_type_id,
-        "orgUnit": case_config.org_unit_id.get_value(case_trigger_info),
+        "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
         "attributes": [],
     }
-    for attr_id, value_source in case_config.attributes.items():
+    for attr_id, value_source_config in case_config.attributes.items():
         set_te_attr(
             tracked_entity["attributes"],
             attr_id,
-            value_source.get_value(case_trigger_info),
+            get_value(value_source_config, case_trigger_info),
         )
     enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:

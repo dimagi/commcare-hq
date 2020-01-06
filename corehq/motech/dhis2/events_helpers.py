@@ -2,9 +2,6 @@ from schema import Optional as SchemaOptional
 from schema import Regex, Schema, SchemaError
 
 from corehq.motech.dhis2.const import DHIS2_DATE_SCHEMA, DHIS2_ID_SCHEMA
-from schema import Optional as SchemaOptional, SchemaError
-from schema import Regex, Schema
-
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -49,7 +46,7 @@ def _get_program(config, case_trigger_info):
 def _get_program_stage(config, case_trigger_info):
     program_stage_id = None
     if config.program_stage_id:
-        program_stage_id = config.program_stage_id.get_value(case_trigger_info)
+        program_stage_id = get_value(config.program_stage_id, case_trigger_info)
     if program_stage_id:
         return {'programStage': program_stage_id}
     return {}

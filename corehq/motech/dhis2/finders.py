@@ -7,6 +7,7 @@ from memoized import memoized_property
 from requests import HTTPError
 
 from corehq.motech.finders import MATCH_FUNCTIONS, MATCH_TYPE_EXACT
+from corehq.motech.value_source import get_value
 
 CandidateScore = namedtuple('CandidateScore', 'candidate score')
 
@@ -69,7 +70,7 @@ class TrackedEntityInstanceFinder:
         if not query_filters:
             return []
         params = {
-            "ou": self.case_config.org_unit_id.get_value(case_trigger_info),
+            "ou": get_value(self.case_config.org_unit_id, case_trigger_info),
             "filter": query_filters,
             "ouMode": "DESCENDANTS",
             "skipPaging": "true",
