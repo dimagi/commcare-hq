@@ -54,13 +54,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 3.3648790746582544,
-                    'sort_key': 3.3648790746582544
+                    'html': 3.235591506572295,
+                    'sort_key': 3.235591506572295
                 },
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.1224489795918366, 'sort_key': 1.1224489795918366},
-                    {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
+                    {'html': 1.1753183153770812, 'sort_key': 1.1753183153770812},
+                    {'html': 3.235591506572295, 'sort_key': 3.235591506572295},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
