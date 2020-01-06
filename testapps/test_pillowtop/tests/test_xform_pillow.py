@@ -61,6 +61,7 @@ class XFormPillowTest(TestCase):
         user.reporting_metadata.last_submissions = []
         user.save()
         PillowError.objects.all().delete()
+        UserReportingMetadataStaging.objects.all().delete()
         super().tearDown()
 
     @classmethod
@@ -167,7 +168,7 @@ class XFormPillowTest(TestCase):
         sync_date = datetime.utcnow()
         UserReportingMetadataStaging.add_heartbeat(
             self.domain, self.user._id, self.metadata.app_id,
-            '123', sync_date, self.metadata.device_id,
+            '123', sync_date, 'heartbeat_device_id',
             230, 2, 10, 'CommCare 2.28', 'en'
         )
 
@@ -182,7 +183,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
         self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, sync_date)
         self.assertEqual(ccuser.reporting_metadata.last_sync_for_user.sync_date, sync_date)
-        self.assertEqual(ccuser.last_device.device_id, self.metadata.device_id)
+        self.assertEqual(ccuser.last_device.device_id, 'heartbeat_device_id')
         app_meta = ccuser.last_device.get_last_used_app_meta()
         self.assertEqual(app_meta.num_unsent_forms, 2)
         self.assertEqual(app_meta.num_quarantined_forms, 10)
