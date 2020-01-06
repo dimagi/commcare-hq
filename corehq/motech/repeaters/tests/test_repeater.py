@@ -1169,7 +1169,6 @@ class TestGetRetryInterval(SimpleTestCase):
             self.assertEqual(interval, timedelta(hours=expected_interval_hours))
 
 
-# TODO: When we upgrade to Python 3.7, use datetime.fromisoformat() instead
 def fromisoformat(isoformat):
     """
     Return a datetime from a string in ISO 8601 date time format
@@ -1178,5 +1177,7 @@ def fromisoformat(isoformat):
     datetime.datetime(2019, 12, 31, 23, 59, 59)
 
     """
-    args = [int(x) for x in re.split("[ :-]", isoformat)]
-    return datetime(*args)
+    try:
+        return datetime.fromisoformat(isoformat)  # Python >= 3.7
+    except AttributeError:
+        return datetime.strptime(isoformat, "%Y-%m-%d %H:%M:%S")
