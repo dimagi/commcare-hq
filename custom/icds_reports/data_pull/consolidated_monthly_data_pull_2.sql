@@ -111,13 +111,10 @@ from
 "ccs_record_monthly" ccs_record where (
 ccs_record.month='2019-12-01'
     )
-group by  supervisor_id)
+group by  supervisor_id);
 
 
-
-
-COPY(
-select
+COPY(select
 state_name,
 sum(mother_thr_0) as "# PW and LM Given 0 Days THR",
 sum(mother_thr_1_7) as "# PW and LM Given 1-7 Days THR",
