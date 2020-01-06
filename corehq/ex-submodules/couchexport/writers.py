@@ -19,6 +19,7 @@ from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
+from couchexport.util import get_excel_format_value
 
 MAX_XLS_COLUMNS = 256
 
@@ -382,31 +383,18 @@ class Excel2007ExportWriter(ExportWriter):
         from couchexport.export import FormattedRow
         sheet = self.tables[sheet_index]
 
-        # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
-        dirty_chars = re.compile(
-            '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
-        )
+        cells = []
+        for val in row:
+            excel_format, val_fmt = get_excel_format_value(val)
+            cell = WriteOnlyCell(sheet, val_fmt)
+            cell.number_format = numbers.FORMAT_TEXT if self.format_as_text else excel_format
+            cells.append(cell)
 
-        def get_write_value(value):
-            if isinstance(value, (int, float)):
-                return value
-            if isinstance(value, bytes):
-                value = value.decode('utf-8')
-            elif value is not None:
-                value = str(value)
-            else:
-                value = ''
-            return dirty_chars.sub('?', value)
-
-        write_values = [get_write_value(val) for val in row]
-        cells = [WriteOnlyCell(sheet, val) for val in write_values]
-        if self.format_as_text:
-            for cell in cells:
-                cell.number_format = numbers.FORMAT_TEXT
         if isinstance(row, FormattedRow):
             for hyperlink_column_index in row.hyperlink_column_indices:
                 cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
                 cells[hyperlink_column_index].style = 'Hyperlink'
+
         sheet.append(cells)
 
     def _close(self):
