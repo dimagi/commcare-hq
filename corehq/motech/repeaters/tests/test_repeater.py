@@ -1156,6 +1156,18 @@ class TestGetRetryInterval(SimpleTestCase):
         interval = _get_retry_interval(last_checked, now)
         self.assertEqual(interval, timedelta(hours=3))
 
+    def test_five_retries(self):
+        # (Five retries because RepeatRecord.max_possible_tries is 6)
+        for last_checked, now, expected_interval_hours in [
+            (None, fromisoformat("2020-01-01 00:00:00"), 1),
+            (fromisoformat("2020-01-01 00:00:00"), fromisoformat("2020-01-01 01:00:00"), 3),
+            (fromisoformat("2020-01-01 01:00:00"), fromisoformat("2020-01-01 04:00:00"), 9),
+            (fromisoformat("2020-01-01 04:00:00"), fromisoformat("2020-01-01 13:00:00"), 27),
+            (fromisoformat("2020-01-01 13:00:00"), fromisoformat("2020-01-02 16:00:00"), 81),
+        ]:
+            interval = _get_retry_interval(last_checked, now)
+            self.assertEqual(interval, timedelta(hours=expected_interval_hours))
+
 
 # TODO: When we upgrade to Python 3.7, use datetime.fromisoformat() instead
 def fromisoformat(isoformat):

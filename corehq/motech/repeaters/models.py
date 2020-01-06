@@ -632,7 +632,7 @@ class RepeatRecord(Document):
     payload_id = StringProperty()
 
     overall_tries = IntegerProperty(default=0)
-    max_possible_tries = IntegerProperty(default=5)
+    max_possible_tries = IntegerProperty(default=6)
 
     attempts = ListProperty(RepeatRecordAttempt)
 
