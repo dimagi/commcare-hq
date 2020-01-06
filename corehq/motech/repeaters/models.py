@@ -893,14 +893,12 @@ def _get_retry_interval(last_checked, now):
     81h, so that the last attempt will be at least 5d 1h after the
     first attempt.
     """
-    interval = timedelta(minutes=0)
     if last_checked:
-        interval = now - last_checked
-        interval *= 3
-    if interval < MIN_RETRY_WAIT:
-        interval = MIN_RETRY_WAIT
-    elif interval > MAX_RETRY_WAIT:
-        interval = MAX_RETRY_WAIT
+        interval = 3 * (now - last_checked)
+    else:
+        interval = timedelta(0)
+    interval = max(MIN_RETRY_WAIT, interval)
+    interval = min(MAX_RETRY_WAIT, interval)
     return interval
 
 
