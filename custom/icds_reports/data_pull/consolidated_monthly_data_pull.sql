@@ -10,7 +10,7 @@ num_launched_districts AS "Districts launched",
 awc_days_open,
 CASE WHEN num_launched_awcs>0 THEN awc_days_open/num_launched_awcs ELSE awc_days_open END AS "Avg. # of Days AWCs open"
 FROM agg_awc_monthly
-WHERE aggregation_level=1 AND month='2019-11-01'
+WHERE aggregation_level=1 AND month='2019-12-01'
 ORDER BY state_name
 ) TO '/tmp/monthly_stats1.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
@@ -29,7 +29,7 @@ SUM(cases_ccs_lactating) AS "# Lactating Mothers",
 SUM(cases_person_adolescent_girls_11_14) AS "# Adolescent Girls (11-14y)",
 SUM(cases_child_health) AS "# Children (0-6y)"
 FROM agg_awc_monthly
-WHERE aggregation_level=1 AND month='2019-11-01'
+WHERE aggregation_level=1 AND month='2019-12-01'
 GROUP BY state_name
 ORDER BY state_name
 ) TO '/tmp/monthly_stats2.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
@@ -49,7 +49,7 @@ SUM(cases_ccs_lactating) AS "# Lactating Mothers",
 SUM(cases_person_adolescent_girls_11_14) AS "# Adolescent Girls (11-14y)",
 SUM(cases_child_health) AS "# Children (0-6y)"
 FROM agg_awc_monthly
-WHERE aggregation_level=1 AND month='2019-11-01'
+WHERE aggregation_level=1 AND month='2019-12-01'
 ORDER BY state_name
 ) TO '/tmp/monthly_stats1.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 
@@ -85,7 +85,7 @@ count(*) FILTER (WHERE infra_infant_weighing_scale IS NULL OR infra_infant_weigh
 count(*) FILTER (WHERE infra_adult_weighing_scale=1) AS "# of AWCs that reported available mother and child weighing scale",
 count(*) FILTER (WHERE infra_adult_weighing_scale IS NULL OR infra_adult_weighing_scale=0) AS "# of AWCs that reported unavailable mother and child weighing scale or did not answer the question"
 FROM agg_awc_monthly
-WHERE aggregation_level=5 AND month='2019-11-01'
+WHERE aggregation_level=5 AND month='2019-12-01'
 GROUP BY state_name
 ORDER BY state_name
 ) TO '/tmp/monthly_stats3.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
@@ -109,7 +109,7 @@ FROM "public"."awc_location_months_local" "awc_location_months" LEFT JOIN "publi
         ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
     )
-WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-11-01'
+WHERE "agg_awc"."aggregation_level"=5 AND "agg_awc"."month"='2019-12-01'
 GROUP BY state_name
 ORDER BY state_name
 ) TO '/tmp/monthly_stats4.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
