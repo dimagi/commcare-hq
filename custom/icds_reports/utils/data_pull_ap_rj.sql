@@ -176,22 +176,15 @@ COPY(SELECT
     awc_name,
     awc_site_code,
 
-    SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_April,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-04-01'  THEN 1 ELSE 0 END) as growth_monitoring_nutrition_status_weighed_April,
-    SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_May,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-05-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_May,
-    SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_June,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-06-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_June,
-    SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_July,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-07-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_July,
-    SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Aug,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-08-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Aug,
-    SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Sept,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-09-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Sept,
-    SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Oct,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-10-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Oct,
-    SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Nov,
-    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-11-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Nov
+    CASE WHEN SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-04-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0 END as growth_monitoring_April,
+    CASE WHEN SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-05-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_May,
+    CASE WHEN SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-06-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_June,
+    CASE WHEN SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-07-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_July,
+    CASE WHEN SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-08-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Aug,
+    CASE WHEN SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-09-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Sept,
+    CASE WHEN SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-10-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Oct,
+    CASE WHEN SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-11-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Nov
+
 
 FROM
    awc_location LEFT JOIN "child_health_monthly"  ON (
