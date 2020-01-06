@@ -66,14 +66,22 @@ COPY(SELECT
     awc_name,
     awc_site_code,
 
-    CASE WHEN SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-04-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0 END as lw_thr_21_April,
-    CASE WHEN SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-05-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_May,
-    CASE WHEN SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-06-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_June,
-    CASE WHEN SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-07-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_July,
-    CASE WHEN SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-08-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_Aug,
-    CASE WHEN SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-09-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_Sept,
-    CASE WHEN SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-10-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_Oct,
-    CASE WHEN SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-11-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as lw_thr_21_Nov
+    SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_April,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-04-01'  THEN 1 ELSE 0 END) as lw_rations_distributed_21_April,
+    SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_May,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-05-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_May,
+    SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_June,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-06-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_June,
+    SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_July,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-07-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_July,
+    SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_Aug,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-08-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_Aug,
+    SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_Sept,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-09-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_Sept,
+    SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_Oct,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-10-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_Oct,
+    SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END) as lw_thr_eligible_Nov,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-11-01'  THEN 1 ELSE 0 END)  as lw_rations_distributed_21_Nov
 FROM
     awc_location  LEFT JOIN  "ccs_record_monthly"  ON (
         ccs_record_monthly.supervisor_id=awc_location.supervisor_id and
@@ -99,14 +107,22 @@ COPY(SELECT
     awc_name,
     awc_site_code,
 
-    CASE WHEN SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-04-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0 END as child_thr_21_April,
-    CASE WHEN SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-05-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_May,
-    CASE WHEN SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-06-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_June,
-    CASE WHEN SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-07-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_July,
-    CASE WHEN SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-08-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_Aug,
-    CASE WHEN SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-09-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_Sept,
-    CASE WHEN SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-10-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_Oct,
-    CASE WHEN SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN num_rations_distributed>=21 AND month='2019-11-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as child_thr_21_Nov
+    SUM(CASE WHEN month='2019-04-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_April,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-04-01'  THEN 1 ELSE 0 END) as child_rations_distributed_21_April,
+    SUM(CASE WHEN month='2019-05-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_May,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-05-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_May,
+    SUM(CASE WHEN month='2019-06-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_June,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-06-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_June,
+    SUM(CASE WHEN month='2019-07-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_July,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-07-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_July,
+    SUM(CASE WHEN month='2019-08-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_Aug,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-08-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_Aug,
+    SUM(CASE WHEN month='2019-09-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_Sept,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-09-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_Sept,
+    SUM(CASE WHEN month='2019-10-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_Oct,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-10-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_Oct,
+    SUM(CASE WHEN month='2019-11-01'  THEN thr_eligible ELSE 0 END) as child_thr_eligible_Nov,
+    SUM(CASE WHEN num_rations_distributed>=21 AND month='2019-11-01'  THEN 1 ELSE 0 END)  as child_rations_distributed_21_Nov
 
 FROM
     awc_location LEFT JOIN "child_health_monthly"  ON (
@@ -160,14 +176,22 @@ COPY(SELECT
     awc_name,
     awc_site_code,
 
-    CASE WHEN SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-04-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0 END as growth_monitoring_April,
-    CASE WHEN SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-05-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_May,
-    CASE WHEN SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-06-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_June,
-    CASE WHEN SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-07-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_July,
-    CASE WHEN SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-08-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Aug,
-    CASE WHEN SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-09-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Sept,
-    CASE WHEN SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-10-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Oct,
-    CASE WHEN SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END)>0 THEN round((sum(CASE WHEN nutrition_status_weighed=1 AND month='2019-11-01'  THEN 1 ELSE 0 END)/SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END)::float)::numeric,2)*100 ELSE 0  END as growth_monitoring_Nov
+    SUM(CASE WHEN month='2019-04-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_April,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-04-01'  THEN 1 ELSE 0 END) as growth_monitoring_nutrition_status_weighed_April,
+    SUM(CASE WHEN month='2019-05-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_May,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-05-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_May,
+    SUM(CASE WHEN month='2019-06-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_June,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-06-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_June,
+    SUM(CASE WHEN month='2019-07-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_July,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-07-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_July,
+    SUM(CASE WHEN month='2019-08-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Aug,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-08-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Aug,
+    SUM(CASE WHEN month='2019-09-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Sept,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-09-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Sept,
+    SUM(CASE WHEN month='2019-10-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Oct,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-10-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Oct,
+    SUM(CASE WHEN month='2019-11-01'  THEN wer_eligible ELSE 0 END) as growth_wer_eligible_Nov,
+    SUM(CASE WHEN nutrition_status_weighed=1 AND month='2019-11-01'  THEN 1 ELSE 0 END)  as growth_monitoring_nutrition_status_weighed_Nov
 
 FROM
    awc_location LEFT JOIN "child_health_monthly"  ON (
