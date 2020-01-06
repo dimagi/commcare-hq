@@ -666,5 +666,323 @@ found at the repeater's location. The intention is that this mobile
 worker would be a supervisor who can pass the case to the appropriate
 person.
 
+Importing OpenMRS Encounters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MOTECH can import both patient data and data about encounters using Atom
+feed integration. This can be used for updating case properties,
+associating clinical diagnoses with a patient, or managing referrals.
+
+Bahmni includes diagnoses in the data of an encounter. The structure of
+a diagnosis is similar to that of an observation. Diagnoses can only be
+imported from Bahmni; Bahmni does not offer an API for adding or
+updating diagnoses in Bahmni. Configurations for observations and
+diagnoses are specified separately in the ``OpenmrsFormConfig``
+definition to make the distinction obvious.
+
+Here is an example ``OpenmrsFormConfig``:
+
+.. code-block:: javascript
+
+    [
+      {
+        "doc_type": "OpenmrsFormConfig",
+        "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+        "openmrs_form": null,
+        "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
+
+        "openmrs_start_datetime": {
+          "direction": "in",
+          "jsonpath": "encounterDateTime",
+          "case_property": "last_clinic_visit_date",
+          "external_data_type": "omrs_datetime",
+          "commcare_data_type": "cc_date"
+        },
+
+        "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+        "openmrs_observations": [
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "f8ca5471-4e76-4737-8ea4-7555f6d5af0f",
+            "value": {
+              "case_property": "blood_group"
+            },
+            "case_property": "blood_group",
+            "indexed_case_mapping": null
+          },
+
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+            "value": {
+              "direction": "in",
+              "case_property": "[unused when direction = 'in']"
+            },
+            "case_property": null,
+            "indexed_case_mapping": {
+              "doc_type": "IndexedCaseMapping",
+              "identifier": "parent",
+              "case_type": "referral",
+              "relationship": "extension",
+              "case_properties": [
+                {
+                  "jsonpath": "value",
+                  "case_property": "case_name",
+                  "value_map": {
+                    "Alice": "397b9631-2911-435a-bf8a-111111111111",
+                    "Bob": "397b9631-2911-435a-bf8a-222222222222",
+                    "Carol": "397b9631-2911-435a-bf8a-333333333333"
+                  }
+                },
+                {
+                  "jsonpath": "value",
+                  "case_property": "owner_id",
+                  "value_map": {
+                    "111111111111": "397b9631-2911-435a-bf8a-111111111111",
+                    "222222222222": "397b9631-2911-435a-bf8a-222222222222",
+                    "333333333333": "397b9631-2911-435a-bf8a-333333333333"
+                  }
+                },
+                {
+                  "jsonpath": "encounterDateTime",
+                  "case_property": "referral_date",
+                  "commcare_data_type": "date",
+                  "external_data_type": "posix_milliseconds"
+                },
+                {
+                  "jsonpath": "comment",
+                  "case_property": "referral_comment"
+                }
+              ]
+            }
+          }
+        ],
+
+        "bahmni_diagnoses": [
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "all",
+            "value": {
+              "direction": "in",
+              "case_property": "[unused when direction = 'in']"
+            },
+            "case_property": null,
+            "indexed_case_mapping": {
+              "doc_type": "IndexedCaseMapping",
+              "identifier": "parent",
+              "case_type": "diagnosis",
+              "relationship": "extension",
+              "case_properties": [
+                {
+                  "jsonpath": "codedAnswer.name",
+                  "case_property": "case_name"
+                },
+                {
+                  "jsonpath": "certainty",
+                  "case_property": "certainty"
+                },
+                {
+                  "jsonpath": "order",
+                  "case_property": "is_primary",
+                  "value_map": {
+                    "yes": "PRIMARY",
+                    "no": "SECONDARY"
+                  }
+                },
+                {
+                  "jsonpath": "diagnosisDateTime",
+                  "case_property": "diagnosis_datetime"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+
+There is a lot happening in that definition. Let us look at the
+different parts.
+
+.. code-block:: javascript
+
+    "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+
+Atom feed integration uses the same configuration as data forwarding,
+because mapping case properties to observations normally applies to both
+exporting data to OpenMRS and importing data from OpenMRS.
+
+For data forwarding, when the form specified by that XMLNS is submitted,
+MOTECH will export corresponding observations.
+
+For Atom feed integration, when a new encounter appears in the
+encounters Atom feed, MOTECH will use the mappings specified for *any*
+form to determine what data to import. In other words, this XMLNS value
+is *not used* for Atom feed integration. It is only used for data
+forwarding.
+
+.. code-block:: javascript
+
+    "openmrs_start_datetime": {
+      "direction": "in",
+      "jsonpath": "encounterDateTime",
+      "case_property": "last_clinic_visit_date",
+      "external_data_type": "omrs_datetime",
+      "commcare_data_type": "cc_date"
+    },
+
+Data forwarding can be configured to set the date and time of the start
+of an encounter. Atom feed integration can be configured to import the
+start of the encounter. ``"direction": "in"`` tells MOTECH that these
+settings only apply to importing via the Atom feed.
+``"jsonpath": "encounterDateTime"`` fetches the value from the
+"encounterDateTime" property in the document returned from OpenMRS.
+``"case_property": "last_clinic_visit_date"`` saves that value to the
+"last_clinic_visit_date" case property. The data type settings convert
+the value from a datetime to a date.
+
+.. code-block:: javascript
+
+      {
+        "doc_type": "ObservationMapping",
+        "concept": "f8ca5471-4e76-4737-8ea4-7555f6d5af0f",
+        "value": {
+          "case_property": "blood_group"
+        },
+        "case_property": "blood_group",
+        "indexed_case_mapping": null
+      },
+
+The first observation mapping is configured for both importing and
+exporting. When data forwarding exports data, it uses
+``"value": {"case_property": "blood_group"}`` to determine which value
+to send. When MOTECH imports via the Atom feed, it uses
+``"case_property": "blood_group", "indexed_case_mapping": null`` to
+determine what to do with the imported value. These specific settings
+tell MOTECH to save the value to the "blood_group" case property, and
+not to create a subcase.
+
+The next observation mapping gets more interesting:
+
+.. code-block:: javascript
+
+      {
+        "doc_type": "ObservationMapping",
+        "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
+        "value": {
+          "direction": "in",
+          "case_property": "[unused when direction = 'in']"
+        },
+        "case_property": null,
+        "indexed_case_mapping": {
+          "doc_type": "IndexedCaseMapping",
+          "identifier": "parent",
+          "case_type": "referral",
+          "relationship": "extension",
+          "case_properties": [
+            {
+              "jsonpath": "value",
+              "case_property": "case_name",
+              "value_map": {
+                "Alice": "397b9631-2911-435a-bf8a-111111111111",
+                "Bob": "397b9631-2911-435a-bf8a-222222222222",
+                "Carol": "397b9631-2911-435a-bf8a-333333333333"
+              }
+            },
+            {
+              "jsonpath": "value",
+              "case_property": "owner_id",
+              "value_map": {
+                "111111111111": "397b9631-2911-435a-bf8a-111111111111",
+                "222222222222": "397b9631-2911-435a-bf8a-222222222222",
+                "333333333333": "397b9631-2911-435a-bf8a-333333333333"
+              }
+            },
+            {
+              "jsonpath": "encounterDateTime",
+              "case_property": "referral_date",
+              "commcare_data_type": "date",
+              "external_data_type": "posix_milliseconds"
+            },
+            {
+              "jsonpath": "comment",
+              "case_property": "referral_comment"
+            }
+          ]
+        }
+      }
+
+``"value": {"direction": "in"`` ... tells MOTECH only to use this
+observation mapping for importing via the Atom feed.
+
+"indexed_case_mapping" is for creating a subcase. "identifier" is the
+name of the index that links the subcase to its parent, and the value
+"parent" is convention in CommCare; unless there are very good reasons
+to use a different value, "parent" should always be used.
+
+``"case_type": "referral"`` gives us a clue about what this
+configuration is for. The set of possible values of the OpenMRS concept
+will be IDs of people, who OpenMRS/Bahmni users can choose to refer
+patients to. Those people will have corresponding mobile workers in
+CommCare. This observation mapping will need to map the people in
+OpenMRS to the mobile workers in CommCare.
+
+``"relationship": "extension"`` sets what kind of subcase to create.
+CommCare uses two kinds of subcase relationships: "child"; and
+"extension". Extension cases are useful for referrals and diagnoses for
+two reasons: if the patient case is removed, CommCare will automatically
+remove its referrals and diagnoses; and mobile workers who have access
+to a patient case will also be able to see all their diagnoses and
+referrals.
+
+The observation mapping sets four case properties:
+
+#. case_name: This is set to the name of the person to whom the patient
+   is being referred.
+#. owner_id: This is the most important aspect of a referral system.
+   "owner_id" is a special case property that sets the owner of the
+   case. It must be set to a mobile worker's ID. When this is done, that
+   mobile worker will get the patient case sent to their device on the
+   next sync.
+#. referral_date: The date on which the OpenMRS observation was made.
+#. comment: The comment, if any, given with the observation.
+
+The configuration for each case property has a "jsonpath" setting to
+specify where to get the value from the JSON data of the observation
+given by the OpenMRS API. See :ref:`_how_to_inspect-label` below.
+
+Inspecting the observation also helps us with a subtle and confusing
+setting:
+
+.. code-block:: javascript
+
+        {
+          "jsonpath": "encounterDateTime",
+          "case_property": "referral_date",
+          "commcare_data_type": "date",
+          "external_data_type": "posix_milliseconds"
+        },
+
+The value for the "referral_date" case property comes from the
+observation's "encounterDateTime" property. This property has the same
+name as the "encounterDateTime" property of the encounter. (We used it
+earlier under the "openmrs_start_datetime" setting to set the
+"last_clinic_visit_date" case property on the patient case.)
+
+What is confusing is that "external_data_type" is set to "omrs_datetime"
+for encounter's "encounterDateTime" property. But here, for the
+observation, "external_data_type" is set to "posix_milliseconds". An
+"omrs_datetime" value looks like ``"2018-01-18T01:15:09.000+0530"``. But
+a "posix_milliseconds" value looks like ``1516218309000``
+
+The only way to know that is to inspect the JSON data returned by the
+OpenMRS API.
+
+
+
+.. _how_to_inspect-label:
+
+
+
+
 
 .. include:: ../corehq/motech/docs/value_source.rst
