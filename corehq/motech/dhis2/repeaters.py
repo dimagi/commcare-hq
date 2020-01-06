@@ -20,12 +20,16 @@ from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, FormRepeater, Repeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    FormRepeater,
+    Repeater,
+    get_requests,
+)
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
@@ -194,18 +198,6 @@ def get_minor_component(version_number):
     except (AttributeError, IndexError):
         raise ValueError(f"Unable to parse version number {version_number!r}.")
     return minor_component
-
-
-def get_requests(repeater, payload_id=None):
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        repeater.username,
-        repeater.plaintext_password,
-        verify=repeater.verify,
-        notify_addresses=repeater.notify_addresses,
-        payload_id=payload_id,
-    )
 
 
 def fetch_metadata(requests):
