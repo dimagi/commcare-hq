@@ -1,8 +1,9 @@
 import logging
 import os
+import pdb
 import signal
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -42,7 +43,6 @@ from ...util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
 
-DIFF_BATCH_SIZE = 100
 PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
 
 
@@ -75,12 +75,22 @@ class Command(BaseCommand):
                 containing a case id on each line. The path must begin
                 with / or ./
             ''')
+        parser.add_argument('-x', '--stop',
+            dest="stop", action='store_true', default=False,
+            help='''
+                Stop and drop into debugger on first diff. A
+                non-parallel iteration algorithm is used when this
+                option is set.
+            ''')
+        parser.add_argument('-b', '--batch-size',
+            dest="batch_size", default=100, type=int,
+            help='''Diff cases in batches of this size.''')
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "state_dir", "live", "cases"]:
+        for opt in ["no_input", "state_dir", "live", "cases", "stop", "batch_size"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -89,7 +99,7 @@ class Command(BaseCommand):
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         setup_logging(self.state_dir, "case_diff", options['debug'])
         migrator = get_migrator(domain, self.state_dir, self.live)
-        msg = do_case_diffs(migrator, self.cases)
+        msg = do_case_diffs(migrator, self.cases, self.stop, self.batch_size)
         if msg:
             sys.exit(msg)
 
@@ -101,7 +111,7 @@ def get_migrator(domain, state_dir, live):
         domain, state_dir, live_migrate=live, diff_process=None)
 
 
-def do_case_diffs(migrator, cases):
+def do_case_diffs(migrator, cases, stop, batch_size):
     def save_result(data):
         log.debug(data)
         add_cases(len(data.doc_ids))
@@ -110,7 +120,7 @@ def do_case_diffs(migrator, cases):
         for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
 
-    casediff = CaseDiffTool(migrator, cases)
+    casediff = CaseDiffTool(migrator, cases, stop, batch_size)
     statedb = casediff.statedb
     with casediff.context() as add_cases:
         for data in casediff.iter_case_diff_results():
@@ -121,11 +131,13 @@ def do_case_diffs(migrator, cases):
 
 class CaseDiffTool:
 
-    def __init__(self, migrator, cases):
+    def __init__(self, migrator, cases, stop, batch_size):
         self.migrator = migrator
         self.domain = migrator.domain
         self.statedb = migrator.statedb
         self.cases = cases
+        self.stop = stop
+        self.batch_size = batch_size
         if not migrator.live_migrate:
             cutoff_date = None
         elif hasattr(migrator.stopper, "stop_date"):
@@ -154,44 +166,48 @@ class CaseDiffTool:
         if self.cases is None:
             return self.resumable_iter_diff_cases()
         if self.cases == "pending":
-            return self.iter_diff_pending_cases()
-        return self.iter_diff_specific_cases()
-
-    def iter_diff_specific_cases(self):
+            return self.iter_diff_cases(self.get_pending_cases())
         case_ids = get_ids_from_string_or_file(self.cases)
-        batches = chunked(case_ids, DIFF_BATCH_SIZE, list)
-        with init_worker(*self.initargs):
-            for batch in batches:
-                yield diff_cases(batch, log_cases=True)
+        return self.iter_diff_cases(case_ids, log_cases=True)
 
     def resumable_iter_diff_cases(self):
-        batches = chunked(self.iter_case_ids(), DIFF_BATCH_SIZE, self.diff_batch)
-        yield from self.pool.imap_unordered(diff_cases, batches)
+        def diff_batch(case_ids):
+            case_ids = list(case_ids)
+            statedb.add_cases_to_diff(case_ids)  # add pending cases
+            return case_ids
 
-    def iter_diff_pending_cases(self):
+        statedb = self.statedb
+        case_ids = self.migrator._get_resumable_iterator(
+            ['CommCareCase.id'],
+            progress_name="Diff",
+            offset_key='CommCareCase.id',
+        )
+        return self.iter_diff_cases(case_ids, diff_batch)
+
+    def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
         def list_or_stop(items):
             if self.is_stopped():
                 raise StopIteration
             return list(items)
 
-        pending = self.get_pending_cases()
-        batches = chunked(pending, DIFF_BATCH_SIZE, list_or_stop)
-        yield from self.pool.imap_unordered(diff_cases, batches)
-
-    def diff_batch(self, case_ids):
-        case_ids = list(case_ids)
-        self.statedb.add_cases_to_diff(case_ids)
-        return case_ids
+        batches = chunked(case_ids, self.batch_size, batcher or list_or_stop)
+        if not self.stop:
+            yield from self.pool.imap_unordered(diff_cases, batches)
+            return
+        stop = [1]
+        with init_worker(*self.initargs), suppress(pdb.bdb.BdbQuit):
+            for batch in batches:
+                data = diff_cases(batch, log_cases=log_cases)
+                yield data
+                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                if diffs:
+                    log.info("found cases with diffs:\n%s",
+                        "\n".join(sorted(diffs)))
+                    if stop:
+                        pdb.set_trace()
 
     def is_stopped(self):
         return self.migrator.stopper.clean_break
-
-    def iter_case_ids(self):
-        return self.migrator._get_resumable_iterator(
-            ['CommCareCase.id'],
-            progress_name="Diff",
-            offset_key='CommCareCase.id',
-        )
 
     def get_pending_cases(self):
         count = self.statedb.count_undiffed_cases()
@@ -218,7 +234,8 @@ def diff_cases(case_ids, log_cases=False):
         for c in CaseAccessorCouch.get_cases(case_ids) if _state.should_diff(c)}
     if log_cases:
         skipped = [id for id in case_ids if id not in couch_cases]
-        log.info("skipping cases modified since cutoff date: %s", skipped)
+        if skipped:
+            log.info("skipping cases modified since cutoff date: %s", skipped)
     case_ids = list(couch_cases)
     data = DiffData()
     sql_case_ids = set()

@@ -136,7 +136,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     def do_case_diffs(self, live=False, cases=None):
         migrator = mod.get_migrator(self.domain_name, self.state_dir, live)
-        return mod.do_case_diffs(migrator, cases)
+        return mod.do_case_diffs(migrator, cases, stop=False, batch_size=100)
 
     @contextmanager
     def augmented_couch_case(self, case_id):
