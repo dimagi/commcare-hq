@@ -51,3 +51,4 @@ XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
 DHIS2_ID_SCHEMA = Regex(r"^[A-Za-z0-9]+$")
 DHIS2_DATE_SCHEMA = Regex(r"^\d{4}-\d{2}-\d{2}$")
+DHIS2_DATETIME_SCHEMA = Regex(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")

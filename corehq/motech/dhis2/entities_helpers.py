@@ -12,6 +12,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.dhis2.const import (
     DHIS2_DATE_SCHEMA,
+    DHIS2_DATETIME_SCHEMA,
     DHIS2_ID_SCHEMA,
     XMLNS_DHIS2,
 )
@@ -254,17 +255,19 @@ def get_tracked_entity_schema() -> dict:
     """
     event_schema = get_event_schema()
     return {
-        SchemaOptional("trackedEntityInstance"): DHIS2_ID_SCHEMA,
-        "trackedEntityType": DHIS2_ID_SCHEMA,
-        "orgUnit": DHIS2_ID_SCHEMA,
-        SchemaOptional("geometry"): {
-            "type": str,
-            "coordinates": [float],
-        },
         SchemaOptional("attributes"): [{
             "attribute": DHIS2_ID_SCHEMA,
+            SchemaOptional("code"): str,
+            SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
+            SchemaOptional("displayName"): str,
+            SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
+            SchemaOptional("storedBy"): str,
             "value": object,
+            SchemaOptional("valueType"): str,
         }],
+        SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
+        SchemaOptional("createdAtClient"): DHIS2_DATETIME_SCHEMA,
+        SchemaOptional("deleted"): bool,
         SchemaOptional("enrollments"): [{
             "program": DHIS2_ID_SCHEMA,
             SchemaOptional("orgUnit"): DHIS2_ID_SCHEMA,
@@ -272,4 +275,17 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("incidentDate"): DHIS2_DATE_SCHEMA,
             SchemaOptional("events"): [event_schema],
         }],
+        SchemaOptional("featureType"): str,
+        SchemaOptional("geometry"): {
+            "type": str,
+            "coordinates": [float],
+        },
+        SchemaOptional("inactive"): bool,
+        SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
+        SchemaOptional("lastUpdatedAtClient"): DHIS2_DATETIME_SCHEMA,
+        "orgUnit": DHIS2_ID_SCHEMA,
+        SchemaOptional("programOwners"): [object],
+        SchemaOptional("relationships"): [object],
+        SchemaOptional("trackedEntityInstance"): DHIS2_ID_SCHEMA,
+        "trackedEntityType": DHIS2_ID_SCHEMA,
     }
