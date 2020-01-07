@@ -89,7 +89,11 @@ class Dhis2EntityRepeater(CaseRepeater):
             form_question_values=get_form_question_values(payload),
         )
         requests = get_requests(self, repeat_record.payload_id)
-        return send_dhis2_entities(requests, self, case_trigger_infos)
+        try:
+            return send_dhis2_entities(requests, self, case_trigger_infos)
+        except Exception as err:
+            requests.notify_error(f"Error sending Entities to {self}: {err}")
+            raise
 
 
 class Dhis2Repeater(FormRepeater):
