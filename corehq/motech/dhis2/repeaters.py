@@ -30,7 +30,10 @@ from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.value_source import get_form_question_values
+from corehq.motech.value_source import (
+    as_value_source,
+    get_form_question_values,
+)
 from corehq.toggles import DHIS2_INTEGRATION
 
 
@@ -76,9 +79,9 @@ class Dhis2EntityRepeater(CaseRepeater):
     def send_request(self, repeat_record, payload):
         value_sources = []
         for case_config in self.dhis2_entity_config.case_configs:
-            value_sources.append(case_config.org_unit_id)
-            for value_source in case_config.attributes.values():
-                value_sources.append(value_source)
+            value_sources.append(as_value_source(case_config.org_unit_id))
+            for value_source_config in case_config.attributes.values():
+                value_sources.append(as_value_source(value_source_config))
 
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
