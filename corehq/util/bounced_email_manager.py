@@ -27,7 +27,7 @@ class BouncedEmailManager(object):
     def _get_messages(self, header_search):
         result, data = self.mail.uid('search', None, header_search)
         if result == 'OK':
-            for uid in data[0].split()[:1]:
+            for uid in data[0].split():
                 fetch_result, fetched_data = self.mail.uid('fetch', uid, '(RFC822)')
                 if fetch_result == 'OK':
                     raw_email = fetched_data[0][1]
