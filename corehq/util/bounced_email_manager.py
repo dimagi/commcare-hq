@@ -64,6 +64,7 @@ class BouncedEmailManager(object):
 
     def _delete_message_with_uid(self, uid):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', '\\Trash')
+        self.mail.expunge()
 
     def process_complaints(self):
         processed_emails = []
