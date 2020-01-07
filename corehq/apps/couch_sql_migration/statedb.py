@@ -318,6 +318,8 @@ class StateDB(DiffDB):
 
     def replace_case_diffs(self, case_diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
+        if not case_diffs:
+            return
         new_diffs = []
         conditions = []
         seen = set()
@@ -340,6 +342,7 @@ class StateDB(DiffDB):
                     and_(Diff.kind == "stock state", Diff.doc_id.startswith(case_id + "/")),
                 ))
             )
+        assert conditions, case_diffs  # avoid deleting all existing diffs
         with self.session() as session:
             session.query(Diff).filter(or_(*conditions)).delete(synchronize_session=False)
         for kind, case_id, diffs in new_diffs:
