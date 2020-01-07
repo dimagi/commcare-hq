@@ -138,6 +138,7 @@ def get_event_schema() -> dict:
     """
     return {
         "program": DHIS2_ID_SCHEMA,
+        SchemaOptional("programStage"): DHIS2_ID_SCHEMA,
         "orgUnit": DHIS2_ID_SCHEMA,
         "eventDate": DHIS2_DATE_SCHEMA,
         SchemaOptional("completedDate"): DHIS2_DATE_SCHEMA,
