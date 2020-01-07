@@ -311,9 +311,20 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
 
 
             var today = $scope.date;
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            let center = $scope.date.getMonth();
+            if ($scope.date.getFullYear() === 2017) {
+                center = $scope.date.getMonth()-2;
+            } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
+                if ($scope.date.getMonth() > new Date().getMonth()) {
+                    center = new Date().getMonth();
+                }
+            }
             $('.month').WSlot({
-                items:['January','February','March','April','May','June','July','August','September','October','November','December'],
-                center:today.getMonth(),
+                items:($scope.date.getFullYear() === 2017) ? months.slice(2) :
+                        (($scope.date.getFullYear() === new Date().getFullYear()) ?
+                            months.slice(0, new Date().getMonth()+1) : months),
+                center:center,
                 angle:30,
                 distance:'auto',
                 displayed_length:1,
@@ -339,17 +350,63 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
             }).on('WSlot.change',function(e,index){
                 initDate(parseInt($('.month').WSlot('get')),parseInt($('.year').WSlot('getText')),$('.day').WSlot('get'));
                 updateText();
+                let center = $scope.date.getMonth();
+                if ($scope.date.getFullYear() === 2017) {
+                    center = $scope.date.getMonth()-2;
+                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
+                    if (center > new Date().getMonth()) {
+                        center = new Date().getMonth();
+                    }
+                }
+                $('.month').WSlot({
+                    items: ($scope.date.getFullYear() === 2017) ? months.slice(2) :
+                        (($scope.date.getFullYear() === new Date().getFullYear()) ?
+                            months.slice(0, new Date().getMonth()+1) : months),
+                    center: center,
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+                updateText();
             });
 
             function updateText() {
                 var dd = ('0'+($('.day').WSlot('get')+1)).slice(-2);
                 var mm = ('0'+($('.month').WSlot('get')+1)).slice(-2);
+                if ($scope.date.getFullYear() === 2017) {
+                    mm = ('0'+($('.month').WSlot('get')+3)).slice(-2);
+                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
+                    if (parseInt($('.month').WSlot('get')) > new Date().getMonth()) {
+                        mm = '0'+ (new Date().getMonth() + 1);
+                    }
+                }
                 var yyyy = $('.year').WSlot('getText');
                 var todaystring = yyyy+'-'+mm+'-'+dd;
                 $scope.date = new Date(todaystring);
                 $scope.$apply();
                 $scope.$emit('date_picked',{'info' : $scope.date });
             }
+
+            $scope.$on('reset_date', function() {
+                $scope.date = new Date();
+                $('.year').WSlot({
+                    items:years,
+                    center:years.indexOf($scope.date.getFullYear()),
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+                $('.month').WSlot({
+                    items:['January','February','March','April','May','June','July','August','September','October','November','December'],
+                    center:$scope.date.getMonth(),
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+            });
 
             function initDate(month,year,selected) {
                 var totalDay = daysInMonth(month,year);
