@@ -33,6 +33,11 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     )
 
     recipient_list = [_f for _f in recipient_list if _f]
+
+    # todo deal with recipients marked as bounced
+    from dimagi.utils.django.email import get_valid_recipients
+    recipient_list = get_valid_recipients(recipient_list)
+
     if not recipient_list:
         return
     try:
