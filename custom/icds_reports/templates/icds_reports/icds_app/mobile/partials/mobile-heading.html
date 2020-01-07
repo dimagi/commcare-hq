@@ -4,9 +4,13 @@
         <div>
             <p class="font-16 font-montserrat font-weight-600 text-white mb-0" ng-bind="$ctrl.label"></p>
             <p class="font-14 font-montserrat font-weight-500 text-white">
-                {$ $ctrl.selectedMonthDisplay $} | National
-                <span ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                  &gt; {$ loc.name $}
+                {$ $ctrl.selectedMonthDisplay $} |
+                <span ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)"
+                      ng-class="{'d-none':(($ctrl.selectedLocationsCount()-1)!==-1 && ($ctrl.selectedLocationsCount()-2)!==-1)}">National</span>
+                <span ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)"
+                      ng-class="{'d-none':(($ctrl.selectedLocationsCount()-1)!==$index && ($ctrl.selectedLocationsCount()-2)!==$index)}"
+                      ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                  <span ng-show="(($ctrl.selectedLocationsCount()-2)==$index-1 || ($ctrl.selectedLocationsCount()-1)==$index-1)">&gt;</span> {$ loc.name $}
                 </span>
             </p>
         </div>

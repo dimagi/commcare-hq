@@ -15,6 +15,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.search('location_name', loc.name);
             }
         };
+        vm.selectedLocationsCount = function() {
+              return (vm.selectedLocationLevel===4) ? (vm.selectedLocations.filter(Boolean).length) :
+                  (vm.selectedLocations.filter(Boolean).length-1);
+        };
         vm.filtersOpen = false;
         $scope.$on('openFilterMenu', function () {
             vm.filtersOpen = true;
