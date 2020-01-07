@@ -15,6 +15,7 @@ describe('Adolescent Girls Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         utils.provideDefaultConstants($provide, false, false);
+        $provide.constant("haveAccessToFeatures", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

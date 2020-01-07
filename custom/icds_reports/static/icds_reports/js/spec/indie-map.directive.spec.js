@@ -54,6 +54,7 @@ describe('Indie Map Directive', function () {
         $httpBackend = _$httpBackend_;
         $storageService = storageService;
 
+        $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
 
         var element = window.angular.element("<indie-map data='test'></indie-map>");
@@ -144,12 +145,14 @@ describe('Indie Map Directive', function () {
 
     it('tests html content of update map', function () {
         controller.data = mockData;
-        var expected = '<div class="modal-header"><button type="button" class="close" ' +
+        var expected = '<div class="secondary-location-selector">' +
+            '<div class="modal-header"><button type="button" class="close" ' +
             'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
-            'ng-click="$ctrl.updateMap(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
+            'ng-click="$ctrl.attemptToDrillToLocation(\'Uttar Pradesh\')">Uttar Pradesh</button>' +
+            '</div></div>';
 
-        var result = controller.getHtmlContent(mockGeography);
+        var result = controller.getSecondaryLocationSelectionHtml(mockGeography);
         assert.equal(expected, result);
     });
 
@@ -165,7 +168,7 @@ describe('Indie Map Directive', function () {
         });
 
         $httpBackend.expectGET('icds_locations?name=test-id').respond(200, mockLocations);
-        controller.updateMap(mockGeography);
+        controller.handleMapClick(mockGeography);
         $httpBackend.flush();
 
         expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "test-id"};

@@ -100,7 +100,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsVhndForm,
     AggregateTHRForm,
     DailyAttendance,
-    DashboardUserActivityReport
+    DashboardUserActivityReport,
+    AggregateAdolescentGirlsRegistrationForms
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -140,7 +141,10 @@ from custom.icds_reports.utils import (
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
-    AggAwcDistributedHelper
+    AggAwcDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
+    GrowthMonitoringFormsAggregationDistributedHelper,
+    DailyFeedingFormsChildHealthAggregationDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -212,6 +216,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
 
+            drop_gm_indices(monthly_date)
+            drop_df_indices(monthly_date)
             stage_1_tasks = [
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
                 for state_id in state_ids
@@ -266,6 +272,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
 
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_adolescent_girls_registration_table')
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -273,6 +285,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             for stage_1_task_result in stage_1_task_results:
                 stage_1_task_result.get(disable_sync_subtasks=False)
 
+            create_df_indices(monthly_date)
             res_child = chain(
                 icds_state_aggregation_task.si(
                     state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table'
@@ -430,6 +443,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
+        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -608,6 +622,18 @@ def _agg_child_health_table(day):
     AggChildHealth.aggregate(force_to_date(day))
 
 
+def agg_child_health_temp(day):
+    helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
+    with get_cursor(AggChildHealth) as cursor:
+        helper.aggregate_temp(cursor)
+
+
+def update_agg_child_health(day):
+    helper = AggChildHealthAggregationDistributedHelper(force_to_date(day))
+    with get_cursor(AggChildHealth) as cursor:
+        helper.update_table(cursor)
+
+
 @track_time
 def _agg_ccs_record_table(day):
     db_alias = router.db_for_write(AggCcsRecord)
@@ -659,6 +685,12 @@ def _agg_ls_table(day):
 def _agg_thr_table(state_id, day):
     with transaction.atomic(using=router.db_for_write(AggregateTHRForm)):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
+
+@track_time
+def _agg_adolescent_girls_registration_table(state_id, day):
+    db_alias = router.db_for_write(AggregateAdolescentGirlsRegistrationForms)
+    with transaction.atomic(using=db_alias):
+        AggregateAdolescentGirlsRegistrationForms.aggregate(state_id, force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -1702,3 +1734,26 @@ def update_dashboard_activity_report(target_date=None):
     db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
+
+
+def drop_gm_indices(agg_date):
+    helper = GrowthMonitoringFormsAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateGrowthMonitoringForms) as cursor:
+        for query, params in helper.delete_queries():
+            cursor.execute(query, params)
+
+
+def create_df_indices(agg_date):
+    helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateChildHealthDailyFeedingForms) as cursor:
+        for query in helper.create_index_queries():
+            cursor.execute(query)
+
+
+def drop_df_indices(agg_date):
+    helper = DailyFeedingFormsChildHealthAggregationDistributedHelper(None, agg_date)
+    with get_cursor(AggregateChildHealthDailyFeedingForms) as cursor:
+        for query, params in helper.delete_queries():
+            cursor.execute(query, params)
+        for query in helper.drop_index_queries():
+            cursor.execute(query)
