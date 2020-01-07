@@ -186,7 +186,6 @@ class XFormPillowTest(TestCase):
         self.assertEqual(app_meta.num_unsent_forms, 2)
         self.assertEqual(app_meta.num_quarantined_forms, 10)
 
-    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker_heartbeat_processed(self):
         self._test_heartbeat(0)
