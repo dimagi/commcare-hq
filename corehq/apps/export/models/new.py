@@ -114,6 +114,9 @@ from corehq.util.view_utils import absolute_reverse
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
+ExcelFormatValue = namedtuple('ExcelFormatValue', 'format value')
+
+
 class PathNode(DocumentSchema):
     """
     A PathNode represents a portion of a path to value in a document.
