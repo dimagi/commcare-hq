@@ -785,6 +785,7 @@ class DefaultProductPlan(models.Model):
         unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
+    @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'], timeout=24 * 60 * 60)
     def get_default_plan_version(cls, edition=None, is_trial=False,
                                  is_report_builder_enabled=False):
         if not edition:
