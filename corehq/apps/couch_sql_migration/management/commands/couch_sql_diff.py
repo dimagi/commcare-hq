@@ -69,8 +69,9 @@ class Command(BaseCommand):
             ''')
         parser.add_argument('--cases',
             help='''
-                Diff specific cases. The value of this option should
-                be 'pending' to clear out in-process diffs OR a
+                Diff specific cases. The value of this option may be
+                'pending' to clear out in-process diffs OR 'with-diffs'
+                to re-diff cases that previously had diffs OR a
                 space-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
@@ -167,6 +168,8 @@ class CaseDiffTool:
             return self.resumable_iter_diff_cases()
         if self.cases == "pending":
             return self.iter_diff_cases(self.get_pending_cases())
+        if self.cases == "with-diffs":
+            return self.iter_diff_cases_with_diffs()
         case_ids = get_ids_from_string_or_file(self.cases)
         return self.iter_diff_cases(case_ids, log_cases=True)
 
@@ -183,6 +186,12 @@ class CaseDiffTool:
             offset_key='CommCareCase.id',
         )
         return self.iter_diff_cases(case_ids, diff_batch)
+
+    def iter_diff_cases_with_diffs(self):
+        count = self.statedb.count_case_ids_with_diffs()
+        cases = self.statedb.iter_case_ids_with_diffs()
+        cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
+        return self.iter_diff_cases(cases)
 
     def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
         def list_or_stop(items):

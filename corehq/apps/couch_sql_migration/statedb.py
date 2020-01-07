@@ -223,6 +223,28 @@ class StateDB(DiffDB):
         with self.session() as session:
             return session.query(CaseToDiff).count()
 
+    def iter_case_ids_with_diffs(self):
+        STOCK_STATE = "stock state"
+        query = self.Session().query(Diff.doc_id, Diff.kind).filter(or_(
+            Diff.kind == "CommCareCase",
+            Diff.kind == STOCK_STATE,
+        ))
+        seen = set()
+        for case_id, kind in iter_large(query, Diff.id):
+            if kind == STOCK_STATE:
+                assert case_id.count("/") == 2, case_id
+                case_id = case_id.split("/", 1)[0]
+            if case_id not in seen:
+                seen.add(case_id)
+                yield case_id
+
+    def count_case_ids_with_diffs(self):
+        # approximation, does not include ledger diff case ids
+        with self.session() as session:
+            return session.query(Diff.doc_id).filter(
+                Diff.kind == "CommCareCase",
+            ).distinct().count()
+
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
 
