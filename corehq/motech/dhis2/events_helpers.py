@@ -12,9 +12,10 @@ from corehq.motech.value_source import (
 
 def send_dhis2_event(request, api_version, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
-    validate_event_schema(event)
-    return request.post(f'/api/{api_version}/events', json=event,
-                        raise_for_status=True)
+    if event:
+        validate_event_schema(event)
+        return request.post(f'/api/{api_version}/events', json=event,
+                            raise_for_status=True)
 
 
 def get_event(domain, config, form_json=None, info=None):
@@ -36,7 +37,15 @@ def get_event(domain, config, form_json=None, info=None):
     ]
     for func in event_property_functions:
         event.update(func(config, info))
-    return event
+    if event['eventDate'] or event['dataValues']:
+        # eventDate is a required field, but we return the event if it
+        # has no date if it does have values, so that it will fail
+        # validation and the administrator will be notified that the
+        # value source for eventDate is broken.
+        return event
+    else:
+        # The event has no date and no values. That is not an event.
+        return {}
 
 
 def _get_program(config, case_trigger_info):
@@ -82,10 +91,12 @@ def _get_completed_date(config, case_trigger_info):
 def _get_datavalues(config, case_trigger_info):
     values = []
     for data_value in config.datavalue_maps:
-        values.append({
-            'dataElement': data_value.data_element_id,
-            'value': get_value(data_value.value, case_trigger_info)
-        })
+        value = get_value(data_value.value, case_trigger_info)
+        if value is not None:
+            values.append({
+                'dataElement': data_value.data_element_id,
+                'value': value
+            })
     return {'dataValues': values}
 
 

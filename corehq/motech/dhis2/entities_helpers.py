@@ -177,6 +177,12 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
 
 
 def get_enrollments(case_trigger_info, case_config):
+    """
+    DHIS2 allows tracked entity instances to be enrolled in programs
+    without any events, but CommCare does not currently have a mechanism
+    for that. Cases/TEIs are enrolled in a program when the first event
+    in that program occurs.
+    """
     events_by_program = get_events_by_program(case_trigger_info, case_config)
     enrollments = []
     for program, events in events_by_program.items():
@@ -192,7 +198,8 @@ def get_events_by_program(case_trigger_info, case_config):
     events_by_program = defaultdict(list)
     for form_config in case_config.form_configs:
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
-        events_by_program[event["program"]].append(event)
+        if event:
+            events_by_program[event["program"]].append(event)
     return events_by_program
 
 
