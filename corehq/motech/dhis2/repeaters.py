@@ -12,6 +12,7 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
@@ -47,7 +48,9 @@ class Dhis2EntityRepeater(CaseRepeater):
         return Repeater.__str__(self)
 
     def allowed_to_forward(self, payload):
-        return True
+        # If the payload is the system form for updating a case with its
+        # DHIS2 TEI ID then don't send it back.
+        return payload.xmlns != XMLNS_DHIS2
 
     @memoized
     def payload_doc(self, repeat_record):
