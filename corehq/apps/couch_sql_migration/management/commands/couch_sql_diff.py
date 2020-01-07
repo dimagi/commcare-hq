@@ -210,8 +210,7 @@ class CaseDiffTool:
                 yield data
                 diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
                 if diffs:
-                    log.info("found cases with diffs:\n%s",
-                        "\n".join(sorted(diffs)))
+                    log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
                         pdb.set_trace()
 
@@ -314,6 +313,23 @@ def add_missing_docs(data, couch_cases, sql_case_ids):
         log.debug("Found %s missing SQL cases", len(missing_cases))
         for doc_type, doc_ids in filter_missing_cases(missing_cases):
             data.missing_docs.append((doc_type, doc_ids))
+
+
+def format_diffs(diff_dict):
+    lines = []
+    for doc_id, diffs in sorted(diff_dict.items()):
+        lines.append(doc_id)
+        for diff in diffs:
+            if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
+                lines.append(f"  {diff.diff_type} {list(diff.path)}")
+                lines.append(f"    - {diff.old_value!r}")
+                lines.append(f"    + {diff.new_value!r}")
+            else:
+                lines.append(
+                    f"  {diff.diff_type} {list(diff.path)}"
+                    f" {diff.old_value!r} -> {diff.new_value!r}"
+                )
+    return "\n".join(lines)
 
 
 def init_worker(domain, *args):
