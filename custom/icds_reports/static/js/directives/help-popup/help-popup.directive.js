@@ -4,9 +4,8 @@ function HelpPopupController($scope) {
     $scope.activeInfoHeading = '';
     $scope.activeInfoHelp = '';
     function showHelp(heading, help) {
-        var regex = /(<([^>]+)>)/ig;
-        $scope.activeInfoHeading = heading.replace(regex, "");
-        $scope.activeInfoHelp = help.replace(regex, "");
+        $scope.activeInfoHeading = heading;
+        $scope.activeInfoHelp = help;
         document.getElementById('summary-info').style.height = '90vh';
         document.getElementById('summary-info').style.top = '10vh';
         document.getElementById('summary-info').style.paddingTop = '30px';
