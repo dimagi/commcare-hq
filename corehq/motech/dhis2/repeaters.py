@@ -1,4 +1,7 @@
 import json
+import sys
+import traceback
+
 from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext_lazy as _
@@ -91,8 +94,13 @@ class Dhis2EntityRepeater(CaseRepeater):
         requests = get_requests(self, repeat_record.payload_id)
         try:
             return send_dhis2_entities(requests, self, case_trigger_infos)
-        except Exception as err:
-            requests.notify_error(f"Error sending Entities to {self}: {err}")
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            requests.notify_error(
+                f"Error sending Entities to {self}: {exc_value!r}",
+                details="".join(tb_lines)
+            )
             raise
 
 
