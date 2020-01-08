@@ -122,7 +122,7 @@ def cached_property(method):
 
 
 def icds_conditional_session_key():
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         # memoize for process lifecycle
         return None
     else:
