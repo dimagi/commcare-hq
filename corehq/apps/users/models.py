@@ -2907,7 +2907,7 @@ class UserReportingMetadataStaging(models.Model):
                     commcare_version = EXCLUDED.commcare_version,
                     build_profile_id = EXCLUDED.build_profile_id,
                     last_heartbeat = CLOCK_TIMESTAMP()
-                WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbea
+                WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
 
     class Meta(object):
