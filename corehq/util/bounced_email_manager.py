@@ -78,11 +78,8 @@ class BouncedEmailManager(object):
 
         self.mail.select('inbox')
         for uid, message in self._get_messages(
-            '(Header Delivered-To "{}" '
-            'From "{}")'.format(
-                settings.RETURN_PATH_EMAIL,
-                COMPLAINTS_DAEMON
-            )
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'From "{COMPLAINTS_DAEMON}")'
         ):
             complaint_email = self._get_forwarded_message_recipient(message)
             if complaint_email:
@@ -95,13 +92,9 @@ class BouncedEmailManager(object):
         processed_emails = []
         self.mail.select('inbox')
         for uid, message in self._get_messages(
-            '(Header Delivered-To "{}" '
-            'Subject "{}" '
-            'From "{}")'.format(
-                settings.RETURN_PATH_EMAIL,
-                subject,
-                BOUNCE_DAEMON
-            )
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'Subject "{subject}" '
+            f'From "{BOUNCE_DAEMON}")'
         ):
             email_regex = re.search(
                 r'(\w+[.|\w])*@(\w+[.])*\w+',
