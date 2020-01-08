@@ -85,31 +85,31 @@ def test_currency_eur():
 
 def test_date():
     yield check, '2020-01-20', datetime.datetime(2020, 1, 20, 0, 0), \
-          numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
     yield check, '2020/01/20', datetime.datetime(2020, 1, 20, 0, 0), \
-          numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
     yield check, '2020.01.20', datetime.datetime(2020, 1, 20, 0, 0), \
-          numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
 
 
 def test_datetime():
     yield check, '2020-01-20 12:33', \
-          datetime.datetime(2020, 1, 20, 12, 33), \
-          numbers.FORMAT_DATE_DATETIME, datetime.datetime
+        datetime.datetime(2020, 1, 20, 12, 33), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 12:33:22', \
-          datetime.datetime(2020, 1, 20, 12, 33, 22), \
-          numbers.FORMAT_DATE_DATETIME, datetime.datetime
+        datetime.datetime(2020, 1, 20, 12, 33, 22), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 1:33:22PM', \
-          datetime.datetime(2020, 1, 20, 13, 33, 22), \
-          numbers.FORMAT_DATE_DATETIME, datetime.datetime
+        datetime.datetime(2020, 1, 20, 13, 33, 22), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 09:33:22.890000-6:00', \
-          datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
-                            tzinfo=tzoffset(None, -21600)), \
-          numbers.FORMAT_DATE_DATETIME, datetime.datetime
+        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
+                          tzinfo=tzoffset(None, -21600)), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 09:33:22.890000-6', \
-          datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
-                            tzinfo=tzoffset(None, -21600)), \
-          numbers.FORMAT_DATE_DATETIME, datetime.datetime
+        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
+                          tzinfo=tzoffset(None, -21600)), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
 
 
 def test_time():
