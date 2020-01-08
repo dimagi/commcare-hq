@@ -19,9 +19,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // this method returns selectedLocationLevel
             // TODO: Need to check why selectedLocationLevel is undefined for all location levels except when awc is selected
             // when awc is selected return selected location level as is or count non null elements in selected Locations array
-            // selectedLocations array is fixed array of size 5. default value: [national, null,null,null,null]
+            // selectedLocations array is fixed array of size 5. default value: [all, null,null,null,null]
             // vm.selectedLocations.filter(Boolean) returns array after removing all null entries
-            // eg: if block is selected selectedLocations is (state, district, block, national, null)- only 3 levels selected.
+            // eg: if block is selected selectedLocations is (state, district, block, all, null)- only 3 levels selected.
             // since 3 levels are selected, selectedLocationLevel is 2 and vm.selectedLocations.filter(Boolean) = 4
             return vm.selectedLocationLevel ? vm.selectedLocationLevel : (vm.selectedLocations.filter(Boolean).length-2);
         };
