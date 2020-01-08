@@ -5,8 +5,7 @@ create unlogged table temp_pse_data_pull as SELECT
     SUM( CASE WHEN ('2020-01-31'-dob)/30.4>36 THEN valid_all_registered_in_month ELSE 0 END)  as all_3_6_not_migrated,
     SUM(CASE WHEN ('2020-01-31'-dob)/30.4>36 and valid_all_registered_in_month=1 and valid_in_month=0  THEN 1 ELSE 0 END) as all_3_6_not_migrated_not_seeking_service,
     SUM(CASE WHEN ('2020-01-31'-dob)/30.4>36 and open_in_month=1 and alive_in_month=1 and valid_all_registered_in_month=0  THEN 1 ELSE 0 END) as all_3_6_migrated,
-    SUM(CASE WHEN ('2020-01-31'-dob)/30.4>36 and ('2019-12-31'-dob)/30.4<=36  THEN valid_all_registered_in_month ELSE 0 END) as all_not_migrated_turning_3_this_month
-
+    SUM(CASE WHEN ('2020-01-31'-dob)/30.4>36 and ('2019-12-31'-dob)/30.4<=36  THEN valid_in_month ELSE 0 END) as all_not_migrated_turning_3_this_month
 from child_health_monthly where month='2020-01-01'
 group by supervisor_id;
 
