@@ -384,10 +384,15 @@ class Excel2007ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
 
         cells = []
-        for val in row:
-            excel_format, val_fmt = get_excel_format_value(val)
-            cell = WriteOnlyCell(sheet, val_fmt)
-            cell.number_format = numbers.FORMAT_TEXT if self.format_as_text else excel_format
+        for col_ind, val in enumerate(row):
+            if ((isinstance(row, FormattedRow) and col_ind in row.skip_excel_formatting)
+                    or self.format_as_text):
+                cell = WriteOnlyCell(sheet, val)
+                cell.number_format = numbers.FORMAT_TEXT
+            else:
+                excel_format, val_fmt = get_excel_format_value(val)
+                cell = WriteOnlyCell(sheet, val_fmt)
+                cell.number_format = excel_format
             cells.append(cell)
 
         if isinstance(row, FormattedRow):

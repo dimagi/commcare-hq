@@ -508,6 +508,8 @@ class TableConfiguration(DocumentSchema):
             doc, row_index = doc_row.doc, doc_row.row
 
             row_data = {} if as_json else []
+            col_index = 0
+            skip_excel_formatting = []
             for col in self.selected_columns:
                 val = col.get_value(
                     domain,
@@ -526,13 +528,30 @@ class TableConfiguration(DocumentSchema):
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    next_col_index = col_index + len(val)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.extend(
+                            list(range(col_index, next_col_index))
+                        )
+                    col_index = next_col_index
                 else:
                     row_data.append(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.append(col_index)
+                    col_index += 1
             if as_json:
                 rows.append(row_data)
             else:
                 rows.append(ExportRow(
-                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                    data=row_data,
+                    hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns),
+                    skip_excel_formatting=skip_excel_formatting
                 ))
         return rows
 
@@ -1322,9 +1341,11 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data, hyperlink_column_indices=()):
+    def __init__(self, data, hyperlink_column_indices=(),
+                 skip_excel_formatting=()):
         self.data = data
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.skip_excel_formatting = skip_excel_formatting
 
 
 class ScalarItem(ExportItem):
