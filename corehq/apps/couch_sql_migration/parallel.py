@@ -58,14 +58,13 @@ class Pool:
         workers = _thread(_worker_pool, worker_args, self.processes)
         producer = _thread(_produce_items, iterable, itemq, running, stop)
         with workers, producer:
-            results = _consume_results(resultq, running)
             try:
-                yield from results
+                yield from _consume_results(resultq, running)
             finally:
                 log.debug("finishing up...")
                 stop.set()
                 if running:
-                    _discard(results)
+                    _discard(_consume_results(resultq, running))
 
     @property
     def _worker_args(self):
