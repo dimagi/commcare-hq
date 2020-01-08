@@ -192,3 +192,7 @@ def _process(init, initargs, maxtasksperchild, func, itemq, resultq):
     finally:
         if proc is not None:
             proc.join()
+            if hasattr(proc, "close"):  # added in Python 3.7
+                # HACK gipc bug https://github.com/jgehrcke/gipc/issues/90
+                proc._popen.poll = lambda: proc.exitcode
+                proc.close()

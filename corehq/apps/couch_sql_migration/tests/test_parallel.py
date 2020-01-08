@@ -10,15 +10,6 @@ from corehq.util.test_utils import timelimit
 from .. import parallel as mod
 
 
-def setup_module():
-    if not os.environ.get("TEST_PARALLEL"):
-        raise SkipTest("""
-            These tests hang intermittently due to a race condition
-            somewhere in the tested code. Be sure to run them locally
-            when modifying the code since they are disabled on Travis.
-        """)
-
-
 @timelimit
 def test_parallel():
     results = set(mod.Pool().imap_unordered(square, range(10)))
@@ -75,6 +66,31 @@ def test_consume_error():
         for result in mod.Pool().imap_unordered(square, range(10)):
             raise Error
             # error should not cause deadlock
+
+
+def test_race_conditions():
+    # This test is slow and is not very useful except for finding race
+    # conditions which often result in a hung process.
+    if not os.environ.get("TEST_PARALLEL"):
+        raise SkipTest("set TEST_PARALLEL=1 to enable this test")
+
+    # NOTE there is a bug somewhere in the tested code (possibly in
+    # gipc or multiprocessing) that causes unreleased file handles to
+    # accumulate. This test will fail with "OSError: [Errno 24] Too
+    # many open files" if `iterations` is set too high. This has been
+    # observed on macOS where `ulimit -n` is 256.
+    iterations = 30
+    tests = [
+        test_parallel,
+        test_initializer,
+        test_maxtasksperchild,
+        test_process_item_error,
+        test_replace_dead_worker,
+        test_consume_error,
+    ]
+    for x in range(iterations):
+        for test in tests:
+            yield test,
 
 
 def square(value):
