@@ -159,7 +159,7 @@
           },
           "default": {
             "type": "constant",
-            "constant": null
+            "constant": 0
           }
         }
       }
