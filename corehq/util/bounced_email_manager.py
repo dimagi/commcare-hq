@@ -18,11 +18,18 @@ class BouncedEmailManager(object):
 
     def __init__(self, delete_processed_messages=True):
         self.delete_processed_messages = delete_processed_messages
+
+    def __enter__(self):
         self.mail = imaplib.IMAP4_SSL(EMAIL_SERVER)
         self.mail.login(
             settings.RETURN_PATH_EMAIL,
             settings.RETURN_PATH_EMAIL_PASSWORD
         )
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.mail.close()
+        self.mail.logout()
 
     def _get_messages(self, header_search):
         result, data = self.mail.uid('search', None, header_search)

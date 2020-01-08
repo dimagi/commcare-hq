@@ -38,17 +38,16 @@ class Command(BaseCommand):
             self.stdout.write(
                 '\n\nLogging into account for {}\n'.format(settings.RETURN_PATH_EMAIL)
             )
-            bounced_manager = BouncedEmailManager(
+            with BouncedEmailManager(
                 delete_processed_messages=delete_messages
-            )
+            ) as bounced_manager:
 
-            self.stdout.write('\n\nProcessing Bounces\n')
-            self._print_processed_emails(bounced_manager.process_bounces())
+                self.stdout.write('\n\nProcessing Bounces\n')
+                self._print_processed_emails(bounced_manager.process_bounces())
 
-            self.stdout.write('\n\nProcessing Complaints\n')
-            self._print_processed_emails(bounced_manager.process_complaints())
+                self.stdout.write('\n\nProcessing Complaints\n')
+                self._print_processed_emails(bounced_manager.process_complaints())
 
-            self.stdout.write('\nLogging Out\n\n')
-            bounced_manager.logout()
+            self.stdout.write('\nDone\n\n')
         except OSError:
             self.stdout.write('Not able to connect at this time\n')

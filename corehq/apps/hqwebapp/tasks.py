@@ -109,12 +109,11 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
 def process_bounced_emails():
     if settings.RETURN_PATH_EMAIL and settings.RETURN_PATH_EMAIL_PASSWORD:
         try:
-            bounced_manager = BouncedEmailManager(
+            with BouncedEmailManager(
                 delete_processed_messages=True
-            )
-            bounced_manager.process_bounces()
-            bounced_manager.process_complaints()
-            bounced_manager.logout()
+            ) as bounced_manager:
+                bounced_manager.process_bounces()
+                bounced_manager.process_complaints()
         except Exception as e:
             notify_exception(
                 None,
