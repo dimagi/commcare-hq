@@ -365,7 +365,7 @@ def get_standbys_with_acceptible_delay():
 
     return {
         db_ for db_, delay in delays_by_db.items()
-        if 0 <= delay or -1 <= acceptable_delays_by_db[db_]
+        if 0 <= (-1 if delay is None else delay) <= acceptable_delays_by_db[db_]
     }
 
 
