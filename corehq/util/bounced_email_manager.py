@@ -101,14 +101,21 @@ class BouncedEmailManager(object):
             f'Subject "{subject}" '
             f'From "{BOUNCE_DAEMON}")'
         ):
-            email_regex = re.search(
-                EMAIL_REGEX,
-                self._get_message_body(message)
-            )
-            if email_regex:
-                bounced_email = email_regex.group()
+            bounced_email = self._get_forwarded_message_recipient(message)
+            if bounced_email:
                 self._mark_email_as_bounced(bounced_email, uid)
                 processed_emails.append(bounced_email)
+            else:
+                # fall back to using the REGEX as a last resort, in case these
+                # messages don't contain a forwarded email
+                email_regex = re.search(
+                    EMAIL_REGEX,
+                    self._get_message_body(message)
+                )
+                if email_regex:
+                    bounced_email = email_regex.group()
+                    self._mark_email_as_bounced(bounced_email, uid)
+                    processed_emails.append(bounced_email)
         return processed_emails
 
     def process_bounces(self):
