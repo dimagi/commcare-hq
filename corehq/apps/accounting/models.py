@@ -1731,7 +1731,7 @@ class Subscription(models.Model):
         return cls._get_active_subscription_by_domain(domain_name_or_obj)
 
     @classmethod
-    @quickcache(['domain_name'], timeout=60 * 60)
+    @quickcache(['domain_name'], timeout=60 * 60, skip_arg=lambda *args: settings.ENTERPRISE_MODE)
     def _get_active_subscription_by_domain(cls, domain_name):
         if settings.ENTERPRISE_MODE:
             # Use the default plan, which is Enterprise when in ENTERPRISE_MODE
