@@ -28,8 +28,11 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             %(state_id)s AS state_id,
             supervisor_id,
             %(month)s::DATE AS month,
-            person_case_id as person_case_id,
-            migration_status as migration_status
+            person_case_id AS person_case_id,
+            CASE
+                WHEN LAST_VALUE(migration_status) OVER w IS 'migrated' THEN 1
+                ELSE 0
+            END AS migration_status,
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
