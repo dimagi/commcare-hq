@@ -53,6 +53,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     DashboardActivityReportAggregate,
     AggAdolescentGirlsRegistrationAggregate
 )
+from custom.icds_reports.utils.aggregation_helpers.distributed.gov_vhnd_forms import GovVhndFormAggDistributedHelper
 
 
 def get_cursor(model):
@@ -1564,6 +1565,6 @@ class AggregateVHNDForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_GOV_VHND_TABLE
 
-    _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
+    _agg_helper_cls = GovVhndFormAggDistributedHelper
     _agg_atomic = False
 

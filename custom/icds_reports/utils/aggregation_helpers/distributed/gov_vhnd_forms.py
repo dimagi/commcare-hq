@@ -29,8 +29,13 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
           awc_id, month
         )(
         SELECT
-          vhsnd_date_past_month, anm_mpw_present, asha_present, child_immu, anc_today,
-          awc_id, month
+          FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
+          FIRST_VALUE(anm_mpw_present) over w as anm_mpw_present,
+          FIRST_VALUE(asha_present) over w as asha_present,
+          FIRST_VALUE(child_immu) over w as child_immu,
+          FIRST_VALUE(anc_today) over w as anc_today,
+          FIRST_VALUE(awc_id) over w as awc_id,
+          FIRST_VALUE(month) over w as month
           FROM "{ucr_tablename}"
           WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
         )
