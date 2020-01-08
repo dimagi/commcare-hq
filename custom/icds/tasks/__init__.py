@@ -8,7 +8,8 @@ from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.datadog.gauges import datadog_counter
-from custom.icds.tasks.sms import send_monthly_sms_report
+from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
+from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
 
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=0, hour='22'))
