@@ -13,6 +13,11 @@ EMAIL_SERVER = 'imap.gmail.com'
 BOUNCE_DAEMON = 'MAILER-DAEMON@amazonses.com'
 COMPLAINTS_DAEMON = 'complaints@email-abuse.amazonses.com'
 
+# From http://regexlib.com/REDetails.aspx?regexp_id=295
+EMAIL_REGEX = r'(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|' \
+              r'([A-Za-z0-9]+\++))*[A-Za-z0-9]+@((\w+\-+)|(\w+\.))' \
+              r'*\w{1,63}\.[a-zA-Z]{2,6}'
+
 
 class BouncedEmailManager(object):
 
@@ -97,7 +102,7 @@ class BouncedEmailManager(object):
             f'From "{BOUNCE_DAEMON}")'
         ):
             email_regex = re.search(
-                r'(\w+[.|\w])*@(\w+[.])*\w+',
+                EMAIL_REGEX,
                 self._get_message_body(message)
             )
             if email_regex:
