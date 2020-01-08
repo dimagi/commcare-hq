@@ -466,6 +466,12 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         });
     });
 
+    //selected all option in top level
+    $scope.$on('reset_filter_data', function() {
+        vm.levelBeingSelected = 0;
+        vm.selectLocation(ALL_OPTION);
+    });
+
     // end mobile only helpers
 
     var selectedLocationIndex = function() {
@@ -510,6 +516,7 @@ window.angular.module('icdsApp').directive("locationFilter", ['templateProviderS
             selectedLocationId: '=',
             selectedLocations: '=',
             isOpenModal: '=?',
+            selectAwc: '=?',
         },
         bindToController: true,
         templateUrl: function () {
