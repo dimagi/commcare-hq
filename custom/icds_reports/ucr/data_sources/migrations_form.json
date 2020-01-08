@@ -143,25 +143,21 @@
       },
       {
         "column_id": "migration_status",
-        "datatype": "small_integer",
+        "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "switch",
-          "switch_on": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
             "type": "property_path",
-            "property_path": ["form", "migration_status"]
-          },
-          "cases": {
-            "migrated": {
-              "type": "constant",
-              "constant": 1
-            }
-          },
-          "default": {
-            "type": "constant",
-            "constant": 0
+            "property_path": [
+              "form",
+              "migration_status"
+            ]
           }
-        }
+        },
+        "is_nullable": true,
+        "is_primary_key": false
       }
     ],
     "named_expressions": {
