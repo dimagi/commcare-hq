@@ -6,11 +6,11 @@ function InfoMessageController($location) {
     var vm = this;
     vm.previousToPreviousMonth = null;
     vm.previousMonth = null;
-    vm.previousYear = null;
-    vm.previousToPreviousYear = null;
+    vm.yearOfPreviousMonth = null;
+    vm.yearOfTwoMonthsAgo = null;
     vm.currentMonth = null;
     vm.nextMonth = null;
-    vm.nextYear = null;
+    vm.yearOfNextMonth = null;
     vm.year = null;
 
     vm.showInfoMessage = function () {
@@ -32,20 +32,17 @@ function InfoMessageController($location) {
             vm.currentMonth = moment().format("MMMM");
             vm.nextMonth = moment().startOf('month').add(1, 'months').format("MMMM");
             vm.year = moment().format('YYYY');
-            if (currentMonth == 1) {
-                vm.previousYear = moment().startOf('year').subtract(1, 'years').format('YYYY');
-            } else {
-                vm.previousYear = vm.year;
+            vm.yearOfPreviousMonth = vm.year;
+            vm.yearOfNextMonth = vm.year;
+            if (currentMonth === 1) {
+                vm.yearOfPreviousMonth = moment().startOf('year').subtract(1, 'years').format('YYYY');
             }
-            if (currentMonth == 2) {
-                vm.previousToPreviousYear = moment().startOf('year').subtract(1, 'years').format('YYYY');
-            } else {
-                vm.previousToPreviousYear = vm.previousYear;
+            vm.yearOfTwoMonthsAgo = vm.yearOfPreviousMonth;
+            if (currentMonth === 2) {
+                vm.yearOfTwoMonthsAgo = moment().startOf('year').subtract(1, 'years').format('YYYY');
             }
-            if(currentMonth == 12) {
-                vm.nextYear = moment().startOf('year').add(1, 'years').format('YYYY')
-            }else {
-                vm.nextYear = vm.year;
+            if(currentMonth === 12) {
+                vm.yearOfNextMonth = moment().startOf('year').add(1, 'years').format('YYYY');
             }
 
             return true;
