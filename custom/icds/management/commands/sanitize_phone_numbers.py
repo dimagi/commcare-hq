@@ -178,7 +178,7 @@ def create_case_blocks(case_ids):
         case_block = CaseBlock(case_id,
                                update={PHONE_NUMBER_PROPERTY: ''},
                                user_id=SYSTEM_USER_ID)
-        case_block = ElementTree.tostring(case_block.as_xml())
+        case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
         case_blocks.append(case_block)
     return case_blocks
 
