@@ -32,6 +32,10 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         text_content = text_content.decode('utf-8')
 
     from_header = {'From': email_from}  # From-header
+
+    if settings.RETURN_PATH_EMAIL:
+        from_header['Return-Path'] = settings.RETURN_PATH_EMAIL
+
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
                                  recipient, headers=from_header,

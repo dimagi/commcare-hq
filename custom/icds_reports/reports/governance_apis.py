@@ -1,7 +1,8 @@
 from datetime import date
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.models import AggAwcMonthly
+from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.models import AggAwcMonthly, AwcLocation
 from custom.icds_reports.utils import DATA_NOT_ENTERED
 
 
@@ -38,3 +39,9 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
     for row in paginated_data:
         data_rows.append(base_data(row))
     return data_rows, data.count()
+
+
+@icds_quickcache([], timeout=30 * 60)
+def get_state_names():
+    return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0
+                                           ).values('state_site_code', 'state_name'))

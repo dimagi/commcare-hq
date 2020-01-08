@@ -136,6 +136,11 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
             'year': vm.selectedDate.getFullYear(),
         });
     });
+
+    $scope.$on('reset_filter_data', function() {
+        $scope.$broadcast('reset_date',{});
+        vm.selectedDate = new Date();
+    });
     // end mobile only helpers
 
     vm.init = function () {

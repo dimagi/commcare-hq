@@ -8,7 +8,7 @@
             <img src="{% static 'icds_reports/mobile/images/program-summary.png' %}" class="mr-3">
             <p class="navigation-font mb-0">Program Summary</p>
         </a>
-        <div class="menu-options" ng-click="expandedSectionId='nutrition'">
+        <div class="menu-options" ng-click="expandedSectionId = (expandedSectionId==='nutrition') ? '' : 'nutrition'">
             <img src="{% static 'icds_reports/mobile/images/mother.png' %}" class="mr-3">
             <div class="d-flex justify-content-between align-items-center w-100">
                 <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
@@ -60,7 +60,7 @@
                 </div>
             </div>
         </div>
-        <div class="menu-options" ng-click="expandedSectionId='reach'">
+        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='reach') ? '' : 'reach'">
           <img src="{% static 'icds_reports/mobile/images/stats-sidebar.png' %}" class="mr-3">
           <div class="d-flex justify-content-between align-items-center w-100">
               <p class="navigation-font mb-0">ICDS-CAS Reach</p>
@@ -81,7 +81,7 @@
                 </div>
             </div>
         </div>
-        <div class="menu-options" ng-click="expandedSectionId='demographics'">
+        <div class="menu-options" ng-click="expandedSectionId=(expandedSectionId==='demographics') ? '' : 'demographics'">
             <img src="{% static 'icds_reports/mobile/images/threegroup-sidebar.png' %}" class="mr-3">
             <div class="d-flex justify-content-between align-items-center w-100">
                 <p class="navigation-font mb-0">Demographics</p>
@@ -129,7 +129,7 @@
                 </div>
             </div>
         </div>
-        <div class="menu-options" ng-click="expandedSectionId='infrastructure'">
+        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='infrastructure') ? '' : 'infrastructure'">
             <img src="{% static 'icds_reports/mobile/images/bulb-sidebar.png' %}" class="mr-3">
             <div class="d-flex justify-content-between align-items-center w-100">
                 <p class="navigation-font mb-0">AWC Infrastructure</p>
