@@ -466,6 +466,15 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SAAS_REPORTING_EMAIL = None
 
+# Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
+# This email must be a REAL email address, not a mailing list, otherwise
+# the emails from mailer daemon will be swallowed up by spam filters.
+RETURN_PATH_EMAIL = None
+
+# This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
+# SES bounce and complaint notifications.
+RETURN_PATH_EMAIL_PASSWORD = None
+
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
