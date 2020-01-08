@@ -78,7 +78,7 @@ def _produce_items(iterable, itemq, running, stop):
         if stop.is_set() or not running:
             log.debug("stopped producing")
             break
-    for x in running:
+    for x in list(running):
         itemq.put(_Stop)
     log.debug("finished producing")
 
