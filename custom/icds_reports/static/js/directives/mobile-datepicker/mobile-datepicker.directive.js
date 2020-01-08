@@ -9,7 +9,8 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
         scope: {
             date: "=",
             minYear: "=",
-            maxYear: "="
+            maxYear: "=",
+            startMonth: "="
         }, // {} = isolate, true = child, false/undefined = no change
         restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
         templateUrl: url('icds-ng-template-mobile', 'mobile-datepicker.directive'),
@@ -309,11 +310,38 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
 
             })(jQuery);
 
-
             var today = $scope.date;
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            //this method returns months to be displayed corresponding to the year selected
+            // if its minYear, then from months list months before startMonth is removed
+            // if its current year then from months list months that comes after the current month are removed
+            var getAvailableMonthsForSelectedYear = function () {
+                return ($scope.date.getFullYear() === $scope.minYear) ? months.slice($scope.startMonth - 1) :
+                        (($scope.date.getFullYear() === new Date().getFullYear()) ?
+                            months.slice(0, new Date().getMonth()+1) : months);
+            };
+
+            // this method returns which month to be shown at the center of datepicker
+            // it is picked from items array.
+            // eg: minyear=2017 and startMonth = 3. So to display the "month of may" center should be 3rd element
+            // (position 2 in array) in months array. $scope.date.getMonth() returns 4 for may.
+            // we should decrease (startMonth-1) elements for proper value
+            var getCenterMonth = function () {
+                var centerMonth = $scope.date.getMonth();
+                if ($scope.date.getFullYear() === $scope.minYear) {
+                    centerMonth = $scope.date.getMonth()- ($scope.startMonth - 1);
+                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
+                    if ($scope.date.getMonth() > new Date().getMonth()) {
+                        centerMonth = new Date().getMonth();
+                    }
+                }
+                return centerMonth;
+            };
+
             $('.month').WSlot({
-                items:['January','February','March','April','May','June','July','August','September','October','November','December'],
-                center:today.getMonth(),
+                items:getAvailableMonthsForSelectedYear(),
+                center:getCenterMonth(),
                 angle:30,
                 distance:'auto',
                 displayed_length:1,
@@ -339,17 +367,54 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
             }).on('WSlot.change',function(e,index){
                 initDate(parseInt($('.month').WSlot('get')),parseInt($('.year').WSlot('getText')),$('.day').WSlot('get'));
                 updateText();
+                $('.month').WSlot({
+                    items: getAvailableMonthsForSelectedYear(),
+                    center: getCenterMonth(),
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+                updateText();
             });
 
             function updateText() {
                 var dd = ('0'+($('.day').WSlot('get')+1)).slice(-2);
                 var mm = ('0'+($('.month').WSlot('get')+1)).slice(-2);
+                if ($scope.date.getFullYear() === $scope.minYear) {
+                    mm = ('0'+($('.month').WSlot('get')+$scope.startMonth)).slice(-2);
+                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
+                    if (parseInt($('.month').WSlot('get')) > new Date().getMonth()) {
+                        mm = '0'+ (new Date().getMonth() + 1);
+                    }
+                }
                 var yyyy = $('.year').WSlot('getText');
                 var todaystring = yyyy+'-'+mm+'-'+dd;
                 $scope.date = new Date(todaystring);
                 $scope.$apply();
                 $scope.$emit('date_picked',{'info' : $scope.date });
             }
+
+            $scope.$on('reset_date', function() {
+                // upon reset center is set to current year and current month
+                $scope.date = new Date();
+                $('.year').WSlot({
+                    items:years,
+                    center:years.indexOf($scope.date.getFullYear()),
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+                $('.month').WSlot({
+                    items:getAvailableMonthsForSelectedYear(),
+                    center:$scope.date.getMonth(),
+                    angle:30,
+                    distance:'auto',
+                    displayed_length:1,
+                    rotation:0
+                });
+            });
 
             function initDate(month,year,selected) {
                 var totalDay = daysInMonth(month,year);

@@ -1,6 +1,6 @@
 {% load staticfiles %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-  <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen">
+  <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel==4">
     <div class="top-section p-3" style="padding-bottom: 25vh">
       {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
       <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
@@ -24,5 +24,7 @@
     </div>
     <help-popup></help-popup>
   </div>
-  <mobile-filters selected-locations="$ctrl.selectedLocations" ng-show="$ctrl.filtersOpen"></mobile-filters>
+  <mobile-filters selected-locations="$ctrl.selectedLocations"
+                  select-awc="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel!=4"
+                  ng-show="$ctrl.filtersOpen || $ctrl.selectedLocationLevel!=4"></mobile-filters>
 </div>
