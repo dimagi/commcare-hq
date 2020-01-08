@@ -80,7 +80,7 @@ def test_currency_eur():
     yield check, '-€303,03', -303.03, numbers.FORMAT_CURRENCY_EUR_SIMPLE, float
     yield check, '€22', 22, numbers.FORMAT_CURRENCY_EUR_SIMPLE, float
     yield check, '€3.303', 3303, numbers.FORMAT_CURRENCY_EUR_SIMPLE, float
-    yield check, '€3,003',  3.003, numbers.FORMAT_CURRENCY_EUR_SIMPLE, float
+    yield check, '€3,003', 3.003, numbers.FORMAT_CURRENCY_EUR_SIMPLE, float
 
 
 def test_date():
