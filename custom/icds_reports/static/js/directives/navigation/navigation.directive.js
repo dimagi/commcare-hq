@@ -38,8 +38,8 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
         var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
 
-        var selectedDate = new Date(selectedYear, selectedMonth);
-        return haveAccessToFeatures && selectedDate >= new Date(2019, 4);
+        var selectedDate = new Date(selectedYear, selectedMonth - 1);
+        return haveAccessToFeatures && selectedDate >= new Date(2019, 3);
     };
 
     // used by mobile only
