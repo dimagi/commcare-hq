@@ -13,16 +13,28 @@ EMAIL_SERVER = 'imap.gmail.com'
 BOUNCE_DAEMON = 'MAILER-DAEMON@amazonses.com'
 COMPLAINTS_DAEMON = 'complaints@email-abuse.amazonses.com'
 
+# From http://regexlib.com/REDetails.aspx?regexp_id=295
+EMAIL_REGEX = r'(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|' \
+              r'([A-Za-z0-9]+\++))*[A-Za-z0-9]+@((\w+\-+)|(\w+\.))' \
+              r'*\w{1,63}\.[a-zA-Z]{2,6}'
+
 
 class BouncedEmailManager(object):
 
     def __init__(self, delete_processed_messages=True):
         self.delete_processed_messages = delete_processed_messages
+
+    def __enter__(self):
         self.mail = imaplib.IMAP4_SSL(EMAIL_SERVER)
         self.mail.login(
             settings.RETURN_PATH_EMAIL,
             settings.RETURN_PATH_EMAIL_PASSWORD
         )
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.mail.close()
+        self.mail.logout()
 
     def _get_messages(self, header_search):
         result, data = self.mail.uid('search', None, header_search)
@@ -71,11 +83,8 @@ class BouncedEmailManager(object):
 
         self.mail.select('inbox')
         for uid, message in self._get_messages(
-            '(Header Delivered-To "{}" '
-            'From "{}")'.format(
-                settings.RETURN_PATH_EMAIL,
-                COMPLAINTS_DAEMON
-            )
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'From "{COMPLAINTS_DAEMON}")'
         ):
             complaint_email = self._get_forwarded_message_recipient(message)
             if complaint_email:
@@ -88,22 +97,25 @@ class BouncedEmailManager(object):
         processed_emails = []
         self.mail.select('inbox')
         for uid, message in self._get_messages(
-            '(Header Delivered-To "{}" '
-            'Subject "{}" '
-            'From "{}")'.format(
-                settings.RETURN_PATH_EMAIL,
-                subject,
-                BOUNCE_DAEMON
-            )
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'Subject "{subject}" '
+            f'From "{BOUNCE_DAEMON}")'
         ):
-            email_regex = re.search(
-                r'(\w+[.|\w])*@(\w+[.])*\w+',
-                self._get_message_body(message)
-            )
-            if email_regex:
-                bounced_email = email_regex.group()
+            bounced_email = self._get_forwarded_message_recipient(message)
+            if bounced_email:
                 self._mark_email_as_bounced(bounced_email, uid)
                 processed_emails.append(bounced_email)
+            else:
+                # fall back to using the REGEX as a last resort, in case these
+                # messages don't contain a forwarded email
+                email_regex = re.search(
+                    EMAIL_REGEX,
+                    self._get_message_body(message)
+                )
+                if email_regex:
+                    bounced_email = email_regex.group()
+                    self._mark_email_as_bounced(bounced_email, uid)
+                    processed_emails.append(bounced_email)
         return processed_emails
 
     def process_bounces(self):
