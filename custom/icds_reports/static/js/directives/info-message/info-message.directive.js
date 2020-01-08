@@ -41,7 +41,7 @@ function InfoMessageController($location) {
             if (currentMonth === 2) {
                 vm.yearOfTwoMonthsAgo = moment().startOf('year').subtract(1, 'years').format('YYYY');
             }
-            if(currentMonth === 12) {
+            if (currentMonth === 12) {
                 vm.yearOfNextMonth = moment().startOf('year').add(1, 'years').format('YYYY');
             }
 
