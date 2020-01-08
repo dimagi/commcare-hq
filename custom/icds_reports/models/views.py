@@ -1127,3 +1127,25 @@ class MWCDReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'mwcd_report'
+
+
+class GovVHNDView(models.Model):
+    state_name = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    vhsnd_date_past_month = models.DateField(blank=True, null=True)
+    anm_mpw_present = models.IntegerField(blank=True, null=True)
+    asha_present = models.IntegerField(blank=True, null=True)
+    child_immu = models.IntegerField(blank=True, null=True)
+    anc_today = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'gov_vhnd_view'
+
+
+

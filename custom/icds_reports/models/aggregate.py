@@ -21,8 +21,8 @@ from custom.icds_reports.const import (
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
     AGG_DASHBOARD_ACTIVITY,
-    AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
-)
+    AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
+    AGG_GOV_VHND_TABLE)
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
     AggAwcDistributedHelper,
@@ -1550,3 +1550,20 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
 
     _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
     _agg_atomic = False
+
+
+class AggregateVHNDForms(models.Model, AggregateMixin):
+    vhsnd_date_past_month = models.DateField(null=True)
+    anm_mpw_present = models.NullBooleanField(null=True)
+    asha_present = models.NullBooleanField(null=True)
+    child_immu = models.NullBooleanField(null=True)
+    anc_today = models.NullBooleanField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_GOV_VHND_TABLE
+
+    _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
+    _agg_atomic = False
+
