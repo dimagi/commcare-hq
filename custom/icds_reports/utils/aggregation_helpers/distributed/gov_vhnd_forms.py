@@ -20,7 +20,8 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
 
         query_params = {
             "start_date": month_formatter(month),
-            "end_date": month_formatter(next_month_start)
+            "end_date": month_formatter(next_month_start),
+            "state_id": self.state_id
         }
 
         return """
@@ -37,7 +38,12 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
           FIRST_VALUE(awc_id) over w as awc_id,
           FIRST_VALUE(month) over w as month
           FROM "{ucr_tablename}"
-          WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
+          WHERE vhnd_date >= %(start_date)s AND
+           vhnd_date < %(end_date)s AND state_id = %(state_id)s
+           WINDOW w AS (
+                PARTITION BY vhsnd_date_past_month, state_id 
+                ORDER BY submission_date
+           ) 
         )
         """.format(
             ucr_tablename=self.ucr_tablename,

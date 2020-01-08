@@ -13,15 +13,18 @@ COALESCE("icds_dashboard_gov_vhnd_forms"."asha_present",0) as "asha_present"
 COALESCE("icds_dashboard_gov_vhnd_forms"."child_immu",0) as "child_immu"
 COALESCE("icds_dashboard_gov_vhnd_forms"."anc_today",0) as "anc_today"
 
-FROM "icds_dashboard_gov_vhnd_forms"
-
-LEFT join awc_location_local on (
-    ("awc_location_local"."awc_id" = "icds_dashboard_gov_vhnd_forms"."awc_id")
-)
+FROM "awc_local_local"
 
 LEFT join agg_awc on (
-        ("agg_awc"."awc_id" = "icds_dashboard_gov_vhnd_forms"."awc_id") AND
-        ("agg_awc"."is_launched" = 'yes')
+        ("awc_local_local"."awc_id" = "agg_awc"."awc_id") and
+        ("agg_awc"."is_launched" = 'yes') and
+        ("agg_awc"."aggregation_level" = 5)
         )
 
-where awc_location_local.state_is_test<>1;
+LEFT join icds_dashboard_gov_vhnd_forms on (
+    ("icds_dashboard_gov_vhnd_forms"."awc_id" = "agg_awc"."awc_id")
+)
+
+where awc_location_local.state_is_test<>1 and awc_location_local.district_is_test<>1 and
+ awc_location_local.block_is_test<>1 and awc_location_local.supervisor_is_test<>1 and awc_location_local.awc_is_test<>1
+ and awc_location_local.aggregation_level = 5;

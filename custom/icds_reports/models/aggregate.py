@@ -1554,6 +1554,7 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
 
 
 class AggregateVHNDForms(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
     vhsnd_date_past_month = models.DateField(null=True)
     anm_mpw_present = models.NullBooleanField(null=True)
     asha_present = models.NullBooleanField(null=True)
