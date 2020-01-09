@@ -9,7 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
 
 class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
     helper_key = 'gov-vhnd-form'
-    ucr_data_source_id = 'static-gov_vhnd_form'
+    ucr_data_source_id = 'static-vhnd_form'
     aggregate_parent_table = AGG_GOV_VHND_TABLE
     aggregate_child_table_prefix = 'icds_db_gov_vhnd_form_'
 
@@ -29,23 +29,24 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          vhsnd_date_past_month, anm_mpw_present, asha_present, child_immu, anc_today,
+          vhsnd_date_past_month, state_id, anm_mpw_present, asha_present, child_immu, anc_today,
           awc_id, month
         )(
         SELECT
           FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
-          FIRST_VALUE(anm_mpw_present) over w as anm_mpw_present,
-          FIRST_VALUE(asha_present) over w as asha_present,
-          FIRST_VALUE(child_immu) over w as child_immu,
-          FIRST_VALUE(anc_today) over w as anc_today,
+          FIRST_VALUE(state_id) over w as state_id,
+          CASE WHEN(FIRST_VALUE(anm_mpw) over w = 1) THEN TRUE  ELSE FALSE END as anm_mpw_present,
+          CASE WHEN(FIRST_VALUE(asha_present) over w = 1) THEN TRUE  ELSE FALSE END as asha_present,
+          CASE WHEN(FIRST_VALUE(child_immu) over w = 1) THEN TRUE  ELSE FALSE END as child_immu,
+          CASE WHEN(FIRST_VALUE(anc_today) over w = 1) THEN TRUE  ELSE FALSE END as anc_today,
           FIRST_VALUE(awc_id) over w as awc_id,
           FIRST_VALUE(month) over w as month
           FROM "{ucr_tablename}"
-          WHERE vhnd_date >= %(start_date)s AND
-           vhnd_date < %(end_date)s AND state_id = %(state_id)s
+          WHERE vhsnd_date_past_month >= %(start_date)s AND
+           vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
            WINDOW w AS (
                 PARTITION BY vhsnd_date_past_month, state_id 
-                ORDER BY submission_date
+                ORDER BY submitted_on
            ) 
         )
         """.format(

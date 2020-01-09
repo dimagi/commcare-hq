@@ -234,7 +234,7 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
-)
+    get_vhnd_data)
 
 
 from . import const
@@ -2241,6 +2241,23 @@ class GovernanceAPIView(View):
                 order,
                 query_filters
             )
+            response_json = {
+                'data': data,
+                'metadata': {
+                    'start': start,
+                    'month': month,
+                    'year': year,
+                    'count': count,
+                    'timestamp': india_now()
+                }
+            }
+        elif step == 'vhnds':
+            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+            query_filters = {}
+            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+            if state_id != '':
+                query_filters['state_id'] = state_id
+            data, count = get_vhnd_data(start, length, year, month, order, query_filters)
             response_json = {
                 'data': data,
                 'metadata': {

@@ -1734,6 +1734,8 @@ def update_dashboard_activity_report(target_date=None):
 def update_vhnd_form_aggregation(state_id, target_month=None):
     if target_month is None:
         target_month = date.today()
+    else:
+        target_month = datetime.strptime(target_month, '%Y-%m-%d')
     target_month = target_month.replace(day=1)
     db_alias = router.db_for_write(AggregateVHNDForms)
     with transaction.atomic(using=db_alias):

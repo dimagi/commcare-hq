@@ -15,7 +15,7 @@ def get_value_or_data_not_entered(source, field):
 
 def get_boolean_if_data_not_null(source, field):
     value = source.get(field)
-    if value is None:
+    if value in [None, False]:
         return 'no'
     return 'yes'
 
@@ -49,10 +49,15 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
     return data_rows, data.count()
 
 
-def get_vhnd_data(start, length, year, month, order):
+@icds_quickcache(['start', 'length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
+def get_vhnd_data(start, length, year, month, order, query_filters):
     data = GovVHNDView.objects.filter(
-        month=date(year, month, 1)
-    ).order_by(*order)
+        month=date(year, month, 1),
+        **query_filters
+    ).order_by(*order).values(
+        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'month',
+        'vhsnd_date_past_month', 'anm_mpw_present', 'asha_present', 'child_immu', 'anc_today'
+    )
 
     paginated_data = data[int(start):(int(start) + length)]
 
@@ -66,10 +71,10 @@ def get_vhnd_data(start, length, year, month, order):
             month=get_value_or_data_not_entered(row_data, 'month'),
             vhsnd_conducted = get_boolean_if_data_not_null(row_data, 'vhsnd_date_past_month'),
             vhsnd_date=get_value_or_data_not_entered(row_data, 'vhsnd_date_past_month'),
-            anm_present=get_value_or_data_not_entered(row_data, 'anm_mpw_present'),
-            asha_present=get_value_or_data_not_entered(row_data, 'asha_present'),
-            any_child_immunized=get_value_or_data_not_entered(row_data, 'child_immu'),
-            anc_conducted=get_value_or_data_not_entered(row_data, 'anc_today'),
+            anm_present=get_boolean_if_data_not_null(row_data, 'anm_mpw_present'),
+            asha_present=get_boolean_if_data_not_null(row_data, 'asha_present'),
+            any_child_immunized=get_boolean_if_data_not_null(row_data, 'child_immu'),
+            anc_conducted=get_boolean_if_data_not_null(row_data, 'anc_today'),
         )
 
     data_rows = []
