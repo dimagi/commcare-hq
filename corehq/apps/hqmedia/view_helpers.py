@@ -117,10 +117,10 @@ def download_audio_translator_files(domain, app, lang):
     headers = get_bulk_app_sheet_headers(app, single_sheet=True, lang=lang, eligible_for_transifex_only=True)
     headers = headers[0]    # There's only one row since these are the headers for the single-sheet format
     headers = headers[1]    # Drop the first element (sheet name), leaving the second (list of header names)
-    text_index = headers.index('default_' + lang)
-    audio_index = headers.index('audio_' + lang)
+    audio_text_index = headers.index('default_' + lang)
+    audio_path_index = headers.index('audio_' + lang)
     sheets = get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=True)
-    audio_rows = [row for row in sheets[SINGLE_SHEET_NAME] if row[audio_index]]
+    audio_rows = [row for row in sheets[SINGLE_SHEET_NAME] if row[audio_path_index]]
 
     # Create file for re-upload to HQ's bulk app translations
     upload_workbook = openpyxl.Workbook()
@@ -131,8 +131,8 @@ def download_audio_translator_files(domain, app, lang):
     # Create dict of audio path to text, and disambiguate any missing path that points to multiple texts
     rows_by_audio = {}
     for row in audio_rows:
-        audio_path = row[audio_index]
-        text = row[text_index]
+        audio_path = row[audio_path_index]
+        text = row[audio_text_index]
         if audio_path in rows_by_audio and audio_path not in app.multimedia_map:
             if rows_by_audio[audio_path] != text:
                 extension = "." + audio_path.split(".")[-1]
@@ -141,24 +141,24 @@ def download_audio_translator_files(domain, app, lang):
                 while audio_path in rows_by_audio and rows_by_audio[audio_path] != text:
                     suffix += 1
                     audio_path = "{}_{}{}".format(not_extension, suffix, extension)
-                row[audio_index] = audio_path
+                row[audio_path_index] = audio_path
                 upload_sheet.append(row)    # add new path to sheet for re-upload to HQ
         rows_by_audio[audio_path] = text
 
     # Create dict of rows, keyed by label text to de-duplicate paths
     rows_by_text = defaultdict(list)
     for row in audio_rows:
-        rows_by_text[row[text_index]].append(row)
+        rows_by_text[row[audio_text_index]].append(row)
 
     def _get_filename_from_duplicate_rows(rows):
-        return rows[0][audio_index]
+        return rows[0][audio_path_index]
 
     # Add a row to upload sheet for each filename being eliminated because the text was duplicated
     for text, rows in rows_by_text.items():
         filename = _get_filename_from_duplicate_rows(rows)
         for row in rows:
-            if row[audio_index] != filename:
-                row[audio_index] = filename
+            if row[audio_path_index] != filename:
+                row[audio_path_index] = filename
                 upload_sheet.append(row)
 
     # Create file for translato, with a row for each unique text label
@@ -169,7 +169,7 @@ def download_audio_translator_files(domain, app, lang):
     sheet1 = translator_workbook.create_sheet("verification")
     sheet1.append(headers)
     for text, rows in rows_by_text.items():
-        if not any([row[audio_index] in app.multimedia_map for row in rows]):
+        if not any([row[audio_path_index] in app.multimedia_map for row in rows]):
             filename = _get_filename_from_duplicate_rows(rows)
             sheet0.append([text, filename])
             sheet1.append(rows[0])
