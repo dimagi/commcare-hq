@@ -68,7 +68,7 @@
                 <option value=""></option>
                 {% for app in import_apps %}
                   {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                  <option value="{{ app.id }}">{{ app.name }} ({% for id, count in import_app_counts.items %}{% if id == app.id %}{% blocktrans with c=count %}{{ c }} items to import{% endblocktrans %}{% endif %}{% endfor %})</option>
+                  <option value="{{ app.id }}">{{ app.name }} ({% for id, count in import_app_counts.items %}{% if id == app.id %}{% blocktrans with c=count %}{{ c }} item(s) to import{% endblocktrans %}{% endif %}{% endfor %})</option>
                 {% endfor %}
               </select>
             </p>
