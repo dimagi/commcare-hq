@@ -23,7 +23,7 @@ class AudioTranslatorFilesTest(TestCase, TestXmlMixin):
 
             It then has three select questions, each with two choices that share text and all
             have French audio specified. One set of choices has audio present for both, one has
-            it missing for both, and one has it present for oone choice and missing for the other.
+            it missing for both, and one has it present for one choice and missing for the other.
 
             Lastly, it has two select questions, each with three choices that all have different
             text but use the same audio path. One of these two audio files is missing.
