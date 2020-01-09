@@ -67,12 +67,12 @@ class BouncedEmailManager(object):
         if maintype == 'multipart':
             for part in message.get_payload():
                 if part.get_content_maintype() == 'message':
-                    forwarded_message = part.get_payload()[0]
-                    original_recipient = forwarded_message.get(
-                        'Original-Rcpt-To'
-                    )
-                    if original_recipient:
-                        return original_recipient
+                    for forwarded_message in part.get_payload():
+                        original_recipient = forwarded_message.get(
+                            'Original-Rcpt-To'
+                        ) or forwarded_message.get('To')
+                        if original_recipient:
+                            return original_recipient
 
     def _delete_message_with_uid(self, uid):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', '\\Trash')
