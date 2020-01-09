@@ -101,8 +101,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm,
     DailyAttendance,
     DashboardUserActivityReport,
-    AggregateAdolescentGirlsRegistrationForms
-)
+    AggregateAdolescentGirlsRegistrationForms,
+    AggregateVHNDForms)
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
 from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
@@ -1729,3 +1729,12 @@ def update_dashboard_activity_report(target_date=None):
     db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
+
+
+def update_vhnd_form_aggregation(state_id, target_month=None):
+    if target_month is None:
+        target_month = date.today()
+    target_month = target_month.replace(day=1)
+    db_alias = router.db_for_write(AggregateVHNDForms)
+    with transaction.atomic(using=db_alias):
+        AggregateVHNDForms().aggregate(state_id, target_month)

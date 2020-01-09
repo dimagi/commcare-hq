@@ -51,9 +51,9 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
     DashboardActivityReportAggregate,
-    AggAdolescentGirlsRegistrationAggregate
+    AggAdolescentGirlsRegistrationAggregate,
+    GovVhndFormAggDistributedHelper
 )
-from custom.icds_reports.utils.aggregation_helpers.distributed.gov_vhnd_forms import GovVhndFormAggDistributedHelper
 
 
 def get_cursor(model):
