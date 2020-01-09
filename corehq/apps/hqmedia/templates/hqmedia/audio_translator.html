@@ -51,6 +51,29 @@
         </select>
       </div>
     </div>
+    {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
+      <div class="form-group">
+        <label class="{% css_label_class %} control-label">
+          {% trans "Transifex" %}
+        </label>
+        <div class="{% css_field_class %} controls">
+          <select-toggle data-apply-bindings="true"
+                         params="
+                           name: 'skip_blacklisted',
+                           options: [
+                             {
+                               id: 'true',
+                               text: '{% trans_html_attr 'Only Transifex references' %}',
+                             },
+                             {
+                               id: 'false',
+                               text: '{% trans_html_attr 'All translations' %}',
+                             },
+                           ],
+                         "></select-toggle>
+        </div>
+      </div>
+    {% endif %}
     <div class="form-group">
       <div class="{% css_action_class %} controls">
         <button class="btn btn-primary" type="submit">

@@ -112,9 +112,10 @@ def update_multimedia_paths(app, paths):
     return successes
 
 
-def download_audio_translator_files(domain, app, lang):
+def download_audio_translator_files(domain, app, lang, eligible_for_transifex_only=True):
     # Get bulk app translation single sheet data
-    headers = get_bulk_app_sheet_headers(app, single_sheet=True, lang=lang, eligible_for_transifex_only=True)
+    headers = get_bulk_app_sheet_headers(app, single_sheet=True, lang=lang,
+                                         eligible_for_transifex_only=eligible_for_transifex_only)
     headers = headers[0]    # There's only one row since these are the headers for the single-sheet format
     headers = headers[1]    # Drop the first element (sheet name), leaving the second (list of header names)
     audio_text_index = headers.index('default_' + lang)
