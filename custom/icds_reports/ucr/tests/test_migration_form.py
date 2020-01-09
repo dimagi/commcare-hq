@@ -16,6 +16,6 @@ class TestMigrationForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "timeend": None,
-                "migration_status": 1,
+                "migration_status": 'migrated',
                 "person_case_id": "b08669b9-f8d5-4dfb-891f-8727a4486682"
             }])
