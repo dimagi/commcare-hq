@@ -39,6 +39,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         drop_query, drop_params = self.drop_table_query()
 
         cursor.execute(drop_query, drop_params)
+        for query in self.drop_indices():
+            cursor.execute(query)
         cursor.execute(self.aggregation_query())
         for query in self.indexes():
             cursor.execute(query)
@@ -403,6 +405,14 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def aggregation_query(self):
         return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
             tablename=self.tablename, tmp_tablename=self.temporary_tablename)
+
+    def drop_indices(self):
+        return [
+            'DROP INDEX IF EXISTS chm_case_idx',
+            'DROP INDEX IF EXISTS chm_awc_idx',
+            'DROP INDEX IF EXISTS chm_mother_dob',
+            'DROP INDEX IF EXISTS chm_month_supervisor_id',
+        ]
 
     def indexes(self):
         return [

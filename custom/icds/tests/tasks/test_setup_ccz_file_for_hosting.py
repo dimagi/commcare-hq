@@ -2,7 +2,7 @@ import mock
 from django.template.defaultfilters import linebreaksbr
 from django.test import SimpleTestCase
 
-from custom.icds.tasks import setup_ccz_file_for_hosting
+from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
 from custom.icds.models import (
     HostedCCZ,
     HostedCCZLink,

@@ -34,19 +34,15 @@ CASE_ITERATION_COUNT = 10000
 MAX_RESCUE_EXCEPTIONS_ON_UPDATE = 5
 CSV_HEADERS = ['Case Id']
 
-TEST_STATES = [
-    'Test State',
-    'Test State 2',
-    'VL State',
-    'Trial State',
-    'Uttar Pradesh_GZB',
-    'AWW Test State',
-]
+TEST_STATES = []
 
+for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=DOMAIN):
+    if loc.metadata.get('is_test_location') == 'test':
+        TEST_STATES.append(loc.name)
 
 class Command(BaseCommand):
     help = """
-    Iterate person cases updated in last 180 days in a single partition,
+    Iterate person cases updated in last 100 days (3 months with buffer) in a single partition,
     Find the ones which are
         - not deleted
         - not belonging to test locations,
@@ -77,7 +73,7 @@ class Command(BaseCommand):
     def _store_case_ids_with_unexpected_phone_number(self):
         if self.case_ids_with_unexpected_phone_number:
             filename = 'unexpected_phone_numbers_with_91_part_%s_%s.csv' % (self.db_alias, datetime.utcnow())
-            with open(filename, 'w+b') as output:
+            with open(filename, 'w') as output:
                 writer = csv.writer(output)
                 for case_id in self.case_ids_with_unexpected_phone_number:
                     writer.writerow([case_id])
@@ -108,7 +104,7 @@ class Command(BaseCommand):
         )
 
         filename = 'invalid_phone_numbers_with_91_part_%s_%s.csv' % (self.db_alias, datetime.utcnow())
-        with open(filename, 'w+b') as output:
+        with open(filename, 'w') as output:
             cases_iterated = 0
             writer = csv.writer(output)
             writer.writerow(CSV_HEADERS)
@@ -155,7 +151,7 @@ class Command(BaseCommand):
 
     def _update_cases(self, case_ids_with_invalid_phone_number):
         exceptions_raised = 0
-        with open('invalid_phone_numbers_with_91_part_%s_updated.csv' % self.db_alias, 'w+b') as output:
+        with open('invalid_phone_numbers_with_91_part_%s_updated.csv' % self.db_alias, 'w') as output:
             writer = csv.writer(output)
             writer.writerow(['Case Id'])
             case_ids_to_update_chunk = list(chunked(case_ids_with_invalid_phone_number, 100))
@@ -182,7 +178,7 @@ def create_case_blocks(case_ids):
         case_block = CaseBlock(case_id,
                                update={PHONE_NUMBER_PROPERTY: ''},
                                user_id=SYSTEM_USER_ID)
-        case_block = ElementTree.tostring(case_block.as_xml())
+        case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
         case_blocks.append(case_block)
     return case_blocks
 

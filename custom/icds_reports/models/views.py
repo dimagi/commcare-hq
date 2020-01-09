@@ -457,8 +457,13 @@ class AggAwcMonthly(models.Model):
         blank=True, null=True,
         help_text="Number of cases_person_all that are female between 15 and 18 years"
     )
-    cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(null=True)
-    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(null=True)
+    cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(
+        null=True,
+        help_text="Number of cases_person_all that are female between 11 and 14 years and are out of school"
+    )
+    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(
+        null=True,
+        help_text="Number of cases_person_all that are female between 11 and 14 years and not migrated")
     cases_person_referred = models.IntegerField(
         blank=True, null=True,
         help_text="Number of person cases whose last_referral_date is in this month"
@@ -585,6 +590,10 @@ class AggAwcMonthly(models.Model):
     )
     infantometer = models.IntegerField(blank=True, null=True)
     stadiometer = models.IntegerField(blank=True, null=True)
+    valid_visits = models.ImageField(blank=True, null=True,
+                                     help_text="num of valid home visits")
+    expected_visits = models.ImageField(blank=True, null=True,
+                                        help_text="num of expected home visits")
 
     class Meta(object):
         app_label = 'icds_reports'
