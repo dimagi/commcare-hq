@@ -5,6 +5,12 @@ import re
 from django.conf import settings
 
 from corehq.util.models import BouncedEmail
+from corehq.util.soft_assert import soft_assert
+
+_bounced_email_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun+bounces', 'dimagi.com')],
+    send_to_ops=False
+)
 
 # NOTE: BouncedEmailManager is not guaranteed to work with non-AmazonSES
 # bounces and complaints or a non-gmail email that receives these notifications.
@@ -17,6 +23,8 @@ COMPLAINTS_DAEMON = 'complaints@email-abuse.amazonses.com'
 EMAIL_REGEX = r'(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|' \
               r'([A-Za-z0-9]+\++))*[A-Za-z0-9]+@((\w+\-+)|(\w+\.))' \
               r'*\w{1,63}\.[a-zA-Z]{2,6}'
+
+EMAIL_REGEX_VALIDATION = rf'^{EMAIL_REGEX}$'
 
 
 class BouncedEmailManager(object):
@@ -134,11 +142,18 @@ class BouncedEmailManager(object):
         return processed_emails
 
     def _mark_email_as_bounced(self, bounced_email, uid):
-        BouncedEmail.objects.update_or_create(
-            email=bounced_email,
-        )
-        if self.delete_processed_messages:
-            self._delete_message_with_uid(uid)
+        if re.search(EMAIL_REGEX_VALIDATION, bounced_email):
+            BouncedEmail.objects.update_or_create(
+                email=bounced_email,
+            )
+            if self.delete_processed_messages:
+                self._delete_message_with_uid(uid)
+        else:
+            _bounced_email_soft_assert(
+                False,
+                f'[{settings.SERVER_ENVIRONMENT}] '
+                f'Tried to mark "{bounced_email}" as BOUNCED and failed.'
+            )
 
     def logout(self):
         self.mail.close()
