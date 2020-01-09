@@ -166,7 +166,7 @@ def download_audio_translator_files(domain, app, lang):
     sheet0 = translator_workbook.worksheets[0]
     sheet0.title = "filepaths"
     sheet0.append([lang, "audio"])
-    sheet1 = translator_workbook.create_sheet("verif")
+    sheet1 = translator_workbook.create_sheet("verification")
     sheet1.append(headers)
     for text, rows in rows_by_text.items():
         if not any([row[audio_index] in app.multimedia_map for row in rows]):
