@@ -62,7 +62,11 @@ class BouncedEmailManager(object):
         return " ".join(parts)
 
     @staticmethod
-    def _get_forwarded_message_recipient(message):
+    def _get_message_recipient(message):
+        failed_recipient = message.get('X-Failed-Recipients')
+        if failed_recipient:
+            return failed_recipient
+
         maintype = message.get_content_maintype()
         if maintype == 'multipart':
             for part in message.get_payload():
@@ -86,7 +90,7 @@ class BouncedEmailManager(object):
             f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
             f'From "{COMPLAINTS_DAEMON}")'
         ):
-            complaint_email = self._get_forwarded_message_recipient(message)
+            complaint_email = self._get_message_recipient(message)
             if complaint_email:
                 self._mark_email_as_bounced(complaint_email, uid)
                 processed_emails.append(complaint_email)
@@ -101,11 +105,8 @@ class BouncedEmailManager(object):
             f'Subject "{subject}" '
             f'From "{BOUNCE_DAEMON}")'
         ):
-            bounced_email = self._get_forwarded_message_recipient(message)
-            if bounced_email:
-                self._mark_email_as_bounced(bounced_email, uid)
-                processed_emails.append(bounced_email)
-            else:
+            bounced_email = self._get_message_recipient(message)
+            if not bounced_email:
                 # fall back to using the REGEX as a last resort, in case these
                 # messages don't contain a forwarded email
                 email_regex = re.search(
@@ -114,8 +115,10 @@ class BouncedEmailManager(object):
                 )
                 if email_regex:
                     bounced_email = email_regex.group()
-                    self._mark_email_as_bounced(bounced_email, uid)
-                    processed_emails.append(bounced_email)
+
+            if bounced_email:
+                self._mark_email_as_bounced(bounced_email, uid)
+                processed_emails.append(bounced_email)
         return processed_emails
 
     def process_bounces(self):
