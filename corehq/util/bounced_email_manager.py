@@ -135,6 +135,7 @@ class BouncedEmailManager(object):
             "Delivery Status Notification (Failure)",
             "Undelivered Mail Returned to Sender",
             "Returned mail: see transcript for details",
+            "Undeliverable: Scheduled report from CommCare HQ",
         ]:
             processed_emails.extend(
                 self._process_bounced_emails_with_subject(subject)
