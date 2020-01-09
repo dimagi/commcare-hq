@@ -4,7 +4,7 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfoMessageController($location) {
     var vm = this;
-    vm.previousToPreviousMonth = null;
+    vm.twoMonthsBackMonth = null;
     vm.previousMonth = null;
     vm.yearOfPreviousMonth = null;
     vm.yearOfTwoMonthsAgo = null;
@@ -41,11 +41,11 @@ function InfoMessageController($location) {
             vm.year = moment().format('YYYY');
 
             var previousMonthDate = new Date();
-            var previousToPreviousMonthDate = new Date();
+            var twoMonthsBackDate = new Date();
             var nextMonthDate = new Date();
 
             previousMonthDate.setMonth(now.getMonth() - 1);
-            previousToPreviousMonthDate.setMonth(now.getMonth() - 2);
+            twoMonthsBackDate.setMonth(now.getMonth() - 2);
             nextMonthDate.setMonth(now.getMonth() + 1);
 
             vm.previousMonth = vm.getMonthFromDate(previousMonthDate);
@@ -55,8 +55,8 @@ function InfoMessageController($location) {
             vm.nextMonth = vm.getMonthFromDate(nextMonthDate);
             vm.yearOfNextMonth = vm.getYearFromDate(nextMonthDate);
 
-            vm.previousToPreviousMonth = vm.getMonthFromDate(previousToPreviousMonthDate);
-            vm.yearOfTwoMonthsAgo = vm.getYearFromDate(previousToPreviousMonthDate);
+            vm.twoMonthsBackMonth = vm.getMonthFromDate(twoMonthsBackDate);
+            vm.yearOfTwoMonthsAgo = vm.getYearFromDate(twoMonthsBackDate);
             return true;
         }
 
