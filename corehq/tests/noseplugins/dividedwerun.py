@@ -71,7 +71,7 @@ class DividedWeRunPlugin(Plugin):
             def skip():
                 raise SkipTest("divided-we-run: {} not in range {}".format(
                                bucket, self.divided_we_run))
-            if isinstance(test, ContextSuite):
+            if isinstance(test, ContextSuite) or test.test.descriptor is None:
                 if hasattr(test.context, "__module__"):
                     desc = test.context
                 else:
