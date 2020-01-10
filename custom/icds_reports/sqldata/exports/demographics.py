@@ -7,7 +7,8 @@ from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
     phone_number_function
-from custom.icds_reports.const import ADOLESCENT_GIRLS_DATA_THRESHOLD
+from custom.icds_reports.const import ADOLESCENT_GIRLS_DATA_THRESHOLD, NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, \
+    NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
     table_name = 'agg_child_health_monthly'
@@ -364,10 +365,10 @@ class DemographicsExport(ExportableMixin):
         elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
             columns += [
                 {
-                    'header': 'Adolescent girls (11-14 years)',
+                    'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
                     'slug': 'num_adolescent_girls_11yr14yr_v2'
                 }, {
-                    'header': 'Out of School Adolescent girls (11-14 years)',
+                    'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
                     'slug': 'num_adolescent_girls_11yr14yr_oos'
                 },
                 {
