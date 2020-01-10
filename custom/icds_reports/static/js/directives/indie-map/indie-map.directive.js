@@ -195,7 +195,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     if (this.options.rightLegend !== null &&
                         d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
-                            '<div class="map-kpi" style="width: 310px;">',
+                            '<div class="map-kpi">',
                             '<div class="row no-margin">',
                             '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
                         ];
