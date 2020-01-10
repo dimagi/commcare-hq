@@ -46,6 +46,20 @@ function MapOrSectorController($location, storageService, locationsService, navi
 
     // reduce caption width to fit screen up to 900px on mobile view
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
+
+    function getChartTooltip(d) {
+        if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
+            return 'NA';
+        }
+        return vm.templatePopup({
+            loc: {
+                properties: {
+                    name: d.value,
+                },
+            },
+            row: vm.data.mapData.tooltips_data[d.value],
+        });
+    }
     vm.chartOptions = {
 
         chart: {
@@ -85,20 +99,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
                 axisLabelDistance: 20,
             },
             tooltip: {
-                contentGenerator: function (d) {
-                    if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
-                        return 'NA';
-                    }
-
-                    return vm.templatePopup({
-                        loc: {
-                            properties: {
-                                name: d.value,
-                            },
-                        },
-                        row: vm.data.mapData.tooltips_data[d.value],
-                    });
-                },
+                contentGenerator: getChartTooltip,
             },
             callback: function (chart) {
                 var height = 1500;
