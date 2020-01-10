@@ -46,6 +46,8 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_15_18_all",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_out_of_school", 0) AS "cases_person_adolescent_girls_11_14_out_of_school",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all_v2", 0) AS "cases_person_adolescent_girls_11_14_all_v2",
         COALESCE("agg_awc"."cases_person_referred", 0) AS "cases_person_referred",
         COALESCE("agg_awc"."cases_ccs_pregnant", 0) AS "cases_ccs_pregnant",
         COALESCE("agg_awc"."cases_ccs_lactating", 0) AS "cases_ccs_lactating",
@@ -85,7 +87,9 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."cases_person_has_aadhaar_v2", 0) AS "cases_person_has_aadhaar_v2",
         COALESCE("agg_awc"."cases_person_beneficiary_v2", 0) AS "cases_person_beneficiary_v2",
         "agg_awc"."infantometer" AS "infantometer",
-        "agg_awc"."stadiometer" AS "stadiometer"
+        "agg_awc"."stadiometer" AS "stadiometer",
+        "agg_awc"."valid_visits" AS "valid_visits",
+        "agg_awc"."expected_visits" AS "expected_visits"
     FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND

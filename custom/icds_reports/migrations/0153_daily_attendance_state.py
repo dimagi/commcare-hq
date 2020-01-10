@@ -27,5 +27,4 @@ class Migration(migrations.Migration):
             sql=create_index_sql,
             reverse_sql=drop_index_sql,
         ),
-        migrator.get_migration('daily_attendance.sql')
     ]

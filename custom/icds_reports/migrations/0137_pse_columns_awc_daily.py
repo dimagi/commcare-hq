@@ -18,5 +18,4 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL("ALTER table agg_awc_daily ADD COLUMN total_eligible_pse INTEGER"),
         migrations.RunSQL("ALTER table agg_awc_daily ADD COLUMN total_attended_pse INTEGER"),
-        migrator.get_migration('agg_awc_daily.sql')
     ]

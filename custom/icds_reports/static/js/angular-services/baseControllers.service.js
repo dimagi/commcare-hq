@@ -15,6 +15,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.search('location_name', loc.name);
             }
         };
+        vm.selectedLocationsCount = function() {
+            // this method returns selectedLocationLevel
+            // TODO: Need to check why selectedLocationLevel is undefined for all location levels except when awc is selected
+            // when awc is selected return selected location level as is or count non null elements in selected Locations array
+            // selectedLocations array is fixed array of size 5. default value: [all, null,null,null,null]
+            // vm.selectedLocations.filter(Boolean) returns array after removing all null entries
+            // eg: if block is selected selectedLocations is (state, district, block, all, null)- only 3 levels selected.
+            // since 3 levels are selected, selectedLocationLevel is 2 and vm.selectedLocations.filter(Boolean) = 4
+            return vm.selectedLocationLevel ? vm.selectedLocationLevel : (vm.selectedLocations.filter(Boolean).length-2);
+        };
         vm.filtersOpen = false;
         $scope.$on('openFilterMenu', function () {
             vm.filtersOpen = true;
@@ -94,7 +104,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.getSteps = function (baseRoute) {
                 return {
                     'map': {route: baseRoute + 'map', label: 'Map View'},
-                    'chart': {route: baseRoute + 'chart', label: isMobile ? 'Rankings View' : 'Chart View'},
+                    'chart': {route: baseRoute + 'chart', label: isMobile ? 'Rankings' : 'Chart View'},
                 };
             };
 
@@ -104,25 +114,29 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return '';
             };
 
-            vm.templatePopup = function(loc, row) {
+            vm.templatePopup = function (loc, row) {
                 // subclasses that don't override this must implement vm.getPopupData
                 // See UnderweightChildrenReportController for an example
                 var popupData = vm.getPopupData(row);
-                return vm.createTemplatePopup(
+                return vm.createMapPopupTemplate(
                     loc.properties.name,
                     popupData,
                     vm.getPopupSubheading()
                 );
             };
 
-            vm.createTemplatePopup = function(header, lines, subheading) {
+            vm.createMapPopupTemplate = function (locationName, lines, subheading) {
                 var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-                    '<p>' + header + '</p>';
+                    '<p>' + locationName + '</p>';
                 if (subheading) {
                     template += '<p>' + subheading + '</p>';
                 }
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                if (isMobile) {
+                    // assume called in the context of a map which has this function.
+                    template += '<a ng-click="$ctrl.handleMobileDrilldown()">see more</a>';
                 }
                 template += '</div>';
                 return template;

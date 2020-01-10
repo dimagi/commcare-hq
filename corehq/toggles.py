@@ -591,7 +591,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
-    notification_emails=['jemord']
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -1172,13 +1171,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ICDS_AUTO_ESCALATION_QA = StaticToggle(
-    'icds_auto_escalation_qa',
-    "Temporary flag to support QA of changes to ICDS's auto escalation workflow",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1437,6 +1429,13 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
+    'MULTI_MASTER_BYPASS_VERSION_CHECK',
+    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -1513,7 +1512,6 @@ RELATED_LOCATIONS = StaticToggle(
     'REACH: Enable experimental location many-to-many mappings',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
@@ -1727,6 +1725,14 @@ mwcd_indicators = StaticToggle(
     'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
+    'governance_apis',
+    'ICDS: Dashboard Governance dashboard API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
 )
 
 MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(

@@ -204,7 +204,6 @@ hqDefine('accounting/js/pricing_table', [
         self.oMonthlyPrice = ko.observable(data.monthly_price);
         self.oAnnualPrice = ko.observable(data.annual_price);
         self.oDescription = ko.observable(data.description);
-        self.oDescExtra = ko.observable(data.desc_extra);
 
         self.oIsCurrentPlan = ko.computed(function () {
             return self.oSlug() === parent.oCurrentPlan();

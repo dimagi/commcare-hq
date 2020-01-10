@@ -178,22 +178,23 @@ def _handle_duplicate(new_doc):
         return new_doc, None
 
     is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-    if is_icds and new_doc.metadata.deviceID == existing_doc.metadata.deviceID:
-        # ICDS does not use 'edit form' functionality via the web and form editing is not possible
-        # on mobile devices so it's safe to assume this is a duplicate without checking md5 etc.
-        duplicate = interface.deduplicate_xform(new_doc)
-        return duplicate, existing_doc
-
     try:
+        if is_icds and new_doc.metadata.deviceID == existing_doc.metadata.deviceID:
+            # ICDS does not use 'edit form' functionality via the web and form editing is not possible
+            # on mobile devices so it's safe to assume this is a duplicate without checking md5 etc.
+            duplicate = interface.deduplicate_xform(new_doc)
+            return duplicate, existing_doc
+
         existing_md5 = existing_doc.xml_md5()
     except MissingFormXml:
-        existing_md5 = None
+        existing_md5 = new_md5 = None
         if not existing_doc.is_error:
             existing_doc.problem = 'Missing form.xml'
+    else:
+        # only do this if we need to do the comparison
+        new_md5 = new_doc.xml_md5()
 
-    new_md5 = new_doc.xml_md5()
-
-    if existing_md5 != new_md5:
+    if existing_md5 is None or existing_md5 != new_md5:
         _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
         if new_doc.xmlns != existing_doc.xmlns:
             # if the XMLNS has changed this probably isn't a form edit

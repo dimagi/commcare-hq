@@ -117,11 +117,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 if (!selectedLocation || selectedLocation.location_id === 'all') {
                     return [];
                 }
-                return _.sortBy(
-                    locationsCache[selectedLocation.location_id], function (o) {
-                        return o.name;
-                    }
-                );
+                return locationsCache[selectedLocation.location_id];
             }
         },
     };
