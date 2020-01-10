@@ -183,6 +183,10 @@ class SumWhenTemplateFactory(object):
         expected = template.bind_count()
         actual = len(template.binds)
         if expected != actual:
-            raise BadSpecError(_('Expected {} binds in sum_when_template, found {}').format(expected, actual))
+            raise BadSpecError(_('Expected {} binds in sum_when_template {}, found {}').format(
+                expected,
+                spec['type'],
+                actual
+            ))
 
         return template
