@@ -1565,6 +1565,7 @@ class AggregateVHNDForms(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_GOV_VHND_TABLE
+        unique_together = ('month', 'awc_id')
 
     _agg_helper_cls = GovVhndFormAggDistributedHelper
     _agg_atomic = False

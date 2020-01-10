@@ -438,7 +438,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
-        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table
+        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
+        '_agg_gov_vhnd_form': _agg_gov_vhnd_form,
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -656,6 +657,12 @@ def _agg_awc_table(day):
 def _agg_ls_vhnd_form(state_id, day):
     with transaction.atomic(using=router.db_for_write(AggLs)):
         AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_gov_vhnd_form(state_id, day):
+    with transaction.atomic(using=router.db_for_write(AggLs)):
+        AggregateVHNDForms.aggregate(state_id, force_to_date(day))
 
 
 @track_time

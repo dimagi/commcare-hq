@@ -1130,6 +1130,7 @@ class MWCDReportView(models.Model):
 
 
 class GovVHNDView(models.Model):
+    state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)
     block_name = models.TextField(blank=True, null=True)
