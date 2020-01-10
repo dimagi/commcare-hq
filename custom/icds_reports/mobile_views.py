@@ -23,6 +23,7 @@ def login(request, domain):
         extra_context={
             'domain': domain,
             'next': reverse('cas_mobile_dashboard', args=[domain]),
+            'password_reset_url': reverse('cas_mobile_dashboard_password_reset', args=[domain]),
         }
     )
 
