@@ -15,9 +15,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     var isAdolescentGirls =  $location.path().indexOf('demographics/adolescent_girls') !== -1;
 
-
     var startYear = 2017;
-
 
     if (isSDD) {
         startYear = reportStartDates['sdd'].getFullYear();
@@ -48,45 +46,24 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
 
     var fullselectedDate = new Date(vm.selectedYear, vm.selectedMonth - 1);
 
-    if (isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1))) {
+    if (isSDD && (fullselectedDate < reportStartDates['sdd'])) {
         vm.showMessage = true;
         vm.selectedYear = new Date().getFullYear();
-        vm.selectedMonth = new Date().getMonth() + 1;
     }
 
     if (haveAccessToFeatures && isAdolescentGirls && fullselectedDate < reportStartDates['adolescent_girls']) {
         vm.showAdolescentGirlMessage = true;
         vm.selectedYear = new Date().getFullYear();
-        vm.selectedMonth = new Date().getMonth() + 1;
     }
 
-    vm.months = vm.monthsCopy;
+    var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
+        vm.selectedMonth,
+        vm.monthsCopy,
+        haveAccessToFeatures);
 
-    if (vm.selectedYear === new Date().getFullYear()) {
-        vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id <= new Date().getMonth() + 1;
-        });
 
-    } else {
-
-        if (isSDD && vm.selectedYear === reportStartDates['sdd'].getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= reportStartDates['sdd'].getMonth() + 1;
-            });
-        }
-
-        if (haveAccessToFeatures && isAdolescentGirls && vm.selectedYear === reportStartDates['adolescent_girls'].getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= reportStartDates['adolescent_girls'].getMonth() + 1;
-            });
-        }
-        if (vm.selectedYear === 2017) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= 3;
-            });
-        }
-
-    }
+    vm.months = customMonths.months;
+    vm.selectedMonth = customMonths.selectedMonth;
 
     vm.apply = function() {
         hqImport('analytix/js/google').track.event('Date Filter', 'Date Changed', '');
@@ -97,39 +74,14 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
     };
 
     vm.onSelectYear = function (item) {
-        vm.months = vm.monthsCopy;
-        if (item.id === new Date().getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id <= new Date().getMonth() + 1;
-            });
 
-            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
-        } else {
+        var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
+            vm.selectedMonth,
+            vm.monthsCopy,
+            haveAccessToFeatures);
 
-            if (isSDD && vm.selectedYear === reportStartDates['sdd'].getFullYear()) {
-                vm.months = _.filter(vm.monthsCopy, function (month) {
-                    return month.id >= reportStartDates['sdd'].getMonth() + 1;
-                });
-                vm.selectedMonth = vm.selectedMonth >= reportStartDates['sdd'].getMonth() + 1 ?
-                    vm.selectedMonth : reportStartDates['sdd'].getMonth() + 1;
-            }
-
-            if (haveAccessToFeatures && isAdolescentGirls && vm.selectedYear === reportStartDates['adolescent_girls'].getFullYear()) {
-                vm.months = _.filter(vm.monthsCopy, function (month) {
-                    return month.id >= reportStartDates['adolescent_girls'].getMonth() + 1;
-                });
-                vm.selectedMonth = vm.selectedMonth >= reportStartDates['adolescent_girls'].getMonth() + 1 ?
-                    vm.selectedMonth : reportStartDates['adolescent_girls'].getMonth() + 1;
-
-            }
-            if (vm.selectedYear === 2017) {
-                vm.months = _.filter(vm.monthsCopy, function (month) {
-                    return month.id >= 3;
-                });
-                vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
-            }
-
-        }
+        vm.months = customMonths.months;
+        vm.selectedMonth = customMonths.selectedMonth;
     };
 
     vm.close = function () {
