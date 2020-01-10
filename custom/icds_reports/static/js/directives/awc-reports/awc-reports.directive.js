@@ -2064,6 +2064,51 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         },
     };
 
+    vm.mobileChartOptions = {
+        chart: {
+            type: 'multiBarChart',
+            height: 350,
+            width: 600,
+            margin: {
+                top: 20,
+                right: 20,
+                bottom: 50,
+                left: 80,
+            },
+            x: function (d) {
+                return d[0];
+            },
+            y: function (d) {
+                return d[1];
+            },
+            showValues: true,
+            showControls: false,
+            useInteractiveGuideline: true,
+            showLegend: false,
+            duration: 500,
+            xAxis: {
+                axisLabel: '',
+                tickFormat: function (d) {
+                    if (typeof d === 'number') {
+                        return d3.time.format('%m/%d/%y')(new Date(d));
+                    } else if (typeof d === 'string') {
+                        return d;
+                    }
+                },
+            },
+            yAxis: {
+                axisLabel: '',
+            },
+            interactiveLayer: {
+                tooltip: {
+                    contentGenerator: function (key) {
+                        return 'Total number of children between <strong>' + key.series[0].data[0] + ':</strong> ' + key.series[0].data[1];
+                    },
+                },
+            },
+        },
+    };
+
     vm.lineChartDaysPerWeekOptions = {
         chart: {
             type: 'multiBarChart',
