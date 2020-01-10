@@ -561,6 +561,15 @@ class FactSheetsReport(object):
                     }
                 ]
             )
+        else:
+            fact_sheet_data_config[4]['sections'][0]['rows_config'].append(
+                    {
+                        'data_source': 'AggAWCMonthlyDataSource',
+                        'header': 'Adolescent girls (15-18 years)',
+                        'slug': 'cases_person_adolescent_girls_15_18_all',
+                        'average': []
+                    }
+            )
 
         return fact_sheet_data_config
 

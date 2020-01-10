@@ -377,5 +377,12 @@ class DemographicsExport(ExportableMixin):
                 }
 
             ]
+        else:
+            columns += [
+                {
+                    'header': 'Number of adolescent girls 15 to 18 years old',
+                    'slug': 'num_adolescent_girls_15yr18yr'
+                }
+            ]
 
         return columns
