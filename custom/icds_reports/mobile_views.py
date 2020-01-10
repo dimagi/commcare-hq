@@ -1,3 +1,6 @@
+import copy
+
+from django.contrib.auth import views as auth_views
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -5,6 +8,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView
 
 from corehq.apps.domain.decorators import two_factor_exempt
+from corehq.apps.domain.urls import PASSWORD_RESET_KWARGS, PASSWORD_RESET_DONE_KWARGS
 from corehq.apps.hqwebapp import views as hqwebapp_views
 from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -20,7 +24,8 @@ def login(request, domain):
         custom_template_name='icds_reports/mobile_login.html',
         extra_context={
             'domain': domain,
-            'next': reverse('cas_mobile_dashboard', args=[domain])
+            'next': reverse('cas_mobile_dashboard', args=[domain]),
+            'password_reset_url': reverse('cas_mobile_dashboard_password_reset', args=[domain]),
         }
     )
 
@@ -30,6 +35,21 @@ def login(request, domain):
 def logout(req, domain):
     # override logout so you are redirected to the right login page afterwards
     return hqwebapp_views.logout(req, default_domain_redirect='cas_mobile_dashboard_login')
+
+
+@xframe_options_exempt
+def password_reset(request, domain):
+    kwargs = copy.deepcopy(PASSWORD_RESET_KWARGS)
+    # submit the form back to this view instead of the default
+    kwargs['extra_context']['form_submit_url'] = reverse('cas_mobile_dashboard_password_reset', args=[domain])
+    # so that we can redirect to a custom "done" page
+    kwargs['post_reset_redirect'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
+    return auth_views.password_reset(request, **kwargs)
+
+
+@xframe_options_exempt
+def password_reset_done(request, domain):
+    return auth_views.password_reset_done(request, **PASSWORD_RESET_DONE_KWARGS)
 
 
 @location_safe
