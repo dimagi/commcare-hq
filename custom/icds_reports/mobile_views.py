@@ -7,7 +7,6 @@ from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import two_factor_exempt
 from corehq.apps.hqwebapp import views as hqwebapp_views
 from corehq.apps.locations.permissions import location_safe
-from corehq.toggles import ICDS_MOBILE_DASHBOARD_MAPS, NAMESPACE_USER
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.views import DASHBOARD_CHECKS
 
@@ -47,6 +46,4 @@ class MobileDashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.request.couch_user))
         kwargs['is_mobile'] = True
-        kwargs['mobile_maps_enabled'] = ICDS_MOBILE_DASHBOARD_MAPS.enabled(self.request.user.username,
-                                                                           NAMESPACE_USER)
         return super().get_context_data(**kwargs)
