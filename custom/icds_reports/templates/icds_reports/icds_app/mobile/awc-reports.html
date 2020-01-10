@@ -14,7 +14,7 @@
       <div ng-if="$ctrl.step === 'demographics'">
         <div class="bar-chart">
           <h2 class="center pl-3">{$ $ctrl.data.chart[0].key $}</h2>
-          <nvd3 options="$ctrl.mobileChartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
+          <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions" id="mobile-bar-chart"></nvd3>
         </div>
       </div>
       <kpi data="$ctrl.data.kpi"></kpi>
