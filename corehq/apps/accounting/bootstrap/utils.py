@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
@@ -203,12 +205,10 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
 
 
 def _clear_cache(software_plans, default_plans):
-    # Copy of clear_plan_version_cache()
-    # To run in a migration context it needs to get the objects from apps.get_model
-    from corehq.apps.accounting.models import (
-        SoftwarePlan, DefaultProductPlan, clear_get_default_plan_version_cache
-    )
+    from corehq.apps.accounting.models import SoftwarePlan, DefaultProductPlan
     for software_plan in software_plans:
         SoftwarePlan.get_version.clear(software_plan)
     for plan in default_plans:
-        clear_get_default_plan_version_cache(plan)
+        DefaultProductPlan.get_default_plan_version.clear(
+            DefaultProductPlan, plan.edition, plan.is_trial, plan.is_report_builder_enabled,
+        )

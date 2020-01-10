@@ -397,13 +397,9 @@ def is_downgrade(current_edition, next_edition):
 
 
 def clear_plan_version_cache():
-    from corehq.apps.accounting.models import (
-        SoftwarePlan, DefaultProductPlan, clear_get_default_plan_version_cache
-    )
+    from corehq.apps.accounting.models import SoftwarePlan
     for software_plan in SoftwarePlan.objects.all():
         SoftwarePlan.get_version.clear(software_plan)
-    for plan in DefaultProductPlan.objects.all():
-        clear_get_default_plan_version_cache(plan)
 
 
 def get_paused_plan_context(request, domain):
