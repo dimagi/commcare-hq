@@ -36,6 +36,7 @@ from ...diff import filter_case_diffs, filter_ledger_diffs
 from ...parallel import Pool
 from ...rebuildcase import (
     is_action_order_equal,
+    rebuild_case,
     rebuild_case_with_couch_action_order,
     was_rebuilt,
 )
@@ -277,9 +278,13 @@ def diff_case(sql_case, couch_case):
             couch_case["domain"], couch_case['_id'], None, save=False, lock=False
         ).to_json()
         diffs = diff(couch_case, sql_json)
-        if diffs and should_sort_sql_transactions(sql_case, couch_case):
-            sql_case = rebuild_case_with_couch_action_order(sql_case)
-            diffs = diff(couch_case, sql_case.to_json())
+        if diffs:
+            if should_sort_sql_transactions(sql_case, couch_case):
+                sql_case = rebuild_case_with_couch_action_order(sql_case)
+                diffs = diff(couch_case, sql_case.to_json())
+            elif not was_rebuilt(sql_case):
+                sql_case = rebuild_case(sql_case)
+                diffs = diff(couch_case, sql_case.to_json())
     return diffs
 
 
