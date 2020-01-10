@@ -4,7 +4,8 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
 
-from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, ADOLESCENT_GIRLS_DATA_THRESHOLD
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, ADOLESCENT_GIRLS_DATA_THRESHOLD, \
+    NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
@@ -541,14 +542,14 @@ class FactSheetsReport(object):
                 [
                     {
                         'data_source': 'AggAWCMonthlyDataSource',
-                        'header': 'Adolescent girls (11-14 years)',
+                        'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
                         'slug': 'cases_person_adolescent_girls_11_14_all_v2',
                         'average': [],
 
                     },
                     {
                         'data_source': 'AggAWCMonthlyDataSource',
-                        'header': 'Out of School Adolescent girls (11-14 years)',
+                        'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
                         'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
                         'average': []
                     },
