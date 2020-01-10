@@ -574,6 +574,8 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
 
     @classmethod
     def _create_data(cls):
+        # This data uses relative dates because if the dates were hard-coded, eventually the
+        # age_in_months_buckets tests would break.
         for row in [
             {
                 "state": "MA",
@@ -587,14 +589,14 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
                 "city": "Boston",
                 "number": 3,
                 "age_at_registration": 5,
-                "date": cls._relative_date(365 + 28 * 3 + 5),
+                "date": cls._relative_date(365 + 28 * 3 + 4),
             },
             {
                 "state": "MA",
                 "city": "Cambridge",
                 "number": 2,
                 "age_at_registration": 8,
-                "date": cls._relative_date(365 + 28 * 4 + 5),
+                "date": cls._relative_date(365 + 28 * 3 + 5),
             },
             {
                 "state": "TN",
@@ -860,16 +862,28 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
         )
         view = self._create_view(report_config)
-        # TODO: test sum, so...3 rows not 4
-        self.assertEqual(
-            view.export_table,
-            [['foo',
-              [['report_column_display_state', 'month', 'report_column_display_number'],
-               ['MA', self._relative_month(365 + 28 * 2 + 5), 4],
-               ['MA', self._relative_month(365 + 28 * 3 + 5), 3],
-               ['MA', self._relative_month(365 + 28 * 4 + 5), 2],
-               ['TN', self._relative_month(365 * 2 + 75), 1]]]]
-        )
+        if self._relative_month(365 + 28 * 3 + 4) == self._relative_month(365 + 28 * 3 + 5):
+            # Typical use case, the two of the MA rows that are a day apart fall in the same month
+            self.assertEqual(
+                view.export_table,
+                [['foo',
+                  [['report_column_display_state', 'month', 'report_column_display_number'],
+                   ['MA', self._relative_month(365 + 28 * 2 + 5), 4],
+                   ['MA', self._relative_month(365 + 28 * 3 + 4), 5],
+                   ['TN', self._relative_month(365 * 2 + 75), 1]]]]
+            )
+        else:
+            # One day each month, those two rows will be in different months.
+            # This no longer tests that the aggregation is summing, it just makes sure this test doesn't fail.
+            self.assertEqual(
+                view.export_table,
+                [['foo',
+                  [['report_column_display_state', 'month', 'report_column_display_number'],
+                   ['MA', self._relative_month(365 + 28 * 2 + 5), 4],
+                   ['MA', self._relative_month(365 + 28 * 3 + 4), 3],
+                   ['MA', self._relative_month(365 + 28 * 3 + 5), 2],
+                   ['TN', self._relative_month(365 * 2 + 75), 1]]]]
+            )
 
     def test_integer_buckets(self):
         report_config = self._create_report(
