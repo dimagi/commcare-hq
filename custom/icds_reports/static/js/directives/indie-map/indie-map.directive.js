@@ -249,7 +249,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', 'map-kpi-outer')
-                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
                         var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
                         var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
