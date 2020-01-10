@@ -144,13 +144,13 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
 
-        var selectDate = new Date(selectedYear, selectedMonth - 1);
+        var selectedDate = new Date(selectedYear, selectedMonth - 1);
 
-        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && selectDate < new Date(2019, 1)) {
+        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && selectedDate < new Date(2019, 1)) {
             vm.open();
         }
 
-        if (haveAccessToFeatures && $location.path().indexOf('demographics/adolescent_girls') !== -1 && selectDate < new Date(2019, 3)) {
+        if (haveAccessToFeatures && $location.path().indexOf('demographics/adolescent_girls') !== -1 && selectedDate < new Date(2019, 3)) {
             vm.open();
         }
     };
