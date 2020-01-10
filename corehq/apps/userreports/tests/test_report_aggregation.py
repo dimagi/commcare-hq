@@ -13,7 +13,30 @@ from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
 
 
-class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
+class ConfigurableReportAggregationTestMixin(ConfigurableReportTestMixin):
+    def _create_report(self, aggregation_columns, columns, filters=None, sort_expression=None):
+        report_config = ReportConfiguration(
+            domain=self.domain,
+            config_id=self.data_source._id,
+            title='foo',
+            aggregation_columns=aggregation_columns,
+            columns=columns,
+            filters=filters or [],
+        )
+        if sort_expression:
+            report_config.sort_expression = sort_expression
+        report_config.save()
+        return report_config
+
+    def _create_view(self, report_config):
+        view = ConfigurableReportView(request=HttpRequest())
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
+        return view
+
+
+class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
     """
@@ -84,26 +107,6 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         cls.adapter.drop_table()
         cls._delete_everything()
         super(TestReportAggregationSQL, cls).tearDownClass()
-
-    def _create_report(self, aggregation_columns, columns, sort_expression=None):
-        report_config = ReportConfiguration(
-            domain=self.domain,
-            config_id=self.data_source._id,
-            title='foo',
-            aggregation_columns=aggregation_columns,
-            columns=columns,
-        )
-        if sort_expression:
-            report_config.sort_expression = sort_expression
-        report_config.save()
-        return report_config
-
-    def _create_view(self, report_config):
-        view = ConfigurableReportView(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
-        return view
 
     def test_aggregation_by_column_not_in_report(self):
         """
@@ -560,7 +563,7 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         )
 
 
-class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
+class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     @classmethod
     def _relative_date(cls, days_offset):
         return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m-%d")
@@ -698,20 +701,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         cls._delete_everything()
         super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns, filters=None, sort_expression=None):
-        report_config = ReportConfiguration(
-            domain=self.domain,
-            config_id=self.data_source._id,
-            title='foo',
-            aggregation_columns=aggregation_columns,
-            columns=columns,
-            filters=filters or [],
-        )
-        if sort_expression:
-            report_config.sort_expression = sort_expression
-        report_config.save()
-        return report_config
-
     def _create_default_report(self, filters=None):
         return self._create_report(
             aggregation_columns=[
@@ -743,13 +732,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             ],
             filters=filters,
         )
-
-    def _create_view(self, report_config):
-        view = ConfigurableReportView(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
-        return view
 
     def test_with_multiple_agg_columns(self):
         report_config = self._create_default_report()
