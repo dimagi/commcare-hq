@@ -4,7 +4,6 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
 
 from corehq.apps.app_manager.views.formdesigner import ping
-from corehq.apps.appstore.views import rewrite_url
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
@@ -13,7 +12,7 @@ from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.settings import logo
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
-from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
+from corehq.apps.hqwebapp.views import apache_license, bsd_license, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.registration.tasks import PRICING_LINK
@@ -93,8 +92,6 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^project_store(.*)$', rewrite_url),
-    url(r'^exchange/', include('corehq.apps.appstore.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -131,8 +128,6 @@ urlpatterns = [
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
-    url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
-    url(r'^exchange/cda/$', cda, name='cda'),
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
