@@ -188,8 +188,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data && !isMobile) {
-            // this chunk of code adds the legend to web maps
+        if (vm.map.data) {
+            // this chunk of code adds the legend
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
