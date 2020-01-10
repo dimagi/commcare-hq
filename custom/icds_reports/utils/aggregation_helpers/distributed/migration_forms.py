@@ -29,10 +29,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             supervisor_id,
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
-            CASE
-                WHEN LAST_VALUE(migration_status) OVER w IS 'migrated' THEN 1
-                ELSE 0
-            END AS migration_status,
+            LAST_VALUES(is_migrated) OVER w AS is_migrated,
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -67,7 +64,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s::DATE AS month,
             COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
-            COALESCE(ucr.migration_status, prev_month.migration_status) as migration_status
+            COALESCE(ucr.is_migrated, prev_month.is_migrated) as migration_status
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
              SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s

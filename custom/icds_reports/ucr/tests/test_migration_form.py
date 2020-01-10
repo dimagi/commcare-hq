@@ -17,5 +17,6 @@ class TestMigrationForms(BaseFormsTest):
                 "doc_id": None,
                 "timeend": None,
                 "migration_status": 'migrated',
+                "is_migrated": 1,
                 "person_case_id": "b08669b9-f8d5-4dfb-891f-8727a4486682"
             }])
