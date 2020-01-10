@@ -471,6 +471,10 @@ SAAS_REPORTING_EMAIL = None
 # the emails from mailer daemon will be swallowed up by spam filters.
 RETURN_PATH_EMAIL = None
 
+# This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
+# SES bounce and complaint notifications.
+RETURN_PATH_EMAIL_PASSWORD = None
+
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 

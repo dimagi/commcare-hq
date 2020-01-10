@@ -22,6 +22,11 @@
     </div>
     <p class="font-montserrat font-18 mb-5 font-weight-600">ICDS-CAS Dashboard</p>
     <div>
+      {% for global_error in form.non_field_errors %}
+        <div class="alert alert-danger">
+          {{ global_error }}
+        </div>
+      {% endfor %}
       {% include "login_and_password/two_factor/core/login_form.html" %}
 {% comment %}
   These are the styles that will ideally get applied to the functional login form above

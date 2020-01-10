@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-18 15:26+0000\n"
+"POT-Creation-Date: 2020-01-08 22:14+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -117,11 +117,11 @@ msgid ""
 "to us about your subscription, please reach out to <%= email %>."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:247
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:246
 msgid "Billed Annually"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:249
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:248
 msgid "Billed Monthly"
 msgstr ""
 
@@ -4183,7 +4183,7 @@ msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:55
 msgid "Parameters"
-msgstr ""
+msgstr "Manejo de Casos"
 
 #: submodules/formdesigner/src/remoteRequest.js:62
 msgid ""

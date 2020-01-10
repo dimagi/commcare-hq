@@ -17,10 +17,30 @@ LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
 LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
 
 
+def get_valid_recipients(recipients):
+    """
+    This filters out any emails that have reported hard bounces or complaints to
+    Amazon SES
+    :param recipients: list of recipient emails
+    :return: list of recipient emails not marked as bounced
+    """
+    from corehq.util.models import BouncedEmail
+    bounced_emails = set(
+        BouncedEmail.objects.filter(email__in=recipients).values_list(
+            'email', flat=True)
+    )
+    return [recipient for recipient in recipients if recipient not in bounced_emails]
+
+
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None, smtp_exception_skip_list=None):
-    recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
+    recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
+    recipients = get_valid_recipients(recipients)
+    if not recipients:
+        # todo address root issues by throwing a real error to catch upstream
+        #  fail silently for now to fix time-sensitive SES issue
+        return
 
     if not isinstance(html_content, str):
         html_content = html_content.decode('utf-8')
@@ -38,7 +58,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
-                                 recipient, headers=from_header,
+                                 recipients, headers=from_header,
                                  connection=connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
@@ -72,7 +92,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 error_subject,
                 error_text,
                 email_from,
-                recipient,
+                recipients,
                 headers=from_header,
                 connection=connection,
                 cc=cc,

@@ -318,3 +318,67 @@ This can be done by:
    return the mobile template for the mobile version of the page. (This is done using an Angular constant `isMobile`).
 
 See `program-summary.directive.js` for an example of this.
+
+## Change Management between Web and Mobile
+
+Generally, moving forwards the goal should be that any change made on the web dashboard *to a piece of functionality
+that exists on mobile* should also be made to mobile.
+Eventually, the goal is to get to ~feature parity on mobile, at which point *all changes made to web dashboard should
+also be made on mobile*.
+
+Because web and mobile dashboard share a lot of code, much of this will happen automatically.
+Here is an approximate guide to the types of changes that can be made and how they are impacted on mobile.
+
+It is expected this section will evolve over time as the scope of mobile dashboard increases
+and as new types of changes are better understood.
+
+### Current Mobile Dashboard Scope
+
+Currently the mobile dashboard includes:
+
+1. Program Summary
+1. All Map views across four major areas of Program Summary, drilling down to block level.
+1. In the above reports, instead of charts, a "rankings" page is displayed on mobile.
+1. KPIs on AWC reports.
+
+An internal document of the scope can be found [here](https://docs.google.com/spreadsheets/d/1W_RvyK2sMg0No5h7495Cg77Hjmz7fWtf7YrQHMaLycU/edit#gid=0)
+and a more detailed version can be found [on Trello](https://trello.com/b/eLO8b8tA/cas-mobile-dashboard).
+
+### Changes to Indicators
+
+**Almost any change to indicators should automatically update on web and mobile.**
+This includes changes to indicator calculations as well as the addition and removal of indicators.
+
+### Addition of New Reports in Four Program Summary Areas
+
+The addition of a new report in one of the four main program summary areas (Maternal and Child Nutrition,
+ICDS-CAS Reach, Demographics, and AWC Infrastructure) should require very little additional work.
+
+The report should be coded as per the above standards and it should work out-of-the-box on mobile.
+
+The only additional piece of work will be adding the report to the mobile navigation menu, in addition
+to the web navigation menu.
+It is expected that this step will be unnecessary soon as we reconcile those two items.
+
+### Addition of New Reports outside the Four Program Summary Areas
+
+Since mobile dashboard does not currently include any additional reports (e.g. Service Delivery Dashboard,
+AWC Report, etc.) it is not necessary to do anything when working with these reports.
+
+This section will be updated once those reports are added to mobile dashboard.
+
+### Addition of new *Features* to existing reports
+
+If the report is not on mobile dashboard as per above, then nothing needs to be done.
+If the report is already on mobile dashboard then *by default, the feature should be added to the mobile dashboard as well.*
+
+For features that have UI components, they should be ported to mobile-friendly versions and added
+to the mobile versions of the report templates in addition to the web versions.
+
+If for some reason the feature is difficult to implement for mobile, or doesn't make sense to add to mobile,
+then a discussion should be raised with the product owner as to why it doesn't make sense to add to mobile,
+and they should sign off on the decision.
+
+### Other types of changes
+
+For any other type of change please follow up with product and technical owners to get them documented here.

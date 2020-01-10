@@ -88,6 +88,7 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.hqmedia.views import copy_multimedia
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -211,6 +212,7 @@ urlpatterns = [
 
     # multimedia stuff
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
+    url(r'^copy_multimedia/(?P<app_id>[\w-]+)/$', copy_multimedia, name='copy_multimedia'),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',

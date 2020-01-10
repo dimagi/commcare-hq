@@ -7,6 +7,7 @@ import shutil
 import uuid
 import zipfile
 from collections import defaultdict
+from datetime import datetime
 from mimetypes import guess_all_extensions, guess_type
 
 from django.conf import settings
@@ -18,7 +19,7 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -77,7 +78,9 @@ from corehq.apps.hqmedia.tasks import (
     build_application_zip,
     process_bulk_upload_zip,
 )
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
@@ -117,7 +120,9 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
             views.append(ManageMultimediaPathsView)
             if len(self.app.langs) > 1:
+                views.append(MultimediaAudioTranslatorFileView)
                 views.append(MultimediaTranslationsCoverageView)
+        views = sorted(views, key=lambda v: v.page_title)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -275,12 +280,92 @@ class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     template_name = "hqmedia/manage_paths.html"
     page_title = ugettext_noop("Manage Multimedia Paths")
 
+    @method_decorator(login_and_domain_required)
+    @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     @property
     def parent_pages(self):
         return [{
             'title': _("Multimedia Reference Checker"),
             'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
         }]
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'bulk_upload': {
+                "download_url": reverse('download_multimedia_paths', args=[self.domain, self.app.get_id]),
+                "adjective": _("multimedia paths"),
+                "plural_noun": _("multimedia paths"),
+                "help_link": "https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager",
+            },
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        handle = request.FILES['bulk_upload_file']
+        extension = os.path.splitext(handle.name)[1][1:].strip().lower()
+        if extension not in ALLOWED_EXTENSIONS:
+            messages.error(request, _("Please choose a file with one of the following extensions: "
+                                      "{}").format(", ".join(ALLOWED_EXTENSIONS)))
+            return self.get(request, *args, **kwargs)
+
+        meta = transient_file_store.write_file(handle, handle.name, self.domain)
+        file_id = meta.identifier
+
+        f = transient_file_store.get_tempfile_ref_for_contents(file_id)
+        try:
+            open_spreadsheet_download_ref(f)
+        except SpreadsheetFileExtError:
+            messages.error(request, _("File does not appear to be an Excel file. Please choose another file."))
+            return self.get(request, *args, **kwargs)
+
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+        from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows, update_multimedia_paths
+
+        # Get rows, filtering out header, no-ops, and any extra "Usages" columns
+        rows = []
+        with get_spreadsheet(f) as spreadsheet:
+            for row in list(spreadsheet.iter_rows())[1:]:
+                if row[1]:
+                    rows.append(row[:2])
+
+        (errors, warnings) = validate_multimedia_paths_rows(self.app, rows)
+        if len(errors):
+            for msg in errors:
+                messages.error(request, msg, extra_tags='html')
+            return self.get(request, *args, **kwargs)
+
+        paths = {
+            row[0]: interpolate_media_path(row[1]) for row in rows if row[1]
+        }
+        successes = update_multimedia_paths(self.app, paths)
+        self.app.save()
+
+        # Force all_media to reset
+        self.app.all_media.reset_cache(self.app)
+        self.app.all_media_paths.reset_cache(self.app)
+
+        # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
+        warnings = []
+        self.app.remove_unused_mappings()
+        app_paths = {m.path: True for m in self.app.all_media()}
+        for old_path, new_path in paths.items():
+            if old_path in app_paths:
+                warnings.append(_("Could not completely update path <code>{}</code>, "
+                                  "please check app for remaining references.").format(old_path))
+
+        for msg in successes:
+            messages.success(request, msg, extra_tags='html')
+        for msg in warnings:
+            messages.warning(request, msg, extra_tags='html')
+        return self.get(request, *args, **kwargs)
 
 
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
@@ -291,7 +376,7 @@ def download_multimedia_paths(request, domain, app_id):
     app = get_app(domain, app_id)
 
     headers = ((_("Paths"), (_("Old Path"), _("New Path"), _("Usages"))),)
-    rows = download_multimedia_paths_rows(app, only_missing=request.GET.get('only_missing', False))
+    rows = download_multimedia_paths_rows(app, only_missing=request.GET.get('only_missing', "false") == "true")
 
     temp = io.BytesIO()
     export_raw(headers, rows, temp)
@@ -301,77 +386,25 @@ def download_multimedia_paths(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, filename)
 
 
-@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@toggles.MULTI_MASTER_LINKED_DOMAINS.required_decorator()
 @require_can_edit_apps
 @require_POST
-def update_multimedia_paths(request, domain, app_id):
-    if not request.FILES:
-        return json_response({
-            'error': _("Please choose an Excel file to import.")
-        })
-
-    handle = request.FILES['file']
-
-    extension = os.path.splitext(handle.name)[1][1:].strip().lower()
-    if extension not in ALLOWED_EXTENSIONS:
-        return json_response({
-            'error': _("Please choose a file with one of the following extensions: "
-                       "{}").format(", ".join(ALLOWED_EXTENSIONS))
-        })
-
-    meta = transient_file_store.write_file(handle, handle.name, domain)
-    file_id = meta.identifier
-
-    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
-    try:
-        open_spreadsheet_download_ref(f)
-    except SpreadsheetFileExtError:
-        return json_response({
-            'error': _("File does not appear to be an Excel file. Please choose another file.")
-        })
-
+def copy_multimedia(request, domain, app_id):
     app = get_app(domain, app_id)
-    from corehq.apps.app_manager.views.media_utils import interpolate_media_path
-    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows, update_multimedia_paths
+    other_app_id = request.POST.get("app_id")
+    other_app = get_app(domain, other_app_id)
 
-    # Get rows, filtering out header, no-ops, and any extra "Usages" columns
-    rows = []
-    with get_spreadsheet(f) as spreadsheet:
-        for row in list(spreadsheet.iter_rows())[1:]:
-            if row[1]:
-                rows.append(row[:2])
+    paths = app.all_media_paths()
+    count = 0
+    for path in paths:
+        if path not in app.multimedia_map:
+            app.multimedia_map[path] = other_app.multimedia_map[path]
+            count += 1
+    if count:
+        app.save()
 
-    (errors, warnings) = validate_multimedia_paths_rows(app, rows)
-    if len(errors):
-        return json_response({
-            'complete': 1,
-            'errors': errors,
-        })
-
-    paths = {
-        row[0]: interpolate_media_path(row[1]) for row in rows if row[1]
-    }
-    successes = update_multimedia_paths(app, paths)
-    app.save()
-
-    # Force all_media to reset
-    app.all_media.reset_cache(app)
-    app.all_media_paths.reset_cache(app)
-
-    # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
-    warnings = []
-    app.remove_unused_mappings()
-    app_paths = {m.path: True for m in app.all_media()}
-    for old_path, new_path in paths.items():
-        if old_path in app_paths:
-            warnings.append(_("Could not completely update path <code>{}</code>, "
-                              "please check app for remaining references.").format(old_path))
-
-    return json_response({
-        'complete': 1,
-        'successes': successes,
-        'warnings': warnings,
-    })
+    messages.success(request, "Copied {} multimedia items.".format(count))
+    return redirect("app_settings", domain=domain, app_id=app_id)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
@@ -402,7 +435,7 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
             "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
                             for t in CommCareMultimedia.get_doc_types()},
             "selected_langs": self.request.POST.getlist('langs', []),
-            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio', 'CommCareVideo']),
+            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio']),
             "selected_build_id": selected_build_id,
             "selected_build_text": selected_build_text,
         })
@@ -442,6 +475,39 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
                                      extra_tags='html')
 
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
+    urlname = "multimedia_audio_translator"
+    template_name = "hqmedia/audio_translator.html"
+    page_title = ugettext_noop("Download Audio Translator Files")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
+
+    def get(self, request, *args, **kwargs):
+        lang = request.GET.get('lang')
+        if lang:
+            from corehq.apps.hqmedia.view_helpers import download_audio_translator_files
+            eligible_for_transifex_only = request.GET.get('skip_blacklisted', "false") == "true"
+            files = download_audio_translator_files(self.domain, self.app, lang, eligible_for_transifex_only)
+            zip_in_memory = io.BytesIO()
+            with zipfile.ZipFile(zip_in_memory, "w", zipfile.ZIP_DEFLATED) as zip_content:
+                for filename, workbook in files.items():
+                    zip_content.writestr(filename, get_file_content_from_workbook(workbook))
+            today = datetime.strftime(datetime.utcnow(), "%Y-%m-%d")
+            filename = "Audio Translator Files {} {}.zip".format(lang, today)
+            zip_in_memory.seek(0)
+            response = HttpResponse(zip_in_memory.read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+            return response
+        return super().get(request, *args, **kwargs)
 
 
 class BaseProcessUploadedView(BaseMultimediaView):

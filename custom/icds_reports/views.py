@@ -368,7 +368,6 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -2198,12 +2197,14 @@ class GovernanceAPIView(View):
             month = prev_month.month
             year = prev_month.year
 
-        start = request.GET.get('start', 0)
+        last_awc_id = request.GET.get('last_awc_id', '')
 
-        return step, start, month, year, state_id
+        return step, last_awc_id, month, year, state_id
+
+
 
     def get(self, request, *args, **kwargs):
-        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
+        step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
         present_year = datetime.now().year
         present_month = datetime.now().month
 
@@ -2226,15 +2227,17 @@ class GovernanceAPIView(View):
         if not is_valid:
             return HttpResponse(exception_message, status=400)
 
-        if step == 'home_visit':
-            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
-            if state_id != '':
-                query_filters['state_id'] = state_id
-            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+        query_filters = {'aggregation_level': AggregationLevels.AWC,
+                         'num_launched_awcs': 1,
+                         'awc_id__gt': last_awc_id
+                         }
 
+        order = ['awc_id']
+
+        if step == 'home_visit':
+            query_filters['state_id'] = state_id
             data, count = get_home_visit_data(
-                start,
                 length,
                 year,
                 month,
@@ -2244,7 +2247,6 @@ class GovernanceAPIView(View):
             response_json = {
                 'data': data,
                 'metadata': {
-                    'start': start,
                     'month': month,
                     'year': year,
                     'count': count,
