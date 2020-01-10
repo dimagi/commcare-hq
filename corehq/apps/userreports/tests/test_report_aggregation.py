@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 from django.test import TestCase
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
@@ -562,14 +562,12 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
 
 class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
-    def _relative_date(cls, month, day, year_offset=0):
-        year = datetime.utcnow().year + year_offset
-        return f"{year}-{month:02}-{day:02}"
+    def _relative_date(cls, days_offset):
+        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m-%d")
 
     @classmethod
-    def _relative_month(cls, month, year_offset=0):
-        year = datetime.utcnow().year + year_offset
-        return f"{year}-{month:02}"
+    def _relative_month(cls, days_offset):
+        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m")
 
     @classmethod
     def _create_data(cls):
@@ -579,27 +577,28 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 "city": "Boston",
                 "number": 4,
                 "age_at_registration": 1,
-                "date": cls._relative_date(1, 3, year_offset=-1),
+                "date": cls._relative_date(365 + 28 * 2 + 5),
             },
             {
                 "state": "MA",
-                "city": "Boston", "number": 3,
+                "city": "Boston",
+                "number": 3,
                 "age_at_registration": 5,
-                "date": cls._relative_date(2, 18, year_offset=-1),
+                "date": cls._relative_date(365 + 28 * 3 + 5),
             },
             {
                 "state": "MA",
                 "city": "Cambridge",
                 "number": 2,
                 "age_at_registration": 8,
-                "date": cls._relative_date(1, 22, year_offset=-1),
+                "date": cls._relative_date(365 + 28 * 4 + 5),
             },
             {
                 "state": "TN",
                 "city": "Nashville",
                 "number": 1,
                 "age_at_registration": 14,
-                "date": cls._relative_date(1, 3, year_offset=-2),
+                "date": cls._relative_date(365 * 2 + 75),
             },
         ]:
             cls._new_case(row).save()
@@ -699,7 +698,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         cls._delete_everything()
         super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns, filters=None):
+    def _create_report(self, aggregation_columns, columns, filters=None, sort_expression=None):
         report_config = ReportConfiguration(
             domain=self.domain,
             config_id=self.data_source._id,
@@ -708,6 +707,8 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             columns=columns,
             filters=filters or [],
         )
+        if sort_expression:
+            report_config.sort_expression = sort_expression
         report_config.save()
         return report_config
 
@@ -869,15 +870,23 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 }
             ],
             filters=None,
+            sort_expression=[
+                {
+                    "field": "month",
+                    "order": "DESC"
+                },
+            ],
         )
         view = self._create_view(report_config)
+        # TODO: test sum, so...3 rows not 4
         self.assertEqual(
             view.export_table,
             [['foo',
               [['report_column_display_state', 'month', 'report_column_display_number'],
-               ['MA', self._relative_month(1, year_offset=-1), 6],
-               ['MA', self._relative_month(2, year_offset=-1), 3],
-               ['TN', self._relative_month(1, year_offset=-2), 1]]]]
+               ['MA', self._relative_month(365 + 28 * 2 + 5), 4],
+               ['MA', self._relative_month(365 + 28 * 3 + 5), 3],
+               ['MA', self._relative_month(365 + 28 * 4 + 5), 2],
+               ['TN', self._relative_month(365 * 2 + 75), 1]]]]
         )
 
     def test_integer_buckets(self):
