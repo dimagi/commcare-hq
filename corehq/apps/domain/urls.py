@@ -93,6 +93,12 @@ PASSWORD_RESET_KWARGS = {
     'extra_context': {'current_page': {'page_name': _('Password Reset')}}
 }
 
+PASSWORD_RESET_DONE_KWARGS = {
+    'template_name': 'login_and_password/password_reset_done.html',
+    'extra_context': {'current_page': {'page_name': _('Reset My Password')}}
+}
+
+
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
@@ -109,11 +115,8 @@ urlpatterns = [
         name='password_change_done'),
 
     url(r'^accounts/password_reset_email/$', password_reset, PASSWORD_RESET_KWARGS, name='password_reset_email'),
-    url(r'^accounts/password_reset_email/done/$', password_reset_done,
-        {'template_name': 'login_and_password/password_reset_done.html',
-         'extra_context': {'current_page': {'page_name': _('Reset My Password')}}},
+    url(r'^accounts/password_reset_email/done/$', password_reset_done, PASSWORD_RESET_DONE_KWARGS,
         name='password_reset_done'),
-
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         PasswordResetView.as_view(),
         {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,
