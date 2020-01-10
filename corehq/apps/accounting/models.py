@@ -784,13 +784,22 @@ class DefaultProductPlan(models.Model):
         app_label = 'accounting'
         unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        clear_get_default_plan_version_cache(self)
+
     @classmethod
-    @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'], timeout=24 * 60 * 60)
     def get_default_plan_version(cls, edition=None, is_trial=False,
                                  is_report_builder_enabled=False):
+        return cls._get_default_plan_version(
+            settings.ENTERPRISE_MODE, edition, is_trial, is_report_builder_enabled
+        )
+
+    @classmethod
+    @quickcache(['is_enterprise', 'edition', 'is_trial', 'is_report_builder_enabled'], timeout=24 * 60 * 60)
+    def _get_default_plan_version(cls, is_enterprise, edition, is_trial, is_report_builder_enabled):
         if not edition:
-            edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
-                       else SoftwarePlanEdition.COMMUNITY)
+            edition = SoftwarePlanEdition.ENTERPRISE if is_enterprise else SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -811,6 +820,15 @@ class DefaultProductPlan(models.Model):
                 return (plan_version if return_plan
                         else plan_version.plan.edition)
         return None if return_plan else SoftwarePlanEdition.ENTERPRISE
+
+
+def clear_get_default_plan_version_cache(plan):
+    DefaultProductPlan._get_default_plan_version.clear(
+        DefaultProductPlan, settings.ENTERPRISE_MODE, plan.edition,
+        plan.is_trial, plan.is_report_builder_enabled,
+    )
+
+
 
 
 class SoftwarePlanVersion(models.Model):
@@ -839,6 +857,8 @@ class SoftwarePlanVersion(models.Model):
     def save(self, *args, **kwargs):
         super(SoftwarePlanVersion, self).save(*args, **kwargs)
         SoftwarePlan.get_version.clear(self.plan)
+        for plan in self.plan.defaultproductplan_set.all():
+            clear_get_default_plan_version_cache(plan)
 
     @property
     def version(self):
