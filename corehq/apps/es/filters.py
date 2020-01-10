@@ -53,6 +53,10 @@ def NOT(filter_):
         # but accepts the same logic
         # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
         return AND(*(NOT(condition) for condition in filter_['or']))
+    elif 'and' in filter_:
+        # Same ES 2.4 issue as above.
+        # Rewrite "not (A and B)" as "not A or not B"
+        return OR(*(NOT(condition) for condition in filter_['and']))
     elif 'not' in filter_:
         # This may not be strictly necessary
         # but prevents {'not': {'not': A}}, in favor of just A
