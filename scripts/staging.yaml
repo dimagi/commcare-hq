@@ -59,6 +59,5 @@ branches:
   - bmb/update-requirejs  # Biyeun Nov 21
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
   - bmb/SAASP-10149-v2  # Biyeun Dec 20
-  - dmr/fix-web-user-query  # Danny Jan 9
   - jls/sql-application-access-1  # Jenny Jan 10
 submodules: {}
