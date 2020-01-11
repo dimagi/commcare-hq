@@ -188,14 +188,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data && !isMobile) {
-            // this chunk of code adds the legend to web maps
+        if (vm.map.data) {
+            // this chunk of code adds the legend
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
                         d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
-                            '<div class="map-kpi" style="width: 310px;">',
+                            '<div class="map-kpi">',
                             '<div class="row no-margin">',
                             '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
                         ];
@@ -249,7 +249,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', 'map-kpi-outer')
-                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
                         var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
                         var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
