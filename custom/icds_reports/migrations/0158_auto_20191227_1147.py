@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('supervisor_id', models.TextField(null=True)),
                 ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
                 ('person_case_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
-                ('migration_status', models.SmallIntegerField(blank=True, null=True,
+                ('is_migrated', models.SmallIntegerField(blank=True, null=True,
                                                               help_text='Status of the Migration')),
             ],
             options={
