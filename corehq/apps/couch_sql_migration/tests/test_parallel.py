@@ -4,9 +4,7 @@ from unittest import SkipTest
 
 from testil import Regex, assert_raises, eq
 
-from corehq.util.test_utils import capture_log_output
-
-from corehq.util.test_utils import timelimit
+from corehq.util.test_utils import capture_log_output, timelimit
 from .. import parallel as mod
 
 
