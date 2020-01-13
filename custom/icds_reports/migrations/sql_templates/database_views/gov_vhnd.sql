@@ -7,6 +7,7 @@ SELECT
 "awc_location_local"."block_name" AS "block_name",
 "awc_location_local"."supervisor_name" AS "supervisor_name",
 "awc_location_local"."awc_name" AS "awc_name",
+"awc_location_local"."doc_id" AS "awc_id",
 agg_awc.month as month,
 COALESCE(icds_dashboard_gov_vhnd_forms.vhsnd_date_past_month, null) as vhsnd_date_past_month,
 COALESCE(icds_dashboard_gov_vhnd_forms.anm_mpw_present,false) as anm_mpw_present,

@@ -59,7 +59,7 @@ def get_vhnd_data(length, year, month, order, query_filters):
         **query_filters
     ).order_by(*order).values(
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'month',
-        'vhsnd_date_past_month', 'anm_mpw_present', 'asha_present', 'child_immu', 'anc_today'
+        'vhsnd_date_past_month', 'anm_mpw_present', 'asha_present', 'child_immu', 'anc_today', 'awc_id'
     )
 
     paginated_data = data[:length]
