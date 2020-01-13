@@ -57,14 +57,14 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, person_case_id, migration_status
+          state_id, supervisor_id, month, person_case_id, is_migrated
         ) (
           SELECT
             %(state_id)s AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s::DATE AS month,
             COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
-            COALESCE(ucr.is_migrated, prev_month.is_migrated) as migration_status
+            COALESCE(ucr.is_migrated, prev_month.is_migrated) as is_migrated
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
              SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
