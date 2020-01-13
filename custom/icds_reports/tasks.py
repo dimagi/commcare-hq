@@ -1629,11 +1629,8 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
 
     data_not_in_ucr = get_data_not_in_ucr(status_record)
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
-    doc_ids_in_pillow_error = set(
-        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    invalid_doc_ids = set(
+    known_bad_doc_ids = set(
         InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
@@ -1641,7 +1638,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
         if doc_id in known_bad_doc_ids:
-            # These docs will either get retried or are invalid
+            # These docs are invalid
             continue
         number_documents_missing += 1
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
