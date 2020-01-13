@@ -17,6 +17,7 @@ from sqlalchemy import (
     and_,
     bindparam,
     func,
+    literal_column,
     or_,
 )
 from sqlalchemy.event import listen
@@ -241,11 +242,17 @@ class StateDB(DiffDB):
                 yield case_id
 
     def count_case_ids_with_diffs(self):
-        # approximation, does not include ledger diff case ids
+        case_id_expr = literal_column("""
+            case kind
+                when 'stock state' then substr(doc_id, instr(doc_id, '/'), -100)
+                else doc_id
+            end as n_docs
+        """)
         with self.session() as session:
-            return session.query(Diff.doc_id).filter(
+            return session.query(case_id_expr).filter(or_(
                 Diff.kind == "CommCareCase",
-            ).distinct().count()
+                Diff.kind == "stock state",
+            )).distinct().count()
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
