@@ -1,7 +1,7 @@
 import logging
 import os
 import traceback
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from threading import Event
 
 import attr
@@ -125,8 +125,10 @@ def _init_worker():
 
 @gipc_process_error_handler()
 def _worker(init, initargs, func, itemq, resultq):
-    init(*initargs)
-    with itemq, resultq:
+    context = init(*initargs)
+    if context is None:
+        context = ExitStack()
+    with itemq, resultq, context:
         while True:
             item = itemq.get()
             if item is _Stop:
