@@ -505,8 +505,9 @@ class FactSheetsReport(object):
             }
         ]
 
+        demographics_section_config = fact_sheet_data_config[4]['sections'][0]['rows_config']
         if not self.beta:
-            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend([
+            demographics_section_config.extend([
                 {
                     'data_source': 'AggAWCMonthlyDataSource',
                     'header': 'Adolescent girls (11-14 years)',
@@ -538,7 +539,7 @@ class FactSheetsReport(object):
             ]
             )
         elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend(
+            demographics_section_config.extend(
                 [
                     {
                         'data_source': 'AggAWCMonthlyDataSource',
@@ -562,7 +563,7 @@ class FactSheetsReport(object):
                 ]
             )
         else:
-            fact_sheet_data_config[4]['sections'][0]['rows_config'].append(
+            demographics_section_config.append(
                     {
                         'data_source': 'AggAWCMonthlyDataSource',
                         'header': 'Adolescent girls (15-18 years)',
