@@ -225,12 +225,12 @@ class StateDB(DiffDB):
 
     def iter_case_ids_with_diffs(self):
         STOCK_STATE = "stock state"
-        query = self.Session().query(Diff.doc_id, Diff.kind).filter(or_(
+        query = self.Session().query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
             Diff.kind == "CommCareCase",
             Diff.kind == STOCK_STATE,
         ))
         seen = set()
-        for case_id, kind in iter_large(query, Diff.id):
+        for diff_id, case_id, kind in iter_large(query, Diff.id):
             if kind == STOCK_STATE:
                 assert case_id.count("/") == 2, case_id
                 case_id = case_id.split("/", 1)[0]
