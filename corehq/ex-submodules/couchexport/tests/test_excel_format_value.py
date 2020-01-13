@@ -137,3 +137,5 @@ def test_empty():
 def test_text():
     yield check, 'hi this is text', 'hi this is text', numbers.FORMAT_TEXT, str
     yield check, '1241234eeeesffsfs', '1241234eeeesffsfs', numbers.FORMAT_TEXT, str
+    yield check, {'en': 'Thanks', 'de': 'Danke'}, "{'en': 'Thanks', 'de': 'Danke'}", \
+          numbers.FORMAT_TEXT, str

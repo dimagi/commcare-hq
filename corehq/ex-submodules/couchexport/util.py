@@ -208,11 +208,14 @@ def get_excel_format_value(value):
     if value == MISSING_VALUE or value == EMPTY_VALUE:
         return ExcelFormatValue(numbers.FORMAT_TEXT, value)
 
-    if value.lower() in ['true', 'false']:
-        return ExcelFormatValue(numbers.FORMAT_GENERAL, bool(value.lower() == 'true'))
-
-    # make sure value is string and strip whitespace
+    # make sure value is string and strip whitespace before applying any
+    # string operations
     value = str(value).strip()
+
+    if value.lower() in ['true', 'false']:
+        return ExcelFormatValue(
+            numbers.FORMAT_GENERAL, bool(value.lower() == 'true')
+        )
 
     # potential full date of any format
     if re.search(r"^\d+(/|-|\.)\d+(/|-|\.)\d+$", value):
