@@ -92,6 +92,8 @@ def test_date():
         numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
     yield check, '2020.01.20', datetime.datetime(2020, 1, 20, 0, 0), \
         numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+    yield check, datetime.date(2020, 1, 20), datetime.date(2020, 1, 20), \
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.date
 
 
 def test_datetime():
@@ -112,6 +114,9 @@ def test_datetime():
         datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
                           tzinfo=tzoffset(None, -21600)), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
+    yield check, datetime.datetime(2020, 1, 20, 11, 11), \
+        datetime.datetime(2020, 1, 20, 11, 11), \
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
 
 
 def test_time():
