@@ -1,6 +1,5 @@
 from django.http import HttpRequest
 from django.test import TestCase
-from datetime import datetime
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
@@ -563,12 +562,12 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
 class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def _relative_date(cls, month, day, year_offset=0):
-        year = datetime.utcnow().year + year_offset
+        year = 2019 + year_offset
         return f"{year}-{month:02}-{day:02}"
 
     @classmethod
     def _relative_month(cls, month, year_offset=0):
-        year = datetime.utcnow().year + year_offset
+        year = 2019 + year_offset
         return f"{year}-{month:02}"
 
     @classmethod

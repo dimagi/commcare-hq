@@ -8,7 +8,7 @@ from custom.icds.models import (
 )
 
 
-@mock.patch('custom.icds.tasks.setup_ccz_file_for_hosting.delay')
+@mock.patch('custom.icds.tasks.hosted_ccz.setup_ccz_file_for_hosting.delay')
 class TestHostedCCZ(TestCase):
     def setUp(self):
         super(TestHostedCCZ, self).setUp()

@@ -4,6 +4,7 @@ from corehq.apps.hqmedia.views import (
     BulkUploadMultimediaView,
     DownloadMultimediaZip,
     ManageMultimediaPathsView,
+    MultimediaAudioTranslatorFileView,
     MultimediaReferencesView,
     MultimediaTranslationsCoverageView,
     MultimediaUploadStatusView,
@@ -18,7 +19,6 @@ from corehq.apps.hqmedia.views import (
     RemoveLogoView,
     ViewMultimediaFile,
     download_multimedia_paths,
-    update_multimedia_paths,
 )
 
 urlpatterns = [
@@ -31,7 +31,8 @@ application_urls = [
     url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.urlname),
     url(r'^paths/$', ManageMultimediaPathsView.as_view(), name=ManageMultimediaPathsView.urlname),
     url(r'^paths/download/$', download_multimedia_paths, name='download_multimedia_paths'),
-    url(r'^paths/update/$', update_multimedia_paths, name='update_multimedia_paths'),
+    url(r'^audio_translator_file/$', MultimediaAudioTranslatorFileView.as_view(),
+        name=MultimediaAudioTranslatorFileView.urlname),
     url(r'^translations/$', MultimediaTranslationsCoverageView.as_view(),
         name=MultimediaTranslationsCoverageView.urlname),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.urlname),
