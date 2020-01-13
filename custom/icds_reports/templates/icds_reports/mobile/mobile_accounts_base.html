@@ -68,9 +68,5 @@
   ctx.lineTo(300, 150);
   ctx.fillStyle = "#002C5F";
   ctx.fill();
-  document.addEventListener("DOMContentLoaded", function () {
-    var redirectUrl = "{% url 'cas_mobile_dashboard' domain %}";
-    window.history.replaceState(null, "", "?next=" + redirectUrl);
-  });
 </script>
 {% endblock body %}

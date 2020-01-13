@@ -4,3 +4,11 @@
 {% block form %}
 {% include "login_and_password/two_factor/core/login_form.html" %}
 {% endblock %}
+{% block body_end %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var redirectUrl = "{% url 'cas_mobile_dashboard' domain %}";
+    window.history.replaceState(null, "", "?next=" + redirectUrl);
+  });
+</script>
+{% endblock body_end %}
