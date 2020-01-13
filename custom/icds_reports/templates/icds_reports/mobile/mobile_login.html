@@ -1,4 +1,6 @@
 {% extends "icds_reports/mobile/mobile_accounts_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Login to ICDS-CAS Mobile Dashboard" %}{% endblock %}
 {% block form %}
 {% include "login_and_password/two_factor/core/login_form.html" %}
 {% endblock %}
