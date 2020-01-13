@@ -164,6 +164,7 @@ class TestAdolescentGirls(TestCase):
                     {'loc_name': 'st5', 'value': 0.0},
                     {'loc_name': 'st6', 'value': 0.0},
                     {'loc_name': 'st7', 'value': 0.0},
+
                 ]
             }
         )
