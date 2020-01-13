@@ -40,6 +40,7 @@ def logout(req, domain):
 @xframe_options_exempt
 def password_reset(request, domain):
     kwargs = copy.deepcopy(PASSWORD_RESET_KWARGS)
+    kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_form.html'
     # submit the form back to this view instead of the default
     kwargs['extra_context']['form_submit_url'] = reverse('cas_mobile_dashboard_password_reset', args=[domain])
     # so that we can redirect to a custom "done" page
