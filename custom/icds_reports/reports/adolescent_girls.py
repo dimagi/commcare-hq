@@ -238,7 +238,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, 
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_value_and_name = sorted(
-        all_locations_sorted_by_name, key=lambda x: -x['value'], reverse=True)
+        all_locations_sorted_by_name, key=lambda x: -x['value'] if beta else x['value'], reverse=True)
 
     return {
         "chart_data": [
