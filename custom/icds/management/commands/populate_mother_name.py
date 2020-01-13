@@ -16,7 +16,6 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, CaseReindexAccessor
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.log import with_progress_bar
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import iter_all_rows
@@ -44,6 +43,7 @@ for loc in SQLLocation.active_objects.filter(location_type__code='state', domain
     if loc.metadata.get('is_test_location') == 'test':
         TEST_STATES.append(loc.name)
 
+
 class Command(BaseCommand):
     help = """
     Iterate person cases updated in last 100 days (3 months with buffer) in a single partition,
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         - not deleted
         - not belonging to test locations,
         - with age less than 6 years using dob case property,
-            - if there is related mother case, populate mother_name case property with it's name  
+            - if there is related mother case, populate mother_name case property with it's name
     Returns two lists of case ids, the ones updated and the ones that could not be updated
     """
 
@@ -139,7 +139,7 @@ class Command(BaseCommand):
 
     def _update_cases(self, filename):
         exceptions_raised = 0
-        updates = {} # case id: mother name
+        updates = {}  # case id: mother name
         counter = 0
         with open(filename, 'r') as _input:
             reader = csv.DictReader(_input)
@@ -149,7 +149,7 @@ class Command(BaseCommand):
                 for row in reader:
                     updates[row['Case ID']] = row['Mother Name']
                     counter += 1
-                    if counter % 100 == 0:
+                    if counter > 0 and counter % 100 == 0:
                         case_ids_list = self._reassured_case_ids_to_update(updates.keys())
                         for case_id in updates:
                             if case_id not in case_ids_list:
@@ -157,10 +157,10 @@ class Command(BaseCommand):
                         for case_id, mother_name in updates.items():
                             writer.writerow([case_id, mother_name])
                         exceptions_raised = self._submit_update_form(updates, exceptions_raised)
-                        updates = {}
-                        counter = 0
                         if self.log_progress:
                             print("cases updated: %s" % counter)
+                        updates = {}
+                        counter = 0
                 # update the pending batch
                 for case_id, mother_name in updates.items():
                     writer.writerow([case_id, mother_name])
@@ -212,5 +212,3 @@ def find_test_locations():
     for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=DOMAIN):
         test_locations.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
     return test_locations
-
-
