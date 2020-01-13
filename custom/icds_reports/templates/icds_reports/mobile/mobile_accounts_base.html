@@ -27,7 +27,7 @@
           {{ global_error }}
         </div>
       {% endfor %}
-    {% include "login_and_password/two_factor/core/login_form.html" %}
+    {% block form %}{% endblock %}
 {% comment %}
   These are the styles that will ideally get applied to the functional login form above
       <div class="mb-3 font-montserrat font-18 font-weight-500">Email</div>
