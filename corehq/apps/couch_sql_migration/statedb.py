@@ -225,10 +225,12 @@ class StateDB(DiffDB):
 
     def iter_case_ids_with_diffs(self):
         STOCK_STATE = "stock state"
-        query = self.Session().query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
+        session = self.Session()
+        last_diff_id = session.query(func.max(Diff.id)).scalar()
+        query = session.query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
             Diff.kind == "CommCareCase",
             Diff.kind == STOCK_STATE,
-        ))
+        ), Diff.id <= last_diff_id)
         seen = set()
         for diff_id, case_id, kind in iter_large(query, Diff.id):
             if kind == STOCK_STATE:
