@@ -21,7 +21,7 @@ def login(request, domain):
         return HttpResponseRedirect(reverse('cas_mobile_dashboard', args=[domain]))
     return hqwebapp_views.domain_login(
         request, domain,
-        custom_template_name='icds_reports/mobile_login.html',
+        custom_template_name='icds_reports/mobile/mobile_login.html',
         extra_context={
             'domain': domain,
             'next': reverse('cas_mobile_dashboard', args=[domain]),
