@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from testil import eq
 
@@ -26,6 +27,7 @@ def test_decimal():
     yield check, '4.0345', 4.0345, numbers.FORMAT_NUMBER_00, float
     yield check, '-3.234', -3.234, numbers.FORMAT_NUMBER_00, float
     yield check, 5.032, 5.032, numbers.FORMAT_NUMBER_00, float
+    yield check, Decimal('3.00'), 3.00, numbers.FORMAT_NUMBER_00, float
 
 
 def test_boolean():

@@ -1,5 +1,6 @@
 import functools
 import re
+from decimal import Decimal
 from inspect import isfunction
 import json
 
@@ -192,6 +193,8 @@ def get_excel_format_value(value):
         return ExcelFormatValue(numbers.FORMAT_NUMBER, value)
     if isinstance(value, float):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, value)
+    if isinstance(value, Decimal):
+        return ExcelFormatValue(numbers.FORMAT_NUMBER_00, float(value))
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is None:
