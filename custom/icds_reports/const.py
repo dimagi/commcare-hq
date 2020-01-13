@@ -163,6 +163,5 @@ GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION = 10000
 
 # need to add more steps
 GOVERNANCE_API_STEPS = [
-    'home_visit',
-    'vhnds'
+    'home_visit'
 ]
