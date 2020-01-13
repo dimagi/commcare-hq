@@ -51,7 +51,10 @@ def password_reset(request, domain):
 
 @xframe_options_exempt
 def password_reset_done(request, domain):
-    return auth_views.password_reset_done(request, **PASSWORD_RESET_DONE_KWARGS)
+    kwargs = copy.deepcopy(PASSWORD_RESET_DONE_KWARGS)
+    kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_done.html'
+    kwargs['extra_context']['domain'] = domain
+    return auth_views.password_reset_done(request, **kwargs)
 
 
 @location_safe
