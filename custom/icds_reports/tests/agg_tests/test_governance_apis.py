@@ -3,9 +3,7 @@ import datetime
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names
-from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_vhnd_data
-from custom.icds_reports.utils import india_now
+from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_vhnd_data, get_state_names
 
 
 class GovernanceApiTest(TestCase):
@@ -32,7 +30,7 @@ class GovernanceApiTest(TestCase):
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_first_row = {
-            'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a1', 'awc_id':'a1',
+            'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a1', 'awc_id': 'a1',
             'month': datetime.date(2017, 5, 1), 'valid_visits': 0, 'expected_visits': 4,
         }
         self.assertEqual(data[0], expected_first_row)
@@ -112,7 +110,7 @@ class GovernanceApiTest(TestCase):
             "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
-}
+        }
         self.assertEqual(data[0], expected_first_row)
 
     def test_data_fetching_with_start_for_vhnds_api(self):
@@ -128,7 +126,7 @@ class GovernanceApiTest(TestCase):
             "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
-}
+        }
         self.assertEqual(data[0], expected_first_row)
 
     def test_data_fetching_total_record_count_for_no_records_for_vhnds_api(self):

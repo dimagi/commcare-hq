@@ -1569,4 +1569,3 @@ class AggregateVHNDForms(models.Model, AggregateMixin):
 
     _agg_helper_cls = GovVhndFormAggDistributedHelper
     _agg_atomic = False
-

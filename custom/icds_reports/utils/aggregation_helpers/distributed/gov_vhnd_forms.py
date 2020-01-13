@@ -48,4 +48,3 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
             ucr_tablename=self.ucr_tablename,
             tablename=tablename,
         ), query_params
-

@@ -1147,6 +1147,3 @@ class GovVHNDView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'gov_vhnd_view'
-
-
-
