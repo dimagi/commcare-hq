@@ -435,9 +435,6 @@
       {
         "field": "date_death",
         "order": "DESC"
-      },
-      { "field": "zscore_grading_wfa",
-        "order": "ASC"
       }
     ],
     "configured_charts": []
