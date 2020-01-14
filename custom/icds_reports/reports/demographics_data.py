@@ -6,8 +6,7 @@ from django.utils.translation import ugettext as _
 
 from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, \
-    ADOLESCENT_GIRLS_DATA_THRESHOLD
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text, \
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
     percent_lactating_women_enrolled_help_text, percent_adolescent_girls_enrolled_help_text, \
@@ -186,38 +185,31 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'format': 'percent_and_div',
                     'frequency': frequency,
                     'redirect': 'demographics/lactating_enrolled_women'
+                },
+                {
+                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
+                               ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
+                    'help_text': percent_adolescent_girls_enrolled_help_text_v2() if beta else percent_adolescent_girls_enrolled_help_text(),
+                    'percent': percent_diff(
+                        'person_adolescent',
+                        ag_data if beta else data,
+                        ag_data_prev_data if beta else prev_data,
+                        'person_adolescent_all'
+                    ),
+                    'color': get_color_with_green_positive(percent_diff(
+                        'person_adolescent',
+                        ag_data if beta else data,
+                        ag_data_prev_data if beta else prev_data,
+                        'person_adolescent_all'
+                    )),
+                    'value': get_value(ag_data if beta else data, 'person_adolescent'),
+                    'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency,
+                    'redirect': 'demographics/adolescent_girls'
                 }
 
             ]
         ]
     }
-    # Add below data to response only if "FF is turned off or the month accessed is later
-    # then the ADOLESCENT_GIRLS_DATA_THRESHOLD"
-    # After QA this statement will be simplified to
-    # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-    if (not beta) or current_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-        adolescent_girls = {
-            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
-                       ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-            'help_text': percent_adolescent_girls_enrolled_help_text_v2() if beta else percent_adolescent_girls_enrolled_help_text(),
-            'percent': percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            ),
-            'color': get_color_with_green_positive(percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            )),
-            'value': get_value(ag_data if beta else data, 'person_adolescent'),
-            'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
-            'format': 'percent_and_div',
-            'frequency': frequency,
-            'redirect': 'demographics/adolescent_girls'
-        }
-        demographics_data['records'][-1].append(adolescent_girls)
-
     return demographics_data
