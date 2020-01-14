@@ -136,7 +136,7 @@
         "field": "birth_weight",
         "type": "field",
         "transform": {
-          "format_string": "{0:.0f}", 
+          "format_string": "{0:.3f}",
           "type": "number_format"
         }, 
         "display": {
