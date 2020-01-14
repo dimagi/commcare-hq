@@ -510,7 +510,8 @@ class FactSheetsReport(object):
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
                                 'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
-                                'average': []
+                                'average': [],
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',

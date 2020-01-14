@@ -15,7 +15,7 @@ from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import (
     percent_increase, percent_diff, get_value, apply_exclude,
     person_has_aadhaar_column, person_is_beneficiary_column,
-    get_color_with_green_positive,
+    get_color_with_green_positive, get_color_with_red_positive
 )
 
 
@@ -194,7 +194,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         ag_data_prev_data,
                         'person_adolescent_all'
                     ),
-                    'color': get_color_with_green_positive(percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'person_adolescent',
                         ag_data,
                         ag_data_prev_data,

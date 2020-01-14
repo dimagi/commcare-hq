@@ -1336,6 +1336,7 @@ class TestFactSheetReportDemographics(TestCase):
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
                 'header': 'Number of out of school adolescent girls (11-14 years)',
+                'reverseColors': True,
                 'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
             }
         )
