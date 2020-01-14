@@ -32,7 +32,7 @@ class SQLApplicationAccess(models.Model):
         if not self.restrict or user['doc_type'] == 'WebUser':
             return True
         app_group = None
-        for app_group in self.app_groups:
+        for app_group in self.sqlappgroup_set.all():
             if app_group.app_id in (app_id, app['copy_of'] or ()):
                 break
         if app_group:
