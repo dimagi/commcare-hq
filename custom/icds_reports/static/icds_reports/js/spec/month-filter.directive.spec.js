@@ -15,7 +15,6 @@ describe('Month Filter Controller', function () {
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
         $provide.constant("isAlertActive", false);
-        $provide.constant("haveAccessToFeatures", false);
     }));
 
     beforeEach(function () {
@@ -75,9 +74,7 @@ describe('Month Filter Controller', function () {
 
 describe('Month Modal Controller', function () {
 
-    beforeEach(module('icdsApp',function ($provide) {
-        $provide.constant("haveAccessToFeatures", false);
-    }));
+    beforeEach(module('icdsApp'));
 
     var modalInstance, controller, $location;
 

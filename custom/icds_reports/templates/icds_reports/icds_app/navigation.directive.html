@@ -95,12 +95,13 @@
                         <a href="{$ goToStep('demographics/lactating_enrolled_women', $location.search()) $}" >{% trans "Lactating Mothers enrolled for Anganwadi Services" %}
                         </a>
                     </li>
+                  <!-- This li item will be removed after QA -->
                     <li ng-if="haveAccessToFeatures==false"
                         ng-class="{'active': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
                         <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" >{% trans "Adolescent Girls enrolled for Anganwadi Services" %}
                         </a>
                     </li>
-                    <li ng-if="toShowOnNavigation()"
+                    <li ng-if="haveAccessToFeatures==true"
                         ng-class="{'active': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
                         <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" >{% trans "Out of school Adolescent girls (11-14 years)" %}
                         </a>
