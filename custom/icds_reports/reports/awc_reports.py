@@ -28,7 +28,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
-    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, ADOLESCENT_GIRLS_DATA_THRESHOLD
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -882,41 +882,34 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency
+                },
+                {
+                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
+                               ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
+                    'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
+                        "Of the total number of adolescent girls (aged 11-14 years), the percentage "
+                        "of girls enrolled for Anganwadi Services"
+                    )),
+                    'percent': percent_diff(
+                        'person_adolescent',
+                        ag_data if beta else data,
+                        ag_data_prev_data if beta else prev_data,
+                        'person_adolescent_all'
+                    ),
+                    'color': get_color_with_green_positive(percent_diff(
+                        'person_adolescent',
+                        ag_data if beta else data,
+                        ag_data_prev_data if beta else prev_data,
+                        'person_adolescent_all'
+                    )),
+                    'value': get_value(ag_data if beta else data, 'person_adolescent'),
+                    'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency
                 }
             ]
         ]
     }
-    # Add below data to response when FF is turned off or the month accessed is later
-    # then the ADOLESCENT_GIRLS_DATA_THRESHOLD
-    # After QA this statement will be simplified to
-    # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-    if (not beta) or selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-        adolescent_girls = {
-            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
-                       ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-            'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
-                "Of the total number of adolescent girls (aged 11-14 years), the percentage "
-                "of girls enrolled for Anganwadi Services"
-            )),
-            'percent': percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            ),
-            'color': get_color_with_green_positive(percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            )),
-            'value': get_value(ag_data if beta else data, 'person_adolescent'),
-            'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
-            'format': 'percent_and_div',
-            'frequency': frequency
-        }
-        demographics_data['kpi'][-1].append(adolescent_girls)
-
     return demographics_data
 
 

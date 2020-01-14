@@ -7,7 +7,7 @@ from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
     phone_number_function
-from custom.icds_reports.const import ADOLESCENT_GIRLS_DATA_THRESHOLD, NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, \
+from custom.icds_reports.const import NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, \
     NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
@@ -362,7 +362,7 @@ class DemographicsExport(ExportableMixin):
                     'header': 'Number of adolescent girls 15 to 18 years old that are enrolled for services',
                     'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
                 }]
-        elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
+        else:
             columns += [
                 {
                     'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,

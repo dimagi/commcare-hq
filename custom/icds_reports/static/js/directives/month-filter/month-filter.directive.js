@@ -1,6 +1,6 @@
 /* global moment, _ */
 
-function MonthModalController($location, $uibModalInstance, dateHelperService, haveAccessToFeatures) {
+function MonthModalController($location, $uibModalInstance, dateHelperService) {
     var vm = this;
 
     vm.months = [];
@@ -9,18 +9,14 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
     vm.showMessage = false;
     var reportStartDates = {
         'sdd': new Date(2019, 1),
-        'adolescent_girls': new Date(2019, 3),
     };
 
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
-    var isAdolescentGirls =  $location.path().indexOf('demographics/adolescent_girls') !== -1;
 
     var startYear = 2017;
 
     if (isSDD) {
         startYear = reportStartDates['sdd'].getFullYear();
-    } else if (isAdolescentGirls && haveAccessToFeatures) {
-        startYear = reportStartDates['adolescent_girls'].getFullYear();
     }
 
 
@@ -51,15 +47,10 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
         vm.selectedYear = new Date().getFullYear();
     }
 
-    if (haveAccessToFeatures && isAdolescentGirls && fullselectedDate < reportStartDates['adolescent_girls']) {
-        vm.showAdolescentGirlMessage = true;
-        vm.selectedYear = new Date().getFullYear();
-    }
 
     var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
         vm.selectedMonth,
-        vm.monthsCopy,
-        haveAccessToFeatures);
+        vm.monthsCopy);
 
 
     vm.months = customMonths.months;
@@ -77,8 +68,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
 
         var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
             vm.selectedMonth,
-            vm.monthsCopy,
-            haveAccessToFeatures);
+            vm.monthsCopy);
 
         vm.months = customMonths.months;
         vm.selectedMonth = customMonths.selectedMonth;
@@ -89,7 +79,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, h
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService, haveAccessToFeatures) {
+function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService) {
     var vm = this;
 
     // used by mobile dashboard
@@ -150,16 +140,13 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
             vm.open();
         }
 
-        if (haveAccessToFeatures && $location.path().indexOf('demographics/adolescent_girls') !== -1 && selectedDate < new Date(2019, 3)) {
-            vm.open();
-        }
     };
 
     vm.init();
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService', 'haveAccessToFeatures'];
-MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService', 'haveAccessToFeatures'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService'];
+MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

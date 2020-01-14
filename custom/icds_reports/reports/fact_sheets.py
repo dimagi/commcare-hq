@@ -4,7 +4,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
 
-from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, ADOLESCENT_GIRLS_DATA_THRESHOLD, \
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, \
     NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
@@ -505,8 +505,9 @@ class FactSheetsReport(object):
             }
         ]
 
+        demographics_data_config = fact_sheet_data_config[4]['sections'][0]['rows_config']
         if not self.beta:
-            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend([
+            demographics_data_config.extend([
                 {
                     'data_source': 'AggAWCMonthlyDataSource',
                     'header': 'Adolescent girls (11-14 years)',
@@ -537,8 +538,8 @@ class FactSheetsReport(object):
                 }
             ]
             )
-        elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-            fact_sheet_data_config[4]['sections'][0]['rows_config'].extend(
+        else:
+            demographics_data_config.extend(
                 [
                     {
                         'data_source': 'AggAWCMonthlyDataSource',
