@@ -347,7 +347,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             context['report_table']['default_rows'] = 100
         if self.request.couch_user.is_staff:
             if not self.data_source._custom_query_provider:
-                context['queries'] = ','.join(self.data_source.data_source.get_query_strings())
+                context['queries'] = self.data_source.data_source.get_query_strings()
         return context
 
     def pop_report_builder_context_data(self):
