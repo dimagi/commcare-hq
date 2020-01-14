@@ -91,7 +91,7 @@
         "slug": "owner_id",
         "field": "owner_id",
         "choice_provider": {
-          "type": "owner"
+          "type": "location"
         },
         "display": "Owner Name"
       },
