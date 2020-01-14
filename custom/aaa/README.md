@@ -1,3 +1,12 @@
+# Current Status
+
+As said in the overview section, this directory contains a reporting dashboard for a pilot of an extension of CAS.
+It is no longer currently used in a production or test environment.
+All real production data associated with this project has been deleted.
+This is still in the repository for the team to showcase when discussing future steps for convergence (using QA test data).
+
+*To remove this* you should get sign-off of the Program Management team in the CAS division.
+
 # Overview
 
 This is a custom reporting dashboard for the AAA Convergence Pilot (sometimes known as REACH).

@@ -209,7 +209,11 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     @property
     def zip_name(self):
-        return 'commcare_v{}.ccz'.format(self.app.version)
+        return '{} - {} - v{}.ccz'.format(
+            self.app.domain,
+            self.app.name,
+            self.app.version,
+        )
 
     def check_before_zipping(self):
         if self.app.is_remote_app():
@@ -427,6 +431,8 @@ def download_index(request, domain, app_id):
         )
     enabled_build_profiles = []
     latest_enabled_build_profiles = {}
+    build_profiles = [{'id': build_profile_id, 'name': build_profile.name}
+                      for build_profile_id, build_profile in request.app.build_profiles.items()]
     if request.app.is_released and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
         enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
@@ -436,6 +442,7 @@ def download_index(request, domain, app_id):
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'supports_j2me': request.app.build_spec.supports_j2me(),
+        'build_profiles': build_profiles,
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
     })

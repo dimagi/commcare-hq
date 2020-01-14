@@ -39,7 +39,7 @@ MAX_FORMS_PER_MEMORIZED_CASE = 20
 MAX_FORMS_PER_DIFF = 1000
 
 
-class CaseDiffQueue(object):
+class CaseDiffQueue:
     """A queue that diffs cases when all relevant forms have been processed
 
     Cases in the queue are moved through the following phases:
@@ -352,7 +352,7 @@ def task_switch():
     gevent.sleep()
 
 
-class BatchProcessor(object):
+class BatchProcessor:
     """Process batches of items with a worker pool
 
     Each batch of items is retained until its processing job has
@@ -411,7 +411,7 @@ class BatchProcessor(object):
         return iter(self.batches.values())
 
 
-class CaseDiffProcess(object):
+class CaseDiffProcess:
     """Run CaseDiffQueue in a separate process"""
 
     def __init__(self, statedb, queue_class=CaseDiffQueue):
@@ -617,7 +617,7 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
-class NoCaseDiff(object):
+class NoCaseDiff:
 
     def __init__(self, statedb):
         pass
@@ -675,14 +675,16 @@ def diff_cases(couch_cases, statedb):
     case_ids = list(couch_cases)
     sql_cases = CaseAccessorSQL.get_cases(case_ids)
     sql_case_ids = set()
+    all_diffs = []
     for sql_case in sql_cases:
         sql_case_ids.add(sql_case.case_id)
         couch_case = couch_cases[sql_case.case_id]
         couch_case, diffs = diff_case(sql_case, couch_case, statedb)
-        statedb.replace_case_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+        all_diffs.append((couch_case['doc_type'], sql_case.case_id, diffs))
         counts[couch_case['doc_type']] += 1
 
-    diff_ledgers(case_ids, statedb)
+    all_diffs.extend(iter_ledger_diffs(case_ids))
+    statedb.replace_case_diffs(all_diffs)
 
     if len(case_ids) != len(sql_case_ids):
         couch_ids = set(case_ids)
@@ -702,6 +704,7 @@ def diff_case(sql_case, couch_case, statedb):
     diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
     diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
     if diffs and not sql_case.is_deleted:
+        # TODO rebuild SQL case with couch action order
         try:
             couch_case, diffs = rebuild_couch_case_and_re_diff(
                 couch_case, sql_case_json, statedb)
@@ -723,7 +726,7 @@ def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):
     return rebuilt_case_json, diffs
 
 
-def diff_ledgers(case_ids, statedb):
+def iter_ledger_diffs(case_ids):
     log.debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
     couch_state_map = {
         state.ledger_reference: state
@@ -733,9 +736,10 @@ def diff_ledgers(case_ids, statedb):
         couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
         couch_json = couch_state.to_json() if couch_state is not None else {}
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        statedb.add_diffs(
-            'stock state', ledger_value.ledger_reference.as_id(),
-            filter_ledger_diffs(diffs)
+        yield (
+            'stock state',
+            ledger_value.ledger_reference.as_id(),
+            filter_ledger_diffs(diffs),
         )
 
 
@@ -761,7 +765,7 @@ def is_orphaned_case(couch_case):
     return not any(references_case(x) for x in couch_case["xform_ids"])
 
 
-class CaseRecord(object):
+class CaseRecord:
 
     def __init__(self, case, stock_forms, processed_forms=0):
         self.id = case.case_id

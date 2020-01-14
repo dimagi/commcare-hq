@@ -7,7 +7,8 @@ from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
     phone_number_function
-
+from custom.icds_reports.const import ADOLESCENT_GIRLS_DATA_THRESHOLD, NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, \
+    NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
     table_name = 'agg_child_health_monthly'
@@ -57,7 +58,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '0' OR age_tranche = '6'": 'valid_in_month'},
+                    whens=[["age_tranche = '0' OR age_tranche = '6'", 'valid_in_month']],
                     alias='num_children_0_6mo_enrolled_for_services'
                 ),
                 slug='num_children_0_6mo_enrolled_for_services'
@@ -65,7 +66,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_6mo3yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'": 'valid_in_month'},
+                    whens=[["age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'", 'valid_in_month']],
                     alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
@@ -73,7 +74,7 @@ class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
                 SumWhen(
-                    whens={"age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'": 'valid_in_month'},
+                    whens=[["age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'", 'valid_in_month']],
                     alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'
@@ -181,9 +182,10 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
                 slug='num_children_0_6years_enrolled_for_services'
             ),
             DatabaseColumn(
-                'num_adolescent_girls_11yr14yr',
-                SumColumn('cases_person_adolescent_girls_11_14_all'),
-                slug='num_adolescent_girls_11yr14yr'
+                'num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr',
+                SumColumn('cases_person_adolescent_girls_11_14_all_v2' if self.beta else
+                          'cases_person_adolescent_girls_11_14_all'),
+                slug='num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr',
@@ -191,9 +193,12 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
                 slug='num_adolescent_girls_15yr18yr'
             ),
             DatabaseColumn(
+                'num_adolescent_girls_11yr14yr_oos' if self.beta else
                 'num_adolescent_girls_11yr14yr_enrolled_for_services',
-                SumColumn('cases_person_adolescent_girls_11_14'),
-                slug='num_adolescent_girls_11yr14yr_enrolled_for_services'
+                SumColumn('cases_person_adolescent_girls_11_14_out_of_school' if self.beta else
+                          'cases_person_adolescent_girls_11_14'),
+                slug='num_adolescent_girls_11yr14yr_oos' if self.beta else
+                'num_adolescent_girls_11yr14yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr_enrolled_for_services',
@@ -279,7 +284,7 @@ class DemographicsExport(ExportableMixin):
     @property
     def columns(self):
         columns = self.get_columns_by_loc_level
-        return columns + [
+        columns += [
             {
                 'header': 'Number of households',
                 'slug': 'num_households'
@@ -336,21 +341,41 @@ class DemographicsExport(ExportableMixin):
             {
                 'header': 'Number of children 3 to 6 years old enrolled for services',
                 'slug': 'num_children_3yr6yr_enrolled_for_services'
-            },
-            {
-                'header': 'Number of adolescent girls 11 to 14 years old',
-                'slug': 'num_adolescent_girls_11yr14yr'
-            },
-            {
-                'header': 'Number of adolescent girls 15 to 18 years old',
-                'slug': 'num_adolescent_girls_15yr18yr'
-            },
-            {
-                'header': 'Number of adolescent girls 11 to 14 years old that are enrolled for services',
-                'slug': 'num_adolescent_girls_11yr14yr_enrolled_for_services'
-            },
-            {
-                'header': 'Number of adolescent girls 15 to 18 years old that are enrolled for services',
-                'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
             }
         ]
+
+        if not self.beta:
+            columns += [
+                {
+                    'header': 'Number of adolescent girls 11 to 14 years old',
+                    'slug': 'num_adolescent_girls_11yr14yr'
+                },
+                {
+                    'header': 'Number of adolescent girls 15 to 18 years old',
+                    'slug': 'num_adolescent_girls_15yr18yr'
+                },
+                {
+                    'header': 'Number of adolescent girls 11 to 14 years old that are enrolled for services',
+                    'slug': 'num_adolescent_girls_11yr14yr_enrolled_for_services'
+                },
+                {
+                    'header': 'Number of adolescent girls 15 to 18 years old that are enrolled for services',
+                    'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
+                }]
+        elif self.config['month'] >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
+            columns += [
+                {
+                    'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
+                    'slug': 'num_adolescent_girls_11yr14yr_v2'
+                }, {
+                    'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
+                    'slug': 'num_adolescent_girls_11yr14yr_oos'
+                },
+                {
+                    'header': 'Number of adolescent girls 15 to 18 years old',
+                    'slug': 'num_adolescent_girls_15yr18yr'
+                }
+
+            ]
+
+        return columns

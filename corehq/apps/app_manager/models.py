@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -1202,11 +1202,6 @@ class FormBase(DocumentSchema):
             return key
         return format_key
 
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         try:
@@ -2336,13 +2331,6 @@ class ModuleDetailsMixin(object):
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -3042,7 +3030,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.requires_case() for form in self.forms)
+        return all(form.requires_case() for form in self.get_forms())
 
     @property
     def search_detail(self):
@@ -3064,7 +3052,7 @@ class AdvancedModule(ModuleBase):
         return AdvancedModuleValidator(self)
 
     def _uses_case_type(self, case_type, invert_match=False):
-        return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
+        return any(form.uses_case_type(case_type, invert_match) for form in self.get_forms())
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
@@ -4050,7 +4038,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return GlobalAppConfig.for_app(self)
+        return SQLGlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -4133,8 +4121,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
 
+    def heartbeat_url(self, build_profile_id=None):
+        return self.base_heartbeat_url + '?build_profile_id=%s' % (build_profile_id or '')
+
     @absolute_url_property
-    def heartbeat_url(self):
+    def base_heartbeat_url(self):
         return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
@@ -4508,7 +4499,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
-        del self.uses_master_app_form_ids
 
     @property
     def commcare_flavor(self):
@@ -4588,7 +4578,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
     def has_modules(self):
-        return len(self.modules) > 0 and not self.is_remote_app()
+        return len(self.get_modules()) > 0 and not self.is_remote_app()
 
     @property
     @memoized
@@ -4847,8 +4837,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
-
-        apk_heartbeat_url = self.heartbeat_url
+        apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
@@ -5060,7 +5049,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         raise ModuleNotFoundException(error)
 
     def get_report_modules(self):
-        for module in self.modules:
+        for module in self.get_modules():
             if isinstance(module, ReportModule):
                 yield module
 
@@ -5186,7 +5175,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         from_module = self.get_module_by_unique_id(from_module_uid)
         to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[from_index].pre_move_hook(from_module, to_module)
+            from_module.get_form(from_index).pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
@@ -5208,10 +5197,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def move_child_modules_after_parents(self):
         # This makes the module ordering compatible with the front-end display
         modules_by_parent_id = OrderedDict(
-            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+            (m.unique_id, [m]) for m in self.get_modules() if not m.root_module_id
         )
         orphaned_modules = []
-        for module in self.modules:
+        for module in self.get_modules():
             if module.root_module_id:
                 if module.root_module_id in modules_by_parent_id:
                     modules_by_parent_id[module.root_module_id].append(module)
@@ -5542,11 +5531,6 @@ class LinkedApplication(Application):
 
     SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
-    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
-    # from a bug years ago. These should be fixed when mobile can handle the change
-    # https://manage.dimagi.com/default.asp?283410
-    uses_master_app_form_ids = BooleanProperty(default=False)
-
     @property
     @memoized
     def domain_link(self):
@@ -5719,49 +5703,38 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
-class GlobalAppConfig(Document):
+class SQLGlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
+    domain = models.CharField(max_length=255, null=False)
+
     # this should be the unique id of the app (not of a versioned copy)
-    app_id = StringProperty()
-    domain = StringProperty()
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
 
-    # these let mobile prompt updates for application and APK
-    app_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-    apk_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-
-    # corresponding versions to which user should be prompted to update to
-    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
-    app_version = IntegerProperty(default=LATEST_APP_VALUE)
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
 
     @classmethod
     def for_app(cls, app):
-        """
-        Returns the actual config object for the app or an unsaved
-            default object
-        """
-        app_id = app.master_id
+        model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
+            'apk_version': LATEST_APK_VALUE,
+            'app_version': LATEST_APP_VALUE,
+        })
+        return model
 
-        res = cls.get_db().view(
-            "global_app_config_by_app_id/view",
-            key=[app_id, app.domain],
-            reduce=False,
-            include_docs=True,
-        ).one()
-
-        if res:
-            return cls(res['doc'])
-        else:
-            # return default config
-            return cls(app_id=app_id, domain=app.domain)
-
-    def save(self, *args, **kwargs):
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
-        super(GlobalAppConfig, self).save(*args, **kwargs)
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
+
+
+class GlobalAppConfig(Document):
+    pass
 
 
 class AppReleaseByLocation(models.Model):

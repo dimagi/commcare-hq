@@ -900,16 +900,16 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if map_changed:
             self.save()
 
-    def create_mapping(self, multimedia, form_path, save=True):
+    def create_mapping(self, multimedia, path, save=True):
         """
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
-        form_path = form_path.strip()
+        path = path.strip()
         map_item = HQMediaMapItem()
         map_item.multimedia_id = multimedia._id
-        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
+        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, path)
         map_item.media_type = multimedia.doc_type
-        self.multimedia_map[form_path] = map_item
+        self.multimedia_map[path] = map_item
 
         if save:
             try:

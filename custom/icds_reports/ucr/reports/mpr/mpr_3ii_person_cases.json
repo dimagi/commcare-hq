@@ -124,42 +124,46 @@
       {
         "display": "F_resident_count",
         "column_id": "F_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
-        }
+        "whens": [{
+          "type": "open_female_resident",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "M_resident_count",
         "column_id": "M_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
-        }
+        "whens": [{
+          "type": "open_male_resident",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "F_migrant_count",
         "column_id": "F_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident != 1": 1
-        }
+        "whens": [{
+          "type": "open_female_migrant",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "M_migrant_count",
         "column_id": "M_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1": 1
-        }
+        "whens": [{
+          "type": "open_male_migrant",
+          "binds": [],
+          "then": 1
+        }]
       }
     ],
     "sort_expression": [],

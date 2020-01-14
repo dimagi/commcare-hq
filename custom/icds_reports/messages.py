@@ -124,6 +124,12 @@ def percent_adolescent_girls_enrolled_help_text():
         "the percentage of girls enrolled for Anganwadi Services"
     )
 
+def percent_adolescent_girls_enrolled_help_text_v2():
+    return _(
+        "Of the total number of adolescent girls (aged 11-14 years), "
+        "the percentage of adolescent girls who are out of school"
+    )
+
 
 def awcs_reported_clean_drinking_water_help_text():
     return _(
@@ -175,4 +181,18 @@ def lady_supervisor_number_of_beneficiaries_visited_help_text():
 def lady_supervisor_number_of_vhnds_observed_help_text():
     return _(
         'Number of VHSND observed: Number of VHSND observed by LS in the current month'
+    )
+
+
+def awcs_reported_infantometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having an Infantometer. '
+    )
+
+
+def awcs_reported_stadiometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having a Stadiometer. '
     )

@@ -155,10 +155,10 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 38,
             "format": "percent_and_div",
             "color": "red",
-            "percent": 0.0,
+            "percent": -1.1080332409972364,
             "value": 34,
             "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "month",
@@ -312,7 +312,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 38,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
@@ -469,7 +469,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 38,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,

@@ -4,17 +4,16 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
-TABLE_NAME = "icds_dashboard_growth_monitoring_forms"
-INDEX_NAME = "icds_dashboard_growth_monitoring_forms_month_59c07619"
-COLUMNS = ['month']
-
-CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
-    INDEX_NAME, TABLE_NAME, ','.join(COLUMNS)
-)
-DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY {}".format(INDEX_NAME)
+from custom.icds_reports.utils.migrations import create_index_migration
 
 
 class Migration(migrations.Migration):
+    table_name = "icds_dashboard_growth_monitoring_forms"
+    index_name = "icds_dashboard_growth_monitoring_forms_month_59c07619"
+    columns = ['month']
+
+    create_index_sql, drop_index_sql = create_index_migration(table_name, index_name, columns)
+
     atomic = False
 
     dependencies = [
@@ -23,8 +22,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql=CREATE_INDEX_SQL,
-            reverse_sql=DROP_INDEX_SQL,
+            sql=create_index_sql,
+            reverse_sql=drop_index_sql,
             state_operations=[
                 migrations.AlterField(
                     model_name='aggregategrowthmonitoringforms',

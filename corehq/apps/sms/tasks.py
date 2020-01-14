@@ -40,7 +40,6 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     DailyOutboundSMSLimitReached,
-    MigrationStatus,
     PhoneLoadBalancingMixin,
     PhoneNumber,
     QueuedSMS,
@@ -49,7 +48,6 @@ from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
@@ -457,11 +455,6 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
-        except DataError:
-            from corehq.util.soft_assert import soft_assert
-            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(len(msg.domain) < 25, "Domain name too long: " + msg.domain)
-            raise
 
 
 @no_result_task(serializer='pickle', queue='background_queue', acks_late=True)

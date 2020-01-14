@@ -30,7 +30,7 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
     )
 
 
-def _update_existing_tech_issue_delegate(tech_issue_delegate):
+def _update_existing_tech_issue_delegate(tech_issue_delegate, owner_id):
     if tech_issue_delegate.get_case_property('change_in_level') == '1':
         change_in_level = '2'
     else:
@@ -43,6 +43,7 @@ def _update_existing_tech_issue_delegate(tech_issue_delegate):
         close=False,
         xmlns=AUTO_UPDATE_XMLNS,
         device_id=__name__ + "._update_existing_tech_issue_delegate",
+        owner_id=owner_id,
     )
 
 
@@ -63,11 +64,11 @@ def _update_tech_issue_for_escalation(case, escalated_ticket_level):
     )
 
 
-def _get_escalated_tech_issue_delegate(tech_issue, escalated_location_id):
+def _get_escalated_tech_issue_delegate(tech_issue, location_id):
     for subcase in tech_issue.get_subcases(index_identifier='parent'):
         if (
             subcase.type == 'tech_issue_delegate' and
-            subcase.owner_id == escalated_location_id and
+            subcase.owner_id == location_id and
             not subcase.closed
         ):
             return subcase
@@ -85,6 +86,12 @@ def escalate_tech_issue(case, rule):
         'district': 'state',
     }
 
+    current_location_id_map = {
+        'supervisor': case.get_case_property('supervisor_location_id'),
+        'block': case.get_case_property('block_location_id'),
+        'district': case.get_case_property('district_location_id'),
+    }
+
     escalated_location_id_map = {
         'supervisor': case.get_case_property('block_location_id'),
         'block': case.get_case_property('district_location_id'),
@@ -93,6 +100,7 @@ def escalate_tech_issue(case, rule):
 
     current_ticket_level = case.get_case_property('ticket_level')
     escalated_ticket_level = escalated_ticket_level_map.get(current_ticket_level)
+    current_location_id = current_location_id_map.get(current_ticket_level)
     escalated_location_id = escalated_location_id_map.get(current_ticket_level)
 
     if not escalated_ticket_level or not escalated_location_id:
@@ -103,10 +111,10 @@ def escalate_tech_issue(case, rule):
 
     num_creates = 0
     num_related_updates = 0
-    tech_issue_delegate = _get_escalated_tech_issue_delegate(case, escalated_location_id)
+    tech_issue_delegate = _get_escalated_tech_issue_delegate(case, current_location_id)
 
     if tech_issue_delegate:
-        delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate)
+        delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate, escalated_location_id)
         rule.log_submission(delegate_update_result[0].form_id)
         num_related_updates = 1
     else:

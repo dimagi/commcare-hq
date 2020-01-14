@@ -45,12 +45,7 @@ def handle(verified_contact, text, msg):
         return False
 
     try:
-        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain_obj.name):
-            # handle special stock parser for custom domain logic
-            data = StockAndReceiptParser(domain_obj, verified_contact).parse(text.lower())
-        else:
-            # default report parser
-            data = StockReportParser(domain_obj, verified_contact).parse(text.lower())
+        data = StockReportParser(domain_obj, verified_contact).parse(text.lower())
         if not data:
             return False
     except NotAUserClassError:
@@ -222,103 +217,6 @@ class StockReportParser(object):
             'location': self.location,
             'transactions': tx,
         }
-
-
-class StockAndReceiptParser(StockReportParser):
-    """
-    This parser (originally written for EWS) allows
-    a slightly different requirement for SMS formats,
-    this class exists to break that functionality
-    out of the default SMS handler to live in the ewsghana
-
-    They send messages of the format:
-
-        'nets 100.22'
-
-    In this example, the data reflects:
-
-        nets = product sms code
-        100 = the facility stating that they have 100 nets
-        20 = the facility stating that they received 20 in this period
-
-    There is some duplication here, but it felt better to
-    add duplication instead of complexity. The goal is to
-    override only the couple methods that required modifications.
-    """
-
-    ALLOWED_KEYWORDS = ['join', 'help']
-
-    def looks_like_prod_code(self, code):
-        """
-        Special for EWS, this version doesn't consider "10.20"
-        as an invalid quantity.
-        """
-        try:
-            float(code)
-            return False
-        except ValueError:
-            return True
-
-    def parse(self, text):
-        args = text.split()
-
-        if len(args) == 0:
-            return None
-
-        if args[0].lower() in self.ALLOWED_KEYWORDS:
-            return None
-
-        if not self.location:
-            self.case, self.location = self.get_supply_point_and_location(args[0])
-            args = args[1:]
-
-        self.verify_location_registration()
-        self.case_id = self.case.case_id
-        action = self.commtrack_settings.action_by_keyword('soh')
-        _tx = self.single_action_transactions(action, args)
-
-        return self.unpack_transactions(_tx)
-
-    def single_action_transactions(self, action, args):
-        products = []
-        for arg in args:
-            if self.looks_like_prod_code(arg):
-                products.append(self.product_from_code(arg))
-            else:
-                if not products:
-                    raise SMSError('quantity "%s" doesn\'t have a product' % arg)
-                if len(products) > 1:
-                    raise SMSError('missing quantity for product "%s"' % products[-1].code)
-
-                # NOTE also custom code here, must be formatted like 11.22
-                if re.compile(r"^\d+\.\d+$").match(arg):
-                    value = arg
-                else:
-                    raise SMSError('could not understand product quantity "%s"' % arg)
-
-                for product in products:
-                    # for EWS we have to do two transactions, one being a receipt
-                    # and second being a transaction (that's reverse of the order
-                    # the user provides them)
-                    yield StockTransactionHelper(
-                        domain=self.domain.name,
-                        location_id=self.location.location_id,
-                        case_id=self.case_id,
-                        product_id=product.product_id,
-                        action=const.StockActions.RECEIPTS,
-                        quantity=Decimal(value.split('.')[1])
-                    )
-                    yield StockTransactionHelper(
-                        domain=self.domain.name,
-                        location_id=self.location.location_id,
-                        case_id=self.case_id,
-                        product_id=product.product_id,
-                        action=const.StockActions.STOCKONHAND,
-                        quantity=Decimal(value.split('.')[0])
-                    )
-                products = []
-        if products:
-            raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
 
 def verify_transaction_cases(transactions):

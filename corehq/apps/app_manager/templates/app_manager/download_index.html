@@ -53,6 +53,15 @@
   {% endif %}
 {% endblock %}
 
+{% block mm_block %}
+  {% initial_page_data 'app_id' app.id %}
+  {% initial_page_data 'build_profiles' build_profiles %}
+  <h2>{% trans 'Multimedia Sizes' %}</h2>
+  {% include 'app_manager/partials/build_profiles_select.html' %}
+  <div id="multimedia-sizes-container" class="ko-template">
+    {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+  </div>
+{% endblock %}
 {% block downloads %}
   <h2>Downloads</h2>
   <table class="table table-condensed">

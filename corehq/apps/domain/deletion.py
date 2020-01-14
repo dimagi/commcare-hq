@@ -26,7 +26,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
@@ -159,8 +158,7 @@ def _delete_all_forms(domain_name):
 
 
 def _delete_data_files(domain_name):
-    db = get_db_alias_for_partitioned_doc(domain_name)
-    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.using(db).filter(
+    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
         parent_id=domain_name,
         type_code=CODES.data_file,
     )))
@@ -212,6 +210,10 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('form_processor', _delete_all_cases),
     CustomDeletion('form_processor', _delete_all_forms),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain'),
+    ModelDeletion('app_manager', 'AppReleaseByLocation', 'domain'),
+    ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
+    ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
+    ModelDeletion('app_manager', 'SQLGlobalAppConfig', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
@@ -247,10 +249,8 @@ DOMAIN_DELETE_OPERATIONS = [
 ]
 
 
-def apply_deletion_operations(domain_name, dynamic_operations):
-    all_ops = dynamic_operations or []
-    all_ops.extend(DOMAIN_DELETE_OPERATIONS)
-    raw_ops, model_ops = _split_ops_by_type(all_ops)
+def apply_deletion_operations(domain_name):
+    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
 
     with connection.cursor() as cursor:
         for op in raw_ops:

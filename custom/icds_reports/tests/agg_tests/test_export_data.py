@@ -168,7 +168,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -202,7 +202,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -236,7 +236,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -271,7 +271,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -304,7 +304,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -337,7 +337,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -370,7 +370,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -403,7 +403,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -436,7 +436,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -469,7 +469,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -613,11 +613,11 @@ class TestExportData(TestCase):
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0]
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 8, 0, 0, 0]
                 ]],
                 [
                     'Export Info',
@@ -2241,7 +2241,7 @@ class TestExportData(TestCase):
                     ['Disclaimer',
                      'The information in the report is based on the self-reported '
                      'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data syncs.']
+                     ' and is subject to timely data submissions.']
                 ]
              ]
         ]

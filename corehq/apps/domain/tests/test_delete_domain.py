@@ -33,6 +33,12 @@ from corehq.apps.aggregate_ucrs.models import (
     SecondaryColumn,
     SecondaryTableDefinition,
 )
+from corehq.apps.app_manager.models import (
+    AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
+    SQLGlobalAppConfig,
+)
+from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverride
 from corehq.apps.case_importer.tracking.models import (
     CaseUploadFormRecord,
     CaseUploadRecord,
@@ -43,6 +49,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
@@ -52,6 +59,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -406,6 +414,38 @@ class TestDeleteDomain(TestCase):
             CaseUploadFormRecord.objects.filter(case_upload_record__domain=self.domain2.name).count(),
             1
         )
+
+    def _assert_app_manager_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            AppReleaseByLocation.objects.filter(domain=domain_name),
+            LatestEnabledBuildProfiles.objects.filter(domain=domain_name),
+            SQLGlobalAppConfig.objects.filter(domain=domain_name),
+            ResourceOverride.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_app_manager(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            location = make_location(
+                domain=domain_name,
+                site_code='testcode',
+                name='test',
+                location_type='facility'
+            )
+            location.save()
+            AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
+                                                version=23, location=location)
+            LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456', version=10)
+            SQLGlobalAppConfig.objects.create(domain=domain_name, app_id='123')
+            ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
+                                            pre_id='456', post_id='789')
+            self._assert_app_manager_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_app_manager_counts(self.domain.name, 0)
+        self._assert_app_manager_counts(self.domain2.name, 1)
+
+        location.delete()
 
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -782,6 +822,11 @@ class TestDeleteDomain(TestCase):
 
         self._assert_couchforms_counts(self.domain.name, 0)
         self._assert_couchforms_counts(self.domain2.name, 1)
+
+    def test_delete_commtrack_config(self):
+        CommtrackConfig(domain=self.domain.name).save()
+        self.domain.delete()
+        self.assertEqual(len(get_docs_in_domain_by_class(self.domain.name, CommtrackConfig)), 0)
 
     def tearDown(self):
         self.domain2.delete()

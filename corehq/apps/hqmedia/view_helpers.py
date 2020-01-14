@@ -1,4 +1,5 @@
 from collections import defaultdict
+import openpyxl
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -6,6 +7,9 @@ from django.utils.translation import ugettext as _
 from lxml import etree
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+from corehq.apps.translations.app_translations.download import get_bulk_app_single_sheet_by_name
+from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
+from corehq.apps.translations.const import SINGLE_SHEET_NAME
 
 
 def download_multimedia_paths_rows(app, only_missing=False):
@@ -106,3 +110,72 @@ def update_multimedia_paths(app, paths):
                                  "{} > {}".format(module.default_name(), form.default_name())))
 
     return successes
+
+
+def download_audio_translator_files(domain, app, lang, eligible_for_transifex_only=True):
+    # Get bulk app translation single sheet data
+    headers = get_bulk_app_sheet_headers(app, single_sheet=True, lang=lang,
+                                         eligible_for_transifex_only=eligible_for_transifex_only)
+    headers = headers[0]    # There's only one row since these are the headers for the single-sheet format
+    headers = headers[1]    # Drop the first element (sheet name), leaving the second (list of header names)
+    audio_text_index = headers.index('default_' + lang)
+    audio_path_index = headers.index('audio_' + lang)
+    sheets = get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=True)
+    audio_rows = [row for row in sheets[SINGLE_SHEET_NAME] if row[audio_path_index]]
+
+    # Create file for re-upload to HQ's bulk app translations
+    upload_workbook = openpyxl.Workbook()
+    upload_sheet = upload_workbook.worksheets[0]
+    upload_sheet.title = SINGLE_SHEET_NAME
+    upload_sheet.append(headers)
+
+    # Create dict of audio path to text, and disambiguate any missing path that points to multiple texts
+    rows_by_audio = {}
+    for row in audio_rows:
+        audio_path = row[audio_path_index]
+        text = row[audio_text_index]
+        if audio_path in rows_by_audio and audio_path not in app.multimedia_map:
+            if rows_by_audio[audio_path] != text:
+                extension = "." + audio_path.split(".")[-1]
+                not_extension = audio_path[:-len(extension)]
+                suffix = 1
+                while audio_path in rows_by_audio and rows_by_audio[audio_path] != text:
+                    suffix += 1
+                    audio_path = "{}_{}{}".format(not_extension, suffix, extension)
+                row[audio_path_index] = audio_path
+                upload_sheet.append(row)    # add new path to sheet for re-upload to HQ
+        rows_by_audio[audio_path] = text
+
+    # Create dict of rows, keyed by label text to de-duplicate paths
+    rows_by_text = defaultdict(list)
+    for row in audio_rows:
+        rows_by_text[row[audio_text_index]].append(row)
+
+    def _get_filename_from_duplicate_rows(rows):
+        return rows[0][audio_path_index]
+
+    # Add a row to upload sheet for each filename being eliminated because the text was duplicated
+    for text, rows in rows_by_text.items():
+        filename = _get_filename_from_duplicate_rows(rows)
+        for row in rows:
+            if row[audio_path_index] != filename:
+                row[audio_path_index] = filename
+                upload_sheet.append(row)
+
+    # Create file for translato, with a row for each unique text label
+    translator_workbook = openpyxl.Workbook()
+    sheet0 = translator_workbook.worksheets[0]
+    sheet0.title = "filepaths"
+    sheet0.append([lang, "audio"])
+    sheet1 = translator_workbook.create_sheet("verification")
+    sheet1.append(headers)
+    for text, rows in rows_by_text.items():
+        if not any([row[audio_path_index] in app.multimedia_map for row in rows]):
+            filename = _get_filename_from_duplicate_rows(rows)
+            sheet0.append([text, filename])
+            sheet1.append(rows[0])
+
+    return {
+        "bulk_upload.xlsx": upload_workbook,
+        "excel_for_translator.xlsx": translator_workbook,
+    }

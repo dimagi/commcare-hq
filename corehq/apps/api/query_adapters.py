@@ -67,35 +67,11 @@ class WrappedUser(CommCareUser):
     @classmethod
     def wrap(cls, data):
         self = super().wrap(data)
-        self._group_ids = data['__group_ids']
+        self._group_ids = sorted(data['__group_ids'])
         return self
 
     def get_group_ids(self):
         return self._group_ids
-
-
-class GroupQuerySetAdapterCouch(object):
-    def __init__(self, domain):
-        self.domain = domain
-
-    def count(self):
-        return get_doc_count_in_domain_by_class(self.domain, Group)
-
-    def __getitem__(self, item):
-        if isinstance(item, slice):
-            limit = item.stop - item.start
-            groups = get_docs_in_domain_by_class(self.domain, Group, limit=limit, skip=item.start)
-        else:
-            raise ValueError(
-                'Invalid type of argument. Item should be an instance of slice class.')
-
-        for group in groups:
-            # precompute the return value of get_users_ids here
-            # so that all the work happens here instead of in an external hidden step
-            # Not any faster, but brings it more under our direct control for optimization
-            group._precomputed_active_users = group.get_user_ids()
-            group.__class__ = WrappedGroup
-        return groups
 
 
 class GroupQuerySetAdapterES(object):
