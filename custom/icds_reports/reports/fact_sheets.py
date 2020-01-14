@@ -498,70 +498,31 @@ class FactSheetsReport(object):
                                 'slug': 'four',
                                 'average': [],
 
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
+                                'slug': 'cases_person_adolescent_girls_11_14_all_v2',
+                                'average': [],
+
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
+                                'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (15-18 years)',
+                                'slug': 'cases_person_adolescent_girls_15_18_all',
+                                'average': []
                             }
                         ]
                     },
                 ]
             }
         ]
-
-        demographics_data_config = fact_sheet_data_config[4]['sections'][0]['rows_config']
-        if not self.beta:
-            demographics_data_config.extend([
-                {
-                    'data_source': 'AggAWCMonthlyDataSource',
-                    'header': 'Adolescent girls (11-14 years)',
-                    'slug': 'cases_person_adolescent_girls_11_14_all',
-                    'average': [],
-
-                },
-                {
-                    'data_source': 'AggAWCMonthlyDataSource',
-                    'header': 'Adolescent girls (15-18 years)',
-                    'slug': 'cases_person_adolescent_girls_15_18_all',
-                    'average': [],
-
-                },
-                {
-                    'data_source': 'AggAWCMonthlyDataSource',
-                    'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
-                    'slug': 'cases_person_adolescent_girls_11_14',
-                    'average': [],
-
-                },
-                {
-                    'data_source': 'AggAWCMonthlyDataSource',
-                    'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
-                    'slug': 'cases_person_adolescent_girls_15_18',
-                    'average': [],
-
-                }
-            ]
-            )
-        else:
-            demographics_data_config.extend(
-                [
-                    {
-                        'data_source': 'AggAWCMonthlyDataSource',
-                        'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
-                        'slug': 'cases_person_adolescent_girls_11_14_all_v2',
-                        'average': [],
-
-                    },
-                    {
-                        'data_source': 'AggAWCMonthlyDataSource',
-                        'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
-                        'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
-                        'average': []
-                    },
-                    {
-                        'data_source': 'AggAWCMonthlyDataSource',
-                        'header': 'Adolescent girls (15-18 years)',
-                        'slug': 'cases_person_adolescent_girls_15_18_all',
-                        'average': []
-                    }
-                ]
-            )
 
         return fact_sheet_data_config
 

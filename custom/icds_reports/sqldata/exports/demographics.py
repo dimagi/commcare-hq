@@ -182,10 +182,9 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
                 slug='num_children_0_6years_enrolled_for_services'
             ),
             DatabaseColumn(
-                'num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr',
-                SumColumn('cases_person_adolescent_girls_11_14_all_v2' if self.beta else
-                          'cases_person_adolescent_girls_11_14_all'),
-                slug='num_adolescent_girls_11yr14yr_v2' if self.beta else 'num_adolescent_girls_11yr14yr'
+                'num_adolescent_girls_11yr14yr_v2',
+                SumColumn('cases_person_adolescent_girls_11_14_all_v2'),
+                slug='num_adolescent_girls_11yr14yr_v2'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr',
@@ -193,12 +192,9 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
                 slug='num_adolescent_girls_15yr18yr'
             ),
             DatabaseColumn(
-                'num_adolescent_girls_11yr14yr_oos' if self.beta else
-                'num_adolescent_girls_11yr14yr_enrolled_for_services',
-                SumColumn('cases_person_adolescent_girls_11_14_out_of_school' if self.beta else
-                          'cases_person_adolescent_girls_11_14'),
-                slug='num_adolescent_girls_11yr14yr_oos' if self.beta else
-                'num_adolescent_girls_11yr14yr_enrolled_for_services'
+                'num_adolescent_girls_11yr14yr_oos',
+                SumColumn('cases_person_adolescent_girls_11_14_out_of_school'),
+                slug='num_adolescent_girls_11yr14yr_oos'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr_enrolled_for_services',
@@ -283,8 +279,7 @@ class DemographicsExport(ExportableMixin):
 
     @property
     def columns(self):
-        columns = self.get_columns_by_loc_level
-        columns += [
+        return self.get_columns_by_loc_level + [
             {
                 'header': 'Number of households',
                 'slug': 'num_households'
@@ -341,41 +336,16 @@ class DemographicsExport(ExportableMixin):
             {
                 'header': 'Number of children 3 to 6 years old enrolled for services',
                 'slug': 'num_children_3yr6yr_enrolled_for_services'
+            },
+            {
+                'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
+                'slug': 'num_adolescent_girls_11yr14yr_v2'
+            }, {
+                'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
+                'slug': 'num_adolescent_girls_11yr14yr_oos'
+            },
+            {
+                'header': 'Number of adolescent girls 15 to 18 years old',
+                'slug': 'num_adolescent_girls_15yr18yr'
             }
         ]
-
-        if not self.beta:
-            columns += [
-                {
-                    'header': 'Number of adolescent girls 11 to 14 years old',
-                    'slug': 'num_adolescent_girls_11yr14yr'
-                },
-                {
-                    'header': 'Number of adolescent girls 15 to 18 years old',
-                    'slug': 'num_adolescent_girls_15yr18yr'
-                },
-                {
-                    'header': 'Number of adolescent girls 11 to 14 years old that are enrolled for services',
-                    'slug': 'num_adolescent_girls_11yr14yr_enrolled_for_services'
-                },
-                {
-                    'header': 'Number of adolescent girls 15 to 18 years old that are enrolled for services',
-                    'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
-                }]
-        else:
-            columns += [
-                {
-                    'header': NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS,
-                    'slug': 'num_adolescent_girls_11yr14yr_v2'
-                }, {
-                    'header': NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
-                    'slug': 'num_adolescent_girls_11yr14yr_oos'
-                },
-                {
-                    'header': 'Number of adolescent girls 15 to 18 years old',
-                    'slug': 'num_adolescent_girls_15yr18yr'
-                }
-
-            ]
-
-        return columns

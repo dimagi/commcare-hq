@@ -90,13 +90,12 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             prev_data = get_data_for(AggAwcMonthly, config)
             frequency = 'month'
 
-    if beta:
-        if 'date' in config:
-            del config['date']
-        config['month'] = current_month
-        ag_data = get_adolescent_girls_data(domain, config, show_test)
-        config['month'] = previous_month
-        ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
+    if 'date' in config:
+        del config['date']
+    config['month'] = current_month
+    ag_data = get_adolescent_girls_data(domain, config, show_test)
+    config['month'] = previous_month
+    ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
 
     demographics_data = {
         'records': [
@@ -187,23 +186,22 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'demographics/lactating_enrolled_women'
                 },
                 {
-                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
-                               ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-                    'help_text': percent_adolescent_girls_enrolled_help_text_v2() if beta else percent_adolescent_girls_enrolled_help_text(),
+                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS),
+                    'help_text': percent_adolescent_girls_enrolled_help_text_v2(),
                     'percent': percent_diff(
                         'person_adolescent',
-                        ag_data if beta else data,
-                        ag_data_prev_data if beta else prev_data,
+                        ag_data,
+                        ag_data_prev_data,
                         'person_adolescent_all'
                     ),
                     'color': get_color_with_green_positive(percent_diff(
                         'person_adolescent',
-                        ag_data if beta else data,
-                        ag_data_prev_data if beta else prev_data,
+                        ag_data,
+                        ag_data_prev_data,
                         'person_adolescent_all'
                     )),
-                    'value': get_value(ag_data if beta else data, 'person_adolescent'),
-                    'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
+                    'value': get_value(ag_data, 'person_adolescent'),
+                    'all': get_value(ag_data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
                     'redirect': 'demographics/adolescent_girls'
