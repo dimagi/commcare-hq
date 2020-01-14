@@ -63,7 +63,7 @@ This should contain:
 
 Once this PR is deployed, run the migration command in any environments where it's likely to take more than a trivial amoount of time.
 
-`Sample PR 1 <https://github.com/dimagi/commcare-hq/pull/26025>`_ - note that this PR does not split the migration out as a management command but instead
+`Sample PR 1 <https://github.com/dimagi/commcare-hq/pull/26025>`_ - note that this PR does not split the migration out as a management command.
 
 PR 2: Verify migration and read from SQL
 ****
