@@ -600,24 +600,6 @@ class AggAwcMonthly(models.Model):
     cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
 
-    valid_all_0_3_female = models.IntegerField(blank=True, null=True)
-    valid_all_0_3_male = models.IntegerField(blank=True, null=True)
-    open_all_0_3_female = models.IntegerField(blank=True, null=True)
-    open_all_0_3_male = models.IntegerField(blank=True, null=True)
-    valid_all_3_6_female = models.IntegerField(blank=True, null=True)
-    valid_all_3_6_male = models.IntegerField(blank=True, null=True)
-    open_all_3_6_female = models.IntegerField(blank=True, null=True)
-    open_all_3_6_male = models.IntegerField(blank=True, null=True)
-
-    valid_reg_in_month_0_3_female = models.IntegerField(blank=True, null=True)
-    valid_reg_in_month_0_3_male = models.IntegerField(blank=True, null=True)
-    open_reg_in_month_0_3_male = models.IntegerField(blank=True, null=True)
-    open_reg_in_month_0_3_female = models.IntegerField(blank=True, null=True)
-    valid_reg_in_month_3_6_female = models.IntegerField(blank=True, null=True)
-    valid_reg_in_month_3_6_male = models.IntegerField(blank=True, null=True)
-    open_reg_in_month_3_6_male = models.IntegerField(blank=True, null=True)
-    open_reg_in_month_3_6_female = models.IntegerField(blank=True, null=True)
-
     class Meta(object):
         app_label = 'icds_reports'
         managed = False

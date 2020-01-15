@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0160_added_gov_Dashboard_child_cols'),
+        ('icds_reports', '0161_added_gov_Dashboard_child_cols'),
     ]
 
     operations = [

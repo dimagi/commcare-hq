@@ -44,8 +44,8 @@ def get_home_visit_data(length, year, month, order, query_filters):
     return data_rows, data.count()
 
 
-@icds_quickcache(['year', 'month', 'order', 'query_filters'], timeout=30 * 60)
-def get_beneficiary_data(start, length, year, month, order, query_filters):
+@icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
+def get_beneficiary_data(length, year, month, order, query_filters):
     data = AggGovernanceDashboard.objects.filter(
         month=date(year, month, 1),
         **query_filters
