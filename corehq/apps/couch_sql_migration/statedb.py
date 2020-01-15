@@ -17,6 +17,7 @@ from sqlalchemy import (
     and_,
     bindparam,
     func,
+    literal_column,
     or_,
 )
 from sqlalchemy.event import listen
@@ -225,12 +226,14 @@ class StateDB(DiffDB):
 
     def iter_case_ids_with_diffs(self):
         STOCK_STATE = "stock state"
-        query = self.Session().query(Diff.doc_id, Diff.kind).filter(or_(
+        session = self.Session()
+        last_diff_id = session.query(func.max(Diff.id)).scalar()
+        query = session.query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
             Diff.kind == "CommCareCase",
             Diff.kind == STOCK_STATE,
-        ))
+        ), Diff.id <= last_diff_id)
         seen = set()
-        for case_id, kind in iter_large(query, Diff.id):
+        for diff_id, case_id, kind in iter_large(query, Diff.id):
             if kind == STOCK_STATE:
                 assert case_id.count("/") == 2, case_id
                 case_id = case_id.split("/", 1)[0]
@@ -239,11 +242,17 @@ class StateDB(DiffDB):
                 yield case_id
 
     def count_case_ids_with_diffs(self):
-        # approximation, does not include ledger diff case ids
+        case_id_expr = literal_column("""
+            case kind
+                when 'stock state' then substr(doc_id, instr(doc_id, '/'), -100)
+                else doc_id
+            end as n_docs
+        """)
         with self.session() as session:
-            return session.query(Diff.doc_id).filter(
+            return session.query(case_id_expr).filter(or_(
                 Diff.kind == "CommCareCase",
-            ).distinct().count()
+                Diff.kind == "stock state",
+            )).distinct().count()
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms

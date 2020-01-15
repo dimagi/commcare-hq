@@ -12,8 +12,11 @@ import attr
 
 from dimagi.utils.chunked import chunked
 
+from casexml.apps.stock.models import StockTransaction
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.backends.couch.processor import FormProcessorCouch
@@ -36,6 +39,7 @@ from ...diff import filter_case_diffs, filter_ledger_diffs
 from ...parallel import Pool
 from ...rebuildcase import (
     is_action_order_equal,
+    rebuild_case,
     rebuild_case_with_couch_action_order,
     was_rebuilt,
 )
@@ -277,9 +281,13 @@ def diff_case(sql_case, couch_case):
             couch_case["domain"], couch_case['_id'], None, save=False, lock=False
         ).to_json()
         diffs = diff(couch_case, sql_json)
-        if diffs and should_sort_sql_transactions(sql_case, couch_case):
-            sql_case = rebuild_case_with_couch_action_order(sql_case)
-            diffs = diff(couch_case, sql_case.to_json())
+        if diffs:
+            if should_sort_sql_transactions(sql_case, couch_case):
+                sql_case = rebuild_case_with_couch_action_order(sql_case)
+                diffs = diff(couch_case, sql_case.to_json())
+            elif not was_rebuilt(sql_case):
+                sql_case = rebuild_case(sql_case)
+                diffs = diff(couch_case, sql_case.to_json())
     return diffs
 
 
@@ -295,12 +303,46 @@ def iter_ledger_diffs(case_ids):
         state.ledger_reference: state
         for state in StockState.objects.filter(case_id__in=case_ids)
     }
+    sql_refs = set()
     for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
-        couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-        couch_json = couch_state.to_json() if couch_state is not None else {}
+        ref = ledger_value.ledger_reference
+        sql_refs.add(ref)
+        couch_state = couch_state_map.get(ref, None)
+        if couch_state is None:
+            couch_json = get_stock_state_json(ledger_value)
+        else:
+            couch_json = couch_state.to_json()
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        ref_id = ledger_value.ledger_reference.as_id()
-        yield "stock state", ref_id, filter_ledger_diffs(diffs)
+        yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+    for ref, couch_state in couch_state_map.items():
+        if ref not in sql_refs:
+            diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
+            yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+
+
+def get_stock_state_json(sql_ledger):
+    """Build stock state JSON from latest transaction
+
+    Returns empty dict if stock transactions do not exist.
+    """
+    # similar to StockTransaction.latest(), but more efficient
+    transactions = list(StockTransaction.get_ordered_transactions_for_stock(
+        sql_ledger.case_id,
+        sql_ledger.section_id,
+        sql_ledger.product_id,
+    ).select_related("report")[:1])
+    if not transactions:
+        return {}
+    transaction = transactions[0]
+    return StockState(
+        case_id=sql_ledger.case_id,
+        section_id=sql_ledger.section_id,
+        product_id=sql_ledger.product_id,
+        sql_location=SQLLocation.objects.get_or_None(supply_point_id=sql_ledger.case_id),
+        last_modified_date=transaction.report.server_date,
+        last_modified_form_id=transaction.report.form_id,
+        stock_on_hand=transaction.stock_on_hand,
+    ).to_json()
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids):
