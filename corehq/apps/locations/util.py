@@ -6,6 +6,7 @@ from memoized import memoized
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
+from django.db.models import Q
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
@@ -117,10 +118,12 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, headers_only=False, async_task=None):
+    def __init__(self, domain, include_consumption=False, root_location_id=None,
+                 headers_only=False, async_task=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
+        self.root_location_id = root_location_id
         self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
@@ -211,6 +214,11 @@ class LocationExporter(object):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
         if self.headers_only:
             query = SQLLocation.objects.none()
+        elif self.root_location_id:
+            root_location = SQLLocation.objects.get(location_id=self.root_location_id)
+            query = SQLLocation.active_objects.get_descendants(
+                Q(domain=self.domain, id=root_location.id)
+            ).filter(location_type=location_type)
         else:
             query = SQLLocation.active_objects.filter(
                 domain=self.domain,
@@ -272,8 +280,8 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption, headers_only, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption,
+def dump_locations(domain, download_id, include_consumption, headers_only, root_location_id=None, task=None):
+    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
                                 headers_only=headers_only, async_task=task)
 
     fd, path = tempfile.mkstemp()

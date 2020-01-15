@@ -983,6 +983,7 @@ def location_export(request, domain):
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     download = DownloadBase()
+    # TODO: if partial, include loc name in filename
     res = download_locations_async.delay(domain, download.download_id,
                                          include_consumption, headers_only)
     download.set_task(res)
