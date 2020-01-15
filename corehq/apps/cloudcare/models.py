@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from django.db import models, transaction
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -12,6 +13,20 @@ from dimagi.ext.couchdbkit import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
+
+
+class SQLApplicationAccess(models.Model):
+    domain = models.CharField(max_length=255, null=False, unique=True)
+    restrict = models.BooleanField(default=False)
+
+
+class SQLAppGroup(models.Model):
+    app_id = models.CharField(max_length=255, null=False)
+    group_id = models.CharField(max_length=255)
+    application_access = models.ForeignKey('SQLApplicationAccess', on_delete=models.CASCADE)
+
+    class Meta(object):
+        unique_together = ('app_id', 'group_id')
 
 
 class AppGroup(DocumentSchema):
@@ -106,3 +121,21 @@ class ApplicationAccess(QuickCachedDocumentMixin, Document):
             })
         j['app_groups'] = merged_access_list
         return j
+
+    def save(self, *args, **kwargs):
+        # Save to SQL
+        with transaction.atomic():
+            model, created = SQLApplicationAccess.objects.update_or_create(
+                domain=self.domain,
+                defaults={
+                    'restrict': self.restrict,
+                }
+            )
+            model.sqlappgroup_set.set([
+                SQLAppGroup.objects.update_or_create(app_id=group.app_id, defaults={'group_id': group.group_id})[0]
+                for group in self.app_groups
+            ], bulk=False)
+            model.save()
+
+        # Save to couch
+        super().save(*args, **kwargs)
