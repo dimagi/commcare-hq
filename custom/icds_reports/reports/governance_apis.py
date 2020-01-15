@@ -14,8 +14,8 @@ def get_home_visit_data(length, year, month, order, query_filters):
         month=date(year, month, 1),
         **query_filters
     ).order_by(*order).values(
-        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'awc_id', 'month', 'valid_visits',
-        'expected_visits'
+        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'awc_id', 'month',
+        'valid_visits', 'expected_visits'
     )
     paginated_data = data[:length]
 

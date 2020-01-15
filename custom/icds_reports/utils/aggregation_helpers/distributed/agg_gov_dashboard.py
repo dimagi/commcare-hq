@@ -3,7 +3,6 @@ from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
-from corehq.apps.userreports.util import get_table_name
 
 
 class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
@@ -68,7 +67,7 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             ('block_id', 'awc_location_local.block_id'),
             ('supervisor_id', 'awc_location_local.supervisor_id'),
             ('awc_id', 'awc_location_local.doc_id'),
-            ('awc_site_code','awc_location_local.awc_site_code'),
+            ('awc_site_code', 'awc_location_local.awc_site_code'),
             ('month', "'{}'".format(month_formatter(self.month_start))),
             ('awc_launched', 'agg_awc.num_launched_awcs=1'),
             ('total_preg_benefit_till_date', 'COALESCE(agg_awc.cases_ccs_pregnant, 0)'),
@@ -126,38 +125,38 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN sex='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 THEN
                     valid_all_registered_in_month ELSE 0 END ) AS open_all_3_6_male,
 
-                sum(CASE WHEN sex='F' AND age_tranche::INTEGER<=36 AND 
+                sum(CASE WHEN sex='F' AND age_tranche::INTEGER<=36 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_in_month ELSE 0 END ) AS valid_reg_in_month_0_3_female,
-                sum(CASE WHEN sex='M' AND age_tranche::INTEGER<=36 AND 
+                sum(CASE WHEN sex='M' AND age_tranche::INTEGER<=36 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_in_month ELSE 0 END ) AS valid_reg_in_month_0_3_male,
-                sum(CASE WHEN sex='F' AND age_tranche::INTEGER<=36 AND 
+                sum(CASE WHEN sex='F' AND age_tranche::INTEGER<=36 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_all_registered_in_month ELSE 0 END ) AS open_reg_in_month_0_3_female,
-            
-                sum(CASE WHEN sex='M' AND age_tranche::INTEGER<=36 AND 
+
+                sum(CASE WHEN sex='M' AND age_tranche::INTEGER<=36 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_all_registered_in_month ELSE 0 END ) AS open_reg_in_month_0_3_male,
-                    
-                sum(CASE WHEN sex='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND 
+
+                sum(CASE WHEN sex='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_in_month ELSE 0 END ) AS valid_reg_in_month_3_6_female,
-                sum(CASE WHEN sex='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND 
+                sum(CASE WHEN sex='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_in_month ELSE 0 END ) AS valid_reg_in_month_3_6_male,
-                    
-                sum(CASE WHEN sex='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND 
+
+                sum(CASE WHEN sex='F' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_all_registered_in_month ELSE 0 END ) AS  open_reg_in_month_3_6_female,
-                
-                sum(CASE WHEN sex='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND 
+
+                sum(CASE WHEN sex='M' AND age_tranche::INTEGER BETWEEN 37 AND 72 AND
                     date_trunc('month',opened_on)=%(start_date)s THEN
                     valid_all_registered_in_month ELSE 0 END ) AS  open_reg_in_month_3_6_male
             FROM child_health_monthly
             WHERE month=%(start_date)s
             GROUP BY supervisor_id, awc_id;
-        
+
         UPDATE "{tablename}" agg_gov
         SET total_0_3_female_benefit_till_date = ut.valid_all_0_3_female,
             total_0_3_male_benefit_till_date = ut.valid_all_0_3_male,
@@ -176,11 +175,10 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             total_3_6_female_reg_in_month = ut.open_reg_in_month_3_6_female,
             total_3_6_male_reg_in_month = ut.open_reg_in_month_3_6_male
         FROM temp_gov_dashboard ut
-        WHERE agg_gov.awc_id = ut.awc_id
-        ;
-            
-        DROP TABLE temp_gov_dashboard
-        
+        WHERE agg_gov.awc_id = ut.awc_id;
+
+        DROP TABLE temp_gov_dashboard;
+
         """.format(
             tablename=self._tablename_func(),
         ), {
