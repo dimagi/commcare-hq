@@ -16,25 +16,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE child_health_monthly ADD COLUMN opened_on DATE'),
-        migrations.RunSQL('ALTER TABLE agg_child_health ADD COLUMN open_all_created_in_month INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_child_health ADD COLUMN valid_all_created_in_month INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_all_0_3_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_all_0_3_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_all_0_3_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_all_0_3_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_all_3_6_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_all_3_6_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_all_3_6_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_all_3_6_male INTEGER'),
-
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_reg_in_month_0_3_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_reg_in_month_0_3_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_0_3_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_0_3_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_reg_in_month_3_6_female INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN valid_reg_in_month_3_6_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_3_6_male INTEGER'),
-        migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN open_reg_in_month_3_6_female INTEGER')
+        migrations.RunSQL('ALTER TABLE child_health_monthly ADD COLUMN opened_on DATE')
     ]
     operations.extend(get_view_migrations())

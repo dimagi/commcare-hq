@@ -135,11 +135,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                 "ELSE 0 END)"),
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
-            ('days_ration_given_child', "SUM(chm.days_ration_given_child)"),
-            ('open_all_created_in_month',"SUM(CASE WHEN date_trunc('month',chm.opened_on)=%(start_date)s THEN "
-                                         "chm.valid_all_registered_in_month ELSE 0 END)"),
-            ('valid_all_created_in_month', "SUM(CASE WHEN date_trunc('month',chm.opened_on)=%(start_date)s THEN "
-                                          "chm.valid_in_month ELSE 0 END)"),
+            ('days_ration_given_child', "SUM(chm.days_ration_given_child)")
         )
         query_cols = []
         for c in columns:
@@ -312,8 +308,6 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             ('zscore_grading_hfa_recorded_in_month', ),
             ('zscore_grading_wfh_recorded_in_month', ),
             ('state_is_test', 'MAX(state_is_test)'),
-            ('open_all_created_in_month',),
-            ('valid_all_created_in_month',),
             (
                 'district_is_test',
                 lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
