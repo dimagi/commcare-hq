@@ -644,6 +644,7 @@ class TestDiffCases(SimpleTestCase):
     def add_case(self, case_id, **props):
         assert case_id not in self.sql_cases, self.sql_cases[case_id]
         assert case_id not in self.couch_cases, self.couch_cases[case_id]
+        props.setdefault("domain", "test")
         props.setdefault("doc_type", "CommCareCase")
         self.sql_cases[case_id] = Config(
             case_id=case_id,

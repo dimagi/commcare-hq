@@ -28,6 +28,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
+from corehq.util.datadog.gauges import datadog_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
@@ -707,44 +708,55 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
+    if not couch_cases:
+        return data
     case_ids = list(couch_cases)
+    domain = couch_cases[case_ids[0]]["domain"]
+    dd_count = partial(datadog_counter, tags=["domain:" + domain])
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
-        couch_case, diffs = diff_case(sql_case, couch_cases[case_id])
+        couch_case, diffs = diff_case(sql_case, couch_cases[case_id], dd_count)
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         if log_cases:
             log.info("case %s -> %s diffs", case_id, len(diffs))
 
-    data.diffs.extend(iter_ledger_diffs(case_ids))
-    add_missing_docs(data, couch_cases, sql_case_ids)
+    data.diffs.extend(iter_ledger_diffs(case_ids, dd_count))
+    add_missing_docs(data, couch_cases, sql_case_ids, dd_count)
     return data
 
 
-def diff_case(sql_case, couch_case):
+def diff_case(sql_case, couch_case, dd_count):
     def diff(couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         return filter_case_diffs(couch_json, sql_json, diffs, _diff_state)
     sql_json = sql_case.to_json()
+    dd_count("commcare.couchsqlmigration.case.diffed")
     diffs = diff(couch_case, sql_json)
     if diffs:
         try:
             couch_case = FormProcessorCouch.hard_rebuild_case(
                 couch_case["domain"], couch_case['_id'], None, save=False, lock=False
             ).to_json()
+            dd_count("commcare.couchsqlmigration.case.rebuild.couch")
             diffs = diff(couch_case, sql_json)
             if diffs:
                 if should_sort_sql_transactions(sql_case, couch_case):
                     sql_case = rebuild_case_with_couch_action_order(sql_case)
+                    dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
                     diffs = diff(couch_case, sql_case.to_json())
                 elif not was_rebuilt(sql_case):
                     sql_case = rebuild_case(sql_case)
+                    dd_count("commcare.couchsqlmigration.case.rebuild.sql")
                     diffs = diff(couch_case, sql_case.to_json())
         except Exception as err:
+            dd_count("commcare.couchsqlmigration.case.rebuild.error")
             log.warning('Case {} rebuild -> {}: {}'.format(
                 sql_case.case_id, type(err).__name__, err))
+    if diffs:
+        dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
 
 
@@ -755,7 +767,7 @@ def should_sort_sql_transactions(sql_case, couch_case):
     )
 
 
-def iter_ledger_diffs(case_ids):
+def iter_ledger_diffs(case_ids, dd_count):
     couch_state_map = {
         state.ledger_reference: state
         for state in StockState.objects.filter(case_id__in=case_ids)
@@ -767,8 +779,10 @@ def iter_ledger_diffs(case_ids):
         couch_state = couch_state_map.get(ref, None)
         if couch_state is None:
             couch_json = get_stock_state_json(ledger_value)
+            dd_count("commcare.couchsqlmigration.case.diff.ledger.rebuild")
         else:
             couch_json = couch_state.to_json()
+        dd_count("commcare.couchsqlmigration.case.diff.ledger")
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
         yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
     for ref, couch_state in couch_state_map.items():
@@ -802,14 +816,14 @@ def get_stock_state_json(sql_ledger):
     ).to_json()
 
 
-def add_missing_docs(data, couch_cases, sql_case_ids):
+def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
     if len(couch_cases) != len(sql_case_ids):
         only_in_sql = sql_case_ids - couch_cases.keys()
         assert not only_in_sql, only_in_sql
         only_in_couch = couch_cases.keys() - sql_case_ids
         data.doc_ids.extend(only_in_couch)
         missing_cases = [couch_cases[x] for x in only_in_couch]
-        log.debug("Found %s missing SQL cases", len(missing_cases))
+        dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(missing_cases))
         for doc_type, doc_ids in filter_missing_cases(missing_cases):
             data.missing_docs.append((doc_type, doc_ids))
 
