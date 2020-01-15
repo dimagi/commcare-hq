@@ -211,7 +211,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             );
                         }
                         if (!isMobile) {
-                            // only add the middle section to web-based legend
+                            // only add the last two sections to web-based legend
                             html.push('<hr/></div>');
                             var locName = 'National';
                             if (storageService.getKey('selectedLocation') !== void(0)) {
@@ -237,19 +237,19 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                     '</div>'
                                 );
                             }
+                            if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
+                                html.push('<hr/><div class="row  no-margin">');
+                                window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
+                                    html.push(
+                                        '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
+                                    );
+                                });
+                                html.push('</div>');
+                            }
 
-                        }
-                        if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
-                            html.push('<hr/><div class="row  no-margin">');
-                            window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
-                                html.push(
-                                    '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
-                                );
-                            });
                             html.push('</div>');
                         }
 
-                        html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', 'map-kpi-outer')
                             .html(html.join(''));
