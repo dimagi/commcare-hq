@@ -1,6 +1,6 @@
 {% load staticfiles %}
 <div class="col-xs-10 text-center filter-alert" ng-show="$ctrl.selectAwc">
-  <p class="font-14 font-montserrat font-weight-500 mb-0">Info! You must choose AWC to see data!</p>
+  <p class="font-14 font-montserrat font-weight-500 mb-0">You must choose AWC to see data.</p>
 </div>
 <div class="col-xs-10 no-gutters float-unset mx-auto pt-3">
     <div ng-repeat="locationTypes in $ctrl.hierarchy track by $index" ng-show="$ctrl.locationTypeIsVisible($index)">

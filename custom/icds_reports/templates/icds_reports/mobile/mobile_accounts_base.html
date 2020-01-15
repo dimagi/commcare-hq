@@ -1,8 +1,7 @@
-{% extends "icds_reports/base_minimal.html" %}
+{% extends "icds_reports/mobile/base_mobile.html" %}
 {% load i18n %}
 {% load compress %}
 {% load hq_shared_tags %}
-{% block title %}{% trans "Login to ICDS-CAS Mobile Dashboard" %}{% endblock %}
 {% block head %}
   <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
   {% compress css %}
@@ -27,7 +26,7 @@
           {{ global_error }}
         </div>
       {% endfor %}
-      {% include "login_and_password/two_factor/core/login_form.html" %}
+    {% block form %}{% endblock %}
 {% comment %}
   These are the styles that will ideally get applied to the functional login form above
       <div class="mb-3 font-montserrat font-18 font-weight-500">Email</div>
@@ -69,9 +68,5 @@
   ctx.lineTo(300, 150);
   ctx.fillStyle = "#002C5F";
   ctx.fill();
-  document.addEventListener("DOMContentLoaded", function () {
-    var redirectUrl = "{% url 'cas_mobile_dashboard' domain %}";
-    window.history.replaceState(null, "", "?next=" + redirectUrl);
-  });
 </script>
 {% endblock body %}

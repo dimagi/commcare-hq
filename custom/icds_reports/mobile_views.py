@@ -21,7 +21,7 @@ def login(request, domain):
         return HttpResponseRedirect(reverse('cas_mobile_dashboard', args=[domain]))
     return hqwebapp_views.domain_login(
         request, domain,
-        custom_template_name='icds_reports/mobile_login.html',
+        custom_template_name='icds_reports/mobile/mobile_login.html',
         extra_context={
             'domain': domain,
             'next': reverse('cas_mobile_dashboard', args=[domain]),
@@ -40,8 +40,10 @@ def logout(req, domain):
 @xframe_options_exempt
 def password_reset(request, domain):
     kwargs = copy.deepcopy(PASSWORD_RESET_KWARGS)
+    kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_form.html'
     # submit the form back to this view instead of the default
     kwargs['extra_context']['form_submit_url'] = reverse('cas_mobile_dashboard_password_reset', args=[domain])
+    kwargs['extra_context']['login_url'] = reverse('cas_mobile_dashboard_login', args=[domain])
     # so that we can redirect to a custom "done" page
     kwargs['post_reset_redirect'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
     return auth_views.password_reset(request, **kwargs)
@@ -49,7 +51,10 @@ def password_reset(request, domain):
 
 @xframe_options_exempt
 def password_reset_done(request, domain):
-    return auth_views.password_reset_done(request, **PASSWORD_RESET_DONE_KWARGS)
+    kwargs = copy.deepcopy(PASSWORD_RESET_DONE_KWARGS)
+    kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_done.html'
+    kwargs['extra_context']['domain'] = domain
+    return auth_views.password_reset_done(request, **kwargs)
 
 
 @location_safe
