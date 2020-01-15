@@ -6,6 +6,7 @@ import os.path
 from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
+from functools import partial
 
 from memoized import memoized
 from sqlalchemy import (
@@ -25,6 +26,7 @@ from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
+from corehq.util.datadog.gauges import datadog_counter
 
 from .diff import filter_form_diffs
 
@@ -335,6 +337,9 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json, replace=False):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
+        domain = couch_json.get("domain", "unknown")
+        dd_count = partial(datadog_counter, tags=["domain:" + domain])
+        dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
         if replace:
@@ -345,6 +350,7 @@ class StateDB(DiffDB):
                     .delete(synchronize_session=False)
                 )
         if diffs:
+            dd_count("commcare.couchsqlmigration.form.has_diffs")
             self.add_diffs(doc_type, doc_id, diffs)
 
     def replace_case_diffs(self, case_diffs):
