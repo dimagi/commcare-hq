@@ -202,7 +202,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
                             html.push(
-                                '<div class="row no-margin" style="margin-bottom: 5px;">',
+                                '<div class="row no-margin map-legend-color-row">',
                                 '<div class="col-xs-1 map-legend-color" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important;"></div>',
                                 '<div class="col-xs-10 map-legend-color-label">' + fillKey + '</div>',
                                 '</div>'
