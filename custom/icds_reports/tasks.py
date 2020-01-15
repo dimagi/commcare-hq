@@ -566,7 +566,6 @@ def get_cursor(model, write=True):
 
 def _child_health_monthly_table(state_ids, day):
     _child_health_monthly_data(state_ids, day)
-    update_child_health_monthly_table.delay(day, state_ids)
 
 
 def _child_health_monthly_data(state_ids, day):
@@ -587,12 +586,7 @@ def _child_health_monthly_data(state_ids, day):
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
-
-
-@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
-def update_child_health_monthly_table(day, state_ids):
-    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
-    celery_task_logger.info("Inserting into child_health_monthly_table")
+    celery_task_logger.info("Attaching partition")
     with transaction.atomic(using=router.db_for_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
