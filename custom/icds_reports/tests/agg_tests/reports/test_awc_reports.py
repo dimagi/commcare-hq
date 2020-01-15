@@ -8,7 +8,7 @@ from mock import mock
 
 from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
@@ -17,7 +17,7 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
-    percent_adolescent_girls_enrolled_help_text
+    percent_adolescent_girls_enrolled_help_text_v2
 
 
 class FirstDayOfMay(date):
@@ -1614,12 +1614,12 @@ class TestAWCReport(TestCase):
             {
                 "all": 0,
                 "format": "percent_and_div",
-                "color": "red",
-                "percent": -100.0,
+                "color": "green",
+                "percent": 'Data in the previous reporting period was 0',
                 "value": 0,
-                "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
+                "label": OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
                 "frequency": "month",
-                "help_text": percent_adolescent_girls_enrolled_help_text()
+                "help_text": percent_adolescent_girls_enrolled_help_text_v2()
             }
         )
 
@@ -1874,10 +1874,10 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": (
-                    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
+                    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
                 ),
                 "frequency": "day",
-                "help_text": percent_adolescent_girls_enrolled_help_text()
+                "help_text": percent_adolescent_girls_enrolled_help_text_v2()
             }
         )
 
@@ -2115,10 +2115,10 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": (
-                    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
+                    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
                 ),
                 "frequency": "day",
-                "help_text": percent_adolescent_girls_enrolled_help_text()
+                "help_text": percent_adolescent_girls_enrolled_help_text_v2()
             }
         )
 

@@ -1,5 +1,7 @@
+import datetime
 import functools
 import re
+from decimal import Decimal
 from inspect import isfunction
 import json
 
@@ -192,6 +194,12 @@ def get_excel_format_value(value):
         return ExcelFormatValue(numbers.FORMAT_NUMBER, value)
     if isinstance(value, float):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, value)
+    if isinstance(value, Decimal):
+        return ExcelFormatValue(numbers.FORMAT_NUMBER_00, float(value))
+    if isinstance(value, datetime.date):
+        return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, value)
+    if isinstance(value, datetime.datetime):
+        return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, value)
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is None:
@@ -200,11 +208,14 @@ def get_excel_format_value(value):
     if value == MISSING_VALUE or value == EMPTY_VALUE:
         return ExcelFormatValue(numbers.FORMAT_TEXT, value)
 
-    if value.lower() in ['true', 'false']:
-        return ExcelFormatValue(numbers.FORMAT_GENERAL, bool(value.lower() == 'true'))
-
-    # make sure value is string and strip whitespace
+    # make sure value is string and strip whitespace before applying any
+    # string operations
     value = str(value).strip()
+
+    if value.lower() in ['true', 'false']:
+        return ExcelFormatValue(
+            numbers.FORMAT_GENERAL, bool(value.lower() == 'true')
+        )
 
     # potential full date of any format
     if re.search(r"^\d+(/|-|\.)\d+(/|-|\.)\d+$", value):

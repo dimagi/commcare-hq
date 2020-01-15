@@ -99,7 +99,7 @@
         "show_all": true,
         "datatype": "string",
         "choice_provider": {
-          "type": "owner"
+          "type": "location"
         },
         "required": false,
         "display": "Owner Name",

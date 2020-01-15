@@ -26,14 +26,22 @@ def is_action_order_equal(sql_case, couch_json):
 def was_rebuilt(sql_case):
     """Check if most recent case transaction is a sort rebuild"""
     details = sql_case.transactions[-1].details if sql_case.transactions else None
-    return details and details["reason"] == SortTransactionsRebuild._REASON
+    return details and (
+        details["reason"] == SortTransactionsRebuild._REASON
+        or details["reason"] == COUCH_SQL_REBUILD_REASON
+    )
 
 
 def rebuild_case_with_couch_action_order(sql_case):
     server_dates = update_transaction_order(sql_case)
     detail = SortTransactionsRebuild(original_server_dates=server_dates)
-    return FormProcessorSQL.hard_rebuild_case(
-        sql_case.domain, sql_case.case_id, detail)
+    return rebuild_case(sql_case, detail)
+
+
+def rebuild_case(sql_case, detail=None):
+    if detail is None:
+        detail = RebuildWithReason(reason=COUCH_SQL_REBUILD_REASON)
+    return FormProcessorSQL.hard_rebuild_case(sql_case.domain, sql_case.case_id, detail)
 
 
 def update_transaction_order(sql_case):
@@ -58,6 +66,9 @@ class SortTransactionsRebuild(RebuildWithReason):
     _REASON = 'Couch to SQL: sort transactions'
     reason = StringProperty(default=_REASON)
     original_server_dates = DictProperty()
+
+
+COUCH_SQL_REBUILD_REASON = "Couch to SQL migration"
 
 
 def iter_ascending_dates(dates):

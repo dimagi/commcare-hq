@@ -775,13 +775,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             prev_data = get_data_for(AggAwcMonthly, config)
             frequency = 'month'
 
-    if beta:
-        if 'date' in config:
-            del config['date']
-        config['month'] = selected_month
-        ag_data = get_adolescent_girls_data(domain, config, show_test)
-        config['month'] = previous_month
-        ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
+    if 'date' in config:
+        del config['date']
+    config['month'] = selected_month
+    ag_data = get_adolescent_girls_data(domain, config, show_test)
+    config['month'] = previous_month
+    ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
 
     demographics_data = {
         'chart': [
@@ -884,26 +883,22 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency
                 },
                 {
-                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
-                               ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-                    'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
-                        "Of the total number of adolescent girls (aged 11-14 years), the percentage "
-                        "of girls enrolled for Anganwadi Services"
-                    )),
+                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS),
+                    'help_text': _(percent_adolescent_girls_enrolled_help_text_v2()),
                     'percent': percent_diff(
                         'person_adolescent',
-                        ag_data if beta else data,
-                        ag_data_prev_data if beta else prev_data,
+                        ag_data,
+                        ag_data_prev_data,
                         'person_adolescent_all'
                     ),
                     'color': get_color_with_green_positive(percent_diff(
                         'person_adolescent',
-                        ag_data if beta else data,
-                        ag_data_prev_data if beta else prev_data,
+                        ag_data,
+                        ag_data_prev_data,
                         'person_adolescent_all'
                     )),
-                    'value': get_value(ag_data if beta else data, 'person_adolescent'),
-                    'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
+                    'value': get_value(ag_data, 'person_adolescent'),
+                    'all': get_value(ag_data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency
                 }
