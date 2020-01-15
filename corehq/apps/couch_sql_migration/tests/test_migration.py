@@ -265,6 +265,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with raise_context, mock.patch(path, iter_docs):
             yield
 
+    @contextmanager
+    def diff_without_rebuild(self):
+        with mock.patch("corehq.form_processor.backends.couch.processor"
+                        ".FormProcessorCouch.hard_rebuild_case") as mock_:
+            mock_.side_effect = Exception("fail!")
+            yield
+
 
 @contextmanager
 def null_context():
@@ -288,6 +295,22 @@ def get_report_domain():
 
 
 class MigrationTestCase(BaseMigrationTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # disable hard rebuild SQL case to prevent deadlock in
+        # publish_case_saved related to kafka threading and gipc locking??
+        cls.rebuild_sql_case_patch = mock.patch(
+            "corehq.apps.couch_sql_migration.casediff.was_rebuilt",
+            lambda *a: True,
+        )
+        cls.rebuild_sql_case_patch.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.rebuild_sql_case_patch.stop()
+        super().tearDownClass()
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
@@ -875,7 +898,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         case.save()
 
         # migration should re-diff previously migrated form-1
-        self._do_migration_and_assert_flags(self.domain_name)
+        with self.diff_without_rebuild():
+            self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1", "case-2"})
         self._compare_diffs([
             ('CommCareCase-Deleted', Diff('diff', ['age'], old='35', new='27')),
