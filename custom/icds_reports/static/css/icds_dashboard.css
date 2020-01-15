@@ -759,6 +759,10 @@ table.no-footer {
     font-size: 15px;
 }
 
+.map-legend-color-label {
+    font-size: 15px;
+}
+
 
 ::-webkit-scrollbar {
     margin-left: 22px;

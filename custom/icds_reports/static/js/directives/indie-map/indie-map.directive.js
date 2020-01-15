@@ -204,9 +204,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             html.push(
                                 '<div class="row no-margin" style="margin-bottom: 5px;">',
                                 '<div class="col-xs-1" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 30px; height: 30px;"></div>',
-                                '<div class="col-xs-10">',
-                                '<span style="font-size: 15px;">' + fillKey + '</span>',
-                                '</div>',
+                                '<div class="col-xs-10 map-legend-color-label">' + fillKey + '</div>',
                                 '</div>'
                             );
                         }
