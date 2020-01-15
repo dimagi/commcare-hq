@@ -4,6 +4,7 @@
     ],
     "server_environment": [
         "production",
+        "staging",
         "localdev"
     ],
     "config": {
