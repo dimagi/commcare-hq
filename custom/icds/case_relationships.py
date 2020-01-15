@@ -70,6 +70,11 @@ def mother_person_case_from_ccs_record_case(ccs_record_case):
     return _get_exactly_one_parent_case(ccs_record_case, 'parent', CommCareCaseIndexSQL.CHILD, 'person')
 
 
+def child_person_cases_from_mother_person_case(mother_person_case):
+    subcases = mother_person_case.get_subcases(index_identifier='mother')
+    return [case for case in subcases if case.type == 'person']
+
+
 def mother_person_case_from_child_health_case(child_health_case):
     child_person_case = child_person_case_from_child_health_case(child_health_case)
     return mother_person_case_from_child_person_case(child_person_case)
