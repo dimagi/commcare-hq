@@ -759,6 +759,11 @@ table.no-footer {
     font-size: 15px;
 }
 
+.map-legend-color {
+    width: 30px;
+    height: 30px;
+}
+
 .map-legend-color-label {
     font-size: 15px;
 }
