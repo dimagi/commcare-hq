@@ -194,6 +194,7 @@ def setup_tables_and_fixtures(domain_name):
                 postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
     _distribute_tables_for_citus(engine)
+    partition_child_health()
 
 
 def _distribute_tables_for_citus(engine):
@@ -239,3 +240,16 @@ def cleanup_misc_agg_tables():
             table = metadata.tables[name]
             delete = table.delete()
             connection.execute(delete)
+
+
+def partition_child_health():
+    engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
+    queries = [
+        "ALTER TABLE child_health_monthly RENAME TO child_health_old_partition",
+        "CREATE TABLE child_health_monthly (LIKE child_health_old_partition) PARTITION BY LIST (month)",
+        "SELECT create_distributed_table('child_health_monthly', 'supervisor_id')",
+        "ALTER TABLE child_health_monthly ATTACH PARTITION child_health_old_partition FOR VALUES IN ('2017-03-01')"
+        ]
+    with engine.begin() as connection:
+        for query in queries:
+            connection.execute(query)
