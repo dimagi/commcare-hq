@@ -443,8 +443,8 @@ class TestDeleteDomain(TestCase):
 
         self.domain.delete()
 
-        self._assert_case_search_counts(self.domain.name, 0)
-        self._assert_case_search_counts(self.domain2.name, 1)
+        self._assert_cloudcare_counts(self.domain.name, 0)
+        self._assert_cloudcare_counts(self.domain2.name, 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
