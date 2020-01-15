@@ -106,7 +106,8 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.motech.models import RequestLog, SQLDhis2Connection
+from corehq.motech.models import RequestLog
+from corehq.motech.dhis2.models import SQLDhis2Connection
 
 
 class TestDeleteDomain(TestCase):

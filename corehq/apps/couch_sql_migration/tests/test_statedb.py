@@ -202,6 +202,19 @@ def test_resume_state():
                 pass
 
 
+def test_case_ids_with_diffs():
+    with init_db() as db:
+        db.replace_case_diffs([
+            ("CommCareCase", "case-1", [make_diff(0)]),
+            ("stock state", "case-1/x/y", [make_diff(1)]),
+            ("CommCareCase", "case-2", [make_diff(2)]),
+            ("stock state", "case-2/x/y", [make_diff(3)]),
+            ("stock state", "case-2/x/z", [make_diff(5)]),
+        ])
+        eq(db.count_case_ids_with_diffs(), 2)
+        eq(set(db.iter_case_ids_with_diffs()), {"case-1", "case-2"})
+
+
 def test_replace_case_diffs():
     with init_db() as db:
         case_id = "865413246874321"

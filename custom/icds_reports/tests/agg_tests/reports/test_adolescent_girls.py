@@ -21,27 +21,25 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
-                            "enrolled for Anganwadi Services",
-                    "average": '89.47',
+                    "info": "Of the total number of adolescent girls (aged 11-14 years), "
+                            "the percentage of adolescent girls who are out of school",
+                    "average": '8.33',
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi '
-                                'Services:'
+                                'Number of adolescent girls (11-14 years) who are out of school:'
                             ),
-                            'value': "34"
+                            'value': "2"
                         },
                         {
-                            'indicator': 'Total number of adolescent girls (11 - 14 years) who are registered:',
-                            'value': "38"
+                            'indicator': 'Total Number of adolescent girls (11-14 years) who are registered:',
+                            'value': "24"
                         },
                         {
                             'indicator': (
-                                'Percentage of registered adolescent girls (11 - 14 years) '
-                                'who are enrolled for Anganwadi Services:'
+                                'Percentage of adolescent girls (11-14 years) who are out of school:'
                             ),
-                            'value': '89.47%'
+                            'value': '8.33%'
                         }
                     ]
                 },
@@ -53,9 +51,9 @@ class TestAdolescentGirls(TestCase):
                     'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Adolescent Girls'},
                     'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Adolescent Girls'},
                     'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Adolescent Girls'},
-                    'st7': {'all': 4, 'valid': 0, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'},
-                    'st1': {'all': 17, 'valid': 17, 'original_name': ['st1'], 'fillKey': 'Adolescent Girls'},
-                    'st2': {'all': 17, 'valid': 17, 'original_name': ['st2'], 'fillKey': 'Adolescent Girls'},
+                    'st7': {'all': 3, 'valid': 2, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'},
+                    'st1': {'all': 10, 'valid': 0, 'original_name': ['st1'], 'fillKey': 'Adolescent Girls'},
+                    'st2': {'all': 11, 'valid': 0, 'original_name': ['st2'], 'fillKey': 'Adolescent Girls'},
                     'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Adolescent Girls'}},
                 "slug": "adolescent_girls",
                 "label": ""
@@ -76,27 +74,23 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
-                            "enrolled for Anganwadi Services",
-                    "average": '100.00',
+                    "info": "Of the total number of adolescent girls (aged 11-14 years), "
+                            "the percentage of adolescent girls who are out of school",
+                    "average": '0.00',
                     'extended_info': [
                         {
-                            'indicator': (
-                                'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi '
-                                'Services:'
-                            ),
-                            'value': "17"
+                            'indicator': 'Number of adolescent girls (11-14 years) who are out of school:',
+                            'value': "0"
                         },
                         {
-                            'indicator': 'Total number of adolescent girls (11 - 14 years) who are registered:',
-                            'value': "17"
+                            'indicator': 'Total Number of adolescent girls (11-14 years) who are registered:',
+                            'value': "10"
                         },
                         {
                             'indicator': (
-                                'Percentage of registered adolescent girls (11 - 14 years) '
-                                'who are enrolled for Anganwadi Services:'
+                                'Percentage of adolescent girls (11-14 years) who are out of school:'
                             ),
-                            'value': '100.00%'
+                            'value': '0.00%'
                         }
                     ]
                 },
@@ -106,8 +100,8 @@ class TestAdolescentGirls(TestCase):
                 },
                 "data": {
                     'block_map': {
-                        'valid': 17,
-                        'all': 17,
+                        'valid': 0,
+                        'all': 10,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Adolescent Girls'}
                 },
@@ -133,11 +127,11 @@ class TestAdolescentGirls(TestCase):
                     {'loc_name': 'st4', 'value': 0.0},
                     {'loc_name': 'st5', 'value': 0.0},
                     {'loc_name': 'st6', 'value': 0.0},
-                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 2.0},
                 ],
                 "top_five": [
-                    {'loc_name': 'st1', 'value': 17.0},
-                    {'loc_name': 'st2', 'value': 17.0},
+                    {'loc_name': 'st1', 'value': 0.0},
+                    {'loc_name': 'st2', 'value': 0.0},
                     {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
                     {'loc_name': 'st5', 'value': 0.0},
@@ -150,20 +144,20 @@ class TestAdolescentGirls(TestCase):
                         "values": [
                             {'y': 0, 'x': 1485907200000, 'all': 0},
                             {'y': 0, 'x': 1488326400000, 'all': 0},
-                            {'y': 38, 'x': 1491004800000, 'all': 42},
-                            {'y': 34, 'x': 1493596800000, 'all': 38}
+                            {'y': 2, 'x': 1491004800000, 'all': 33},
+                            {'y': 2, 'x': 1493596800000, 'all': 24}
                         ],
-                        "key": "Total number of adolescent girls who are enrolled for Anganwadi Services"
+                        "key": "Number of adolescent girls (11-14 years) who are out of school"
                     }
                 ],
                 "all_locations": [
-                    {'loc_name': 'st1', 'value': 17.0},
-                    {'loc_name': 'st2', 'value': 17.0},
+                    {'loc_name': 'st1', 'value': 0.0},
+                    {'loc_name': 'st2', 'value': 0.0},
                     {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
                     {'loc_name': 'st5', 'value': 0.0},
                     {'loc_name': 'st6', 'value': 0.0},
-                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 2.0},
 
                 ]
             }
@@ -184,16 +178,16 @@ class TestAdolescentGirls(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
-                        "enrolled for Anganwadi Services",
+                "info":  "Of the total number of adolescent girls (aged 11-14 years), "
+                         "the percentage of adolescent girls who are out of school",
                 "tooltips_data": {
                     "s2": {
-                        "all": 5,
-                        "valid": 5
+                        "all": 4,
+                        "valid": 0
                     },
                     "s1": {
-                        "valid": 3,
-                        "all": 3
+                        "valid": 0,
+                        "all": 1
                     },
                 },
                 "chart_data": [
@@ -204,11 +198,11 @@ class TestAdolescentGirls(TestCase):
                         "values": [
                             [
                                 "s1",
-                                3
+                                0
                             ],
                             [
                                 "s2",
-                                5
+                                0
                             ]
                         ],
                         "key": "Number Of Girls"

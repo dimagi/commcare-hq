@@ -370,7 +370,7 @@ hqDefine('export/js/models', [
             return false;
         }
         if (tableId === 0) {
-            return column.formatProperty() === 'formid' || column.formatProperty() === 'caseid';
+            return (column.formatProperty() === 'formid' || column.formatProperty() === 'caseid') && column.tags().indexOf('info') !== -1;
         }
         return column.formatProperty() === 'number';
     };
