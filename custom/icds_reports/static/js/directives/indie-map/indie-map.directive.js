@@ -210,31 +210,34 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                 '</div>'
                             );
                         }
-                        html.push('<hr/></div>');
-
-                        var locName = 'National';
-                        if (storageService.getKey('selectedLocation') !== void(0)) {
-                            locName = storageService.getKey('selectedLocation')['name'];
-                        }
-                        if (this.options.rightLegend['average'] !== void(0)) {
-                            html.push('<div class="row no-margin">');
-                            if (this.options.rightLegend['average_format'] === 'number') {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
-                            } else {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                        if (!isMobile) {
+                            // only add the middle section to web-based legend
+                            html.push('<hr/></div>');
+                            var locName = 'National';
+                            if (storageService.getKey('selectedLocation') !== void(0)) {
+                                locName = storageService.getKey('selectedLocation')['name'];
                             }
-                            html.push('</div>',
-                                '</br>',
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
-                        } else {
-                            html.push(
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
+                            if (this.options.rightLegend['average'] !== void(0)) {
+                                html.push('<div class="row no-margin">');
+                                if (this.options.rightLegend['average_format'] === 'number') {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
+                                } else {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                                }
+                                html.push('</div>',
+                                    '</br>',
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
+                                );
+                            } else {
+                                html.push(
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
+                                );
+                            }
+
                         }
                         if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
                             html.push('<hr/><div class="row  no-margin">');
