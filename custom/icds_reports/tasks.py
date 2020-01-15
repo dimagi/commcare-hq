@@ -101,7 +101,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm,
     DailyAttendance,
     DashboardUserActivityReport,
-    AggregateAdolescentGirlsRegistrationForms
+    AggregateAdolescentGirlsRegistrationForms,
+    AggGovernanceDashboard
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1729,3 +1730,21 @@ def update_dashboard_activity_report(target_date=None):
     db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
+
+
+
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    run_every=crontab(minute=0, hour=14),  # To run on 7:30 PM IST
+    acks_late=True,
+    queue='icds_aggregation_queue'
+)
+def update_governance_dashboard(target_date=None):
+    if target_date is None:
+        target_date = date.today()
+
+    month = target_date.replace(day=1)
+
+    db_alias = router.db_for_write(AggGovernanceDashboard)
+    with transaction.atomic(using=db_alias):
+        AggGovernanceDashboard().aggregate(month)
