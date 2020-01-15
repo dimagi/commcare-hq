@@ -1,6 +1,7 @@
 from datetime import date
 
 from custom.icds_reports.cache import icds_quickcache
+from custom.icds_reports.models.aggregate import AggGovernanceDashboard
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import DATA_NOT_ENTERED
 from django.db.models import F
@@ -43,41 +44,36 @@ def get_home_visit_data(start, length, year, month, order, query_filters):
 
 @icds_quickcache(['start', 'length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
 def get_beneficiary_data(start, length, year, month, order, query_filters):
-    data = AggAwcMonthly.objects.filter(
+    data = AggGovernanceDashboard.objects.filter(
         month=date(year, month, 1),
         **query_filters
     ).order_by(*order).values(
-        'month',
-        state=F('state_name'),
-        district=F('district_name'),
-        block=F('block_name'),
-        sector=F('supervisor_name'),
-        awc=F('awc_name'),
-        total_preg_benefit_till_date=F('cases_ccs_pregnant'),
-        total_lact_benefit_till_date=F('cases_ccs_lactating'),
-        total_preg_reg_till_date=F('cases_ccs_pregnant_all'),
-        total_lact_reg_till_date=F('cases_ccs_lactating_all'),
-        total_lact_benefit_in_month=F('cases_ccs_lactating_reg_in_month'),
-        total_preg_benefit_in_month=F('cases_ccs_pregnant_reg_in_month'),
-        total_lact_reg_in_month=F('cases_ccs_lactating_all_reg_in_month'),
-        total_preg_reg_in_month=F('cases_ccs_pregnant_all_reg_in_month'),
-        total_0_3_female_benefit_till_date=F('valid_all_0_3_female'),
-        total_0_3_male_benefit_till_date=F('valid_all_0_3_male'),
-        total_0_3_female_reg_till_date=F('open_all_0_3_female'),
-        total_0_3_male_reg_till_date=F('open_all_0_3_male'),
-        total_3_6_female_benefit_till_date=F('valid_all_3_6_female'),
-        total_3_6_male_benefit_till_date=F('valid_all_3_6_male'),
-        total_3_6_female_reg_till_date=F('open_all_3_6_female'),
-        total_3_6_male_reg_till_date=F('open_all_3_6_male'),
-        total_0_3_female_benefit_in_month=F('valid_reg_in_month_0_3_female'),
-        total_0_3_male_benefit_in_month=F('valid_reg_in_month_0_3_male'),
-        total_0_3_female_reg_in_month=F('open_reg_in_month_0_3_female'),
-        total_0_3_male_reg_in_month=F('open_reg_in_month_0_3_male'),
-        total_3_6_female_benefit_in_month=F('valid_reg_in_month_3_6_female'),
-        total_3_6_male_benfit_in_month=F('valid_reg_in_month_3_6_male'),
-        total_3_6_female_reg_in_month=F('open_reg_in_month_3_6_female'),
-        total_3_6_male_reg_in_month=F('open_reg_in_month_3_6_male'),
-
+        'awc_id',
+        'awc_site_code',
+        'total_preg_benefit_till_date',
+        'total_lact_benefit_till_date',
+        'total_preg_reg_till_date',
+        'total_lact_reg_till_date',
+        'total_lact_benefit_in_month',
+        'total_preg_benefit_in_month',
+        'total_lact_reg_in_month',
+        'total_preg_reg_in_month',
+        'total_0_3_female_benefit_till_date',
+        'total_0_3_male_benefit_till_date',
+        'total_0_3_female_reg_till_date',
+        'total_0_3_male_reg_till_date',
+        'total_3_6_female_benefit_till_date',
+        'total_3_6_male_benefit_till_date',
+        'total_3_6_female_reg_till_date',
+        'total_3_6_male_reg_till_date',
+        'total_0_3_female_benefit_in_month',
+        'total_0_3_male_benefit_in_month',
+        'total_0_3_female_reg_in_month',
+        'total_0_3_male_reg_in_month',
+        'total_3_6_female_benefit_in_month',
+        'total_3_6_male_benfit_in_month',
+        'total_3_6_female_reg_in_month',
+        'total_3_6_male_reg_in_month'
     )
 
     # To apply pagination on database query with offset and limit

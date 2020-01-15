@@ -2240,6 +2240,9 @@ class GovernanceAPIView(View):
                 query_filters
             )
         elif step == 'beneficiary':
+            query_filters = {'awc_launched': True,
+                             'state_id': state_id}
+            order = ['awc_id']
             data, count = get_beneficiary_data(
                 start,
                 length,
