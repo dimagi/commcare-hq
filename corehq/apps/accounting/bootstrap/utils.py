@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
@@ -94,7 +96,7 @@ def ensure_plans(config, verbose, apps):
                     % (default_product_plan.edition, is_trial)
                 )
 
-    _clear_cache(SoftwarePlan.objects.all())
+    _clear_cache(SoftwarePlan.objects.all(), DefaultProductPlan.objects.all())
 
 
 def _ensure_role(role_slug, apps):
@@ -202,7 +204,11 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
     return db_feature_rates
 
 
-def _clear_cache(software_plans):
-    from corehq.apps.accounting.models import SoftwarePlan
+def _clear_cache(software_plans, default_plans):
+    from corehq.apps.accounting.models import SoftwarePlan, DefaultProductPlan
     for software_plan in software_plans:
         SoftwarePlan.get_version.clear(software_plan)
+    for plan in default_plans:
+        DefaultProductPlan.get_default_plan_version.clear(
+            DefaultProductPlan, plan.edition, plan.is_trial, plan.is_report_builder_enabled,
+        )
