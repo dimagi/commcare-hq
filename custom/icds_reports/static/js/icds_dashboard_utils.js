@@ -36,7 +36,6 @@ hqDefine("js/icds_dashboard_utils", function () {
             {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
             {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
         ]);
-        angular.module(appName).constant('mobileMapsEnabled', initialPageData.get("mobile_maps_enabled"));
     }
 
     function addMaternalChildRoutes($routeProvider, defaultStep) {

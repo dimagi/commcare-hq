@@ -233,8 +233,8 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
-    get_beneficiary_data
-)
+    get_beneficiary_data,
+    get_state_names)
 
 
 from . import const
@@ -368,7 +368,6 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -2198,12 +2197,14 @@ class GovernanceAPIView(View):
             month = prev_month.month
             year = prev_month.year
 
-        start = request.GET.get('start', 0)
+        last_awc_id = request.GET.get('last_awc_id', '')
 
-        return step, start, month, year, state_id
+        return step, last_awc_id, month, year, state_id
+
+
 
     def get(self, request, *args, **kwargs):
-        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
+        step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
         present_year = datetime.now().year
         present_month = datetime.now().month
 
@@ -2226,13 +2227,13 @@ class GovernanceAPIView(View):
         length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': AggregationLevels.AWC,
                          'num_launched_awcs': 1,
-                         'state_id': state_id}
-
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+                         'awc_id__gt': last_awc_id,
+                         'state_id': state_id
+                         }
+        order = ['awc_id']
 
         if step == 'home_visit':
             data, count = get_home_visit_data(
-                start,
                 length,
                 year,
                 month,
@@ -2241,16 +2242,17 @@ class GovernanceAPIView(View):
             )
         elif step == 'beneficiary':
             query_filters = {'awc_launched': True,
-                             'state_id': state_id}
-            order = ['awc_id']
+                             'state_id': state_id,
+                             'awc_id__gt': last_awc_id}
             data, count = get_beneficiary_data(
-                start,
                 length,
                 year,
                 month,
                 order,
                 query_filters
             )
+        elif step == 'state_names':
+            return JsonResponse(data={'data': get_state_names()})
         else:
             exception_message = 'Invalid step ' + step
             return HttpResponse(exception_message, status=400)
@@ -2258,12 +2260,10 @@ class GovernanceAPIView(View):
         response_json = {
             'data': data,
             'metadata': {
-                'start': start,
                 'month': month,
                 'year': year,
                 'count': count,
                 'timestamp': india_now()
             }
         }
-
         return JsonResponse(data=response_json)

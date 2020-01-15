@@ -99,7 +99,7 @@
         "slug": "owner_id",
         "field": "awc_id",
         "choice_provider": {
-          "type": "owner"
+          "type": "location"
         },
         "display": "Owner Name"
       }

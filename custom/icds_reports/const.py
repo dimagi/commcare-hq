@@ -155,8 +155,15 @@ CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Serv
 PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
 LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
 ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'
-OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Out of school Adolescent girls(11-14 years)'
-ADOLESCENT_GIRLS_DATA_THRESHOLD = date(2019, 4, 1)
+OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Out of school Adolescent girls (11-14 years)'
+NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
+NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
+
 
 GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION = 10000
 
+# need to add more steps
+GOVERNANCE_API_STEPS = [
+    'home_visit',
+    'state_names'
+]

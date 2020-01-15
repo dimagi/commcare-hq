@@ -61,6 +61,7 @@ class XFormPillowTest(TestCase):
         user.reporting_metadata.last_submissions = []
         user.save()
         PillowError.objects.all().delete()
+        UserReportingMetadataStaging.objects.all().delete()
         super().tearDown()
 
     @classmethod
@@ -160,6 +161,45 @@ class XFormPillowTest(TestCase):
             string_to_utc_datetime(self.metadata.received_on),
         )
         self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    def _test_heartbeat(self, num_submissions):
+        sync_date = datetime.utcnow()
+        UserReportingMetadataStaging.add_heartbeat(
+            self.domain, self.user._id, self.metadata.app_id,
+            '123', sync_date, 'heartbeat_device_id',
+            230, 2, 10, 'CommCare 2.28', 'en'
+        )
+
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
+
+        process_reporting_metadata_staging()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
+        ccuser = CommCareUser.get_by_user_id(self.user._id, self.domain)
+
+        self.assertEqual(len(ccuser.reporting_metadata.last_submissions), num_submissions)
+        self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
+        self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, sync_date)
+        self.assertEqual(ccuser.reporting_metadata.last_sync_for_user.sync_date, sync_date)
+        self.assertEqual(ccuser.last_device.device_id, 'heartbeat_device_id')
+        app_meta = ccuser.last_device.get_last_used_app_meta()
+        self.assertEqual(app_meta.num_unsent_forms, 2)
+        self.assertEqual(app_meta.num_quarantined_forms, 10)
+
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
+    def test_app_metadata_tracker_heartbeat_processed(self):
+        self._test_heartbeat(0)
+
+    @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
+    def test_app_metadata_tracker_heartbeat_processed_with_sync_prior(self):
+        UserReportingMetadataStaging.add_sync(
+            self.domain, self.user._id, self.metadata.app_id,
+            '123', datetime.utcnow(), self.metadata.device_id
+        )
+        form, metadata = self._create_form_and_sync_to_es()
+        # existing row should get updated, no new row should be added
+        self._test_heartbeat(1)
 
     @run_with_all_backends
     def test_form_pillow_error_in_form_metadata(self):

@@ -18,15 +18,11 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
     vm.filters = ['age', 'gender'];
 
-    if (haveAccessToFeatures) {
-        vm.rightLegend = {
-            info: 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school',
-        };
-    } else {
-        vm.rightLegend = {
-            info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
-        };
-    }
+
+    vm.rightLegend = {
+        info: 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school',
+    };
+
 
 
     vm.getPopupData = function (row) {
@@ -34,38 +30,21 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
 
-        var data = [];
-        if (haveAccessToFeatures) {
-            data = [
-                {
-                    indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
-                    indicator_value: valid,
-                },
-                {
-                    indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
-                    indicator_value: all,
-                },
-                {
-                    indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
-                    indicator_value: percent,
-                },
-            ];
-        } else {
-            data = [
-                {
-                    indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                    indicator_value: valid,
-                },
-                {
-                    indicator_name: 'Total number of adolescent girls (11 - 14 years) who are registered: ',
-                    indicator_value: all,
-                },
-                {
-                    indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                    indicator_value: percent,
-                },
-            ];
-        }
+        var data = [
+            {
+                indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
+                indicator_value: valid,
+            },
+            {
+                indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
+                indicator_value: all,
+            },
+            {
+                indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
+                indicator_value: percent,
+            },
+        ];
+
 
         return data;
     };
@@ -75,12 +54,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services' ,
+        'captionContent': 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school',
     };
-
-    if (haveAccessToFeatures) {
-        options['captionContent'] = 'Of the total number of adolescent girls (aged 11-14 years),the percentage of adolescent girls who are out of school';
-    }
 
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
@@ -100,34 +75,19 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.tooltipContent = function (monthName, day) {
         var tooltipdata;
-        if (haveAccessToFeatures) {
-            tooltipdata = [{
-                indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
-                indicator_value: $filter('indiaNumbers')(day.y),
-            },
-            {
-                indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
-                indicator_value: $filter('indiaNumbers')(day.all),
-            },
-            {
-                indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
-                indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
-            }];
 
-        } else {
-            tooltipdata = [{
-                indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                indicator_value: $filter('indiaNumbers')(day.y),
-            },
-            {
-                indicator_name: 'Total number of adolescent girls (11 - 14 years) who are registered: ',
-                indicator_value: $filter('indiaNumbers')(day.all),
-            },
-            {
-                indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
-                indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
-            }];
-        }
+        tooltipdata = [{
+            indicator_name: 'Number of adolescent girls (11-14 years) who are out of school: ',
+            indicator_value: $filter('indiaNumbers')(day.y),
+        },
+        {
+            indicator_name: 'Total Number of adolescent girls (11-14 years) who are registered: ',
+            indicator_value: $filter('indiaNumbers')(day.all),
+        },
+        {
+            indicator_name: 'Percentage of adolescent girls (11-14 years) who are out of school: ',
+            indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
+        }];
 
 
         return vm.createTooltipContent(

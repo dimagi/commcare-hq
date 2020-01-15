@@ -615,3 +615,22 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
+
+    def test_case_with_closed_by_diff(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "actions": [
+                {
+                    "action_type": "close",
+                    "user_id": "somebody",
+                },
+            ],
+            "closed_by": "",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "closed_by": "somebody",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])

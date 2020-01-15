@@ -1,10 +1,8 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile,
-                               mobileMapsEnabled) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile) {
 
     var vm = this;
-    vm.mobileMapsEnabled = mobileMapsEnabled;
     var leftMargin = isMobile ? 70 : 150;
     var truncateAmount = isMobile ? 70 : 100;  // used in cropping the x-axis labels
 
@@ -150,7 +148,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
 }
 
 MapOrSectorController.$inject = [
-    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile', 'mobileMapsEnabled',
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile',
 ];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
