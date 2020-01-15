@@ -447,7 +447,7 @@ def maintenance_alert(request, dismissable=True):
             ' hide' if dismissable else '',
             alert.id,
             mark_safe('''
-                <a class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
             ''') if dismissable else '',
             mark_safe(alert.html),
         )
