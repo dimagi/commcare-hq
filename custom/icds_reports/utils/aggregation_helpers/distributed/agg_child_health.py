@@ -1,4 +1,4 @@
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_tablename, get_agg_child_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -23,8 +23,8 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
         return AggChildHealth
 
     @property
-    def child_temp_tablename(self):
-        return get_child_health_temp_tablename(self.month)
+    def child_tablename(self):
+        return get_child_health_tablename(self.month)
 
     @property
     def temporary_tablename(self):
@@ -172,7 +172,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             INSERT INTO "{self.temporary_tablename}" ({final_columns})
             SELECT
                 {query_cols}
-                FROM "{self.child_temp_tablename}" chm
+                FROM "{self.child_tablename}" chm
                 LEFT OUTER JOIN "awc_location" awc_loc ON (
                     awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
                 )
