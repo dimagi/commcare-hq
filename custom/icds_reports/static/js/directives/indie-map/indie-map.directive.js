@@ -197,7 +197,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         var html = [
                             '<div class="map-kpi">',
                             '<div class="row no-margin">',
-                            '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
+                            '<div class="row no-margin map-legend-title"">' + this.options.label + '</div>',
                         ];
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
