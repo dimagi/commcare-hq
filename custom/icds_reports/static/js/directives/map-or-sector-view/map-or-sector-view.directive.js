@@ -75,6 +75,18 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         $compile(popup[0])($scope);
     }
 
+    function navigateToLocation(locName) {
+        locationsService.getLocationByNameAndParent(locName, location_id).then(function (locations) {
+            var location = locations[0];
+            $location.search('location_name', location.name);
+            $location.search('location_id', location.location_id);
+            storageService.setKey('search', $location.search());
+            if (location.location_type_name === 'awc') {
+                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
+            }
+        });
+    }
+
     vm.chartOptions = {
 
         chart: {
@@ -123,20 +135,13 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
+                    var locName = e.data[0];
                     if (isMobile) {
                         // disable click navigation on mobile and instead trigger the tooltip
-                        var popupHtml = getTooltipHtml(e.data[0]);
+                        var popupHtml = getTooltipHtml(locName);
                         renderTooltip(popupHtml);
                     } else {
-                        locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
-                            var location = locations[0];
-                            $location.search('location_name', location.name);
-                            $location.search('location_id', location.location_id);
-                            storageService.setKey('search', $location.search());
-                            if (location.location_type_name === 'awc') {
-                                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
-                            }
-                        });
+                        navigateToLocation(locName);
                     }
                 });
 
