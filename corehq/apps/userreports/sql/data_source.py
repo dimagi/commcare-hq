@@ -73,6 +73,13 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         return ret
 
     @method_decorator(catch_and_raise_exceptions)
+    def get_query_strings(self):
+        qc = self.query_context()
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
+        with session_helper.session_context() as session:
+            return qc.get_query_strings(session.connection())
+
+    @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         qc = self.query_context()
         session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)

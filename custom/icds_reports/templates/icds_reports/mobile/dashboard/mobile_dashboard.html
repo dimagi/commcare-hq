@@ -1,4 +1,4 @@
-{% extends "icds_reports/base_minimal.html" %}
+{% extends "icds_reports/mobile/base_mobile.html" %}
 {% load menu_tags %}
 {% load compress %}
 {% load hq_shared_tags %}
@@ -78,6 +78,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 </div>
 <div id="app" ng-cloak>
   <navigation></navigation>
+  {% maintenance_alert request True %}
   <div ng-controller="MainMobileController" class="container-fluid">
       <div class="row">
         <div class="col-md-12 main-container">
@@ -102,5 +103,20 @@ Split up compression due to a weird js dependency bug that makes it not work wit
     minDuration: 700,
   });
   angular.bootstrap(document.getElementById('app'), [appName]);
+  $(function () {
+    // maintenance alert hide/show logic - lifted from hqwebapp/js/main.js
+    var $maintenance = $(".alert-maintenance");
+    if ($maintenance.length) {
+      var id = $maintenance.data("id"),
+        alertCookie = "alert_maintenance";
+      if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+        $maintenance.removeClass('hide');
+        $maintenance.on('click', '.close', function () {
+          $.cookie(alertCookie, id, {expires: 7, path: '/'});
+        });
+      }
+    }
+  });
+
 </script>
 {% endblock body_end %}

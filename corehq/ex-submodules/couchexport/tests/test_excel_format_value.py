@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from testil import eq
 
@@ -26,6 +27,7 @@ def test_decimal():
     yield check, '4.0345', 4.0345, numbers.FORMAT_NUMBER_00, float
     yield check, '-3.234', -3.234, numbers.FORMAT_NUMBER_00, float
     yield check, 5.032, 5.032, numbers.FORMAT_NUMBER_00, float
+    yield check, Decimal('3.00'), 3.00, numbers.FORMAT_NUMBER_00, float
 
 
 def test_boolean():
@@ -90,6 +92,8 @@ def test_date():
         numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
     yield check, '2020.01.20', datetime.datetime(2020, 1, 20, 0, 0), \
         numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+    yield check, datetime.date(2020, 1, 20), datetime.date(2020, 1, 20), \
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.date
 
 
 def test_datetime():
@@ -110,6 +114,9 @@ def test_datetime():
         datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
                           tzinfo=tzoffset(None, -21600)), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
+    yield check, datetime.datetime(2020, 1, 20, 11, 11), \
+        datetime.datetime(2020, 1, 20, 11, 11), \
+        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
 
 
 def test_time():
@@ -130,3 +137,5 @@ def test_empty():
 def test_text():
     yield check, 'hi this is text', 'hi this is text', numbers.FORMAT_TEXT, str
     yield check, '1241234eeeesffsfs', '1241234eeeesffsfs', numbers.FORMAT_TEXT, str
+    yield check, {'en': 'Thanks', 'de': 'Danke'}, "{'en': 'Thanks', 'de': 'Danke'}", \
+          numbers.FORMAT_TEXT, str

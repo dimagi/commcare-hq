@@ -1153,8 +1153,8 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
-               acks_late=True, queue='background_queue')
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_week='monday', hour=0, minute=0),
+                       acks_late=True, queue='background_queue')
 def collect_inactive_dashboard_users():
     celery_task_logger.info("Started updating the Inactive Dashboard users")
 
@@ -1236,8 +1236,8 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     not_logged_in = dashboard_usernames - logged_in_dashboard_users
     return not_logged_in
 
-
-@periodic_task(run_every=crontab(day_of_week=5, hour=14, minute=0), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_week=5, hour=14, minute=0),
+                       acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     # Weekly refresh of disha dumps for current and last month
     DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
@@ -1263,7 +1263,8 @@ def build_missing_disha_dump(month, state_name):
     DishaDump(state_name, month).build_export_json(query_master=True)
 
 
-@periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=17, minute=0, day_of_month='12'),
+                       acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -1647,7 +1648,10 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes
-    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+    # running the data accessor again to avoid storing all doc ids in memory
+    # since run time is relatively short and does not scale with number of errors
+    # but the number of doc ids will increase with the number of errors
+    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
         if doc_id in known_bad_doc_ids:
             # These docs will either get retried or are invalid
             continue
