@@ -533,7 +533,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
                 sum(rations_21_plus_distributed) as rations_21_plus_distributed
-
             FROM {agg_child_temp_tablename}
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id
         ) ut

@@ -135,7 +135,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                 "ELSE 0 END)"),
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
-            ('days_ration_given_child', "SUM(chm.days_ration_given_child)")
+            ('days_ration_given_child', "SUM(chm.days_ration_given_child)"),
         )
         query_cols = []
         for c in columns:
