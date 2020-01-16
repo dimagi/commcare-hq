@@ -20,6 +20,7 @@ import stripe
 from django_prbac.models import Role
 from memoized import memoized
 
+from corehq.apps.domain.models import icds_conditional_session_key
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1728,7 +1729,8 @@ class Subscription(models.Model):
         return cls._get_active_subscription_by_domain(domain_name_or_obj)
 
     @classmethod
-    @quickcache(['domain_name'], timeout=60 * 60)
+    @quickcache(['domain_name'], timeout=60 * 60,
+        session_function=icds_conditional_session_key(), memoize_timeout=60 * 60)
     def _get_active_subscription_by_domain(cls, domain_name):
         try:
             return cls.visible_objects.select_related(

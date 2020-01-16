@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import datetime
+from corehq.apps.domain.models import icds_conditional_session_key
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.util.quickcache import quickcache
@@ -48,7 +49,8 @@ def _get_new_arbitrary_value():
     return datetime.datetime.utcnow().isoformat()
 
 
-@quickcache(['domain'], timeout=60 * 24 * 60 * 60)
+@quickcache(['domain'], timeout=60 * 24 * 60 * 60,
+    session_function=icds_conditional_session_key(), memoize_timeout=60 * 60)
 def _get_domain_freshness_token(domain):
     return _get_new_arbitrary_value()
 
