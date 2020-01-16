@@ -39,6 +39,7 @@ from custom.icds_reports.tasks import (
     create_df_indices,
     drop_df_indices,
     drop_gm_indices,
+    update_governance_dashboard
 )
 
 
@@ -79,6 +80,7 @@ NORMAL_TASKS = {
     'agg_awc_table': (None, _agg_awc_table, None),
     'aggregate_awc_daily': (None, aggregate_awc_daily, None),
     'update_agg_child_health': (None, update_agg_child_health, None),
+    'update_governance_dashboard': (None, update_governance_dashboard, None)
 }
 
 

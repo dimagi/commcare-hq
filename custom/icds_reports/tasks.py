@@ -1764,18 +1764,17 @@ def drop_df_indices(agg_date):
             cursor.execute(query)
 
 
-@periodic_task_on_envs(
-    settings.ICDS_ENVS,
-    run_every=crontab(minute=0, hour=14),  # To run on 7:30 PM IST
-    acks_late=True,
-    queue='icds_aggregation_queue'
-)
 def update_governance_dashboard(target_date=None):
     if target_date is None:
         target_date = date.today()
+    current_month = target_date.replace(day=1)
+    _agg_governance_dashboard(current_month)
 
-    month = target_date.replace(day=1)
 
-    db_alias = router.db_for_write(AggGovernanceDashboard)
-    with transaction.atomic(using=db_alias):
-        AggGovernanceDashboard().aggregate(month)
+@task(queue='icds_aggregation_queue')
+def _agg_governance_dashboard(current_month):
+    previous_month = current_month - relativedelta(months=1)
+    for month in [previous_month, current_month]:
+        db_alias = router.db_for_write(AggGovernanceDashboard)
+        with transaction.atomic(using=db_alias):
+            AggGovernanceDashboard().aggregate(month)
