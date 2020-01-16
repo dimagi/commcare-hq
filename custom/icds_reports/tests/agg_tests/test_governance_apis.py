@@ -46,7 +46,7 @@ class GovernanceApiTest(TestCase):
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_first_row = {
-            'awc_id': 'a17', 'awc_code': 'a17', 'valid_visits': 0, 'expected_visits': 3
+            'awc_id': 'a10', 'awc_code': 'a10', 'valid_visits': 0, 'expected_visits': 2
         }
         self.assertEqual(data[0], expected_first_row)
 
