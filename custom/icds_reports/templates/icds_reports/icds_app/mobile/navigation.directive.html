@@ -115,14 +115,7 @@
                     <a href="{$ goToStep('demographics/lactating_enrolled_women', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
                       Lactating Mothers enrolled for Anganwadi Services</a>
                 </div>
-                <div class="navigation-font pl-3 pr-3 mb-0"
-                     ng-if="haveAccessToFeatures==false"
-                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
-                    <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
-                      Adolescent Girls enrolled for Anganwadi Services</a>
-                </div>
               <div class="navigation-font pl-3 pr-3 mb-0"
-                     ng-if="toShowOnNavigation()"
                      ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
                     <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
                       Out of school Adolescent girls (11-14 years)</a>

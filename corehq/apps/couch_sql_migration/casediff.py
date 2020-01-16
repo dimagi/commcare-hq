@@ -675,14 +675,16 @@ def diff_cases(couch_cases, statedb):
     case_ids = list(couch_cases)
     sql_cases = CaseAccessorSQL.get_cases(case_ids)
     sql_case_ids = set()
+    all_diffs = []
     for sql_case in sql_cases:
         sql_case_ids.add(sql_case.case_id)
         couch_case = couch_cases[sql_case.case_id]
         couch_case, diffs = diff_case(sql_case, couch_case, statedb)
-        statedb.replace_case_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+        all_diffs.append((couch_case['doc_type'], sql_case.case_id, diffs))
         counts[couch_case['doc_type']] += 1
 
-    diff_ledgers(case_ids, statedb)
+    all_diffs.extend(iter_ledger_diffs(case_ids))
+    statedb.replace_case_diffs(all_diffs)
 
     if len(case_ids) != len(sql_case_ids):
         couch_ids = set(case_ids)
@@ -702,6 +704,7 @@ def diff_case(sql_case, couch_case, statedb):
     diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
     diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
     if diffs and not sql_case.is_deleted:
+        # TODO rebuild SQL case with couch action order
         try:
             couch_case, diffs = rebuild_couch_case_and_re_diff(
                 couch_case, sql_case_json, statedb)
@@ -723,7 +726,7 @@ def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):
     return rebuilt_case_json, diffs
 
 
-def diff_ledgers(case_ids, statedb):
+def iter_ledger_diffs(case_ids):
     log.debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
     couch_state_map = {
         state.ledger_reference: state
@@ -733,9 +736,10 @@ def diff_ledgers(case_ids, statedb):
         couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
         couch_json = couch_state.to_json() if couch_state is not None else {}
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        statedb.add_diffs(
-            'stock state', ledger_value.ledger_reference.as_id(),
-            filter_ledger_diffs(diffs)
+        yield (
+            'stock state',
+            ledger_value.ledger_reference.as_id(),
+            filter_ledger_diffs(diffs),
         )
 
 

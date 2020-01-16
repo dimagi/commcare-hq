@@ -138,6 +138,18 @@ def test_get_forms_count():
         eq(db.get_forms_count("c"), 0)
 
 
+def test_case_diff_lifecycle():
+    with init_db() as db:
+        case_ids = ["a", "b", "c"]
+        db.add_cases_to_diff(case_ids)
+        db.add_cases_to_diff(["d"])
+        db.add_diffed_cases(case_ids)
+        eq(list(db.iter_undiffed_case_ids()), ["d"])
+        eq(db.count_undiffed_cases(), 1)
+        db.add_diffed_cases(case_ids)  # add again should not error
+        db.add_diffed_cases([])  # no ids should not error
+
+
 @with_setup(teardown=delete_db)
 def test_problem_forms():
     with init_db(memory=False) as db:
@@ -190,24 +202,45 @@ def test_resume_state():
                 pass
 
 
+def test_case_ids_with_diffs():
+    with init_db() as db:
+        db.replace_case_diffs([
+            ("CommCareCase", "case-1", [make_diff(0)]),
+            ("stock state", "case-1/x/y", [make_diff(1)]),
+            ("CommCareCase", "case-2", [make_diff(2)]),
+            ("stock state", "case-2/x/y", [make_diff(3)]),
+            ("stock state", "case-2/x/z", [make_diff(5)]),
+        ])
+        eq(db.count_case_ids_with_diffs(), 2)
+        eq(set(db.iter_case_ids_with_diffs()), {"case-1", "case-2"})
+
+
 def test_replace_case_diffs():
     with init_db() as db:
         case_id = "865413246874321"
         # add old diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(0)])
-        db.replace_case_diffs("CommCareCase", "unaffected", [make_diff(1)])
-        db.add_diffs("stock state", case_id + "/x/y", [make_diff(2)])
-        db.add_diffs("stock state", "unaffected/x/y", [make_diff(3)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(0)]),
+            ("stock state", case_id + "/x/y", [make_diff(1)]),
+            ("CommCareCase", "unaffected", [make_diff(2)]),
+            ("stock state", "unaffected/x/y", [make_diff(3)]),
+            ("CommCareCase", "stock-only", [make_diff(4)]),
+            ("stock state", "stock-only/x/y", [make_diff(5)]),
+        ])
         # add new diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(4)])
-        db.add_diffs("stock state", case_id + "/y/z", [make_diff(5)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(6)]),
+            ("stock state", case_id + "/y/z", [make_diff(7)]),
+            ("stock state", "stock-only/y/z", [make_diff(8)]),
+        ])
         eq(
             {(d.kind, d.doc_id, d.json_diff) for d in db.get_diffs()},
             {(kind, doc_id, make_diff(x)) for kind, doc_id, x in [
-                ("CommCareCase", "unaffected", 1),
+                ("CommCareCase", "unaffected", 2),
                 ("stock state", "unaffected/x/y", 3),
-                ("CommCareCase", case_id, 4),
-                ("stock state", case_id + "/y/z", 5),
+                ("CommCareCase", case_id, 6),
+                ("stock state", case_id + "/y/z", 7),
+                ("stock state", "stock-only/y/z", 8),
             ]},
         )
 
@@ -274,8 +307,8 @@ def test_clone_casediff_data_from():
                     Config(id="c", total_forms=2, processed_forms=1),
                 ])
                 cddb.add_missing_docs("CommCareCase-couch", ["missing"])
-                cddb.replace_case_diffs("CommCareCase", "a", [diffs[0]])
-                cddb.replace_case_diffs("CommCareCase-Deleted", "b", [diffs[1]])
+                cddb.add_diffs("CommCareCase", "a", [diffs[0]])
+                cddb.add_diffs("CommCareCase-Deleted", "b", [diffs[1]])
                 cddb.add_diffs("stock state", "c/ledger", [diffs[2]])
                 cddb.increment_counter("CommCareCase", 3)           # case, a, c
                 cddb.increment_counter("CommCareCase-Deleted", 1)   # b
@@ -313,7 +346,9 @@ def test_clone_casediff_data_from_tables():
     # to be updated.
     eq(set(mod.Base.metadata.tables), {m.__tablename__ for m in [
         mod.CaseForms,
+        mod.CaseToDiff,
         mod.Diff,
+        mod.DiffedCase,
         mod.KeyValue,
         mod.DocCount,
         mod.MissingDoc,
