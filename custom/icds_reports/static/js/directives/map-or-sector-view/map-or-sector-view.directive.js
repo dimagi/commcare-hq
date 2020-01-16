@@ -3,6 +3,7 @@
 function MapOrSectorController($scope, $compile, $location, storageService, locationsService, navigationService, isMobile) {
 
     var vm = this;
+    vm.selectedLocation = null;
     var leftMargin = isMobile ? 70 : 150;
     var truncateAmount = isMobile ? 70 : 100;  // used in cropping the x-axis labels
 
@@ -43,6 +44,9 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
             }
         });
     }
+    vm.handleMobileDrilldown = function () {
+        navigateToLocation(vm.selectedLocation);
+    };
 
     // reduce caption width to fit screen up to 900px on mobile view
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
@@ -138,6 +142,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                     var locName = e.data[0];
                     if (isMobile) {
                         // disable click navigation on mobile and instead trigger the tooltip
+                        vm.selectedLocation = locName;
                         var popupHtml = getTooltipHtml(locName);
                         renderTooltip(popupHtml);
                     } else {
