@@ -66,7 +66,7 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             ('block_id', 'awc_location_local.block_id'),
             ('supervisor_id', 'awc_location_local.supervisor_id'),
             ('awc_id', 'awc_location_local.doc_id'),
-            ('awc_site_code', 'awc_location_local.awc_site_code'),
+            ('awc_code', 'awc_location_local.awc_site_code'),
             ('month', "'{}'".format(month_formatter(self.month_start))),
             ('awc_launched', 'agg_awc.num_launched_awcs=1'),
             ('total_preg_benefit_till_date', 'COALESCE(agg_awc.cases_ccs_pregnant, 0)'),

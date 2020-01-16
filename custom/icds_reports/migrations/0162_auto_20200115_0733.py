@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('block_id', models.TextField(null=True)),
                 ('supervisor_id', models.TextField(null=True)),
                 ('awc_id', models.TextField(primary_key=True, serialize=False)),
-                ('awc_site_code', models.TextField(null=True)),
+                ('awc_code', models.TextField(null=True)),
                 ('awc_launched', models.NullBooleanField()),
                 ('total_preg_benefit_till_date', models.IntegerField(null=True)),
                 ('total_lact_benefit_till_date', models.IntegerField(null=True)),

@@ -51,7 +51,7 @@ def get_beneficiary_data(length, year, month, order, query_filters):
         **query_filters
     ).order_by(*order).values(
         'awc_id',
-        'awc_site_code',
+        'awc_code',
         'total_preg_benefit_till_date',
         'total_lact_benefit_till_date',
         'total_preg_reg_till_date',
