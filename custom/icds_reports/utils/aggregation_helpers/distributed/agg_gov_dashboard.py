@@ -33,15 +33,14 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
         index_query = self.indexes()
         cursor.execute(index_query)
 
-    def _tablename_func(self, month=None):
-        if month is None:
-            month = self.month_start
-        return "{}_{}".format(self.base_tablename, month.strftime("%Y-%m-%d"))
+    @property
+    def tablename(self):
+        return "{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"))
 
     def drop_table_if_exists(self):
         return """
         DROP TABLE IF EXISTS "{table_name}"
-        """.format(table_name=self._tablename_func())
+        """.format(table_name=self.tablename)
 
     def create_child_table(self):
         return """
@@ -49,7 +48,7 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
         CHECK (month=DATE %(start_date)s)
         ) INHERITS ({base_tablename})
         """.format(
-            table_name=self._tablename_func(),
+            table_name=self.tablename,
             base_tablename=self.base_tablename,
         ), {
             "start_date": self.month_start
@@ -93,7 +92,7 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
         )
         WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
         """.format(
-            tablename=self._tablename_func(),
+            tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns])
 
@@ -156,7 +155,11 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             FROM child_health_monthly
             WHERE month=%(start_date)s
             GROUP BY supervisor_id, awc_id;
+        """, {
+            'start_date': self.month_start
+        }
 
+        yield """
         UPDATE "{tablename}" agg_gov
         SET total_0_3_female_benefit_till_date = ut.valid_all_0_3_female,
             total_0_3_male_benefit_till_date = ut.valid_all_0_3_male,
@@ -176,19 +179,16 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             total_3_6_male_reg_in_month = ut.open_reg_in_month_3_6_male
         FROM temp_gov_dashboard ut
         WHERE agg_gov.awc_id = ut.awc_id;
-
-        DROP TABLE temp_gov_dashboard;
-
         """.format(
-            tablename=self._tablename_func(),
-        ), {
-            'start_date': self.month_start
-        }
+            tablename=self.tablename,
+        ), {}
+
+        yield """
+        DROP TABLE temp_gov_dashboard;
+        """, {}
 
     def indexes(self):
         """
         Returns query to create index with columns month, state_id and awc_id
         """
-        index_cols = ['month', 'state_id', 'awc_id']
-
-        return 'CREATE INDEX ON "{}" ({})'.format(self._tablename_func(), ', '.join(index_cols))
+        return 'CREATE INDEX ON "{}" (month, state_id, awc_id)'.format(self.tablename)
