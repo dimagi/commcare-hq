@@ -48,16 +48,20 @@ function MapOrSectorController($location, storageService, locationsService, navi
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
 
     function getChartTooltip(d) {
-        if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
+        return getTooltipHtml(d.value);
+    }
+
+    function getTooltipHtml(locName) {
+        if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[locName]) {
             return 'NA';
         }
         return vm.templatePopup({
             loc: {
                 properties: {
-                    name: d.value,
+                    name: locName,
                 },
             },
-            row: vm.data.mapData.tooltips_data[d.value],
+            row: vm.data.mapData.tooltips_data[locName],
         });
     }
     vm.chartOptions = {
