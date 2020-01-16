@@ -231,12 +231,17 @@ class LocationsListView(BaseLocationView):
 class FilteredLocationDownload(BaseLocationView):
     urlname = 'filter_and_download_locations'
     page_title = ugettext_noop('Filter and Download Locations')
+    template_name = 'locations/filter_and_download.html'
 
     @method_decorator(require_can_edit_or_view_locations)
-    def get(self, request, domain, *args, **kwargs):
-        return render(request, "locations/filter_and_download.html", {
-            'form': LocationFilterForm(request.GET, domain=domain),
-        })
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': LocationFilterForm(self.request.GET, domain=self.domain),
+        }
 
 
 class LocationOptionsController(EmwfOptionsController):
