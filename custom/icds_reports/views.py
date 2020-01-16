@@ -225,7 +225,7 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-)
+    india_now)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -234,7 +234,7 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
-)
+    get_state_names)
 
 
 from . import const
@@ -368,7 +368,6 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -2178,8 +2177,10 @@ class GovernanceAPIView(View):
 
     @staticmethod
     def get_state_id_from_state_site_code(state_code):
-        return AwcLocation.objects.get(aggregation_level=AggregationLevels.STATE,
-                                       state_site_code=state_code, state_is_test=0).state_id
+        awc_location = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                                  state_site_code=state_code, state_is_test=0)\
+            .values_list('state_id', flat=True)
+        return awc_location[0] if len(awc_location) > 0 else None
 
     def get_gov_api_params(self, request, *args, **kwargs):
         step = kwargs.get('step')
@@ -2189,21 +2190,21 @@ class GovernanceAPIView(View):
         state_site_code = request.GET.get('state_site_code')
         state_id = ''
         if state_site_code is not None:
-            try:
-                state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
-            except:
-                state_id = None
+            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             prev_month = now - relativedelta(months=1)
             month = prev_month.month
             year = prev_month.year
 
-        start = request.GET.get('start', 0)
+        last_awc_id = request.GET.get('last_awc_id', '')
 
-        return step, start, month, year, state_id
+        return step, last_awc_id, month, year, state_id
+
+
 
     def get(self, request, *args, **kwargs):
-        step, start, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
+        step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
         present_year = datetime.now().year
         present_month = datetime.now().month
 
@@ -2226,19 +2227,33 @@ class GovernanceAPIView(View):
         if not is_valid:
             return HttpResponse(exception_message, status=400)
 
-        if step == 'home_visit':
-            length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-            query_filters = {'aggregation_level': AggregationLevels.AWC, 'num_launched_awcs': 1}
-            if state_id != '':
-                query_filters['state_id'] = state_id
-            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+        query_filters = {'aggregation_level': AggregationLevels.AWC,
+                         'num_launched_awcs': 1,
+                         'awc_id__gt': last_awc_id
+                         }
 
-            data = get_home_visit_data(
-                start,
+        order = ['awc_id']
+
+        if step == 'home_visit':
+            query_filters['state_id'] = state_id
+            data, count = get_home_visit_data(
                 length,
                 year,
                 month,
                 order,
                 query_filters
             )
-        return JsonResponse(data=data)
+            response_json = {
+                'data': data,
+                'metadata': {
+                    'month': month,
+                    'year': year,
+                    'count': count,
+                    'timestamp': india_now()
+                }
+            }
+        elif step == 'state_names':
+            response_json = {'data': get_state_names()}
+
+        return JsonResponse(data=response_json)

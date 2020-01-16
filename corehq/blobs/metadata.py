@@ -90,18 +90,25 @@ class MetaDB(object):
                 "type_code",
                 "created_on",
                 "deleted_on"
-            )
-            SELECT
-                "id",
-                "domain",
-                "parent_id",
-                "name",
-                "key",
-                "type_code",
-                "created_on",
-                %s AS "deleted_on"
-            FROM deleted
-            WHERE expires_on IS NULL
+            ) (
+                SELECT
+                    "id",
+                    "domain",
+                    "parent_id",
+                    "name",
+                    "key",
+                    "type_code",
+                    "created_on",
+                    %s AS "deleted_on"
+                FROM deleted
+                WHERE expires_on IS NULL
+            ) ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                key = EXCLUDED.key,
+                type_code = EXCLUDED.type_code,
+                created_on = EXCLUDED.created_on,
+                deleted_on = CLOCK_TIMESTAMP()
+            WHERE blobs_deletedblobmeta.parent_id = EXCLUDED.parent_id and blobs_deletedblobmeta.key = EXCLUDED.key
         ) SELECT COUNT(*) FROM deleted;
         """
         now = _utcnow()

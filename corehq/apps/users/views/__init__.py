@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -49,7 +49,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import AppES
+from corehq.apps.es import AppES, UserES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.utils import send_confirmation_email
@@ -572,55 +572,35 @@ class ListRolesView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
-    def _query_es(limit, skip, query=None):
-        web_user_filter = [
-            {"term": {"user.domain_memberships.domain": domain}},
-            {"term": {"doc_type": "WebUser"}},
-            {"term": {"base_doc": "couchuser"}},
-            {"term": {"is_active": True}},
-        ]
-
-        q = {
-            "filter": {"and": web_user_filter},
-            "sort": {'username.exact': 'asc'},
-        }
-        default_fields = ["username", "last_name", "first_name"]
-        q["query"] = search_string_query(query, default_fields)
-        return es_query(
-            params={}, q=q, es_index='users',
-            size=limit, start_at=skip,
-        )
-
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
-    web_users_query = _query_es(limit, skip, query=query)
-    total = web_users_query.get('hits', {}).get('total', 0)
-    results = web_users_query.get('hits', {}).get('hits', [])
+    result = (
+        UserES().domain(domain).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
 
-    web_users = [WebUser.wrap(w['_source']) for w in results]
+    web_users = [WebUser.wrap(w) for w in result.hits]
+    web_users_fmt = [{
+        'email': u.get_email(),
+        'domain': domain,
+        'name': u.full_name,
+        'role': u.role_label(domain),
+        'phoneNumbers': u.phone_numbers,
+        'id': u.get_id,
+        'editUrl': reverse('user_account', args=[domain, u.get_id]),
+        'removeUrl': (
+            reverse('remove_web_user', args=[domain, u.user_id])
+            if request.user.username != u.username else None
+        ),
+    } for u in web_users]
 
-    def _fmt_result(domain, u):
-        return {
-            'email': u.get_email(),
-            'domain': domain,
-            'name': u.full_name,
-            'role': u.role_label(domain),
-            'phoneNumbers': u.phone_numbers,
-            'id': u.get_id,
-            'editUrl': reverse('user_account', args=[domain, u.get_id]),
-            'removeUrl': (
-                reverse('remove_web_user', args=[domain, u.user_id])
-                if request.user.username != u.username else None
-            ),
-        }
-    web_users_fmt = [_fmt_result(domain, u) for u in web_users]
-
-    return json_response({
+    return JsonResponse({
         'users': web_users_fmt,
-        'total': total,
+        'total': result.total,
         'page': page,
         'query': query,
     })
@@ -1062,7 +1042,6 @@ class DomainRequestView(BasePageView):
                     domain_obj = Domain.get_by_name(domain_request.domain)
                     return render(request, "users/confirmation_sent.html", {
                         'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
-                        'url': reverse("appstore"),
                     })
         return self.get(request, *args, **kwargs)
 

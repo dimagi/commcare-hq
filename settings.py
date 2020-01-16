@@ -400,14 +400,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/billing/statements/',
-    '/a/%(domain)s/settings/project/billing_information/',
-    '/a/%(domain)s/settings/project/flags/',
-    '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/internal/info/',
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/project_limits/',
-    '/a/%(domain)s/settings/project/subscription/',
+    '/a/{domain}/settings/project/billing/statements/',
+    '/a/{domain}/settings/project/billing_information/',
+    '/a/{domain}/settings/project/flags/',
+    '/a/{domain}/settings/project/internal/calculations/',
+    '/a/{domain}/settings/project/internal/info/',
+    '/a/{domain}/settings/project/internal_subscription_management/',
+    '/a/{domain}/settings/project/project_limits/',
+    '/a/{domain}/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -439,7 +439,6 @@ EMAIL_USE_TLS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
-EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
@@ -466,7 +465,17 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SAAS_REPORTING_EMAIL = None
 
+# Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
+# This email must be a REAL email address, not a mailing list, otherwise
+# the emails from mailer daemon will be swallowed up by spam filters.
+RETURN_PATH_EMAIL = None
+
+# This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
+# SES bounce and complaint notifications.
+RETURN_PATH_EMAIL_PASSWORD = None
+
 ENABLE_SOFT_ASSERT_EMAILS = True
+IS_DIMAGI_ENVIRONMENT = True
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds',)
@@ -1618,6 +1627,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
+    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
