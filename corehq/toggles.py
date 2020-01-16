@@ -1353,7 +1353,7 @@ FILTERED_LOCATION_DOWNLOAD = StaticToggle(
     "Ability to filter location download to include only a specified location and its descendants.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link='TODO',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
