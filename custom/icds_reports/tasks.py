@@ -310,6 +310,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func_name='_agg_gov_vhnd_form')
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
                                                                 func_name='_agg_beneficiary_form')
                                  for state_id in state_ids
                                  ])

@@ -1,13 +1,9 @@
 DROP VIEW IF EXISTS gov_vhnd_view CASCADE;
 CREATE VIEW gov_vhnd_view AS
 SELECT
-"awc_location_local"."state_name" AS "state_name",
 "awc_location_local"."state_id" AS "state_id",
-"awc_location_local"."district_name" AS "district_name",
-"awc_location_local"."block_name" AS "block_name",
-"awc_location_local"."supervisor_name" AS "supervisor_name",
-"awc_location_local"."awc_name" AS "awc_name",
 "awc_location_local"."doc_id" AS "awc_id",
+"awc_location_local"."awc_site_code" AS "awc_code",
 agg_awc.month as month,
 COALESCE(icds_dashboard_gov_vhnd_forms.vhsnd_date_past_month, null) as vhsnd_date_past_month,
 COALESCE(icds_dashboard_gov_vhnd_forms.anm_mpw_present,false) as anm_mpw_present,

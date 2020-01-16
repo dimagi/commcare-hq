@@ -2254,7 +2254,7 @@ class GovernanceAPIView(View):
         elif step == 'vhnds':
             length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
             query_filters = {'awc_id__gt': last_awc_id}
-            order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+            order = ['awc_id', 'awc_code']
             if state_id != '':
                 query_filters['state_id'] = state_id
             data, count = get_vhnd_data(length, year, month, order, query_filters)

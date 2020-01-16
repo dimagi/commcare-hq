@@ -90,7 +90,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id', 'awc_code']
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_count = 10
@@ -102,11 +102,11 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id', 'awc_code']
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_first_row = {
-            "state": "st1", "district": "d1", "block": "b1", "sector": "s1", "awc": "a41",
+            "awc_id": "a41","awc_code": "a41",
             "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
@@ -119,10 +119,10 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id', 'awc_code']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_first_row = {
-            "state": "st1", "district": "d1", "block": "b1", "sector": "s1", "awc": "a49",
+            "awc_id": "a49","awc_code": "a49",
             "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
@@ -135,8 +135,37 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id', 'awc_code']
         data, count = get_vhnd_data(limit, 2018, 6, order, query_filters)
         expected_count = 0
         self.assertEqual(count, expected_count)
         self.assertEqual(data, [])
+
+    def test_data_fetching_retrieving_first_record_for_multiple_nhnds_per_month_per_awc(self):
+        """
+        test tp check if the first record is getting retrieved if there are multiple vhnds per month per awc
+        """
+        limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
+        query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41'}
+        order = ['awc_id', 'awc_code']
+        data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
+        expected_row = {
+            "awc_id": "a49","awc_code": "a49",
+            "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no",
+            "vhsnd_date": "Data Not Entered", "anm_present": "no", "asha_present": "no",
+            "any_child_immunized": "no", "anc_conducted": "no"
+        }
+        expected_counter = 1
+        actual_row = None
+
+        counter = 0
+        for row in data:
+            if row['awc'] == 'a49':
+                actual_row = row
+                counter += 1
+
+        self.assertEqual(counter, expected_counter)
+        self.assertEqual(actual_row, expected_row)
+
+
+

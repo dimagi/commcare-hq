@@ -1560,12 +1560,12 @@ class AggregateVHNDForms(models.Model, AggregateMixin):
     asha_present = models.NullBooleanField(null=True)
     child_immu = models.NullBooleanField(null=True)
     anc_today = models.NullBooleanField(null=True)
-    awc_id = models.TextField(null=True)
+    awc_id = models.TextField(primary_key=True)
     month = models.DateField(null=True)
 
     class Meta(object):
         db_table = AGG_GOV_VHND_TABLE
-        unique_together = ('month', 'awc_id')
+        unique_together = ('month', 'awc_id', 'state_id')
 
     _agg_helper_cls = GovVhndFormAggDistributedHelper
     _agg_atomic = False

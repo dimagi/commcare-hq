@@ -20,14 +20,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AggregateVHNDForms',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('state_id', models.TextField(null=True)),
                 ('vhsnd_date_past_month', models.DateField(null=True)),
                 ('anm_mpw_present', models.NullBooleanField()),
                 ('asha_present', models.NullBooleanField()),
                 ('child_immu', models.NullBooleanField()),
                 ('anc_today', models.NullBooleanField()),
-                ('awc_id', models.TextField(null=True)),
+                ('awc_id', models.TextField(primary_key=True, serialize=False,)),
                 ('month', models.DateField(null=True)),
             ],
             options={
@@ -37,7 +36,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='aggregatevhndforms',
-            unique_together=set([('month', 'awc_id')]),
+            unique_together=set([('month', 'awc_id', 'state_id')]),
         ),
         migrator.get_migration('gov_vhnd.sql')
     ]

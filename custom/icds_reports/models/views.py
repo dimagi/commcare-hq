@@ -1132,11 +1132,7 @@ class MWCDReportView(models.Model):
 class GovVHNDView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     awc_id = models.TextField(blank=True, null=True)
-    state_name = models.TextField(blank=True, null=True)
-    district_name = models.TextField(blank=True, null=True)
-    block_name = models.TextField(blank=True, null=True)
-    supervisor_name = models.TextField(blank=True, null=True)
-    awc_name = models.TextField(blank=True, null=True)
+    awc_code = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     vhsnd_date_past_month = models.DateField(blank=True, null=True)
     anm_mpw_present = models.IntegerField(blank=True, null=True)

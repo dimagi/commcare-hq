@@ -29,20 +29,25 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          vhsnd_date_past_month, state_id, anm_mpw_present, asha_present, child_immu, anc_today,
-          awc_id, month
+          awc_id, vhsnd_date_past_month, state_id, anm_mpw_present, asha_present, child_immu, anc_today,
+          month
         )(
         SELECT
-        DISTINCT ON(awc_id, month) vhsnd_date_past_month, state_id,
-         CASE WHEN(anm_mpw = 1) THEN TRUE  ELSE FALSE END as anm_mpw_present,
-         CASE WHEN(asha_present = 1) THEN TRUE  ELSE FALSE END as asha_present,
-         CASE WHEN(child_immu = 1) THEN TRUE  ELSE FALSE END as child_immu,
-         CASE WHEN(anc_today = 1) THEN TRUE  ELSE FALSE END as anc_today,
-         awc_id, month
+          DISTINCT awc_id as awc_id,
+          FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
+          FIRST_VALUE(state_id) over w as state_id,
+          FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
+          FIRST_VALUE(asha_present=1) over w as asha_present,
+          FIRST_VALUE(child_immu=1) over w as child_immu,
+          FIRST_VALUE(anc_today=1) over w as anc_today,
+          FIRST_VALUE(month) over w as month
           FROM "{ucr_tablename}"
-          WHERE vhsnd_date_past_month >= %(start_date)s AND
-           vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
-           ORDER BY awc_id, month, submitted_on
+            WHERE vhsnd_date_past_month >= %(start_date)s AND
+            vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
+          WINDOW w AS (
+                PARTITION BY awc_id 
+                ORDER BY submitted_on
+          )ORDER BY awc_id, month 
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
