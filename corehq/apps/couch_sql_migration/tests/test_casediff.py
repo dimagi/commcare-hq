@@ -646,6 +646,7 @@ class TestDiffCases(SimpleTestCase):
         assert case_id not in self.couch_cases, self.couch_cases[case_id]
         props.setdefault("domain", "test")
         props.setdefault("doc_type", "CommCareCase")
+        props.setdefault("_id", case_id)
         self.sql_cases[case_id] = Config(
             case_id=case_id,
             props=props,
@@ -683,7 +684,7 @@ class TestDiffCases(SimpleTestCase):
         return [ledgers[c] for c in case_id__in if c in ledgers]
 
     def hard_rebuild_case(self, *args, **kw):
-        raise Exception("unexpected")
+        raise Exception("rebuild disabled")
 
 
 @attr.s

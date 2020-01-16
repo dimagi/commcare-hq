@@ -736,25 +736,29 @@ def diff_case(sql_case, couch_case, dd_count):
     dd_count("commcare.couchsqlmigration.case.diffed")
     diffs = diff(couch_case, sql_json)
     if diffs:
+        domain = couch_case["domain"]
+        case_id = couch_case['_id']
         try:
-            couch_case = FormProcessorCouch.hard_rebuild_case(
-                couch_case["domain"], couch_case['_id'], None, save=False, lock=False
-            ).to_json()
+            with convert_rebuild_error():
+                couch_case = FormProcessorCouch.hard_rebuild_case(
+                    domain, case_id, None, save=False, lock=False
+                ).to_json()
             dd_count("commcare.couchsqlmigration.case.rebuild.couch")
             diffs = diff(couch_case, sql_json)
             if diffs:
                 if should_sort_sql_transactions(sql_case, couch_case):
-                    sql_case = rebuild_case_with_couch_action_order(sql_case)
+                    with convert_rebuild_error():
+                        sql_case = rebuild_case_with_couch_action_order(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
                     diffs = diff(couch_case, sql_case.to_json())
                 elif not was_rebuilt(sql_case):
-                    sql_case = rebuild_case(sql_case)
+                    with convert_rebuild_error():
+                        sql_case = rebuild_case(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql")
                     diffs = diff(couch_case, sql_case.to_json())
-        except Exception as err:
+        except RebuildError as err:
             dd_count("commcare.couchsqlmigration.case.rebuild.error")
-            log.warning('Case {} rebuild -> {}: {}'.format(
-                sql_case.case_id, type(err).__name__, err))
+            log.warning(f"Case {case_id} rebuild -> {err}")
     if diffs:
         dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
@@ -836,6 +840,18 @@ def filter_missing_cases(missing_cases):
         else:
             result[couch_case["doc_type"]].append(couch_case["_id"])
     return result.items()
+
+
+@contextmanager
+def convert_rebuild_error():
+    try:
+        yield
+    except Exception as err:
+        raise RebuildError(f"{type(err).__name__}: {err}")
+
+
+class RebuildError(Exception):
+    pass
 
 
 @contextmanager
