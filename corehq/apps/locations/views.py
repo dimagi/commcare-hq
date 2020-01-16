@@ -47,7 +47,7 @@ from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
-from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm
+from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm, LocationFilterForm
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
@@ -234,13 +234,9 @@ class FilteredLocationDownload(BaseLocationView):
 
     @method_decorator(require_can_edit_or_view_locations)
     def get(self, request, domain, *args, **kwargs):
-        # TODO
-        context = {}
-        return render(
-            request,
-            "locations/filter_and_download.html",
-            context
-        )
+        return render(request, "locations/filter_and_download.html", {
+            'form': LocationFilterForm(request.GET, domain=domain),
+        })
 
 
 class LocationOptionsController(EmwfOptionsController):
@@ -1003,10 +999,10 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
+    root_location_id = request.GET.get('root_location_id')
     download = DownloadBase()
-    # TODO: if partial, include loc name in filename
-    res = download_locations_async.delay(domain, download.download_id,
-                                         include_consumption, headers_only)
+    res = download_locations_async.delay(domain, download.download_id, include_consumption,
+                                         headers_only, root_location_id)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
