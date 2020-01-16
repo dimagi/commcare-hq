@@ -45,9 +45,9 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
             WHERE vhsnd_date_past_month >= %(start_date)s AND
             vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
           WINDOW w AS (
-                PARTITION BY awc_id 
+                PARTITION BY awc_id
                 ORDER BY submitted_on
-          )ORDER BY awc_id, month 
+          )ORDER BY awc_id, month
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
