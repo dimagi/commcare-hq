@@ -12,10 +12,10 @@ def get_home_visit_data(length, year, month, order, query_filters):
         month=date(year, month, 1),
         **query_filters
     ).order_by(*order).values(
-        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'awc_id', 'month', 'valid_visits',
-        'expected_visits'
+        'awc_id', 'awc_site_code', 'month', 'valid_visits', 'expected_visits'
     )
     paginated_data = data[:length]
+
     def get_value_or_data_not_entered(source, field):
         value = source.get(field)
         if value is None:
@@ -24,12 +24,8 @@ def get_home_visit_data(length, year, month, order, query_filters):
 
     def base_data(row_data):
         return dict(
-            state=get_value_or_data_not_entered(row_data, 'state_name'),
-            district=get_value_or_data_not_entered(row_data, 'district_name'),
-            block=get_value_or_data_not_entered(row_data, 'block_name'),
-            sector=get_value_or_data_not_entered(row_data, 'supervisor_name'),
-            awc=get_value_or_data_not_entered(row_data, 'awc_name'),
             awc_id=get_value_or_data_not_entered(row_data, 'awc_id'),
+            awc_code=get_value_or_data_not_entered(row_data, 'awc_site_code'),
             month=get_value_or_data_not_entered(row_data, 'month'),
             valid_visits=get_value_or_data_not_entered(row_data, 'valid_visits'),
             expected_visits=get_value_or_data_not_entered(row_data, 'expected_visits'),

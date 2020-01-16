@@ -2201,8 +2201,6 @@ class GovernanceAPIView(View):
 
         return step, last_awc_id, month, year, state_id
 
-
-
     def get(self, request, *args, **kwargs):
         step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
         present_year = datetime.now().year
