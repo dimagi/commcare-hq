@@ -112,15 +112,19 @@ function MapOrSectorController($location, storageService, locationsService, navi
                 vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
-                    locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
-                        var location = locations[0];
-                        $location.search('location_name', location.name);
-                        $location.search('location_id', location.location_id);
-                        storageService.setKey('search', $location.search());
-                        if (location.location_type_name === 'awc') {
-                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
-                        }
-                    });
+                    if (isMobile) {
+                        // todo: disable click navigation on mobile and instead trigger the tooltip
+                    } else {
+                        locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
+                            var location = locations[0];
+                            $location.search('location_name', location.name);
+                            $location.search('location_id', location.location_id);
+                            storageService.setKey('search', $location.search());
+                            if (location.location_type_name === 'awc') {
+                                $location.path(navigationService.getAWCTabFromPagePath($location.path()));
+                            }
+                        });
+                    }
                 });
 
                 nv.utils.windowResize(function () {
