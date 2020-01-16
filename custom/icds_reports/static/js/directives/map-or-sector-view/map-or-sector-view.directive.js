@@ -103,6 +103,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
                 axisLabelDistance: 20,
             },
             tooltip: {
+                enabled: !isMobile,
                 contentGenerator: getChartTooltip,
             },
             callback: function (chart) {
