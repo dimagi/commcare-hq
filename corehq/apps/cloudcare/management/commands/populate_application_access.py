@@ -1,17 +1,5 @@
-import logging
-
-from django.db import transaction
-
-from dimagi.utils.couch.database import iter_docs
-
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.apps.cloudcare.models import (
-    SQLApplicationAccess,
-    SQLAppGroup,
-)
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
-
-logger = logging.getLogger(__name__)
+from corehq.apps.cloudcare.models import  SQLAppGroup
 
 
 class Command(PopulateSQLCommand):
@@ -37,7 +25,7 @@ class Command(PopulateSQLCommand):
         return SQLApplicationAccess
 
     def update_or_create_sql_object(self, doc):
-        model, created = SQLApplicationAccess.objects.update_or_create(
+        model, created = self.sql_class.objects.update_or_create(
             domain=doc['domain'],
             defaults={
                 "restrict": doc['restrict'],
