@@ -1,6 +1,6 @@
 /* global d3 */
 
-function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile) {
+function MapOrSectorController($scope, $compile, $location, storageService, locationsService, navigationService, isMobile) {
 
     var vm = this;
     var leftMargin = isMobile ? 70 : 150;
@@ -64,6 +64,17 @@ function MapOrSectorController($location, storageService, locationsService, navi
             row: vm.data.mapData.tooltips_data[locName],
         });
     }
+
+    function renderTooltip(html) {
+        // todo: this is mostly duplicated from indie-map.renderPopup
+        // only the div ID is changed
+        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+        var popup = d3.select('#chartPopup');
+        popup.classed("hidden", false);
+        popup.attr('style', css).html(html);
+        $compile(popup[0])($scope);
+    }
+
     vm.chartOptions = {
 
         chart: {
@@ -113,7 +124,9 @@ function MapOrSectorController($location, storageService, locationsService, navi
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     if (isMobile) {
-                        // todo: disable click navigation on mobile and instead trigger the tooltip
+                        // disable click navigation on mobile and instead trigger the tooltip
+                        var popupHtml = getTooltipHtml(e.data[0]);
+                        renderTooltip(popupHtml);
                     } else {
                         locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
                             var location = locations[0];
@@ -158,7 +171,7 @@ function MapOrSectorController($location, storageService, locationsService, navi
 }
 
 MapOrSectorController.$inject = [
-    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile',
+    '$scope', '$compile', '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile',
 ];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
