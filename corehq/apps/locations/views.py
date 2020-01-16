@@ -194,7 +194,12 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
+        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+            bulk_download_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("location_export", args=[self.domain])
         return {
+            'bulk_download_url': bulk_download_url,
             'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
@@ -220,6 +225,22 @@ class LocationsListView(BaseLocationView):
             return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+
+@location_safe
+class FilteredLocationDownload(BaseLocationView):
+    urlname = 'filter_and_download_locations'
+    page_title = ugettext_noop('Filter and Download Locations')
+
+    @method_decorator(require_can_edit_or_view_locations)
+    def get(self, request, domain, *args, **kwargs):
+        # TODO
+        context = {}
+        return render(
+            request,
+            "locations/filter_and_download.html",
+            context
+        )
 
 
 class LocationOptionsController(EmwfOptionsController):
@@ -1014,6 +1035,12 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
+        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+            next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+            next_url_text = _("Go back to organization download")
+        else:
+            next_url = reverse("location_export", args=[self.domain])
+            next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
@@ -1021,8 +1048,8 @@ class DownloadLocationStatusView(BaseLocationView):
             'title': _("Download Organization Structure Status"),
             'progress_text': _("Preparing organization structure download."),
             'error_text': _("There was an unexpected error! Please try again or report an issue."),
-            'next_url': reverse(LocationsListView.urlname, args=[self.domain]),
-            'next_url_text': _("Go back to organization structure"),
+            'next_url': next_url,
+            'next_url_text': next_url_text,
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
 
