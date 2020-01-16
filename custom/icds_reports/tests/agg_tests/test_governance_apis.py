@@ -14,7 +14,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id', 'awc_site_code']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_count = 55
@@ -26,7 +26,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id', 'awc_site_code']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_first_row = {
@@ -41,7 +41,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5, 'awc_id__gt': 'a1'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id', 'awc_site_code']
 
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
@@ -56,7 +56,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id', 'awc_site_code']
         data, count = get_home_visit_data(limit,
                                           2017, 6, order, query_filters)
         expected_count = 0
@@ -69,7 +69,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5, 'state_id': 'st1'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id', 'awc_site_code']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_count = 26

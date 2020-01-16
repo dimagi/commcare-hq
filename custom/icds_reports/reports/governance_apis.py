@@ -26,7 +26,6 @@ def get_home_visit_data(length, year, month, order, query_filters):
         return dict(
             awc_id=get_value_or_data_not_entered(row_data, 'awc_id'),
             awc_code=get_value_or_data_not_entered(row_data, 'awc_site_code'),
-            month=get_value_or_data_not_entered(row_data, 'month'),
             valid_visits=get_value_or_data_not_entered(row_data, 'valid_visits'),
             expected_visits=get_value_or_data_not_entered(row_data, 'expected_visits'),
         )
