@@ -1,5 +1,5 @@
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.apps.cloudcare.models import  SQLAppGroup
+from corehq.apps.cloudcare.models import SQLAppGroup
 
 
 class Command(PopulateSQLCommand):
