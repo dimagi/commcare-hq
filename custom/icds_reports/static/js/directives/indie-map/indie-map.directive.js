@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+function IndieMapController($scope, $location, $filter, storageService, locationsService,
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
     var useNewMaps = haveAccessToFeatures || isMobile;
@@ -370,7 +370,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    '$scope', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
     'haveAccessToFeatures', 'isMobile',
 ];
 
