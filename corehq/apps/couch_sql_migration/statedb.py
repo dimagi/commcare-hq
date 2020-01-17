@@ -7,6 +7,7 @@ from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 from functools import partial
+from itertools import groupby
 
 from memoized import memoized
 from sqlalchemy import (
@@ -23,6 +24,7 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.log import with_progress_bar
 
 from .diff import filter_form_diffs
 
@@ -66,6 +68,8 @@ class StateDB(DiffDB):
         db = super(StateDB, cls).init(path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
+        else:
+            db._migrate()
         return db
 
     def __init__(self, *args, **kw):
@@ -343,7 +347,7 @@ class StateDB(DiffDB):
         for (doc_type, case_id), diffs in diffs_by_doc.items():
             self.add_diffs(doc_type, case_id, diffs)
 
-    def add_diffs(self, kind, doc_id, diffs):
+    def add_diffs(self, kind, doc_id, diffs, *, session=None):
         def to_dict(diff):
             data = {"type": diff.diff_type, "path": diff.path}
             if diff.old_value is not MISSING:
@@ -355,7 +359,7 @@ class StateDB(DiffDB):
             "combined with other diffs for the same case")
         if diffs:
             diff_json = json.dumps([to_dict(d) for d in diffs], cls=LazyEncoder)
-            with self.session() as session:
+            with self.session(session) as session:
                 session.execute(
                     f"""
                     INSERT OR REPLACE
@@ -365,7 +369,7 @@ class StateDB(DiffDB):
                     [{"kind": kind, "doc_id": doc_id, "diffs": diff_json}],
                 )
         else:
-            with self.session() as session:
+            with self.session(session) as session:
                 session.query(DocDiffs).filter(
                     DocDiffs.kind == kind,
                     DocDiffs.doc_id == doc_id,
@@ -503,6 +507,50 @@ class StateDB(DiffDB):
             copy(KeyValue, session, f"key IN {quotelist(resume_keys)}")
             copy(DocCount, session)
             copy(MissingDoc, session)
+
+    def _migrate(self):
+        with self.session() as session:
+            self._migrate_diff_to_docdiffs(session)
+
+    def _migrate_diff_to_docdiffs(self, session):
+        if not session.query(session.query(Diff).exists()).scalar():
+            return
+        assert not session.query(session.query(DocDiffs).exists()).scalar()
+        log.info("migrating PlanningDiff to DocDiffs...")
+        base_query = session.query(Diff).filter(Diff.kind != "stock state")
+        count = base_query.count()
+        query = base_query.order_by(Diff.kind, Diff.doc_id)
+        items = with_progress_bar(query, count, oneline="concise", prefix="main diffs")
+        for (kind, doc_id), diffs in groupby(items, lambda d: (d.kind, d.doc_id)):
+            diffs = [d.json_diff for d in diffs]
+            self.add_diffs(kind, doc_id, diffs, session=session)
+        # "stock state" diffs must be migrated after "CommCareCase"
+        # diffs since it will probably replace some of them
+        self._migrate_stock_state_diffs(session)
+        session.query(Diff).delete(synchronize_session=False)
+
+    def _migrate_stock_state_diffs(self, session):
+        def get_case_diffs(case_id):
+            case_diffs = session.query(Diff).filter_by(doc_id=case_id)
+            return [d.json_diff for d in case_diffs]
+        query = session.query(Diff).filter_by(kind="stock state")
+        count = query.count()
+        stock_state_diffs = with_progress_bar(
+            query, count, oneline="concise", prefix="stock state cases")
+        diffs_by_doc = defaultdict(list)
+        for stock_diff in stock_state_diffs:
+            case_id, x, x = stock_diff.doc_id.split("/")
+            key = ("CommCareCase", case_id)
+            jsdiff = stock_diff.json_diff
+            stock_json_diff = jsdiff._replace(path={
+                "stock_id": stock_diff.doc_id,
+                "path": jsdiff.path,
+            })
+            if key not in diffs_by_doc:
+                diffs_by_doc[key].extend(get_case_diffs(case_id))
+            diffs_by_doc[key].append(stock_json_diff)
+        for (doc_type, case_id), diffs in diffs_by_doc.items():
+            self.add_diffs(doc_type, case_id, diffs, session=session)
 
 
 class ResumeError(Exception):

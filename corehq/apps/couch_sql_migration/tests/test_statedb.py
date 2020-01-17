@@ -366,6 +366,31 @@ def test_get_set():
         eq(db.get("key"), True)
 
 
+@with_setup(teardown=delete_db)
+def test_migrate():
+    with init_db(memory=False) as db:
+        old_add_diffs = super(StateDB, db).add_diffs
+        old_add_diffs("Test", "test", [make_diff(0)])
+        old_add_diffs("Test", "test", [make_diff(1)])
+        old_add_diffs("CommCareCase", "abc", [make_diff(2)])
+        old_add_diffs("stock state", "abc/x/y", [make_diff(3)])
+        old_add_diffs("stock state", "def/x/y", [make_diff(4)])
+        eq(list(db.iter_diffs()), [])
+
+    with init_db(memory=False) as db:
+        eq(
+            {(d.kind, d.doc_id, hashable(d.json_diff)) for d in db.iter_diffs()},
+            {
+                ("Test", "test", hashable(make_diff(0))),
+                ("Test", "test", hashable(make_diff(1))),
+                ("CommCareCase", "abc", hashable(make_diff(2))),
+                ("stock state", "abc/x/y", hashable(make_diff(3))),
+                ("stock state", "def/x/y", hashable(make_diff(4))),
+            }
+        )
+        eq(super(StateDB, db).get_diffs(), [])
+
+
 def make_diff(id):
     return JsonDiff("type", ["data", id], "old%s" % id, "new%s" % id)
 
