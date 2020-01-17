@@ -131,7 +131,7 @@ class LocationExporter(object):
         self._locations_exported = 0
 
         if headers_only:
-            self.base_query = SQLLocation.objects
+            self.base_query = SQLLocation.objects.none()
         elif root_location_id:
             root_location = SQLLocation.objects.get(location_id=root_location_id)
             self.base_query = SQLLocation.active_objects.get_descendants(
