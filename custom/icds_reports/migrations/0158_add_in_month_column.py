@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 from corehq.sql_db.operations import RawSQLMigration
 from django.db import migrations
-
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
@@ -25,4 +25,4 @@ class Migration(migrations.Migration):
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN cases_ccs_pregnant_reg_in_month INTEGER'),
 
     ]
-
+    operations.extend(get_view_migrations())

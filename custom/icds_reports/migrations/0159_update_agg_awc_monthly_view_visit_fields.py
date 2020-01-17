@@ -13,4 +13,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0158_add_in_month_column'),
     ]
 
-    operations = []
+    operations = [migrator.get_migration('agg_awc_monthly.sql')]
