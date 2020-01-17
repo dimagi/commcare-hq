@@ -90,8 +90,7 @@ class GovernanceApiTest(TestCase):
         _agg_governance_dashboard(date(2017, 5, 1))
         query_filters = {'state_id': 'st1'}
         order = ['awc_id']
-        data, count = get_beneficiary_data(limit,2017, 5, order, query_filters)
-        print(data)
+        data, count = get_beneficiary_data(limit, 2017, 5, order, query_filters)
         self.assertEqual(len(data), limit)
         self.assertEqual([{'awc_id': 'a1', 'awc_code': 'a1', 'total_preg_benefit_till_date': 2,
                            'total_lact_benefit_till_date': 3, 'total_preg_reg_till_date': 2,
