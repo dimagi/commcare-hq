@@ -218,12 +218,6 @@ class LocationForm(forms.Form):
             if parent and self.location.location_id in parent.path:
                 raise forms.ValidationError(_("Location's parent is itself or a descendant"))
 
-            if self.location.get_descendants().exists():
-                raise forms.ValidationError(_(
-                    'only locations that have no child locations can be '
-                    'moved to a different parent'
-                ))
-
             self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
         return parent_id
@@ -260,10 +254,11 @@ class LocationForm(forms.Form):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'
                 ))
-            if (SQLLocation.objects.filter(domain=self.domain,
-                                        site_code__iexact=site_code)
-                                   .exclude(location_id=self.location.location_id)
-                                   .exists()):
+            if (SQLLocation.objects
+                .filter(domain=self.domain,
+                        site_code__iexact=site_code)
+                .exclude(location_id=self.location.location_id)
+                .exists()):
                 raise forms.ValidationError(_(
                     'another location already uses this site code'
                 ))
@@ -308,6 +303,13 @@ class LocationForm(forms.Form):
             else:
                 if loc_type_obj not in allowed_types:
                     raise forms.ValidationError(_('Location type not valid for the selected parent.'))
+
+        _can_change_location_type = (self.is_new_location
+                                     or not self.location.get_descendants().exists())
+        if not _can_change_location_type and loc_type_obj.pk != self.location.location_type.pk:
+            raise forms.ValidationError(_(
+                'You cannot change the location type of a location with children'
+            ))
 
         self.cleaned_data['location_type_object'] = loc_type_obj
         return loc_type_obj.name
