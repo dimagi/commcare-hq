@@ -2173,7 +2173,7 @@ class MWCDDataView(View):
 
 @location_safe
 @method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
-class GovernanceAPIView(View):
+class GovernanceAPIBaseView(View):
 
     @staticmethod
     def get_state_id_from_state_site_code(state_code):
@@ -2182,49 +2182,44 @@ class GovernanceAPIView(View):
             .values_list('state_id', flat=True)
         return awc_location[0] if len(awc_location) > 0 else None
 
-    def get_gov_api_params(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
+    def get_gov_api_params(self, request):
+        month = int(request.GET.get('month'))
+        year = int(request.GET.get('year'))
         state_site_code = request.GET.get('state_site_code')
         state_id = None
         if state_site_code is not None:
-            state_id = GovernanceAPIView.get_state_id_from_state_site_code(state_site_code)
+            state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
-        if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
-            prev_month = now - relativedelta(months=1)
-            month = prev_month.month
-            year = prev_month.year
 
         last_awc_id = request.GET.get('last_awc_id', '')
 
-        return step, last_awc_id, month, year, state_id
+        return  last_awc_id, month, year, state_id
 
-
-
-    def get(self, request, *args, **kwargs):
-        step, last_awc_id, month, year, state_id = self.get_gov_api_params(request, *args, **kwargs)
-        present_year = datetime.now().year
-        present_month = datetime.now().month
+    def validate_param(self, state_id, month, year):
+        selected_month = date(year, month, 1)
+        current_month = date.today().replace(day=1)
 
         is_valid = True
-
-        # input validations
-        if not (1 <= year <= present_year and 1 <= month <= 12):
+        error_message = ''
+        if date(2019, 12, 1) <= selected_month <= current_month:
             is_valid = False
-            exception_message = 'Invalid date'
-        if year > present_year or (year == present_year and month > present_month):
-            is_valid = False
-            exception_message = 'Date should be less than present date'
+            error_message = "Month should not be in future and can only be from Dec 2019"
         if state_id is None:
             is_valid = False
-            exception_message = 'Invalid state site code'
+            error_message = "Invalid State code"
+
+        return is_valid, error_message
+
+
+class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
 
         if not is_valid:
-            return HttpResponse(exception_message, status=400)
+            return HttpResponse(error_message, status=400)
 
-        length = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': AggregationLevels.AWC,
                          'num_launched_awcs': 1,
                          'awc_id__gt': last_awc_id,
@@ -2232,30 +2227,46 @@ class GovernanceAPIView(View):
                          }
         order = ['awc_id']
 
-        if step == 'home_visit':
-            data, count = get_home_visit_data(
-                length,
-                year,
-                month,
-                order,
-                query_filters
-            )
-        elif step == 'beneficiary':
-            query_filters = {'awc_launched': True,
-                             'state_id': state_id,
-                             'awc_id__gt': last_awc_id}
-            data, count = get_beneficiary_data(
-                length,
-                year,
-                month,
-                order,
-                query_filters
-            )
-        elif step == 'state_names':
-            return JsonResponse(data={'data': get_state_names()})
-        else:
-            exception_message = 'Invalid step ' + step
-            return HttpResponse(exception_message, status=400)
+        data, count = get_home_visit_data(
+            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            year,
+            month,
+            order,
+            query_filters
+        )
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)
+
+
+class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {'awc_launched': True,
+                         'state_id': state_id,
+                         'awc_id__gt': last_awc_id}
+        order = ['awc_id']
+
+        data, count = get_beneficiary_data(
+            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            year,
+            month,
+            order,
+            query_filters
+        )
 
         response_json = {
             'data': data,
@@ -2267,3 +2278,9 @@ class GovernanceAPIView(View):
             }
         }
         return JsonResponse(data=response_json)
+
+
+class GovernanceStateListAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(data={'data': get_state_names()})
