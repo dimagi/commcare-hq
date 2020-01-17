@@ -136,11 +136,10 @@ class LocationExporter(object):
             root_location = SQLLocation.objects.get(location_id=root_location_id)
             self.base_query = SQLLocation.active_objects.get_descendants(
                 Q(domain=self.domain, id=root_location.id)
-            ).filter(location_type=location_type)
+            )
         else:
             self.base_query = SQLLocation.active_objects.filter(
                 domain=self.domain,
-                location_type=location_type
             )
 
     @property
@@ -225,7 +224,8 @@ class LocationExporter(object):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
 
         def _row_generator(include_consumption=include_consumption):
-            for loc in self.base_query:
+            query = self.base_query.filter(location_type=location_type)
+            for loc in query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
                 row_data = {
                     'location_id': loc.location_id,
