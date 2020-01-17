@@ -70,9 +70,6 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
     }
 
     vm.renderPopup = function (html, divId) {
-        console.log('new popup');
-        // todo: this is mostly duplicated from indie-map.renderPopup
-        // only the div ID is changed
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
         var popup = d3.select('#' + divId);
         popup.classed("hidden", false);
