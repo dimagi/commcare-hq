@@ -184,6 +184,8 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     def aggregate_temp(self, cursor):
         staging_queries = self.staging_queries()
         logger.info(f"Creating temporary distributed table for {self.helper_key}")
+
+
         cursor.execute(self.drop_temporary_table())
         cursor.execute(self.create_temporary_table())
 
@@ -265,7 +267,8 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         self.cleanup(cursor)
 
     def aggregate(self, cursor):
-        self.aggregate_temp(cursor)
+        if getattr(self, 'temporary_tablename', None):
+            self.aggregate_temp(cursor)
         self.update_table(cursor)
 
 

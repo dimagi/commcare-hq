@@ -21,26 +21,8 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         from custom.icds_reports.models.aggregate import AggGovernanceDashboard
         return AggGovernanceDashboard
 
-    @property
-    def temporary_tablename(self):
-        return 'tmp_{}'.format(self.base_tablename)
 
-    def create_temporary_table(self):
-        return f"""
-        CREATE UNLOGGED TABLE "{self.temporary_tablename}" (LIKE "{self.base_tablename}" INCLUDING INDEXES);
-        """
-
-    def drop_temporary_table(self):
-        return """
-        DROP TABLE IF EXISTS \"{table}\";
-        """.format(table=self.temporary_tablename)
-
-    def staging_queries(self):
-        """
-        Returns the base aggregate query which is used to insert all the locations
-        into the LS data table.
-        """
-
+    def update_queries(self):
         columns = (
             ('state_id', 'awc_location_local.state_id'),
             ('district_id', 'awc_location_local.district_id'),
@@ -60,31 +42,30 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
         )
         yield """
-        INSERT INTO "{tmp_tablename}" (
-            {columns}
-        )
-        (
-        SELECT
-        {calculations}
-        from awc_location_local  LEFT JOIN agg_awc  ON (
-            awc_location_local.doc_id = agg_awc.awc_id AND
-            awc_location_local.aggregation_level = agg_awc.aggregation_level AND
-            agg_awc.month = %(start_date)s
-        )
-        WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
-        """.format(
-            tmp_tablename=self.temporary_tablename,
+                INSERT INTO "{tmp_tablename}" (
+                    {columns}
+                )
+                (
+                SELECT
+                {calculations}
+                from awc_location_local  LEFT JOIN agg_awc  ON (
+                    awc_location_local.doc_id = agg_awc.awc_id AND
+                    awc_location_local.aggregation_level = agg_awc.aggregation_level AND
+                    agg_awc.month = %(start_date)s
+                )
+                WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
+                """.format(
+            tmp_tablename=self.staging_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns])
 
         ), {
-            'start_date': self.month
-        }
+                  'start_date': self.month
+              }
 
-    def update_queries(self):
 
         yield """
-        CREATE UNLOGGED TABLE temp_gov_dashboard AS
+        CREATE TABLE temp_gov_dashboard AS
             SELECT
                 supervisor_id,
                 awc_id,
@@ -161,17 +142,13 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         FROM temp_gov_dashboard ut
         WHERE agg_gov.awc_id = ut.awc_id;
         """.format(
-            tmp_tablename=self.temporary_tablename,
+            tmp_tablename=self.staging_tablename,
         ), {}
 
         yield """
         DROP TABLE temp_gov_dashboard;
         """, {}
 
-        yield f"""
-                    INSERT INTO "{self.staging_tablename}" SELECT * from "{self.temporary_tablename}";
-                """, {
-        }
 
     def indexes(self):
         return []
