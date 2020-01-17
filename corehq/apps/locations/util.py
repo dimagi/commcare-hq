@@ -123,14 +123,25 @@ class LocationExporter(object):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
-        self.root_location_id = root_location_id
-        self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
         self.location_types = LocationType.objects.by_domain(domain)
         self.async_task = async_task
         self._location_count = None
         self._locations_exported = 0
+
+        if headers_only:
+            self.base_query = SQLLocation.objects
+        elif root_location_id:
+            root_location = SQLLocation.objects.get(location_id=root_location_id)
+            self.base_query = SQLLocation.active_objects.get_descendants(
+                Q(domain=self.domain, id=root_location.id)
+            ).filter(location_type=location_type)
+        else:
+            self.base_query = SQLLocation.active_objects.filter(
+                domain=self.domain,
+                location_type=location_type
+            )
 
     @property
     @memoized
@@ -139,7 +150,7 @@ class LocationExporter(object):
 
     def _increment_progress(self):
         if self._location_count is None:
-            self._location_count = SQLLocation.active_objects.filter(domain=self.domain).count()
+            self._location_count = self.base_query.count()
             self._progress_update_chunksize = max(10, self._location_count // 100)
         self._locations_exported += 1
         if self._locations_exported % self._progress_update_chunksize == 0:
@@ -212,21 +223,9 @@ class LocationExporter(object):
 
     def _write_locations(self, writer, location_type):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
-        if self.headers_only:
-            query = SQLLocation.objects.none()
-        elif self.root_location_id:
-            root_location = SQLLocation.objects.get(location_id=self.root_location_id)
-            query = SQLLocation.active_objects.get_descendants(
-                Q(domain=self.domain, id=root_location.id)
-            ).filter(location_type=location_type)
-        else:
-            query = SQLLocation.active_objects.filter(
-                domain=self.domain,
-                location_type=location_type
-            )
 
         def _row_generator(include_consumption=include_consumption):
-            for loc in query:
+            for loc in self.base_query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
                 row_data = {
                     'location_id': loc.location_id,
