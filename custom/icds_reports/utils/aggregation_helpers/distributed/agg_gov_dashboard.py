@@ -1,5 +1,5 @@
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
 
 
