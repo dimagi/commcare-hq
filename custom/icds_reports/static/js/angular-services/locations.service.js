@@ -12,6 +12,21 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         }
     }
 
+    function getLocationByNameAndParent(name, parentId) {
+        var includeTest = $location.search()['include_test'];
+        gtag.event('Location Service', 'Fetching data started', 'getLocationByNameAndParent');
+        return $http.get(url('icds_locations'), {
+            params: {name: name, parent_id: parentId, include_test: includeTest},
+        }).then(
+            function(response) {
+                gtag.event('Location Service', 'Fetching data succeeded', 'getLocationByNameAndParent');
+                return response.data.locations;
+            },
+            function() {
+                gtag.event('Location Service', 'Fetching data failed', 'getLocationByNameAndParent');
+            }
+        );
+    }
     return {
         getRootLocations: function() {
             return this.getChildren(null);
@@ -61,21 +76,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 }
             );
         },
-        getLocationByNameAndParent: function(name, parentId) {
-            var includeTest = $location.search()['include_test'];
-            gtag.event('Location Service', 'Fetching data started', 'getLocationByNameAndParent');
-            return $http.get(url('icds_locations'), {
-                params: {name: name, parent_id: parentId, include_test: includeTest},
-            }).then(
-                function(response) {
-                    gtag.event('Location Service', 'Fetching data succeeded', 'getLocationByNameAndParent');
-                    return response.data.locations;
-                },
-                function() {
-                    gtag.event('Location Service', 'Fetching data failed', 'getLocationByNameAndParent');
-                }
-            );
-        },
+        getLocationByNameAndParent: getLocationByNameAndParent,
         getAwcLocations: function(locationId) {
             gtag.event('Location Service', 'Fetching data started', 'getAwcLocations');
             return $http.get(url('awc_locations'), {
