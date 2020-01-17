@@ -18,11 +18,11 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         return $http.get(url('icds_locations'), {
             params: {name: name, parent_id: parentId, include_test: includeTest},
         }).then(
-            function(response) {
+            function (response) {
                 gtag.event('Location Service', 'Fetching data succeeded', 'getLocationByNameAndParent');
                 return response.data.locations;
             },
-            function() {
+            function () {
                 gtag.event('Location Service', 'Fetching data failed', 'getLocationByNameAndParent');
             }
         );
