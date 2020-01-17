@@ -1764,11 +1764,9 @@ def drop_df_indices(agg_date):
             cursor.execute(query)
 
 
-def update_governance_dashboard(target_date=None):
-    if target_date is None:
-        target_date = date.today()
+def update_governance_dashboard(target_date):
     current_month = target_date.replace(day=1)
-    _agg_governance_dashboard(current_month)
+    _agg_governance_dashboard.delay(current_month)
 
 
 @task(queue='icds_aggregation_queue')
