@@ -466,50 +466,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(results['2013-07-14'], 1)
 
-    @run_with_all_backends
-    def test_get_last_form_submission_for_user_for_app(self):
-        kwargs_u1 = {
-            'user_id': 'u1',
-            'app_id': '1234',
-            'domain': self.domain,
-        }
-        kwargs_u2 = {
-            'user_id': 'u2',
-            'app_id': '1234',
-            'domain': self.domain,
-        }
-        kwargs_u3 = {
-            'user_id': None,
-            'app_id': '1234',
-            'domain': self.domain,
-        }
-
-        first = datetime(2013, 7, 15, 0, 0, 0)
-        second = datetime(2013, 7, 16, 0, 0, 0)
-        third = datetime(2013, 7, 17, 0, 0, 0)
-
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u1)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u1)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u1)
-
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u2)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u2)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u2)
-
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u3)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u3)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u3)
-
-        result = get_last_form_submissions_by_user(self.domain, ['u1', 'u2', 'missing'])
-        self.assertEqual(result['u1'][0]['xmlns'], 'third')
-        self.assertEqual(result['u2'][0]['xmlns'], 'third')
-
-        result = get_last_form_submissions_by_user(self.domain, ['u1'], '1234')
-        self.assertEqual(result['u1'][0]['xmlns'], 'third')
-
-        result = get_last_form_submissions_by_user(self.domain, ['u1', None], '1234')
-        self.assertEqual(result['u1'][0]['xmlns'], 'third')
-        self.assertEqual(result[None][0]['xmlns'], 'third')
 
     @run_with_all_backends
     def test_get_form_counts_by_user_xmlns(self):
