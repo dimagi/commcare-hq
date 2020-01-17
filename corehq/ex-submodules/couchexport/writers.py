@@ -19,7 +19,7 @@ from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
-from couchexport.util import get_excel_format_value
+from couchexport.util import get_excel_format_value, get_excel_safe_text_value
 
 MAX_XLS_COLUMNS = 256
 
@@ -387,7 +387,7 @@ class Excel2007ExportWriter(ExportWriter):
         for col_ind, val in enumerate(row):
             if ((isinstance(row, FormattedRow) and col_ind in row.skip_excel_formatting)
                     or self.format_as_text):
-                cell = WriteOnlyCell(sheet, val)
+                cell = WriteOnlyCell(sheet, get_excel_safe_text_value(val))
                 cell.number_format = numbers.FORMAT_TEXT
             else:
                 excel_format, val_fmt = get_excel_format_value(val)
