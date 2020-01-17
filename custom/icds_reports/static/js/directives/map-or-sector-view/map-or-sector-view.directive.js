@@ -69,15 +69,16 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         });
     }
 
-    function renderPopup(html) {
+    vm.renderPopup = function (html, divId) {
+        console.log('new popup');
         // todo: this is mostly duplicated from indie-map.renderPopup
         // only the div ID is changed
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-        var popup = d3.select('#chartPopup');
+        var popup = d3.select('#' + divId);
         popup.classed("hidden", false);
         popup.attr('style', css).html(html);
         $compile(popup[0])($scope);
-    }
+    };
 
     vm.chartOptions = {
 
@@ -132,7 +133,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                         // disable click navigation on mobile and instead trigger the tooltip
                         vm.selectedLocation = locName;
                         var popupHtml = getTooltipHtml(locName);
-                        renderPopup(popupHtml);
+                        vm.renderPopup(popupHtml, 'chartPopup');
                     } else {
                         locationsService.tryToNavigateToLocation(locName, location_id);
                     }

@@ -324,11 +324,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     function renderPopup(html) {
-        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-        var popup = d3.select('#locPopup');
-        popup.classed("hidden", false);
-        popup.attr('style', css).html(html);
-        $compile(popup[0])($scope);
+        return vm.renderPopup({html: html, divId: 'locPopup'});
     }
 
     function showSecondaryLocationSelectionPopup(geography) {
@@ -388,6 +384,7 @@ window.angular.module('icdsApp').directive('indieMap', ['templateProviderService
             legendTitle: '@?',
             bubbles: '=?',
             templatePopup: '&',
+            renderPopup: '&',
         },
         templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,
