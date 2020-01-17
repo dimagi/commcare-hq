@@ -1,60 +1,41 @@
-from dateutil.relativedelta import relativedelta
-
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
 
 
-class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
+class AggGovDashboardHelper(AggregationPartitionedHelper):
     helper_key = 'agg-gov-dashboard'
     base_tablename = AGG_GOV_DASHBOARD_TABLE
-
-    def __init__(self, month):
-        self.month_start = transform_day_to_month(month)
-        self.prev_month_start = self.month_start - relativedelta(months=1)
-        self.next_month_start = self.month_start + relativedelta(months=1)
-
-    def aggregate(self, cursor):
-        drop_table_query = self.drop_table_if_exists()
-        cursor.execute(drop_table_query)
-
-        create_table_query, create_params = self.create_child_table()
-        cursor.execute(create_table_query, create_params)
-
-        agg_query, agg_params = self.aggregate_query()
-
-        cursor.execute(agg_query, agg_params)
-
-        update_queries = self.update_queries()
-
-        for query, param in update_queries:
-            cursor.execute(query, param)
-
-        index_query = self.indexes()
-        cursor.execute(index_query)
+    staging_tablename = 'staging_{}'.format(AGG_GOV_DASHBOARD_TABLE)
 
     @property
-    def tablename(self):
-        return "{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"))
+    def monthly_tablename(self):
+        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
-    def drop_table_if_exists(self):
+    @property
+    def previous_agg_table_name(self):
+        return f"previous_{self.monthly_tablename}"
+
+    @property
+    def model(self):
+        from custom.icds_reports.models.aggregate import AggGovernanceDashboard
+        return AggGovernanceDashboard
+
+    @property
+    def temporary_tablename(self):
+        return 'tmp_{}'.format(self.base_tablename)
+
+    def create_temporary_table(self):
+        return f"""
+        CREATE UNLOGGED TABLE "{self.temporary_tablename}" (LIKE "{self.base_tablename}" INCLUDING INDEXES);
+        """
+
+    def drop_temporary_table(self):
         return """
-        DROP TABLE IF EXISTS "{table_name}"
-        """.format(table_name=self.tablename)
+        DROP TABLE IF EXISTS \"{table}\";
+        """.format(table=self.temporary_tablename)
 
-    def create_child_table(self):
-        return """
-        CREATE TABLE "{table_name}" (
-        CHECK (month=DATE %(start_date)s)
-        ) INHERITS ({base_tablename})
-        """.format(
-            table_name=self.tablename,
-            base_tablename=self.base_tablename,
-        ), {
-            "start_date": self.month_start
-        }
-
-    def aggregate_query(self):
+    def staging_queries(self):
         """
         Returns the base aggregate query which is used to insert all the locations
         into the LS data table.
@@ -67,7 +48,7 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             ('supervisor_id', 'awc_location_local.supervisor_id'),
             ('awc_id', 'awc_location_local.doc_id'),
             ('awc_code', 'awc_location_local.awc_site_code'),
-            ('month', "'{}'".format(month_formatter(self.month_start))),
+            ('month', "'{}'".format(month_formatter(self.month))),
             ('awc_launched', 'agg_awc.num_launched_awcs=1'),
             ('total_preg_benefit_till_date', 'COALESCE(agg_awc.cases_ccs_pregnant, 0)'),
             ('total_lact_benefit_till_date', 'COALESCE(agg_awc.cases_ccs_lactating, 0)'),
@@ -78,8 +59,8 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
             ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
         )
-        return """
-        INSERT INTO "{tablename}" (
+        yield """
+        INSERT INTO "{tmp_tablename}" (
             {columns}
         )
         (
@@ -92,12 +73,12 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
         )
         WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
         """.format(
-            tablename=self.tablename,
+            tmp_tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns])
 
         ), {
-            'start_date': self.month_start
+            'start_date': self.month
         }
 
     def update_queries(self):
@@ -156,11 +137,11 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
             WHERE month=%(start_date)s
             GROUP BY supervisor_id, awc_id;
         """, {
-            'start_date': self.month_start
+            'start_date': self.month
         }
 
         yield """
-        UPDATE "{tablename}" agg_gov
+        UPDATE "{tmp_tablename}" agg_gov
         SET total_0_3_female_benefit_till_date = ut.valid_all_0_3_female,
             total_0_3_male_benefit_till_date = ut.valid_all_0_3_male,
             total_0_3_female_reg_till_date = ut.open_all_0_3_female,
@@ -180,15 +161,17 @@ class AggGovDashboardHelper(BaseICDSAggregationDistributedHelper):
         FROM temp_gov_dashboard ut
         WHERE agg_gov.awc_id = ut.awc_id;
         """.format(
-            tablename=self.tablename,
+            tmp_tablename=self.temporary_tablename,
         ), {}
 
         yield """
         DROP TABLE temp_gov_dashboard;
         """, {}
 
+        yield f"""
+                    INSERT INTO "{self.staging_tablename}" SELECT * from "{self.temporary_tablename}";
+                """, {
+        }
+
     def indexes(self):
-        """
-        Returns query to create index with columns month, state_id and awc_id
-        """
-        return 'CREATE INDEX ON "{}" (month, state_id, awc_id)'.format(self.tablename)
+        return []

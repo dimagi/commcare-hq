@@ -196,7 +196,10 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
 
     def update_table(self, cursor):
         update_queries = self.update_queries()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        if getattr(self, 'rollup_query', None):
+            rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        else:
+            rollup_queries = []
 
         logger.info(f"Creating staging table for {self.helper_key}")
         self.cleanup(cursor)
