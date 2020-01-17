@@ -180,7 +180,7 @@
         "calculate_total": true,
         "whens": [{
           "type": "open_male_hh_caste",
-          "bind": ["st"],
+          "binds": ["st"],
           "then": 1
         }]
       },
@@ -191,7 +191,7 @@
         "calculate_total": true,
         "whens": [{
           "type": "open_male_hh_caste",
-          "bind": ["sc"],
+          "binds": ["sc"],
           "then": 1
         }]
       },

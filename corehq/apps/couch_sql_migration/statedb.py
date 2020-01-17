@@ -17,8 +17,10 @@ from sqlalchemy import (
     and_,
     bindparam,
     func,
+    literal_column,
     or_,
 )
+from sqlalchemy.event import listen
 from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
@@ -70,6 +72,7 @@ class StateDB(DiffDB):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        listen(self.engine, "connect", case_sensitive_like)
         self.is_rebuild = False
 
     def __enter__(self):
@@ -192,6 +195,65 @@ class StateDB(DiffDB):
             query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
             return query.scalar() or 0
 
+    def add_cases_to_diff(self, case_ids):
+        with self.session() as session:
+            session.bulk_save_objects([CaseToDiff(id=id) for id in case_ids])
+
+    def add_diffed_cases(self, case_ids):
+        if not case_ids:
+            return
+        with self.session() as session:
+            session.execute(
+                """
+                INSERT OR IGNORE INTO {table} (id) VALUES (:id)
+                """.format(table=DiffedCase.__tablename__),
+                [{"id": x} for x in case_ids],
+            )
+            (
+                session.query(CaseToDiff)
+                .filter(CaseToDiff.id.in_(case_ids))
+                .delete(synchronize_session=False)
+            )
+
+    def iter_undiffed_case_ids(self):
+        query = self.Session().query(CaseToDiff.id)
+        for case_id, in iter_large(query, CaseToDiff.id):
+            yield case_id
+
+    def count_undiffed_cases(self):
+        with self.session() as session:
+            return session.query(CaseToDiff).count()
+
+    def iter_case_ids_with_diffs(self):
+        STOCK_STATE = "stock state"
+        session = self.Session()
+        last_diff_id = session.query(func.max(Diff.id)).scalar()
+        query = session.query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
+            Diff.kind == "CommCareCase",
+            Diff.kind == STOCK_STATE,
+        ), Diff.id <= last_diff_id)
+        seen = set()
+        for diff_id, case_id, kind in iter_large(query, Diff.id):
+            if kind == STOCK_STATE:
+                assert case_id.count("/") == 2, case_id
+                case_id = case_id.split("/", 1)[0]
+            if case_id not in seen:
+                seen.add(case_id)
+                yield case_id
+
+    def count_case_ids_with_diffs(self):
+        case_id_expr = literal_column("""
+            case kind
+                when 'stock state' then substr(doc_id, instr(doc_id, '/'), -100)
+                else doc_id
+            end as n_docs
+        """)
+        with self.session() as session:
+            return session.query(case_id_expr).filter(or_(
+                Diff.kind == "CommCareCase",
+                Diff.kind == "stock state",
+            )).distinct().count()
+
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
 
@@ -285,19 +347,36 @@ class StateDB(DiffDB):
         if diffs:
             self.add_diffs(doc_type, doc_id, diffs)
 
-    def replace_case_diffs(self, kind, case_id, diffs):
+    def replace_case_diffs(self, case_diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
-        assert kind in CASE_DOC_TYPES, kind
-        with self.session() as session:
-            (
-                session.query(Diff)
-                .filter(or_(
-                    and_(Diff.kind == "CommCareCase", Diff.doc_id == case_id),
+        if not case_diffs:
+            return
+        new_diffs = []
+        conditions = []
+        seen = set()
+        for kind, case_id, diffs in case_diffs:
+            if diffs:
+                new_diffs.append((kind, case_id, diffs))
+            if kind == "stock state":
+                assert case_id.count("/") == 2, case_id
+                case_id = case_id.split("/", 1)[0]
+                kind = "CommCareCase"
+            else:
+                assert kind in CASE_DOC_TYPES, kind
+            if case_id in seen:
+                continue
+            seen.add(case_id)
+            # optimized for one index scan per condition; profile after editing
+            conditions.append(
+                and_(Diff.doc_id.startswith(case_id), or_(
+                    and_(Diff.kind == kind, Diff.doc_id == case_id),
                     and_(Diff.kind == "stock state", Diff.doc_id.startswith(case_id + "/")),
                 ))
-                .delete(synchronize_session=False)
             )
-        if diffs:
+        assert conditions, case_diffs  # avoid deleting all existing diffs
+        with self.session() as session:
+            session.query(Diff).filter(or_(*conditions)).delete(synchronize_session=False)
+        for kind, case_id, diffs in new_diffs:
             self.add_diffs(kind, case_id, diffs)
 
     def increment_counter(self, kind, value):
@@ -415,6 +494,18 @@ class CaseForms(Base):
     processed_forms = Column(Integer, nullable=False, default=0)
 
 
+class CaseToDiff(Base):
+    __tablename__ = 'case_to_diff'
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+class DiffedCase(Base):
+    __tablename__ = 'diffed_case'
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
 class DocCount(Base):
     __tablename__ = 'doc_count'
 
@@ -474,3 +565,10 @@ def iter_large(query, pk_attr, maxrq=1000):
         if rec is None:
             break
         first_id = getattr(rec, pk_attr.name)
+
+
+def case_sensitive_like(dbapi_connection, connection_record):
+    # so replace_case_diffs queries use diff_doc_id_idx
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA case_sensitive_like = ON")
+    cursor.close()

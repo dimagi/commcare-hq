@@ -10,7 +10,6 @@ from dimagi.utils.couch.database import get_db
 
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
-    count_downloads_for_all_snapshots,
     deleted_domain_exists,
     domain_exists,
     domain_or_deleted_domain_exists,
@@ -157,15 +156,6 @@ class DBAccessorsTest(TestCase):
 
         ids = get_domain_ids_by_names(names)
         self.assertEqual(ids, expected_ids)
-
-    def test_count_downloads_for_all_snapshots(self):
-        counts = [5, 12, 10]
-        for count in counts:
-            copy = self.project.save_snapshot(share_reminders=False, copy_by_id=set())
-            copy.downloads = count
-            copy.save()
-        self.assertEqual(
-            count_downloads_for_all_snapshots(self.project.get_id), sum(counts))
 
     def test_deleted_domain_exists(self):
         x = Domain(name='x')

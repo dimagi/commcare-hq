@@ -1,7 +1,7 @@
 import logging
 import os
 import traceback
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from threading import Event
 
 import attr
@@ -125,8 +125,10 @@ def _init_worker():
 
 @gipc_process_error_handler()
 def _worker(init, initargs, func, itemq, resultq):
-    init(*initargs)
-    with itemq, resultq:
+    context = init(*initargs)
+    if context is None:
+        context = ExitStack()
+    with itemq, resultq, context:
         while True:
             item = itemq.get()
             if item is _Stop:
@@ -172,27 +174,26 @@ def _process(init, initargs, maxtasksperchild, func, itemq, resultq):
     else:
         task_limit = range(maxtasksperchild)
     proc = None
-    try:
-        with gipc_process_error_handler(), \
-                gipc.pipe() as (i_send, items), \
-                gipc.pipe() as (results, r_send):
-            args = (init, initargs, func, i_send, r_send)
-            proc = gipc.start_process(target=_worker, args=args)
-            log.debug("start worker: %s", proc.pid)
-            for x in task_limit:
-                items.put(itemq.get())
-                result = results.get()
-                resultq.put(result)
-                if result is _Stop:
-                    log.debug("worker stopped: %s", proc.pid)
-                    return _Stop
-            items.put(_Stop)
-    except ProcessError:
-        log.error("process error %s", proc.pid)
-    finally:
-        if proc is not None:
-            proc.join()
-            if hasattr(proc, "close"):  # added in Python 3.7
-                # HACK gipc bug https://github.com/jgehrcke/gipc/issues/90
-                proc._popen.poll = lambda: proc.exitcode
-                proc.close()
+    with gipc.pipe() as (i_send, items), gipc.pipe() as (results, r_send):
+        try:
+            with gipc_process_error_handler():
+                args = (init, initargs, func, i_send, r_send)
+                proc = gipc.start_process(target=_worker, args=args)
+                log.debug("start worker: %s", proc.pid)
+                for x in task_limit:
+                    items.put(itemq.get())
+                    result = results.get()
+                    resultq.put(result)
+                    if result is _Stop:
+                        log.debug("worker stopped: %s", proc.pid)
+                        return _Stop
+                items.put(_Stop)
+        except ProcessError:
+            log.error("process error %s", proc.pid)
+        finally:
+            if proc is not None:
+                proc.join()
+                if hasattr(proc, "close"):  # added in Python 3.7
+                    # HACK gipc bug https://github.com/jgehrcke/gipc/issues/90
+                    proc._popen.poll = lambda: proc.exitcode
+                    proc.close()

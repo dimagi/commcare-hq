@@ -101,6 +101,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
         Ignore('type', 'closed_by', old='', new=None),
+        Ignore('diff', 'closed_by', old=''),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
         Ignore('missing', 'location_', new=MISSING),
