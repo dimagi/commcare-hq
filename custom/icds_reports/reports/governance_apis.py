@@ -1,25 +1,13 @@
 from datetime import date
 
+from django.db.models import F
+
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.models.views import GovVHNDView
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models import AggAwcMonthly, AwcLocation
 from custom.icds_reports.utils import DATA_NOT_ENTERED
-
-
-def get_value_or_data_not_entered(source, field):
-    value = source.get(field)
-    if value is None:
-        return DATA_NOT_ENTERED
-    return value
-
-
-def get_boolean_if_data_not_null(source, field):
-    value = source.get(field)
-    if value in [None, False]:
-        return 'no'
-    return 'yes'
 
 
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
@@ -32,6 +20,12 @@ def get_home_visit_data(length, year, month, order, query_filters):
         'valid_visits', 'expected_visits'
     )
     paginated_data = data[:length]
+
+    def get_value_or_data_not_entered(source, field):
+        value = source.get(field)
+        if value is None:
+            return DATA_NOT_ENTERED
+        return value
 
     def base_data(row_data):
         return dict(
@@ -57,29 +51,29 @@ def get_vhnd_data(length, year, month, order, query_filters):
     data = GovVHNDView.objects.filter(
         month=date(year, month, 1),
         **query_filters
-    ).order_by(*order).values(
-        'awc_id', 'awc_code', 'vhsnd_date_past_month', 'anm_mpw_present', 'asha_present',
-        'child_immu', 'anc_today'
+    ).order_by(*order).annotate(
+        vhsnd_conducted=F('vhsnd_date_past_month'), vhsnd_date=F('vhsnd_date_past_month'),
+        anm_present=F('anm_mpw_present'), any_child_immunized=F('child_immu'),
+        anc_conducted=F('anc_today')).values(
+        'awc_id', 'awc_code', 'vhsnd_conducted', 'vhsnd_date', 'anm_present', 'asha_present',
+        'any_child_immunized', 'anc_conducted'
     )
 
     paginated_data = data[:length]
 
-    def base_data(row_data):
-        return dict(
-            awc_id=get_value_or_data_not_entered(row_data, 'awc_id'),
-            awc_code=get_value_or_data_not_entered(row_data, 'awc_code'),
-            vhsnd_conducted=get_boolean_if_data_not_null(row_data, 'vhsnd_date_past_month'),
-            vhsnd_date=get_value_or_data_not_entered(row_data, 'vhsnd_date_past_month'),
-            anm_present=get_boolean_if_data_not_null(row_data, 'anm_mpw_present'),
-            asha_present=get_boolean_if_data_not_null(row_data, 'asha_present'),
-            any_child_immunized=get_boolean_if_data_not_null(row_data, 'child_immu'),
-            anc_conducted=get_boolean_if_data_not_null(row_data, 'anc_today'),
-        )
+    def get_value_or_data_not_entered(key, value):
+        if type(value) is bool or key == 'vhsnd_conducted':
+            if value in [None, False]:
+                return 'no'
+            return 'yes'
+        elif value is None:
+            return DATA_NOT_ENTERED
+        return value
 
-    data_rows = []
-    for row in paginated_data:
-        data_rows.append(base_data(row))
-    return data_rows, data.count()
+    def base_data(row_data):
+        return {key: get_value_or_data_not_entered(key, value) for key, value in row_data.items()}
+
+    return [base_data(row) for row in paginated_data], data.count()
 
 
 @icds_quickcache([], timeout=30 * 60)

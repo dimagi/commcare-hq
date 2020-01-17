@@ -40,7 +40,7 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
           FIRST_VALUE(asha_present=1) over w as asha_present,
           FIRST_VALUE(child_immu=1) over w as child_immu,
           FIRST_VALUE(anc_today=1) over w as anc_today,
-          FIRST_VALUE(month) over w as month
+          %(start_date)s::DATE AS month
           FROM "{ucr_tablename}"
             WHERE vhsnd_date_past_month >= %(start_date)s AND
             vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
