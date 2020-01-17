@@ -9,7 +9,7 @@ class SummaryStatsNutrientDataProvider(SummaryStatisticsDataMixin):
     slug = 'group_level_summary_statistics_by_nutrient_intake'
     headers_in_order = [
         'nutrient', 'mean', 'median', 'std.Dev', '5_percent', '25_percent',
-        '50_percent',  '75_percent', '95_percent'
+        '50_percent', '75_percent', '95_percent'
     ]
 
     def __init__(self, config, filters_config):
