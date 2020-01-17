@@ -19,7 +19,7 @@ from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
-from couchexport.util import get_excel_format_value, get_excel_safe_text_value
+from couchexport.util import get_excel_format_value, get_legacy_excel_safe_value
 
 MAX_XLS_COLUMNS = 256
 

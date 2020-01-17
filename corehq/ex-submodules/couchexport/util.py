@@ -324,7 +324,9 @@ def get_excel_format_value(value):
     return ExcelFormatValue(numbers.FORMAT_TEXT, value)
 
 
-def get_excel_safe_text_value(value):
+def get_legacy_excel_safe_value(value):
+    if isinstance(value, (int, float)):
+        return value
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is not None:
