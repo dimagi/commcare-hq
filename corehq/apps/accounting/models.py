@@ -20,7 +20,6 @@ import stripe
 from django_prbac.models import Role
 from memoized import memoized
 
-from corehq.apps.domain.models import icds_conditional_session_key
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
