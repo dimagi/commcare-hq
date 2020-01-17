@@ -9,7 +9,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
-from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
+from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table, get_view_migrations
 from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
@@ -214,7 +214,7 @@ def _distribute_tables_for_citus(engine):
             )
             for child in [row.child for row in res]:
                 # only need this because of reusedb if testing on master and this branch
-                conn.execute('drop table if exists "{}"'.format(child))
+                conn.execute('drop table if exists "{}" cascade'.format(child))
 
             create_citus_distributed_table(conn, table, col)
 
@@ -251,5 +251,13 @@ def partition_child_health():
         "ALTER TABLE child_health_monthly ATTACH PARTITION child_health_old_partition FOR VALUES IN ('2017-03-01')"
         ]
     with engine.begin() as connection:
+        # check if we have already partitioned this table (necessary for reusedb)
+        q = connection.execute("select exists (select * from pg_tables where tablename='child_health_old_partition')")
+        if q.first()[0]:
+            return
         for query in queries:
             connection.execute(query)
+        for view in get_view_migrations():
+            with open(view.sql, "r", encoding='utf-8') as sql_file:
+                sql_to_execute = sql_file.read()
+                connection.execute(sql_to_execute)
