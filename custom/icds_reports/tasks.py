@@ -277,7 +277,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                                func_name='_agg_adolescent_girls_registration_table')
                 for state_id in state_ids
             ])
-
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_gov_vhnd_form')
+                for state_id in state_ids
+             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -307,10 +311,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
                                                                 func_name='_agg_ls_vhnd_form')
-                                 for state_id in state_ids
-                                 ])
-            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func_name='_agg_gov_vhnd_form')
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
