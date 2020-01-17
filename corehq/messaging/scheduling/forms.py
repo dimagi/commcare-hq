@@ -1069,6 +1069,7 @@ class ScheduleForm(Form):
         required=False,
         label=ugettext_lazy("Also send to users at organizations below the selected ones"),
     )
+    # TODO: add usercase instead of mobile workers flag
     restrict_location_types = ChoiceField(
         required=False,
         choices=(

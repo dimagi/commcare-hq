@@ -1256,6 +1256,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 recipient_type = cls.RECIPIENT_LOCATION
 
             recipient_id = schedule_instance.recipient.location_id
+        # TODO: add elif here to check flag and if recipient is RECIPIENT_TYPE_MOBILE_WORKER?
+        # then switch type to new type, RECIPIENT_TYPE_USERCASE?
+        # then update send_current_event_content_to_recipients to send to usercases
+        # then...write tests?
         elif schedule_instance.recipient is None:
             recipient_type = cls.RECIPIENT_UNKNOWN
             recipient_id = None

@@ -48,6 +48,8 @@ class Schedule(models.Model):
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
 
+    # TODO: add new flag here?
+
     # Only matters when include_descendant_locations is True.
     # If this is an empty list, it's ignored.
     # Otherwise, only the SQLLocations whose LocationType foreign keys are in this list
