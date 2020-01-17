@@ -69,7 +69,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         });
     }
 
-    function renderTooltip(html) {
+    function renderPopup(html) {
         // todo: this is mostly duplicated from indie-map.renderPopup
         // only the div ID is changed
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
@@ -132,7 +132,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                         // disable click navigation on mobile and instead trigger the tooltip
                         vm.selectedLocation = locName;
                         var popupHtml = getTooltipHtml(locName);
-                        renderTooltip(popupHtml);
+                        renderPopup(popupHtml);
                     } else {
                         locationsService.tryToNavigateToLocation(locName, location_id);
                     }
