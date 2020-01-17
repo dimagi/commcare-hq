@@ -158,21 +158,22 @@ def get_paged_forms_by_type(
 
 @quickcache(['domain', 'xmlns'], timeout=5 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
-    last_form = get_last_form_submission_for_xmlns(domain, xmlns)
-    return last_form['form'].get('@name') if last_form else None
+    return get_form_name_from_last_submission_for_xmlns(domain, xmlns)
 
 
-def get_last_form_submission_for_xmlns(domain, xmlns):
+def get_form_name_from_last_submission_for_xmlns(domain, xmlns):
     query = (
         FormES()
         .domain(domain)
         .xmlns(xmlns)
         .sort('received_on', desc=True)
+        .source(['form.@name'])
         .size(1)
     )
 
-    if query.run().hits:
-        return query.run().hits[0]
+    results = query.run().hits
+    if results:
+        return results[0]['form']['@name']
     return None
 
 

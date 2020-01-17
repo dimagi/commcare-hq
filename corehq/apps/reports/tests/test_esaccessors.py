@@ -30,8 +30,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     get_forms,
     get_group_stubs,
-    get_last_form_submission_for_xmlns,
-    get_last_form_submissions_by_user,
+    get_form_name_from_last_submission_for_xmlns,
     get_paged_forms_by_type,
     get_submission_counts_by_date,
     get_submission_counts_by_user,
@@ -359,27 +358,28 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
-    def test_get_last_form_submission_by_xmlns(self):
+    def test_get_form_name_from_last_submission_for_xmlns(self):
         xmlns = 'http://a.b.org'
         kwargs = {
             'user_id': 'u1',
             'app_id': '1234',
             'domain': self.domain,
+            'xmlns': xmlns
         }
 
         first = datetime(2013, 7, 15, 0, 0, 0)
         second = datetime(2013, 7, 16, 0, 0, 0)
         third = datetime(2013, 7, 17, 0, 0, 0)
 
-        self._send_form_to_es(received_on=second, xmlns=xmlns, **kwargs)
-        self._send_form_to_es(received_on=third, xmlns=xmlns, **kwargs)
-        self._send_form_to_es(received_on=first, xmlns=xmlns, **kwargs)
+        self._send_form_to_es(received_on=second, form_name='2', **kwargs)
+        self._send_form_to_es(received_on=third, form_name='3', **kwargs)
+        self._send_form_to_es(received_on=first, form_name='1', **kwargs)
 
-        form = get_last_form_submission_for_xmlns(self.domain, xmlns)
-        self.assertEqual(string_to_utc_datetime(form['received_on']), third)
+        name = get_form_name_from_last_submission_for_xmlns(self.domain, xmlns)
+        self.assertEqual(name, '3')
 
-        form = get_last_form_submission_for_xmlns(self.domain, 'missing')
-        self.assertIsNone(form)
+        name = get_form_name_from_last_submission_for_xmlns(self.domain, 'missing')
+        self.assertIsNone(name)
 
     @run_with_all_backends
     def test_guess_form_name_from_xmlns_not_found(self):
