@@ -346,15 +346,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.attemptToDrillToLocation = function (geography) {
         var location = getLocationNameFromGeography(geography);
-        locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-            var location = locations[0];
-            if (!location) {
-                return;
-            }
-            $location.search('location_name', (geography.id || geography));
-            $location.search('location_id', location.location_id);
-            storageService.setKey('search', $location.search());
-        });
+        locationsService.tryToNavigateToLocation(location, location_id);
     };
 
     vm.handleMobileDrilldown = function () {

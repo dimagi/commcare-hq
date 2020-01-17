@@ -1,4 +1,4 @@
-window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', function($http, $location) {
+window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', 'storageService', 'navigationService', function($http, $location, storageService, navigationService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     var gtag = hqImport('analytix/js/google').track;
 
@@ -27,6 +27,20 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             }
         );
     }
+    function tryToNavigateToLocation(locationName, parentLocationId) {
+        getLocationByNameAndParent(locationName, parentLocationId).then(function (locations) {
+            var location = locations[0];
+            if (location) {
+                $location.search('location_name', location.name);
+                $location.search('location_id', location.location_id);
+                storageService.setKey('search', $location.search());
+                if (location.location_type_name === 'awc') {
+                    $location.path(navigationService.getAWCTabFromPagePath($location.path()));
+                }
+            }
+        });
+    }
+
     return {
         getRootLocations: function() {
             return this.getChildren(null);
@@ -77,6 +91,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             );
         },
         getLocationByNameAndParent: getLocationByNameAndParent,
+        tryToNavigateToLocation: tryToNavigateToLocation,
         getAwcLocations: function(locationId) {
             gtag.event('Location Service', 'Fetching data started', 'getAwcLocations');
             return $http.get(url('awc_locations'), {

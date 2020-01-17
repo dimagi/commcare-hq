@@ -45,7 +45,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         });
     }
     vm.handleMobileDrilldown = function () {
-        navigateToLocation(vm.selectedLocation);
+        locationsService.tryToNavigateToLocation(vm.selectedLocation, location_id);
     };
 
     // reduce caption width to fit screen up to 900px on mobile view
@@ -77,20 +77,6 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         popup.classed("hidden", false);
         popup.attr('style', css).html(html);
         $compile(popup[0])($scope);
-    }
-
-    function navigateToLocation(locName) {
-        locationsService.getLocationByNameAndParent(locName, location_id).then(function (locations) {
-            var location = locations[0];
-            if (location) {
-                $location.search('location_name', location.name);
-                $location.search('location_id', location.location_id);
-                storageService.setKey('search', $location.search());
-                if (location.location_type_name === 'awc') {
-                    $location.path(navigationService.getAWCTabFromPagePath($location.path()));
-                }
-            }
-        });
     }
 
     vm.chartOptions = {
@@ -148,7 +134,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                         var popupHtml = getTooltipHtml(locName);
                         renderTooltip(popupHtml);
                     } else {
-                        navigateToLocation(locName);
+                        locationsService.tryToNavigateToLocation(locName, location_id);
                     }
                 });
 
