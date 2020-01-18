@@ -141,7 +141,7 @@ class CaseDiffTool:
     @contextmanager
     def context(self):
         with self.migrator.counter as counter, self.migrator.stopper:
-            with counter('diff_cases', 'CommCareCase') as add_cases:
+            with counter('diff_cases', 'CommCareCase.id') as add_cases:
                 yield add_cases
 
     def iter_case_diff_results(self):

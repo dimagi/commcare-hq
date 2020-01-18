@@ -401,7 +401,7 @@ class CouchSqlDomainMigrator:
     def _with_progress(self, doc_types, iterable, progress_name='Migrating', offset_key=None):
         doc_count = sum([
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-            for doc_type in doc_types
+            for doc_type in (d.split(".", 1)[0] for d in doc_types)
         ])
         if offset_key is None:
             offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
@@ -1020,7 +1020,7 @@ class DocCounter:
 
     def __init__(self, statedb):
         self.statedb = statedb
-        self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.counts = defaultdict(int, self.statedb.get(self.STATE_KEY, {}))
         self.timing = TimingContext("couch_sql_migration")
         self.dd_session = 0
         self.state_session = 0
