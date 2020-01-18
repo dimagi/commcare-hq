@@ -185,7 +185,7 @@ class CaseDiffTool:
             yield from self.pool.imap_unordered(load_and_diff_cases, batches)
             return
         stop = [1]
-        with init_worker(*self.initargs), suppress(pdb.bdb.BdbQuit):
+        with global_diff_state(*self.initargs[1:]), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
