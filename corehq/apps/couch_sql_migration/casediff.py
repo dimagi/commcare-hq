@@ -783,15 +783,20 @@ def iter_ledger_diffs(case_ids, dd_count):
         couch_state = couch_state_map.get(ref, None)
         if couch_state is None:
             couch_json = get_stock_state_json(ledger_value)
-            dd_count("commcare.couchsqlmigration.case.diff.ledger.rebuild")
+            dd_count("commcare.couchsqlmigration.ledger.rebuild")
         else:
             couch_json = couch_state.to_json()
-        dd_count("commcare.couchsqlmigration.case.diff.ledger")
+        dd_count("commcare.couchsqlmigration.ledger.diffed")
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+        diffs = filter_ledger_diffs(diffs)
+        if diffs:
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
+        yield "stock state", ref.as_id(), diffs
     for ref, couch_state in couch_state_map.items():
         if ref not in sql_refs:
             diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
+            dd_count("commcare.couchsqlmigration.ledger.diffed")
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
             yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
 
 
