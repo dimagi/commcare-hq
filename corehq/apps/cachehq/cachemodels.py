@@ -5,7 +5,6 @@ class DomainGenerationCache(GenerationCache):
     generation_key = '#gen#domain#'
     doc_types = ['Domain']
     views = [
-        "domain/snapshots",
         "domain/not_snapshots",
         "domain/domains",
     ]

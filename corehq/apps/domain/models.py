@@ -723,16 +723,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
-    def snapshots(self, **view_kwargs):
-        return Domain.view('domain/snapshots',
-            startkey=[self._id, {}],
-            endkey=[self._id],
-            include_docs=True,
-            reduce=False,
-            descending=True,
-            **view_kwargs
-        )
-
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
         self.save()
