@@ -8,7 +8,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/snapshots",
         "domain/published_snapshots",
         "domain/not_snapshots",
-        "domain/copied_from_snapshot",
         "domain/domains",
     ]
 

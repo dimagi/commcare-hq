@@ -759,12 +759,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def get_license_url(self):
         return LICENSE_LINKS.get(self.license)
 
-    def copies(self):
-        return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
-
-    def copies_of_parent(self):
-        return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
-
     def delete(self, leave_tombstone=False):
         if not leave_tombstone and not settings.UNIT_TESTING:
             raise ValueError(
