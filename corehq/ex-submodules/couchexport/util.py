@@ -13,6 +13,10 @@ from dimagi.ext.couchdbkit import Property
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_handler
 
+_dirty_chars = re.compile(
+    '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
+)
+
 
 def force_tag_to_list(export_tag):
     if isinstance(export_tag, str):
@@ -316,8 +320,17 @@ def get_excel_format_value(value):
             pass
 
     # no formats matched...clean and return as text
-    dirty_chars = re.compile(
-        '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
-    )
-    value = dirty_chars.sub('?', value)
+    value = _dirty_chars.sub('?', value)
     return ExcelFormatValue(numbers.FORMAT_TEXT, value)
+
+
+def get_legacy_excel_safe_value(value):
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    elif value is not None:
+        value = str(value)
+    else:
+        value = ''
+    return _dirty_chars.sub('?', value)
