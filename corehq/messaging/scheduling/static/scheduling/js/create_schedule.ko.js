@@ -179,6 +179,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.user_organization_recipients.init();
 
         self.include_descendant_locations = ko.observable(initial_values.include_descendant_locations);
+        self.use_usercase_phone_number = ko.observable(initial_values.use_usercase_phone_number);
         self.restrict_location_types = ko.observable(initial_values.restrict_location_types);
 
         self.location_types = new recipientsSelect2Handler(select2_location_types,

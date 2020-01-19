@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Form as AdvancedForm
+from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -1069,7 +1070,13 @@ class ScheduleForm(Form):
         required=False,
         label=ugettext_lazy("Also send to users at organizations below the selected ones"),
     )
-    # TODO: add usercase instead of mobile workers flag
+    use_usercase_phone_number = BooleanField(
+        required=False,
+        label=ugettext_lazy("""
+            For SMSs going to users, send to the phone number on the user case
+            instead of the phone number set for the mobile worker.
+        """),
+    )
     restrict_location_types = ChoiceField(
         required=False,
         choices=(
@@ -1300,6 +1307,7 @@ class ScheduleForm(Form):
             'user_group_recipients': user_group_recipients,
             'user_organization_recipients': user_organization_recipients,
             'case_group_recipients': case_group_recipients,
+            'use_usercase_phone_number': self.initial_schedule.use_usercase_phone_number,
             'include_descendant_locations': self.initial_schedule.include_descendant_locations,
             'restrict_location_types': 'Y' if len(self.initial_schedule.location_type_filter) > 0 else 'N',
             'location_types': [str(i) for i in self.initial_schedule.location_type_filter],
@@ -1754,7 +1762,7 @@ class ScheduleForm(Form):
         return result
 
     def get_recipients_layout_fields(self):
-        return [
+        fields = [
             crispy.Field(
                 'recipient_types',
                 data_bind="selectedOptions: recipient_types",
@@ -1776,6 +1784,19 @@ class ScheduleForm(Form):
                 ),
                 data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
             ),
+        ]
+        if is_usercase_in_use(self.domain):
+            fields.append(crispy.Div(
+                crispy.Field(
+                    'use_usercase_phone_number',
+                    data_bind='checked: use_usercase_phone_number',
+                ),
+                data_bind="visible: recipientTypeSelected('{}') || recipientTypeSelected('{}')".format(
+                    ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+                    ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
+                ),
+            ))
+        fields += [
             crispy.Div(
                 crispy.Field(
                     'user_organization_recipients',
@@ -1817,6 +1838,7 @@ class ScheduleForm(Form):
                 data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
+        return fields
 
     @property
     def display_utc_timezone_option(self):
@@ -2321,6 +2343,12 @@ class ScheduleForm(Form):
         return {
             'active': form_data['active'],
             'default_language_code': self.distill_default_language_code(),
+            'use_usercase_phone_number': (
+                (
+                    ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER in form_data['recipient_types'] or
+                    ScheduleInstance.RECIPIENT_TYPE_USER_GROUP in form_data['recipient_types']
+                ) and form_data['use_usercase_phone_number']
+            ),
             'include_descendant_locations': (
                 ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
                 form_data['include_descendant_locations']

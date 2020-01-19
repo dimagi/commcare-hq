@@ -48,13 +48,16 @@ class Schedule(models.Model):
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
 
-    # TODO: add new flag here?
-
     # Only matters when include_descendant_locations is True.
     # If this is an empty list, it's ignored.
     # Otherwise, only the SQLLocations whose LocationType foreign keys are in this list
     # will be considered when expanding the recipients of the schedule instance.
     location_type_filter = jsonfield.JSONField(default=list)
+
+    # Only matters when the recipient of a ScheduleInstance involves mobile workers, either a user or group.
+    # If False, send SMSs to the mobile worker's phone number.
+    # If True, send SMSes to thee contact_phone_number of the usercase associated with the mobile worker.
+    use_usercase_phone_number = models.BooleanField(default=False)
 
     # If None, the list of languages defined in the project for messaging will be
     # inspected and the default language there will be used.
@@ -135,6 +138,7 @@ class Schedule(models.Model):
             'active': self.active,
             'default_language_code': self.default_language_code,
             'include_descendant_locations': self.include_descendant_locations,
+            'use_usercase_phone_number': self.use_usercase_phone_number,
             'location_type_filter': self.location_type_filter,
             'use_utc_as_default_timezone': self.use_utc_as_default_timezone,
             'user_data_filter': self.user_data_filter,
