@@ -103,6 +103,7 @@ def get_migrator(domain, state_dir, live):
 
 def do_case_diffs(migrator, cases, stop, batch_size):
     casediff = CaseDiffTool(migrator, cases, stop, batch_size)
+    log.info("cutoff_date = %s", casediff.cutoff_date)
     with casediff.context() as add_cases:
         save_result = make_result_saver(casediff.statedb, add_cases)
         for data in casediff.iter_case_diff_results():
