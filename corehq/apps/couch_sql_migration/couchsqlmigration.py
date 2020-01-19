@@ -898,7 +898,11 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = str_to_datetime(key_date)
+        try:
+            key_date = str_to_datetime(key_date)
+        except ValueError:
+            log.warn("could not get date from last element of key %r", results[-1]['key'])
+            return
         if self.should_stop(key_date):
             raise StopToResume
 
