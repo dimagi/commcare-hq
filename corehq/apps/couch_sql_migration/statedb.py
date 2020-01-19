@@ -513,9 +513,8 @@ class StateDB(DiffDB):
             self._migrate_diff_to_docdiffs(session)
 
     def _migrate_diff_to_docdiffs(self, session):
-        if not session.query(session.query(Diff).exists()).scalar():
-            return
-        assert not session.query(session.query(DocDiffs).exists()).scalar()
+        if session.query(session.query(DocDiffs).exists()).scalar():
+            return  # already migrated
         log.info("migrating PlanningDiff to DocDiffs...")
         base_query = session.query(Diff).filter(Diff.kind != "stock state")
         count = base_query.count()
@@ -527,7 +526,6 @@ class StateDB(DiffDB):
         # "stock state" diffs must be migrated after "CommCareCase"
         # diffs since it will probably replace some of them
         self._migrate_stock_state_diffs(session)
-        session.query(Diff).delete(synchronize_session=False)
 
     def _migrate_stock_state_diffs(self, session):
         def get_case_diffs(case_id):

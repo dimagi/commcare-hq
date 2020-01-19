@@ -388,7 +388,7 @@ def test_migrate():
                 ("stock state", "def/x/y", hashable(make_diff(4))),
             }
         )
-        eq(super(StateDB, db).get_diffs(), [])
+        eq(len(super(StateDB, db).get_diffs()), 5)
 
 
 def make_diff(id):
