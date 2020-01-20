@@ -93,7 +93,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id']
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_count = 10
@@ -105,7 +105,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id']
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_first_row = {
@@ -122,7 +122,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_first_row = {
             "awc_id": "a49", "awc_code": "a49",
@@ -138,7 +138,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id']
         data, count = get_vhnd_data(limit, 2018, 6, order, query_filters)
         expected_count = 0
         self.assertEqual(count, expected_count)
@@ -150,7 +150,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41'}
-        order = ['awc_id', 'awc_code']
+        order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_row = {
             "awc_id": "a49", "awc_code": "a49",
