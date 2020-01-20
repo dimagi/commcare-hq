@@ -66,4 +66,5 @@ branches:
   - es/enterprise-subscriptions  # Ethan Jan 15
   - jls/migrate-Dhis2Connection-2 # Jenny Jan 17
   - bmb/soft-rollback-data-typing # Biyeun Jan 17
+  - cz/dashboard-css # jan 20
 submodules: {}
