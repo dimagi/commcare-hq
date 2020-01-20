@@ -9,7 +9,7 @@ from corehq.form_processor.backends.sql.update_strategy import (
 from corehq.form_processor.models import RebuildWithReason
 
 
-def is_action_order_equal(sql_case, couch_json):
+def should_sort_sql_transactions(sql_case, couch_json):
     """Check if sql and couch cases had forms applied in the same order
 
     :param sql_case: `CommCareCaseSQL` object.
@@ -18,17 +18,19 @@ def is_action_order_equal(sql_case, couch_json):
     """
     def dedup(items):
         return list(dict.fromkeys(items))
+    if was_rebuilt(sql_case):
+        return False
     sql_ids = dedup(t.form_id for t in sql_case.transactions if t.form_id)
     couch_ids = dedup(a["xform_id"] for a in couch_json["actions"] if a["xform_id"])
-    return sql_ids == couch_ids
+    return len(sql_ids) == len(couch_ids) and sql_ids != couch_ids
 
 
 def was_rebuilt(sql_case):
     """Check if most recent case transaction is a sort rebuild"""
     details = sql_case.transactions[-1].details if sql_case.transactions else None
     return details and (
-        details["reason"] == SortTransactionsRebuild._REASON
-        or details["reason"] == COUCH_SQL_REBUILD_REASON
+        details.get("reason") == SortTransactionsRebuild._REASON
+        or details.get("reason") == COUCH_SQL_REBUILD_REASON
     )
 
 

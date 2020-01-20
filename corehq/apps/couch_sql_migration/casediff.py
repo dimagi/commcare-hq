@@ -33,9 +33,9 @@ from corehq.util.datadog.gauges import datadog_counter
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .rebuildcase import (
-    is_action_order_equal,
     rebuild_case,
     rebuild_case_with_couch_action_order,
+    should_sort_sql_transactions,
     was_rebuilt,
 )
 from .statedb import StateDB
@@ -762,13 +762,6 @@ def diff_case(sql_case, couch_case, dd_count):
     if diffs:
         dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
-
-
-def should_sort_sql_transactions(sql_case, couch_case):
-    return (
-        not was_rebuilt(sql_case)
-        and not is_action_order_equal(sql_case, couch_case)
-    )
 
 
 def iter_ledger_diffs(case_ids, dd_count):
