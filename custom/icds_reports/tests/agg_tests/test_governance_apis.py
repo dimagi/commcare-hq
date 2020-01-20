@@ -151,9 +151,9 @@ class GovernanceApiTest(TestCase):
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_row = {
-            "awc_id": "a49", "awc_code": "a49", "vhsnd_conducted": "no",
-            "vhsnd_date": "Data Not Entered", "anm_present": "no", "asha_present": "no",
-            "any_child_immunized": "no", "anc_conducted": "no"
+            "awc_id": "a49", "awc_code": "a49", "vhsnd_conducted": "yes",
+            "vhsnd_date": datetime.date(2017, 5, 2), "anm_present": "no", "asha_present": "yes",
+            "any_child_immunized": "yes", "anc_conducted": "no"
         }
         expected_counter = 1
         actual_row = None
