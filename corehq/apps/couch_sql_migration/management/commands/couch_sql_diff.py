@@ -77,7 +77,7 @@ class Command(BaseCommand):
             help='''Diff cases in batches of this size.''')
 
     def handle(self, domain, **options):
-        if should_use_sql_backend(domain):
+        if should_use_sql_backend(domain) and options["cases"] != "unsort":
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
         for opt in ["no_input", "state_dir", "live", "cases", "stop", "batch_size"]:
@@ -152,6 +152,8 @@ class CaseDiffTool:
             return self.iter_diff_cases(self.get_pending_cases())
         if self.cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
+        if self.cases == "unsort":
+            return self.iter_cases_with_sorted_transactions()
         case_ids = get_ids_from_string_or_file(self.cases)
         return self.iter_diff_cases(case_ids, log_cases=True)
 
@@ -175,20 +177,26 @@ class CaseDiffTool:
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
         return self.iter_diff_cases(cases)
 
-    def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
+    def iter_cases_with_sorted_transactions(self):
+        cases = iter_sql_cases_with_sorted_transactions(self.domain)
+        return self.iter_diff_cases(cases, process_batch=unsort_sql_transactions)
+
+    def iter_diff_cases(self, case_ids, batcher=None, process_batch=None, log_cases=False):
         def list_or_stop(items):
             if self.is_stopped():
                 raise StopIteration
             return list(items)
 
+        if process_batch is None:
+            process_batch = load_and_diff_cases
         batches = chunked(case_ids, self.batch_size, batcher or list_or_stop)
         if not self.stop:
-            yield from self.pool.imap_unordered(load_and_diff_cases, batches)
+            yield from self.pool.imap_unordered(process_batch, batches)
             return
         stop = [1]
         with global_diff_state(*self.initargs[1:]), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
-                data = load_and_diff_cases(batch, log_cases=log_cases)
+                data = process_batch(batch, log_cases=log_cases)
                 yield data
                 diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
                 if diffs:
@@ -229,6 +237,68 @@ def load_and_diff_cases(case_ids, log_cases=False):
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
     return diff_cases(couch_cases, log_cases=log_cases)
+
+
+def iter_sql_cases_with_sorted_transactions(domain):
+    from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+    from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+    from ...rebuildcase import SortTransactionsRebuild
+
+    sql = f"""
+        SELECT cx.case_id
+        FROM {CommCareCaseSQL._meta.db_table} cx
+        INNER JOIN {CaseTransaction._meta.db_table} tx ON cx.case_id = tx.case_id
+        WHERE cx.domain = %s AND tx.details LIKE %s
+    """
+    reason = f'%{SortTransactionsRebuild._REASON}%'
+    for dbname in get_db_aliases_for_partitioned_query():
+        with CommCareCaseSQL.get_cursor_for_partition_db(dbname) as cursor:
+            cursor.execute(sql, [domain, reason])
+            yield from iter(set(case_id for case_id, in cursor.fetchall()))
+
+
+def unsort_sql_transactions(case_ids):
+    from corehq.form_processor.backends.sql.dbaccessors import (
+        CaseAccessorSQL,
+        FormAccessorSQL,
+    )
+    from ...casediff import DiffData
+    from ...rebuildcase import SortTransactionsRebuild
+
+    def unsort_transactions(sql_case):
+        rebuilds = [t for t in sql_case.transactions if is_rebuild(t)]
+        others = [t for t in sql_case.transactions if not is_rebuild(t)]
+        assert len(rebuilds) == 1, rebuilds
+        changes = []
+        for trans in sorted(others, key=lambda t: t.server_date):
+            if not trans.form_id:
+                continue
+            received_on = FormAccessorSQL.get_form(trans.form_id).received_on
+            if received_on != trans.server_date:
+                changes.append((trans, received_on))
+        case_id = sql_case.case_id
+        if changes:
+            chg = "\n".join(
+                f"  {t.form_id}: {t.server_date} -> {received_on}"
+                for t, received_on in changes
+            )
+            log.info("unsort transactions for case %s:\n%s", case_id, chg)
+            return True
+        return False
+
+    def is_rebuild(trans):
+        return (trans.details
+            and trans.details["reason"] == SortTransactionsRebuild._REASON)
+
+    total = 0
+    unsorted = 0
+    for sql_case in CaseAccessorSQL.get_cases(case_ids):
+        changed = unsort_transactions(sql_case)
+        if changed:
+            unsorted += 1
+        total += 1
+    log.info("examined %s cases; unsorted %s", total, unsorted)
+    return DiffData(case_ids)
 
 
 def format_diffs(diff_dict):
