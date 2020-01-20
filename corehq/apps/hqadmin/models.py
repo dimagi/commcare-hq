@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from dimagi.ext.couchdbkit import *
@@ -10,6 +11,14 @@ from pillowtop.utils import (
     get_pillow_by_name,
     safe_force_seq_int,
 )
+
+
+class SQLHqDeploy(models.Model):
+    date = models.DateTimeField(default=datetime.utcnow, db_index=True)
+    user = models.CharField(max_length=100)
+    environment = models.CharField(max_length=100)
+    diff_url = models.CharField(max_length=126)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
 
 class HqDeploy(Document):
