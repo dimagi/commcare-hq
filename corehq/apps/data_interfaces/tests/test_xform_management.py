@@ -5,12 +5,15 @@ from django.test import TestCase, Client
 from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import reset_es_index
 
 
 class XFormManagementTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        reset_es_index(XFORM_INDEX_INFO)
         cls.domain = create_domain('xform-management-test')
         cls.web_user = WebUser.create('xform-management-test', 'test', 'test',
                                       is_superuser=True)
