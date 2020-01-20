@@ -3,8 +3,9 @@ import datetime
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names
-
+from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, get_beneficiary_data
+from custom.icds_reports.tasks import _agg_governance_dashboard
+from datetime import date
 
 class GovernanceApiTest(TestCase):
 
@@ -82,3 +83,33 @@ class GovernanceApiTest(TestCase):
         data = get_state_names()
         expected_count = 6
         self.assertEqual(len(data), expected_count)
+
+    def test_fetch_beneficiary_data(self):
+        limit = 1
+        _agg_governance_dashboard(date(2017, 5, 1))
+        query_filters = {'state_id': 'st1'}
+        order = ['awc_id']
+        data, count = get_beneficiary_data(limit, 2017, 5, order, query_filters)
+        self.assertEqual(len(data), limit)
+        self.assertEqual([{'awc_id': 'a1', 'awc_code': 'a1', 'total_preg_benefit_till_date': 2,
+                           'total_lact_benefit_till_date': 3, 'total_preg_reg_till_date': 2,
+                           'total_lact_reg_till_date': 3, 'total_lact_benefit_in_month': 1,
+                           'total_preg_benefit_in_month': 1, 'total_lact_reg_in_month': 1,
+                           'total_preg_reg_in_month': 1,
+                           'total_0_3_female_benefit_till_date': 'Data Not Entered',
+                           'total_0_3_male_benefit_till_date': 'Data Not Entered',
+                           'total_0_3_female_reg_till_date': 'Data Not Entered',
+                           'total_0_3_male_reg_till_date': 'Data Not Entered',
+                           'total_3_6_female_benefit_till_date': 'Data Not Entered',
+                           'total_3_6_male_benefit_till_date': 'Data Not Entered',
+                           'total_3_6_female_reg_till_date': 'Data Not Entered',
+                           'total_3_6_male_reg_till_date': 'Data Not Entered',
+                           'total_0_3_female_benefit_in_month': 'Data Not Entered',
+                           'total_0_3_male_benefit_in_month': 'Data Not Entered',
+                           'total_0_3_female_reg_in_month': 'Data Not Entered',
+                           'total_0_3_male_reg_in_month': 'Data Not Entered',
+                           'total_3_6_female_benefit_in_month': 'Data Not Entered',
+                           'total_3_6_male_benefit_in_month': 'Data Not Entered',
+                           'total_3_6_female_reg_in_month': 'Data Not Entered',
+                           'total_3_6_male_reg_in_month': 'Data Not Entered'},
+                          ], data)
