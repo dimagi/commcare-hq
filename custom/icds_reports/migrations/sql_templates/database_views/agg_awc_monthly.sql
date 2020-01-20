@@ -90,6 +90,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."stadiometer" AS "stadiometer",
         "agg_awc"."valid_visits" AS "valid_visits",
         "agg_awc"."expected_visits" AS "expected_visits"
+
     FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND

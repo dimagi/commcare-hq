@@ -111,7 +111,7 @@ AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
 AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE = 'icds_dashboard_adolescent_girls_registration'
-
+AGG_GOV_DASHBOARD_TABLE = 'agg_gov_dashboard'
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
