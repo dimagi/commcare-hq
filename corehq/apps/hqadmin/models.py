@@ -52,6 +52,21 @@ class HqDeploy(Document):
             include_docs=False
         ).all()
 
+    def save(self, *args, **kwargs):
+        # Save to SQL
+        model, created = SQLHqDeploy.objects.update_or_create(
+            couch_id=self.get_id,
+            defaults={
+                'date': self.date,
+                'user': self.user,
+                'environment': self.environment,
+                'diff_url': self.diff_url,
+            }
+        )
+
+        # Save to couch
+        super().save(*args, **kwargs)
+
 
 class HistoricalPillowCheckpoint(models.Model):
     seq = models.TextField()
