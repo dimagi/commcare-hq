@@ -29,6 +29,13 @@ class SQLHqDeploy(models.Model):
             return query[:limit]
         return query
 
+    @classmethod
+    def get_latest(cls, environment, limit=1):
+        query = SQLHqDeploy.objects.filter(environment=environment).order_by("-date")
+        if limit:
+            return query[:limit]
+        return query
+
 
 class HqDeploy(Document):
     date = DateTimeProperty()
