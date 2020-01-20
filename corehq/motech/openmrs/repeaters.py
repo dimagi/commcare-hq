@@ -5,7 +5,6 @@ from typing import Iterable
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-import attr
 from jsonobject.containers import JsonDict
 from memoized import memoized
 from requests import RequestException
@@ -32,7 +31,6 @@ from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
     get_patient,
-    get_relevant_case_updates_from_form_json,
 )
 from corehq.motech.openmrs.workflow import execute_workflow
 from corehq.motech.openmrs.workflow_tasks import (
@@ -44,29 +42,21 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
 )
-from corehq.motech.repeaters.models import CaseRepeater, Repeater
+from corehq.motech.repeater_helpers import (
+    RepeaterResponse,
+    get_relevant_case_updates_from_form_json,
+)
+from corehq.motech.repeaters.models import CaseRepeater, Repeater, get_requests
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
-
-
-@attr.s
-class OpenmrsResponse:
-    """
-    Ducktypes an HTTP response for Repeater.handle_response(),
-    RepeatRecord.handle_success() and RepeatRecord.handle_failure()
-    """
-    status_code = attr.ib()
-    reason = attr.ib()
-    text = attr.ib(default="")
 
 
 class AtomFeedStatus(DocumentSchema):
@@ -141,18 +131,7 @@ class OpenmrsRepeater(CaseRepeater):
     def requests(self):
         # Used by atom_feed module and views that don't have a payload
         # associated with the request
-        return self.get_requests()
-
-    def get_requests(self, payload_id=None):
-        return Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-            payload_id=payload_id,
-        )
+        return get_requests(self)
 
     @cached_property
     def first_user(self):
@@ -225,7 +204,7 @@ class OpenmrsRepeater(CaseRepeater):
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-        requests = self.get_requests(payload_id=repeat_record.payload_id)
+        requests = get_requests(self, repeat_record.payload_id)
         try:
             response = send_openmrs_data(
                 requests,
@@ -236,7 +215,7 @@ class OpenmrsRepeater(CaseRepeater):
             )
         except Exception as err:
             requests.notify_exception(str(err))
-            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+            return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
 
@@ -314,12 +293,12 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
         # case, so one workflow.)
-        return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
+        return RepeaterResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
+        return RepeaterResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
-    return OpenmrsResponse(200, "OK")
+    return RepeaterResponse(200, "OK")
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
