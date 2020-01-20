@@ -893,7 +893,10 @@ class WorkerState:
         return self.forms
 
     def should_diff(self, case):
-        return case.server_modified_on < self.cutoff_date
+        try:
+            return case.server_modified_on < self.cutoff_date
+        except TypeError:
+            return True
 
 
 def is_orphaned_case(couch_case):
