@@ -163,6 +163,20 @@ function IndieMapController($scope, $location, $filter, storageService, location
                     projection.scale(scaleCenter.scale)
                         .center(scaleCenter.center)
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+
+                    //setting zoom out limit
+                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                    $(function () {
+                        // DOM Ready
+                        var svg = d3.select('#map svg'); //selects svg in datamap component
+                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                            // this function redraws the map rendered on zoom event
+                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                            svg.selectAll('g').attr("transform",
+                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                        });
+                        svg.call(zoom); //connects zoom event to map
+                    });
                 } else {
                     projection = d3.geo.equirectangular()
                         .center(options.center)
