@@ -755,6 +755,24 @@ table.no-footer {
     width: 310px;
 }
 
+.map-legend-color-row {
+    margin-bottom: 5px;
+}
+
+.map-legend-title {
+    font-size: 15px;
+}
+
+.map-legend-color {
+    width: 30px;
+    height: 30px;
+}
+
+.map-legend-color-label {
+    font-size: 15px;
+}
+
+
 ::-webkit-scrollbar {
     margin-left: 22px;
     float: left;

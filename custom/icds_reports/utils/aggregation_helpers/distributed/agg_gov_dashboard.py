@@ -21,7 +21,6 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         from custom.icds_reports.models.aggregate import AggGovernanceDashboard
         return AggGovernanceDashboard
 
-
     def update_queries(self):
         columns = (
             ('state_id', 'awc_location_local.state_id'),
@@ -60,9 +59,8 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             calculations=", ".join([col[1] for col in columns])
 
         ), {
-                  'start_date': self.month
-              }
-
+            'start_date': self.month
+        }
 
         yield """
         CREATE TABLE temp_gov_dashboard AS
@@ -136,7 +134,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             total_0_3_female_reg_in_month = ut.open_reg_in_month_0_3_female,
             total_0_3_male_reg_in_month = ut.open_reg_in_month_0_3_male,
             total_3_6_female_benefit_in_month = ut.valid_reg_in_month_3_6_female,
-            total_3_6_male_benfit_in_month = ut.valid_reg_in_month_3_6_male,
+            total_3_6_male_benefit_in_month = ut.valid_reg_in_month_3_6_male,
             total_3_6_female_reg_in_month = ut.open_reg_in_month_3_6_female,
             total_3_6_male_reg_in_month = ut.open_reg_in_month_3_6_male
         FROM temp_gov_dashboard ut
@@ -148,7 +146,6 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         yield """
         DROP TABLE temp_gov_dashboard;
         """, {}
-
 
     def indexes(self):
         return []

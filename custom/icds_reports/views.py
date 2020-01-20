@@ -2192,7 +2192,6 @@ class GovernanceAPIBaseView(View):
 
 
         last_awc_id = request.GET.get('last_awc_id', '')
-
         return  last_awc_id, month, year, state_id
 
     def validate_param(self, state_id, month, year):
@@ -2221,7 +2220,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
             return HttpResponse(error_message, status=400)
 
         query_filters = {'aggregation_level': AggregationLevels.AWC,
-                         'num_launched_awcs': 1,
+                         # 'num_launched_awcs': 1,
                          'awc_id__gt': last_awc_id,
                          'state_id': state_id
                          }
@@ -2255,7 +2254,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         if not is_valid:
             return HttpResponse(error_message, status=400)
 
-        query_filters = {'awc_launched': True,
+        query_filters = {
                          'state_id': state_id,
                          'awc_id__gt': last_awc_id}
         order = ['awc_id']

@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('total_0_3_female_reg_in_month', models.IntegerField(null=True)),
                 ('total_0_3_male_reg_in_month', models.IntegerField(null=True)),
                 ('total_3_6_female_benefit_in_month', models.IntegerField(null=True)),
-                ('total_3_6_male_benfit_in_month', models.IntegerField(null=True)),
+                ('total_3_6_male_benefit_in_month', models.IntegerField(null=True)),
                 ('total_3_6_female_reg_in_month', models.IntegerField(null=True)),
                 ('total_3_6_male_reg_in_month', models.IntegerField(null=True)),
                 ('month', models.DateField(null=True)),

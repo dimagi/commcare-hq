@@ -105,43 +105,6 @@ def get_form_list(domain):
     return form_list
 
 
-def get_recipient_name(recipient, include_desc=True):
-    if recipient is None:
-        return "(no recipient)"
-    elif isinstance(recipient, list):
-        if len(recipient) > 0:
-            return ",".join([get_recipient_name(r, include_desc) for r in recipient])
-        else:
-            return "(no recipient)"
-    elif isinstance(recipient, CouchUser):
-        name = recipient.raw_username
-        desc = "User"
-    elif is_commcarecase(recipient):
-        name = recipient.name
-        desc = "Case"
-    elif isinstance(recipient, Group):
-        name = recipient.name
-        desc = "Group"
-    elif isinstance(recipient, CommCareCaseGroup):
-        name = recipient.name
-        desc = "Case Group"
-    elif isinstance(recipient, SQLLocation):
-        name = recipient.name
-        desc = "Location"
-    else:
-        name = "(unknown)"
-        desc = ""
-
-    if include_desc:
-        return "%s '%s'" % (desc, name)
-    else:
-        return name
-
-
-def can_use_survey_reminders(request):
-    return has_privilege(request, privileges.INBOUND_SMS)
-
-
 def get_two_way_number_for_recipient(recipient):
     if isinstance(recipient, CommCareMobileContactMixin):
         two_way_numbers = recipient.get_two_way_numbers()
@@ -173,7 +136,3 @@ def get_one_way_number_for_recipient(recipient):
             except InvalidFormatException:
                 return None
     return None
-
-
-def get_preferred_phone_number_for_recipient(recipient):
-    return get_two_way_number_for_recipient(recipient) or get_one_way_number_for_recipient(recipient)
