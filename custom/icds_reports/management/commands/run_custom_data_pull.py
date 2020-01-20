@@ -17,10 +17,14 @@ from custom.icds.utils.data_pull import (
 
 
 class Command(BaseCommand):
-    help = "Dump data from a pre-defined query for ICDS data pull requests"
+    help = """
+            Dump data from a pre-defined custom query for ICDS data pull requests 
+            or a sql file to generate a result zip file in the current directory.
+            The command returns the zip file name.
+           """
 
     def add_arguments(self, parser):
-        parser.add_argument('name')
+        parser.add_argument('name', help="slug of a custom data pull or a sql file name/path")
         parser.add_argument('db_alias', choices=settings.DATABASES)
         parser.add_argument('--month', help="format YYYY-MM-DD")
         parser.add_argument('--location_id')
@@ -85,7 +89,7 @@ class Command(BaseCommand):
             return [result_file]
 
     def _log(self, queries):
-        print("Running queries")
+        print("Running queries now")
         for sql in queries:
             print(sql)
 

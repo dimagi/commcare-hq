@@ -1,2 +1,2 @@
-class UnboundDataPull(Exception):
+class UnboundDataPullException(Exception):
     pass
