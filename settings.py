@@ -949,6 +949,8 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)

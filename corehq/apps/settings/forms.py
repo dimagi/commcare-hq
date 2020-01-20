@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -15,6 +16,7 @@ from two_factor.forms import (
     PhoneNumberMethodForm,
     TOTPDeviceForm,
 )
+from two_factor.models import get_available_phone_methods
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -143,6 +145,14 @@ class HQTwoFactorMethodForm(MethodForm):
 
     def __init__(self, **kwargs):
         super(HQTwoFactorMethodForm, self).__init__(**kwargs)
+        if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+            # Block people from setting up the phone method as their default
+            phone_methods = [method for method, _ in get_available_phone_methods()]
+            self.fields['method'].choices = [
+                (method, display_name)
+                for method, display_name in self.fields['method'].choices
+                if method not in phone_methods
+            ]
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
