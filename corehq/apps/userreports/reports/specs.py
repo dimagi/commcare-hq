@@ -16,7 +16,7 @@ from sqlagg import (
     SumColumn,
 )
 from sqlagg.columns import (
-    ArrayAggLastValueAggregationColumn,
+    ArrayAggColumn,
     ConditionalAggregation,
     MonthColumn,
     NonzeroSumColumn,
@@ -489,9 +489,12 @@ class ArrayAggLastValueReportColumn(ReportColumn):
     type = TypeProperty('array_agg_last_value')
     field = StringProperty(required=True)
     order_by_col = StringProperty(required=False)
-    _agg_column_type = ArrayAggLastValueAggregationColumn
+    _agg_column_type = ArrayAggColumn
 
     def get_column_config(self, data_source_config, lang):
+        def _last_value(array):
+            return array[-1] if array else None
+
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
@@ -500,6 +503,7 @@ class ArrayAggLastValueReportColumn(ReportColumn):
                     order_by_col=self.order_by_col,
                     alias=self.column_id,
                 ),
+                format_fn=_last_value,
                 data_slug=self.column_id,
                 help_text=self.description,
                 visible=self.visible,
