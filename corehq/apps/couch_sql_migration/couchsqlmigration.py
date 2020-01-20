@@ -946,7 +946,18 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    return (row[row_key] for row in rows)
+    log.info("iteration state: %r", rows.state)
+    row = None
+    try:
+        for row in rows:
+            assert row['key'][0] == domain, row
+            yield row[row_key]
+    finally:
+        if row is not None:
+            row_copy = dict(row)
+            row_copy.pop("doc", None)
+            log.info("last item: %r", row_copy)
+        log.info("final iteration state: %r", rows.state)
 
 
 _iter_docs.chunk_size = 1000
