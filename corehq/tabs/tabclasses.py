@@ -1383,6 +1383,7 @@ class ProjectUsersTab(UITab):
                 LocationsListView,
                 NewLocationView,
                 EditLocationView,
+                FilteredLocationDownload,
                 LocationImportView,
                 LocationImportStatusView,
                 LocationFieldsView,
@@ -1414,6 +1415,10 @@ class ProjectUsersTab(UITab):
                     {
                         'title': _(LocationFieldsView.page_name()),
                         'urlname': LocationFieldsView.urlname,
+                    },
+                    {
+                        'title': _(FilteredLocationDownload.page_title),
+                        'urlname': FilteredLocationDownload.urlname,
                     },
                 ]
             })
