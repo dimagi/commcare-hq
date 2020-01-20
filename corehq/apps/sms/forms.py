@@ -30,8 +30,6 @@ from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
 from corehq.apps.sms.models import (
-    FORWARD_ALL,
-    FORWARD_BY_KEYWORD,
     SQLMobileBackend,
 )
 from corehq.apps.sms.util import (
@@ -41,11 +39,6 @@ from corehq.apps.sms.util import (
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser
-
-FORWARDING_CHOICES = (
-    (FORWARD_ALL, ugettext_noop("All messages")),
-    (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
-)
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
@@ -96,46 +89,6 @@ WELCOME_RECIPIENT_CHOICES = (
     (WELCOME_RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Workers only')),
     (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
 )
-
-
-class ForwardingRuleForm(Form):
-    forward_type = ChoiceField(choices=FORWARDING_CHOICES)
-    keyword = CharField(required=False)
-    backend_id = CharField()
-
-    def __init__(self, *args, **kwargs):
-        super(ForwardingRuleForm, self).__init__(*args, **kwargs)
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Forwarding Rule Options'),
-                'forward_type',
-                crispy.Div(
-                    'keyword',
-                    css_id="keyword_row",
-                    css_class='hide',
-                ),
-                'backend_id',
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Submit"),
-                        type="submit",
-                        css_class="btn btn-primary",
-                    ),
-                ),
-            )
-        )
-
-    def clean_keyword(self):
-        forward_type = self.cleaned_data.get("forward_type")
-        keyword = self.cleaned_data.get("keyword", "").strip()
-        if forward_type == FORWARD_BY_KEYWORD:
-            if keyword == "":
-                raise ValidationError(_("This field is required."))
-            return keyword
-        else:
-            return None
 
 
 class LoadBalancingBackendFormMixin(Form):
