@@ -109,8 +109,7 @@ class GovernanceApiTest(TestCase):
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a41", "awc_code": "a41",
-            "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
+            "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
         }
@@ -125,8 +124,7 @@ class GovernanceApiTest(TestCase):
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a49", "awc_code": "a49",
-            "month": datetime.date(2017, 5, 1), "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
+            "awc_id": "a43", "awc_code": "a43",  "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
             "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
             "anc_conducted": "no"
         }
