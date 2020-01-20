@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -45,11 +45,12 @@ from .signals import location_edited
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None, placeholder=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
+        self.placeholder = placeholder
         if query_url:
             self.query_url = query_url
         else:
@@ -71,6 +72,7 @@ class LocationSelectWidget(forms.Widget):
             'value': [loc.location_id for loc in locations],
             'query_url': self.query_url,
             'multiselect': self.multiselect,
+            'placeholder': self.placeholder,
             'initial_data': initial_data,
             'attrs': self.build_attrs(self.attrs, attrs),
         })
@@ -634,6 +636,36 @@ class RelatedLocationForm(forms.Form):
                 for name, value in self.cleaned_data.items()
                 if name.startswith('relation_distance_')
             }
+        )
+
+
+class LocationFilterForm(forms.Form):
+    root_location_id = forms.CharField(
+        label=ugettext_noop("Root Location"),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        super().__init__(*args, **kwargs)
+        self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_action = reverse('location_export', args=[self.domain])
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Filter and Download Locations"),
+                crispy.Field('root_location_id'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            ),
         )
 
 

@@ -1,29 +1,19 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pytz
-
 from django.conf import settings
-from django.db.models import Max
 from django.db import connections
+from django.db.models import Max
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from lxml import etree
+from memoized import memoized
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
-from dimagi.utils.dates import DateSpan
-from memoized import memoized
-from dimagi.utils.parsing import string_to_datetime
-
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
-from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.locations.dbaccessors import (
-    get_user_ids_from_primary_location_ids,
     get_users_by_location_id,
-)
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_users,
-    get_last_form_submissions_by_user,
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
@@ -36,13 +26,10 @@ from custom.icds.const import (
     HOME_VISIT_REPORT_ID,
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
-    VHND_SURVEY_XMLNS,
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from dimagi.utils.couch import CriticalSection
-
-from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
 

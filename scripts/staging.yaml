@@ -64,4 +64,6 @@ branches:
   - dmr/es-rewrite-not-and  # Danny Jan 10
   - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
+  - jls/migrate-Dhis2Connection-2 # Jenny Jan 17
+  - bmb/soft-rollback-data-typing # Biyeun Jan 17
 submodules: {}

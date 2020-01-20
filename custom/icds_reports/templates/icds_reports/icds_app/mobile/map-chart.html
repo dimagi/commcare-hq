@@ -22,8 +22,9 @@
           <span class="font-16 font-montserrat font-weight-600 mr-3">
             {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking
           </span>
-          {# don't show info bubble until we know what it will do #}
-          {#          <img src="{% static "icds_reports/mobile/images/dark-info.png" %}" class="d-inline">#}
+          <img src="{% static 'icds_reports/mobile/images/dark-info.png' %}" class="d-inline"
+               uib-popover="Ranking based on previous month's data" popover-placement="bottom"
+               popover-trigger="'mouseenter'">
         </div>
         <div class="d-flex justify-content-between align-items-center"
              ng-repeat="location in $ctrl.all_locations">
