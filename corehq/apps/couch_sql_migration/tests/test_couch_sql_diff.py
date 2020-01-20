@@ -5,11 +5,14 @@ import attr
 from gevent.pool import Pool
 from mock import patch
 
+from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
+from corehq.util.test_utils import capture_log_output
 
 from .test_migration import BaseMigrationTestCase, Diff, make_test_form
+from .. import casediff
 from ..management.commands import couch_sql_diff as mod
 from ..statedb import open_state_db
 
@@ -52,15 +55,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
 
     def test_pending_diff(self):
-        def diff_none(case_ids):
-            return mod.DiffData([])
+        def diff_none(case_ids, log_cases=None):
+            return casediff.DiffData([])
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self._do_migration(case_diff='none')
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
-            with patch.object(mod, "diff_cases", diff_none):
+            with patch("corehq.apps.couch_sql_migration.casediff.diff_cases", diff_none):
                 result = self.do_case_diffs()
             self.assertEqual(result, mod.PENDING_WARNING)
             self.do_case_diffs(cases="pending")
@@ -80,11 +83,17 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_failed_diff(self):
+        self.pool_mock.stop()
+        self.addCleanup(self.pool_mock.start)
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self._do_migration(case_diff="none")
-        with patch.object(mod, "diff_case") as mock:
-            mock.side_effect = Exception("fail!")
+        with patch("corehq.apps.couch_sql_migration.casediff.diff_case") as mock, \
+                capture_log_output("corehq.apps.couch_sql_migration.parallel") as log:
+            mock.side_effect = Exception("diff failed!")
             self.do_case_diffs()
+        logs = log.get_output()
+        self.assertIn("error processing item in worker", logs)
+        self.assertIn("Exception: diff failed!", logs)
         self._compare_diffs([])
         db = open_state_db(self.domain_name, self.state_dir)
         self.assertEqual(list(db.iter_undiffed_case_ids()), ["case-1"])
@@ -96,7 +105,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.submit_form(form1)
         self.submit_form(form2)
         self.assertEqual(self._get_case("test-case").age, "33")
-        self._do_migration(case_diff="local")
+        with self.diff_without_rebuild():
+            self._do_migration(case_diff="local")
         self._compare_diffs([
             ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
         ])
@@ -124,9 +134,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         case.save()
         with self.assertRaises(AttributeError):
             self._get_case("test-case").thing
-        self._do_migration(case_diff="local")
+        with self.diff_without_rebuild():
+            self._do_migration(case_diff="local")
         self._compare_diffs([
             ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
+            ('CommCareCase', Diff('missing', ['thing'], old=MISSING, new='1')),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
@@ -140,10 +152,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     @contextmanager
     def augmented_couch_case(self, case_id):
-        def no_rebuild(*args, **kw):
-            return case
         case = self._get_case(case_id)
-        with patch.object(mod.FormProcessorCouch, "hard_rebuild_case", no_rebuild):
+        with self.diff_without_rebuild():
             yield case
 
 
