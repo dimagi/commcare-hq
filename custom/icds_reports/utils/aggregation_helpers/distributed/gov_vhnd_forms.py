@@ -1,7 +1,7 @@
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_GOV_VHND_TABLE
-from custom.icds_reports.utils.aggregation_helpers import date_to_string
+from custom.icds_reports.utils.aggregation_helpers import date_to_string, month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     StateBasedAggregationPartitionedHelper,
 )
@@ -18,12 +18,13 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
         self.state_id = state_id
 
     def aggregate_query(self):
+        month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(self.month)
         next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
-            "start_date": date_to_string(self.month),
-            "end_date": date_to_string(next_month_start),
+            "start_date": month_formatter(month),
+            "end_date": month_formatter(next_month_start),
             "state_id": self.state_id
         }
 
