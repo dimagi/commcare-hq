@@ -41,10 +41,10 @@
       <div data-bind="visible: restrict">
         <table class="table table-bordered table-striped" data-bind="if: app_groups().length">
           <thead>
-          <tr>
-            <th>{% trans 'Application' %}</th>
-            <th>{% trans 'Group' %}</th>
-          </tr>
+            <tr>
+              <th class="col-sm-6">{% trans 'Application' %}</th>
+              <th class="col-sm-6">{% trans 'Group' %}</th>
+            </tr>
           </thead>
           <tbody data-bind="foreach: app_groups">
           <tr>
