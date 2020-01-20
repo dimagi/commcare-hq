@@ -34,6 +34,7 @@ class Command(BaseCommand):
     def handle(self, name, db_alias, *arg, **options):
         generated_files = []
         month = options.get('month')
+        zip_file_name = None
         if month:
             # convert to string if date object received
             month = str(month)
@@ -60,8 +61,8 @@ class Command(BaseCommand):
                 for generated_file in generated_files:
                     z.write(generated_file)
                     os.remove(generated_file)
-            return zip_file_name
         reset_data_pull_in_progress()
+        return zip_file_name
 
     def run_via_class(self, slug, db_alias, month, location_id, skip_confirmation, log_progress):
         data_pull_class = CUSTOM_DATA_PULLS[slug]
