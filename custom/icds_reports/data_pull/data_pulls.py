@@ -34,13 +34,13 @@ class MonthlyDataPull(BaseDataPull):
     def __init__(self, db_alias, *args, **kwargs):
         super(MonthlyDataPull, self).__init__(db_alias, *args, **kwargs)
         self.month = kwargs.get('month')
+        if not self.month:
+            raise UnboundDataPullException("Month not defined")
 
     def get_queries(self):
         return [query_class(self.month).sql_query for query_class in self.queries]
 
     def run(self):
-        if not self.month:
-            raise UnboundDataPullException("Month not defined")
         return [query_class(self.month).run(self.db_alias) for query_class in self.queries]
 
 
@@ -48,13 +48,13 @@ class LocationAndMonthBasedDataPull(MonthlyDataPull):
     def __init__(self, db_alias, *args, **kwargs):
         super(LocationAndMonthBasedDataPull, self).__init__(db_alias, *args, **kwargs)
         self.location_id = kwargs.get('location_id')
+        if not self.location_id:
+            raise UnboundDataPullException("Location not defined")
 
     def get_queries(self):
         return [query_class(self.location_id, self.month).sql_query for query_class in self.queries]
 
     def run(self):
-        if not self.location_id:
-            raise UnboundDataPullException("Location not defined")
         return [query_class(self.location_id, self.month).run(self.db_alias) for query_class in self.queries]
 
 
