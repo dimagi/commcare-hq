@@ -172,12 +172,10 @@ describe('Indie Map Directive', function () {
         controller.handleMapClick(mockGeography);
         $httpBackend.flush();
 
-        expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "test-id"};
+        expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "Chhattisgarh"};
         result = $location.search();
 
         assert.deepEqual(expected, result);
-        assert.deepEqual($storageService.getKey('search'), {
-            "location_name": "test-id", "location_id": "9951736acfe54c68948225cc05fbbd63",
-        });
+        assert.deepEqual($storageService.getKey('search'), expected);
     });
 });
