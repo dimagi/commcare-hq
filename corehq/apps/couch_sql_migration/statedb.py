@@ -518,6 +518,8 @@ class StateDB(DiffDB):
     def _migrate_diff_to_docdiffs(self, session):
         if session.query(session.query(DocDiffs).exists()).scalar():
             return  # already migrated
+        if not session.query(session.query(Diff).exists()).scalar():
+            return  # nothing to migrate
         log.info("migrating PlanningDiff to DocDiffs...")
         base_query = session.query(Diff).filter(Diff.kind != "stock state")
         count = base_query.count()
