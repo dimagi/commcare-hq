@@ -14,7 +14,7 @@ from custom.icds_reports.views import (
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
-    GovernanceAPIView)
+    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI)
 
 
 dashboard_urls = [
@@ -183,7 +183,9 @@ urlpatterns = [
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
     url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
-    url(r'^governance_apis/(?P<step>[\w-]+)/', GovernanceAPIView.as_view(), name='governance_apis'),
+    url(r'^governance_apis/home_visit/', GovernanceHomeVisitAPI.as_view(), name='governance_apis_home_visit'),
+    url(r'^governance_apis/beneficiary/', GovernanceBeneficiaryAPI.as_view(), name='governance_apis_beneficiary'),
+    url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
 
 ]
 
