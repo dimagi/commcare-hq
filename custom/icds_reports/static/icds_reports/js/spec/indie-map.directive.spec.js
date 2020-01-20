@@ -10,6 +10,7 @@ describe('Indie Map Directive', function () {
     var $scope, $location, controller, $httpBackend, $storageService;
 
     pageData.registerUrl('icds_locations', 'icds_locations');
+    pageData.registerUrl('icds-ng-template', 'template');
 
     var mockGeography = {
         geometry: {type: "Polygon", coordinates: []},
