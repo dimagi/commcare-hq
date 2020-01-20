@@ -1,7 +1,6 @@
 import os
 
 from django.conf import settings
-from django.core.management import call_command
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,14 +12,16 @@ from soil.util import expose_blob_download
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.files import safe_filename_header
+from custom.icds_reports.data_pull.exporter import DataExporter
 
 
 @task(queue='icds_dashboard_reports_queue')
 def run_data_pull(data_pull_slug, month, location_id=None, email=None):
     subject = _('Custom ICDS Data Pull')
     try:
-        filename = call_command("run_custom_data_pull", data_pull_slug, "icds-ucr-citus", month=month,
-                                location_id=location_id, skip_confirmation=True)
+        filename = DataExporter(
+            data_pull_slug, "icds-ucr-citus", month=month, location_id=location_id
+        ).export()
     except Exception as e:
         if email:
             message = _("""
