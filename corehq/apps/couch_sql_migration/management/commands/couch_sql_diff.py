@@ -77,8 +77,12 @@ class Command(BaseCommand):
             help='''Diff cases in batches of this size.''')
 
     def handle(self, domain, **options):
-        if should_use_sql_backend(domain) and options["cases"] != "unsort":
-            raise CommandError('It looks like {} has already been migrated.'.format(domain))
+        is_sql_domain = should_use_sql_backend(domain)
+        if options["cases"] in ["unsort", "unsort-commit"]:
+            if not is_sql_domain:
+                raise CommandError(f'Cannot unsort commits on non-SQL domain: {domain}')
+        elif is_sql_domain:
+            raise CommandError(f'It looks like {domain} has already been migrated.')
 
         for opt in ["no_input", "state_dir", "live", "cases", "stop", "batch_size"]:
             setattr(self, opt, options[opt])
@@ -152,8 +156,8 @@ class CaseDiffTool:
             return self.iter_diff_cases(self.get_pending_cases())
         if self.cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
-        if self.cases == "unsort":
-            return self.iter_cases_with_sorted_transactions()
+        if self.cases in ["unsort", "unsort-commit"]:
+            return self.iter_cases_with_sorted_transactions(self.cases)
         case_ids = get_ids_from_string_or_file(self.cases)
         return self.iter_diff_cases(case_ids, log_cases=True)
 
@@ -177,9 +181,15 @@ class CaseDiffTool:
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
         return self.iter_diff_cases(cases)
 
-    def iter_cases_with_sorted_transactions(self):
+    def iter_cases_with_sorted_transactions(self, action):
+        if action == "unsort-commit":
+            log.info("COMMIT MODE: show and save unsorted transactions...")
+            process_batch = unsort_sql_transactions_and_save
+        else:
+            log.info("DRY RUN: show but do not save unsorted transactions...")
+            process_batch = unsort_sql_transactions
         cases = iter_sql_cases_with_sorted_transactions(self.domain)
-        return self.iter_diff_cases(cases, process_batch=unsort_sql_transactions)
+        return self.iter_diff_cases(cases, process_batch=process_batch)
 
     def iter_diff_cases(self, case_ids, batcher=None, process_batch=None, log_cases=False):
         def list_or_stop(items):
@@ -257,13 +267,18 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def unsort_sql_transactions(case_ids):
+def unsort_sql_transactions_and_save(*args, **kw):
+    return unsort_sql_transactions(*args, commit=True, **kw)
+
+
+def unsort_sql_transactions(case_ids, log_cases=False, commit=False):
     from corehq.form_processor.backends.sql.dbaccessors import (
         CaseAccessorSQL,
         FormAccessorSQL,
     )
+    from corehq.form_processor.models import RebuildWithReason
     from ...casediff import DiffData
-    from ...rebuildcase import SortTransactionsRebuild
+    from ...rebuildcase import SortTransactionsRebuild, rebuild_case
 
     def unsort_transactions(sql_case):
         rebuilds = [t for t in sql_case.transactions if is_rebuild(t)]
@@ -276,6 +291,9 @@ def unsort_sql_transactions(case_ids):
             received_on = FormAccessorSQL.get_form(trans.form_id).received_on
             if received_on != trans.server_date:
                 changes.append((trans, received_on))
+                if commit:
+                    trans.server_date = received_on
+                    trans.save()
         case_id = sql_case.case_id
         if changes:
             chg = "\n".join(
@@ -283,6 +301,9 @@ def unsort_sql_transactions(case_ids):
                 for t, received_on in changes
             )
             log.info("unsort transactions for case %s:\n%s", case_id, chg)
+            if commit:
+                detail = RebuildWithReason(reason=UNSORT_REBUILD_REASON)
+                rebuild_case(sql_case, detail)
             return True
         return False
 
@@ -299,6 +320,9 @@ def unsort_sql_transactions(case_ids):
         total += 1
     log.info("examined %s cases; unsorted %s", total, unsorted)
     return DiffData(case_ids)
+
+
+UNSORT_REBUILD_REASON = "Couch to SQL: unsort transactions"
 
 
 def format_diffs(diff_dict):
