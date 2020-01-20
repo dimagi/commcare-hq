@@ -22,26 +22,6 @@ class SQLHqDeploy(models.Model):
     class Meta(object):
         db_table = "hqadmin_hqdeploy"
 
-    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        # Update or create couch doc
-        if self.couch_id:
-            doc = HqDeploy.wrap(HqDeploy.get_db().get(self.couch_id))
-        else:
-            doc = HqDeploy(
-                date=self.date,
-                user=self.user,
-                environment=self.environment,
-                diff_url=self.diff_url,
-            )
-
-        doc.save(from_sql=True)
-        self.couch_id = doc.get_id
-
-        # Save to SQL
-        super().save(
-            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
-        )
-
     @classmethod
     def get_latest(cls, environment, limit=1):
         query = SQLHqDeploy.objects.filter(environment=environment).order_by("-date")
