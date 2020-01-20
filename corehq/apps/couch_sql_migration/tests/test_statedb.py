@@ -142,6 +142,8 @@ def test_case_diff_lifecycle():
         case_ids = ["a", "b", "c"]
         db.add_cases_to_diff(case_ids)
         db.add_cases_to_diff(["d"])
+        db.add_cases_to_diff(["d"])  # add again should not error
+        db.add_cases_to_diff([])  # no ids should not error
         db.add_diffed_cases(case_ids)
         eq(list(db.iter_undiffed_case_ids()), ["d"])
         eq(db.count_undiffed_cases(), 1)

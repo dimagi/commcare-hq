@@ -197,17 +197,20 @@ class StateDB(DiffDB):
             return query.scalar() or 0
 
     def add_cases_to_diff(self, case_ids):
+        if not case_ids:
+            return
         with self.session() as session:
-            session.bulk_save_objects([CaseToDiff(id=id) for id in case_ids])
+            session.execute(
+                f"INSERT OR IGNORE INTO {CaseToDiff.__tablename__} (id) VALUES (:id)",
+                [{"id": x} for x in case_ids],
+            )
 
     def add_diffed_cases(self, case_ids):
         if not case_ids:
             return
         with self.session() as session:
             session.execute(
-                """
-                INSERT OR IGNORE INTO {table} (id) VALUES (:id)
-                """.format(table=DiffedCase.__tablename__),
+                f"INSERT OR IGNORE INTO {DiffedCase.__tablename__} (id) VALUES (:id)",
                 [{"id": x} for x in case_ids],
             )
             (
