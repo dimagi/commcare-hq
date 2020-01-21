@@ -126,6 +126,19 @@
                   {% endblocktrans %}
                 </label>
               </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox"
+                         id="format-data-in-excel-checkbox"
+                         data-bind="checked: format_data_in_excel" />
+                  <strong>{% trans "Automatically format cells for Excel 2007+" %}</strong><br/>
+                  {% blocktrans %}
+                    If this setting is not selected, your export will be in Excel’s general format.
+                    If you enable this setting, Excel will format dates, integers, decimals,
+                    Boolean values (True/False) and currencies.
+                  {% endblocktrans %}
+                </label>
+              </div>
 
               <div class="checkbox">
                 <label>
