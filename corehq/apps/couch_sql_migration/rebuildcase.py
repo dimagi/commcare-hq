@@ -17,12 +17,12 @@ def should_sort_sql_transactions(sql_case, couch_json):
     :returns: True if (trans)action order matches else false.
     """
     def dedup(items):
-        return list(dict.fromkeys(items))
+        return dict.fromkeys(items)
     if was_rebuilt(sql_case):
         return False
     sql_ids = dedup(t.form_id for t in sql_case.transactions if t.form_id)
     couch_ids = dedup(a["xform_id"] for a in couch_json["actions"] if a["xform_id"])
-    return len(sql_ids) == len(couch_ids) and sql_ids != couch_ids
+    return sql_ids == couch_ids and list(sql_ids) != list(couch_ids)
 
 
 def was_rebuilt(sql_case):

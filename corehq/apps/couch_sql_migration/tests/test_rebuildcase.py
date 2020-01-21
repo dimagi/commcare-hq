@@ -21,6 +21,7 @@ def test_should_sort_sql_transactions():
     yield test, "abc", "aabbcc", False
     yield test, "abc", "acb", True
     yield test, "abcd", "acb", False
+    yield test, "abd", "acb", False
 
 
 def test_iter_ascending_dates():
