@@ -18,7 +18,7 @@
         <div>
             <div id="nutrition" ng-show="expandedSectionId==='nutrition'">
                 <div ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile']"
+                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
                      ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
                     <a href="{$ goToStep(menuItem['route'], $location.search()) $}" class="sub-links"
                         ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
@@ -35,7 +35,7 @@
         <div>
             <div id="reach" ng-show="expandedSectionId==='reach'">
                 <div ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile']"
+                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
                      ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
                     <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
                        class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
@@ -52,7 +52,7 @@
         <div>
             <div id="demographics" ng-show="expandedSectionId==='demographics'">
                 <div ng-repeat="menuItem in navMenuItems['Demographics']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile']"
+                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
                      ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
                     <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
                        class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
@@ -69,7 +69,7 @@
         <div>
             <div id="infrastructure" ng-show="expandedSectionId==='infrastructure'">
                 <div ng-repeat="menuItem in navMenuItems['AWC Infrastructure']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile']"
+                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
                      ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
                     <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
                        class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>

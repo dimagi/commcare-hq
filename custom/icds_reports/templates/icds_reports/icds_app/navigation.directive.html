@@ -21,7 +21,7 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
-                    <li ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']" ng-show="menuItem['showInWeb']"
+                    <li ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
                         ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
                         <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
                             {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}</a>
@@ -35,7 +35,7 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="icdsCasReach">
-                    <li ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']" ng-show="menuItem['showInWeb']"
+                    <li ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
                         ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
                         <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
                             {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
@@ -50,7 +50,7 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="demographics">
-                    <li ng-repeat="menuItem in navMenuItems['Demographics']" ng-show="menuItem['showInWeb']"
+                    <li ng-repeat="menuItem in navMenuItems['Demographics']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
                         ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
                         <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
                             {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
@@ -65,7 +65,7 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="infrastructure">
-                    <li ng-repeat="menuItem in navMenuItems['AWC Infrastructure']" ng-show="menuItem['showInWeb']"
+                    <li ng-repeat="menuItem in navMenuItems['AWC Infrastructure']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
                         ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
                         <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
                             {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
