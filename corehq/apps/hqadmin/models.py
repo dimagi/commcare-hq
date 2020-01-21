@@ -1,6 +1,5 @@
 from datetime import date, datetime
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from dimagi.ext.couchdbkit import *

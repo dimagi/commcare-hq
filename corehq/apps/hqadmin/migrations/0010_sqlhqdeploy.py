@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 
 
