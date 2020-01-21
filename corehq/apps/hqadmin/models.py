@@ -37,7 +37,6 @@ class HqDeploy(Document):
     code_snapshot = DictProperty()
     diff_url = StringProperty()
 
-
     def save(self, *args, **kwargs):
         # Save to SQL
         model, created = SQLHqDeploy.objects.update_or_create(
