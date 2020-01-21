@@ -293,6 +293,8 @@ def update_last_sync(user, app_id, sync_date, version):
 
 
 def _last_sync_needs_update(last_sync, sync_datetime):
+    if not sync_datetime:
+        return False
     if not (last_sync and last_sync.sync_date):
         return True
     if sync_datetime > last_sync.sync_date:
