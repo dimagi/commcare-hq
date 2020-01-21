@@ -592,7 +592,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         return affected_count
 
     @staticmethod
-    @transaction.atomic
     def set_archived_state(form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
@@ -604,7 +603,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
 
     @staticmethod
-    @transaction.atomic
     def save_new_form(form):
         """
         Save a previously unsaved form
@@ -671,7 +669,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             publish_form_saved(form)
 
     @staticmethod
-    @transaction.atomic
     def update_form_problem_and_state(form):
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
