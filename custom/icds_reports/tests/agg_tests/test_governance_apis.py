@@ -3,8 +3,9 @@ import datetime
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names
-
+from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, get_beneficiary_data
+from custom.icds_reports.tasks import _agg_governance_dashboard
+from datetime import date
 
 class GovernanceApiTest(TestCase):
 
@@ -14,7 +15,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_count = 55
@@ -26,12 +27,12 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_first_row = {
-            'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a1', 'awc_id':'a1',
-            'month': datetime.date(2017, 5, 1), 'valid_visits': 0, 'expected_visits': 4,
+            'awc_id': 'a1', 'awc_code': 'a1',
+            'valid_visits': 0, 'expected_visits': 4,
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -41,13 +42,12 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5, 'awc_id__gt': 'a1'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id']
 
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_first_row = {
-            'state': 'st1', 'district': 'd1', 'block': 'b1', 'sector': 's1', 'awc': 'a17', 'awc_id': 'a17',
-            'month': datetime.date(2017, 5, 1), 'valid_visits': 0, 'expected_visits': 3
+            'awc_id': 'a10', 'awc_code': 'a10', 'valid_visits': 0, 'expected_visits': 2
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -57,7 +57,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id']
         data, count = get_home_visit_data(limit,
                                           2017, 6, order, query_filters)
         expected_count = 0
@@ -70,7 +70,7 @@ class GovernanceApiTest(TestCase):
         """
         limit = GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
         query_filters = {'aggregation_level': 5, 'state_id': 'st1'}
-        order = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+        order = ['awc_id']
         data, count = get_home_visit_data(limit,
                                           2017, 5, order, query_filters)
         expected_count = 26
@@ -83,3 +83,33 @@ class GovernanceApiTest(TestCase):
         data = get_state_names()
         expected_count = 6
         self.assertEqual(len(data), expected_count)
+
+    def test_fetch_beneficiary_data(self):
+        limit = 1
+        _agg_governance_dashboard(date(2017, 5, 1))
+        query_filters = {'state_id': 'st1'}
+        order = ['awc_id']
+        data, count = get_beneficiary_data(limit, 2017, 5, order, query_filters)
+        self.assertEqual(len(data), limit)
+        self.assertEqual([{'awc_id': 'a1', 'awc_code': 'a1', 'total_preg_benefit_till_date': 2,
+                           'total_lact_benefit_till_date': 3, 'total_preg_reg_till_date': 2,
+                           'total_lact_reg_till_date': 3, 'total_lact_benefit_in_month': 1,
+                           'total_preg_benefit_in_month': 1, 'total_lact_reg_in_month': 1,
+                           'total_preg_reg_in_month': 1,
+                           'total_0_3_female_benefit_till_date': 'Data Not Entered',
+                           'total_0_3_male_benefit_till_date': 'Data Not Entered',
+                           'total_0_3_female_reg_till_date': 'Data Not Entered',
+                           'total_0_3_male_reg_till_date': 'Data Not Entered',
+                           'total_3_6_female_benefit_till_date': 'Data Not Entered',
+                           'total_3_6_male_benefit_till_date': 'Data Not Entered',
+                           'total_3_6_female_reg_till_date': 'Data Not Entered',
+                           'total_3_6_male_reg_till_date': 'Data Not Entered',
+                           'total_0_3_female_benefit_in_month': 'Data Not Entered',
+                           'total_0_3_male_benefit_in_month': 'Data Not Entered',
+                           'total_0_3_female_reg_in_month': 'Data Not Entered',
+                           'total_0_3_male_reg_in_month': 'Data Not Entered',
+                           'total_3_6_female_benefit_in_month': 'Data Not Entered',
+                           'total_3_6_male_benefit_in_month': 'Data Not Entered',
+                           'total_3_6_female_reg_in_month': 'Data Not Entered',
+                           'total_3_6_male_reg_in_month': 'Data Not Entered'},
+                          ], data)

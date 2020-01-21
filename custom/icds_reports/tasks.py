@@ -101,7 +101,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm,
     DailyAttendance,
     DashboardUserActivityReport,
-    AggregateAdolescentGirlsRegistrationForms
+    AggregateAdolescentGirlsRegistrationForms,
+    AggGovernanceDashboard
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1762,3 +1763,17 @@ def drop_df_indices(agg_date):
             cursor.execute(query, params)
         for query in helper.drop_index_queries():
             cursor.execute(query)
+
+
+def update_governance_dashboard(target_date):
+    current_month = target_date.replace(day=1)
+    _agg_governance_dashboard.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue')
+def _agg_governance_dashboard(current_month):
+    previous_month = current_month - relativedelta(months=1)
+    for month in [previous_month, current_month]:
+        db_alias = router.db_for_write(AggGovernanceDashboard)
+        with transaction.atomic(using=db_alias):
+            AggGovernanceDashboard().aggregate(month)
