@@ -58,23 +58,7 @@
         media="all"
         href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
 
-  {% if less_debug %}
-    {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-    <script>
-      less = {
-        env: "development",
-        useFileCache: true,
-        logLevel: 2,
-        errorReporting: 'console',
-        async: false,
-        fileAsync: false,
-        poll: 1000,
-        functions: {},
-        dumpLineNumbers: "comments",
-        relativeUrls: false
-      };
-    </script>
-    <script src="{% static 'less/dist/less.min.js' %}"></script>
+    {% include "hqwebapp/partials/less_debug.html" %}
   {% endif %}
 
   {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
