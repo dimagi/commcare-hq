@@ -1,13 +1,16 @@
 /* global module, inject, chai, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Indie Map Directive', function () {
+    this.timeout(10000);  // bump timeout for maps tests because they are slow...
 
     var $scope, $location, controller, $httpBackend, $storageService;
 
     pageData.registerUrl('icds_locations', 'icds_locations');
+    pageData.registerUrl('icds-ng-template', 'template');
 
     var mockGeography = {
         geometry: {type: "Polygon", coordinates: []},
@@ -41,8 +44,9 @@ describe('Indie Map Directive', function () {
     };
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, false, false);
+        $provide.constant('haveAccessToFeatures', false);
+
     }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService) {
@@ -51,6 +55,7 @@ describe('Indie Map Directive', function () {
         $httpBackend = _$httpBackend_;
         $storageService = storageService;
 
+        $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
 
         var element = window.angular.element("<indie-map data='test'></indie-map>");
@@ -119,34 +124,36 @@ describe('Indie Map Directive', function () {
 
     it('tests init topo json when location level equal 1', function () {
         $location.search('selectedLocationLevel', 1);
-        $location.search('location_name', 'test');
+        $location.search('location_name', 'Anantapur');
 
         var locationLevel = $location.search()['selectedLocationLevel'];
         var location = {
-            location_type: "state",
-            location_type_name: "state",
-            map_location_name: "test_on_map",
-            name: "test",
+            location_type: "district",
+            location_type_name: "district",
+            map_location_name: "Anantapur",
+            name: "Anantapur",
         };
 
         assert.equal(locationLevel, 1);
-        assert.equal(location.name, 'test');
+        assert.equal(location.name, 'Anantapur');
 
         controller.initTopoJson(locationLevel, location);
 
-        assert.equal(controller.scope, 'test_on_map');
-        assert.equal(controller.type, 'test_on_mapTopo');
-        assert.equal(Datamap.prototype['test_on_mapTopo'], BLOCK_TOPOJSON);
+        assert.equal(controller.scope, 'Anantapur');
+        assert.equal(controller.type, 'AnantapurTopo');
+        assert.equal(Datamap.prototype['AnantapurTopo'], BLOCK_TOPOJSON);
     });
 
     it('tests html content of update map', function () {
         controller.data = mockData;
-        var expected = '<div class="modal-header"><button type="button" class="close" ' +
+        var expected = '<div class="secondary-location-selector">' +
+            '<div class="modal-header"><button type="button" class="close" ' +
             'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
-            'ng-click="$ctrl.updateMap(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
+            'ng-click="$ctrl.attemptToDrillToLocation(\'Uttar Pradesh\')">Uttar Pradesh</button>' +
+            '</div></div>';
 
-        var result = controller.getHtmlContent(mockGeography);
+        var result = controller.getSecondaryLocationSelectionHtml(mockGeography);
         assert.equal(expected, result);
     });
 
@@ -162,15 +169,13 @@ describe('Indie Map Directive', function () {
         });
 
         $httpBackend.expectGET('icds_locations?name=test-id').respond(200, mockLocations);
-        controller.updateMap(mockGeography);
+        controller.handleMapClick(mockGeography);
         $httpBackend.flush();
 
-        expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "test-id"};
+        expected = {"location_id": "9951736acfe54c68948225cc05fbbd63", "location_name": "Chhattisgarh"};
         result = $location.search();
 
         assert.deepEqual(expected, result);
-        assert.deepEqual($storageService.getKey('search'), {
-            "location_name": "test-id", "location_id": "9951736acfe54c68948225cc05fbbd63",
-        });
+        assert.deepEqual($storageService.getKey('search'), expected);
     });
 });

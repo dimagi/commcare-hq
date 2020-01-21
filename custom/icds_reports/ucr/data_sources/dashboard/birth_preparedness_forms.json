@@ -558,6 +558,11 @@
       },
       "primary_key": ["supervisor_id","doc_id"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

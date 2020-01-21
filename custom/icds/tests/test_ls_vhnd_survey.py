@@ -74,7 +74,8 @@ class TestLSVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
         cls.loc_types = setup_location_types_with_structure(cls.domain, location_type_structure)
         cls.locs = setup_locations_with_structure(cls.domain, location_structure)
         cls.ls = cls._make_user('ls', cls.locs['LSL'])
-        cls.aww = cls._make_user('aww', cls.locs['AWC1'])
+        cls.aww1 = cls._make_user('aww1', cls.locs['AWC1'])
+        cls.aww2 = cls._make_user('aww2', cls.locs['AWC2'])
         cls.setup_datasource()
 
     @classmethod
@@ -96,28 +97,27 @@ class TestLSVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
         return datetime.now(tz=tz).date()
 
     def test_survey_date_today(self):
-        self._save_form(self.aww.get_id, self.today)
+        self._save_form(self.aww1.get_id, self.today)
+        self._save_form(self.aww2.get_id, self.today)
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
     def test_form_sent_thirty_six_days_ago(self):
-        self._save_form(self.aww.get_id, self.today - timedelta(days=36))
+        self._save_form(self.aww1.get_id, self.today - timedelta(days=36))
+        self._save_form(self.aww2.get_id, self.today - timedelta(days=36))
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    @skip('avoid bleeding builds')
     def test_form_sent_thirty_seven_days_ago(self):
-        self._save_form(self.aww.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww1.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww2.get_id, self.today - timedelta(days=36))
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])
 
     def test_multiple_locations(self):
-        aww_2 = self._make_user('aww_2', self.locs['AWC2'])
-        self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
-        self.addCleanup(aww_2.delete)
-        self._save_form(self.aww.get_id, self.today - timedelta(days=37))
-        self._save_form(aww_2.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww1.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww2.get_id, self.today - timedelta(days=37))
 
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
@@ -126,11 +126,8 @@ class TestLSVHNDSurveyIndicator(TestCase, VHNDIndicatorTestMixin):
         self.assertTrue('AWC2' in message)
 
     def test_multiple_locations_one_is_old(self):
-        aww_2 = self._make_user('aww_2', self.locs['AWC2'])
-        self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
-        self.addCleanup(aww_2.delete)
-        self._save_form(aww_2.get_id, self.today - timedelta(days=37))
-        self._save_form(self.aww.get_id, self.today - timedelta(days=15))
+        self._save_form(self.aww2.get_id, self.today - timedelta(days=37))
+        self._save_form(self.aww1.get_id, self.today - timedelta(days=15))
 
         messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)

@@ -55,11 +55,15 @@ branches:
   - nh/dhis2/te  # Norman Oct 2
   - sr-session-audit  # Sravan Oct 15
   - jls/kill-exchange # Jenny Nov 13
-  - bmb/saas-q4-qa # Biyeun Nov 13
   - dm/select-toggle # Daniel Nov 19
-  - dmr/refactor-rate-definitions  # Danny Nov 20
   - bmb/update-requirejs  # Biyeun Nov 21
-  - jls/resource-overrides  # Jenny Nov 22
-  - jls/non-unique-form-ids  # Jenny Nov 24
-  - mk/track-build-profile-id-via-heartbeat # MK Nov 26
+  - dmr/throttle-and-measure-case-imports  # Danny Dec 12
+  - bmb/SAASP-10149-v2  # Biyeun Dec 20
+  - jls/sql-application-access-1  # Jenny Jan 10
+  - jls/sql-application-access-2  # Jenny Jan 10
+  - dmr/es-rewrite-not-and  # Danny Jan 10
+  - MC/inddex-reports  # Ethan/Maciej Jan 15
+  - es/enterprise-subscriptions  # Ethan Jan 15
+  - jls/migrate-HqDeploy-2 # Jenny Jan 20
+  - bmb/soft-rollback-data-typing # Biyeun Jan 17
 submodules: {}

@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 from datetime import date
 
-from django.db import connections, models, transaction
+from django.db import connections, models, transaction, router
 
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_CF_TABLE,
@@ -21,6 +20,9 @@ from custom.icds_reports.const import (
     AGG_LS_VHND_TABLE,
     AGG_THR_V2_TABLE,
     AWW_INCENTIVE_TABLE,
+    AGG_DASHBOARD_ACTIVITY,
+    AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
+    AGG_GOV_DASHBOARD_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -49,17 +51,20 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
+    DashboardActivityReportAggregate,
+    AggAdolescentGirlsRegistrationAggregate,
+    AggGovDashboardHelper
 )
 
 
 def get_cursor(model):
-    db = db_for_read_write(model)
+    db = router.db_for_write(model)
     return connections[db].cursor()
 
 
 def maybe_atomic(cls, atomic=True):
     if atomic:
-        return transaction.atomic(using=db_for_read_write(cls))
+        return transaction.atomic(using=router.db_for_write(cls))
     else:
         @contextmanager
         def noop_context():
@@ -177,6 +182,21 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
     person_case_id = models.TextField(blank=True, null=True)
+    husband_name = models.TextField(blank=True, null=True)
+    lmp = models.DateField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Where the child is born"
+    )
+    num_children_del = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        help_text="Number of children alive"
+    )
 
     class Meta(object):
         managed = False
@@ -200,7 +220,7 @@ class AwcLocation(models.Model, AggregateMixin):
     district_id = models.TextField(db_index=True)
     district_name = models.TextField(blank=True, null=True)
     district_site_code = models.TextField(blank=True, null=True)
-    state_id = models.TextField(db_index=True)
+    state_id = models.TextField()
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True, db_index=True)
@@ -315,6 +335,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    opened_on = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -467,6 +489,8 @@ class AggAwc(models.Model, AggregateMixin):
     cases_person_adolescent_girls_15_18 = models.IntegerField(null=True)
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
+    cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(null=True)
+    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(null=True)
     infra_infant_weighing_scale = models.IntegerField(null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
@@ -481,6 +505,10 @@ class AggAwc(models.Model, AggregateMixin):
     preschool_kit_available = models.IntegerField(blank=True, null=True)
     preschool_kit_usable = models.IntegerField(blank=True, null=True)
     awc_with_gm_devices = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -588,6 +616,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     valid_in_month = models.IntegerField()
     lactating = models.IntegerField()
     pregnant = models.IntegerField()
+    lactating_registered_in_month = models.IntegerField()
+    pregnant_registered_in_month = models.IntegerField()
     thr_eligible = models.IntegerField()
     rations_21_plus_distributed = models.IntegerField()
     tetanus_complete = models.IntegerField()
@@ -624,6 +654,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     institutional_delivery_in_month = models.IntegerField(null=True)
     lactating_all = models.IntegerField(null=True)
     pregnant_all = models.IntegerField(null=True)
+    lactating_all_registered_in_month = models.IntegerField(null=True)
+    pregnant_all_registered_in_month = models.IntegerField(null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
 
@@ -707,7 +739,6 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
-
     class Meta:
         managed = False
         db_table = 'agg_child_health'
@@ -775,6 +806,7 @@ class DailyAttendance(models.Model, AggregateMixin):
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
+    state_id = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -783,6 +815,7 @@ class DailyAttendance(models.Model, AggregateMixin):
         indexes = [
             models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
         ]
+        index_together = ('month', 'state_id')
 
     _agg_helper_cls = DailyAttendanceAggregationDistributedHelper
     _agg_atomic = False
@@ -1303,6 +1336,14 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
         null=True,
         help_text="Where the child is born"
     )
+    num_children_del = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children born"
+    )
+    still_live_birth = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of children alive"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
@@ -1469,4 +1510,87 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
         db_table = AWW_INCENTIVE_TABLE
 
     _agg_helper_cls = AwwIncentiveAggregationDistributedHelper
+    _agg_atomic = False
+
+
+class DashboardUserActivityReport(models.Model, AggregateMixin):
+    """
+    Daily Update table to hold Dashboard users activity information
+    """
+    # This will be unique per day not unique universally among all data in it
+    username = models.TextField(primary_key=True)
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    user_level = models.IntegerField(null=True)
+    location_launched = models.NullBooleanField(null=True)
+    last_activity = models.DateTimeField(
+        help_text="The latest time dashboard user used dashboard",
+        null=True
+    )
+    date = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_DASHBOARD_ACTIVITY
+
+    _agg_helper_cls = DashboardActivityReportAggregate
+
+
+class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
+    person_case_id = models.TextField(primary_key=True)
+    state_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    out_of_school = models.NullBooleanField(null=True)
+    re_out_of_school = models.NullBooleanField(null=True)
+    admitted_in_school = models.NullBooleanField(null=True)
+    month = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
+    _agg_atomic = False
+
+
+class AggGovernanceDashboard(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(primary_key=True)
+    awc_code = models.TextField(null=True)
+    awc_launched = models.NullBooleanField(null=True)
+    total_preg_benefit_till_date = models.IntegerField(null=True)
+    total_lact_benefit_till_date = models.IntegerField(null=True)
+    total_preg_reg_till_date = models.IntegerField(null=True)
+    total_lact_reg_till_date = models.IntegerField(null=True)
+    total_lact_benefit_in_month = models.IntegerField(null=True)
+    total_preg_benefit_in_month = models.IntegerField(null=True)
+    total_lact_reg_in_month = models.IntegerField(null=True)
+    total_preg_reg_in_month = models.IntegerField(null=True)
+    total_0_3_female_benefit_till_date = models.IntegerField(null=True)
+    total_0_3_male_benefit_till_date = models.IntegerField(null=True)
+    total_0_3_female_reg_till_date = models.IntegerField(null=True)
+    total_0_3_male_reg_till_date = models.IntegerField(null=True)
+    total_3_6_female_benefit_till_date = models.IntegerField(null=True)
+    total_3_6_male_benefit_till_date = models.IntegerField(null=True)
+    total_3_6_female_reg_till_date = models.IntegerField(null=True)
+    total_3_6_male_reg_till_date = models.IntegerField(null=True)
+    total_0_3_female_benefit_in_month = models.IntegerField(null=True)
+    total_0_3_male_benefit_in_month = models.IntegerField(null=True)
+    total_0_3_female_reg_in_month = models.IntegerField(null=True)
+    total_0_3_male_reg_in_month = models.IntegerField(null=True)
+    total_3_6_female_benefit_in_month = models.IntegerField(null=True)
+    total_3_6_male_benefit_in_month = models.IntegerField(null=True)
+    total_3_6_female_reg_in_month = models.IntegerField(null=True)
+    total_3_6_male_reg_in_month = models.IntegerField(null=True)
+    month = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = AGG_GOV_DASHBOARD_TABLE
+        unique_together = ('month', 'state_id', 'awc_id')  # pkey
+
+    _agg_helper_cls = AggGovDashboardHelper
     _agg_atomic = False

@@ -330,7 +330,7 @@ def bulk_fetch_changes_docs(changes, domain=None):
         doc_store = _changes[0].document_store
         doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
         new_docs = list(doc_store.iter_documents(doc_ids_to_query))
-        docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
+        docs_queried_prior = [change.document for change in _changes if change.document]
         docs.extend(new_docs + docs_queried_prior)
 
     # catch missing docs

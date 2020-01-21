@@ -4,19 +4,19 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
 # Marco Horta <mhorta@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-27 19:08+0000\n"
+"POT-Creation-Date: 2020-01-15 21:18+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Marco Horta <mhorta@dimagi.com>, 2019\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -72,7 +72,35 @@ msgid ""
 "href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:90
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:103
+msgid "Downgrading?"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:105
+msgid "Pausing Subscription?"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:107
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
+"Edition Plan subscription to be paused on <%= date %>.</p><p>If you have "
+"questions or if you would like to speak to us about your subscription, "
+"please reach out to <%= email %>.</p>"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:120
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
+"be paused on <%= date %>.</p><p>Continuing ahead will allow you to schedule "
+"your current <%= oldPlan %> Edition Plan subscription to be downgraded to "
+"the <%= newPlan %> Edition Plan on <%= date %>.</p><p>If you have questions "
+"or if you would like to speak to us about your subscription, please reach "
+"out to <%= email %>.</p>"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:136
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
 "p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
@@ -83,7 +111,7 @@ msgid ""
 "speak to us about your subscription, please reach out to <%= email %>.</p>"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:107
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:153
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
 "p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
@@ -92,12 +120,12 @@ msgid ""
 "to us about your subscription, please reach out to <%= email %>."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:183
-msgid "Billed Monthly"
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:246
+msgid "Billed Annually"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:185
-msgid "Billed Annually"
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:248
+msgid "Billed Monthly"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js:70
@@ -130,8 +158,8 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:33
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js:62
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:56
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
@@ -2787,14 +2815,6 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:34
-msgid "Hide previous versions"
-msgstr ""
-
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:38
-msgid "Show previous versions"
-msgstr ""
-
 #: corehq/apps/export/static/export/js/create_export.js:100
 msgid "<%= count %> form submission available."
 msgstr ""
@@ -2935,16 +2955,6 @@ msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js:134
 msgid "Please wait and do not navigate away..."
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
-msgid ""
-"There was an error processing your file. Please try again or report an issue "
-"if the problem persists."
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:43
-msgid "No items were found to update."
 msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:72
@@ -3792,3 +3802,6 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
+
+#~ msgid "Parameters"
+#~ msgstr "Manejo de Casos"

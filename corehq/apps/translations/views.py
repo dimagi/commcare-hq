@@ -95,8 +95,7 @@ def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
     app = get_app(domain, app_id)
-    # if there is a lang selected, assume that user wants a single sheet
-    is_single_sheet = bool(lang)
+    is_single_sheet = request.GET.get('format') == "single"
     headers = get_bulk_app_sheet_headers(app, single_sheet=is_single_sheet,
                                          lang=lang, eligible_for_transifex_only=skip_blacklisted)
     if is_single_sheet:

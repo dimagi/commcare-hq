@@ -4,8 +4,10 @@
         <div class="filter-header">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="d-flex align-items-center">
-                    <img src="{% static "icds_reports/mobile/images/back-icon.png" %}" class="mr-2" ng-click="closeFilters()">
-                    <p class="font-montserrat font-weight-600 font-16 text-white mb-0">Filters</p>
+                    <nav-menu-opener ng-show="$ctrl.selectAwc"></nav-menu-opener>
+                    <img src="{% static 'icds_reports/mobile/images/back-icon.png' %}" ng-show="!$ctrl.selectAwc" class="mr-2" ng-click="closeFilters()">
+                    <p class="font-montserrat font-weight-600 font-16 text-white mb-0" ng-show="!$ctrl.selectAwc">Filters</p>
+                    <p class="font-montserrat font-weight-600 font-16 text-white mb-0" ng-show="$ctrl.selectAwc">AWC Reports</p>
                 </div>
                 <p class="font-montserrat font-weight-600 font-16 text-white mb-0" ng-click="resetFilters()">Reset</p>
             </div>
@@ -16,7 +18,7 @@
             <div class="col-xs-6 section-heading" id="locationSection" ng-class="{'selectedSection': selectedTab=='location'}" ng-click="selectLocationTab()">Location</div>
         </div>
     </div>
-    <location-filter ng-show="selectedTab == 'location'" selected-locations="$ctrl.selectedLocations"></location-filter>
-{#    <month-filter ng-show="currentSection == 'date'" ng-controller="monthFilterController"></month-filter>#}
+    <location-filter ng-show="selectedTab == 'location'" select-awc="$ctrl.selectAwc" selected-locations="$ctrl.selectedLocations"></location-filter>
+    <month-filter ng-show="selectedTab == 'month'"></month-filter>
     <div class="apply-button" ng-click="applyFilters()">Apply</div>
 </div>

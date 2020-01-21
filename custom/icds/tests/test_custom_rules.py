@@ -3,6 +3,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomMatchD
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
     BaseCaseRuleTest,
     _create_empty_rule,
+    set_parent_case,
     _with_case,
 )
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
@@ -122,10 +123,9 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '1')
+            self.assertEqual(tech_issue_delegate.owner_id, 'district_id')
 
-            update_case(self.domain, tech_issue.case_id, case_properties={'ticket_level': 'block'})
             tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
-
             result = rule.run_actions_when_case_matches(tech_issue)
             self.assertEqual(result.num_updates, 1)
             self.assertEqual(result.num_creates, 0)
@@ -136,6 +136,7 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '2')
+            self.assertEqual(tech_issue_delegate.owner_id, 'state_id')
 
 
 @use_sql_backend
@@ -275,3 +276,31 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         with create_user_case(self.aww) as aww_uc, create_user_case(self.ls) as ls_uc:
             self.assertFalse(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertTrue(rule.criteria_match(ls_uc, datetime.utcnow()))
+
+    def test_ccs_record_case_that_is_availing_services(self):
+        rule = _create_empty_rule(self.domain, case_type='ccs_record')
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_CCS_RECORD_CASE_AVAILING_SERVICES')
+
+        def check(case, add, match):
+            case = self._set_case_props(case, {"add": add})
+            (self.assertTrue if match else self.assertFalse)(
+                rule.criteria_match(case, now),
+                "%s case with add=%s should%s match" % (
+                    case.type, add, "" if match else " not",
+                )
+            )
+
+        now = datetime(2020, 1, 13, 12, 0)
+        with _with_case(self.domain, 'person', datetime.utcnow()) as mother:
+            check(mother, '2020-01-01', False)
+            with _with_case(self.domain, 'person', datetime.utcnow()) as child:
+                self._set_case_props(child, {"dob": '2020-01-01'})
+                set_parent_case(self.domain, child, mother, identifier='mother')
+                with _with_case(self.domain, 'ccs_record', datetime.utcnow()) as ccs:
+                    set_parent_case(self.domain, ccs, mother, identifier='parent')
+                    for match, add in [
+                        (False, None),          # not set
+                        (False, '2020-01-02'),  # no match
+                        (True, '2020-01-01'),   # match
+                    ]:
+                        check(ccs, add, match)

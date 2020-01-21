@@ -78,7 +78,6 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
     send_sms_with_backend_name,
 )
-from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.forms import (
     CUSTOM,
     DEFAULT,
@@ -93,7 +92,6 @@ from corehq.apps.sms.forms import (
     WELCOME_RECIPIENT_NONE,
     BackendMapForm,
     ComposeMessageForm,
-    ForwardingRuleForm,
     InitiateAddSMSBackendForm,
     SendRegistrationInvitationsForm,
     SettingsForm,
@@ -105,7 +103,6 @@ from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
     SMS,
-    ForwardingRule,
     MessagingEvent,
     PhoneLoadBalancingMixin,
     PhoneNumber,
@@ -516,128 +513,6 @@ def api_send_sms(request, domain):
             return HttpResponse("ERROR")
     else:
         return HttpResponseBadRequest("POST Expected.")
-
-
-class BaseForwardingRuleView(BaseDomainView):
-    section_name = ugettext_noop("Messaging")
-
-    @method_decorator(login_and_domain_required)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseForwardingRuleView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse("sms_default", args=(self.domain,))
-
-
-class ListForwardingRulesView(BaseForwardingRuleView):
-    urlname = 'list_forwarding_rules'
-    template_name = 'sms/list_forwarding_rules.html'
-    page_title = ugettext_lazy("Forwarding Rules")
-
-    @property
-    def page_context(self):
-        forwarding_rules = get_forwarding_rules_for_domain(self.domain)
-        return {
-            'forwarding_rules': forwarding_rules,
-        }
-
-
-class BaseEditForwardingRuleView(BaseForwardingRuleView):
-    template_name = 'sms/add_forwarding_rule.html'
-
-    @property
-    def forwarding_rule_id(self):
-        return self.kwargs.get('forwarding_rule_id')
-
-    @property
-    def forwarding_rule(self):
-        raise NotImplementedError("must return ForwardingRule")
-
-    @property
-    @memoized
-    def rule_form(self):
-        if self.request.method == 'POST':
-            return ForwardingRuleForm(self.request.POST)
-        initial = {}
-        if self.forwarding_rule_id:
-            initial["forward_type"] = self.forwarding_rule.forward_type
-            initial["keyword"] = self.forwarding_rule.keyword
-            initial["backend_id"] = self.forwarding_rule.backend_id
-        return ForwardingRuleForm(initial=initial)
-
-    @property
-    def page_url(self):
-        if self.forwarding_rule_id:
-            return reverse(self.urlname, args=(self.domain, self.forwarding_rule_id,))
-        return super(BaseEditForwardingRuleView, self).page_url
-
-    def post(self, request, *args, **kwargs):
-        if self.rule_form.is_valid():
-            self.forwarding_rule.forward_type = self.rule_form.cleaned_data.get(
-                'forward_type'
-            )
-            self.forwarding_rule.keyword = self.rule_form.cleaned_data.get(
-                'keyword'
-            )
-            self.forwarding_rule.backend_id = self.rule_form.cleaned_data.get(
-                'backend_id'
-            )
-            self.forwarding_rule.save()
-            return HttpResponseRedirect(reverse(
-                ListForwardingRulesView.urlname, args=(self.domain,)))
-
-        return self.get(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.rule_form,
-            'forwarding_rule_id': self.forwarding_rule_id,
-        }
-
-    @property
-    def parent_pages(self):
-        return [
-            {
-                'url': reverse(ListForwardingRulesView.urlname, args=(self.domain,)),
-                'title': ListForwardingRulesView.page_title,
-            }
-        ]
-
-
-class AddForwardingRuleView(BaseEditForwardingRuleView):
-    urlname = 'add_forwarding_rule'
-    page_title = ugettext_lazy("Add Forwarding Rule")
-
-    @property
-    @memoized
-    def forwarding_rule(self):
-        return ForwardingRule(domain=self.domain)
-
-
-class EditForwardingRuleView(BaseEditForwardingRuleView):
-    urlname = 'edit_forwarding_rule'
-    page_title = ugettext_lazy("Edit Forwarding Rule")
-
-    @property
-    @memoized
-    def forwarding_rule(self):
-        forwarding_rule = ForwardingRule.get(self.forwarding_rule_id)
-        if forwarding_rule.domain != self.domain:
-            raise Http404()
-        return forwarding_rule
-
-
-@login_and_domain_required
-@require_superuser
-def delete_forwarding_rule(request, domain, forwarding_rule_id):
-    forwarding_rule = ForwardingRule.get(forwarding_rule_id)
-    if forwarding_rule.domain != domain or forwarding_rule.doc_type != "ForwardingRule":
-        raise Http404
-    forwarding_rule.retire()
-    return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 
 
 class GlobalBackendMap(BaseAdminSectionView):

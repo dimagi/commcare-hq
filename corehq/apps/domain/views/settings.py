@@ -19,6 +19,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
 from toggle.models import Toggle
@@ -70,14 +71,15 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
+        return reverse(DefaultProjectSettingsView.urlname, args=[self.domain])
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 class DefaultProjectSettingsView(BaseDomainView):
     urlname = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
-        if request.couch_user.is_domain_admin(self.domain):
+        if request.couch_user.is_domain_admin(self.domain) and has_privilege(request, privileges.PROJECT_ACCESS):
             return HttpResponseRedirect(reverse(EditBasicProjectInfoView.urlname, args=[self.domain]))
         return HttpResponseRedirect(reverse(EditMyProjectSettingsView.urlname, args=[self.domain]))
 
@@ -208,6 +210,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     urlname = 'my_project_settings'
     page_title = ugettext_lazy("My Timezone")
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -331,53 +334,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         if self.privacy_form.is_valid():
             self.privacy_form.save(self.domain_object)
             messages.success(request, _("Your project settings have been saved!"))
-        return self.get(request, *args, **kwargs)
-
-
-class ManageProjectMediaView(BaseAdminProjectSettingsView):
-    urlname = 'domain_manage_multimedia'
-    page_title = ugettext_lazy("Multimedia Sharing")
-    template_name = 'domain/admin/media_manager.html'
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def project_media_data(self):
-        return [{
-            'license': m.license.type if m.license else 'public',
-            'shared': self.domain in m.shared_by,
-            'url': m.url(),
-            'm_id': m._id,
-            'tags': m.tags.get(self.domain, []),
-            'type': m.doc_type,
-        } for m in self.request.project.all_media()]
-
-    @property
-    def page_context(self):
-        return {
-            'media': self.project_media_data,
-            'licenses': list(LICENSES.items()),
-        }
-
-    @retry_resource(3)
-    def post(self, request, *args, **kwargs):
-        for m_file in request.project.all_media():
-            if '%s_tags' % m_file._id in request.POST:
-                m_file.tags[self.domain] = request.POST.get('%s_tags' % m_file._id, '').split(' ')
-
-            if self.domain not in m_file.shared_by and request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.append(self.domain)
-            elif self.domain in m_file.shared_by and not request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.remove(self.domain)
-
-            if '%s_license' % m_file._id in request.POST:
-                m_file.update_or_add_license(self.domain,
-                                             type=request.POST.get('%s_license' % m_file._id, 'public'),
-                                             should_save=True)
-            m_file.save()
-        messages.success(request, _("Multimedia updated successfully!"))
         return self.get(request, *args, **kwargs)
 
 

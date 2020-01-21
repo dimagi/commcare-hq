@@ -2,20 +2,22 @@ import json
 import re
 from collections import namedtuple
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 
+from couchdbkit import ResourceNotFound
+
 import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
+from corehq.util.soft_assert import soft_assert
 
 
 def get_submit_url(domain, app_id=None):
@@ -217,19 +219,14 @@ def _submitted_by_demo_user(form_meta, domain):
 
 
 def _notify_ignored_form_submission(request, form_meta):
-    message = """
-        Details:
-        Method: {}
-        URL: {}
-        GET Params: {}
-        Form Meta: {}
-    """.format(request.method, request.get_raw_uri(), json.dumps(request.GET), json.dumps(form_meta))
-    send_mail_async.delay(
-        "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        ['mkangia@dimagi.com', 'sgoyal@dimagi.com']
-    )
+    _assert = soft_assert(['mkangia@dimagi.com', 'sgoyal@dimagi.com'],
+                          exponential_backoff=False, send_to_ops=False)
+    _assert(False, "Unexpected practice mobile user submission received", {
+        'Method': request.method,
+        'URL': request.get_raw_uri(),
+        'GET Params': json.dumps(request.GET),
+        'Form Meta': json.dumps(form_meta),
+    })
 
 
 def should_ignore_submission(request):

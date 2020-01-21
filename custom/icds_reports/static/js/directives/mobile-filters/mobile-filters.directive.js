@@ -1,7 +1,7 @@
 function MobileFiltersController($scope) {
     const MONTH = 'month';
     const LOCATION = 'location';
-    $scope.selectedTab = MONTH;
+    $scope.selectedTab = LOCATION;
     $scope.filterData = {};
     $scope.closeFilters = function () {
         $scope.$emit('closeFilterMenu', {});
@@ -13,19 +13,29 @@ function MobileFiltersController($scope) {
         $scope.selectedTab = LOCATION;
     };
     $scope.applyFilters = function () {
+        $scope.hasLocation = false;
+        $scope.hasDate = false;
+        $scope.filterData = {};
         $scope.$broadcast('request_filter_data',{});
+    };
+    $scope.resetFilters = function () {
+        $scope.$broadcast('reset_filter_data',{});
     };
     $scope.$on('filter_data', function (event, data) {
         if (data.hasLocation) {
-            $scope.filterData['hasLocation'] = true;
+            $scope.hasLocation = true;
             $scope.filterData['location'] = data.location;
             $scope.filterData['locationLevel'] = data.locationLevel;
-        } else {
-            // todo: assign filter data from date picker
+        } else if (data.hasDate) {
+            $scope.hasDate = true;
+            $scope.filterData['date'] = data.date;
+            $scope.filterData['month'] = data.month;
+            $scope.filterData['year'] = data.year;
         }
-        // send data to other places
-        // todo: only send this after getting both location and month?
-        $scope.$emit('mobile_filter_data_changed', $scope.filterData);
+        if ($scope.hasLocation && $scope.hasDate) {
+            // if we have all the data then pass it along to other places
+            $scope.$emit('mobile_filter_data_changed', $scope.filterData);
+        }
     });
 }
 
@@ -37,6 +47,7 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
         restrict:'E',
         scope: {
             selectedLocations: '=',
+            selectAwc: '=?',
         },
         bindToController: true,
         templateUrl: function () {

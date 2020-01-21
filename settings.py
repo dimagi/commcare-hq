@@ -27,6 +27,17 @@ DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
 DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
+# Setting to declare always_enabled/always_disabled toggle states for domains
+#   declaring toggles here avoids toggle lookups from cache for all requests.
+#   Example format
+#   STATIC_TOGGLES_STATES = {
+#     'toggle_slug': {
+#         'always_enabled': ['domain1', 'domain2],
+#         'always_disabled': ['domain4', 'domain3],
+#     }
+#   }
+STATIC_TOGGLE_STATES = {}
+
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -148,6 +159,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -236,14 +248,17 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
-    'corehq.sql_db',
+    'corehq.sql_db.app_config.SqlDbAppConfig',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
+    'corehq.sql_proxy_standby_accessors',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -385,14 +400,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/billing/statements/',
-    '/a/%(domain)s/settings/project/billing_information/',
-    '/a/%(domain)s/settings/project/flags/',
-    '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/internal/info/',
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/project_limits/',
-    '/a/%(domain)s/settings/project/subscription/',
+    '/a/{domain}/settings/project/billing/statements/',
+    '/a/{domain}/settings/project/billing_information/',
+    '/a/{domain}/settings/project/flags/',
+    '/a/{domain}/settings/project/internal/calculations/',
+    '/a/{domain}/settings/project/internal/info/',
+    '/a/{domain}/settings/project/internal_subscription_management/',
+    '/a/{domain}/settings/project/project_limits/',
+    '/a/{domain}/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -424,7 +439,6 @@ EMAIL_USE_TLS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
-EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
@@ -449,8 +463,19 @@ BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SAAS_REPORTING_EMAIL = None
+
+# Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
+# This email must be a REAL email address, not a mailing list, otherwise
+# the emails from mailer daemon will be swallowed up by spam filters.
+RETURN_PATH_EMAIL = None
+
+# This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
+# SES bounce and complaint notifications.
+RETURN_PATH_EMAIL_PASSWORD = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
+IS_DIMAGI_ENVIRONMENT = True
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds',)
@@ -924,6 +949,8 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -997,6 +1024,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
+                'corehq.util.context_processors.banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1450,7 +1478,6 @@ CUSTOM_SMS_HANDLERS = [
 ]
 
 SMS_HANDLERS = [
-    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1601,6 +1628,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
+    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -1855,6 +1884,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
@@ -1867,6 +1897,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'migrations_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),

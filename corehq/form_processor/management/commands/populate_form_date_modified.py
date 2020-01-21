@@ -2,9 +2,9 @@ import traceback
 
 import gevent
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connections
 
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor, iter_all_ids_chunked
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -51,7 +51,7 @@ def _update_forms_in_db(db_name):
 
 
 def _update_forms(db_name, form_ids):
-    with connections[db_name].cursor() as cursor:
+    with XFormInstanceSQL.get_cursor_for_partition_db(db_name) as cursor:
         cursor.execute("""
         WITH max_dates as (
             SELECT form_id, max(modified_on) as modified_on FROM (

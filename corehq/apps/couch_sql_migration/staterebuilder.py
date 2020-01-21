@@ -76,7 +76,7 @@ def get_endkey_docid(domain, doc_type, migration_id):
 
 def iter_docs_not_in_sql(form_ids, couch_db):
     def get_missing_form_ids(db, db_form_ids):
-        with db.cursor() as cursor:
+        with XFormInstanceSQL.get_cursor_for_partition_db(db, readonly=True) as cursor:
             cursor.execute(sql, [db_form_ids])
             return [r[0] for r in cursor.fetchall()]
 
@@ -89,7 +89,7 @@ def iter_docs_not_in_sql(form_ids, couch_db):
     """
 
     for db_name, db_form_ids in split_list_by_db_partition(form_ids):
-        missing_ids = get_missing_form_ids(connections[db_name], db_form_ids)
+        missing_ids = get_missing_form_ids(db_name, db_form_ids)
         if missing_ids:
             log.debug("missing ids: %s", missing_ids)
             yield from iter_docs(couch_db, missing_ids)

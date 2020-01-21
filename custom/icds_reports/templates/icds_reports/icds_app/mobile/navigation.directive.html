@@ -1,40 +1,189 @@
 {% load staticfiles %}
 <div class="sideNavigation" id="nav-menu">
-    <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" class="close-icon" ng-click="closeMenu()">
-    <p class="navigation-font" ng-bind="userFullName" ng-if="userFullName"></p>
-    <p class="navigation-font mb-5" ng-bind="userUsername"></p>
-    <a class="menu-options" href="{$ goToStep('', $location.search()) $}" ng-click="closeMenu()">
-        <img src="{% static "icds_reports/mobile/images/program-summary.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Program Summary</p>
-    </a>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/mother.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/stats-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">ICDS-CAS Reach</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/threegroup-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Demographics</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/bulb-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">AWC Infrastructure</p>
-    </div>
-    <hr>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/awc-reports.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">AWC Reports</p>
-    </div>
-    <hr>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/settings.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Settings</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/logout.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Logout</p>
+    <img src="{% static 'icds_reports/mobile/images/white-close-icon.png' %}" class="close-icon" ng-click="closeMenu()">
+    <p class="navigation-font pl-3 pr-3 mb-0" ng-bind="userFullName" ng-if="userFullName"></p>
+    <p class="navigation-font pl-3 pr-3 mb-4" ng-bind="userUsername"></p>
+    <div class="navigation-menu-height">
+        <a class="menu-options" href="{$ goToStep('', $location.search()) $}" ng-click="closeMenu()">
+            <img src="{% static 'icds_reports/mobile/images/program-summary.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Program Summary</p>
+        </a>
+        <div class="menu-options" ng-click="expandedSectionId = (expandedSectionId==='nutrition') ? '' : 'nutrition'">
+            <img src="{% static 'icds_reports/mobile/images/mother.png' %}" class="mr-3">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
+                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
+            </div>
+        </div>
+        <div>
+            <div id="nutrition" ng-show="expandedSectionId==='nutrition'">
+                <div class="navigation-font pl-3 pr-3 mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/underweight_children') !== -1}">
+                  <a href="{$ goToStep('maternal_and_child/underweight_children', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                    Prevalence of Underweight (Weight-for-Age)</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/wasting') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/wasting', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Prevalence of Wasting (Weight-for-Height)</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/stunting') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/stunting', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Prevalence of Stunting (Height-for-Age)</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/low_birth') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/low_birth', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Newborns with Low Birth Weight</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/early_initiation') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/early_initiation', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Early Initiation of Breastfeeding</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/exclusive_breastfeeding') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/exclusive_breastfeeding', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Exclusive Breastfeeding</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/children_initiated') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/children_initiated', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Children initiated appropriate complementary feeding</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/institutional_deliveries') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/institutional_deliveries', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Institutional deliveries</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/maternal_and_child/immunization_coverage') !== -1}">
+                    <a href="{$ goToStep('maternal_and_child/immunization_coverage', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Immunization coverage (at age 1 year)</a>
+                </div>
+            </div>
+        </div>
+        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='reach') ? '' : 'reach'">
+          <img src="{% static 'icds_reports/mobile/images/stats-sidebar.png' %}" class="mr-3">
+          <div class="d-flex justify-content-between align-items-center w-100">
+              <p class="navigation-font mb-0">ICDS-CAS Reach</p>
+              <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
+          </div>
+        </div>
+        <div>
+            <div id="reach" ng-show="expandedSectionId==='reach'">
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/icds_cas_reach/awc_daily_status') !== -1}">
+                    <a href="{$ goToStep('icds_cas_reach/awc_daily_status', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Daily Status</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/icds_cas_reach/awcs_covered') !== -1}">
+                    <a href="{$ goToStep('icds_cas_reach/awcs_covered', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Launched</a>
+                </div>
+            </div>
+        </div>
+        <div class="menu-options" ng-click="expandedSectionId=(expandedSectionId==='demographics') ? '' : 'demographics'">
+            <img src="{% static 'icds_reports/mobile/images/threegroup-sidebar.png' %}" class="mr-3">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <p class="navigation-font mb-0">Demographics</p>
+                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
+            </div>
+        </div>
+        <div>
+            <div id="demographics" ng-show="expandedSectionId==='demographics'">
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/registered_household') !== -1}">
+                    <a href="{$ goToStep('demographics/registered_household', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Registered Households</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/adhaar') !== -1}">
+                    <a href="{$ goToStep('demographics/adhaar', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Aadhaar-seeded Beneficiaries</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/enrolled_children') !== -1}">
+                    <a href="{$ goToStep('demographics/enrolled_children', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Children enrolled for Anganwadi Services</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/enrolled_women') !== -1}">
+                    <a href="{$ goToStep('demographics/enrolled_women', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Pregnant Women enrolled for Anganwadi Services</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/lactating_enrolled_women') !== -1}">
+                    <a href="{$ goToStep('demographics/lactating_enrolled_women', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Lactating Mothers enrolled for Anganwadi Services</a>
+                </div>
+              <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
+                    <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      Out of school Adolescent girls (11-14 years)</a>
+                </div>
+            </div>
+        </div>
+        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='infrastructure') ? '' : 'infrastructure'">
+            <img src="{% static 'icds_reports/mobile/images/bulb-sidebar.png' %}" class="mr-3">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <p class="navigation-font mb-0">AWC Infrastructure</p>
+                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
+            </div>
+        </div>
+        <div>
+            <div id="infrastructure" ng-show="expandedSectionId==='infrastructure'">
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/clean_water') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/clean_water', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Clean Drinking Water</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/functional_toilet') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/functional_toilet', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported functional toilet</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/infants_weight_scale') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/infants_weight_scale', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Weighing Scale: Infants</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/adult_weight_scale') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/adult_weight_scale', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Weighing Scale: Mother and Child</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/medicine_kit') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/medicine_kit', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Medicine kit</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/infantometer') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/infantometer', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Infantometer</a>
+                </div>
+                <div class="navigation-font pl-3 pr-3 mb-0"
+                     ng-class="{'active-mobile-link': $location.path().indexOf('/awc_infrastructure/stadiometer') !== -1}">
+                    <a href="{$ goToStep('awc_infrastructure/stadiometer', $location.search()) $}" class="sub-links" ng-click="closeMenu()">
+                      AWCs Reported Stadiometer</a>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/awc_reports') !== -1}">
+            <img src="{% static 'icds_reports/mobile/images/awc-reports.png' %}" class="mr-3">
+            <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">AWC Report</a>
+        </div>
+        <hr>
+        {% comment %}
+        Mobile settings page has not been implemented yet so just hide the option
+        <div class="menu-options">
+            <img src="{% static 'icds_reports/mobile/images/settings.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Settings</p>
+        </div>
+        {% endcomment %}
+        <a class="menu-options" href="{% url 'cas_mobile_dashboard_logout' domain %}">
+            <img src="{% static 'icds_reports/mobile/images/logout.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Logout</p>
+        </a>
     </div>
 </div>
