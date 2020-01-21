@@ -1186,7 +1186,7 @@ class Subscription(models.Model):
     @property
     def previous_subscription(self):
         try:
-            return self.previous_subscription_filter.order_by('date_end')[0]
+            return self.previous_subscription_filter.order_by('-date_end')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 

@@ -1171,13 +1171,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ICDS_AUTO_ESCALATION_QA = StaticToggle(
-    'icds_auto_escalation_qa',
-    "Temporary flag to support QA of changes to ICDS's auto escalation workflow",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1355,6 +1348,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
 )
 
+FILTERED_LOCATION_DOWNLOAD = StaticToggle(
+    'filtered_location_download',
+    "Ability to filter location download to include only a specified location and its descendants.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
+)
+
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1394,13 +1395,6 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-ICDS_MOBILE_DASHBOARD_MAPS = DynamicallyPredictablyRandomToggle(
-    'icds_mobile_dashboard_maps',
-    'ICDS: Enable Maps on the Mobile Dashboard',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-)
-
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
@@ -1432,6 +1426,13 @@ LINKED_DOMAINS = StaticToggle(
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
+    'MULTI_MASTER_BYPASS_VERSION_CHECK',
+    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
@@ -1725,6 +1726,14 @@ mwcd_indicators = StaticToggle(
     'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
+    'governance_apis',
+    'ICDS: Dashboard Governance dashboard API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
 )
 
 MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(

@@ -1,5 +1,6 @@
 from datetime import date
 
+from couchdbkit import ResourceConflict
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.dispatch import receiver
 
@@ -8,8 +9,12 @@ from corehq.apps.users.models import CouchUser
 
 def clear_login_attempts(user):
     if user and user.login_attempts > 0:
-        user.login_attempts = 0
-        user.save()
+        try:
+            user.login_attempts = 0
+            user.save()
+        except ResourceConflict:
+            updated_user = CouchUser.get_by_username(user.username)
+            clear_login_attempts(updated_user)
 
 
 @receiver(user_logged_in)

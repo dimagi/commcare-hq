@@ -950,7 +950,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
 PlanOption = namedtuple(
     'PlanOption',
-    ['name', 'monthly_price', 'annual_price', 'description', 'desc_extra']
+    ['name', 'monthly_price', 'annual_price', 'description']
 )
 
 
@@ -971,7 +971,6 @@ class SelectPlanView(DomainAccountingSettings):
                 "$250",
                 _("For programs with one-time data collection needs, simple "
                   "case management workflows, and basic M&E requirements."),
-                None,
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
@@ -980,7 +979,6 @@ class SelectPlanView(DomainAccountingSettings):
                 _("For programs with complex case management needs, field "
                   "staff collaborating on tasks, and M&E teams that need to "
                   "clean and report on data."),
-                _("Includes all Standard Features."),
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
@@ -989,7 +987,6 @@ class SelectPlanView(DomainAccountingSettings):
                 _("For programs with distributed field staff, facility-based "
                   "workflows, and advanced security needs. Also for M&E teams "
                   "integrating data with 3rd party analytics."),
-                _("Includes all Pro Features."),
             ),
             PlanOption(
                 SoftwarePlanEdition.ENTERPRISE,
@@ -998,7 +995,6 @@ class SelectPlanView(DomainAccountingSettings):
                 _("For organizations that need a sustainable path to scale "
                   "mobile data collection and service delivery across multiple "
                   "teams, programs, or countries."),
-                _("Includes all Advanced Features."),
             )
         ]
 

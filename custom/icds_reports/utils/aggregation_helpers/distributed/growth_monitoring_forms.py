@@ -183,3 +183,9 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
             ucr_table_query=ucr_query,
             tablename=self.aggregate_parent_table
         ), query_params
+
+    def delete_old_data_query(self):
+        pass
+
+    def delete_previous_run_query(self):
+        pass

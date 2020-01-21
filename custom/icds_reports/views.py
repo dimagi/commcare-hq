@@ -64,7 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-)
+    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -224,12 +224,18 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-)
+    india_now)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
     get_program_summary_data_with_retrying,
 )
+
+from custom.icds_reports.reports.governance_apis import (
+    get_home_visit_data,
+    get_beneficiary_data,
+    get_state_names)
+
 
 from . import const
 from .exceptions import TableauTokenException
@@ -362,7 +368,6 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        kwargs['mobile_maps_enabled'] = False  # not used on web but required to exist
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(
@@ -2164,3 +2169,117 @@ class MWCDDataView(View):
         except Exception:
             response = dict(isSuccess=False, message='Unknown Error occured')
             return JsonResponse(response, status=500)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
+class GovernanceAPIBaseView(View):
+
+    @staticmethod
+    def get_state_id_from_state_site_code(state_code):
+        awc_location = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                                  state_site_code=state_code, state_is_test=0)\
+            .values_list('state_id', flat=True)
+        return awc_location[0] if len(awc_location) > 0 else None
+
+    def get_gov_api_params(self, request):
+        month = int(request.GET.get('month'))
+        year = int(request.GET.get('year'))
+        state_site_code = request.GET.get('state_site_code')
+        state_id = None
+        if state_site_code is not None:
+            state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
+
+
+        last_awc_id = request.GET.get('last_awc_id', '')
+        return  last_awc_id, month, year, state_id
+
+    def validate_param(self, state_id, month, year):
+        selected_month = date(year, month, 1)
+        current_month = date.today().replace(day=1)
+
+        is_valid = True
+        error_message = ''
+        if not (date(2019, 12, 1) <= selected_month <= current_month):
+            is_valid = False
+            error_message = "Month should not be in future and can only be from Dec 2019"
+        if state_id is None:
+            is_valid = False
+            error_message = "Invalid State code"
+
+        return is_valid, error_message
+
+
+class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {'aggregation_level': AggregationLevels.AWC,
+                         # 'num_launched_awcs': 1,
+                         'awc_id__gt': last_awc_id,
+                         'state_id': state_id
+                         }
+        order = ['awc_id']
+
+        data, count = get_home_visit_data(
+            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            year,
+            month,
+            order,
+            query_filters
+        )
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)
+
+
+class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {
+                         'state_id': state_id,
+                         'awc_id__gt': last_awc_id}
+        order = ['awc_id']
+
+        data, count = get_beneficiary_data(
+            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            year,
+            month,
+            order,
+            query_filters
+        )
+
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)
+
+
+class GovernanceStateListAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(data={'data': get_state_names()})

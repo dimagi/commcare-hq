@@ -2,6 +2,7 @@ import uuid
 import functools
 import json
 import logging
+from datetime import datetime, timedelta
 from io import open, StringIO
 
 import mock
@@ -364,6 +365,42 @@ def generate_cases(argsets, cls=None):
             return Test
 
     return add_cases
+
+
+def timelimit(limit):
+    """Create a decorator that asserts a run time limit
+
+    An assertion error is raised if the decorated function returns
+    without raising an error and the elapsed run time is longer than
+    the allowed time limit.
+
+    Usage:
+
+        @timelimit
+        def lt_one_second():
+            ...
+
+        @timelimit(0.5)
+        def lt_half_second():
+            ...
+
+    :param limit: number of seconds or a callable to decorate. If
+    callable, the time limit defaults to one second.
+    """
+    if callable(limit):
+        return timelimit((limit, timedelta(seconds=1)))
+    if not isinstance(limit, tuple):
+        limit = timedelta(seconds=limit)
+        return lambda func: timelimit((func, limit))
+    func, limit = limit
+    @wraps(func)
+    def decorator(*args, **kw):
+        start = datetime.utcnow()
+        rval = func(*args, **kw)
+        elapsed = datetime.utcnow() - start
+        assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
+        return rval
+    return decorator
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):

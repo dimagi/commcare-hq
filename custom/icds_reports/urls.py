@@ -13,8 +13,8 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView
-)
+    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
+    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI)
 
 
 dashboard_urls = [
@@ -135,6 +135,9 @@ awc_infrastructure_urls = [
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
     url(r'^logout/$', mobile_views.logout, name="cas_mobile_dashboard_logout"),
+    url(r'^password_reset/$', mobile_views.password_reset, name="cas_mobile_dashboard_password_reset"),
+    url(r'^password_reset/done$', mobile_views.password_reset_done,
+        name="cas_mobile_dashboard_password_reset_done"),
     url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
@@ -180,6 +183,9 @@ urlpatterns = [
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
     url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
+    url(r'^governance_apis/home_visit/', GovernanceHomeVisitAPI.as_view(), name='governance_apis_home_visit'),
+    url(r'^governance_apis/beneficiary/', GovernanceBeneficiaryAPI.as_view(), name='governance_apis_beneficiary'),
+    url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
 
 ]
 

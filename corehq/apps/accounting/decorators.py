@@ -135,6 +135,7 @@ def always_allow_project_access(view_func):
     (typically because the subscription was paused).
     Remember: Order matters.
     """
+    @wraps(view_func)
     def shim(request, *args, **kwargs):
         request.always_allow_project_access = True
         return view_func(request, *args, **kwargs)

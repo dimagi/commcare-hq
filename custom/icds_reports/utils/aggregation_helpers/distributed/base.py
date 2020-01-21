@@ -70,14 +70,17 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
     months_required = None
 
     def aggregate(self, cursor):
-        delete_query, delete_params = self.delete_previous_run_query()
+        if self.delete_previous_run_query():
+            delete_query, delete_params = self.delete_previous_run_query()
         agg_query, agg_params = self.aggregation_query()
 
-        logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
-        if self.months_required:
+        if self.months_required and self.delete_old_data_query():
+            logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
+
             cursor.execute(*self.delete_old_data_query())
-        logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
-        cursor.execute(delete_query, delete_params)
+        if self.delete_previous_run_query():
+            logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
+            cursor.execute(delete_query, delete_params)
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
         logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
@@ -97,6 +100,23 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s AND state_id = %(state)s',
             {'month': month_formatter(month), 'state': self.state_id}
         )
+
+    def delete_queries(self):
+        queries = [(
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s',
+            {'month': month_formatter(self.month)}
+        )]
+
+        if self.months_required is None:
+            return queries
+
+        month = self.month - relativedelta(months=self.months_required)
+        queries.append((
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s',
+            {'month': month_formatter(month)}
+        ))
+
+        return queries
 
 
 class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
@@ -161,14 +181,28 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
-    def aggregate(self, cursor):
+    def aggregate_temp(self, cursor):
         staging_queries = self.staging_queries()
-        update_queries = self.update_queries()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
-
         logger.info(f"Creating temporary distributed table for {self.helper_key}")
+
+
         cursor.execute(self.drop_temporary_table())
         cursor.execute(self.create_temporary_table())
+
+        logger.info(f"Inserting inital data into distributed temp table for {self.helper_key}")
+        i = 0
+        for staging_query, params in staging_queries:
+            logger.info(f"Running staging query {i}")
+            cursor.execute(staging_query, params)
+            i += 1
+
+    def update_table(self, cursor):
+        update_queries = self.update_queries()
+        if getattr(self, 'rollup_query', None):
+            rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        else:
+            rollup_queries = []
+
         logger.info(f"Creating staging table for {self.helper_key}")
         self.cleanup(cursor)
         cursor.execute(f"""
@@ -178,13 +212,6 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
         )
         """)
-
-        logger.info(f"Inserting inital data into staging table for {self.helper_key}")
-        i = 0
-        for staging_query, params in staging_queries:
-            logger.info(f"Running staging query {i}")
-            cursor.execute(staging_query, params)
-            i += 1
 
         logger.info(f"Updating data into staging table for {self.helper_key}")
         i = 0
@@ -238,6 +265,12 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
 
         self.cleanup(cursor)
+
+    def aggregate(self, cursor):
+        if getattr(self, 'temporary_tablename', None):
+            self.aggregate_temp(cursor)
+        self.update_table(cursor)
+
 
     def cleanup(self, cursor):
         logger.info(f'Start {self.helper_key} cleanup')

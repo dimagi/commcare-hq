@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+function IndieMapController($scope, $location, $filter, storageService, locationsService,
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
     var useNewMaps = haveAccessToFeatures || isMobile;
@@ -163,6 +163,20 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     projection.scale(scaleCenter.scale)
                         .center(scaleCenter.center)
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+
+                    //setting zoom out limit
+                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                    $(function () {
+                        // DOM Ready
+                        var svg = d3.select('#map svg'); //selects svg in datamap component
+                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                            // this function redraws the map rendered on zoom event
+                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                            svg.selectAll('g').attr("transform",
+                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                        });
+                        svg.call(zoom); //connects zoom event to map
+                    });
                 } else {
                     projection = d3.geo.equirectangular()
                         .center(options.center)
@@ -188,68 +202,68 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data && !isMobile) {
-            // this chunk of code adds the legend to web maps
+        if (vm.map.data) {
+            // this chunk of code adds the legend
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
                         d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
-                            '<div class="map-kpi" style="width: 310px;">',
+                            '<div class="map-kpi">',
                             '<div class="row no-margin">',
-                            '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
+                            '<div class="row no-margin map-legend-title"">' + this.options.label + '</div>',
                         ];
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
                             html.push(
-                                '<div class="row no-margin" style="margin-bottom: 5px;">',
-                                '<div class="col-md-1" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 30px; height: 30px;"></div>',
-                                '<div class="col-md-10">',
-                                '<span style="font-size: 15px;">' + fillKey + '</span>',
-                                '</div>',
+                                '<div class="row no-margin map-legend-color-row">',
+                                '<div class="col-xs-1 map-legend-color" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important;"></div>',
+                                '<div class="col-xs-10 map-legend-color-label">' + fillKey + '</div>',
                                 '</div>'
                             );
                         }
-                        html.push('<hr/></div>');
-
-                        var locName = 'National';
-                        if (storageService.getKey('selectedLocation') !== void(0)) {
-                            locName = storageService.getKey('selectedLocation')['name'];
-                        }
-                        if (this.options.rightLegend['average'] !== void(0)) {
-                            html.push('<div class="row no-margin">');
-                            if (this.options.rightLegend['average_format'] === 'number') {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
-                            } else {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                        if (!isMobile) {
+                            // only add the last two sections to web-based legend
+                            html.push('<hr/></div>');
+                            var locName = 'National';
+                            if (storageService.getKey('selectedLocation') !== void(0)) {
+                                locName = storageService.getKey('selectedLocation')['name'];
                             }
-                            html.push('</div>',
-                                '</br>',
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
-                        } else {
-                            html.push(
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
-                        }
-                        if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
-                            html.push('<hr/><div class="row  no-margin">');
-                            window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
-                                html.push(
-                                    '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
+                            if (this.options.rightLegend['average'] !== void(0)) {
+                                html.push('<div class="row no-margin">');
+                                if (this.options.rightLegend['average_format'] === 'number') {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
+                                } else {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                                }
+                                html.push('</div>',
+                                    '</br>',
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
                                 );
-                            });
+                            } else {
+                                html.push(
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
+                                );
+                            }
+                            if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
+                                html.push('<hr/><div class="row  no-margin">');
+                                window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
+                                    html.push(
+                                        '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
+                                    );
+                                });
+                                html.push('</div>');
+                            }
+
                             html.push('</div>');
                         }
 
-                        html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', 'map-kpi-outer')
-                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
                         var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
                         var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
@@ -324,11 +338,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     function renderPopup(html) {
-        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-        var popup = d3.select('#locPopup');
-        popup.classed("hidden", false);
-        popup.attr('style', css).html(html);
-        $compile(popup[0])($scope);
+        return vm.renderPopup({html: html, divId: 'locPopup'});
     }
 
     function showSecondaryLocationSelectionPopup(geography) {
@@ -346,15 +356,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.attemptToDrillToLocation = function (geography) {
         var location = getLocationNameFromGeography(geography);
-        locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-            var location = locations[0];
-            if (!location) {
-                return;
-            }
-            $location.search('location_name', (geography.id || geography));
-            $location.search('location_id', location.location_id);
-            storageService.setKey('search', $location.search());
-        });
+        locationsService.tryToNavigateToLocation(location, location_id);
     };
 
     vm.handleMobileDrilldown = function () {
@@ -382,7 +384,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    '$scope', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
     'haveAccessToFeatures', 'isMobile',
 ];
 
@@ -396,6 +398,7 @@ window.angular.module('icdsApp').directive('indieMap', ['templateProviderService
             legendTitle: '@?',
             bubbles: '=?',
             templatePopup: '&',
+            renderPopup: '&',
         },
         templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,

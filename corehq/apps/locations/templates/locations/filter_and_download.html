@@ -1,0 +1,9 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main 'locations/js/widgets' %}
+
+{% block page_content %}
+  {% crispy form %}
+{% endblock %}

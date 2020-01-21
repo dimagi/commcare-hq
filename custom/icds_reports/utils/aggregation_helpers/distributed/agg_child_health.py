@@ -1,4 +1,4 @@
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, get_agg_child_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -28,7 +28,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     @property
     def temporary_tablename(self):
-        return 'tmp_agg_child_health_5'
+        return get_agg_child_temp_tablename()
 
     def staging_queries(self):
         columns = (
@@ -90,7 +90,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             # height_eligible calculation is to keep consistent with usage of
             # age_in_months_start & age_in_months_end in UCR
             ('height_eligible',
-                "SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND "
+                "SUM(CASE WHEN chm.age_tranche NOT IN ('72') AND "
                 "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('wasting_moderate',
                 "SUM(CASE WHEN chm.current_month_wasting = 'moderate' THEN 1 ELSE 0 END)"),

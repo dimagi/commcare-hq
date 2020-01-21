@@ -54,13 +54,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 3.3648790746582544,
-                    'sort_key': 3.3648790746582544
+                    'html': 3.235591506572295,
+                    'sort_key': 3.235591506572295
                 },
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.1224489795918366, 'sort_key': 1.1224489795918366},
-                    {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
+                    {'html': 1.1753183153770812, 'sort_key': 1.1753183153770812},
+                    {'html': 3.235591506572295, 'sort_key': 3.235591506572295},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -977,7 +977,7 @@ class TestFactSheetReportDemographics(TestCase):
         self.assertEqual(len(self.get_data()['config']['sections']), 1)
 
     def test_demographics_amount_of_config_rows(self):
-        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 19)
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 18)
 
     def test_cases_household(self):
         self.assertDictEqual(
@@ -1285,24 +1285,24 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][15],
             {
                 'average': {
-                    'html': 38,
-                    'sort_key': 38
+                    'html': 24,
+                    'sort_key': 24
                 },
                 'data': [
-                    {'html': 'Adolescent girls (11-14 years)'},
-                    {'html': 42, 'sort_key': 42},
-                    {'html': 38, 'sort_key': 38},
+                    {'html': 'Number of adolescent girls (11-14 years)'},
+                    {'html': 33, 'sort_key': 33},
+                    {'html': 24, 'sort_key': 24},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
-                'header': 'Adolescent girls (11-14 years)',
-                'slug': 'cases_person_adolescent_girls_11_14_all',
+                'header': 'Number of adolescent girls (11-14 years)',
+                'slug': 'cases_person_adolescent_girls_11_14_all_v2',
             }
         )
 
     def test_cases_person_adolescent_girls_15_18_all(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][16],
+            self.get_data()['config']['sections'][0]['rows_config'][17],
             {
                 'average': {
                     'html': 13,
@@ -1322,41 +1322,22 @@ class TestFactSheetReportDemographics(TestCase):
 
     def test_cases_person_adolescent_girls_11_14(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][17],
+            self.get_data()['config']['sections'][0]['rows_config'][16],
             {
                 'average': {
-                    'html': 34,
-                    'sort_key': 34
+                    'html': 2,
+                    'sort_key': 2
                 },
                 'data': [
-                    {'html': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services'},
-                    {'html': 38, 'sort_key': 38},
-                    {'html': 34, 'sort_key': 34},
+                    {'html': 'Number of out of school adolescent girls (11-14 years)'},
+                    {'html': 2, 'sort_key': 2},
+                    {'html': 2, 'sort_key': 2},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
-                'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
-                'slug': 'cases_person_adolescent_girls_11_14',
-            }
-        )
-
-    def test_cases_person_adolescent_girls_15_18(self):
-        self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][18],
-            {
-                'average': {
-                    'html': 13,
-                    'sort_key': 13
-                },
-                'data': [
-                    {'html': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services'},
-                    {'html': 19, 'sort_key': 19},
-                    {'html': 13, 'sort_key': 13},
-                    {'html': 0}
-                ],
-                'data_source': 'AggAWCMonthlyDataSource',
-                'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
-                'slug': 'cases_person_adolescent_girls_15_18',
+                'header': 'Number of out of school adolescent girls (11-14 years)',
+                'reverseColors': True,
+                'slug': 'cases_person_adolescent_girls_11_14_out_of_school',
             }
         )
 

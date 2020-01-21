@@ -18,6 +18,9 @@ function MobileFiltersController($scope) {
         $scope.filterData = {};
         $scope.$broadcast('request_filter_data',{});
     };
+    $scope.resetFilters = function () {
+        $scope.$broadcast('reset_filter_data',{});
+    };
     $scope.$on('filter_data', function (event, data) {
         if (data.hasLocation) {
             $scope.hasLocation = true;
@@ -44,6 +47,7 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
         restrict:'E',
         scope: {
             selectedLocations: '=',
+            selectAwc: '=?',
         },
         bindToController: true,
         templateUrl: function () {

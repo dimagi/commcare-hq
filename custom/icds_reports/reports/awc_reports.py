@@ -24,11 +24,11 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
     chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
     get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED, get_delivery_nature, get_color_with_green_positive,\
-    get_color_with_red_positive
+    get_color_with_red_positive, include_records_by_age_for_column
 from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES, AADHAR_SEEDED_BENEFICIARIES, \
-    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS, ADOLESCENT_GIRLS_DATA_THRESHOLD
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -336,41 +336,41 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche__lte': 60}
 
-        moderately_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        moderately_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_moderately_underweight'
         )
-        severely_underweight = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        severely_underweight = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_severely_underweight'
         )
-        wasting_moderate = exclude_records_by_age_for_column(
+        wasting_moderate = include_records_by_age_for_column(
             age_filters,
             wasting_moderate_column(icds_feature_flag)
         )
-        wasting_severe = exclude_records_by_age_for_column(
+        wasting_severe = include_records_by_age_for_column(
             age_filters,
             wasting_severe_column(icds_feature_flag)
         )
-        stunting_moderate = exclude_records_by_age_for_column(
+        stunting_moderate = include_records_by_age_for_column(
             age_filters,
             stunting_moderate_column(icds_feature_flag)
         )
-        stunting_severe = exclude_records_by_age_for_column(
+        stunting_severe = include_records_by_age_for_column(
             age_filters,
             stunting_severe_column(icds_feature_flag)
         )
-        nutrition_status_weighed = exclude_records_by_age_for_column(
-            {'age_tranche': 72},
+        nutrition_status_weighed = include_records_by_age_for_column(
+            age_filters,
             'nutrition_status_weighed'
         )
-        height_measured_in_month = exclude_records_by_age_for_column(
+        height_measured_in_month = include_records_by_age_for_column(
             age_filters,
             hfa_recorded_in_month_column(icds_feature_flag)
         )
-        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+        weighed_and_height_measured_in_month = include_records_by_age_for_column(
             age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
@@ -775,13 +775,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             prev_data = get_data_for(AggAwcMonthly, config)
             frequency = 'month'
 
-    if beta:
-        if 'date' in config:
-            del config['date']
-        config['month'] = selected_month
-        ag_data = get_adolescent_girls_data(domain, config, show_test)
-        config['month'] = previous_month
-        ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
+    if 'date' in config:
+        del config['date']
+    config['month'] = selected_month
+    ag_data = get_adolescent_girls_data(domain, config, show_test)
+    config['month'] = previous_month
+    ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
 
     demographics_data = {
         'chart': [
@@ -882,41 +881,30 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency
+                },
+                {
+                    'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS),
+                    'help_text': _(percent_adolescent_girls_enrolled_help_text_v2()),
+                    'percent': percent_diff(
+                        'person_adolescent',
+                        ag_data,
+                        ag_data_prev_data,
+                        'person_adolescent_all'
+                    ),
+                    'color': get_color_with_green_positive(percent_diff(
+                        'person_adolescent',
+                        ag_data,
+                        ag_data_prev_data,
+                        'person_adolescent_all'
+                    )),
+                    'value': get_value(ag_data, 'person_adolescent'),
+                    'all': get_value(ag_data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency
                 }
             ]
         ]
     }
-    # Add below data to response when FF is turned off or the month accessed is later
-    # then the ADOLESCENT_GIRLS_DATA_THRESHOLD
-    # After QA this statement will be simplified to
-    # if selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-    if (not beta) or selected_month.date() >= ADOLESCENT_GIRLS_DATA_THRESHOLD:
-        adolescent_girls = {
-            'label': _(OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS if beta else
-                       ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
-            'help_text': _(percent_adolescent_girls_enrolled_help_text_v2() if beta else (
-                "Of the total number of adolescent girls (aged 11-14 years), the percentage "
-                "of girls enrolled for Anganwadi Services"
-            )),
-            'percent': percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            ),
-            'color': get_color_with_green_positive(percent_diff(
-                'person_adolescent',
-                ag_data if beta else data,
-                ag_data_prev_data if beta else prev_data,
-                'person_adolescent_all'
-            )),
-            'value': get_value(ag_data if beta else data, 'person_adolescent'),
-            'all': get_value(ag_data if beta else data, 'person_adolescent_all'),
-            'format': 'percent_and_div',
-            'frequency': frequency
-        }
-        demographics_data['kpi'][-1].append(adolescent_girls)
-
     return demographics_data
 
 

@@ -14,23 +14,15 @@ from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, beta=False):
 
-    if beta:
-        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
-        valid_num_title = 'Number of adolescent girls (11-14 years) who are out of school:'
-        all_num_title = 'Total Number of adolescent girls (11-14 years) who are registered:'
-        percent_title = 'Percentage of adolescent girls (11-14 years) who are out of school:'
-        info_text = percent_adolescent_girls_enrolled_help_text_v2()
-    else:
-        valid_col_name = 'cases_person_adolescent_girls_11_14'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all'
-        valid_num_title = 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
-        all_num_title = 'Total number of adolescent girls (11 - 14 years) who are registered:'
-        percent_title = 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
-        info_text = percent_adolescent_girls_enrolled_help_text()
+    valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+    all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+    valid_num_title = 'Number of adolescent girls (11-14 years) who are out of school:'
+    all_num_title = 'Total Number of adolescent girls (11-14 years) who are registered:'
+    percent_title = 'Percentage of adolescent girls (11-14 years) who are out of school:'
+    info_text = percent_adolescent_girls_enrolled_help_text_v2()
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -100,17 +92,12 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
 
-    if beta:
-        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
-        info_text = percent_adolescent_girls_enrolled_help_text_v2()
-    else:
-        valid_col_name = 'cases_person_adolescent_girls_11_14'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all'
-        info_text = percent_adolescent_girls_enrolled_help_text()
+    valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+    all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+    info_text = percent_adolescent_girls_enrolled_help_text_v2()
 
     group_by = ['%s_name' % loc_level]
     config['month'] = datetime(*config['month'])
@@ -170,18 +157,12 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, beta=False):
 
-    if beta:
-        valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
-        indicator_key = "Number of adolescent girls (11-14 years) who are out of school"
-    else:
-        valid_col_name = 'cases_person_adolescent_girls_11_14'
-        all_col_name = 'cases_person_adolescent_girls_11_14_all'
-        indicator_key = "Total number of adolescent girls who are enrolled for Anganwadi Services"
-
+    valid_col_name = 'cases_person_adolescent_girls_11_14_out_of_school'
+    all_col_name = 'cases_person_adolescent_girls_11_14_all_v2'
+    indicator_key = "Number of adolescent girls (11-14 years) who are out of school"
 
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -237,8 +218,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False, 
         for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
-    all_locations_sorted_by_value_and_name = sorted(
-        all_locations_sorted_by_name, key=lambda x: x['value'], reverse=True)
+    all_locations_sorted_by_value_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['value'])
 
     return {
         "chart_data": [
