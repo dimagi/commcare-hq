@@ -135,7 +135,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }
                 if (isMobile) {
-                    // assume called in the context of a map which has this function.
+                    // assume called in the context of either indie-map or map-or-sector-view,
+                    // which both have this function.
                     template += '<a ng-click="$ctrl.handleMobileDrilldown()">see more</a>';
                 }
                 template += '</div>';

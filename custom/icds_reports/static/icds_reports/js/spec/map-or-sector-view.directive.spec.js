@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Map Or Sector View Directive', function () {
 
-    var $location, controller;
+    var $location, controller, scope;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
@@ -15,10 +15,12 @@ describe('Map Or Sector View Directive', function () {
         utils.provideDefaultConstants($provide, false, false);
     }));
 
-    beforeEach(inject(function ($controller, _$location_, storageService, locationsService) {
+    beforeEach(inject(function ($controller, $rootScope, _$location_, storageService, locationsService) {
         $location = _$location_;
+        scope = $rootScope.$new();
 
         controller = $controller(MapOrSectorController, {
+            $scope: scope,
             $location: $location,
             storageService: storageService,
             locationsService: locationsService,
