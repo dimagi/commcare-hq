@@ -1166,6 +1166,10 @@ class SystemUsageReportView(models.Model):
         blank=True, null=True,
         help_text="Number of Delivery forms submitted"
     )
+    usage_num_pnc = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Postnatal Care Forms submitted"
+    )
     usage_num_ebf = models.IntegerField(
         blank=True, null=True,
         help_text="Number of Exclusive Breast Feeding forms submitted"
@@ -1187,6 +1191,7 @@ class SystemUsageReportView(models.Model):
         help_text="Number of due list forms submitted where tasks.type is pregnancy"
     )
     num_supervisor_launched = models.IntegerField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
