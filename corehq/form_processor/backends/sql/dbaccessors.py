@@ -870,11 +870,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
-            'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-            [domain, list(cases_by_id)])
-        )
-        _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        if cases_by_id:
+            indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
+                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(cases_by_id)])
+            )
+            _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
 
     @staticmethod
