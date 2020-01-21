@@ -946,7 +946,7 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    log.info("iteration state: %r", rows.state)
+    log.info("iteration state: %r", rows.state.to_json())
     row = None
     try:
         for row in rows:
@@ -957,7 +957,7 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
             row_copy = dict(row)
             row_copy.pop("doc", None)
             log.info("last item: %r", row_copy)
-        log.info("final iteration state: %r", rows.state)
+        log.info("final iteration state: %r", rows.state.to_json())
 
 
 _iter_docs.chunk_size = 1000
