@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from dimagi.ext.couchdbkit import *
@@ -12,6 +13,21 @@ from pillowtop.utils import (
 )
 
 
+class SQLHqDeploy(models.Model):
+    date = models.DateTimeField(default=datetime.utcnow, db_index=True)
+    user = models.CharField(max_length=100)
+    environment = models.CharField(max_length=100)
+    diff_url = models.CharField(max_length=126, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    @classmethod
+    def get_latest(cls, environment, limit=1):
+        query = SQLHqDeploy.objects.filter(environment=environment).order_by("-date")
+        if limit:
+            return query[:limit]
+        return query
+
+
 class HqDeploy(Document):
     date = DateTimeProperty()
     user = StringProperty()
@@ -19,29 +35,21 @@ class HqDeploy(Document):
     code_snapshot = DictProperty()
     diff_url = StringProperty()
 
-    @classmethod
-    def get_latest(cls, environment, limit=1):
-        result = HqDeploy.view(
-            'hqadmin/deploy_history',
-            startkey=[environment, {}],
-            endkey=[environment],
-            reduce=False,
-            limit=limit,
-            descending=True,
-            include_docs=True
-        )
-        return result.all()
 
-    @classmethod
-    def get_list(cls, environment, startdate, enddate, limit=50):
-        return HqDeploy.view(
-            'hqadmin/deploy_history',
-            startkey=[environment, json_format_datetime(startdate)],
-            endkey=[environment, json_format_datetime(enddate)],
-            reduce=False,
-            limit=limit,
-            include_docs=False
-        ).all()
+    def save(self, *args, **kwargs):
+        # Save to SQL
+        model, created = SQLHqDeploy.objects.update_or_create(
+            couch_id=self.get_id,
+            defaults={
+                'date': self.date,
+                'user': self.user,
+                'environment': self.environment,
+                'diff_url': self.diff_url,
+            }
+        )
+
+        # Save to couch
+        super().save(*args, **kwargs)
 
 
 class HistoricalPillowCheckpoint(models.Model):
