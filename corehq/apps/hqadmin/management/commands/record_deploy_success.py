@@ -12,7 +12,7 @@ from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.models import SQLHqDeploy
 from corehq.util.log import send_HTML_email
 
 STYLE_MARKDOWN = 'markdown'
@@ -37,7 +37,7 @@ def make_link(label, url):
 
 
 class Command(BaseCommand):
-    help = "Creates an HqDeploy document to record a successful deployment."
+    help = "Creates an SQLHqDeploy object to record a successful deployment."
 
     def add_arguments(self, parser):
         parser.add_argument('--user', help='User', default=False)
@@ -55,7 +55,7 @@ class Command(BaseCommand):
         compare_url = options.get('url', None)
         minutes = options.get('minutes', None)
 
-        deploy = HqDeploy(
+        deploy = SQLHqDeploy(
             date=datetime.utcnow(),
             user=options['user'],
             environment=options['environment'],
