@@ -78,20 +78,14 @@ a:active, a:hover, a:focus {
     height: 25px;
 }
 
-// maps and charts popup handling. modified from datamaps css.
-.locPopup, .chartPopup {
+// maps popup handling. modified from datamaps css.
+.locPopup {
   position: absolute;
   z-index: @zindexMapsPopup;
-  pointer-events: inherit !important;  // nvd3 disables pointer-events on some shared classes
 }
 
 .locPopup .hoverinfo {
   background-color: rgba(255, 255, 255, 0.9);
-}
-
-.chartPopup .hoverinfo {
-  background-color: rgba(255, 255, 255, 1);
-  padding: .25em;
 }
 
 .locPopup .secondary-location-selector {
