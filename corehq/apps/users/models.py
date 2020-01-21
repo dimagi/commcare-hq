@@ -2898,9 +2898,9 @@ class UserReportingMetadataStaging(models.Model):
                 ON CONFLICT (domain, user_id, app_id)
                 DO UPDATE SET
                     modified_on = CLOCK_TIMESTAMP(),
-                    build_id = EXCLUDED.build_id,
-                    sync_date = EXCLUDED.sync_date,
-                    device_id = EXCLUDED.device_id,
+                    build_id = COALESCE(EXCLUDED.build_id, staging.build_id),
+                    sync_date = COALESCE(EXCLUDED.sync_date, staging.sync_date),
+                    device_id = COALESCE(EXCLUDED.device_id, staging.device_id),
                     app_version = EXCLUDED.app_version,
                     num_unsent_forms = EXCLUDED.num_unsent_forms,
                     num_quarantined_forms = EXCLUDED.num_quarantined_forms,
