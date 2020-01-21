@@ -80,7 +80,8 @@ Split up compression due to a weird js dependency bug that makes it not work wit
   <navigation></navigation>
   {% maintenance_alert request True %}
   <div ng-controller="MainMobileController" class="container-fluid">
-      <div class="row">
+<!--      listening for click event anywhere in mobile dashboard outside navigation menu-->
+      <div class="row" ng-click="closeMenu()">
         <div class="col-md-12 main-container">
           <div class="row no-margin">
             <div class="ng-view"></div>
