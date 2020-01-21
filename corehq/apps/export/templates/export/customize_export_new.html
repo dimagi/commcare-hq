@@ -118,7 +118,12 @@
                   <input type="checkbox"
                          id="transform-dates-checkbox"
                          data-bind="checked: transform_dates" />
-                  {% trans "Automatically convert dates and links for Excel" %}
+                  <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
+                  {% blocktrans %}
+                    Leaving this checked will ensure dates appear in excel format.
+                    Otherwise they will appear as a normal text format. This also allows for
+                    hyperlinks to the multimedia captured by your form submission.
+                  {% endblocktrans %}
                 </label>
               </div>
 
