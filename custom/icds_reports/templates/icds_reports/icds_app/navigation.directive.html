@@ -21,33 +21,10 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
-                    <li ng-class="{'active': $location.path().indexOf('/maternal_and_child/underweight_children') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/underweight_children', $location.search()) $}" >{% trans "Prevalence of Underweight (Weight-for-Age)" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/maternal_and_child/wasting') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/wasting', $location.search()) $}" >{% trans "Prevalence of Wasting (Weight-for-Height)" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/stunting') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/stunting', $location.search()) $}" >{% trans "Prevalence of Stunting (Height-for-Age)" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/low_birth') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/low_birth', $location.search()) $}" >{% trans "Newborns with Low Birth Weight" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/early_initiation') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/early_initiation', $location.search()) $}" >{% trans "Early Initiation of Breastfeeding" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/exclusive_breastfeeding') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/exclusive_breastfeeding', $location.search()) $}" >{% trans "Exclusive breastfeeding" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/children_initiated') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/children_initiated', $location.search()) $}" >{% trans "Children initiated appropriate complementary feeding" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/institutional_deliveries') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/institutional_deliveries', $location.search()) $}" >{% trans "Institutional deliveries" %}</a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('maternal_and_child/immunization_coverage') !== -1}">
-                        <a href="{$ goToStep('maternal_and_child/immunization_coverage', $location.search()) $}" >{% trans "Immunization coverage (at age 1 year)" %}</a>
+                    <li ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']" ng-show="menuItem['showInWeb']"
+                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
+                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
+                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}</a>
                     </li>
                 </ul>
             </li>
@@ -58,12 +35,10 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="icdsCasReach">
-                    <li ng-class="{'active': $location.path().indexOf('/icds_cas_reach/awc_daily_status') !== -1}">
-                        <a href="{$ goToStep('icds_cas_reach/awc_daily_status', $location.search()) $}" >{% trans "AWC Daily Status" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/icds_cas_reach/awcs_covered') !== -1}">
-                        <a href="{$ goToStep('icds_cas_reach/awcs_covered', $location.search()) $}" >{% trans "AWCs Launched" %}
+                    <li ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']" ng-show="menuItem['showInWeb']"
+                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
+                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
+                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
                         </a>
                     </li>
                 </ul>
@@ -75,28 +50,10 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="demographics">
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/registered_household') !== -1}">
-                        <a href="{$ goToStep('demographics/registered_household', $location.search()) $}" >{% trans "Registered Households" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/adhaar') !== -1}">
-                        <a href="{$ goToStep('demographics/adhaar', $location.search()) $}" >{% trans "Aadhaar-seeded Beneficiaries" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/enrolled_children') !== -1}">
-                        <a href="{$ goToStep('demographics/enrolled_children', $location.search()) $}" >{% trans "Children enrolled for Anganwadi Services" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/enrolled_women') !== -1}">
-                        <a href="{$ goToStep('demographics/enrolled_women', $location.search()) $}" >{% trans "Pregnant Women enrolled for Anganwadi Services" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/lactating_enrolled_women') !== -1}">
-                        <a href="{$ goToStep('demographics/lactating_enrolled_women', $location.search()) $}" >{% trans "Lactating Mothers enrolled for Anganwadi Services" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/demographics/adolescent_girls') !== -1}">
-                        <a href="{$ goToStep('demographics/adolescent_girls', $location.search()) $}" >{% trans "Out of school Adolescent girls (11-14 years)" %}
+                    <li ng-repeat="menuItem in navMenuItems['Demographics']" ng-show="menuItem['showInWeb']"
+                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
+                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
+                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
                         </a>
                     </li>
                 </ul>
@@ -108,32 +65,10 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="infrastructure">
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/clean_water') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/clean_water', $location.search()) $}" >{% trans "AWCs Reported Clean Drinking Water" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/functional_toilet') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/functional_toilet', $location.search()) $}" >{% trans "AWCs Reported Functional Toilet" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infants_weight_scale') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/infants_weight_scale', $location.search()) $}" >{% trans "AWCs Reported Weighing Scale: Infants" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/adult_weight_scale') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/adult_weight_scale', $location.search()) $}" >{% trans "AWCs Reported Weighing Scale: Mother and Child" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/medicine_kit') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/medicine_kit', $location.search()) $}" >{% trans "AWCs Reported Medicine Kit" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infantometer') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/infantometer', $location.search()) $}" >{% trans "AWCs Reported Infantometer" %}
-                        </a>
-                    </li>
-                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/stadiometer') !== -1}">
-                        <a href="{$ goToStep('awc_infrastructure/stadiometer', $location.search()) $}" >{% trans "AWCs Reported Stadiometer" %}
+                    <li ng-repeat="menuItem in navMenuItems['AWC Infrastructure']" ng-show="menuItem['showInWeb']"
+                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
+                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
+                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
                         </a>
                     </li>
                 </ul>
