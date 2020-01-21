@@ -32,7 +32,7 @@ def teardown_module():
 
 def init_db(name="test", memory=True):
     if memory:
-        return StateDB.init(":memory:")
+        return StateDB.init(name, ":memory:")
     return init_state_db(name, state_dir)
 
 
@@ -317,7 +317,7 @@ def test_clone_casediff_data_from():
             main.clone_casediff_data_from(cddb.db_filepath)
         main.close()
 
-        with StateDB.open(main.db_filepath) as db:
+        with StateDB.open("test", main.db_filepath) as db:
             eq(list(db.iter_cases_with_unprocessed_forms()), [("a", 2), ("b", 2), ("c", 2)])
             eq(list(db.iter_problem_forms()), ["problem"])
             eq(db.get_no_action_case_forms(), {"no-action"})

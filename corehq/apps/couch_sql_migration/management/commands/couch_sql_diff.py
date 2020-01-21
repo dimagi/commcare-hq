@@ -204,7 +204,7 @@ class CaseDiffTool:
             yield from self.pool.imap_unordered(process_batch, batches)
             return
         stop = [1]
-        with global_diff_state(*self.initargs[1:]), suppress(pdb.bdb.BdbQuit):
+        with global_diff_state(*self.initargs), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
                 data = process_batch(batch, log_cases=log_cases)
                 yield data
@@ -353,4 +353,4 @@ def init_worker(domain, *args):
     clean_break = False
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
-    return global_diff_state(*args)
+    return global_diff_state(domain, *args)

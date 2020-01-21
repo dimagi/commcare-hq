@@ -36,7 +36,7 @@ def init_state_db(domain, state_dir):
     db_dir = os.path.dirname(db_filepath)
     if os.path.isdir(state_dir) and not os.path.isdir(db_dir):
         os.mkdir(db_dir)
-    return StateDB.init(db_filepath)
+    return StateDB.init(domain, db_filepath)
 
 
 def open_state_db(domain, state_dir):
@@ -44,7 +44,7 @@ def open_state_db(domain, state_dir):
     db_filepath = _get_state_db_filepath(domain, state_dir)
     if not os.path.exists(db_filepath):
         db_filepath = ":memory:"
-    return StateDB.open(db_filepath, readonly=True)
+    return StateDB.open(domain, db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -63,9 +63,9 @@ def _get_state_db_filepath(domain, state_dir):
 class StateDB(DiffDB):
 
     @classmethod
-    def init(cls, path):
+    def init(cls, domain, path):
         is_new_db = not os.path.exists(path)
-        db = super(StateDB, cls).init(path)
+        db = super(StateDB, cls).init(domain, path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         else:
@@ -325,8 +325,7 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
-        domain = couch_json.get("domain", "unknown")
-        dd_count = partial(datadog_counter, tags=["domain:" + domain])
+        dd_count = partial(datadog_counter, tags=["domain:" + self.domain])
         dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
@@ -479,7 +478,7 @@ class StateDB(DiffDB):
             """)
 
         log.info("checking casediff data preconditions...")
-        casediff_db = type(self).open(casediff_state_path)
+        casediff_db = type(self).open(self.domain, casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {
                 "CommCareCase",

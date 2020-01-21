@@ -217,10 +217,10 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             assert backend == "couch", "typo? unknown backend: %s" % backend
             self.assertFalse(is_sql, "sql backend is active")
 
-    def submit_form(self, xml, received_on=None):
+    def submit_form(self, xml, received_on=None, domain=None):
         # NOTE freezegun.freeze_time does not work with the blob db
         # boto3 and/or minio -> HeadBucket 403 Forbidden
-        form = submit_form_locally(xml, self.domain_name).xform
+        form = submit_form_locally(xml, domain or self.domain_name).xform
         if received_on is not None:
             if isinstance(received_on, timedelta):
                 received_on = datetime.utcnow() + received_on
