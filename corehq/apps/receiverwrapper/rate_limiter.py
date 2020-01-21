@@ -96,7 +96,8 @@ def _report_rate_limit_submission(domain):
 
 def _delay_and_report_rate_limit_submission_test(domain, max_wait):
     with TimingContext() as timer:
-        acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+        acquired = submission_rate_limiter.wait(domain, timeout=max_wait,
+                                                windows_not_to_wait_on=())
     if acquired:
         duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
     else:
