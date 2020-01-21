@@ -3,28 +3,28 @@ import json
 import logging
 import os
 import os.path
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 from datetime import datetime
+from functools import partial
+from itertools import groupby
 
 from memoized import memoized
 from sqlalchemy import (
     Column,
-    Index,
     Integer,
     String,
     Text,
-    and_,
     bindparam,
     func,
-    literal_column,
-    or_,
 )
-from sqlalchemy.event import listen
 from sqlalchemy.exc import IntegrityError
 
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
-from corehq.apps.tzmigration.timezonemigration import json_diff
+from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.log import with_progress_bar
 
 from .diff import filter_form_diffs
 
@@ -68,11 +68,12 @@ class StateDB(DiffDB):
         db = super(StateDB, cls).init(path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
+        else:
+            db._migrate()
         return db
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        listen(self.engine, "connect", case_sensitive_like)
         self.is_rebuild = False
 
     def __enter__(self):
@@ -225,34 +226,20 @@ class StateDB(DiffDB):
             return session.query(CaseToDiff).count()
 
     def iter_case_ids_with_diffs(self):
-        STOCK_STATE = "stock state"
-        session = self.Session()
-        last_diff_id = session.query(func.max(Diff.id)).scalar()
-        query = session.query(Diff.id, Diff.doc_id, Diff.kind).filter(or_(
-            Diff.kind == "CommCareCase",
-            Diff.kind == STOCK_STATE,
-        ), Diff.id <= last_diff_id)
-        seen = set()
-        for diff_id, case_id, kind in iter_large(query, Diff.id):
-            if kind == STOCK_STATE:
-                assert case_id.count("/") == 2, case_id
-                case_id = case_id.split("/", 1)[0]
-            if case_id not in seen:
-                seen.add(case_id)
-                yield case_id
+        query = (
+            self.Session().query(DocDiffs.doc_id)
+            .filter(DocDiffs.kind == "CommCareCase")
+        )
+        for doc_id, in iter_large(query, DocDiffs.doc_id):
+            yield doc_id
 
     def count_case_ids_with_diffs(self):
-        case_id_expr = literal_column("""
-            case kind
-                when 'stock state' then substr(doc_id, instr(doc_id, '/'), -100)
-                else doc_id
-            end as n_docs
-        """)
         with self.session() as session:
-            return session.query(case_id_expr).filter(or_(
-                Diff.kind == "CommCareCase",
-                Diff.kind == "stock state",
-            )).distinct().count()
+            return (
+                session.query(DocDiffs.doc_id)
+                .filter(DocDiffs.kind == "CommCareCase")
+                .count()
+            )
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -332,52 +319,93 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
-    def save_form_diffs(self, couch_json, sql_json, replace=False):
+    def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
+        domain = couch_json.get("domain", "unknown")
+        dd_count = partial(datadog_counter, tags=["domain:" + domain])
+        dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
-        if replace:
-            with self.session() as session:
-                (
-                    session.query(Diff)
-                    .filter(Diff.kind == doc_type, Diff.doc_id == doc_id)
-                    .delete(synchronize_session=False)
-                )
+        self.add_diffs(doc_type, doc_id, diffs)
         if diffs:
-            self.add_diffs(doc_type, doc_id, diffs)
+            dd_count("commcare.couchsqlmigration.form.has_diffs")
 
     def replace_case_diffs(self, case_diffs):
-        from .couchsqlmigration import CASE_DOC_TYPES
-        if not case_diffs:
-            return
-        new_diffs = []
-        conditions = []
-        seen = set()
-        for kind, case_id, diffs in case_diffs:
-            if diffs:
-                new_diffs.append((kind, case_id, diffs))
+        diffs_by_doc = defaultdict(list)
+        for kind, doc_id, diffs in case_diffs:
+            assert all(isinstance(d.path, (list, tuple)) for d in diffs), diffs
             if kind == "stock state":
-                assert case_id.count("/") == 2, case_id
-                case_id = case_id.split("/", 1)[0]
-                kind = "CommCareCase"
+                case_id = doc_id.split("/", 1)[0]
+                diffs = [
+                    d._replace(path={"stock_id": doc_id, "path": d.path})
+                    for d in diffs
+                ]
+                diffs_by_doc[("CommCareCase", case_id)].extend(diffs)
             else:
-                assert kind in CASE_DOC_TYPES, kind
-            if case_id in seen:
-                continue
-            seen.add(case_id)
-            # optimized for one index scan per condition; profile after editing
-            conditions.append(
-                and_(Diff.doc_id.startswith(case_id), or_(
-                    and_(Diff.kind == kind, Diff.doc_id == case_id),
-                    and_(Diff.kind == "stock state", Diff.doc_id.startswith(case_id + "/")),
-                ))
+                diffs_by_doc[(kind, doc_id)].extend(diffs)
+        for (doc_type, case_id), diffs in diffs_by_doc.items():
+            self.add_diffs(doc_type, case_id, diffs)
+
+    def add_diffs(self, kind, doc_id, diffs, *, session=None):
+        def to_dict(diff):
+            data = {"type": diff.diff_type, "path": diff.path}
+            if diff.old_value is not MISSING:
+                data["old_value"] = diff.old_value
+            if diff.new_value is not MISSING:
+                data["new_value"] = diff.new_value
+            return data
+        assert kind != "stock state", ("stock state diffs should be "
+            "combined with other diffs for the same case")
+        if diffs:
+            diff_json = json.dumps([to_dict(d) for d in diffs], cls=LazyEncoder)
+            with self.session(session) as session:
+                session.execute(
+                    f"""
+                    INSERT OR REPLACE
+                    INTO {DocDiffs.__tablename__} (kind, doc_id, diffs)
+                    VALUES (:kind, :doc_id, :diffs)
+                    """,
+                    [{"kind": kind, "doc_id": doc_id, "diffs": diff_json}],
+                )
+        else:
+            with self.session(session) as session:
+                session.query(DocDiffs).filter(
+                    DocDiffs.kind == kind,
+                    DocDiffs.doc_id == doc_id,
+                ).delete(synchronize_session=False)
+
+    def iter_diffs(self):
+        def get_planning_diff(kind, doc_id, diff):
+            path = diff["path"]
+            if len(path) == 2 and isinstance(path, dict):
+                assert path.keys() == {"stock_id", "path"}, path
+                assert path["stock_id"].startswith(doc_id + "/"), (doc_id, path)
+                kind = "stock state"
+                doc_id = path["stock_id"]
+                path = path["path"]
+            return Diff(
+                kind=kind,
+                doc_id=doc_id,
+                diff_type=diff["type"],
+                path=json.dumps(path),
+                old_value=json_or_none(diff, "old_value"),
+                new_value=json_or_none(diff, "new_value"),
             )
-        assert conditions, case_diffs  # avoid deleting all existing diffs
+
+        def json_or_none(diff, key):
+            return json.dumps(diff[key]) if key in diff else None
+
         with self.session() as session:
-            session.query(Diff).filter(or_(*conditions)).delete(synchronize_session=False)
-        for kind, case_id, diffs in new_diffs:
-            self.add_diffs(kind, case_id, diffs)
+            for kind, in list(session.query(DocDiffs.kind).distinct()):
+                query = session.query(DocDiffs).filter_by(kind=kind)
+                for doc in iter_large(query, DocDiffs.doc_id):
+                    for diff in json.loads(doc.diffs):
+                        yield get_planning_diff(doc.kind, doc.doc_id, diff)
+
+    def get_diffs(self):
+        """DEPRECATED use iter_diffs(); the result may be very large"""
+        return list(self.iter_diffs())
 
     def increment_counter(self, kind, value):
         self._upsert(DocCount, DocCount.kind, kind, value, incr=True)
@@ -419,9 +447,10 @@ class StateDB(DiffDB):
 
         model analysis
         - CaseForms - casediff r/w
-        - Diff - casediff w (case and stock kinds), main r/w
+        - Diff - deprecated
         - KeyValue - casediff r/w, main r/w (different keys)
         - DocCount - casediff w, main r
+        - DocDiffs - casediff w (case and stock kinds), main r/w
         - MissingDoc - casediff w, main r
         - NoActionCaseForm - main r/w
         - ProblemForm - main r/w
@@ -454,7 +483,7 @@ class StateDB(DiffDB):
                 "CommCareCase-Deleted",
                 "stock state",
             }
-            casediff_kinds = {k for k, in cddb.query(Diff.kind).distinct()}
+            casediff_kinds = {k for k, in cddb.query(DocDiffs.kind).distinct()}
             assert not casediff_kinds - expect_casediff_kinds, casediff_kinds
 
             resume_keys = [
@@ -474,9 +503,54 @@ class StateDB(DiffDB):
             session.execute(f"ATTACH DATABASE {quote(casediff_state_path)} AS cddb")
             copy(CaseForms, session)
             copy(Diff, session, f"kind IN {quotelist(expect_casediff_kinds)}")
+            copy(DocDiffs, session, f"kind IN {quotelist(expect_casediff_kinds)}")
             copy(KeyValue, session, f"key IN {quotelist(resume_keys)}")
             copy(DocCount, session)
             copy(MissingDoc, session)
+
+    def _migrate(self):
+        with self.session() as session:
+            self._migrate_diff_to_docdiffs(session)
+
+    def _migrate_diff_to_docdiffs(self, session):
+        if not session.query(session.query(Diff).exists()).scalar():
+            return
+        assert not session.query(session.query(DocDiffs).exists()).scalar()
+        log.info("migrating PlanningDiff to DocDiffs...")
+        base_query = session.query(Diff).filter(Diff.kind != "stock state")
+        count = base_query.count()
+        query = base_query.order_by(Diff.kind, Diff.doc_id)
+        items = with_progress_bar(query, count, oneline="concise", prefix="main diffs")
+        for (kind, doc_id), diffs in groupby(items, lambda d: (d.kind, d.doc_id)):
+            diffs = [d.json_diff for d in diffs]
+            self.add_diffs(kind, doc_id, diffs, session=session)
+        # "stock state" diffs must be migrated after "CommCareCase"
+        # diffs since it will probably replace some of them
+        self._migrate_stock_state_diffs(session)
+        session.query(Diff).delete(synchronize_session=False)
+
+    def _migrate_stock_state_diffs(self, session):
+        def get_case_diffs(case_id):
+            case_diffs = session.query(Diff).filter_by(doc_id=case_id)
+            return [d.json_diff for d in case_diffs]
+        query = session.query(Diff).filter_by(kind="stock state")
+        count = query.count()
+        stock_state_diffs = with_progress_bar(
+            query, count, oneline="concise", prefix="stock state cases")
+        diffs_by_doc = defaultdict(list)
+        for stock_diff in stock_state_diffs:
+            case_id, x, x = stock_diff.doc_id.split("/")
+            key = ("CommCareCase", case_id)
+            jsdiff = stock_diff.json_diff
+            stock_json_diff = jsdiff._replace(path={
+                "stock_id": stock_diff.doc_id,
+                "path": jsdiff.path,
+            })
+            if key not in diffs_by_doc:
+                diffs_by_doc[key].extend(get_case_diffs(case_id))
+            diffs_by_doc[key].append(stock_json_diff)
+        for (doc_type, case_id), diffs in diffs_by_doc.items():
+            self.add_diffs(doc_type, case_id, diffs, session=session)
 
 
 class ResumeError(Exception):
@@ -513,6 +587,14 @@ class DocCount(Base):
     value = Column(Integer, nullable=False)
 
 
+class DocDiffs(Base):
+    __tablename__ = 'doc_diffs'
+
+    kind = Column(String(50), nullable=False, primary_key=True)
+    doc_id = Column(String(50), nullable=False, primary_key=True)
+    diffs = Column(Text(), nullable=False)
+
+
 class KeyValue(Base):
     __tablename__ = "keyvalue"
 
@@ -540,9 +622,6 @@ class ProblemForm(Base):
     id = Column(String(50), nullable=False, primary_key=True)
 
 
-diff_doc_id_idx = Index("diff_doc_id_idx", Diff.doc_id)
-
-
 Counts = namedtuple('Counts', 'total missing')
 
 
@@ -565,10 +644,3 @@ def iter_large(query, pk_attr, maxrq=1000):
         if rec is None:
             break
         first_id = getattr(rec, pk_attr.name)
-
-
-def case_sensitive_like(dbapi_connection, connection_record):
-    # so replace_case_diffs queries use diff_doc_id_idx
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA case_sensitive_like = ON")
-    cursor.close()
