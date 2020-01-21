@@ -949,6 +949,8 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1476,7 +1478,6 @@ CUSTOM_SMS_HANDLERS = [
 ]
 
 SMS_HANDLERS = [
-    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',

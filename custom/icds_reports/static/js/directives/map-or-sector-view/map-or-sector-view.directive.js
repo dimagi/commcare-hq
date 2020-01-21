@@ -1,9 +1,8 @@
 /* global d3 */
 
-function MapOrSectorController($scope, $compile, $location, storageService, locationsService, navigationService, isMobile) {
+function MapOrSectorController($location, storageService, locationsService, navigationService, isMobile) {
 
     var vm = this;
-    vm.selectedLocation = null;
     var leftMargin = isMobile ? 70 : 150;
     var truncateAmount = isMobile ? 70 : 100;  // used in cropping the x-axis labels
 
@@ -44,39 +43,9 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
             }
         });
     }
-    vm.handleMobileDrilldown = function () {
-        locationsService.tryToNavigateToLocation(vm.selectedLocation, location_id);
-    };
 
     // reduce caption width to fit screen up to 900px on mobile view
     var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
-
-    function getChartTooltip(d) {
-        return getTooltipHtml(d.value);
-    }
-
-    function getTooltipHtml(locName) {
-        if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[locName]) {
-            return 'NA';
-        }
-        return vm.templatePopup({
-            loc: {
-                properties: {
-                    name: locName,
-                },
-            },
-            row: vm.data.mapData.tooltips_data[locName],
-        });
-    }
-
-    vm.renderPopup = function (html, divId) {
-        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-        var popup = d3.select('#' + divId);
-        popup.classed("hidden", false);
-        popup.attr('style', css).html(html);
-        $compile(popup[0])($scope);
-    };
-
     vm.chartOptions = {
 
         chart: {
@@ -116,8 +85,20 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 axisLabelDistance: 20,
             },
             tooltip: {
-                enabled: !isMobile,
-                contentGenerator: getChartTooltip,
+                contentGenerator: function (d) {
+                    if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
+                        return 'NA';
+                    }
+
+                    return vm.templatePopup({
+                        loc: {
+                            properties: {
+                                name: d.value,
+                            },
+                        },
+                        row: vm.data.mapData.tooltips_data[d.value],
+                    });
+                },
             },
             callback: function (chart) {
                 var height = 1500;
@@ -125,15 +106,15 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
-                    var locName = e.data[0];
-                    if (isMobile) {
-                        // disable click navigation on mobile and instead trigger the tooltip
-                        vm.selectedLocation = locName;
-                        var popupHtml = getTooltipHtml(locName);
-                        vm.renderPopup(popupHtml, 'chartPopup');
-                    } else {
-                        locationsService.tryToNavigateToLocation(locName, location_id);
-                    }
+                    locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
+                        var location = locations[0];
+                        $location.search('location_name', location.name);
+                        $location.search('location_id', location.location_id);
+                        storageService.setKey('search', $location.search());
+                        if (location.location_type_name === 'awc') {
+                            $location.path(navigationService.getAWCTabFromPagePath($location.path()));
+                        }
+                    });
                 });
 
                 nv.utils.windowResize(function () {
@@ -167,7 +148,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
 }
 
 MapOrSectorController.$inject = [
-    '$scope', '$compile', '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile',
+    '$location', 'storageService', 'locationsService', 'navigationService', 'isMobile',
 ];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;

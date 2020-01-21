@@ -184,12 +184,7 @@ class CouchSqlDomainMigrator:
         self._migrate_form_and_associated_models(couch_form)
         self.case_diff_queue.update(case_ids, form_id)
 
-    def _migrate_form_and_associated_models(
-        self,
-        couch_form,
-        form_is_processed=True,
-        replace_diffs=False,
-    ):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
         """
         Copies `couch_form` into a new sql form
         """
@@ -240,12 +235,12 @@ class CouchSqlDomainMigrator:
                 raise err from None
         finally:
             if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form, replace_diffs)
+                self._save_diffs(couch_form, sql_form)
 
-    def _save_diffs(self, couch_form, sql_form, replace):
+    def _save_diffs(self, couch_form, sql_form):
         couch_json = couch_form.to_json()
         sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json, replace)
+        self.statedb.save_form_diffs(couch_json, sql_json)
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -360,7 +355,7 @@ class CouchSqlDomainMigrator:
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
-            self._migrate_form_and_associated_models(form, replace_diffs=True)
+            self._migrate_form_and_associated_models(form)
         self._rediff_already_migrated_forms(migrated_ids)
 
     def _rediff_already_migrated_forms(self, form_ids):
@@ -383,7 +378,7 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form, replace_diffs=True)
+                    self._migrate_form_and_associated_models(form)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:

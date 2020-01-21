@@ -3636,6 +3636,16 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
         # doesn't change makes it easier to run the rule for this alert.
         self.fields['case_type'].disabled = True
 
+    def set_case_type_choices(self, initial):
+        # If this is an edit form, case type won't be editable (see set_read_only_fields_during_editing),
+        # so don't bother fetching case types.
+        if self.initial_rule:
+            self.fields['case_type'].choices = (
+                (case_type, case_type) for case_type in [initial or '']
+            )
+        else:
+            super().set_case_type_choices(initial)
+
     def __init__(self, *args, **kwargs):
         super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
         if self.initial_rule:
