@@ -4,11 +4,8 @@ import zipfile
 from django.db import connections
 from django.utils.functional import cached_property
 
-from custom.icds.utils.data_pull import (
-    data_pull_is_in_progress,
-    reset_data_pull_in_progress,
-    set_data_pull_in_progress,
-)
+from corehq.util.context_managers import prevent_parallel_execution
+from custom.icds.const import DATA_PULL_CACHE_KEY
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
 from custom.icds_reports.data_pull.exceptions import DataPullInProgressError
 
@@ -34,18 +31,14 @@ class DataExporter(object):
             self.data_pull_obj = data_pull_class(self.db_alias, month=self.month, location_id=self.location_id)
         self.result_file_name = None
 
+    @prevent_parallel_execution(DATA_PULL_CACHE_KEY)
     def export(self):
-        if data_pull_is_in_progress():
-            raise DataPullInProgressError
-        set_data_pull_in_progress()
         if self.slug_or_file in CUSTOM_DATA_PULLS:
             generated_files = self.data_pull_obj.run()
         else:
             generated_files = self._run_via_sql_file()
         if generated_files:
             self._zip_files(generated_files)
-
-        reset_data_pull_in_progress()
         return self.result_file_name
 
     def _run_via_sql_file(self):

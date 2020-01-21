@@ -13,14 +13,6 @@ def data_pull_is_in_progress():
     return cache.get(DATA_PULL_CACHE_KEY, False)
 
 
-def set_data_pull_in_progress():
-    return cache.set(DATA_PULL_CACHE_KEY, True, 60 * 60)
-
-
-def reset_data_pull_in_progress():
-    return cache.set(DATA_PULL_CACHE_KEY, False)
-
-
 def can_initiate_data_pull():
     current_hour = datetime.now(INDIA_TIMEZONE).hour
     return (
