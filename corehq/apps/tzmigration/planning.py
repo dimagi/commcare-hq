@@ -97,7 +97,7 @@ class BaseDB(object):
 
     def __repr__(self):
         readonly = ", readonly=True" if self.readonly else ""
-        return f"{type(self).__name__}({self.domain}, {self.db_filepath!r}{readonly})"
+        return f"{type(self).__name__}({self.domain!r}, {self.db_filepath!r}{readonly})"
 
     def __getstate__(self):
         return self.domain, self.db_filepath
