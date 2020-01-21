@@ -114,11 +114,10 @@
         "format": "%Y-%m"
       },
       {
-        "display": "use_salt",
-        "column_id": "use_salt",
-        "type": "field",
+        "type": "array_agg_last_value",
         "field": "use_salt",
-        "aggregation": "max"
+        "column_id": "use_salt",
+        "display": "use_salt"
       }
     ],
     "sort_expression": [
