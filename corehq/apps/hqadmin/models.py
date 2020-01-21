@@ -19,6 +19,9 @@ class SQLHqDeploy(models.Model):
     diff_url = models.CharField(max_length=126, null=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
+    class Meta:
+        db_table = "hqdeploy"
+
 
 class HqDeploy(Document):
     date = DateTimeProperty()
