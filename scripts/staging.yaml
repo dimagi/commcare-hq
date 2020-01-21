@@ -63,5 +63,4 @@ branches:
   - es/enterprise-subscriptions  # Ethan Jan 15
   - jls/migrate-HqDeploy-2 # Jenny Jan 20
   - bmb/soft-rollback-data-typing # Biyeun Jan 17
-  - jls/dry-up-less-debug # Jenny Jan 21
 submodules: {}
