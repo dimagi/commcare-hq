@@ -58,8 +58,7 @@
         media="all"
         href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
 
-    {% include "hqwebapp/partials/less_debug.html" %}
-  {% endif %}
+  {% include "hqwebapp/partials/less_debug.html" %}
 
   {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
