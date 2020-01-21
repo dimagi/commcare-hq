@@ -348,6 +348,3 @@ def process_reporting_metadata_staging():
                 user.save(fire_signals=False)
 
             record.delete()
-
-    if UserReportingMetadataStaging.objects.exists():
-        process_reporting_metadata_staging.delay()
