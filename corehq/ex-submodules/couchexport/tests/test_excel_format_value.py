@@ -116,7 +116,7 @@ def test_datetime():
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, datetime.datetime(2020, 1, 20, 11, 11), \
         datetime.datetime(2020, 1, 20, 11, 11), \
-        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
 
 
 def test_time():
