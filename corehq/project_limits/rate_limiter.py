@@ -120,8 +120,16 @@ def _get_users_included_in_subscription(domain):
             plan_version.feature_rates.get(feature__feature_type='User').monthly_limit)
 
         if plan_version.plan.is_customer_software_plan:
+            # For now just give each domain that's part of an enterprise account
+            # access to nearly all of the throughput allocation.
+            # Really what we want is to limit enterprise accounts' submissions accross all
+            # their domains together, but right now what we care about
+            # is not unfairly limiting high-paying enterprise accounts.
             n_domains = len(plan_version.subscription_set.filter(is_active=True))
-            return n_included_users / n_domains
+            # Heavily bias towards allowing high throughput
+            # 80% minimum, plus a fraction of 20% inversely proportional
+            # to the number of domains that share the throughput allocation.
+            return n_included_users * (.8 + .2 / n_domains)
         else:
             return n_included_users
     else:
