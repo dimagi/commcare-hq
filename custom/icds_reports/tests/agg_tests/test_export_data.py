@@ -633,8 +633,8 @@ class TestExportData(TestCase):
             SystemUsageExport(
                 config={
                     'domain': 'icds-cas',
-                    'month': datetime(2017, 5, 1)
-                }
+                    'month': datetime(2017, 5, 1),
+                }, beta=True
             ).get_excel_data('b1', False, True),
             [
                 ['System Usage', [
@@ -643,46 +643,57 @@ class TestExportData(TestCase):
                         'Number of days AWC was open in the given month',
                         'Number of launched AWCs (ever submitted at least one HH reg form)',
                         'Number of household registration forms', 'Number of add pregnancy forms',
-                        'Number of birth preparedness forms', 'Number of delivery forms',
-                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
-                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
-                        'Number of take home rations forms', 'Number of due list forms'
+                        'Number of delivery forms', 'Number of PNC forms',
+                        'Number of exclusive breastfeeding forms', 'Number of complementary feeding forms',
+                        'Number of growth monitoring forms', 'Number of take home rations forms',
+                        'Number of birth preparedness forms', 'Number of due list forms',
+                        'Number of launched LSs'
                     ],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 'Data Not Entered'],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st3', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st6', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     'Data Not Entered'],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered'],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Data Not Entered']
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
@@ -704,7 +715,7 @@ class TestExportData(TestCase):
                     'aggregation_level': 5,
                     'month': datetime(2017, 5, 1)
                 },
-                loc_level=5,
+                loc_level=5, beta=True
             ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True),
             [
                 ['System Usage', [
@@ -718,66 +729,67 @@ class TestExportData(TestCase):
                         'Number of days AWC was open in the given month',
                         'Number of launched AWCs (ever submitted at least one HH reg form)',
                         'Number of household registration forms', 'Number of add pregnancy forms',
-                        'Number of birth preparedness forms', 'Number of delivery forms',
-                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
-                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
-                        'Number of take home rations forms', 'Number of due list forms'
+                        'Number of delivery forms', 'Number of PNC forms',
+                        'Number of exclusive breastfeeding forms', 'Number of complementary feeding forms',
+                        'Number of growth monitoring forms', 'Number of take home rations forms',
+                        'Number of birth preparedness forms', 'Number of due list forms',
+                        'Number of launched LSs'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a1', '+91555555',
-                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
-                        11, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        11, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a25', 'Data Not Entered',
-                        13, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        13, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
-                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                        12, 'Not Launched', 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
-                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
-                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                        14, 'Launched', 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
-                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
-                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
-                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
-                        10, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        10, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a26', 'Data Not Entered',
-                        12, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        12, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
-                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
-                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                        7, 'Not Launched', 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
-                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Not applicable at AWC level'
                     ]
                 ]],
                 ['Export Info', [
