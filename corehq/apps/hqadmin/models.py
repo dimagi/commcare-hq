@@ -57,7 +57,6 @@ class HqDeploy(Document):
     code_snapshot = DictProperty()
     diff_url = StringProperty()
 
-
     def save(self, *args, **kwargs):
         # Save to couch
         # This must happen first so the SQL save finds this doc and doesn't recreate it
