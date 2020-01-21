@@ -20,7 +20,6 @@ from corehq.apps.accounting.models import (
     FeatureType,
     Invoice,
     LineItem,
-    SoftwarePlan,
     SoftwarePlanEdition,
     Subscriber,
     Subscription,
@@ -83,8 +82,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         cls.domain.delete()
 
         if cls.is_using_test_plans:
-            for software_plan in SoftwarePlan.objects.all():
-                SoftwarePlan.get_version.clear(software_plan)
+            utils.clear_plan_version_cache()
 
         super(BaseInvoiceTestCase, cls).tearDownClass()
 
