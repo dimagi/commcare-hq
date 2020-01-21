@@ -3,7 +3,6 @@ from datetime import date, datetime
 from django.db import models
 
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.parsing import json_format_datetime
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
     get_all_pillow_instances,
@@ -34,29 +33,6 @@ class SQLHqDeploy(models.Model):
         if limit:
             return query[:limit]
         return query
-
-
-class HqDeploy(Document):
-    date = DateTimeProperty()
-    user = StringProperty()
-    environment = StringProperty()
-    code_snapshot = DictProperty()
-    diff_url = StringProperty()
-
-    def save(self, *args, **kwargs):
-        # Save to SQL
-        model, created = SQLHqDeploy.objects.update_or_create(
-            couch_id=self.get_id,
-            defaults={
-                'date': self.date,
-                'user': self.user,
-                'environment': self.environment,
-                'diff_url': self.diff_url,
-            }
-        )
-
-        # Save to couch
-        super().save(*args, **kwargs)
 
 
 class HistoricalPillowCheckpoint(models.Model):
