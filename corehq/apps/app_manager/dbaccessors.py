@@ -178,14 +178,18 @@ def get_app_cached(domain, app_id):
     which are read-only.
 
     This only caches app builds."""
-    key = 'app_build_cache_{}_{}'.format(domain, app_id)
-    app = cache.get(key)
-    if not app:
-        app = get_app(domain, app_id)
-        if app.copy_of:
-            cache.set(key, app, 24 * 3600)
-
+    app = get_app_cached()
+    if not app.copy_of:
+        _get_app_cached.clear(app_id)
     return app
+
+
+@quickcache(['domain', 'app_id'], timeout=24 * 3600,
+    memoize_timeout=24 * 3600, session_function=None)
+def _get_app_cached(domain, app_id):
+    # This should only be used by get_app_cached which clears the cache
+    #   if the app is an actual app
+    return get_app(domain, app_id)
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
