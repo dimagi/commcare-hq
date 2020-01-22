@@ -338,10 +338,17 @@ def process_reporting_metadata_staging():
                     num_unsent_forms=record.num_unsent_forms,
                     num_quarantined_forms=record.num_quarantined_forms
                 )
+                if not record.last_heartbeat:
+                    # coming from sync
+                    latest_build_date = record.sync_date
+                else:
+                    # coming from hearbeat
+                    latest_build_date = record.modified_on
                 save |= mark_last_synclog(
                     record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, record.device_id, device_app_meta,
-                    commcare_version=record.commcare_version, build_profile_id=record.build_profile_id, save_user=False
+                    record.sync_date, latest_build_date, record.device_id, device_app_meta,
+                    commcare_version=record.commcare_version, build_profile_id=record.build_profile_id,
+                    save_user=False
                 )
             if save:
                 user.save(fire_signals=False)
