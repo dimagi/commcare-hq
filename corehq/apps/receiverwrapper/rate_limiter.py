@@ -91,8 +91,7 @@ def report_submission_usage(domain):
 
 def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
     with TimingContext() as timer:
-        acquired = submission_rate_limiter.wait(domain, timeout=max_wait,
-                                                windows_not_to_wait_on=('hour', 'day', 'week'))
+        acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
     if acquired:
         duration_tag = bucket_value(timer.duration, [.5, 1, 5, 10, 15], unit='s')
     elif timer.duration < max_wait:
