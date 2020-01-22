@@ -70,10 +70,19 @@ class RateLimiter(object):
             for rate_counter, limit in self.get_rate_limits(*scope)
         )
 
-    def wait(self, scope, timeout):
+    def wait(self, scope, timeout, windows_not_to_wait_on=('hour', 'day', 'week')):
         start = time.time()
         target_end = start + timeout
         delay = 0
+        larger_windows_allow = all(
+            current_rate < limit
+            for rate_counter_key, current_rate, limit in self.iter_rates(scope)
+            if rate_counter_key in windows_not_to_wait_on
+        )
+        if not larger_windows_allow:
+            # There's no point in waiting 15 seconds for the hour/day/week values to change
+            return False
+
         while True:
             if self.allow_usage(scope):
                 return True
