@@ -61,7 +61,6 @@ branches:
   - dmr/es-rewrite-not-and  # Danny Jan 10
   - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
-  - jls/migrate-HqDeploy-2 # Jenny Jan 20
-  - bmb/soft-rollback-data-typing # Biyeun Jan 17
-  - jls/dry-up-less-debug # Jenny Jan 21
+  - bmb/SAASP-10249 # Biyeun Jan 21
+  #- jls/migrate-HqDeploy-1 # Jenny Jan 21
 submodules: {}
