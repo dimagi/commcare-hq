@@ -8,9 +8,9 @@ from couchexport import writers
 
 
 def get_writer(format, use_formatted_cells=False):
+    if format == Format.XLS_2007:
+        return writers.Excel2007ExportWriter(use_formatted_cells=use_formatted_cells)
     try:
-        if Format.XLS_2007:
-            return writers.Excel2007ExportWriter(use_formatted_cells=use_formatted_cells)
         return {
             Format.CSV: writers.CsvExportWriter,
             Format.HTML: writers.HtmlExportWriter,
