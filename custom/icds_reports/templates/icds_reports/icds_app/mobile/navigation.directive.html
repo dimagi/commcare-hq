@@ -8,71 +8,22 @@
             <img src="{% static 'icds_reports/mobile/images/program-summary.png' %}" class="mr-3">
             <p class="navigation-font mb-0">Program Summary</p>
         </a>
-        <div class="menu-options" ng-click="expandedSectionId = (expandedSectionId==='nutrition') ? '' : 'nutrition'">
-            <img src="{% static 'icds_reports/mobile/images/mother.png' %}" class="mr-3">
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
-                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
-            </div>
-        </div>
-        <div>
-            <div id="nutrition" ng-show="expandedSectionId==='nutrition'">
-                <div ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
-                     ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
-                    <a href="{$ goToStep(menuItem['route'], $location.search()) $}" class="sub-links"
-                        ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
+        <div ng-repeat="menuItem in navMenuItems['sections']">
+            <div class="menu-options" ng-click="expandedSectionId = (expandedSectionId=== menuItem['sectionId']) ? '' : menuItem['sectionId']">
+                <img ng-src="{% static 'icds_reports/mobile/images/' %}{$menuItem['image']$}" class="mr-3">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <p class="navigation-font mb-0">{$ menuItem['name'] $}</p>
+                    <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
                 </div>
             </div>
-        </div>
-        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='reach') ? '' : 'reach'">
-          <img src="{% static 'icds_reports/mobile/images/stats-sidebar.png' %}" class="mr-3">
-          <div class="d-flex justify-content-between align-items-center w-100">
-              <p class="navigation-font mb-0">ICDS-CAS Reach</p>
-              <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
-          </div>
-        </div>
-        <div>
-            <div id="reach" ng-show="expandedSectionId==='reach'">
-                <div ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
-                     ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
-                    <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
-                       class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
-                </div>
-            </div>
-        </div>
-        <div class="menu-options" ng-click="expandedSectionId=(expandedSectionId==='demographics') ? '' : 'demographics'">
-            <img src="{% static 'icds_reports/mobile/images/threegroup-sidebar.png' %}" class="mr-3">
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <p class="navigation-font mb-0">Demographics</p>
-                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
-            </div>
-        </div>
-        <div>
-            <div id="demographics" ng-show="expandedSectionId==='demographics'">
-                <div ng-repeat="menuItem in navMenuItems['Demographics']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
-                     ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
-                    <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
-                       class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
-                </div>
-            </div>
-        </div>
-        <div class="menu-options" ng-click="expandedSectionId= (expandedSectionId==='infrastructure') ? '' : 'infrastructure'">
-            <img src="{% static 'icds_reports/mobile/images/bulb-sidebar.png' %}" class="mr-3">
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <p class="navigation-font mb-0">AWC Infrastructure</p>
-                <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
-            </div>
-        </div>
-        <div>
-            <div id="infrastructure" ng-show="expandedSectionId==='infrastructure'">
-                <div ng-repeat="menuItem in navMenuItems['AWC Infrastructure']"
-                     class="navigation-font pl-3 pr-3 mb-0" ng-show="menuItem['showInMobile'] && !menuItem['featureFlagOnly']"
-                     ng-class="{'active-mobile-link': $location.path().indexOf(menuItem['route']) !== -1}">
-                    <a href="{$ goToStep(menuItem['route'], $location.search()) $}"
-                       class="sub-links" ng-click="closeMenu()" ng-bind="menuItem['name']"></a>
+            <div>
+                <div id="nutrition" ng-show="expandedSectionId===menuItem['sectionId']">
+                    <div ng-repeat="subPage in menuItem['sub_pages']"
+                         class="navigation-font pl-3 pr-3 mb-0" ng-show="subPage['showInMobile'] && !subPage['featureFlagOnly']"
+                         ng-class="{'active-mobile-link': $location.path().indexOf(subPage['route']) !== -1}">
+                        <a href="{$ goToStep(subPage['route'], $location.search()) $}" class="sub-links"
+                            ng-click="closeMenu()" ng-bind="subPage['name']"></a>
+                    </div>
                 </div>
             </div>
         </div>

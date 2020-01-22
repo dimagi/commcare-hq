@@ -36,6 +36,13 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
     };
 
+    $scope.toggleCollapse = function (sectionId) {
+         $scope.healthCollapsed = (sectionId === 'healthCollapsed') ? !$scope.healthCollapsed : true;
+         $scope.icdsCasReach = (sectionId === 'icdsCasReach') ? !$scope.icdsCasReach : true;
+         $scope.demographics = (sectionId === 'demographics') ? !$scope.demographics : true;
+         $scope.infrastructure = (sectionId === 'infrastructure') ? !$scope.infrastructure : true;
+    };
+
     // used by mobile only
     $scope.closeMenu = function () {
         if (isMobile) {

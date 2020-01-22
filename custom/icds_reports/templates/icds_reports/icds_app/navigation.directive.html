@@ -14,62 +14,17 @@
                     <div class="col-sm-9">{% trans "Program Summary" %}</div>
                 </a>
             </li>
-            <li class="nav-header" >
-                <div class="row pointer" ng-click="healthCollapsed = !healthCollapsed; icdsCasReach = true; demographics = true; infrastructure = true;">
-                    <div class="col-sm-1"><i class="fa fa-child" aria-hidden="true"></i></div>
-                    <div class="col-sm-8">{% trans "Maternal and Child Nutrition" %}</div>
+            <li class="nav-header" data-toggle="collapse" data-target=""  ng-repeat="menuItem in navMenuItems['sections']">
+                <div class="row pointer" ng-click="toggleCollapse(menuItem['sectionId'])">
+                    <div class="col-sm-1"><i class="fa" ng-class="[menuItem['icon']]" aria-hidden="true"></i></div>
+                    <div class="col-sm-8">{$ menuItem['name'] $}</div>
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
-                <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
-                    <li ng-repeat="menuItem in navMenuItems['Maternal and Child Nutrition']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
-                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
-                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
-                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}</a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-header" data-toggle="collapse" data-target="">
-                <div class="row pointer" ng-click="icdsCasReach = !icdsCasReach; healthCollapsed = true; demographics = true; infrastructure = true;">
-                    <div class="col-sm-1"><i class="fa fa-bar-chart" aria-hidden="true"></i></div>
-                    <div class="col-sm-8">{% trans "ICDS-CAS Reach" %}</div>
-                    <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
-                </div>
-                <ul class="nav nav-list collapse" uib-collapse="icdsCasReach">
-                    <li ng-repeat="menuItem in navMenuItems['ICDS-CAS Reach']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
-                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
-                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
-                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-header" data-toggle="collapse" data-target="">
-                <div class="row pointer" ng-click="demographics = !demographics;  healthCollapsed = true; icdsCasReach = true; infrastructure = true;">
-                    <div class="col-sm-1"><i class="fa fa-users" aria-hidden="true"></i></div>
-                    <div class="col-sm-8">{% trans "Demographics" %}</div>
-                    <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
-                </div>
-                <ul class="nav nav-list collapse" uib-collapse="demographics">
-                    <li ng-repeat="menuItem in navMenuItems['Demographics']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
-                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
-                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
-                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-header" data-toggle="collapse" data-target="">
-                <div class="row pointer" ng-click="infrastructure = !infrastructure;  healthCollapsed = true; icdsCasReach = true; demographics = true;">
-                    <div class="col-sm-1"><i class="fa fa-lightbulb-o" aria-hidden="true"></i></div>
-                    <div class="col-sm-8">{% trans "AWC Infrastructure" %}</div>
-                    <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
-                </div>
-                <ul class="nav nav-list collapse" uib-collapse="infrastructure">
-                    <li ng-repeat="menuItem in navMenuItems['AWC Infrastructure']" ng-show="menuItem['showInWeb'] && !menuItem['featureFlagOnly']"
-                        ng-class="{'active': $location.path().indexOf(menuItem['route']) !== -1}">
-                        <a href="{$ goToStep(menuItem['route'], $location.search()) $}" >
-                            {% blocktrans %} {$ menuItem['name'] $} {% endblocktrans %}
-                        </a>
+                <ul class="nav nav-list collapse" uib-collapse="{$ menuItem['sectionId'] $}">
+                    <li ng-repeat="subPage in menuItem['sub_pages']" ng-show="subPage['showInWeb'] && !subPage['featureFlagOnly']"
+                        ng-class="{'active': $location.path().indexOf(subPage['route']) !== -1}">
+                        <a href="{$ goToStep(subPage['route'], $location.search()) $}" >
+                            {% blocktrans %} {$ subPage['name'] $} {% endblocktrans %}</a>
                     </li>
                 </ul>
             </li>

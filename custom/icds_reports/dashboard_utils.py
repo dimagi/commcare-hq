@@ -5,6 +5,7 @@ from corehq.apps.locations.util import location_hierarchy_config
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.utils import icds_pre_release_features
 
+import attr
 
 def get_dashboard_template_context(domain, couch_user):
     context = {}
@@ -63,206 +64,85 @@ def _get_nav_metadatada():
     }
 
 
+@attr.s
+class NavMenuSectionsList (object):
+    sections = attr.ib()
+
+
+@attr.s
+class NavMenuSection (object):
+    name = attr.ib()
+    sub_pages = attr.ib()
+    sectionId = attr.ib()  # used to collapse and expand a section in nav menu
+    icon = attr.ib(default='fa-child')  # used for image of navigation section heading in web
+    image = attr.ib(default='mother.png')  # used for image of navigation section heading in mobile
+
+
+@attr.s
+class NavMenuSubPages (object):
+    name = attr.ib()
+    route = attr.ib()
+    featureFlagOnly = attr.ib(default=False)
+    showInWeb = attr.ib(default=True)
+    showInMobile = attr.ib(default=True)
+
+
 def _get_nav_menu_items():
-    return {
-        'Maternal and Child Nutrition': [
-            {
-                'name': 'Prevalence of Underweight (Weight-for-Age)',
-                'route': 'maternal_and_child/underweight_children',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Prevalence of Wasting (Weight-for-Height)',
-                'route': 'maternal_and_child/wasting',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Prevalence of Stunting (Height-for-Age)',
-                'route': 'maternal_and_child/stunting',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Newborns with Low Birth Weight',
-                'route': 'maternal_and_child/low_birth',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Early Initiation of Breastfeeding',
-                'route': 'maternal_and_child/early_initiation',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Exclusive Breastfeeding',
-                'route': 'maternal_and_child/exclusive_breastfeeding',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Children initiated appropriate complementary feeding',
-                'route': 'maternal_and_child/children_initiated',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Institutional deliveries',
-                'route': 'maternal_and_child/institutional_deliveries',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Immunization coverage (at age 1 year)',
-                'route': 'maternal_and_child/immunization_coverage',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-        ],
-        'ICDS-CAS Reach': [
-            {
-                'name': 'AWCs Daily Status',
-                'route': 'icds_cas_reach/awc_daily_status',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Launched',
-                'route': 'icds_cas_reach/awcs_covered',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            }
-        ],
-        'Demographics': [
-            {
-                'name': 'Registered Households',
-                'route': 'demographics/registered_household',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Aadhaar-seeded Beneficiaries',
-                'route': 'demographics/adhaar',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Children enrolled for Anganwadi Services',
-                'route': 'demographics/enrolled_children',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Pregnant Women enrolled for Anganwadi Services',
-                'route': 'demographics/enrolled_women',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Lactating Mothers enrolled for Anganwadi Services',
-                'route': 'demographics/lactating_enrolled_women',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'Out of school Adolescent girls(11-14 years)',
-                'route': 'demographics/adolescent_girls',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            }
-        ],
-        'AWC Infrastructure': [
-            {
-                'name': 'AWCs Reported Clean Drinking Water',
-                'route': 'awc_infrastructure/clean_water',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported functional toilet',
-                'route': 'awc_infrastructure/functional_toilet',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported Weighing Scale: Infants',
-                'route': 'awc_infrastructure/infants_weight_scale',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported Weighing Scale: Mother and Child',
-                'route': 'awc_infrastructure/adult_weight_scale',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported Medicine kit',
-                'route': 'awc_infrastructure/medicine_kit',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported Infantometer',
-                'route': 'awc_infrastructure/infantometer',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            },
-            {
-                'name': 'AWCs Reported Stadiometer',
-                'route': 'awc_infrastructure/stadiometer',
-                'children': False,
-                'featureFlagOnly': False,
-                'showInMobile': True,
-                'showInWeb': True
-            }
-        ],
-    }
+    return attr.asdict(NavMenuSectionsList([
+        NavMenuSection(_('Maternal and Child Nutrition'),
+                       [NavMenuSubPages(_('Prevalence of Underweight (Weight-for-Age)'),
+                                        'maternal_and_child/underweight_children'),
+                        NavMenuSubPages(_('Prevalence of Wasting (Weight-for-Height)'),
+                                        'maternal_and_child/wasting'),
+                        NavMenuSubPages(_('Prevalence of Stunting (Height-for-Age)'),
+                                        'maternal_and_child/stunting'),
+                        NavMenuSubPages(_('Newborns with Low Birth Weight'),
+                                        'maternal_and_child/low_birth'),
+                        NavMenuSubPages(_('Early Initiation of Breastfeeding'),
+                                        'maternal_and_child/early_initiation'),
+                        NavMenuSubPages(_('Exclusive Breastfeeding'),
+                                        'maternal_and_child/exclusive_breastfeeding'),
+                        NavMenuSubPages(_('Children initiated appropriate complementary feeding'),
+                                        'maternal_and_child/children_initiated'),
+                        NavMenuSubPages(_('Institutional deliveries'),
+                                        'maternal_and_child/institutional_deliveries'),
+                        NavMenuSubPages(_('Immunization coverage (at age 1 year)'),
+                                        'maternal_and_child/immunization_coverage')],
+                       'healthCollapsed', 'fa-child', 'mother.png'
+                       ),
+        NavMenuSection(_('ICDS-CAS Reach'),
+                       [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
+                        NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')],
+                       'icdsCasReach', 'fa-bar-chart', 'stats-sidebar.png'
+                       ),
+        NavMenuSection(_('Demographics'),
+                       [NavMenuSubPages(_('Registered Households'), 'demographics/registered_household'),
+                        NavMenuSubPages(_('Aadhaar-seeded Beneficiaries'), 'demographics/adhaar'),
+                        NavMenuSubPages(_('Children enrolled for Anganwadi Services'),
+                                        'demographics/enrolled_children'),
+                        NavMenuSubPages(_('Pregnant Women enrolled for Anganwadi Services'),
+                                        'demographics/enrolled_women'),
+                        NavMenuSubPages(_('Lactating Mothers enrolled for Anganwadi Services'),
+                                        'demographics/lactating_enrolled_women'),
+                        NavMenuSubPages(_('Out of school Adolescent girls(11-14 years)'),
+                                        'demographics/adolescent_girls')],
+                       'demographics', 'fa-users', 'threegroup-sidebar.png'
+                       ),
+        NavMenuSection(_('AWC Infrastructure'),
+                       [NavMenuSubPages(_('AWCs Reported Clean Drinking Water'),
+                                        'awc_infrastructure/clean_water'),
+                        NavMenuSubPages(_('AWCs Reported functional toilet'),
+                                        'awc_infrastructure/functional_toilet'),
+                        NavMenuSubPages(_('AWCs Reported Weighing Scale: Infants'),
+                                        'awc_infrastructure/infants_weight_scale'),
+                        NavMenuSubPages(_('AWCs Reported Weighing Scale: Mother and Child'),
+                                        'awc_infrastructure/adult_weight_scale'),
+                        NavMenuSubPages(_('AWCs Reported Medicine kit'),
+                                        'awc_infrastructure/medicine_kit'),
+                        NavMenuSubPages(_('AWCs Reported Infantometer'),
+                                        'awc_infrastructure/infantometer'),
+                        NavMenuSubPages(_('AWCs Reported Stadiometer'),
+                                        'awc_infrastructure/stadiometer')],
+                       'infrastructure', 'fa-lightbulb-o', 'bulb-sidebar.png'
+                       ),
+    ]))
