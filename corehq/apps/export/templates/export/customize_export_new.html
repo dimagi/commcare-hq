@@ -131,7 +131,7 @@
                 </label>
               </div>
 
-              {% if request|toggle_enabled:"EXCEL_EXPORT_DATA_TYPING" %}
+              {% if request|toggle_enabled:"EXCEL_EXPORT_DATA_TYPING" and export_instance.type == 'form' %}
               <div class="checkbox">
                 <label>
                   <input type="checkbox"
