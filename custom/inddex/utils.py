@@ -9,34 +9,6 @@ from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter,
     BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
 
 
-class ReportMixin(DatespanMixin):
-    request = domain = None
-
-    @property
-    def fields(self):
-        return [DateRangeFilter]
-
-    @property
-    def report_config(self):
-        return {
-            'domain': self.domain,
-            'startdate': self.start_date,
-            'enddate': self.end_date
-        }
-
-    @property
-    def start_date(self):
-        start_date = self.request.GET.get('startdate')
-
-        return start_date if start_date else str(datetime.datetime.now().date())
-
-    @property
-    def end_date(self):
-        end_date = self.request.GET.get('end_date')
-
-        return end_date if end_date else str(datetime.datetime.now().date())
-
-
 class ReportBaseMixin:
     request = None
 
@@ -117,7 +89,7 @@ class MultiSheetReportExport(ReportExport):
         return self.build_export_data()
 
 
-class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport):
+class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     title = 'Multi report'
     name = 'Multi Report'
     slug = 'multi_report'
@@ -125,6 +97,31 @@ class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport)
     flush_layout = True
     default_rows = 10
     exportable = True
+    request = domain = None
+
+    @property
+    def fields(self):
+        return [DateRangeFilter]
+
+    @property
+    def report_config(self):
+        return {
+            'domain': self.domain,
+            'startdate': self.start_date,
+            'enddate': self.end_date
+        }
+
+    @property
+    def start_date(self):
+        start_date = self.request.GET.get('startdate')
+
+        return start_date if start_date else str(datetime.datetime.now().date())
+
+    @property
+    def end_date(self):
+        end_date = self.request.GET.get('end_date')
+
+        return end_date if end_date else str(datetime.datetime.now().date())
 
     @property
     def data_providers(self):
