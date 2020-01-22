@@ -7,15 +7,16 @@ from couchexport.models import Format
 from couchexport import writers
 
 
-def get_writer(format):
+def get_writer(format, use_formatted_cells=False):
     try:
+        if Format.XLS_2007:
+            return writers.Excel2007ExportWriter(use_formatted_cells=use_formatted_cells)
         return {
             Format.CSV: writers.CsvExportWriter,
             Format.HTML: writers.HtmlExportWriter,
             Format.ZIPPED_HTML: writers.ZippedHtmlExportWriter,
             Format.JSON: writers.JsonExportWriter,
             Format.XLS: writers.Excel2003ExportWriter,
-            Format.XLS_2007: writers.Excel2007ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
             Format.CDISC_ODM: writers.CdiscOdmExportWriter,
             Format.PYTHON_DICT: writers.PythonDictWriter,
