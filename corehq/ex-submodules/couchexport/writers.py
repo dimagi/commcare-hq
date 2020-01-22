@@ -389,7 +389,9 @@ class Excel2007ExportWriter(ExportWriter):
             skip_formatting_on_row = (isinstance(row, FormattedRow)
                                       and col_ind in row.skip_excel_formatting)
 
-            if self.use_formatted_cells and not skip_formatting_on_row:
+            if (self.use_formatted_cells
+                    and not skip_formatting_on_row
+                    and not self.format_as_text):
                 excel_format, val_fmt = get_excel_format_value(val)
                 cell = WriteOnlyCell(sheet, val_fmt)
                 cell.number_format = excel_format
