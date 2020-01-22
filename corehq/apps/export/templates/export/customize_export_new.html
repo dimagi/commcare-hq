@@ -118,14 +118,20 @@
                   <input type="checkbox"
                          id="transform-dates-checkbox"
                          data-bind="checked: transform_dates" />
-                  <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
-                  {% blocktrans %}
-                    Leaving this checked will ensure dates appear in excel format.
-                    Otherwise they will appear as a normal text format. This also allows for
-                    hyperlinks to the multimedia captured by your form submission.
-                  {% endblocktrans %}
+                  {% if request|toggle_enabled:"EXCEL_EXPORT_DATA_TYPING" %}
+                    <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
+                    {% blocktrans %}
+                      Leaving this checked will ensure dates appear in excel format.
+                      Otherwise they will appear as a normal text format. This also allows for
+                      hyperlinks to the multimedia captured by your form submission.
+                    {% endblocktrans %}
+                  {% else %}
+                    {% trans "Automatically convert dates and links for Excel" %}
+                  {% endif %}
                 </label>
               </div>
+
+              {% if request|toggle_enabled:"EXCEL_EXPORT_DATA_TYPING" %}
               <div class="checkbox">
                 <label>
                   <input type="checkbox"
@@ -139,6 +145,7 @@
                   {% endblocktrans %}
                 </label>
               </div>
+              {% endif %}
 
               <div class="checkbox">
                 <label>
