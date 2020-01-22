@@ -107,21 +107,9 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     def report_config(self):
         return {
             'domain': self.domain,
-            'startdate': self.start_date,
-            'enddate': self.end_date
+            'startdate': self.datespan.startdate,
+            'enddate': self.datespan.enddate,
         }
-
-    @property
-    def start_date(self):
-        start_date = self.request.GET.get('startdate')
-
-        return start_date if start_date else str(datetime.datetime.now().date())
-
-    @property
-    def end_date(self):
-        end_date = self.request.GET.get('end_date')
-
-        return end_date if end_date else str(datetime.datetime.now().date())
 
     @property
     def data_providers(self):
