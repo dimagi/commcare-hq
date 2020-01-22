@@ -78,7 +78,6 @@
         "transform": {},
         "is_nullable": false,
         "is_primary_key": true,
-        "create_index": true,
         "column_id": "supervisor_id",
         "expression": {
           "location_id_expression": {
@@ -176,11 +175,7 @@
       },
       "primary_key": ["supervisor_id","doc_id"]
     },
-    "sql_column_indexes": [
-      {
-        "column_ids": ["doc_id"]
-      }
-    ],
+    "sql_column_indexes": [],
     "disable_destructive_rebuild": true
   }
 }

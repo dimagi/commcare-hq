@@ -7,6 +7,25 @@
 
 {% block title %}{% trans "Login to ICDS CAS" %}{% endblock title %}
 {% block title_context %} {% endblock %}
+{% block stylesheets %}
+  <style>
+    .vcenter {
+      display: flex;
+      align-items: center;
+    }
+    img.logo {
+      width: 100%;
+    }
+    img.phone {
+      max-height: 300px;
+      width: 100%;
+    }
+    #login-footer {
+      margin-top: 60px;
+      text-align: center;
+    }
+  </style>
+{% endblock stylesheets %}
 
 <!-- get rid of navigation menu -->
 {% block navigation %}
@@ -16,44 +35,36 @@
 {% block page_content %}
 {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
 <div class="container">
-    <div class="row">
-        <div class="col-sm-2">
-            <img style="width: 100%" src="{% static 'icds/img/poshan-logo.png' %}" alt="CommCare HQ Logo" />
+    <div class="row vcenter">
+        <div class="col-xs-2">
+            <img class="logo" src="{% static 'icds/img/poshan-logo.png' %}" alt="Poshan Logo" />
         </div>
-        <div class="col-sm-8">
+        <div class="col-xs-8">
             <br/>
             {% blocktrans %}
             <h4 class="text-center">Government of India</h4>
             <h2 class="text-center">Ministry of Women and Child Development</h2>
             {% endblocktrans %}
         </div>
-        <div class="col-sm-2">
-            <a href="{% url "homepage" %}" class="navbar-brand">
-            <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CommCare HQ Logo" />
-            </a>
+        <div class="col-xs-2">
+            <img class="logo" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CAS Logo" />
         </div>
     </div>
-
     <div class="row">
-        <div class="col-sm-2">
-            <img style="height:300px" src="{% static 'icds/img/phone_left.png' %}">
+        <div class="col-sm-2 hidden-xs">
+            <img class="phone" src="{% static 'icds/img/phone_left.png' %}">
         </div>
-
         <div class="col-sm-8" style="padding-top: 40px">
             <h2 class="text-center">Welcome to ICDS-CAS!</h2>
             {% include "login_and_password/two_factor/core/login.html" %}
         </div>
-        <div class="col-lg-2">
-            <img style="height:300px" src="{% static 'icds/img/phone_right.png' %}">
+        <div class="col-sm-2 hidden-xs">
+            <img class="phone" src="{% static 'icds/img/phone_right.png' %}">
         </div>
     </div>
-
-    <div class="row" style="margin-top:60px">
-        <div class="col-sm-1"></div>
-        <div class="col-sm-11">
-            <h6 style="text-align: center;">Content Managed by Ministry of Women and Child Development, GOI</h6>
-            <hr style="background-color: black; height: 3px; border: 0;"/>
-        </div>
+    <div class="row" id="login-footer">
+      <h6 >Content Managed by Ministry of Women and Child Development, GOI</h6>
+      <hr style="background-color: black; height: 3px; border: 0;"/>
     </div>
 </div>
 {% endblock page_content %}

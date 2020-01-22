@@ -11,7 +11,11 @@ describe('Kpi Directive', function () {
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
-    beforeEach(module('icdsApp'));
+    beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("isMobile", false);
+        $provide.constant("haveAccessToFeatures", false);
+
+    }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_) {
         $compile = _$compile_;

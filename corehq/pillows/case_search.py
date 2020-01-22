@@ -112,6 +112,14 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
 
 def get_case_search_processor():
+    """Case Search
+
+    Reads from:
+      - Case data source
+
+    Writes to:
+      - Case Search ES index
+    """
     return CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,

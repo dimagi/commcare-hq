@@ -46,10 +46,6 @@ CALLBACK_PENDING = "PENDING"
 CALLBACK_RECEIVED = "RECEIVED"
 CALLBACK_MISSED = "MISSED"
 
-FORWARD_ALL = "ALL"
-FORWARD_BY_KEYWORD = "KEYWORD"
-FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
-
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
@@ -462,17 +458,6 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
             )
         except cls.DoesNotExist:
             return None
-
-
-class ForwardingRule(Document):
-    domain = StringProperty()
-    forward_type = StringProperty(choices=FORWARDING_CHOICES)
-    keyword = StringProperty()
-    backend_id = StringProperty() # id of MobileBackend which will be used to do the forwarding
-    
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
 
 
 class PhoneBlacklist(models.Model):
@@ -1154,9 +1139,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_form_name_or_none(cls, domain, app_id, form_unique_id):
         try:
-            if app_id is None:
-                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, form_unique_id)
             app = get_app(domain, app_id)
             form = app.get_form(form_unique_id)
             return form.full_path_name

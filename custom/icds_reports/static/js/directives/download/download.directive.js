@@ -1,13 +1,14 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService, isAlertActive) {
+    downloadService, isAlertActive, userLocationType) {
     var vm = this;
 
     vm.months = [];
     vm.monthsCopy = [];
     vm.years = [];
     vm.yearsCopy = [];
+    vm.userLocationType = userLocationType;
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.previousTaskFailed = null;
@@ -76,7 +77,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var latest = new Date();
         if (latest.getDate() <= 3 && vm.months[vm.months.length - 1].id === latest.getMonth() + 1 &&
             vm.selectedYear === latest.getFullYear()) {
-            vm.months.pop();
+            if (vm.months.length === 1) {
+                // For January, reset to Dec last year
+                vm.months = vm.monthsCopy;
+                vm.selectedYear = latest.getFullYear() - 1;
+            } else {
+                vm.months.pop();
+            }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
     };
@@ -141,8 +148,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 10, name: 'Take Home Ration (THR)'},
     ];
 
-    if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 11, name: 'Dashboard usage(Last 7 days)'});
+    if (vm.userLocationType.toLowerCase() !== 'block') {
+        vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
     var ALL_OPTION = {
@@ -644,7 +651,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService', 'isAlertActive'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

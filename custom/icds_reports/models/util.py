@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
@@ -69,10 +70,27 @@ class ICDSAuditEntryRecord(models.Model):
 
 class AggregationRecord(models.Model):
     agg_date = models.DateField()
-    run_date = models.DateField(auto_now_add=True)
+    run_date = models.DateField()
     state_ids = ArrayField(models.CharField(max_length=255), null=True)
     agg_uuid = models.UUIDField(unique=True, default=uuid.uuid4)
     interval = models.IntegerField(null=True)
+
+    @property
+    def run_aggregation_queries(self) -> bool:
+        # always run the current month
+        if self.interval == 0:
+            return True
+
+        if self.run_date.day in (1, 2, 3):
+            return True
+        if self.run_date.day == 11:  # for performance report
+            return True
+        if self.run_date.isoweekday() == 6:  # Saturday
+            return True
+        if self.run_date.month != (self.run_date + timedelta(days=1)).month:  # last day of month
+            return True
+
+        return False
 
 
 class UcrReconciliationStatus(models.Model):
@@ -143,17 +161,23 @@ class UcrReconciliationStatus(models.Model):
                 ],
                 "static-visitorbook_forms": [
                     'http://openrosa.org/formdesigner/08583F46-ED60-4864-B54F-CA725D5C230E',
+                ],
+                'static-dashboard_thr_forms': [
+                    'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
+                ],
+                'static-thr_forms_v2': [
+                    'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
                 ]
             },
             cls.CommCareCase: {
-                'commcare-user': ['static-commcare_user_cases'],
-                'ccs_record': ['static-ccs_record_cases'],
-                'child_health': ['static-child_health_cases'],
-                'hardware': ['static-hardware_cases'],
-                'household': ['static-household_cases'],
-                'person': ['static-person_cases_v3'],
-                'tasks': ['static-tasks_cases'],
-                'tech_issue': ['static-tech_issue_cases'],
+                'static-commcare_user_cases': ['commcare-user'],
+                'static-ccs_record_cases': ['ccs_record'],
+                'static-child_health_cases': ['child_health'],
+                'static-hardware_cases': ['hardware'],
+                'static-household_cases': ['household'],
+                'static-person_cases_v3': ['person'],
+                'static-tasks_cases': ['tasks'],
+                'static-tech_issue_cases': ['tech_issue'],
             },
         }
 

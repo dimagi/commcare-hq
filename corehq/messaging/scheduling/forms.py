@@ -442,12 +442,8 @@ class ContentForm(Form):
             result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
-            app_id = content.app_id
-            if app_id is None:
-                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                app_id,
+                content.app_id,
                 content.form_unique_id
             )
             result['survey_expiration_in_hours'] = content.expire_after // 60
@@ -464,12 +460,8 @@ class ContentForm(Form):
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
-            app_id = content.app_id
-            if app_id is None:
-                from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-                app_id = get_app_id_from_form_unique_id(domain, content.form_unique_id)
             result['app_and_form_unique_id'] = get_combined_id(
-                app_id,
+                content.app_id,
                 content.form_unique_id
             )
             result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
@@ -3643,6 +3635,16 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
         # an existing conditional alert. Being allowed to assume that case_type
         # doesn't change makes it easier to run the rule for this alert.
         self.fields['case_type'].disabled = True
+
+    def set_case_type_choices(self, initial):
+        # If this is an edit form, case type won't be editable (see set_read_only_fields_during_editing),
+        # so don't bother fetching case types.
+        if self.initial_rule:
+            self.fields['case_type'].choices = (
+                (case_type, case_type) for case_type in [initial or '']
+            )
+        else:
+            super().set_case_type_choices(initial)
 
     def __init__(self, *args, **kwargs):
         super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)

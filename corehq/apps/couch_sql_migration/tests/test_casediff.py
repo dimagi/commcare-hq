@@ -1,7 +1,7 @@
 import logging
 import os
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from glob import glob
 from inspect import signature
@@ -33,7 +33,7 @@ class TestCaseDiffQueue(SimpleTestCase):
     def setUp(self):
         super(TestCaseDiffQueue, self).setUp()
         self.patches = [
-            patch.object(mod, "diff_cases", self.diff_cases),
+            patch.object(mod, "diff_cases_and_save_state", self.diff_cases),
             patch(
                 "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
                 self.get_cases,
@@ -43,7 +43,7 @@ class TestCaseDiffQueue(SimpleTestCase):
 
         for patcher in self.patches:
             patcher.start()
-        self.statedb = StateDB.init(":memory:")  # in-memory db for test speed
+        self.statedb = StateDB.init("test", ":memory:")  # in-memory db for test speed
         self.cases = {}
         self.processed_forms = defaultdict(set)
         self.stock_forms = defaultdict(set)
@@ -505,7 +505,7 @@ class TestCaseDiffProcess(SimpleTestCase):
         return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
 
-class FakeCaseDiffQueue(object):
+class FakeCaseDiffQueue:
 
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
@@ -593,46 +593,51 @@ class TestDiffCases(SimpleTestCase):
 
         for patcher in self.patches:
             patcher.start()
-        self.statedb = StateDB.init(":memory:")
+            self.addCleanup(patcher.stop)
+        self.statedb = StateDB.init("test", ":memory:")
+        self.addCleanup(self.statedb.close)
         self.sql_cases = {}
         self.sql_ledgers = {}
         self.couch_cases = {}
         self.couch_ledgers = {}
-
-    def tearDown(self):
-        for patcher in self.patches:
-            patcher.stop()
-        self.statedb.close()
-        super(TestDiffCases, self).tearDown()
+        stack = ExitStack()
+        stack.enter_context(mod.global_diff_state("test", {}))
+        self.addCleanup(stack.close)
 
     def test_clean(self):
         self.add_case("a")
-        mod.diff_cases(self.couch_cases, self.statedb)
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
 
     def test_diff(self):
         couch_json = self.add_case("a", prop=1)
         couch_json["prop"] = 2
-        mod.diff_cases(self.couch_cases, self.statedb)
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
+
+    def test_wrong_domain(self):
+        couch_json = self.add_case("a", prop=1, domain="wrong")
+        couch_json["prop"] = 2
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs([Diff("a", path=["domain"], old="wrong", new="test")])
 
     def test_replace_diff(self):
         self.add_case("a", prop=1)
         different_cases = deepcopy(self.couch_cases)
         different_cases["a"]["prop"] = 2
-        mod.diff_cases(different_cases, self.statedb)
+        mod.diff_cases_and_save_state(different_cases, self.statedb)
         self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
-        mod.diff_cases(self.couch_cases, self.statedb)
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
 
     def test_replace_ledger_diff(self):
         self.add_case("a")
         stock = self.add_ledger("a", x=1)
         stock.values["x"] = 2
-        mod.diff_cases(self.couch_cases, self.statedb)
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs([Diff("a/stock/a", "stock state", path=["x"], old=2, new=1)])
         stock.values["x"] = 1
-        mod.diff_cases(self.couch_cases, self.statedb)
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
 
     def assert_diffs(self, expected=None):
@@ -645,7 +650,9 @@ class TestDiffCases(SimpleTestCase):
     def add_case(self, case_id, **props):
         assert case_id not in self.sql_cases, self.sql_cases[case_id]
         assert case_id not in self.couch_cases, self.couch_cases[case_id]
+        props.setdefault("domain", self.statedb.domain)
         props.setdefault("doc_type", "CommCareCase")
+        props.setdefault("_id", case_id)
         self.sql_cases[case_id] = Config(
             case_id=case_id,
             props=props,
@@ -682,12 +689,12 @@ class TestDiffCases(SimpleTestCase):
         ledgers = self.couch_ledgers
         return [ledgers[c] for c in case_id__in if c in ledgers]
 
-    def hard_rebuild_case(self, domain, case_id, *args, **kw):
-        return Config(to_json=lambda: self.couch_cases[case_id])
+    def hard_rebuild_case(self, *args, **kw):
+        raise Exception("rebuild disabled")
 
 
 @attr.s
-class Diff(object):
+class Diff:
     doc_id = attr.ib()
     kind = attr.ib(default="CommCareCase")
     type = attr.ib(default="diff")
@@ -697,7 +704,7 @@ class Diff(object):
 
 
 @attr.s
-class FakeCase(object):
+class FakeCase:
 
     _id = attr.ib()
     xform_ids = attr.ib(factory=list)
@@ -714,7 +721,7 @@ class FakeCase(object):
 
 
 @attr.s
-class FakeAction(object):
+class FakeAction:
 
     xform_id = attr.ib()
 

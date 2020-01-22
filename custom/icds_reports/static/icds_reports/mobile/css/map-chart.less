@@ -1,0 +1,129 @@
+@import "app";
+@import "variables";
+
+.chartView {
+  .shadow;
+  .bg-white;
+  .mx-auto;
+  .float-unset;
+  .p-3;
+  .rounded-border;
+  max-height: ~"calc(100vh - 170px)";
+  min-height: 170px;
+  overflow: auto;
+}
+
+.mapView {
+  .shadow;
+  .bg-white;
+  .mx-auto;
+  .float-unset;
+  .p-3;
+  .rounded-border;
+  height: ~"calc(100vh - 170px)";
+  overflow: auto;
+}
+
+.location-names {
+  .font-montserrat;
+  .font-weight-600;
+  .font-16;
+  .mb-3;
+  color: #0047CC;
+}
+
+a:active, a:hover, a:focus {
+  .font-montserrat;
+  .font-weight-600;
+  .font-16;
+  // .mb-3;  // removed to prevent back button jumping - need to see where this is actually needed
+  color: #0047CC;
+  text-decoration: none;
+}
+
+.modal-dialog-centered {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  min-height: ~"calc(100% - (.5rem * 2))";
+}
+
+// legend styling
+.map-kpi-outer {
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: -250px; // make sure it shows on screen by moving up
+}
+
+.map-kpi {
+  padding: 20px;
+  background-color: rgb(0, 98, 115) !important;
+  border-radius: 35px;
+  color: #ffffff;
+}
+
+.map-kpi .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.map-legend-title {
+  margin-bottom: 5px;
+}
+
+.map-legend-color {
+    width: 25px;
+    height: 25px;
+}
+
+// maps and charts popup handling. modified from datamaps css.
+.locPopup, .chartPopup {
+  position: absolute;
+  z-index: @zindexMapsPopup;
+  pointer-events: inherit !important;  // nvd3 disables pointer-events on some shared classes
+}
+
+.locPopup .hoverinfo {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.chartPopup .hoverinfo {
+  background-color: rgba(255, 255, 255, 1);
+  padding: .25em;
+}
+
+.locPopup .secondary-location-selector {
+  background-color: white;
+  box-shadow: 1px 1px 5px #888;
+}
+
+.locPopup .secondary-location-selector .modal-header {
+    padding: 5px;
+}
+
+.locPopup .secondary-location-selector .modal-body {
+    display: grid;
+}
+
+.locPopup .secondary-location-selector .modal-body button {
+    margin: 0 0 8px 0;
+}
+
+// nvd3 chart customizations
+
+// reduce font size of x-axis labels
+.nvd3 text {
+  font-size: 10px;
+}
+
+// reduce width of tooltip
+.nvtooltip .hoverinfo {
+  width: 160px !important;
+}
+
+// move tooltip 40px to the left to accommodate margins
+.nvtooltip {
+  margin-left: -40px;
+}

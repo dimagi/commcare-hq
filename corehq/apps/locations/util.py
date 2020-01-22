@@ -6,6 +6,7 @@ from memoized import memoized
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
+from django.db.models import Q
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
@@ -117,17 +118,29 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, headers_only=False, async_task=None):
+    def __init__(self, domain, include_consumption=False, root_location_id=None,
+                 headers_only=False, async_task=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
-        self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
         self.location_types = LocationType.objects.by_domain(domain)
         self.async_task = async_task
         self._location_count = None
         self._locations_exported = 0
+
+        if headers_only:
+            self.base_query = SQLLocation.objects.none()
+        elif root_location_id:
+            root_location = SQLLocation.objects.get(location_id=root_location_id)
+            self.base_query = SQLLocation.active_objects.get_descendants(
+                Q(domain=self.domain, id=root_location.id)
+            )
+        else:
+            self.base_query = SQLLocation.active_objects.filter(
+                domain=self.domain,
+            )
 
     @property
     @memoized
@@ -136,7 +149,7 @@ class LocationExporter(object):
 
     def _increment_progress(self):
         if self._location_count is None:
-            self._location_count = SQLLocation.active_objects.filter(domain=self.domain).count()
+            self._location_count = self.base_query.count()
             self._progress_update_chunksize = max(10, self._location_count // 100)
         self._locations_exported += 1
         if self._locations_exported % self._progress_update_chunksize == 0:
@@ -209,15 +222,9 @@ class LocationExporter(object):
 
     def _write_locations(self, writer, location_type):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
-        if self.headers_only:
-            query = SQLLocation.objects.none()
-        else:
-            query = SQLLocation.active_objects.filter(
-                domain=self.domain,
-                location_type=location_type
-            )
 
         def _row_generator(include_consumption=include_consumption):
+            query = self.base_query.filter(location_type=location_type)
             for loc in query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
                 row_data = {
@@ -272,8 +279,8 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption, headers_only, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption,
+def dump_locations(domain, download_id, include_consumption, headers_only, root_location_id=None, task=None):
+    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
                                 headers_only=headers_only, async_task=task)
 
     fd, path = tempfile.mkstemp()
@@ -295,11 +302,15 @@ def dump_locations(domain, download_id, include_consumption, headers_only, task=
         )
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
+        filename = '{}_locations'.format(domain)
+        if root_location_id:
+            root_location = SQLLocation.objects.get(location_id=root_location_id)
+            filename += '_{}'.format(root_location.name)
         expose_blob_download(
             download_id,
             expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
-            content_disposition=safe_filename_header('{}_locations'.format(domain), file_format.extension),
+            content_disposition=safe_filename_header(filename, file_format.extension),
             download_id=download_id,
         )
 

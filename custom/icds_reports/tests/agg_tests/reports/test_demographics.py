@@ -2,10 +2,10 @@ from django.test import TestCase
 
 from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
     PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
+    OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 from custom.icds_reports.messages import percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
-    percent_adolescent_girls_enrolled_help_text
+    percent_adolescent_girls_enrolled_help_text_v2
 from custom.icds_reports.reports.demographics_data import get_demographics_data
 
 
@@ -155,14 +155,14 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 24,
             "format": "percent_and_div",
             "color": "red",
-            "percent": 0.0,
-            "value": 34,
-            "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
+            "percent": 37.49999999999998,
+            "value": 2,
+            "label": OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
             "frequency": "month",
-            "help_text": percent_adolescent_girls_enrolled_help_text()
+            "help_text": percent_adolescent_girls_enrolled_help_text_v2()
         }
         self.assertDictEqual(expected, data['records'][2][1])
 
@@ -312,14 +312,14 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 24,
             "format": "percent_and_div",
             "color": "red",
-            "percent": 0,
-            "value": 34,
-            "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
+            "percent": 37.49999999999998,
+            "value": 2,
+            "label": OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
             "frequency": "day",
-            "help_text": percent_adolescent_girls_enrolled_help_text()
+            "help_text": percent_adolescent_girls_enrolled_help_text_v2()
         }
         self.assertDictEqual(expected, data['records'][2][1])
 
@@ -469,13 +469,13 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adolescent_girls",
-            "all": 34,
+            "all": 24,
             "format": "percent_and_div",
             "color": "red",
-            "percent": 0,
-            "value": 34,
-            "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
+            "percent": 37.49999999999998,
+            "value": 2,
+            "label": OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS,
             "frequency": "day",
-            "help_text": percent_adolescent_girls_enrolled_help_text()
+            "help_text": percent_adolescent_girls_enrolled_help_text_v2()
         }
         self.assertDictEqual(expected, data['records'][2][1])

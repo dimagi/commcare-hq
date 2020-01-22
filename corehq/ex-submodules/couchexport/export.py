@@ -261,13 +261,15 @@ class FormattedRow(object):
     """
 
     def __init__(self, data, id=None, separator=".", id_index=0,
-                 is_header_row=False, hyperlink_column_indices=()):
+                 is_header_row=False, hyperlink_column_indices=(),
+                 skip_excel_formatting=()):
         self.data = data
         self.id = id
         self.separator = separator
         self.id_index = id_index
         self.is_header_row = is_header_row
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.skip_excel_formatting = skip_excel_formatting
 
     def __iter__(self):
         for i in self.get_data():

@@ -1,28 +1,12 @@
+from django.core.management import call_command
 from django.db import migrations, models
-from itertools import chain
 
-from corehq.apps.app_manager.util import get_app_id_from_form_unique_id
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.util.django_migrations import skip_on_fresh_install
-
-
-def _update_model(model, domain):
-    if model.form_unique_id is None:
-        return None
-
-    model.app_id = get_app_id_from_form_unique_id(domain, model.form_unique_id)
-    if model.app_id:
-        model.save()
 
 
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
-    for schedule in chain(AlertSchedule.objects.all(), TimedSchedule.objects.all()):
-        for event in schedule.memoized_events:
-            if event.sms_survey_content:
-                _update_model(event.sms_survey_content, schedule.domain)
-            if event.ivr_survey_content:
-                _update_model(event.ivr_survey_content, schedule.domain)
+    call_command('populate_app_id_for_scheduling')
 
 
 class Migration(migrations.Migration):

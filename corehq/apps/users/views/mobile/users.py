@@ -93,6 +93,7 @@ from corehq.apps.users.views import (
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -410,6 +411,8 @@ def force_user_412(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
+
+    datadog_counter('commcare.force_user_412.count', tags=['domain:{}'.format(domain)])
 
     SyncLogSQL.objects.filter(user_id=user_id).delete()
 

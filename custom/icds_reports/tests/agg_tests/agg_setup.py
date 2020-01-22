@@ -13,7 +13,8 @@ from custom.icds_reports.utils.migrations import create_citus_reference_table, c
 from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
-    _aggregate_gm_forms
+    _aggregate_gm_forms,
+    drop_gm_indices
 )
 
 
@@ -39,6 +40,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
     'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
+    'ls_usage': get_table_name('icds-cas', 'static-ls_usage_forms'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
@@ -46,6 +48,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'awc_location': 'awc_location',
     'awc_location_local': 'awc_location_local',
     'agg_awc': 'agg_awc',
+    'private_school': get_table_name('icds-cas', 'static-dashboard_primary_private_school'),
+    'adolescent_girls_reg_form': get_table_name('icds-cas', 'static-adolescent_girls_reg_form')
 }
 
 
@@ -219,6 +223,7 @@ def _distribute_tables_for_citus(engine):
 
 
 def aggregate_state_form_data():
+    drop_gm_indices(datetime(2017, 3, 31))
     for state_id in ('st1', 'st2'):
         _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
         _aggregate_gm_forms(state_id, datetime(2017, 3, 31))

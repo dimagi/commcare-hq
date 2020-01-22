@@ -11,4 +11,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0123_weighing_new_columng_agg_awc'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

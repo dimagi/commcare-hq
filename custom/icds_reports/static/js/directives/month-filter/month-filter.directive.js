@@ -1,14 +1,25 @@
 /* global moment, _ */
 
-function MonthModalController($location, $uibModalInstance) {
+function MonthModalController($location, $uibModalInstance, dateHelperService) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
     vm.monthsCopy = [];
     vm.showMessage = false;
+    var reportStartDates = {
+        'sdd': new Date(2019, 1),
+    };
+
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
-    var startDate = $location.path().indexOf('service_delivery_dashboard') === -1 ? 2017 : 2019;
+
+    var startYear = 2017;
+
+    if (isSDD) {
+        startYear = reportStartDates['sdd'].getFullYear();
+    }
+
+
 
     window.angular.forEach(moment.months(), function(key, value) {
         vm.monthsCopy.push({
@@ -18,41 +29,32 @@ function MonthModalController($location, $uibModalInstance) {
     });
 
 
-    for (var year = startDate; year <= new Date().getFullYear(); year++) {
+    for (var year = startYear; year <= new Date().getFullYear(); year++) {
         vm.years.push({
             name: year,
             id: year,
         });
     }
 
-    vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
-    vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
+    vm.selectedMonth = dateHelperService.getSelectedMonth();
+    vm.selectedYear = dateHelperService.getSelectedYear();
 
-    if (isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1))) {
+
+    var fullselectedDate = new Date(vm.selectedYear, vm.selectedMonth - 1);
+
+    if (isSDD && (fullselectedDate < reportStartDates['sdd'])) {
         vm.showMessage = true;
         vm.selectedYear = new Date().getFullYear();
-        vm.selectedMonth = new Date().getMonth() + 1;
     }
 
-    if (vm.selectedYear === new Date().getFullYear()) {
-        vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id <= new Date().getMonth() + 1;
-        });
 
-        if (startDate === 2019) {
-            vm.months.shift();
-        }
-    } else if (startDate === 2019 && vm.selectedYear === 2019) {
-        vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id >= 2;
-        });
-    } else if (vm.selectedYear === 2017) {
-        vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id >= 3;
-        });
-    } else {
-        vm.months = vm.monthsCopy;
-    }
+    var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
+        vm.selectedMonth,
+        vm.monthsCopy);
+
+
+    vm.months = customMonths.months;
+    vm.selectedMonth = customMonths.selectedMonth;
 
     vm.apply = function() {
         hqImport('analytix/js/google').track.event('Date Filter', 'Date Changed', '');
@@ -63,28 +65,13 @@ function MonthModalController($location, $uibModalInstance) {
     };
 
     vm.onSelectYear = function (item) {
-        if (item.id === new Date().getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function(month) {
-                return month.id <= new Date().getMonth() + 1;
-            });
 
-            if (startDate === 2019) {
-                vm.months.shift();
-            }
-            
-            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
-        } else if (startDate === 2019 && vm.selectedYear === 2019) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= 2;
-            });
-        } else if (item.id === 2017) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= 3;
-            });
-            vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
-        } else {
-            vm.months = vm.monthsCopy;
-        }
+        var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
+            vm.selectedMonth,
+            vm.monthsCopy);
+
+        vm.months = customMonths.months;
+        vm.selectedMonth = customMonths.selectedMonth;
     };
 
     vm.close = function () {
@@ -92,17 +79,14 @@ function MonthModalController($location, $uibModalInstance) {
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal, storageService) {
+function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService) {
     var vm = this;
 
+    // used by mobile dashboard
+    vm.selectedDate = dateHelperService.getSelectedDate();
+    vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function() {
-
-        var now = moment().utc();
-
-        var month = $location.search().month || now.month() + 1;
-        var year = $location.search().year || now.year();
-        var formattedMonth = moment(month, 'MM').format('MMMM');
-        return formattedMonth + ' ' + year;
+        return dateHelperService.getSelectedMonthDisplay();
     };
 
     vm.open = function () {
@@ -118,34 +102,53 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         });
 
         modalInstance.result.then(function (data) {
-            $location.search('month', data['month']);
-            $location.search('year', data['year']);
+            dateHelperService.updateSelectedMonth(data['month'], data['year']);
             storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });
     };
 
+    // mobile only helpers
+    // update currently selected month from inner datepicker's events
+    $scope.$on('date_picked', function (event, data) {
+        vm.selectedDate = data.info;
+    });
+
+    // respond to requests for filter data with currently selected month
+    $scope.$on('request_filter_data', function () {
+        $scope.$emit('filter_data', {
+            'hasDate': true,
+            'date': vm.selectedDate,
+            'month': vm.selectedDate.getMonth() + 1,
+            'year': vm.selectedDate.getFullYear(),
+        });
+    });
+
+    $scope.$on('reset_filter_data', function() {
+        $scope.$broadcast('reset_date',{});
+        vm.selectedDate = new Date();
+    });
+    // end mobile only helpers
+
     vm.init = function () {
-        var month = parseInt($location.search()['month']);
-        var year = parseInt($location.search()['year']);
-        var displayModal = true;
+        var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
 
-        if (year > 2019 || (year === 2019  &&  month > 1)) {
-            displayModal = false;
-        }
+        var selectedDate = new Date(selectedYear, selectedMonth - 1);
 
-        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
+        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && selectedDate < new Date(2019, 1)) {
             vm.open();
         }
+
     };
 
     vm.init();
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-MonthModalController.$inject = ['$location', '$uibModalInstance'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService'];
+MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
-window.angular.module('icdsApp').directive("monthFilter", function() {
+window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
@@ -154,8 +157,10 @@ window.angular.module('icdsApp').directive("monthFilter", function() {
         },
         bindToController: true,
         require: 'ngModel',
-        templateUrl: url('icds-ng-template', 'month-filter'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('month-filter');
+        },
         controller: MonthFilterController,
         controllerAs: "$ctrl",
     };
-});
+}]);

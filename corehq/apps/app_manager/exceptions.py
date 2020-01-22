@@ -104,15 +104,15 @@ class MediaResourceError(SuiteError):
     pass
 
 
+class ResourceOverrideError(SuiteError):
+    pass
+
+
 class ParentModuleReferenceError(SuiteError):
     pass
 
 
 class SuiteValidationError(SuiteError):
-    pass
-
-
-class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
     pass
 
 

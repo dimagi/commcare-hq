@@ -870,7 +870,7 @@ This spec would produce the following columns in the data source:
 
 If the ledger you're using is a due list and you wish to save the dates
 instead of integers, you can change the "type" from "ledger_balances" to
-"due_list_dates".
+"due_list_date".
 
 Practical notes for creating indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1453,6 +1453,53 @@ Here's an example using ``age_in_months_buckets``:
             "36_to_59": [36, 59],
             "60_to_71": [60, 71],
        }
+   }
+
+SumWhenColumn and SumWhenTemplateColumn
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note: ``SumWhenColumn`` usage is limited to static reports, and ``SumWhenTemplateColumn``
+usage is behind a feature flag.
+
+Sum When columns allow you to aggregate data based on arbitrary conditions.
+
+The ``SumWhenColumn`` allows any expression.
+
+The ``SumWhenTemplateColumn`` is used in conjunction with a subclass of ``SumWhenTemplateSpec``.
+The template defines an expression and typically accepts binds. An example:
+
+Example using ``sum_when``:
+
+.. code:: json
+
+   {
+       "display": "under_six_month_olds",
+       "column_id": "under_six_month_olds",
+       "type": "sum_when",
+       "field": "age_at_registration",
+       "whens": [
+            ["age_at_registration < 6", 1],
+       ],
+       "else_": 0
+   }
+
+Equivalent example using ``sum_when_template``:
+
+.. code:: json
+
+   {
+       "display": "under_x_month_olds",
+       "column_id": "under_x_month_olds",
+       "type": "sum_when_template",
+       "field": "age_at_registration",
+       "whens": [
+            {
+                "type": "under_x_months",
+                "binds": [6],
+                "then": 1
+            }
+       ],
+       "else_": 0
    }
 
 Expanded Columns
