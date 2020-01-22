@@ -76,3 +76,16 @@ def get_district_topojson_data():
     district_topojson_data_path = os.path.join(get_topojson_directory(), 'district_topojson_data.json')
     with open(district_topojson_data_path, encoding='utf-8') as f:
         return json.loads(f.read())
+
+
+def get_map_name(location):
+    """
+    Gets the "map name" of a SQLLocation, defaulting to the location's name if not available.
+    """
+    if not location:
+        return
+
+    if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
+        return location.metadata['map_location_name']
+    else:
+        return location.name

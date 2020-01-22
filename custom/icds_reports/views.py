@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -447,6 +447,7 @@ class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
         district = request.GET.get('district')
+
         topojson = get_topojson_for_district(district)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
@@ -565,19 +566,16 @@ class LocationView(View):
                 location_id=location_id
             )
 
-            map_location_name = location.name
-            if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
-                map_location_name = location.metadata['map_location_name']
             return JsonResponse({
                 'name': location.name,
-                'map_location_name': map_location_name,
+                'map_location_name': get_map_name(location),
                 'location_type': location.location_type.code,
                 'location_type_name': location.location_type_name,
                 'user_have_access': user_can_access_location_id(
                     self.kwargs['domain'],
                     request.couch_user, location.location_id
                 ),
-                'user_have_access_to_parent': location.location_id in parent_ids
+                'user_have_access_to_parent': location.location_id in parent_ids,
             })
 
         parent_id = request.GET.get('parent_id')
