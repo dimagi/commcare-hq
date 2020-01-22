@@ -9,60 +9,6 @@ from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter,
     BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
 
 
-class ReportBaseMixin:
-
-    @staticmethod
-    def get_base_fields():
-        return [
-            GenderFilter,
-            AgeRangeFilter,
-            PregnancyFilter,
-            BreastFeedingFilter,
-            SettlementAreaFilter,
-            RecallStatusFilter
-        ]
-
-    @staticmethod
-    def get_base_report_config(obj):
-        return {
-            'gender': obj.gender,
-            'age_range': obj.age_range,
-            'pregnant': obj.pregnant,
-            'breastfeeding': obj.breastfeeding,
-            'urban_rural': obj.urban_rural,
-            'supplements': obj.supplements,
-            'recall_status': obj.recall_status
-        }
-
-    @property
-    def age_range(self):
-        return self.request.GET.get('age_range') or ''
-
-    @property
-    def gender(self):
-        return self.request.GET.get('gender') or ''
-
-    @property
-    def urban_rural(self):
-        return self.request.GET.get('urban_rural') or ''
-
-    @property
-    def breastfeeding(self):
-        return self.request.GET.get('breastfeeding') or ''
-
-    @property
-    def pregnant(self):
-        return self.request.GET.get('pregnant') or ''
-
-    @property
-    def supplements(self):
-        return self.request.GET.get('supplements') or ''
-
-    @property
-    def recall_status(self):
-        return self.request.GET.get('recall_status') or ''
-
-
 class MultiSheetReportExport(ReportExport):
 
     def __init__(self, title, table_data):
@@ -156,3 +102,31 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         title = data_provider.slug
 
         return title, exported_rows
+
+
+class BaseNutrientReport(MultiTabularReport):
+
+    @property
+    def fields(self):
+        return [
+            DateRangeFilter,
+            GenderFilter,
+            AgeRangeFilter,
+            PregnancyFilter,
+            BreastFeedingFilter,
+            SettlementAreaFilter,
+            RecallStatusFilter
+        ]
+
+    @property
+    def filters_config(self):
+        request_slugs = [
+            'gender',
+            'age_range',
+            'pregnant',
+            'breastfeeding',
+            'urban_rural',
+            'supplements',
+            'recall_status',
+        ]
+        return {slug: self.request.GET.get(slug, '') for slug in request_slugs}
