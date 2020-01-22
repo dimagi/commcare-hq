@@ -212,10 +212,11 @@ def is_datetime_string(string):
         return True
 
 
-class MissingType(object):
+class MissingType(type):
 
     def __repr__(self):
         return "MISSING"
 
 
-MISSING = MissingType()
+class MISSING(metaclass=MissingType):
+    pass

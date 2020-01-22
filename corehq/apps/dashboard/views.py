@@ -31,7 +31,6 @@ from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_edit_location_types,
@@ -170,13 +169,6 @@ def _get_default_tiles(request):
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
-    def can_view_exchange(request):
-        return (
-            can_edit_apps(request)
-            and not settings.ENTERPRISE_MODE
-            and not get_domain_master_link(request.domain)  # this isn't a linked domain
-        ) and has_privilege(request, privileges.PROJECT_ACCESS)
-
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
 
@@ -264,16 +256,6 @@ def _get_default_tiles(request):
             urlname='sms_default',
             visibility_check=can_use_messaging,
             help_text=_('Configure and schedule SMS messages and keywords'),
-        ),
-        Tile(
-            request,
-            title=_('Exchange'),
-            slug='exchange',
-            icon='fcc fcc-exchange',
-            urlname='appstore',
-            visibility_check=can_view_exchange,
-            url_generator=lambda urlname, req: reverse(urlname),
-            help_text=_('Download and share CommCare applications with other users around the world'),
         ),
         Tile(
             request,

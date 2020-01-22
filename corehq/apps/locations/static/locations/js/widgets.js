@@ -22,7 +22,7 @@ hqDefine("locations/js/widgets", [
             $select.select2({
                 multiple: options.multiselect,
                 allowClear: !options.multiselect,
-                placeholder: gettext("Select a Location"),
+                placeholder: options.placeholder || gettext("Select a Location"),
                 width: '100%',
                 ajax: {
                     url: options.queryUrl,

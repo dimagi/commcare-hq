@@ -34,6 +34,7 @@ class SyncLogPillowTest(TestCase):
         user = CommCareUser.get(self.ccuser._id)
         user.reporting_metadata.last_syncs = []
         user.save()
+        UserReportingMetadataStaging.objects.all().delete()
         super().tearDown()
 
     @classmethod

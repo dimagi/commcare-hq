@@ -14,12 +14,14 @@ class TestSMSES(ElasticTestMixin, SimpleTestCase):
                         "and": [
                             {"term": {"domain.exact": "demo"}},
                             {
-                                "not": {
-                                    "and": (
-                                        {"term": {"direction": "o"}},
-                                        {"term": {"processed": False}},
-                                    )
-                                }
+                                "or": (
+                                    {
+                                        "not": {"term": {"direction": "o"}},
+                                    },
+                                    {
+                                        "not": {"term": {"processed": False}},
+                                    }
+                                ),
                             },
                             {"match_all": {}},
                         ]

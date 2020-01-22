@@ -2022,13 +2022,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.chartOptions = {
         chart: {
             type: 'multiBarChart',
-            height: 450,
-            width: 1100,
+            height: isMobile ? 350 : 450,
+            width: isMobile ? 600 : 1100,
             margin: {
                 top: 20,
                 right: 20,
                 bottom: 50,
-                left: 80,
+                left: isMobile ? 40 : 80,
             },
             x: function (d) {
                 return d[0];

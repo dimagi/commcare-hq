@@ -49,6 +49,8 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
+from corehq.apps.cloudcare.models import SQLApplicationAccess
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -107,6 +109,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
+from corehq.motech.dhis2.models import SQLDhis2Connection
 
 
 class TestDeleteDomain(TestCase):
@@ -468,6 +471,20 @@ class TestDeleteDomain(TestCase):
         self._assert_case_search_counts(self.domain.name, 0)
         self._assert_case_search_counts(self.domain2.name, 1)
 
+    def _assert_cloudcare_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLApplicationAccess.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_cloudcare(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            get_application_access_for_domain(domain_name)
+
+        self.domain.delete()
+
+        self._assert_cloudcare_counts(self.domain.name, 0)
+        self._assert_cloudcare_counts(self.domain2.name, 1)
+
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
             GIRRow.objects.filter(domain_name=domain_name),
@@ -792,11 +809,13 @@ class TestDeleteDomain(TestCase):
     def _assert_motech_count(self, domain_name, count):
         self._assert_queryset_count([
             RequestLog.objects.filter(domain=domain_name),
+            SQLDhis2Connection.objects.filter(domain=domain_name),
         ], count)
 
     def test_motech_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             RequestLog.objects.create(domain=domain_name)
+            SQLDhis2Connection.objects.create(domain=domain_name)
             self._assert_motech_count(domain_name, 1)
 
         self.domain.delete()

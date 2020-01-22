@@ -1348,6 +1348,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
 )
 
+FILTERED_LOCATION_DOWNLOAD = StaticToggle(
+    'filtered_location_download',
+    "Ability to filter location download to include only a specified location and its descendants.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
+)
+
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1385,13 +1393,6 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
-)
-
-ICDS_MOBILE_DASHBOARD_MAPS = DynamicallyPredictablyRandomToggle(
-    'icds_mobile_dashboard_maps',
-    'ICDS: Enable Maps on the Mobile Dashboard',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
 )
 
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
