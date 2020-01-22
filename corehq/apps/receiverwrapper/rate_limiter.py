@@ -101,7 +101,8 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
         duration_tag = 'delayed_reject'
     datadog_counter(datadog_metric, tags=[
         'domain:{}'.format(domain),
-        'duration:{}'.format(duration_tag)
+        'duration:{}'.format(duration_tag),
+        'throttle_method:{}'.format('delay' if acquired else 'reject')
     ])
     return acquired
 
