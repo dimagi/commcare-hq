@@ -24,7 +24,7 @@ from corehq.apps.export.models.new import (
     SMSExportInstance,
 )
 from corehq.elastic import iter_es_docs_from_query
-from corehq.toggles import PAGINATED_EXPORTS
+from corehq.toggles import PAGINATED_EXPORTS, EXCEL_EXPORT_DATA_TYPING
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
 from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS, load_counter
 from corehq.util.files import TransientTempfile, safe_filename
@@ -272,14 +272,22 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     Return a new _Writer
     """
     format = Format.XLS_2007
+    format_data_in_excel = False
+
     if len(export_instances) == 1:
         format = export_instances[0].export_format
+        format_data_in_excel = (
+            export_instances[0].format_data_in_excel
+            and EXCEL_EXPORT_DATA_TYPING.enabled(export_instances[0].domain)
+        )
 
-    legacy_writer = get_writer(format)
+    legacy_writer = get_writer(format, use_formatted_cells=format_data_in_excel)
+
     if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
         writer = _PaginatedExportWriter(legacy_writer, temp_path)
     else:
         writer = _ExportWriter(legacy_writer, temp_path)
+
     return writer
 
 
