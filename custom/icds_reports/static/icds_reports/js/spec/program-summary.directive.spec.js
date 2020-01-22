@@ -27,8 +27,8 @@ describe('Program Summary Directive', function () {
                 {'name': 'Maternal and Child Nutrition'},
                 {'name': 'ICDS-CAS Reach'},
                 {'name': 'Demographics'},
-                {'name': 'AWC Infrastructure'}
-            ]
+                {'name': 'AWC Infrastructure'},
+            ],
         });
     }));
 
