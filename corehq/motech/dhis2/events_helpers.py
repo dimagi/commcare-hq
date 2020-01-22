@@ -1,7 +1,7 @@
-from schema import Optional as SchemaOptional, SchemaError
-from schema import Regex, Schema
+from schema import Optional as SchemaOptional
+from schema import Regex, Schema, SchemaError
 
-from corehq.motech.dhis2.const import DHIS2_API_VERSION
+from corehq.motech.dhis2.const import DHIS2_DATE_SCHEMA, DHIS2_ID_SCHEMA
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -10,22 +10,25 @@ from corehq.motech.value_source import (
 )
 
 
-def send_dhis2_event(request, form_config, payload):
+def send_dhis2_event(request, api_version, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
-    validate_event_schema(event)
-    return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event,
-                        raise_for_status=True)
+    if event:
+        validate_event_schema(event)
+        return request.post(f'/api/{api_version}/events', json=event,
+                            raise_for_status=True)
 
 
-def get_event(domain, config, form_json):
-    info = CaseTriggerInfo(
-        domain=domain,
-        case_id=None,
-        form_question_values=get_form_question_values(form_json),
-    )
+def get_event(domain, config, form_json=None, info=None):
+    if info is None:
+        info = CaseTriggerInfo(
+            domain=domain,
+            case_id=None,
+            form_question_values=get_form_question_values(form_json),
+        )
     event = {}
     event_property_functions = [
         _get_program,
+        _get_program_stage,
         _get_org_unit,
         _get_event_date,
         _get_event_status,
@@ -34,11 +37,28 @@ def get_event(domain, config, form_json):
     ]
     for func in event_property_functions:
         event.update(func(config, info))
-    return event
+    if event['eventDate'] or event['dataValues']:
+        # eventDate is a required field, but we return the event if it
+        # has no date if it does have values, so that it will fail
+        # validation and the administrator will be notified that the
+        # value source for eventDate is broken.
+        return event
+    else:
+        # The event has no date and no values. That is not an event.
+        return {}
 
 
 def _get_program(config, case_trigger_info):
     return {'program': config.program_id}
+
+
+def _get_program_stage(config, case_trigger_info):
+    program_stage_id = None
+    if config.program_stage_id:
+        program_stage_id = get_value(config.program_stage_id, case_trigger_info)
+    if program_stage_id:
+        return {'programStage': program_stage_id}
+    return {}
 
 
 def _get_org_unit(config, case_trigger_info):
@@ -71,10 +91,12 @@ def _get_completed_date(config, case_trigger_info):
 def _get_datavalues(config, case_trigger_info):
     values = []
     for data_value in config.datavalue_maps:
-        values.append({
-            'dataElement': data_value.data_element_id,
-            'value': get_value(data_value.value, case_trigger_info)
-        })
+        value = get_value(data_value.value, case_trigger_info)
+        if value is not None:
+            values.append({
+                'dataElement': data_value.data_element_id,
+                'value': value
+            })
     return {'dataValues': values}
 
 
@@ -114,13 +136,12 @@ def get_event_schema() -> dict:
     True
 
     """
-    date_str = Regex(r"^\d{4}-\d{2}-\d{2}$")
-    dhis2_id_str = Regex(r"^[A-Za-z0-9]+$")  # (ASCII \w without underscore)
     return {
-        "program": dhis2_id_str,
-        "orgUnit": dhis2_id_str,
-        "eventDate": date_str,
-        SchemaOptional("completedDate"): date_str,
+        "program": DHIS2_ID_SCHEMA,
+        SchemaOptional("programStage"): DHIS2_ID_SCHEMA,
+        "orgUnit": DHIS2_ID_SCHEMA,
+        "eventDate": DHIS2_DATE_SCHEMA,
+        SchemaOptional("completedDate"): DHIS2_DATE_SCHEMA,
         SchemaOptional("status"): Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$"),
         SchemaOptional("storedBy"): str,
         SchemaOptional("coordinate"): {
@@ -131,9 +152,9 @@ def get_event_schema() -> dict:
             "type": str,
             "coordinates": [float],
         },
-        SchemaOptional("assignedUser"): dhis2_id_str,
+        SchemaOptional("assignedUser"): DHIS2_ID_SCHEMA,
         "dataValues": [{
-            "dataElement": dhis2_id_str,
+            "dataElement": DHIS2_ID_SCHEMA,
             "value": object,
         }],
     }
