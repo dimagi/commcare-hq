@@ -59,7 +59,12 @@ to see how that works.
 
 Updating requirements
 ---------------------
-To update requirements edit ``requirements/requirements.in``
+To update requirements edit
+``requirements/requirements.in`` for packages for all environments
+``requirements/production.in`` for packages for production environment only
+``requirements/tests.in`` for packages for test environment only
+``requirements/dev.in`` for packages for dev environment only
+
 and run ``make requirements``.
 
 To upgrade all requirements to their latest allowed version you can run
