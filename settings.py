@@ -951,6 +951,7 @@ SESSION_BYPASS_URLS = [
 ]
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+RATE_LIMIT_SUBMISSIONS = False
 
 try:
     # try to see if there's an environmental variable set for local_settings

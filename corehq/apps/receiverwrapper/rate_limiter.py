@@ -56,7 +56,7 @@ global_submission_rate_limiter = RateLimiter(
 )
 
 
-SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
 @run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
