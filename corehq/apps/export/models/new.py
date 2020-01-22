@@ -2731,44 +2731,6 @@ class StockExportColumn(ExportColumn):
         return values
 
 
-class ConversionMeta(DocumentSchema):
-    path = StringProperty()
-    failure_reason = StringProperty()
-    info = ListProperty()
-
-    def pretty_print(self):
-        print('---' * 15)
-        print('{:<20}| {}'.format('Original Path', self.path))
-        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
-        for idx, line in enumerate(self.info):
-            prefix = 'Info' if idx == 0 else ''
-            print('{:<20}| {}'.format(prefix, line))
-
-
-class ExportMigrationMeta(Document):
-    saved_export_id = StringProperty()
-    domain = StringProperty()
-    export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
-
-    # The schema of the new export
-    generated_schema_id = StringProperty()
-
-    skipped_tables = SchemaListProperty(ConversionMeta)
-    skipped_columns = SchemaListProperty(ConversionMeta)
-
-    converted_tables = SchemaListProperty(ConversionMeta)
-    converted_columns = SchemaListProperty(ConversionMeta)
-
-    is_remote_app_migration = BooleanProperty(default=False)
-
-    has_case_history = BooleanProperty(default=False)
-
-    migration_date = DateTimeProperty()
-
-    class Meta(object):
-        app_label = 'export'
-
-
 def _meta_property(name):
     def fget(self):
         return getattr(self._meta, name)
