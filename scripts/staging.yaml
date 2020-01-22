@@ -63,4 +63,5 @@ branches:
   - bmb/SAASP-10249 # Biyeun Jan 21
   #- jls/migrate-HqDeploy-1 # Jenny Jan 21
   - dmr/smarter-wait  # Danny Jan 22
+  - dmr/RATE_LIMIT_SUBMISSIONS-setting  # Danny Jan 22
 submodules: {}
