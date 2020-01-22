@@ -2,11 +2,22 @@ from memoized import memoized
 
 from custom.inddex.ucr.data_providers.nutrient_intakes_data import NutrientIntakesByFoodData, \
     NutrientIntakesByRespondentData
-from custom.inddex.ucr.report_bases.nutrient_intakes_report import NutrientIntakesReportBase
-from custom.inddex.ucr.report_bases.mixins import NutrientIntakesBaseMixin
+from custom.inddex.utils import MultiTabularReport, ReportBaseMixin
 
 
-class NutrientIntakesReport(NutrientIntakesReportBase, NutrientIntakesBaseMixin):
+class NutrientIntakesReport(MultiTabularReport, ReportBaseMixin):
+    title = '2: Nutrient Intakes by Food and by Respondent'
+    name = title
+    slug = 'nutrient_intakes_by_food_and_by_respondent'
+    export_only = False
+    show_filters = True
+
+    @property
+    def report_context(self):
+        context = super().report_context
+        context['export_only'] = self.export_only
+
+        return context
 
     @property
     def fields(self):

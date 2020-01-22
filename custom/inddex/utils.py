@@ -1,9 +1,95 @@
+import datetime
+
 from memoized import memoized
 
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.userreports.reports.util import ReportExport
-from custom.inddex.ucr.report_bases.mixins import ReportMixin
+from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter, PregnancyFilter, \
+    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
+
+
+class ReportMixin(DatespanMixin):
+    request = domain = None
+
+    @property
+    def fields(self):
+        return [DateRangeFilter]
+
+    @property
+    def report_config(self):
+        return {
+            'domain': self.domain,
+            'startdate': self.start_date,
+            'enddate': self.end_date
+        }
+
+    @property
+    def start_date(self):
+        start_date = self.request.GET.get('startdate')
+
+        return start_date if start_date else str(datetime.datetime.now().date())
+
+    @property
+    def end_date(self):
+        end_date = self.request.GET.get('end_date')
+
+        return end_date if end_date else str(datetime.datetime.now().date())
+
+
+class ReportBaseMixin:
+    request = None
+
+    @staticmethod
+    def get_base_fields():
+        return [
+            GenderFilter,
+            AgeRangeFilter,
+            PregnancyFilter,
+            BreastFeedingFilter,
+            SettlementAreaFilter,
+            RecallStatusFilter
+        ]
+
+    @staticmethod
+    def get_base_report_config(obj):
+        return {
+            'gender': obj.gender,
+            'age_range': obj.age_range,
+            'pregnant': obj.pregnant,
+            'breastfeeding': obj.breastfeeding,
+            'urban_rural': obj.urban_rural,
+            'supplements': obj.supplements,
+            'recall_status': obj.recall_status
+        }
+
+    @property
+    def age_range(self):
+        return self.request.GET.get('age_range') or ''
+
+    @property
+    def gender(self):
+        return self.request.GET.get('gender') or ''
+
+    @property
+    def urban_rural(self):
+        return self.request.GET.get('urban_rural') or ''
+
+    @property
+    def breastfeeding(self):
+        return self.request.GET.get('breastfeeding') or ''
+
+    @property
+    def pregnant(self):
+        return self.request.GET.get('pregnant') or ''
+
+    @property
+    def supplements(self):
+        return self.request.GET.get('supplements') or ''
+
+    @property
+    def recall_status(self):
+        return self.request.GET.get('recall_status') or ''
 
 
 class SingleTableReport(ReportMixin, CustomProjectReport):
@@ -16,11 +102,11 @@ class SingleTableReport(ReportMixin, CustomProjectReport):
 
     @property
     def rows(self):
-        raise NotImplementedError('\'rows\' must be implemented')
+        return []
 
     @property
     def headers(self):
-        raise NotImplementedError('\'headers\' must be implemented')
+        return []
 
     @property
     def export_format(self):
@@ -110,7 +196,7 @@ class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport)
 
     @property
     def data_providers(self):
-        raise NotImplementedError('\'data_providers\' must implemented')
+        return []
 
     @property
     def report_context(self):
@@ -153,4 +239,5 @@ class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport)
         exported_rows = [[header.html for header in data_provider.headers]]
         exported_rows.extend(data_provider.rows)
         title = data_provider.slug
+
         return title, exported_rows

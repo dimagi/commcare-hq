@@ -152,7 +152,7 @@ class NutrientIntakesByRespondentData(NutrientIntakesDataMixin):
     ]
 
     def __init__(self, config, filters_config):
-        super(NutrientIntakesByRespondentData, self).__init__(config)
+        super().__init__(config)
         self.filters_config = filters_config
 
     @property
