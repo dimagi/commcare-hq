@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -576,6 +576,8 @@ class LocationView(View):
                     request.couch_user, location.location_id
                 ),
                 'user_have_access_to_parent': location.location_id in parent_ids,
+                'parent_name': location.parent.name if location.parent else None,
+                'parent_map_name': get_map_name(location.parent),
             })
 
         parent_id = request.GET.get('parent_id')
