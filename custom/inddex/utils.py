@@ -10,7 +10,6 @@ from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter,
 
 
 class ReportBaseMixin:
-    request = None
 
     @staticmethod
     def get_base_fields():
@@ -97,7 +96,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     flush_layout = True
     default_rows = 10
     exportable = True
-    request = domain = None
 
     @property
     def fields(self):
