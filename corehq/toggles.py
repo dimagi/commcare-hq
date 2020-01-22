@@ -1807,3 +1807,12 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     databases to generate restore payloads.
     """
 )
+
+
+EXCEL_EXPORT_DATA_TYPING = StaticToggle(
+    'excel_export_data_typing',
+    'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
+    'and case exports, so that excel export cells are correctly data-typed.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
