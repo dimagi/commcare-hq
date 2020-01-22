@@ -212,7 +212,12 @@ class CaseDiffTool:
 
     @property
     def pool(self):
-        return Pool(initializer=init_worker, initargs=self.initargs, maxtasksperchild=100)
+        return Pool(
+            processes=os.cpu_count() * 2,
+            initializer=init_worker,
+            initargs=self.initargs,
+            maxtasksperchild=100,
+        )
 
     @property
     def initargs(self):
