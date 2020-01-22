@@ -58,10 +58,9 @@ branches:
   - bmb/update-requirejs  # Biyeun Nov 21
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
   - bmb/SAASP-10149-v2  # Biyeun Dec 20
-  - dmr/es-rewrite-not-and  # Danny Jan 10
   - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
-  - jls/migrate-HqDeploy-2 # Jenny Jan 20
-  - bmb/soft-rollback-data-typing # Biyeun Jan 17
-  - jls/dry-up-less-debug # Jenny Jan 21
+  - bmb/SAASP-10249 # Biyeun Jan 21
+  #- jls/migrate-HqDeploy-1 # Jenny Jan 21
+  - dmr/smarter-wait  # Danny Jan 22
 submodules: {}

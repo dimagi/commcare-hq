@@ -78,7 +78,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
-            raise CommandError('It looks like {} has already been migrated.'.format(domain))
+            raise CommandError(f'It looks like {domain} has already been migrated.')
 
         for opt in ["no_input", "state_dir", "live", "cases", "stop", "batch_size"]:
             setattr(self, opt, options[opt])
@@ -103,6 +103,7 @@ def get_migrator(domain, state_dir, live):
 
 def do_case_diffs(migrator, cases, stop, batch_size):
     casediff = CaseDiffTool(migrator, cases, stop, batch_size)
+    log.info("cutoff_date = %s", casediff.cutoff_date)
     with casediff.context() as add_cases:
         save_result = make_result_saver(casediff.statedb, add_cases)
         for data in casediff.iter_case_diff_results():
@@ -141,7 +142,7 @@ class CaseDiffTool:
     @contextmanager
     def context(self):
         with self.migrator.counter as counter, self.migrator.stopper:
-            with counter('diff_cases', 'CommCareCase') as add_cases:
+            with counter('diff_cases', 'CommCareCase.id') as add_cases:
                 yield add_cases
 
     def iter_case_diff_results(self):
@@ -185,7 +186,7 @@ class CaseDiffTool:
             yield from self.pool.imap_unordered(load_and_diff_cases, batches)
             return
         stop = [1]
-        with init_worker(*self.initargs), suppress(pdb.bdb.BdbQuit):
+        with global_diff_state(*self.initargs), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
@@ -230,6 +231,24 @@ def load_and_diff_cases(case_ids, log_cases=False):
     return diff_cases(couch_cases, log_cases=log_cases)
 
 
+def iter_sql_cases_with_sorted_transactions(domain):
+    from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+    from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+    from ...rebuildcase import SortTransactionsRebuild
+
+    sql = f"""
+        SELECT cx.case_id
+        FROM {CommCareCaseSQL._meta.db_table} cx
+        INNER JOIN {CaseTransaction._meta.db_table} tx ON cx.case_id = tx.case_id
+        WHERE cx.domain = %s AND tx.details LIKE %s
+    """
+    reason = f'%{SortTransactionsRebuild._REASON}%'
+    for dbname in get_db_aliases_for_partitioned_query():
+        with CommCareCaseSQL.get_cursor_for_partition_db(dbname) as cursor:
+            cursor.execute(sql, [domain, reason])
+            yield from iter(set(case_id for case_id, in cursor.fetchall()))
+
+
 def format_diffs(diff_dict):
     lines = []
     for doc_id, diffs in sorted(diff_dict.items()):
@@ -258,4 +277,4 @@ def init_worker(domain, *args):
     clean_break = False
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
-    return global_diff_state(*args)
+    return global_diff_state(domain, *args)

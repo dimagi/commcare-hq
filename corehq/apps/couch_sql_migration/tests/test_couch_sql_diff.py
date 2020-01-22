@@ -5,6 +5,7 @@ import attr
 from gevent.pool import Pool
 from mock import patch
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
@@ -145,6 +146,26 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
         self._compare_diffs([], ignore_fail=True)
+
+    def test_diff_case_with_wrong_domain(self):
+        wrong_domain = create_domain("wrong")
+        self.addCleanup(wrong_domain.delete)
+        self.submit_form(make_test_form("form-1"), domain="wrong")
+        self._do_migration(case_diff="none", domain="wrong")
+        self._do_migration(case_diff="none")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with capture_log_output("corehq.apps.couch_sql_migration") as log, \
+                self.augmented_couch_case("test-case") as case:
+            # modify case so it would have a diff (if it were diffed)
+            case.age = '35'
+            case.save()
+            # try to diff case in wrong domain
+            self.do_case_diffs(cases="test-case")
+        self._compare_diffs([
+            ('CommCareCase', Diff('diff', ['domain'], old='wrong', new=self.domain_name)),
+        ])
+        logs = log.get_output()
+        self.assertIn("couch case test-case has wrong domain: wrong", logs)
 
     def do_case_diffs(self, live=False, cases=None):
         migrator = mod.get_migrator(self.domain_name, self.state_dir, live)
