@@ -4,7 +4,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.db import router
+from django.db import router, transaction
 from django.test import TestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -333,7 +333,9 @@ class FormAccessorTestsSQL(TestCase):
         dup_form.form_id = form.form_id
 
         try:
-            FormAccessorSQL.save_new_form(dup_form)
+            with transaction.atomic(dup_form.db):
+                # prevent rolled back transaction from rolling back the test's transaction
+                FormAccessorSQL.save_new_form(dup_form)
         except Exception:
             dup_form.form_id = uuid.uuid4().hex
             FormAccessorSQL.save_new_form(dup_form)
