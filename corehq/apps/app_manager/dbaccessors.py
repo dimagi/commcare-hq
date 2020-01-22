@@ -180,7 +180,7 @@ def get_app_cached(domain, app_id):
     This only caches app builds."""
     app = get_app_cached()
     if not app.copy_of:
-        _get_app_cached.clear(app_id)
+        _get_app_cached.clear(domain, app_id)
     return app
 
 
