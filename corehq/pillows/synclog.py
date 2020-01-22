@@ -117,7 +117,7 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_da
     local_save = False
     if sync_date:
         # sync_date could be null if this is called from a heartbeat request
-        update_last_sync(user, app_id, sync_date, version)
+        local_save |= update_last_sync(user, app_id, sync_date, version)
     if version:
         local_save |= update_latest_builds(user, app_id, latest_build_date, version, build_profile_id=build_profile_id)
 
