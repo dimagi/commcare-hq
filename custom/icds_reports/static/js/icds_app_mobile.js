@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainMobileController($scope, $route, $routeParams, $location, $window, $http,
-                              isWebUser, userLocationId) {
+                              isWebUser, userLocationId, isMobile) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -10,6 +10,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
+    $scope.isMobile = isMobile;
 
     $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
@@ -34,6 +35,13 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
         $window.ga('set', 'page', path);
         $window.ga('send', 'pageview', path);
     });
+
+    // used by mobile only
+    $scope.closeMenu = function () {
+        if (isMobile) {
+            document.getElementById('nav-menu').style.left = '-300px';
+        }
+    };
 }
 
 MainMobileController.$inject = [
@@ -45,6 +53,7 @@ MainMobileController.$inject = [
     '$http',
     'isWebUser',
     'userLocationId',
+    'isMobile',
 ];
 
 window.angular.module('icdsApp', [
