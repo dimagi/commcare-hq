@@ -70,11 +70,12 @@ def rate_limit_submission(domain):
     if should_allow_usage:
         allow_usage = True
     elif RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
-        allow_usage = False
-        _report_rate_limit_submission(domain)
+        allow_usage = _delay_and_report_rate_limit_submission(
+            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited')
     else:
         allow_usage = True
-        _delay_and_report_rate_limit_submission_test(domain, max_wait=15)
+        _delay_and_report_rate_limit_submission(
+            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited.test')
 
     return not allow_usage
 
@@ -88,23 +89,21 @@ def report_submission_usage(domain):
     _report_current_global_submission_thresholds()
 
 
-def _report_rate_limit_submission(domain):
-    datadog_counter('commcare.xform_submissions.rate_limited', tags=[
-        'domain:{}'.format(domain),
-    ])
-
-
-def _delay_and_report_rate_limit_submission_test(domain, max_wait):
+def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
     with TimingContext() as timer:
-        acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+        acquired = submission_rate_limiter.wait(domain, timeout=max_wait,
+                                                windows_not_to_wait_on=('second', 'minute'))
     if acquired:
-        duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+        duration_tag = bucket_value(timer.duration, [.5, 1, 5, 10, 15], unit='s')
+    elif timer.duration < max_wait:
+        duration_tag = 'quick_reject'
     else:
-        duration_tag = 'timeout'
-    datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+        duration_tag = 'delayed_reject'
+    datadog_counter(datadog_metric, tags=[
         'domain:{}'.format(domain),
         'duration:{}'.format(duration_tag)
     ])
+    return acquired
 
 
 @quickcache([], timeout=60)  # Only report up to once a minute
