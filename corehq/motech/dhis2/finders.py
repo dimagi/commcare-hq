@@ -7,7 +7,7 @@ from memoized import memoized_property
 from requests import HTTPError
 
 from corehq.motech.finders import MATCH_FUNCTIONS, MATCH_TYPE_EXACT
-from corehq.motech.value_source import get_value
+from corehq.motech.value_source import deserialize, get_value
 
 CandidateScore = namedtuple('CandidateScore', 'candidate score')
 
@@ -94,7 +94,7 @@ class TrackedEntityInstanceFinder:
     def get_weights(self, candidate, case_trigger_info):
         for property_weight in self.property_weights:
             case_property = property_weight['case_property']
-            (attr_type_id, value_source) = self.attr_type_id_value_source_by_case_property[case_property]
+            (attr_type_id, value_source_config) = self.attr_type_id_value_source_by_case_property[case_property]
 
             candidate_value = get_tei_attr(candidate, attr_type_id)
             case_value = case_trigger_info.extra_fields[case_property]
@@ -103,7 +103,7 @@ class TrackedEntityInstanceFinder:
             match_type = property_weight['match_type']
             match_params = property_weight['match_params']
             match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
-            is_equivalent = match_function(value_source.deserialize(candidate_value), case_value)
+            is_equivalent = match_function(deserialize(value_source_config, candidate_value), case_value)
             yield weight if is_equivalent else 0
 
 
