@@ -65,11 +65,14 @@ def copy_custom_metadata(from_topojson, to_topojson):
 
 def get_topojson_for_district(district):
     path = get_topojson_directory()
-
-    district_topojson_data_path = os.path.join(path, 'district_topojson_data.json')
-    district_topojson_data = json.loads(open(district_topojson_data_path, encoding='utf-8').read())
-
+    district_topojson_data = get_district_topojson_data()
     for state, data in district_topojson_data.items():
         if district in data['districts']:
             with open(os.path.join(path, 'blocks/' + data['file_name']), encoding='utf-8') as f:
                 return json.loads(f.read())
+
+
+def get_district_topojson_data():
+    district_topojson_data_path = os.path.join(get_topojson_directory(), 'district_topojson_data.json')
+    with open(district_topojson_data_path, encoding='utf-8') as f:
+        return json.loads(f.read())
