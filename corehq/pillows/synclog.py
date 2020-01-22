@@ -108,8 +108,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
 
 def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_date, device_id,
-        device_app_meta, commcare_version=None, build_profile_id=None, save_user=True,
-        build_update_date=None):
+        device_app_meta, commcare_version=None, build_profile_id=None, save_user=True):
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
