@@ -2781,6 +2781,7 @@ class UserReportingMetadataStaging(models.Model):
     user_id = models.TextField()
     app_id = models.TextField()
     modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now=True)
 
     # should build_id actually be nullable?
     build_id = models.TextField(null=True)
