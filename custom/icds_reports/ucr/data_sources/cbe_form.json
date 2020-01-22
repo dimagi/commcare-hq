@@ -132,6 +132,181 @@
         "column_id": "date_cbe_organise"
       },
       {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "cbe_info",
+            "theme_cbe"
+          ]
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "theme_cbe"
+      },
+      {
+        "column_id": "count_targeted_beneficiaries",
+        "datatype": "integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "cbe_info", "theme_cbe"],
+              "datatype": "string"
+            }
+          },
+          "cases": {
+            "third_fourth_month_of_pregnancy": {
+              "type": "reduce_items",
+                "items_expression": {
+                    "type": "split_string",
+                    "string_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "cbe_info", "pregnant_woman_group", "pregnant_women_list"]
+                    }
+                },
+            "aggregation_fn": "count"
+            },
+            "annaprasan_diwas": {
+              "type": "reduce_items",
+                "items_expression": {
+                    "type": "split_string",
+                    "string_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "cbe_info", "children_group", "children_list"]
+                    }
+                },
+            "aggregation_fn": "count"
+            },
+            "suposhan_diwas": {
+              "type": "property_path",
+              "property_path": ["form", "cbe_info", "husband_group", "husband_number"]
+            },
+            "coming_of_age": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "split_string",
+                    "string_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "cbe_info", "coming_of_age_group", "coming_of_age_list"]
+                    }
+                },
+            "aggregation_fn": "count"
+            },
+            "public_health_message": {
+                "type": "evaluator",
+                "statement": "women + men + community_leaders + ag",
+                "context_variables": {
+                    "women": {
+                        "type": "coalesce",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_path",
+                            "property_path": ["form", "cbe_info", "group_public__messages", "public_list_group", "public_list", "women"]
+                            },
+                        "default_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "men": {
+                        "type": "coalesce",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_path",
+                            "property_path": ["form", "cbe_info", "group_public__messages", "public_list_group", "public_list", "men"]
+                            },
+                        "default_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "community_leaders": {
+                        "type": "coalesce",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_path",
+                            "property_path": ["form", "cbe_info", "group_public__messages", "public_list_group", "public_list", "community_leaders"]
+                            },
+                        "default_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "ag": {
+                        "type": "coalesce",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_path",
+                            "property_path": ["form", "cbe_info", "group_public__messages", "public_list_group", "public_list", "ag"]
+                            },
+                        "default_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                }
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "count_other_beneficiaries",
+        "datatype": "integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "cbe_info", "theme_cbe"],
+              "datatype": "string"
+            }
+          },
+          "cases": {
+            "third_fourth_month_of_pregnancy": {
+               "type": "property_path",
+              "property_path": ["form", "cbe_info", "pregnant_woman_group", "others_preganant_women"]
+            },
+            "annaprasan_diwas": {
+                "type": "property_path",
+              "property_path": ["form", "cbe_info", "children_group", "others_children"]
+
+            },
+            "suposhan_diwas": {
+              "type": "property_path",
+              "property_path": ["form", "cbe_info", "husband_group", "others_husband"]
+            },
+            "coming_of_age": {
+                "type": "property_path",
+              "property_path": ["form", "cbe_info", "coming_of_age_group", "others_coming_of_age"]
+            },
+            "public_health_message": {
+               "type": "property_path",
+              "property_path": ["form", "cbe_info", "group_public__messages", "public_list_group", "public_list", "others"]
+
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
         "display_name": "Submission Date",
         "transform": {},
         "datatype": "datetime",
