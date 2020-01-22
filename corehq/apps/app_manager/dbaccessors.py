@@ -177,7 +177,9 @@ def get_app_cached(domain, app_id):
     api calls where most requests will be for app builds
     which are read-only.
 
-    This only caches app builds."""
+    This only caches app builds. This should be used with caution
+    elsewhere since it could drain the local memory of web workers
+    if called for actual apps that are not builds"""
     app = get_app_cached()
     if not app.copy_of:
         _get_app_cached.clear(domain, app_id)
