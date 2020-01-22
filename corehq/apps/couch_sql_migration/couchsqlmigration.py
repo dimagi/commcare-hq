@@ -23,7 +23,7 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, retry_on_couch_error
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -921,6 +921,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
 
 def _iter_docs(domain, doc_type, resume_key, stopper):
+    @retry_on_couch_error
     def data_function(**view_kwargs):
         return couch_db.view('by_domain_doc_type_date/view', **view_kwargs)
 

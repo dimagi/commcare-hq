@@ -1,11 +1,16 @@
+from functools import wraps
+from time import sleep
+
+from django.conf import settings
+
 from couchdbkit import ResourceConflict
 from couchdbkit.client import Database
-from dimagi.ext.couchdbkit import Document
-from django.conf import settings
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import get_docs
+from memoized import memoized
 from requests.exceptions import RequestException
-from time import sleep
+
+from dimagi.ext.couchdbkit import Document
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import BulkFetchException, get_docs
 
 
 class DocTypeMismatchException(Exception):
@@ -14,17 +19,17 @@ class DocTypeMismatchException(Exception):
 
 class DesignDoc(object):
     """Data structure representing a design doc"""
-    
+
     def __init__(self, database, id):
         self.id = id
         self._doc = database.get(id)
         self.name = id.replace("_design/", "")
-    
+
     @property
     def views(self):
         views = []
         if "views" in self._doc:
-            for view_name, _ in self._doc["views"].items(): 
+            for view_name, _ in self._doc["views"].items():
                 views.append(view_name)
         return views
 
@@ -43,7 +48,7 @@ def get_db(postfix=None):
 
 
 def get_design_docs(database):
-    design_doc_rows = database.view("_all_docs", startkey="_design/", 
+    design_doc_rows = database.view("_all_docs", startkey="_design/",
                                     endkey="_design/zzzz")
     ret = []
     for row in design_doc_rows:
@@ -170,3 +175,36 @@ def apply_update(doc, update_fn, max_tries=5):
             doc = doc.__class__.get(doc._id)
         tries += 1
     raise ResourceConflict("Document update conflict. -- Max Retries Reached")
+
+
+def retry_on_couch_error(func):
+    """Decorator to retry function call on Couch error
+
+    Retry up to 5 times with exponential backoff. Raise the last
+    received error from Couch if all calls fail.
+    """
+    @wraps(func)
+    def retry(*args, **kw):
+        for delay in [0.1, 1, 2, 4, 8, None]:
+            try:
+                return func(*args, **kw)
+            except (BulkFetchException, RequestException) as err:
+                if delay is None or not _is_couch_error(err):
+                    raise
+                sleep(delay)
+    return retry
+
+
+def _is_couch_error(err):
+    if isinstance(err, BulkFetchException):
+        return True
+    return err.request and err.request.url.startswith(_get_couch_base_urls())
+
+
+@memoized
+def _get_couch_base_urls():
+    urls = set()
+    for config in settings.COUCH_DATABASES.values():
+        protocol = 'https' if config['COUCH_HTTPS'] else 'http'
+        urls.add(f"{protocol}://{config['COUCH_SERVER_ROOT']}")
+    return tuple(urls)

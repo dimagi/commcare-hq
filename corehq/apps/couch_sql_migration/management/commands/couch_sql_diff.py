@@ -225,10 +225,10 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    from ...casediff import _diff_state, diff_cases
+    from ...casediff import _diff_state, get_couch_cases, diff_cases
     should_diff = _diff_state.should_diff
     couch_cases = {c.case_id: c.to_json()
-        for c in CaseAccessorCouch.get_cases(case_ids) if should_diff(c)}
+        for c in get_couch_cases(case_ids) if should_diff(c)}
     if log_cases:
         skipped = [id for id in case_ids if id not in couch_cases]
         if skipped:
