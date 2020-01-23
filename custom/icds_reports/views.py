@@ -234,7 +234,8 @@ from custom.icds_reports.utils.data_accessor import (
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
     get_beneficiary_data,
-    get_state_names)
+    get_state_names,
+    get_cbe_data)
 
 
 from . import const
@@ -2283,3 +2284,38 @@ class GovernanceStateListAPI(GovernanceAPIBaseView):
 
     def get(self, request, *args, **kwargs):
         return JsonResponse(data={'data': get_state_names()})
+
+
+class GovernanceCBEAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {
+            'state_id': state_id,
+            'awc_launched': 1,
+            'awc_id__gt': last_awc_id}
+        order = ['awc_id']
+
+        data, count = get_cbe_data(
+            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            year,
+            month,
+            order,
+            query_filters
+        )
+
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)

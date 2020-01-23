@@ -83,3 +83,28 @@ def get_beneficiary_data(length, year, month, order, query_filters):
 def get_state_names():
     return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0
                                            ).values('state_site_code', 'state_name'))
+
+
+@icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
+def get_cbe_data(length, year, month, order, query_filters):
+    data = AggGovernanceDashboard.objects.filter(
+        month=date(year, month, 1),
+        **query_filters
+    ).order_by(*order).values(
+        'awc_id',
+        'awc_code',
+        'cbe_conducted_1',
+        'cbe_type_1',
+        'cbe_date_1',
+        'num_target_beneficiaries_1',
+        'num_other_beneficiaries_1',
+        'cbe_conducted_2',
+        'cbe_type_2',
+        'cbe_date_2',
+        'num_target_beneficiaries_2',
+        'num_other_beneficiaries_2',
+    )
+
+    # To apply pagination on database query with offset and limit
+    paginated_data = list(data[:length])
+    return paginated_data, data.count()
