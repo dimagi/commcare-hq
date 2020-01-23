@@ -247,7 +247,9 @@ class TestLocationView(TestCase):
             'map_location_name': 'Test State 3',
             'location_type_name': 'state',
             'user_have_access': True,
-            'location_type': 'state'
+            'location_type': 'state',
+            'parent_map_name': None,
+            'parent_name': None,
         }
         self.assertDictEqual(expected, json.loads(response.content))
 
