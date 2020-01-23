@@ -163,10 +163,3 @@ NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adoles
 
 
 GOVERNANCE_API_RECORDS_PAGINATION = 10000
-
-# need to add more steps
-GOVERNANCE_API_STEPS = [
-    'home_visit',
-    'state_names',
-    'vhnds'
-]
