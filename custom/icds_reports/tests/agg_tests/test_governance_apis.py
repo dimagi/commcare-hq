@@ -113,8 +113,8 @@ class GovernanceApiTest(TestCase):
                                     2017, 5, order, query_filters)
         expected_first_row = {
             "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
-            "anm_present": "no", "asha_present": "no", "any_child_immunized": "no",
-            "anc_conducted": "no"
+            "anm_present": "Data Not Entered", "asha_present": "Data Not Entered",
+            "any_child_immunized": "Data Not Entered", "anc_conducted": "Data Not Entered"
         }
         self.assertEqual(data[0], expected_first_row)
 
