@@ -91,12 +91,12 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
             )
         ]
         if self.beta:
-            agg_columns.append(DatabaseColumn(
+            agg_columns.insert(4, DatabaseColumn(
                 'Number of birth preparedness forms',
                 SumColumn('usage_num_bp_tri'),
                 slug='usage_num_bp_tri')
             )
-            agg_columns.append(DatabaseColumn(
+            agg_columns.insert(11, DatabaseColumn(
                 'Number of due list forms',
                 SumColumn('usage_num_due_list_ccs_and_child_health'),
                 slug='usage_num_due_list_ccs_and_child_health')
@@ -108,7 +108,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 slug='num_supervisor_launched')
             )
         else:
-            agg_columns.append(AggregateColumn(
+            agg_columns.insert(4, AggregateColumn(
                 'Number of birth preparedness forms',
                 lambda x, y, z: x + y + z,
                 [
@@ -118,7 +118,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 ],
                 slug='num_bp_forms')
             )
-            agg_columns.append(AggregateColumn(
+            agg_columns.insert(11, AggregateColumn(
                 'Number of due list forms',
                 lambda x, y: x + y,
                 [

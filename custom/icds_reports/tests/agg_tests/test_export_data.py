@@ -633,7 +633,171 @@ class TestExportData(TestCase):
             SystemUsageExport(
                 config={
                     'domain': 'icds-cas',
-                    'month': datetime(2017, 5, 1),
+                    'month': datetime(2017, 5, 1)
+                }
+            ).get_excel_data('b1', False, True),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['District', 'd1'],
+                    ['Block', 'b1'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]]
+            ]
+        )
+
+    def test_system_usage_export_for_awc_level(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': datetime(2017, 5, 1)
+                },
+                loc_level=5,
+            ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'District',
+                        'Block',
+                        'Supervisor',
+                        'AWC',
+                        'AWW Phone Number',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a1', '+91555555',
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
+                        11, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a25', 'Data Not Entered',
+                        13, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
+                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
+                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
+                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
+                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
+                        10, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a26', 'Data Not Entered',
+                        12, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
+                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
+                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
+                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['District', 'd1'],
+                    ['Block', 'b1'],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]],
+            ]
+        )
+
+    def test_system_usage_export_with_beta(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'month': datetime(2017, 5, 1)
                 }, beta=True
             ).get_excel_data('b1', False, True),
             [
@@ -643,23 +807,23 @@ class TestExportData(TestCase):
                         'Number of days AWC was open in the given month',
                         'Number of launched AWCs (ever submitted at least one HH reg form)',
                         'Number of household registration forms', 'Number of add pregnancy forms',
-                        'Number of delivery forms', 'Number of PNC forms',
-                        'Number of exclusive breastfeeding forms', 'Number of complementary feeding forms',
-                        'Number of growth monitoring forms', 'Number of take home rations forms',
-                        'Number of birth preparedness forms', 'Number of due list forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms',
                         'Number of launched LSs'
                     ],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5, 4],
-                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 1, 0, 5, 12, 3, 46, 4, 5,
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5, 4],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5,
                      'Data Not Entered'],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17, 2],
-                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 1, 1, 4, 4, 20, 65, 4, 17,
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17,
                      'Data Not Entered'],
                     ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                      'Data Not Entered'],
@@ -708,7 +872,7 @@ class TestExportData(TestCase):
             ]
         )
 
-    def test_system_usage_export_for_awc_level(self):
+    def test_system_usage_export_for_awc_level_with_beta(self):
         self.assertListEqual(
             SystemUsageExport(
                 config={
@@ -731,10 +895,10 @@ class TestExportData(TestCase):
                         'Number of days AWC was open in the given month',
                         'Number of launched AWCs (ever submitted at least one HH reg form)',
                         'Number of household registration forms', 'Number of add pregnancy forms',
-                        'Number of delivery forms', 'Number of PNC forms',
-                        'Number of exclusive breastfeeding forms', 'Number of complementary feeding forms',
-                        'Number of growth monitoring forms', 'Number of take home rations forms',
-                        'Number of birth preparedness forms', 'Number of due list forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms',
                         'Number of launched LSs'
                     ],
                     [
@@ -751,7 +915,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
-                        12, 'Not Launched', 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 'Not applicable at AWC level'
+                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
@@ -759,7 +923,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
-                        14, 'Launched', 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 'Not applicable at AWC level'
+                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
@@ -787,7 +951,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
-                        7, 'Not Launched', 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 'Not applicable at AWC level'
+                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 'Not applicable at AWC level'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
