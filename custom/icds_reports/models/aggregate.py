@@ -54,8 +54,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormV2AggDistributedHelper,
     DashboardActivityReportAggregate,
     AggAdolescentGirlsRegistrationAggregate,
-    AggGovDashboardHelper,
-    GovVhndFormAggDistributedHelper
+    AggGovDashboardHelper
 )
 
 

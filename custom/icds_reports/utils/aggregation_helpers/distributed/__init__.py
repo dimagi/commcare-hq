@@ -62,6 +62,5 @@ __all__ = (
     'THRFormV2AggDistributedHelper',
     'DashboardActivityReportAggregate',
     'AggAdolescentGirlsRegistrationAggregate',
-    'AggGovDashboardHelper',
-    'GovVhndFormAggDistributedHelper'
+    'AggGovDashboardHelper'
 )

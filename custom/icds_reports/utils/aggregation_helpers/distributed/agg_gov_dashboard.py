@@ -1,3 +1,5 @@
+from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
@@ -6,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import Aggre
 class AggGovDashboardHelper(AggregationPartitionedHelper):
     helper_key = 'agg-gov-dashboard'
     base_tablename = AGG_GOV_DASHBOARD_TABLE
+    ucr_data_source_id = 'static_vhnd_form'
     staging_tablename = 'staging_{}'.format(AGG_GOV_DASHBOARD_TABLE)
 
     @property
@@ -38,12 +41,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_lact_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_reg_in_month,0)'),
             ('total_preg_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_reg_in_month,0)'),
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
-            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)'),
-            ('vhsnd_date_past_month', 'COALESCE(icds_dashboard_gov_vhnd_forms.vhsnd_date_past_month, null)'),
-            ('anm_mpw_present', 'COALESCE(icds_dashboard_gov_vhnd_forms.anm_mpw_present,false)'),
-            ('asha_present', 'COALESCE(icds_dashboard_gov_vhnd_forms.asha_present,false)'),
-            ('child_immu', 'COALESCE(icds_dashboard_gov_vhnd_forms.child_immu,false)'),
-            ('anc_today', 'COALESCE(icds_dashboard_gov_vhnd_forms.anc_today,false)')
+            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
         )
         yield """
                 INSERT INTO "{tmp_tablename}" (
@@ -56,9 +54,6 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
                     awc_location_local.doc_id = agg_awc.awc_id AND
                     awc_location_local.aggregation_level = agg_awc.aggregation_level AND
                     agg_awc.month = %(start_date)s
-                ) LEFT JOIN icds_dashboard_gov_vhnd_forms ON (
-                    icds_dashboard_gov_vhnd_forms.awc_id = agg_awc.awc_id AND
-                    icds_dashboard_gov_vhnd_forms.month = agg_awc.month
                 )
                 WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
                 """.format(
@@ -128,6 +123,27 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         }
 
         yield """
+        CREATE TABLE temp_vhnd_form AS 
+            SELECT DISTINCT awc_id as awc_id,
+                 FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
+                 FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
+                 FIRST_VALUE(asha_present=1) over w as asha_present,
+                 FIRST_VALUE(child_immu=1) over w as child_immu,
+                 FIRST_VALUE(anc_today=1) over w as anc_today,
+                %(start_date)s::DATE AS month
+            FROM "{ucr_tablename}" WHERE
+        vhsnd_date_past_month >= %(start_date)s AND
+        vhsnd_date_past_month < %(end_date)s WINDOW w AS(
+            PARTITION BY awc_id
+            ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )ORDER BY awc_id, month;""".format(
+            ucr_tablename=self.ucr_tablename
+        ), {
+            'start_date': self.month,
+            'end_date': self.month + relativedelta(months=1)
+        }
+
+        yield """
         UPDATE "{tmp_tablename}" agg_gov
         SET total_0_3_female_benefit_till_date = ut.valid_all_0_3_female,
             total_0_3_male_benefit_till_date = ut.valid_all_0_3_male,
@@ -152,7 +168,21 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         ), {}
 
         yield """
+        UPDATE "{tmp_tablename}" agg_gov
+        SET vhsnd_date_past_month = ut.vhsnd_date_past_month,
+            anm_mpw_present = ut.anm_mpw_present,
+            asha_present = ut.asha_present,
+            child_immu = ut.child_immu,
+            anc_today = ut.anc_today
+        FROM temp_vhnd_form ut
+        WHERE agg_gov.awc_id = ut.awc_id;
+        """.format(
+            tmp_tablename=self.staging_tablename,
+        ), {}
+
+        yield """
         DROP TABLE temp_gov_dashboard;
+        DROP TABLE temp_vhnd_form;
         """, {}
 
     def indexes(self):
