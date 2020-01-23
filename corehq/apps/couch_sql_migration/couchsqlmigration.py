@@ -184,12 +184,7 @@ class CouchSqlDomainMigrator:
         self._migrate_form_and_associated_models(couch_form)
         self.case_diff_queue.update(case_ids, form_id)
 
-    def _migrate_form_and_associated_models(
-        self,
-        couch_form,
-        form_is_processed=True,
-        replace_diffs=False,
-    ):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
         """
         Copies `couch_form` into a new sql form
         """
@@ -240,12 +235,12 @@ class CouchSqlDomainMigrator:
                 raise err from None
         finally:
             if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form, replace_diffs)
+                self._save_diffs(couch_form, sql_form)
 
-    def _save_diffs(self, couch_form, sql_form, replace):
+    def _save_diffs(self, couch_form, sql_form):
         couch_json = couch_form.to_json()
         sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json, replace)
+        self.statedb.save_form_diffs(couch_json, sql_json)
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -360,7 +355,7 @@ class CouchSqlDomainMigrator:
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
-            self._migrate_form_and_associated_models(form, replace_diffs=True)
+            self._migrate_form_and_associated_models(form)
         self._rediff_already_migrated_forms(migrated_ids)
 
     def _rediff_already_migrated_forms(self, form_ids):
@@ -383,7 +378,7 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form, replace_diffs=True)
+                    self._migrate_form_and_associated_models(form)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
@@ -406,7 +401,7 @@ class CouchSqlDomainMigrator:
     def _with_progress(self, doc_types, iterable, progress_name='Migrating', offset_key=None):
         doc_count = sum([
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-            for doc_type in doc_types
+            for doc_type in (d.split(".", 1)[0] for d in doc_types)
         ])
         if offset_key is None:
             offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
@@ -903,7 +898,11 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = str_to_datetime(key_date)
+        try:
+            key_date = str_to_datetime(key_date)
+        except ValueError:
+            log.warn("could not get date from last element of key %r", results[-1]['key'])
+            return
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -947,7 +946,18 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    return (row[row_key] for row in rows)
+    log.info("iteration state: %r", rows.state.to_json())
+    row = None
+    try:
+        for row in rows:
+            assert row['key'][0] == domain, row
+            yield row[row_key]
+    finally:
+        if row is not None:
+            row_copy = dict(row)
+            row_copy.pop("doc", None)
+            log.info("last item: %r", row_copy)
+        log.info("final iteration state: %r", rows.state.to_json())
 
 
 _iter_docs.chunk_size = 1000
@@ -1025,7 +1035,7 @@ class DocCounter:
 
     def __init__(self, statedb):
         self.statedb = statedb
-        self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.counts = defaultdict(int, self.statedb.get(self.STATE_KEY, {}))
         self.timing = TimingContext("couch_sql_migration")
         self.dd_session = 0
         self.state_session = 0

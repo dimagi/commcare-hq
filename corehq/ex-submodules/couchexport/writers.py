@@ -19,7 +19,7 @@ from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
-from couchexport.util import get_excel_format_value
+from couchexport.util import get_excel_format_value, get_legacy_excel_safe_value
 
 MAX_XLS_COLUMNS = 256
 
@@ -362,9 +362,10 @@ class Excel2007ExportWriter(ExportWriter):
     format = Format.XLS_2007
     max_table_name_size = 31
 
-    def __init__(self, format_as_text=False):
+    def __init__(self, format_as_text=False, use_formatted_cells=False):
         super(Excel2007ExportWriter, self).__init__()
         self.format_as_text = format_as_text
+        self.use_formatted_cells = use_formatted_cells
 
     def _init(self):
         # https://openpyxl.readthedocs.io/en/latest/optimized.html
@@ -385,14 +386,20 @@ class Excel2007ExportWriter(ExportWriter):
 
         cells = []
         for col_ind, val in enumerate(row):
-            if ((isinstance(row, FormattedRow) and col_ind in row.skip_excel_formatting)
-                    or self.format_as_text):
-                cell = WriteOnlyCell(sheet, val)
-                cell.number_format = numbers.FORMAT_TEXT
-            else:
+            skip_formatting_on_row = (isinstance(row, FormattedRow)
+                                      and col_ind in row.skip_excel_formatting)
+
+            if (self.use_formatted_cells
+                    and not skip_formatting_on_row
+                    and not self.format_as_text):
                 excel_format, val_fmt = get_excel_format_value(val)
                 cell = WriteOnlyCell(sheet, val_fmt)
                 cell.number_format = excel_format
+            else:
+                cell = WriteOnlyCell(sheet, get_legacy_excel_safe_value(val))
+                if self.format_as_text:
+                    cell.number_format = numbers.FORMAT_TEXT
+
             cells.append(cell)
 
         if isinstance(row, FormattedRow):

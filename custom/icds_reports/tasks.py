@@ -1769,7 +1769,7 @@ def update_governance_dashboard(target_date):
     _agg_governance_dashboard.delay(current_month)
 
 
-@task(queue='icds_aggregation_queue')
+@task(queue='icds_aggregation_queue', serializer='pickle')
 def _agg_governance_dashboard(current_month):
     previous_month = current_month - relativedelta(months=1)
     for month in [previous_month, current_month]:

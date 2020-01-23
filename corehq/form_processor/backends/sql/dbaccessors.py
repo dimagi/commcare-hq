@@ -592,7 +592,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         return affected_count
 
     @staticmethod
-    @transaction.atomic
     def set_archived_state(form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
@@ -604,7 +603,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
 
     @staticmethod
-    @transaction.atomic
     def save_new_form(form):
         """
         Save a previously unsaved form
@@ -671,7 +669,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             publish_form_saved(form)
 
     @staticmethod
-    @transaction.atomic
     def update_form_problem_and_state(form):
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -873,11 +870,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
-            'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-            [domain, list(cases_by_id)])
-        )
-        _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        if cases_by_id:
+            indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
+                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(cases_by_id)])
+            )
+            _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
 
     @staticmethod
