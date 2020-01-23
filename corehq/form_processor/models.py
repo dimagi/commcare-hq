@@ -884,7 +884,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         assert len(transactions) <= 1
         transaction = transactions[0] if transactions else None
 
-        if not transaction:
+        if not transaction and self.is_saved():
             transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 

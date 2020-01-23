@@ -33,9 +33,9 @@ from corehq.util.datadog.gauges import datadog_counter
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .rebuildcase import (
-    is_action_order_equal,
     rebuild_case,
     rebuild_case_with_couch_action_order,
+    should_sort_sql_transactions,
     was_rebuilt,
 )
 from .statedb import StateDB
@@ -108,9 +108,10 @@ class CaseDiffQueue:
             self._load_resume_state(state)
         self._stop_status_logger = run_status_logger(
             log_status, self.get_status, self.status_interval)
+        domain = self.statedb.domain
         get_forms = self.statedb.get_no_action_case_forms
         self._global_state = ExitStack()
-        self._global_state.enter_context(global_diff_state(get_forms))
+        self._global_state.enter_context(global_diff_state(domain, get_forms))
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -446,7 +447,15 @@ class CaseDiffProcess:
         self.stats, stats = self.stats_pipe.__enter__()
         debug = log.isEnabledFor(logging.DEBUG)
         is_rebuild = self.statedb.is_rebuild
-        args = (self.queue_class, calls, stats, self.state_path, is_rebuild, debug)
+        args = (
+            self.queue_class,
+            calls,
+            stats,
+            self.statedb.domain,
+            self.state_path,
+            is_rebuild,
+            debug,
+        )
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -524,7 +533,7 @@ def get_casediff_state_path(path):
     return path[:-3] + "-casediff.db"
 
 
-def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug):
+def run_case_diff_queue(queue_class, calls, stats, domain, state_path, is_rebuild, debug):
     def status():
         stats.put((STATUS, queue.get_status()))
 
@@ -554,7 +563,7 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
 
     signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
-    statedb = StateDB.init(state_path)
+    statedb = StateDB.init(domain, state_path)
     statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
     queue = None
@@ -708,11 +717,8 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
-    if not couch_cases:
-        return data
+    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
     case_ids = list(couch_cases)
-    domain = couch_cases[case_ids[0]]["domain"]
-    dd_count = partial(datadog_counter, tags=["domain:" + domain])
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
         case_id = sql_case.case_id
@@ -732,12 +738,16 @@ def diff_case(sql_case, couch_case, dd_count):
     def diff(couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         return filter_case_diffs(couch_json, sql_json, diffs, _diff_state)
+    case_id = couch_case['_id']
     sql_json = sql_case.to_json()
     dd_count("commcare.couchsqlmigration.case.diffed")
+    diffs = check_domains(case_id, couch_case, sql_json)
+    if diffs:
+        dd_count("commcare.couchsqlmigration.case.has_diff")
+        return couch_case, diffs
     diffs = diff(couch_case, sql_json)
     if diffs:
         domain = couch_case["domain"]
-        case_id = couch_case['_id']
         try:
             with convert_rebuild_error():
                 couch_case = FormProcessorCouch.hard_rebuild_case(
@@ -764,11 +774,17 @@ def diff_case(sql_case, couch_case, dd_count):
     return couch_case, diffs
 
 
-def should_sort_sql_transactions(sql_case, couch_case):
-    return (
-        not was_rebuilt(sql_case)
-        and not is_action_order_equal(sql_case, couch_case)
-    )
+def check_domains(case_id, couch_json, sql_json):
+    if couch_json["domain"] == _diff_state.domain:
+        if sql_json["domain"] == _diff_state.domain:
+            return []
+        log.warning("sql case %s has wrong domain: %s", case_id, sql_json["domain"])
+        diffs = json_diff({"domain": _diff_state.domain}, {"domain": sql_json["domain"]})
+    else:
+        log.warning("couch case %s has wrong domain: %s", case_id, couch_json["domain"])
+        diffs = json_diff({"domain": couch_json["domain"]}, {"domain": _diff_state.domain})
+    assert diffs, "expected domain diff"
+    return diffs
 
 
 def iter_ledger_diffs(case_ids, dd_count):
@@ -783,15 +799,20 @@ def iter_ledger_diffs(case_ids, dd_count):
         couch_state = couch_state_map.get(ref, None)
         if couch_state is None:
             couch_json = get_stock_state_json(ledger_value)
-            dd_count("commcare.couchsqlmigration.case.diff.ledger.rebuild")
+            dd_count("commcare.couchsqlmigration.ledger.rebuild")
         else:
             couch_json = couch_state.to_json()
-        dd_count("commcare.couchsqlmigration.case.diff.ledger")
+        dd_count("commcare.couchsqlmigration.ledger.diffed")
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+        diffs = filter_ledger_diffs(diffs)
+        if diffs:
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
+        yield "stock state", ref.as_id(), diffs
     for ref, couch_state in couch_state_map.items():
         if ref not in sql_refs:
             diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
+            dd_count("commcare.couchsqlmigration.ledger.diffed")
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
             yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
 
 
@@ -855,10 +876,10 @@ class RebuildError(Exception):
 
 
 @contextmanager
-def global_diff_state(no_action_case_forms, cutoff_date=None):
+def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
     from .couchsqlmigration import migration_patches
     global _diff_state
-    _diff_state = WorkerState(no_action_case_forms, cutoff_date)
+    _diff_state = WorkerState(domain, no_action_case_forms, cutoff_date)
     try:
         with migration_patches():
             yield
@@ -875,6 +896,7 @@ class DiffData:
 
 @attr.s
 class WorkerState:
+    domain = attr.ib()
     forms = attr.ib(repr=lambda v: repr(v) if callable(v) else f"[{len(v)} ids]")
     cutoff_date = attr.ib()
 
@@ -888,7 +910,10 @@ class WorkerState:
         return self.forms
 
     def should_diff(self, case):
-        return case.server_modified_on < self.cutoff_date
+        return (
+            case.server_modified_on is None
+            or case.server_modified_on < self.cutoff_date
+        )
 
 
 def is_orphaned_case(couch_case):

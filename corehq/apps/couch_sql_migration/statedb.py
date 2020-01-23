@@ -36,7 +36,7 @@ def init_state_db(domain, state_dir):
     db_dir = os.path.dirname(db_filepath)
     if os.path.isdir(state_dir) and not os.path.isdir(db_dir):
         os.mkdir(db_dir)
-    return StateDB.init(db_filepath)
+    return StateDB.init(domain, db_filepath)
 
 
 def open_state_db(domain, state_dir):
@@ -44,7 +44,7 @@ def open_state_db(domain, state_dir):
     db_filepath = _get_state_db_filepath(domain, state_dir)
     if not os.path.exists(db_filepath):
         db_filepath = ":memory:"
-    return StateDB.open(db_filepath, readonly=True)
+    return StateDB.open(domain, db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -63,9 +63,9 @@ def _get_state_db_filepath(domain, state_dir):
 class StateDB(DiffDB):
 
     @classmethod
-    def init(cls, path):
+    def init(cls, domain, path):
         is_new_db = not os.path.exists(path)
-        db = super(StateDB, cls).init(path)
+        db = super(StateDB, cls).init(domain, path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         else:
@@ -197,17 +197,20 @@ class StateDB(DiffDB):
             return query.scalar() or 0
 
     def add_cases_to_diff(self, case_ids):
+        if not case_ids:
+            return
         with self.session() as session:
-            session.bulk_save_objects([CaseToDiff(id=id) for id in case_ids])
+            session.execute(
+                f"INSERT OR IGNORE INTO {CaseToDiff.__tablename__} (id) VALUES (:id)",
+                [{"id": x} for x in case_ids],
+            )
 
     def add_diffed_cases(self, case_ids):
         if not case_ids:
             return
         with self.session() as session:
             session.execute(
-                """
-                INSERT OR IGNORE INTO {table} (id) VALUES (:id)
-                """.format(table=DiffedCase.__tablename__),
+                f"INSERT OR IGNORE INTO {DiffedCase.__tablename__} (id) VALUES (:id)",
                 [{"id": x} for x in case_ids],
             )
             (
@@ -322,8 +325,7 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
-        domain = couch_json.get("domain", "unknown")
-        dd_count = partial(datadog_counter, tags=["domain:" + domain])
+        dd_count = partial(datadog_counter, tags=["domain:" + self.domain])
         dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
@@ -476,7 +478,7 @@ class StateDB(DiffDB):
             """)
 
         log.info("checking casediff data preconditions...")
-        casediff_db = type(self).open(casediff_state_path)
+        casediff_db = type(self).open(self.domain, casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {
                 "CommCareCase",
@@ -513,9 +515,10 @@ class StateDB(DiffDB):
             self._migrate_diff_to_docdiffs(session)
 
     def _migrate_diff_to_docdiffs(self, session):
+        if session.query(session.query(DocDiffs).exists()).scalar():
+            return  # already migrated
         if not session.query(session.query(Diff).exists()).scalar():
-            return
-        assert not session.query(session.query(DocDiffs).exists()).scalar()
+            return  # nothing to migrate
         log.info("migrating PlanningDiff to DocDiffs...")
         base_query = session.query(Diff).filter(Diff.kind != "stock state")
         count = base_query.count()
@@ -527,7 +530,6 @@ class StateDB(DiffDB):
         # "stock state" diffs must be migrated after "CommCareCase"
         # diffs since it will probably replace some of them
         self._migrate_stock_state_diffs(session)
-        session.query(Diff).delete(synchronize_session=False)
 
     def _migrate_stock_state_diffs(self, session):
         def get_case_diffs(case_id):
