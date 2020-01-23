@@ -29,7 +29,7 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @property
-    def couch_class_key(self):
+    def couch_key(self):
         raise NotImplementedError()
 
     @property
@@ -37,7 +37,7 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     def doc_key(self, doc):
-        return {key: doc[key] for key in doc if key in self.couch_class_key}
+        return {key: doc[key] for key in doc if key in self.couch_key}
 
     def update_or_create_sql_object(self, doc):
         raise NotImplementedError()

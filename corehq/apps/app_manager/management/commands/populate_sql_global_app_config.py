@@ -17,7 +17,7 @@ class Command(PopulateSQLCommand):
             return None
 
     @property
-    def couch_class_key(self):
+    def couch_key(self):
         return set(['domain', 'app_id'])
 
     @property
