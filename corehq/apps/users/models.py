@@ -2817,11 +2817,11 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     xform_version, form_meta, received_on
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(xform_version)s, %(form_meta)s, %(received_on)s
                 )
@@ -2848,11 +2848,11 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     sync_date, device_id
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s
                 )
@@ -2884,13 +2884,13 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on
                     build_id,
                     sync_date, device_id,
                     app_version, num_unsent_forms, num_quarantined_forms,
                     commcare_version, build_profile_id, last_heartbeat
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s,
                     %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
