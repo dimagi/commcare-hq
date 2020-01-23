@@ -3,7 +3,8 @@ import datetime
 from django.test import TestCase
 
 from custom.icds_reports.const import GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION
-from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, get_beneficiary_data
+from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, \
+    get_beneficiary_data, get_cbe_data
 from custom.icds_reports.tasks import _agg_governance_dashboard
 from datetime import date
 
@@ -112,4 +113,25 @@ class GovernanceApiTest(TestCase):
                            'total_3_6_male_benefit_in_month': 'Data Not Entered',
                            'total_3_6_female_reg_in_month': 'Data Not Entered',
                            'total_3_6_male_reg_in_month': 'Data Not Entered'},
+                          ], data)
+
+    def test_fetch_cbe_data(self):
+        limit = 1
+        _agg_governance_dashboard(date(2017, 5, 1))
+        query_filters = {'state_id': 'st2'}
+        order = ['awc_id']
+        data, count = get_cbe_data(limit, 2017, 5, order, query_filters)
+        self.assertEqual(len(data), limit)
+        self.assertEqual([{'awc_code': 'a13',
+                           'awc_id': 'a13',
+                           'cbe_conducted_1': 'yes',
+                           'cbe_conducted_2': 'yes',
+                           'cbe_date_1': datetime.date(2017, 5, 2),
+                           'cbe_date_2': datetime.date(2017, 5, 14),
+                           'cbe_type_1': 'annaprasan_diwas',
+                           'cbe_type_2': 'suposhan_diwas',
+                           'num_other_beneficiaries_1': 1,
+                           'num_other_beneficiaries_2': 0,
+                           'num_target_beneficiaries_1': 12,
+                           'num_target_beneficiaries_2': 8}
                           ], data)
