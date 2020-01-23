@@ -103,7 +103,7 @@ from custom.icds_reports.models.aggregate import (
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard
-    )
+)
 
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
