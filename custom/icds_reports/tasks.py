@@ -102,8 +102,8 @@ from custom.icds_reports.models.aggregate import (
     DailyAttendance,
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
-    AggGovernanceDashboard,
-    AggregateVHNDForms)
+    AggGovernanceDashboard
+    )
 
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -279,11 +279,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                                func_name='_agg_adolescent_girls_registration_table')
                 for state_id in state_ids
             ])
-            stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
-                                               func_name='_agg_gov_vhnd_form')
-                for state_id in state_ids
-             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -449,8 +444,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
-        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
-        '_agg_gov_vhnd_form': _agg_gov_vhnd_form,
+        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -668,12 +662,6 @@ def _agg_awc_table(day):
 def _agg_ls_vhnd_form(state_id, day):
     with transaction.atomic(using=router.db_for_write(AggLs)):
         AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
-
-
-@track_time
-def _agg_gov_vhnd_form(state_id, day):
-    with transaction.atomic(using=router.db_for_write(AggLs)):
-        AggregateVHNDForms.aggregate(state_id, force_to_date(day))
 
 
 @track_time
@@ -1751,16 +1739,6 @@ def update_dashboard_activity_report(target_date=None):
     db_alias = router.db_for_write(DashboardUserActivityReport)
     with transaction.atomic(using=db_alias):
         DashboardUserActivityReport().aggregate(target_date)
-
-
-def update_vhnd_form_aggregation(state_id, target_month=None):
-    if target_month is None:
-        target_month = date.today()
-    else:
-        target_month = datetime.strptime(target_month, '%Y-%m-%d')
-    db_alias = router.db_for_write(AggregateVHNDForms)
-    with transaction.atomic(using=db_alias):
-        AggregateVHNDForms().aggregate(state_id, target_month)
 
 
 def drop_gm_indices(agg_date):

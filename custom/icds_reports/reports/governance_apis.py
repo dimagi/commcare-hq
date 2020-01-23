@@ -6,7 +6,6 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggGovernanceDashboard
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models import AggAwcMonthly, AwcLocation
-from custom.icds_reports.models.views import GovVHNDView
 from custom.icds_reports.utils import DATA_NOT_ENTERED
 
 
@@ -33,7 +32,7 @@ def get_home_visit_data(length, year, month, order, query_filters):
 
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
 def get_vhnd_data(length, year, month, order, query_filters):
-    data = GovVHNDView.objects.filter(
+    data = AggGovernanceDashboard.objects.filter(
         month=date(year, month, 1),
         **query_filters
     ).order_by(*order).annotate(

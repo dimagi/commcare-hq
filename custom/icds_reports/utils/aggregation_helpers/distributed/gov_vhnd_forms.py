@@ -47,7 +47,7 @@ class GovVhndFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
             vhsnd_date_past_month < %(end_date)s AND state_id = %(state_id)s
           WINDOW w AS (
                 PARTITION BY awc_id
-                ORDER BY submitted_on
+                ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
           )ORDER BY awc_id, month
         )
         """.format(

@@ -38,7 +38,12 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_lact_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_reg_in_month,0)'),
             ('total_preg_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_reg_in_month,0)'),
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
-            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
+            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)'),
+            ('vhsnd_date_past_month', 'COALESCE(icds_dashboard_gov_vhnd_forms.vhsnd_date_past_month, null)'),
+            ('anm_mpw_present', 'COALESCE(icds_dashboard_gov_vhnd_forms.anm_mpw_present,false)'),
+            ('asha_present', 'COALESCE(icds_dashboard_gov_vhnd_forms.asha_present,false)'),
+            ('child_immu', 'COALESCE(icds_dashboard_gov_vhnd_forms.child_immu,false)'),
+            ('anc_today', 'COALESCE(icds_dashboard_gov_vhnd_forms.anc_today,false)')
         )
         yield """
                 INSERT INTO "{tmp_tablename}" (
@@ -51,6 +56,9 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
                     awc_location_local.doc_id = agg_awc.awc_id AND
                     awc_location_local.aggregation_level = agg_awc.aggregation_level AND
                     agg_awc.month = %(start_date)s
+                ) LEFT JOIN icds_dashboard_gov_vhnd_forms ON (
+                    icds_dashboard_gov_vhnd_forms.awc_id = agg_awc.awc_id AND
+                    icds_dashboard_gov_vhnd_forms.month = agg_awc.month
                 )
                 WHERE awc_location_local.aggregation_level=5 and awc_location_local.state_is_test<>1);
                 """.format(

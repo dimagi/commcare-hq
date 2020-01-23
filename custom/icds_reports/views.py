@@ -64,7 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION)
+    GOVERNANCE_API_RECORDS_PAGINATION)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -2228,7 +2228,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            GOVERNANCE_API_RECORDS_PAGINATION,
             year,
             month,
             order,
@@ -2261,7 +2261,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            GOVERNANCE_API_RECORDS_PAGINATION,
             year,
             month,
             order,
@@ -2295,11 +2295,11 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
         if not is_valid:
             return HttpResponse(error_message, status=400)
 
-        query_filters = {'awc_id__gt': last_awc_id}
+        query_filters = {'awc_id__gt': last_awc_id, 'awc_launched': True}
         order = ['awc_id']
         if state_id != '':
             query_filters['state_id'] = state_id
-        data, count = get_vhnd_data(GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION, year,
+        data, count = get_vhnd_data(GOVERNANCE_API_RECORDS_PAGINATION, year,
                                     month, order, query_filters)
         response_json = {
             'data': data,

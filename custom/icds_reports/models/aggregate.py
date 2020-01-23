@@ -1588,18 +1588,6 @@ class AggGovernanceDashboard(models.Model, AggregateMixin):
     total_3_6_male_benefit_in_month = models.IntegerField(null=True)
     total_3_6_female_reg_in_month = models.IntegerField(null=True)
     total_3_6_male_reg_in_month = models.IntegerField(null=True)
-    month = models.DateField(null=True)
-
-    class Meta(object):
-        db_table = AGG_GOV_DASHBOARD_TABLE
-        unique_together = ('month', 'state_id', 'awc_id')  # pkey
-
-    _agg_helper_cls = AggGovDashboardHelper
-    _agg_atomic = False
-
-
-class AggregateVHNDForms(models.Model, AggregateMixin):
-    state_id = models.TextField(null=True)
     vhsnd_date_past_month = models.DateField(null=True)
     anm_mpw_present = models.NullBooleanField(null=True)
     asha_present = models.NullBooleanField(null=True)
@@ -1609,8 +1597,8 @@ class AggregateVHNDForms(models.Model, AggregateMixin):
     month = models.DateField(null=True)
 
     class Meta(object):
-        db_table = AGG_GOV_VHND_TABLE
-        unique_together = ('month', 'awc_id', 'state_id')
+        db_table = AGG_GOV_DASHBOARD_TABLE
+        unique_together = ('month', 'state_id', 'awc_id')  # pkey
 
-    _agg_helper_cls = GovVhndFormAggDistributedHelper
+    _agg_helper_cls = AggGovDashboardHelper
     _agg_atomic = False
