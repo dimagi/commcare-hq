@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -446,9 +446,10 @@ class ProgramSummaryView(BaseReportView):
 class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
+        state = request.GET.get('state')
         district = request.GET.get('district')
 
-        topojson = get_topojson_for_district(district)
+        topojson = get_topojson_for_district(state, district)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 

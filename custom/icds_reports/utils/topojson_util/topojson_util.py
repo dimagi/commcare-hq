@@ -63,13 +63,23 @@ def copy_custom_metadata(from_topojson, to_topojson):
         location_data['scale'] = from_topojson['objects'][location_name]['scale']
 
 
-def get_topojson_for_district(district):
+def get_topojson_for_district(state, district):
     path = get_topojson_directory()
     district_topojson_data = get_district_topojson_data()
-    for state, data in district_topojson_data.items():
-        if district in data['districts']:
-            with open(os.path.join(path, 'blocks/' + data['file_name']), encoding='utf-8') as f:
-                return json.loads(f.read())
+    # if we have the state name already use that
+    filename = None
+    if state in district_topojson_data:
+        filename = district_topojson_data[state]['file_name']
+    else:
+        # legacy support - missing state name so look for the district by name across all states
+        # todo: add soft assert and/or remove this
+        for state, data in district_topojson_data.items():
+            if district in data['districts']:
+                filename = data['file_name']
+                break
+    if filename:
+        with open(os.path.join(path, 'blocks/' + filename), encoding='utf-8') as f:
+            return json.loads(f.read())
 
 
 def get_district_topojson_data():
