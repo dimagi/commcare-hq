@@ -226,9 +226,10 @@ class FormProcessorSQL(object):
                     affected_cases.update(case_update.id for case_update in get_case_updates(xform))
 
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
+            case_db.populate(list(affected_cases))
             for case_id in affected_cases:
-                case = case_db.get(case_id)
                 is_creation = False
+                case = case_db.cache.get(case_id, None)
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
                     is_creation = True
@@ -244,7 +245,10 @@ class FormProcessorSQL(object):
                     )
         else:
             xform = xforms[0]
-            for case_update in get_case_updates(xform):
+            case_updates = get_case_updates(xform)
+            case_ids = [update.id for update in case_updates]
+            case_db.populate(case_ids)
+            for case_update in case_updates:
                 case_update_meta = case_db.get_case_from_case_update(case_update, xform)
                 if case_update_meta.case:
                     case_id = case_update_meta.case.case_id
