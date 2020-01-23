@@ -1,7 +1,6 @@
 from django.core.management import BaseCommand
 
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_file_for_level, \
-    get_district_topojson_data
+from custom.icds_reports.utils.topojson_util.topojson_util import get_district_topojson_data
 
 
 class Command(BaseCommand):
