@@ -12,6 +12,9 @@ from datetime import date
 
 class GovernanceApiTest(TestCase):
 
+    def setUp(self):
+        _agg_governance_dashboard(date(2017, 5, 1))
+
     def test_data_fetching_total_record_count_for_home_visit_api(self):
         """
         test to check the total count of records that are returned from the home visit api
@@ -157,7 +160,6 @@ class GovernanceApiTest(TestCase):
         }
         expected_counter = 1
         actual_row = None
-        print(data)
         counter = 0
         for row in data:
             if row['awc_id'] == 'a49':
@@ -169,7 +171,6 @@ class GovernanceApiTest(TestCase):
 
     def test_fetch_beneficiary_data(self):
         limit = 1
-        _agg_governance_dashboard(date(2017, 5, 1))
         query_filters = {'state_id': 'st1'}
         order = ['awc_id']
         data, count = get_beneficiary_data(limit, 2017, 5, order, query_filters)
