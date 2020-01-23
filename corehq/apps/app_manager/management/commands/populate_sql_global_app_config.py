@@ -9,12 +9,12 @@ class Command(PopulateSQLCommand):
     """
 
     @property
-    def couch_class(self):
-        try:
-            from corehq.apps.app_manager.models import GlobalAppConfig
-            return GlobalAppConfig
-        except ImportError:
-            return None
+    def couch_db_slug(self):
+        return 'apps'
+
+    @property
+    def couch_doc_type(self):
+        return 'GlobalAppConfig'
 
     @property
     def couch_key(self):

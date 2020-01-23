@@ -7,12 +7,8 @@ class Command(PopulateSQLCommand):
     """
 
     @property
-    def couch_class(self):
-        try:
-            from corehq.motech.dhis2.models import Dhis2Connection
-            return Dhis2Connection
-        except ImportError:
-            return None
+    def couch_doc_type(self):
+        return 'Dhis2Connection'
 
     @property
     def couch_key(self):

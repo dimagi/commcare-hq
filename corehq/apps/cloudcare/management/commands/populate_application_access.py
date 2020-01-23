@@ -8,12 +8,8 @@ class Command(PopulateSQLCommand):
     """
 
     @property
-    def couch_class(self):
-        try:
-            from corehq.apps.cloudcare.models import ApplicationAccess
-            return ApplicationAccess
-        except ImportError:
-            return None
+    def couch_doc_type(self):
+        return 'ApplicationAccess'
 
     @property
     def couch_key(self):
