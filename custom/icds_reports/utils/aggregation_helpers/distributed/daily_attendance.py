@@ -29,6 +29,8 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
         return get_table_name(self.domain, self.ucr_daily_attendance_table)
 
     def aggregate_query(self):
+        # This query uses DISTINCT ON and ORDER BY to find the most recent form of each day
+        # inserted_at is used as a proxy for received_on or timeend as those are not in this table.
         return """
             INSERT INTO "{tablename}" (
               SELECT DISTINCT ON (awc_id, submitted_on)

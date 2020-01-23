@@ -56,7 +56,7 @@ global_submission_rate_limiter = RateLimiter(
 )
 
 
-SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
 @run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
@@ -76,12 +76,16 @@ def rate_limit_submission(domain):
         allow_usage = True
         _delay_and_report_rate_limit_submission_test(domain, max_wait=15)
 
-    if allow_usage:
-        submission_rate_limiter.report_usage(domain)
-        global_submission_rate_limiter.report_usage()
-        _report_current_global_submission_thresholds()
-
     return not allow_usage
+
+
+@run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
+@silence_and_report_error("Exception raised reporting usage to the submission rate limiter",
+                          'commcare.xform_submissions.report_usage_errors')
+def report_submission_usage(domain):
+    submission_rate_limiter.report_usage(domain)
+    global_submission_rate_limiter.report_usage()
+    _report_current_global_submission_thresholds()
 
 
 def _report_rate_limit_submission(domain):

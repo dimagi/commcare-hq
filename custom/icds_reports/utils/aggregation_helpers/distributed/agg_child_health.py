@@ -1,4 +1,4 @@
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, get_agg_child_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -25,6 +25,10 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
     @property
     def child_temp_tablename(self):
         return get_child_health_temp_tablename(self.month)
+
+    @property
+    def temporary_tablename(self):
+        return get_agg_child_temp_tablename()
 
     def staging_queries(self):
         columns = (
@@ -86,7 +90,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             # height_eligible calculation is to keep consistent with usage of
             # age_in_months_start & age_in_months_end in UCR
             ('height_eligible',
-                "SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND "
+                "SUM(CASE WHEN chm.age_tranche NOT IN ('72') AND "
                 "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('wasting_moderate',
                 "SUM(CASE WHEN chm.current_month_wasting = 'moderate' THEN 1 ELSE 0 END)"),
@@ -165,7 +169,8 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
         return [
             (f"""
-            CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
+            INSERT INTO "{self.temporary_tablename}" ({final_columns})
+            SELECT
                 {query_cols}
                 FROM "{self.child_temp_tablename}" chm
                 LEFT OUTER JOIN "awc_location" awc_loc ON (
@@ -179,8 +184,6 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                 GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
                          chm.month, chm.sex, chm.age_tranche, chm.caste,
                          coalesce_disabled, coalesce_minority, coalesce_resident;
-            INSERT INTO "{self.staging_tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
-            DROP TABLE "{tmp_tablename}";
             """, {
                 "start_date": self.month
             })
@@ -189,7 +192,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     def update_queries(self):
         yield f"""
-        UPDATE "{self.staging_tablename}" agg SET
+            UPDATE "{self.temporary_tablename}" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
@@ -203,8 +206,8 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                     MAX(block_is_test) as block_is_test,
                     MAX(supervisor_is_test) as supervisor_is_test,
                     MAX(awc_is_test) as awc_is_test
-                FROM "awc_location_local"
-                GROUP BY awc_id
+                FROM "awc_location"
+                GROUP BY awc_id, supervisor_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -221,6 +224,13 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                   ut.awc_is_test != agg.awc_is_test
                 )
             );
+        """, {
+        }
+
+        yield f"""
+            CREATE TABLE "local_tmp_agg_child_health" AS SELECT * FROM "{self.temporary_tablename}";
+            INSERT INTO "{self.staging_tablename}" SELECT * from "local_tmp_agg_child_health";
+            DROP TABLE "local_tmp_agg_child_health";
         """, {
         }
 
@@ -371,3 +381,14 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
             f'CREATE INDEX ON "{staging_tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
         ]
+
+    def create_temporary_table(self):
+        return """
+        CREATE UNLOGGED TABLE \"{table}\" (LIKE agg_child_health INCLUDING INDEXES);
+        SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.temporary_tablename)
+
+    def drop_temporary_table(self):
+        return """
+        DROP TABLE IF EXISTS \"{table}\";
+        """.format(table=self.temporary_tablename)

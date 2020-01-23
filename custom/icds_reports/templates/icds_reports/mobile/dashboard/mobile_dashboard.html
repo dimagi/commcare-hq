@@ -1,4 +1,4 @@
-{% extends "icds_reports/base_minimal.html" %}
+{% extends "icds_reports/mobile/base_mobile.html" %}
 {% load menu_tags %}
 {% load compress %}
 {% load hq_shared_tags %}
@@ -10,14 +10,11 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
   {% endcompress %}
-
-  {# todo: for now, just compile less --> css in the browser. We'll update this to use HQ's build pipeline before release #}
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
-  <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
-  <script src="{% static 'icds_reports/mobile/css/less.min.js' %}" ></script>
 
   {% include 'analytics/analytics_js.html' %}
   {% include 'analytics/google.html' %}
@@ -30,6 +27,7 @@
 
   <script src="{% static 'angular/angular.js' %}"></script>
   <script src="{% static 'angular-route/angular-route.js' %}"></script>
+  <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
   <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
   <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
   <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
@@ -72,10 +70,6 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 {% endcompress %}
 
   {% include 'icds_reports/partials/shared_report_directives.html' %}
-
-  <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
-  <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
-  <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
 {% endblock head %}
 {% block body %}
 <div class="hidden">
@@ -84,8 +78,10 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 </div>
 <div id="app" ng-cloak>
   <navigation></navigation>
+  {% maintenance_alert request True %}
   <div ng-controller="MainMobileController" class="container-fluid">
-      <div class="row">
+<!--      listening for click event anywhere in mobile dashboard outside navigation menu-->
+      <div class="row" ng-click="closeMenu()">
         <div class="col-md-12 main-container">
           <div class="row no-margin">
             <div class="ng-view"></div>
@@ -103,12 +99,25 @@ Split up compression due to a weird js dependency bug that makes it not work wit
   hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
   angular.module(appName).value('cgBusyDefaults', {
     message:'Loading data',
-    backdrop: true,
-    templateUrl: url('icds-ng-template', 'busy'),
+    templateUrl: url('icds-ng-template-mobile', 'busy'),
     delay: 300,
     minDuration: 700,
-    wrapperClass: 'my-class my-class2'
   });
   angular.bootstrap(document.getElementById('app'), [appName]);
+  $(function () {
+    // maintenance alert hide/show logic - lifted from hqwebapp/js/main.js
+    var $maintenance = $(".alert-maintenance");
+    if ($maintenance.length) {
+      var id = $maintenance.data("id"),
+        alertCookie = "alert_maintenance";
+      if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+        $maintenance.removeClass('hide');
+        $maintenance.on('click', '.close', function () {
+          $.cookie(alertCookie, id, {expires: 7, path: '/'});
+        });
+      }
+    }
+  });
+
 </script>
 {% endblock body_end %}

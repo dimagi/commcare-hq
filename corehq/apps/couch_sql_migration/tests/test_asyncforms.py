@@ -26,7 +26,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
 
         forms = [Form(n) for n in range(1, mod.POOL_SIZE * 3 + 1)]
         migrated = []
-        statedb = StateDB.init(":memory:")
+        statedb = StateDB.init("test", ":memory:")
         with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
             for form in forms:
                 add(form, queue)
@@ -57,7 +57,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
         forms = [Form(n) for n in range(20)]
         form0 = forms.pop(0)
         migrated = []
-        statedb = StateDB.init(":memory:")
+        statedb = StateDB.init("test", ":memory:")
         with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
             setup(queue)
             assert queue.queues.full, len(queue.queues)
@@ -86,7 +86,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
         form = Form(1)
         retries = []
         migrated = []
-        statedb = StateDB.init(":memory:")
+        statedb = StateDB.init("test", ":memory:")
         with self.mock_forms(form), \
                 patch.object(mod, "get_case_ids", get_case_ids), \
                 patch.object(mod.gevent, "spawn_later", spawn_later):
@@ -109,7 +109,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
 
         form = Form(1)
         migrated = []
-        statedb = StateDB.init(":memory:")
+        statedb = StateDB.init("test", ":memory:")
         with self.mock_forms(form):
             throw = True
             with self.assertRaises(UnhandledError), \

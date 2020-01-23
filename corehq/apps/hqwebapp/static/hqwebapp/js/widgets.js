@@ -2,7 +2,7 @@ hqDefine("hqwebapp/js/widgets", [
     'jquery',
     'select2/dist/js/select2.full.min',
 ], function ($) {
-    $(function () {
+    var init = function () {
         // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
         _.each($(".hqwebapp-select2"), function (element) {
             $(element).select2({
@@ -54,13 +54,18 @@ hqDefine("hqwebapp/js/widgets", [
                 },
             });
         });
-    });
+    };
 
     var parseEmails = function (input) {
         return $.trim(input).split(/[, ]\s*/);
     };
 
+    $(function () {
+        init();
+    });
+
     return {
+        init: init,
         parseEmails: parseEmails,   // export for testing
     };
 });

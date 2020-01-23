@@ -173,7 +173,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     )
 
 
-def _get_update_or_close_case_block(case_id, case_properties=None, close=False):
+def _get_update_or_close_case_block(case_id, case_properties=None, close=False, owner_id=None):
     kwargs = {
         'create': False,
         'user_id': SYSTEM_USER_ID,
@@ -181,12 +181,14 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False):
     }
     if case_properties:
         kwargs['update'] = case_properties
+    if owner_id:
+        kwargs['owner_id'] = owner_id
 
     return CaseBlock(case_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None):
+                xmlns=None, device_id=None, owner_id=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -197,7 +199,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     xmlns - pass in an xmlns to use it instead of the default
     device_id - see submit_case_blocks device_id docs
     """
-    caseblock = _get_update_or_close_case_block(case_id, case_properties, close)
+    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
         domain,

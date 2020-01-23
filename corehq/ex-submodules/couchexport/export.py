@@ -7,7 +7,9 @@ from couchexport.models import Format
 from couchexport import writers
 
 
-def get_writer(format):
+def get_writer(format, use_formatted_cells=False):
+    if format == Format.XLS_2007:
+        return writers.Excel2007ExportWriter(use_formatted_cells=use_formatted_cells)
     try:
         return {
             Format.CSV: writers.CsvExportWriter,
@@ -15,7 +17,6 @@ def get_writer(format):
             Format.ZIPPED_HTML: writers.ZippedHtmlExportWriter,
             Format.JSON: writers.JsonExportWriter,
             Format.XLS: writers.Excel2003ExportWriter,
-            Format.XLS_2007: writers.Excel2007ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
             Format.CDISC_ODM: writers.CdiscOdmExportWriter,
             Format.PYTHON_DICT: writers.PythonDictWriter,
@@ -261,13 +262,15 @@ class FormattedRow(object):
     """
 
     def __init__(self, data, id=None, separator=".", id_index=0,
-                 is_header_row=False, hyperlink_column_indices=()):
+                 is_header_row=False, hyperlink_column_indices=(),
+                 skip_excel_formatting=()):
         self.data = data
         self.id = id
         self.separator = separator
         self.id_index = id_index
         self.is_header_row = is_header_row
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.skip_excel_formatting = skip_excel_formatting
 
     def __iter__(self):
         for i in self.get_data():

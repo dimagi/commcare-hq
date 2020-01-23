@@ -132,8 +132,10 @@ class Command(BaseCommand):
         parser.add_argument('--forms', default=None,
             help="""
                 Migrate specific forms. The value of this option should
-                be a space-delimited list of form ids OR 'skipped' to
-                migrate forms skipped by previous migration.
+                be a space-delimited list of form ids OR a file path to
+                a file having one form id per line OR 'skipped' to
+                migrate forms skipped by previous migration. The file
+                path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,

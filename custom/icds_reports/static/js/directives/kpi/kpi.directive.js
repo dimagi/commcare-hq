@@ -1,8 +1,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
-function KpiController($rootScope, $location, navigationService, haveAccessToFeatures) {
-    this.haveAccessToFeatures = haveAccessToFeatures;
+function KpiController($rootScope, $location, navigationService) {
     this.goToStep = function(path) {
         return navigationService.getPagePath(path, $location.search());
     };
@@ -24,7 +23,7 @@ function KpiController($rootScope, $location, navigationService, haveAccessToFea
     };
 }
 
-KpiController.$inject = ['$rootScope', '$location', 'navigationService', 'haveAccessToFeatures'];
+KpiController.$inject = ['$rootScope', '$location', 'navigationService'];
 
 window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
     return {

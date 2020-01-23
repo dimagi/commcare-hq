@@ -55,3 +55,13 @@ to see how that works.
 .. _Read the Docs: https://commcare-hq.readthedocs.io/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _autoclass: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+
+
+Updating requirements
+---------------------
+To update requirements edit ``requirements/requirements.in``
+and run ``make requirements``.
+
+To upgrade all requirements to their latest allowed version you can run
+``make upgrade-requirements``—this usually results in a large number of upgrades
+and is not something we can merge easily, but it is sometimes a useful exploratory first step.

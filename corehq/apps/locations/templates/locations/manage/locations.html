@@ -62,7 +62,7 @@
               {% if not has_location_types %}
                disabled
               {% else %}
-               href="{% url "location_export" domain %}"
+               href="{{ bulk_download_url }}"
               {% endif %}
             >
               <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}

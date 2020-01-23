@@ -114,6 +114,9 @@ from corehq.util.view_utils import absolute_reverse
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
+ExcelFormatValue = namedtuple('ExcelFormatValue', 'format value')
+
+
 class PathNode(DocumentSchema):
     """
     A PathNode represents a portion of a path to value in a document.
@@ -505,6 +508,8 @@ class TableConfiguration(DocumentSchema):
             doc, row_index = doc_row.doc, doc_row.row
 
             row_data = {} if as_json else []
+            col_index = 0
+            skip_excel_formatting = []
             for col in self.selected_columns:
                 val = col.get_value(
                     domain,
@@ -523,13 +528,30 @@ class TableConfiguration(DocumentSchema):
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    next_col_index = col_index + len(val)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.extend(
+                            list(range(col_index, next_col_index))
+                        )
+                    col_index = next_col_index
                 else:
                     row_data.append(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.append(col_index)
+                    col_index += 1
             if as_json:
                 rows.append(row_data)
             else:
                 rows.append(ExportRow(
-                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                    data=row_data,
+                    hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns),
+                    skip_excel_formatting=skip_excel_formatting
                 ))
         return rows
 
@@ -735,6 +757,9 @@ class ExportInstance(BlobMixin, Document):
 
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
+
+    # Whether to typset the cells in Excel 2007+ exports
+    format_data_in_excel = BooleanProperty(default=False)
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
@@ -1319,9 +1344,11 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data, hyperlink_column_indices=()):
+    def __init__(self, data, hyperlink_column_indices=(),
+                 skip_excel_formatting=()):
         self.data = data
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.skip_excel_formatting = skip_excel_formatting
 
 
 class ScalarItem(ExportItem):

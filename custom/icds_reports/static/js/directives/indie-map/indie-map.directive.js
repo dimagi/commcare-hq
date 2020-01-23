@@ -1,7 +1,9 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, isMobile) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
+                            topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
+    var useNewMaps = haveAccessToFeatures || isMobile;
 
     $scope.$watch(function () {
         return vm.data;
@@ -44,27 +46,27 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
-    vm.scalingFactor = 1;
 
-    vm.initTopoJson = function (location_level, location) {
-        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+    vm.initTopoJson = function (locationLevel, location, topojson) {
+        if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = STATES_TOPOJSON;
-        } else if (location_level === 0) {
+            vm.rawTopojson = useNewMaps ? topojson : STATES_TOPOJSON;
+        } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-        } else if (location_level === 1) {
+            vm.rawTopojson = useNewMaps ? topojson : DISTRICT_TOPOJSON;
+        } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            vm.rawTopojson = useNewMaps ? topojson : BLOCK_TOPOJSON;
         }
-        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
+        if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
+            Datamap.prototype[vm.type] = vm.rawTopojson;
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
-                vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+                vm.mapHeight = vm.rawTopojson.objects[vm.scope].height;
             }
             if (isMobile) {
                 // scale maps based on space available on device.
@@ -72,59 +74,61 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 // take window height and subtract height of the header plus 44px of additional padding / margins
                 var availableHeight = window.innerHeight - headerHeight - 44;
                 if (availableHeight < vm.mapHeight) {
-                    // how much we have downscaled so we can also scale the map itself
-                    vm.scalingFactor = availableHeight / vm.mapHeight;
-                    // this approximates additional scaling based on the width of the device.
-                    // the factor was determined from a few samples and is not perfect.
-                    var factor = 1.1;
-                    var aspectRatio = window.innerHeight / window.innerWidth;
-                    if (aspectRatio > factor) {
-                        vm.scalingFactor = vm.scalingFactor / (aspectRatio / factor);
-                    }
                     vm.mapHeight = availableHeight;
                 }
             }
         }
     };
 
-    vm.getCenter = function (options) {
-        if (isMobile) {
-            // adjust center for mobile maps, because web maps are intentionally offset to leave
-            // room for the legend.
-            function getLatAdjustmentForScale(scale) {
-                // this is a very rough approximation made with a few data points for a first pass
-                // basically the further zoomed in we are the less we should adjust
-                if (scale < 5000) {
-                    return 2;
-                } else if (scale < 8000) {
-                    return 1.5;
-                } else if (scale < 12000) {
-                    return 1;
-                } else {
-                    return .5;
-                }
-            }
-            return [options.center[0] + getLatAdjustmentForScale(options.scale), options.center[1]];
+    // this function was copied with minor modification (inputs and variable names) from
+    // https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html
+    function calculateScaleCenter(path, features, width, height) {
+        // Get the bounding box of the paths (in pixels!) and calculate a
+        // scale factor based on the size of the bounding box and the map
+        // size.
+        var bboxPath = path.bounds(features),
+            scale = 0.95 / Math.max(
+                (bboxPath[1][0] - bboxPath[0][0]) / width,
+                (bboxPath[1][1] - bboxPath[0][1]) / height
+            );
+
+        // Get the bounding box of the features (in map units!) and use it
+        // to calculate the center of the features.
+        var bboxFeature = d3.geo.bounds(features),
+            center = [
+                (bboxFeature[1][0] + bboxFeature[0][0]) / 2,
+                (bboxFeature[1][1] + bboxFeature[0][1]) / 2];
+
+        return {
+            'scale': scale,
+            'center': center,
+        };
+    }
+
+    function getLocationLevelFromType(locationType) {
+        if (locationType === 'state') {
+            return 0;
+        } else if (locationType === 'district') {
+            return 1;
+        } else if (locationType === 'block') {
+            return 2;
         } else {
-            return options.center;
+            return -1;
         }
-    };
+    }
 
-    vm.getScale = function (options) {
-        // apply additional scaling if necessary (used by mobile maps)
-        return vm.scalingFactor * options.scale;
-    };
+    function getPopupForGeography(geography) {
+        return vm.templatePopup({
+            loc: {
+                loc: geography,
+                row: vm.map.data[geography.id],
+            },
+        });
+    }
 
-    var mapConfiguration = function (location) {
-
-        var location_level = -1;
-        if (location.location_type === 'state') location_level = 0;
-        else if (location.location_type === 'district') location_level = 1;
-        else if (location.location_type === 'block') location_level = 2;
-        else location_level = -1;
-
-        vm.initTopoJson(location_level, location);
-
+    var mapConfiguration = function (location, topojson) {
+        var locationLevel = getLocationLevelFromType(location.location_type);
+        vm.initTopoJson(locationLevel, location, topojson);
         vm.map = {
             scope: vm.scope,
             rightLegend: vm.data && vm.data !== void(0) ? vm.data.rightLegend : null,
@@ -133,29 +137,53 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
             height: vm.mapHeight,
             geographyConfig: {
+                popupOnHover: !isMobile,
                 highlightFillColor: '#00f8ff',
                 highlightBorderColor: '#000000',
                 highlightBorderWidth: 1,
                 highlightBorderOpacity: 1,
                 popupTemplate: function (geography, data) {
-                    return vm.templatePopup({
-                        loc: {
-                            loc: geography,
-                            row: vm.map.data[geography.id],
-                        },
-                    });
+                    return getPopupForGeography(geography);
                 },
             },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 4;
-                var options = Datamap.prototype[vm.type].objects[vm.scope];
-                var projection = d3.geo.equirectangular()
-                    .center(vm.getCenter(options))
-                    .scale(vm.getScale(options))
-                    .translate([element.offsetWidth / 2, element.offsetHeight / div]);
-                var path = d3.geo.path()
-                    .projection(projection);
+                var options = vm.rawTopojson.objects[vm.scope];
+                var projection, path;
+                if (isMobile) {
+                    // load a dummy projection so we can calculate the true size
+                    // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
+                    projection = d3.geo.equirectangular().scale(1);
+                    path = d3.geo.path().projection(projection);
+                    var feature = window.topojson.feature(vm.rawTopojson, options);
+                    var scaleCenter = calculateScaleCenter(
+                        path, feature,
+                        element.offsetWidth, element.offsetHeight
+                    );
+                    projection.scale(scaleCenter.scale)
+                        .center(scaleCenter.center)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
 
+                    //setting zoom out limit
+                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                    $(function () {
+                        // DOM Ready
+                        var svg = d3.select('#map svg'); //selects svg in datamap component
+                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                            // this function redraws the map rendered on zoom event
+                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                            svg.selectAll('g').attr("transform",
+                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                        });
+                        svg.call(zoom); //connects zoom event to map
+                    });
+                } else {
+                    projection = d3.geo.equirectangular()
+                        .center(options.center)
+                        .scale(options.scale)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                    path = d3.geo.path().projection(projection);
+                }
                 return {path: path, projection: projection};
             },
         };
@@ -174,68 +202,68 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             bubbles: [],
         };
 
-        if (vm.map.data && !isMobile) {
-            // this chunk of code adds the legend to web maps
+        if (vm.map.data) {
+            // this chunk of code adds the legend
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null &&
                         d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
-                            '<div class="map-kpi" style="width: 310px;">',
+                            '<div class="map-kpi">',
                             '<div class="row no-margin">',
-                            '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
+                            '<div class="row no-margin map-legend-title"">' + this.options.label + '</div>',
                         ];
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
                             html.push(
-                                '<div class="row no-margin" style="margin-bottom: 5px;">',
-                                '<div class="col-md-1" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 30px; height: 30px;"></div>',
-                                '<div class="col-md-10">',
-                                '<span style="font-size: 15px;">' + fillKey + '</span>',
-                                '</div>',
+                                '<div class="row no-margin map-legend-color-row">',
+                                '<div class="col-xs-1 map-legend-color" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important;"></div>',
+                                '<div class="col-xs-10 map-legend-color-label">' + fillKey + '</div>',
                                 '</div>'
                             );
                         }
-                        html.push('<hr/></div>');
-
-                        var locName = 'National';
-                        if (storageService.getKey('selectedLocation') !== void(0)) {
-                            locName = storageService.getKey('selectedLocation')['name'];
-                        }
-                        if (this.options.rightLegend['average'] !== void(0)) {
-                            html.push('<div class="row no-margin">');
-                            if (this.options.rightLegend['average_format'] === 'number') {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
-                            } else {
-                                html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                        if (!isMobile) {
+                            // only add the last two sections to web-based legend
+                            html.push('<hr/></div>');
+                            var locName = 'National';
+                            if (storageService.getKey('selectedLocation') !== void(0)) {
+                                locName = storageService.getKey('selectedLocation')['name'];
                             }
-                            html.push('</div>',
-                                '</br>',
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
-                        } else {
-                            html.push(
-                                '<div class="row no-margin">',
-                                this.options.rightLegend['info'],
-                                '</div>'
-                            );
-                        }
-                        if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
-                            html.push('<hr/><div class="row  no-margin">');
-                            window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
-                                html.push(
-                                    '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
+                            if (this.options.rightLegend['average'] !== void(0)) {
+                                html.push('<div class="row no-margin">');
+                                if (this.options.rightLegend['average_format'] === 'number') {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
+                                } else {
+                                    html.push('<strong>' + locName + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                                }
+                                html.push('</div>',
+                                    '</br>',
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
                                 );
-                            });
+                            } else {
+                                html.push(
+                                    '<div class="row no-margin">',
+                                    this.options.rightLegend['info'],
+                                    '</div>'
+                                );
+                            }
+                            if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
+                                html.push('<hr/><div class="row  no-margin">');
+                                window.angular.forEach(this.options.rightLegend.extended_info, function (info) {
+                                    html.push(
+                                        '<div>' + info.indicator + ' <strong>' + info.value + '</strong></div>'
+                                    );
+                                });
+                                html.push('</div>');
+                            }
+
                             html.push('</div>');
                         }
 
-                        html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', 'map-kpi-outer')
-                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
                         var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
                         var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
@@ -249,7 +277,22 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        mapConfiguration(location);
+        var locationLevel = getLocationLevelFromType(location.location_type);
+        if (useNewMaps && locationLevel === -1) {
+            topojsonService.getStateTopoJson().then(function (resp) {
+                mapConfiguration(location, resp);
+            });
+        } else if (useNewMaps && locationLevel === 0) {
+            topojsonService.getDistrictTopoJson().then(function (resp) {
+                mapConfiguration(location, resp);
+            });
+        } else if (useNewMaps && locationLevel === 1) {
+            topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
+                mapConfiguration(location, resp.topojson);
+            });
+        } else {
+            mapConfiguration(location);
+        }
     });
 
     vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
@@ -273,16 +316,18 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return mapData;
     };
 
-    vm.getHtmlContent = function (geography) {
+    vm.getSecondaryLocationSelectionHtml = function (geography) {
         var html = "";
-        html += "<div class=\"modal-header\">";
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
-                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+        html += '<div class="secondary-location-selector">';
+        html += '<div class="modal-header">';
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html +="<div class=\"modal-body\">";
+        html += '<div class="modal-body">';
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
+            html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.attemptToDrillToLocation(\'' + value + '\')">' + value + '</button>';
         });
+        html += "</div>";
         html += "</div>";
         return html;
     };
@@ -292,42 +337,68 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         popup.classed("hidden", true);
     };
 
-    vm.updateMap = function (geography) {
-        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            var html = vm.getHtmlContent(geography);
-            var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+    function renderPopup(html) {
+        return vm.renderPopup(html, 'locPopup');
+    }
 
-            var popup = d3.select('#locPopup');
-            popup.classed("hidden", false);
-            popup.attr('style', css)
-                .html(html);
+    vm.renderPopup = function (html, divId) {
+        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+        var popup = d3.select('#' + divId);
+        popup.classed("hidden", false);
+        popup.attr('style', css).html(html);
+        $compile(popup[0])($scope);
+    };
 
-            $compile(popup[0])($scope);
-        } else {
-            var location = geography.id || geography;
-            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
-                location = vm.data.data[geography.id].original_name[0];
-            }
-            locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-                var location = locations[0];
-                if (!location) {
-                    return;
-                }
-                $location.search('location_name', (geography.id || geography));
-                $location.search('location_id', location.location_id);
-                storageService.setKey('search', $location.search());
-            });
+    function showSecondaryLocationSelectionPopup(geography) {
+        var html = vm.getSecondaryLocationSelectionHtml(geography);
+        renderPopup(html);
+    }
+
+    function getLocationNameFromGeography(geography) {
+        var location = geography.id || geography;
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+            location = vm.data.data[geography.id].original_name[0];
         }
+        return location;
+    }
 
+    vm.attemptToDrillToLocation = function (geography) {
+        var location = getLocationNameFromGeography(geography);
+        locationsService.tryToNavigateToLocation(location, location_id);
+    };
+
+    vm.handleMobileDrilldown = function () {
+        vm.handleDrillDownClick(vm.selectedGeography);
+    };
+
+    vm.handleDrillDownClick = function (geography) {
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+            showSecondaryLocationSelectionPopup(geography);
+        } else {
+            vm.attemptToDrillToLocation(geography);
+        }
+    };
+
+    vm.handleMapClick = function (geography) {
+        if (isMobile) {
+            vm.selectedGeography = geography;
+            var popupHtml = getPopupForGeography(geography);
+            renderPopup(popupHtml);
+        } else {
+            vm.handleDrillDownClick(geography);
+        }
     };
 
 }
 
 IndieMapController.$inject = [
-    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'isMobile',
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    'haveAccessToFeatures', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('indieMap', function () {
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
+window.angular.module('icdsApp').directive('indieMap', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         scope: {
@@ -336,9 +407,9 @@ window.angular.module('icdsApp').directive('indieMap', function () {
             bubbles: '=?',
             templatePopup: '&',
         },
-        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',
     };
-});
+}]);

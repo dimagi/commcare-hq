@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from itertools import chain
 from typing import Iterable
 
@@ -54,7 +53,6 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
-    as_value_source,
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
@@ -141,6 +139,11 @@ class OpenmrsRepeater(CaseRepeater):
 
     @cached_property
     def requests(self):
+        # Used by atom_feed module and views that don't have a payload
+        # associated with the request
+        return self.get_requests()
+
+    def get_requests(self, payload_id=None):
         return Requests(
             self.domain,
             self.url,
@@ -148,37 +151,8 @@ class OpenmrsRepeater(CaseRepeater):
             self.plaintext_password,
             verify=self.verify,
             notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
         )
-
-    @cached_property
-    def observation_mappings(self):
-        obs_mappings = defaultdict(list)
-        for form_config in self.openmrs_config.form_configs:
-            for obs_mapping in form_config.openmrs_observations:
-                value_source = as_value_source(obs_mapping.value)
-                if (
-                    value_source.can_import
-                    and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
-                ):
-                    # It's possible that an OpenMRS concept appears more
-                    # than once in form_configs. We are using a
-                    # defaultdict(list) so that earlier definitions
-                    # don't get overwritten by later ones:
-                    obs_mappings[obs_mapping.concept].append(obs_mapping)
-        return obs_mappings
-
-    @cached_property
-    def diagnosis_mappings(self):
-        diag_mappings = defaultdict(list)
-        for form_config in self.openmrs_config.form_configs:
-            for diag_mapping in form_config.bahmni_diagnoses:
-                value_source = as_value_source(diag_mapping.value)
-                if (
-                    value_source.can_import
-                    and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
-                ):
-                    diag_mappings[diag_mapping.concept].append(diag_mapping)
-        return diag_mappings
 
     @cached_property
     def first_user(self):
@@ -239,29 +213,29 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_source_configs = chain(
+        value_source_configs: Iterable[JsonDict] = chain(
             self.openmrs_config.case_config.patient_identifiers.values(),
             self.openmrs_config.case_config.person_properties.values(),
             self.openmrs_config.case_config.person_preferred_name.values(),
             self.openmrs_config.case_config.person_preferred_address.values(),
             self.openmrs_config.case_config.person_attributes.values(),
-        )  # type: Iterable[JsonDict]
+        )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-
+        requests = self.get_requests(payload_id=repeat_record.payload_id)
         try:
             response = send_openmrs_data(
-                self.requests,
+                requests,
                 self.domain,
                 payload,
                 self.openmrs_config,
                 case_trigger_infos,
             )
         except Exception as err:
-            self.requests.notify_exception(str(err))
+            requests.notify_exception(str(err))
             return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 

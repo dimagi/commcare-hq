@@ -1,61 +1,38 @@
-import logging
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
-from django.core.management.base import BaseCommand
-
-from dimagi.utils.couch.database import iter_docs
-
-from corehq.apps.app_manager.models import (
-    LATEST_APK_VALUE,
-    LATEST_APP_VALUE,
-    SQLGlobalAppConfig,
-)
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
-
-logger = logging.getLogger(__name__)
+from corehq.apps.app_manager.models import LATEST_APK_VALUE, LATEST_APP_VALUE
 
 
-class Command(BaseCommand):
+class Command(PopulateSQLCommand):
     help = """
         Adds a SQLGlobalAppConfig for any GlobalAppConfig doc that doesn't yet have one.
     """
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            dest='dry_run',
-            default=False,
-            help='Do not actually modify the database, just verbosely log what will happen',
-        )
-
-    def handle(self, dry_run=False, **options):
-        log_prefix = "[DRY RUN] " if dry_run else ""
-
+    @property
+    def couch_class(self):
         try:
             from corehq.apps.app_manager.models import GlobalAppConfig
+            return GlobalAppConfig
         except ImportError:
-            return
+            return None
 
-        doc_ids = get_doc_ids_by_class(GlobalAppConfig)
-        logger.info("{}Found {} GlobalAppConfig docs and {} SQLGlobalAppConfig models".format(
-            log_prefix,
-            len(doc_ids),
-            SQLGlobalAppConfig.objects.count()
-        ))
-        for doc in iter_docs(GlobalAppConfig.get_db(), doc_ids):
-            log_message = "{}Created model for domain {} app {}".format(log_prefix, doc['domain'], doc['app_id'])
-            if dry_run:
-                if not SQLGlobalAppConfig.objects.filter(domain=doc['domain'], app_id=doc['app_id']).exists():
-                    logger.info(log_message)
-            else:
-                model, created = SQLGlobalAppConfig.objects.get_or_create(
-                    domain=doc['domain'],
-                    app_id=doc['app_id'],
-                    defaults={
-                        "apk_prompt": doc['apk_prompt'],
-                        "app_prompt": doc['app_prompt'],
-                        "apk_version": doc.get('apk_version', LATEST_APK_VALUE),
-                        "app_version": doc.get('app_version', LATEST_APP_VALUE),
-                    })
-                if created:
-                    logger.info(log_message)
+    @property
+    def couch_class_key(self):
+        return set(['domain', 'app_id'])
+
+    @property
+    def sql_class(self):
+        from corehq.apps.app_manager.models import SQLGlobalAppConfig
+        return SQLGlobalAppConfig
+
+    def update_or_create_sql_object(self, doc):
+        model, created = self.sql_class.objects.get_or_create(
+            domain=doc['domain'],
+            app_id=doc['app_id'],
+            defaults={
+                "apk_prompt": doc['apk_prompt'],
+                "app_prompt": doc['app_prompt'],
+                "apk_version": doc.get('apk_version', LATEST_APK_VALUE),
+                "app_version": doc.get('app_version', LATEST_APP_VALUE),
+            })
+        return (model, created)

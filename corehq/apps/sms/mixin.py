@@ -37,25 +37,6 @@ class UnrecognizedBackendException(Exception):
     pass
 
 
-class VerifiedNumber(Document):
-    """
-    There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
-    each VerifiedNumber.phone_number should be unique across all entries.
-    """
-    domain          = StringProperty()
-    owner_doc_type  = StringProperty()
-    owner_id        = StringProperty()
-    phone_number    = StringProperty()
-    backend_id      = StringProperty() # the name of a MobileBackend (can be domain-level or system-level)
-    ivr_backend_id  = StringProperty() # points to a MobileBackend
-    verified        = BooleanProperty()
-    contact_last_modified = DateTimeProperty()
-
-
-def add_plus(phone_number):
-    return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
-
-
 def apply_leniency(contact_phone_number):
     """
     The documentation says that contact_phone_number should be
