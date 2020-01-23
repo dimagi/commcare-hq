@@ -1,5 +1,6 @@
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
@@ -8,7 +9,6 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import Aggre
 class AggGovDashboardHelper(AggregationPartitionedHelper):
     helper_key = 'agg-gov-dashboard'
     base_tablename = AGG_GOV_DASHBOARD_TABLE
-    ucr_data_source_id = 'static_vhnd_form'
     staging_tablename = 'staging_{}'.format(AGG_GOV_DASHBOARD_TABLE)
 
     @property
@@ -171,7 +171,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         WHERE agg_gov.awc_id = ut.awc_id;
         """.format(
             tmp_tablename=self.staging_tablename,
-            ucr_tablename=self.ucr_tablename
+            ucr_tablename=get_table_name(self.domain, 'static-vhnd_form')
         ), {
             'start_date': self.month,
             'end_date': self.month + relativedelta(months=1)
