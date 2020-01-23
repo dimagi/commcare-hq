@@ -98,11 +98,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
         transaction = CaseTransaction.form_transaction(case, form, case_update.guess_modified_on(), types)
-        for trans in case.get_tracked_models_to_create(CaseTransaction):
-            if transaction == trans:
-                trans.type |= transaction.type
-                break
-        else:
+        if transaction not in case.get_tracked_models_to_create(CaseTransaction):
             case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
