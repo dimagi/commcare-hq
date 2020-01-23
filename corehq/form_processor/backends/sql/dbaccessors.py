@@ -470,7 +470,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_operations(form_id):
-        return list(XFormOperationSQL.objects.partitioned_query(form_id).filter(form_id=form_id))
+        return list(XFormOperationSQL.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
@@ -926,7 +926,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id))
+        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id).order_by('server_date'))
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
