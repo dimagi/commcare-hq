@@ -156,12 +156,9 @@
         "expression": {
           "type": "switch",
           "switch_on": {
-            "type": "root_doc",
-            "expression": {
               "type": "property_path",
               "property_path": ["form", "cbe_info", "theme_cbe"],
               "datatype": "string"
-            }
           },
           "cases": {
             "third_fourth_month_of_pregnancy": {
@@ -269,12 +266,9 @@
         "expression": {
           "type": "switch",
           "switch_on": {
-            "type": "root_doc",
-            "expression": {
               "type": "property_path",
               "property_path": ["form", "cbe_info", "theme_cbe"],
               "datatype": "string"
-            }
           },
           "cases": {
             "third_fourth_month_of_pregnancy": {
