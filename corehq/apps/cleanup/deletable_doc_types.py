@@ -16,4 +16,5 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CaseReminderEvent': (MAIN_DB,),
     'ForwardingRule': (MAIN_DB,),
     'ForwardingRule-Deleted': (MAIN_DB,),
+    'WisePillDeviceEvent': (MAIN_DB,),
 }
