@@ -7,6 +7,7 @@ from contextlib2 import ExitStack
 from django.db import transaction
 from lxml import etree
 
+from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -239,6 +240,7 @@ class FormProcessorSQL(object):
                 if case:
                     touched_cases[case.case_id] = CaseUpdateMetadata(
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
+                        actions={const.CASE_ACTION_REBUILD}
                     )
         else:
             xform = xforms[0]

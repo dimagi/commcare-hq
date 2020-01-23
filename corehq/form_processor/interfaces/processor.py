@@ -7,6 +7,7 @@ from django.conf import settings
 from lxml import etree
 from redis.exceptions import RedisError
 
+from casexml.apps.case import const
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.exceptions import (
     KafkaPublishingError,
@@ -18,7 +19,13 @@ from memoized import memoized
 from ..system_action import system_action
 from ..utils import should_use_sql_backend
 
-CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
+
+class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id', 'actions'])):
+    @property
+    def index_change(self):
+        return const.CASE_ACTION_INDEX in self.actions or const.CASE_ACTION_REBUILD in self.actions
+
+
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
 HARD_DELETE_CASE_AND_FORMS = "hard_delete_case_and_forms"
 
