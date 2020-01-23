@@ -6,6 +6,7 @@ from django.conf import settings
 from couchdbkit import ResourceConflict
 from couchdbkit.client import Database
 from memoized import memoized
+from requests.models import Response
 from requests.exceptions import RequestException
 
 from dimagi.ext.couchdbkit import Document
@@ -198,7 +199,22 @@ def retry_on_couch_error(func):
 def _is_couch_error(err):
     if isinstance(err, BulkFetchException):
         return True
-    return err.request and err.request.url.startswith(_get_couch_base_urls())
+    request = err.request
+    if request is None:
+        request = _get_request_from_traceback(err.__traceback__)
+    return request and request.url.startswith(_get_couch_base_urls())
+
+
+def _get_request_from_traceback(tb):
+    # Response.iter_content() raises errors without request context.
+    # Maybe https://github.com/psf/requests/pull/5323 will get merged?
+    while tb.tb_next is not None:
+        tb = tb.tb_next
+    if "self" in tb.tb_frame.f_locals:
+        obj = tb.tb_frame.f_locals["self"]
+        if isinstance(obj, Response) and obj.request:
+            return obj.request
+    return None
 
 
 @memoized
