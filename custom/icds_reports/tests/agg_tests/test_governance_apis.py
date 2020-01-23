@@ -157,7 +157,7 @@ class GovernanceApiTest(TestCase):
         }
         expected_counter = 1
         actual_row = None
-
+        print(data)
         counter = 0
         for row in data:
             if row['awc_id'] == 'a49':
