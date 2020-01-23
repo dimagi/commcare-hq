@@ -21,6 +21,13 @@ from ..utils import should_use_sql_backend
 
 
 class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id', 'actions'])):
+    def merge(self, other):
+        return CaseUpdateMetadata(
+            case=self.case,
+            is_creation=self.is_creation or other.is_creation,
+            previous_owner_id=self.previous_owner_id,
+            actions=self.actions | other.actions
+        )
     @property
     def index_change(self):
         return const.CASE_ACTION_INDEX in self.actions or const.CASE_ACTION_REBUILD in self.actions
