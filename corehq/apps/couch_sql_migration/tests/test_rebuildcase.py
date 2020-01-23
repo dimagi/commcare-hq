@@ -5,21 +5,23 @@ from testil import Config, eq
 from .. import rebuildcase as mod
 
 
-def test_is_action_order_equal():
+def test_should_sort_sql_transactions():
     def test(sql_form_ids, couch_form_ids, expect):
         sql_case = Config(
-            transactions=[Config(form_id=x) for x in sql_form_ids]
+            transactions=[Config(form_id=x, details={}) for x in sql_form_ids]
         )
         couch_json = {
             "actions": [{"xform_id": x} for x in couch_form_ids]
         }
         print(sql_case)
         print(couch_json)
-        eq(mod.is_action_order_equal(sql_case, couch_json), expect)
+        eq(mod.should_sort_sql_transactions(sql_case, couch_json), expect)
 
-    yield test, "abc", "abc", True
-    yield test, "abc", "aabbcc", True
-    yield test, "abc", "acb", False
+    yield test, "abc", "abc", False
+    yield test, "abc", "aabbcc", False
+    yield test, "abc", "acb", True
+    yield test, "abcd", "acb", False
+    yield test, "abd", "acb", False
 
 
 def test_iter_ascending_dates():

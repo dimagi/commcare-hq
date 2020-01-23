@@ -16,7 +16,8 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.less' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/fact_sheets.less' %}"/>
 {% endcompress %}
 
         {% include 'analytics/google.html' %}
@@ -104,6 +105,7 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
         <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>
 {% endcompress %}
+{% include "hqwebapp/partials/less_debug.html" %}
 </head>
 <body>
 <div id="app" ng-cloak>

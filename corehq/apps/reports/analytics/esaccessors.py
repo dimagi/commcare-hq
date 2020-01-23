@@ -169,6 +169,7 @@ def get_form_name_from_last_submission_for_xmlns(domain, xmlns):
         .sort('received_on', desc=True)
         .source(['form.@name'])
         .size(1)
+        .non_null('form.@name')
     )
 
     results = query.run().hits
