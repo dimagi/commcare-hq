@@ -279,7 +279,7 @@ class LedgerTestsSQL(LedgerTests):
         self.assertTrue(transactions[1].is_form_transaction)
         self.assertTrue(transactions[1].is_ledger_transaction)
 
-        self._assert_transactions([self._expected_val(50, 50),])
+        self._assert_transactions([self._expected_val(50, 50)])
 
 
 class TestLedgerDocumentStore(TestCase):

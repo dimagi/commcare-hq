@@ -28,6 +28,7 @@ class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata', ['case', 'is_creation'
             previous_owner_id=self.previous_owner_id,
             actions=self.actions | other.actions
         )
+
     @property
     def index_change(self):
         return const.CASE_ACTION_INDEX in self.actions or const.CASE_ACTION_REBUILD in self.actions
