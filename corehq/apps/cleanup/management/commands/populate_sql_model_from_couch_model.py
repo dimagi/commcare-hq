@@ -46,15 +46,14 @@ class PopulateSQLCommand(BaseCommand):
         log_prefix = "[DRY RUN] " if dry_run else ""
 
         couch_class = self.couch_class
-        sql_class = self.sql_class
 
         doc_ids = get_doc_ids_by_class(couch_class)
         logger.info("{}Found {} {} docs and {} {} models".format(
             log_prefix,
             len(doc_ids),
             couch_class.__name__,
-            sql_class.objects.count(),
-            sql_class.__name__,
+            self.sql_class.objects.count(),
+            self.sql_class.__name__,
         ))
         for doc in iter_docs(couch_class.get_db(), doc_ids):
             logger.info("{}Looking at doc with key {}".format(log_prefix, self.doc_key(doc)))
