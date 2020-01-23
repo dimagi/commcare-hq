@@ -28,7 +28,6 @@ from .thr_form_v2 import THRFormV2AggDistributedHelper
 from .agg_dashboard_activity import DashboardActivityReportAggregate
 from .adolescent_girls_registration import  AggAdolescentGirlsRegistrationAggregate
 from .agg_gov_dashboard import AggGovDashboardHelper
-from .gov_vhnd_forms import GovVhndFormAggDistributedHelper
 
 __all__ = (
     'AggAwcDistributedHelper',

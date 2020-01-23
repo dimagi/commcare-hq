@@ -123,27 +123,6 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         }
 
         yield """
-        CREATE TABLE temp_vhnd_form AS 
-            SELECT DISTINCT awc_id as awc_id,
-                 FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
-                 FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
-                 FIRST_VALUE(asha_present=1) over w as asha_present,
-                 FIRST_VALUE(child_immu=1) over w as child_immu,
-                 FIRST_VALUE(anc_today=1) over w as anc_today,
-                %(start_date)s::DATE AS month
-            FROM "{ucr_tablename}" WHERE
-        vhsnd_date_past_month >= %(start_date)s AND
-        vhsnd_date_past_month < %(end_date)s WINDOW w AS(
-            PARTITION BY awc_id
-            ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-        )ORDER BY awc_id, month;""".format(
-            ucr_tablename=self.ucr_tablename
-        ), {
-            'start_date': self.month,
-            'end_date': self.month + relativedelta(months=1)
-        }
-
-        yield """
         UPDATE "{tmp_tablename}" agg_gov
         SET total_0_3_female_benefit_till_date = ut.valid_all_0_3_female,
             total_0_3_male_benefit_till_date = ut.valid_all_0_3_male,
@@ -174,15 +153,32 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             asha_present = ut.asha_present,
             child_immu = ut.child_immu,
             anc_today = ut.anc_today
-        FROM temp_vhnd_form ut
+        FROM (
+            SELECT DISTINCT awc_id as awc_id,
+                FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
+                FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
+                FIRST_VALUE(asha_present=1) over w as asha_present,
+                FIRST_VALUE(child_immu=1) over w as child_immu,
+                FIRST_VALUE(anc_today=1) over w as anc_today,
+                %(start_date)s::DATE AS month
+            FROM "{ucr_tablename}" WHERE
+                vhsnd_date_past_month >= %(start_date)s AND
+                vhsnd_date_past_month < %(end_date)s WINDOW w AS(
+                PARTITION BY awc_id
+                ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            ) ORDER BY awc_id, month
+        ) ut
         WHERE agg_gov.awc_id = ut.awc_id;
         """.format(
             tmp_tablename=self.staging_tablename,
-        ), {}
+            ucr_tablename=self.ucr_tablename
+        ), {
+            'start_date': self.month,
+            'end_date': self.month + relativedelta(months=1)
+        }
 
         yield """
         DROP TABLE temp_gov_dashboard;
-        DROP TABLE temp_vhnd_form;
         """, {}
 
     def indexes(self):
