@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2019
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-08 22:14+0000\n"
+"POT-Creation-Date: 2020-01-22 21:38+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -157,7 +157,7 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr "Tiene cambios sin guardar"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js:62
 #: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js:56
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
@@ -3293,14 +3293,6 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:34
-msgid "Hide previous versions"
-msgstr "Ocultar versiones anteriores"
-
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:38
-msgid "Show previous versions"
-msgstr "Mostrar versiones anteriores"
-
 #: corehq/apps/export/static/export/js/create_export.js:100
 msgid "<%= count %> form submission available."
 msgstr ""
@@ -3408,19 +3400,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:671
+#: corehq/apps/export/static/export/js/models.js:672
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:782
+#: corehq/apps/export/static/export/js/models.js:783
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:784
+#: corehq/apps/export/static/export/js/models.js:785
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:786
+#: corehq/apps/export/static/export/js/models.js:787
 msgid "None"
 msgstr "Ninguna"
 
@@ -3443,16 +3435,6 @@ msgstr "Error al guardar"
 #: corehq/apps/groups/static/groups/js/group_members.js:134
 msgid "Please wait and do not navigate away..."
 msgstr "Por favor espere y no se vaya..."
-
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
-msgid ""
-"There was an error processing your file. Please try again or report an issue "
-"if the problem persists."
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:43
-msgid "No items were found to update."
-msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:72
 msgid ""
@@ -3604,10 +3586,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:303
 msgid "Edit mapping for <%= property %>"
 msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
-msgid "Not a valid email"
-msgstr "No es un correo electrónico válido"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -4353,23 +4331,25 @@ msgstr ""
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "show"
-msgstr "mostrar"
+msgstr ""
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "hide"
-msgstr "ocultar"
+msgstr ""
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "toggle"
-msgstr "alternar"
+msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:34
+#, fuzzy
+#| msgid "Delete request"
 msgid "Remote Request"
-msgstr ""
+msgstr "Eliminar solicitud"
 
 #: submodules/formdesigner/src/remoteRequest.js:48
 msgid "URL"
-msgstr "URL"
+msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:52
 msgid "The URL to be requested on form load."
@@ -4377,7 +4357,7 @@ msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:55
 msgid "Parameters"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:62
 msgid ""
@@ -4386,5 +4366,12 @@ msgid ""
 msgstr ""
 
 #: submodules/formdesigner/src/saveToCase.js:752
+#, fuzzy
+#| msgid "An error occurred emailing you report. Please try again."
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
+"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
+"intente de nuevo."
+
+#~ msgid "Not a valid email"
+#~ msgstr "No es un correo electrónico válido"

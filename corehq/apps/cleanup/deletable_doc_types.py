@@ -15,4 +15,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CaseReminderHandler': (MAIN_DB,),
     'CaseReminderEvent': (MAIN_DB,),
     'Dhis2Connection': (MAIN_DB,),
+    'ForwardingRule': (MAIN_DB,),
+    'ForwardingRule-Deleted': (MAIN_DB,),
 }

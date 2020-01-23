@@ -54,14 +54,15 @@ branches:
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - nh/dhis2/te  # Norman Oct 2
   - sr-session-audit  # Sravan Oct 15
-  - jls/kill-exchange # Jenny Nov 13
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
   - bmb/SAASP-10149-v2  # Biyeun Dec 20
-  - jls/sql-application-access-1  # Jenny Jan 10
-  - jls/sql-application-access-2  # Jenny Jan 10
-  - dmr/es-rewrite-not-and  # Danny Jan 10
   - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
+  - bmb/SAASP-10249 # Biyeun Jan 21
+  #- jls/migrate-HqDeploy-1 # Jenny Jan 21
+  - jls/migrate-GlobalAppConfig-3 # Jenny Jan 22
+  - dmr/smarter-wait  # Danny Jan 22
+  - dmr/RATE_LIMIT_SUBMISSIONS-setting  # Danny Jan 22
 submodules: {}

@@ -155,24 +155,7 @@
       window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
     </script>
 
-    {% if less_debug %}
-      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-      <script>
-        less = {
-          env: "development",
-          useFileCache: true,
-          logLevel: 2,
-          errorReporting: 'console',
-          async: false,
-          fileAsync: false,
-          poll: 1000,
-          functions: {},
-          dumpLineNumbers: "comments",
-          relativeUrls: false
-        };
-      </script>
-      <script src="{% static 'less/dist/less.min.js' %}"></script>
-    {% endif %}
+    {% include "hqwebapp/partials/less_debug.html" %}
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}

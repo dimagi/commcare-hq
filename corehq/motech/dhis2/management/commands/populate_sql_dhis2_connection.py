@@ -30,7 +30,7 @@ class Command(PopulateSQLCommand):
                 'server_url': doc.get('server_url'),
                 'username': doc.get('username'),
                 'password': doc.get('password'),
-                'skip_cert_verify': doc.get('skip_cert_verify'),
+                'skip_cert_verify': doc.get('skip_cert_verify') or False,
             }
         )
         return (model, created)

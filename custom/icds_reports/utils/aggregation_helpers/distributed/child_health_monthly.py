@@ -321,7 +321,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("mother_phone_number", "child_health.mother_phone_number"),
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
-            ("state_id", "child_health.state_id")
+            ("state_id", "child_health.state_id"),
+            ("opened_on", "child_health.opened_on")
         )
         return """
         INSERT INTO "{child_tablename}" (
