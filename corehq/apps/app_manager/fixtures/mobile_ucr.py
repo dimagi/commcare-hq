@@ -37,7 +37,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -145,11 +145,6 @@ class ReportDataCache(object):
             self.data_cache[key] = data_source.get_data()
         return self.data_cache[key]
 
-    def get_total_row(self, key, data_source):
-        if key not in self.total_row_cache:
-            self.total_row_cache[key] = data_source.get_total_row()
-        return self.total_row_cache[key]
-
 
 class BaseReportFixtureProvider(metaclass=ABCMeta):
     def __init__(self, report_data_cache=None):
@@ -224,11 +219,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_row_calculator = SQLTotalRowCalculator(data_source)
-        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            restore_user.username, NAMESPACE_USER
-        ):
-            total_row_calculator = IterativeTotalRowCalculator(data_source)
+        total_row_calculator = IterativeTotalRowCalculator(data_source)
 
         rows_elem = E.rows()
         row_index = 0
@@ -365,11 +356,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_row_calculator = SQLTotalRowCalculator(data_source)
-        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            restore_user.username, NAMESPACE_USER
-        ):
-            total_row_calculator = IterativeTotalRowCalculator(data_source)
+        total_row_calculator = IterativeTotalRowCalculator(data_source)
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
@@ -480,20 +467,9 @@ def _get_report_and_data_source(report_id, domain):
     return report, data_source
 
 
-class SQLTotalRowCalculator(object):
+class IterativeTotalRowCalculator(object):
     def __init__(self, data_source):
         self.data_source = data_source
-
-    def update_totals(self, row):
-        pass
-
-    def get_total_row(self):
-        return self.data_source.get_total_row()
-
-
-class IterativeTotalRowCalculator(SQLTotalRowCalculator):
-    def __init__(self, data_source):
-        super(IterativeTotalRowCalculator, self).__init__(data_source)
         self.total_column_ids = data_source.total_column_ids
         self.total_cols = {col_id: 0 for col_id in self.total_column_ids}
 

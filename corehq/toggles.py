@@ -1736,13 +1736,6 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
-MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
-    'mobile_ucr_total_row_iterative_calculation',
-    'Calculate total rows for mobile UCR during iteration instead of using a DB query',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-)
-
 RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
     'rate_limit_submissions',
     'Rate limit submissions with a 429 TOO MANY REQUESTS response',

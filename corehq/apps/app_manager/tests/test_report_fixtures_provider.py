@@ -22,7 +22,6 @@ from corehq.apps.app_manager.tests.test_report_config import (
     mock_report_configuration_get,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.util.test_utils import flag_enabled
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
@@ -75,7 +74,6 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         self._test_report_fixtures_provider(ReportFixturesProviderV2(cache), 'expected_v2_report', data_source)
         data_source.get_data.assert_called_once()
 
-    @flag_enabled('MOBILE_UCR_TOTAL_ROW_ITERATIVE')
     def test_v2_report_fixtures_provider_iterative_total_row(self):
         report_id = 'deadbeef'
         provider = ReportFixturesProviderV2()
