@@ -2911,7 +2911,7 @@ class UserReportingMetadataStaging(models.Model):
                 WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
 
-    def process_record(self, couch_user):
+    def process_record(self, user):
         save = False
         if not user or user.is_deleted():
             return
