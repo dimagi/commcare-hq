@@ -22,8 +22,7 @@ from custom.icds_reports.const import (
     AWW_INCENTIVE_TABLE,
     AGG_DASHBOARD_ACTIVITY,
     AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
-    AGG_GOV_DASHBOARD_TABLE,
-    AGG_GOV_VHND_TABLE
+    AGG_GOV_DASHBOARD_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
