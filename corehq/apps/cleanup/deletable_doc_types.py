@@ -5,6 +5,7 @@ clean up these docs.
 """
 
 MAIN_DB = None
+META_DB = None
 
 # Doc types for classes we've removed from our code
 # but may still have docs lying around from
@@ -14,6 +15,7 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CaseReminder': (MAIN_DB,),
     'CaseReminderHandler': (MAIN_DB,),
     'CaseReminderEvent': (MAIN_DB,),
+    'ExportMigrationMeta': (META_DB,),
     'ForwardingRule': (MAIN_DB,),
     'ForwardingRule-Deleted': (MAIN_DB,),
 }
