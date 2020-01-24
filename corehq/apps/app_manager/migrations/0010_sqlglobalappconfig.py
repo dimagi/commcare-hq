@@ -8,20 +8,12 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.apps.app_manager.management.commands.populate_sql_global_app_config import Command
-from corehq.apps.app_manager.models import GlobalAppConfig, SQLGlobalAppConfig
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
-
-
-def count_items_to_be_migrated():
-    couch_count = len(get_doc_ids_by_class(GlobalAppConfig))
-    sql_count = SQLGlobalAppConfig.objects.count()
-    return couch_count - sql_count
 
 
 @skip_on_fresh_install
 def _verify_sql_global_app_config(apps, schema_editor):
-    to_migrate = count_items_to_be_migrated()
+    to_migrate = Command.count_items_to_be_migrated()
     migrated = to_migrate == 0
     if migrated:
         return
@@ -29,7 +21,7 @@ def _verify_sql_global_app_config(apps, schema_editor):
     if to_migrate < Command.AUTO_MIGRATE_ITEMS_LIMIT:
         try:
             call_command('populate_sql_global_app_config')
-            migrated = count_items_to_be_migrated() == 0
+            migrated = Command.count_items_to_be_migrated() == 0
             if not migrated:
                 print("Automatic migration failed")
         except Exception:

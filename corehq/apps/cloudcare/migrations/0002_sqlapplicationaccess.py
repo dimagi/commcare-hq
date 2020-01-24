@@ -8,24 +8,12 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.apps.cloudcare.management.commands.populate_application_access import Command
-from corehq.apps.cloudcare.models import SQLApplicationAccess
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
-
-
-def count_items_to_be_migrated():
-    try:
-        from corehq.apps.cloudcare.models import ApplicationAccess
-    except ImportError:
-        return 0
-    couch_count = len(get_doc_ids_by_class(ApplicationAccess))
-    sql_count = SQLApplicationAccess.objects.count()
-    return couch_count - sql_count
 
 
 @skip_on_fresh_install
 def _verify_sql_application_access(apps, schema_editor):
-    to_migrate = count_items_to_be_migrated()
+    to_migrate = Command.count_items_to_be_migrated()
     migrated = to_migrate == 0
     if migrated:
         return
@@ -33,7 +21,7 @@ def _verify_sql_application_access(apps, schema_editor):
     if to_migrate < Command.AUTO_MIGRATE_ITEMS_LIMIT:
         try:
             call_command('populate_application_access')
-            migrated = count_items_to_be_migrated() == 0
+            migrated = Command.count_items_to_be_migrated() == 0
             if not migrated:
                 print("Automatic migration failed")
         except Exception:

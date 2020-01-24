@@ -8,24 +8,12 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.motech.dhis2.management.commands.populate_sql_dhis2_connection import Command
-from corehq.motech.dhis2.models import SQLDhis2Connection
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
-
-
-def count_items_to_be_migrated():
-    try:
-        from corehq.motech.dhis2.models import Dhis2Connection
-    except ImportError:
-        return 0
-    couch_count = len(get_doc_ids_by_class(Dhis2Connection))
-    sql_count = SQLDhis2Connection.objects.count()
-    return couch_count - sql_count
 
 
 @skip_on_fresh_install
 def _verify_sql_dhis2_connection(apps, schema_editor):
-    to_migrate = count_items_to_be_migrated()
+    to_migrate = Command.count_items_to_be_migrated()
     migrated = to_migrate == 0
     if migrated:
         return
@@ -33,7 +21,7 @@ def _verify_sql_dhis2_connection(apps, schema_editor):
     if to_migrate < Command.AUTO_MIGRATE_ITEMS_LIMIT:
         try:
             call_command('populate_sql_dhis2_connection')
-            migrated = count_items_to_be_migrated() == 0
+            migrated = Command.count_items_to_be_migrated() == 0
             if not migrated:
                 print("Automatic migration failed")
         except Exception:

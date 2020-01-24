@@ -49,9 +49,15 @@ class PopulateSQLCommand(BaseCommand):
             This migration is run using the management command {}.
         """.format(__name__.split('.')[-1])
 
-    @property
-    def couch_db(self):
-        return couch_config.get_db(self.couch_db_slug())
+    @classmethod
+    def count_items_to_be_migrated(cls):
+        couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        sql_count = cls.sql_class().objects.count()
+        return couch_count - sql_count
+
+    @classmethod
+    def couch_db(cls):
+        return couch_config.get_db(cls.couch_db_slug())
 
     def doc_key(self, doc):
         return {key: doc[key] for key in doc if key in self.couch_key()}
@@ -70,12 +76,12 @@ class PopulateSQLCommand(BaseCommand):
 
         logger.info("{}Found {} {} docs and {} {} models".format(
             log_prefix,
-            get_doc_count_by_type(self.couch_db, self.couch_doc_type()),
+            get_doc_count_by_type(self.couch_db(), self.couch_doc_type()),
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
-        for doc in get_all_docs_with_doc_types(self.couch_db, [self.couch_doc_type()]):
+        for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
             logger.info("{}Looking at doc with key {}".format(log_prefix, self.doc_key(doc)))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
