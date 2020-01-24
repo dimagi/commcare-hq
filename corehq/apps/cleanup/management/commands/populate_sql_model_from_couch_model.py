@@ -17,17 +17,17 @@ class PopulateSQLCommand(BaseCommand):
     """
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
-    @property
-    def couch_db_slug(self):
+    @classmethod
+    def couch_db_slug(cls):
         # Override this if couch model was not stored in the main commcarehq database
         return None
 
-    @property
-    def couch_doc_type(self):
+    @classmethod
+    def couch_doc_type(cls):
         raise NotImplementedError()
 
-    @property
-    def couch_key(self):
+    @classmethod
+    def couch_key(cls):
         """
         Set of doc keys to uniquely identify a couch document.
         For most documents this is set(["id"]), but sometimes it's useful to use a more
@@ -35,7 +35,7 @@ class PopulateSQLCommand(BaseCommand):
         """
         raise NotImplementedError()
 
-    @property
+    @classmethod
     def sql_class(self):
         raise NotImplementedError()
 
@@ -51,10 +51,10 @@ class PopulateSQLCommand(BaseCommand):
 
     @property
     def couch_db(self):
-        return couch_config.get_db(self.couch_db_slug)
+        return couch_config.get_db(self.couch_db_slug())
 
     def doc_key(self, doc):
-        return {key: doc[key] for key in doc if key in self.couch_key}
+        return {key: doc[key] for key in doc if key in self.couch_key()}
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -70,12 +70,12 @@ class PopulateSQLCommand(BaseCommand):
 
         logger.info("{}Found {} {} docs and {} {} models".format(
             log_prefix,
-            get_doc_count_by_type(self.couch_db, self.couch_doc_type),
-            self.couch_doc_type,
-            self.sql_class.objects.count(),
-            self.sql_class.__name__,
+            get_doc_count_by_type(self.couch_db, self.couch_doc_type()),
+            self.couch_doc_type(),
+            self.sql_class().objects.count(),
+            self.sql_class().__name__,
         ))
-        for doc in get_all_docs_with_doc_types(self.couch_db, [self.couch_doc_type]):
+        for doc in get_all_docs_with_doc_types(self.couch_db, [self.couch_doc_type()]):
             logger.info("{}Looking at doc with key {}".format(log_prefix, self.doc_key(doc)))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
