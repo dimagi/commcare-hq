@@ -2221,7 +2221,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
             return HttpResponse(error_message, status=400)
 
         query_filters = {'aggregation_level': AggregationLevels.AWC,
-                         # 'num_launched_awcs': 1,
+                         'num_launched_awcs': 1,
                          'awc_id__gt': last_awc_id,
                          'state_id': state_id
                          }
@@ -2256,8 +2256,9 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
             return HttpResponse(error_message, status=400)
 
         query_filters = {
-                         'state_id': state_id,
-                         'awc_id__gt': last_awc_id}
+            'state_id': state_id,
+            'awc_launched': 1,
+            'awc_id__gt': last_awc_id}
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
