@@ -1,4 +1,6 @@
+
 from django.test import TestCase
+from lxml import etree
 
 from mock import patch
 
@@ -82,6 +84,11 @@ class AppAwareSyncTests(TestCase):
         domain.delete()
         super(AppAwareSyncTests, cls).tearDownClass()
 
+    def _get_fixture(self, fixtures, fixture_id):
+        matches = [f for f in fixtures if f.attrib.get('id') == fixture_id]
+        if matches:
+            return matches[0]
+
     def test_report_fixtures_provider_without_app(self):
         """
         ReportFixturesProvider should iterate all apps if app not given
@@ -91,7 +98,8 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user)
-        reports = fixtures[0].findall('.//report')
+
+        reports = self._get_fixture(fixtures, report_fixture_generator.id).findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
         self.assertEqual(report_ids, {'123456', 'abcdef'})
@@ -105,7 +113,8 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
-        reports = fixtures[0].findall('.//report')
+        reports = self._get_fixture(fixtures, report_fixture_generator.id).findall('.//report')
+
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
 
@@ -134,7 +143,7 @@ class AppAwareSyncTests(TestCase):
                     self.user,
                     device_id="WebAppsLogin|user@project.commcarehq.org"
                 )
-        reports = fixtures[0].findall('.//report')
+        reports = self._get_fixture(fixtures, report_fixture_generator.id).findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
 

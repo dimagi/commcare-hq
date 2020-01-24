@@ -123,6 +123,13 @@ class BaseReportFixturesProvider(FixtureProvider):
         return filters_elem
 
 
+def _get_report_index_fixture(restore_user):
+    return E.fixture(
+        E.report_index(E.reports(last_update=_last_sync_time(restore_user.domain, restore_user.user_id))),
+        id='commcare-reports:index', user_id=restore_user.user_id,
+    )
+
+
 class ReportFixturesProvider(BaseReportFixturesProvider):
     id = 'commcare:reports'
 
@@ -143,6 +150,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
+            fixtures.append(_get_report_index_fixture(restore_user))
             fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
@@ -279,6 +287,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
+            fixtures.append(_get_report_index_fixture(restore_user))
+
             report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))

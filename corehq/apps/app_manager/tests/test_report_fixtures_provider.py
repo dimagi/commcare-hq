@@ -2,15 +2,12 @@ from datetime import datetime
 
 from django.test import SimpleTestCase
 
-from lxml import etree
-from lxml.builder import E
-from mock import Mock, patch
-
 from casexml.apps.phone.models import UCRSyncLog
 
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     ReportFixturesProvider,
     ReportFixturesProviderV2,
+    _get_report_index_fixture,
 )
 from corehq.apps.app_manager.models import (
     ReportAppConfig,
@@ -22,6 +19,9 @@ from corehq.apps.app_manager.tests.test_report_config import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
+from lxml import etree
+from lxml.builder import E
+from mock import Mock, patch
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
@@ -149,3 +149,20 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
             configs = provider._relevant_report_configs(restore_state, [])
             self.assertEqual(configs, ([], {report_app_config.uuid}))
+
+    @patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time')
+    def test_get_report_index_fixture(self, last_sync_time_patch):
+        last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
+        restore_user = Mock(domain='mock-domain', user_id='mock-user-id')
+        report_index_fixture = _get_report_index_fixture(restore_user)
+        print(etree.tostring(report_index_fixture, pretty_print=True).decode('utf-8'))
+        self.assertXMLEqual(
+            etree.tostring(report_index_fixture, pretty_print=True).decode('utf-8'),
+            """
+            <fixture id="commcare-reports:index" user_id="mock-user-id">
+              <report_index>
+                <reports last_update="2017-09-11T06:35:20"/>
+              </report_index>
+            </fixture>
+            """
+        )
