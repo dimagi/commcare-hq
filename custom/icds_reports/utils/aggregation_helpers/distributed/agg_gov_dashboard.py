@@ -42,7 +42,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_preg_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_reg_in_month,0)'),
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
             ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)'),
-            ('cbe_conducted_1',"'no'"),
+            ('cbe_conducted_1', "'no'"),
             ('cbe_conducted_2', "'no'"),
 
         )
@@ -152,7 +152,6 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         yield """
         DROP TABLE temp_gov_dashboard;
         """, {}
-
 
         yield """
         CREATE TABLE temp_cbe_data AS
