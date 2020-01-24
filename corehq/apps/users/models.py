@@ -2912,6 +2912,9 @@ class UserReportingMetadataStaging(models.Model):
                 """, params)
 
     def process_record(self, user):
+        from corehq.pillows.synclog import mark_last_synclog
+        from pillowtop.processors.form import mark_latest_submission
+
         save = False
         if not user or user.is_deleted():
             return

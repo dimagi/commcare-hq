@@ -307,11 +307,8 @@ def update_domain_date(user_id, domain):
 )
 def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
-        CouchUser,
-        UserReportingMetadataStaging, DeviceAppMeta
+        CouchUser, UserReportingMetadataStaging
     )
-    from corehq.pillows.synclog import mark_last_synclog
-    from pillowtop.processors.form import mark_latest_submission
 
     with transaction.atomic():
         records = (
