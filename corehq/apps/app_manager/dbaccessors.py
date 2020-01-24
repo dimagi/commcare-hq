@@ -183,7 +183,7 @@ def get_app_cached(domain, app_id):
     #   Invalidation is not necessary as the builds don't get updated
     cache = tiered_django_cache([
         ('locmem', timeout, None),
-        ('default', timeout, lambda *x: "get_app_cached")]
+        ('default', timeout, None)]
     )
     key = 'app_build_cache_{}_{}'.format(domain, app_id)
     app = cache.get(key)
