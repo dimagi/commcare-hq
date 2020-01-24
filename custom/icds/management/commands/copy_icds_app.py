@@ -2,6 +2,8 @@ from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version, wrap_app
 from corehq.apps.app_manager.models import import_app
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.linked_domain.applications import copy_resource_overrides
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -19,11 +21,7 @@ class Command(BaseCommand):
         old_app = get_app_by_version(source_domain, app_id, version)
         new_app = import_app(old_app.to_json(), target_domain, source_properties={'name': new_name})
 
-        old_to_new = get_old_to_new_config_ids(old_app, new_app)
-        for form in new_app.get_forms():
-            if form.form_type != 'shadow_form':
-                for old_id, new_id in old_to_new:
-                    form.source = form.source.replace(old_id, new_id)
+        find_and_replace_report_ids(old_app, new_app)
 
         new_app.save()
         print("App succesfully copied, you can view it at\n{}".format(
@@ -37,6 +35,14 @@ def get_app_by_version(domain, app_id, version):
         raise Exception("No app found with id '{}' and version '{}', on '{}'"
                         .format(app_id, version, domain))
     return wrap_app(app)
+
+
+def find_and_replace_report_ids(old_app, new_app):
+    old_to_new = get_old_to_new_config_ids(old_app, new_app)
+    for form in new_app.get_forms():
+        if form.form_type != 'shadow_form':
+            for old_id, new_id in old_to_new:
+                form.source = form.source.replace(old_id, new_id)
 
 
 def get_old_to_new_config_ids(old_app, new_app):
