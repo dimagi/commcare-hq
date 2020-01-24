@@ -2884,7 +2884,7 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on, created_on
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     sync_date, device_id,
                     app_version, num_unsent_forms, num_quarantined_forms,
