@@ -138,7 +138,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def get_users_in_group_a(self):
+    def smss_received(self):
         data = SMS.objects.filter(
             domain=self.domain,
             couch_recipient_doc_type='CommCareUser',
@@ -153,10 +153,10 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         ).values('date', 'couch_recipient').annotate(
             number_of_sms=Count('couch_recipient')
         )
-        return [(user['date'].date(), user['couch_recipient']) for user in data]
+        return {(sms['date'].date(), sms['couch_recipient']) for sms in data}
 
     @cached_property
-    def get_users_in_group_b(self):
+    def sms_events(self):
         data = MessagingSubEvent.objects.filter(
             parent__domain=self.domain,
             parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
@@ -169,7 +169,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 self.enddate
             )
         ).values('date', 'recipient_id')
-        return [(user['date'].date(), user['recipient_id']) for user in data]
+        return {(subevent['date'].date(), subevent['recipient_id']) for subevent in data}
 
     @cached_property
     def get_user_ids(self):
@@ -181,7 +181,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def rows(self):
-        def _to_report_format(date, user, group):
+        def _to_report_format(date, user, error_msg):
             return [
                 date.strftime("%Y-%m-%d"),
                 user['username'].split('@')[0],
@@ -191,7 +191,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 user['level_2'],
                 user['level_3'],
                 user['level_4'],
-                group
+                error_msg
             ]
 
         users = self.get_users
@@ -204,17 +204,15 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         rows = []
         sub_status = self.report_config['submission_status']
         if users:
-            group_a = self.get_users_in_group_a
-            group_b = self.get_users_in_group_b
-
             for date in dates:
                 for user in users:
-                    key = (date.date(), user['user_id'])
-                    if key not in group_a and sub_status != 'group_b':
-                        group = _('No PMT data Submitted')
-                    elif key not in group_b and key in group_a and sub_status != 'group_a':
-                        group = _('Incorrect PMT data Submitted')
+                    sms_received = (date.date(), user['user_id']) in self.smss_received
+                    sms_event_exists = (date.date(), user['user_id']) in self.sms_events
+                    if not sms_received and sub_status != 'group_b':
+                        error_msg = _('No PMT data Submitted')
+                    elif not sms_event_exists and sms_received and sub_status != 'group_a':
+                        error_msg = _('Incorrect PMT data Submitted')
                     else:
                         continue
-                    rows.append(_to_report_format(date, user, group))
+                    rows.append(_to_report_format(date, user, error_msg))
         return rows
