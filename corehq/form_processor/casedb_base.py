@@ -97,15 +97,14 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
             self.locks.append(lock)
 
         if case:
-            self._validate_case(case)
-            self.cache[case_id] = case
-            self._track_load()
+            self.set(case_id, case)
         return case
 
     def set(self, case_id, case):
         assert isinstance(case, self.case_model_classes)
         if case_id not in self.cache:
             self._track_load()
+        self._validate_case(case)
         self.cache[case_id] = case
 
     def in_cache(self, case_id):
