@@ -14,7 +14,7 @@ from corehq.util.test_utils import capture_log_output
 
 from .test_migration import BaseMigrationTestCase, Diff, make_test_form
 from .. import casediff
-from ..management.commands import couch_sql_diff as mod
+from .. import casedifftool as mod
 from ..statedb import open_state_db
 
 
