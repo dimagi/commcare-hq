@@ -414,7 +414,6 @@ def get_report_element(report_data_cache, report_config, data_source, deferred_f
     else:
         total_row_calculator = MockTotalRowCalculator()
 
-
     row_elements = []
     row_index = 0
     rows = report_data_cache.get_data(report_config.uuid, data_source)
