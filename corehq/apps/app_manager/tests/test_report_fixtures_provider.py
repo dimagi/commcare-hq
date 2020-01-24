@@ -94,7 +94,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             mock.final_column_ids = ['foo', 'bar', 'baz']
             report_datasource.from_spec.return_value = mock
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
-            fixtures = provider.report_config_to_v2_fixture(report_app_config, user)
+            fixtures = provider.report_config_to_fixture(report_app_config, user)
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(

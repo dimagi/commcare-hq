@@ -182,7 +182,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
     def _v1_fixture(self, restore_user, report_configs):
         user_id = restore_user.user_id
         root = E.fixture(id=self.id, user_id=user_id)
-        reports_elem = E.reports(last_sync=_last_sync_time(restore_user.domain, user_id))
+        reports_elem = E.reports(last_sync=_last_sync_time(restore_user))
         for report_config in report_configs:
             try:
                 reports_elem.extend(self.report_config_to_fixture(report_config, restore_user))
@@ -200,17 +200,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         return [root]
 
     def report_config_to_fixture(self, report_config, restore_user):
-        rows_elem, filters_elem = generate_rows_and_filters(
-            report_config, restore_user, self._get_v1_report_elem
-        )
-
-        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
-        report_elem.append(filters_elem)
-        report_elem.append(rows_elem)
-        return [report_elem]
-
-    def _get_v1_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
-        def _row_to_row_elem(row, index, is_total_row=False):
+        def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
@@ -219,29 +209,17 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_row_calculator = IterativeTotalRowCalculator(data_source)
-
+        row_elements, filters_elem = generate_rows_and_filters(
+            self.report_data_cache, report_config, restore_user, _row_to_row_elem
+        )
         rows_elem = E.rows()
-        row_index = 0
+        for row in row_elements:
+            rows_elem.append(row)
 
-        rows = self.report_data_cache.get_data(report_config.uuid, data_source)
-        for row_index, row in enumerate(rows):
-            rows_elem.append(_row_to_row_elem(row, row_index))
-            total_row_calculator.update_totals(row)
-
-        if data_source.has_total_row:
-            total_row = total_row_calculator.get_total_row()
-            rows_elem.append(_row_to_row_elem(
-                dict(
-                    zip(
-                        list(data_source.final_column_ids),
-                        list(map(str, total_row))
-                    )
-                ),
-                row_index + 1,
-                is_total_row=True,
-            ))
-        return rows_elem
+        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
+        report_elem.append(filters_elem)
+        report_elem.append(rows_elem)
+        return [report_elem]
 
 
 class ReportFixturesProviderV2(BaseReportFixtureProvider):
@@ -332,9 +310,21 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         return fixtures
 
     def report_config_to_fixture(self, report_config, restore_user):
-        rows_elem, filters_elem = generate_rows_and_filters(
-            report_config, restore_user, self._get_v2_report_elem
+        def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
+            row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
+            for k in sorted(row.keys()):
+                value = serialize(row[k])
+                row_elem.append(E(k, value))
+                if not is_total_row and k in deferred_fields:
+                    filter_options_by_field[k].add(value)
+            return row_elem
+
+        rows, filters_elem = generate_rows_and_filters(
+            self.report_data_cache, report_config, restore_user, _row_to_row_elem
         )
+        rows_elem = E.rows(last_sync=_last_sync_time(restore_user))
+        for row in rows:
+            rows_elem.append(row)
 
         report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
@@ -345,39 +335,6 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         )
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
-
-    def _get_v2_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
-        def _row_to_row_elem(row, index, is_total_row=False):
-            row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            for k in sorted(row.keys()):
-                value = serialize(row[k])
-                row_elem.append(E(k, value))
-                if not is_total_row and k in deferred_fields:
-                    filter_options_by_field[k].add(value)
-            return row_elem
-
-        total_row_calculator = IterativeTotalRowCalculator(data_source)
-
-        rows_elem = E.rows(last_sync=last_sync)
-        row_index = 0
-        rows = self.report_data_cache.get_data(report_config.uuid, data_source)
-        for row_index, row in enumerate(rows):
-            rows_elem.append(_row_to_row_elem(row, row_index))
-            total_row_calculator.update_totals(row)
-
-        if data_source.has_total_row:
-            total_row = total_row_calculator.get_total_row()
-            rows_elem.append(_row_to_row_elem(
-                dict(
-                    zip(
-                        list(data_source.final_column_ids),
-                        list(map(str, total_row))
-                    )
-                ),
-                row_index + 1,
-                is_total_row=True,
-                ))
-        return rows_elem
 
     @staticmethod
     def _report_fixture_id(report_uuid):
@@ -392,16 +349,16 @@ def _utcnow():
     return datetime.utcnow()
 
 
-def _last_sync_time(domain, user_id):
-    timezone = get_timezone_for_user(user_id, domain)
+def _last_sync_time(restore_user):
+    timezone = get_timezone_for_user(restore_user.user_id, restore_user.domain)
     return ServerTime(_utcnow()).user_time(timezone).done().isoformat()
 
 
-def generate_rows_and_filters(report_config, restore_user, get_rows_element):
+def generate_rows_and_filters(report_data_cache, report_config, restore_user, row_to_element):
     """Generate restore row and filter elements
-    :param get_rows_element: function (
-                data_source, deferred_fields, filter_options_by_field, last_sync
-            ) -> rows_element
+    :param row_to_element: function (
+                deferred_fields, filter_options_by_field, row, index, is_total_row
+            ) -> row_element
     """
     domain = restore_user.domain
     report, data_source = _get_report_and_data_source(report_config.report_id, domain)
@@ -429,12 +386,13 @@ def generate_rows_and_filters(report_config, restore_user, get_rows_element):
     data_source.set_defer_fields([f.field for f in defer_filters])
     filter_options_by_field = defaultdict(set)
 
-    rows_elem = get_rows_element(
+    row_elements = get_report_element(
+        report_data_cache,
         report_config,
         data_source,
         {f.field for f in defer_filters},
         filter_options_by_field,
-        _last_sync_time(domain, restore_user.user_id),
+        row_to_element,
     )
     filters_elem = _get_filters_elem(defer_filters, filter_options_by_field, restore_user._couch_user)
 
@@ -442,7 +400,42 @@ def generate_rows_and_filters(report_config, restore_user, get_rows_element):
         COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
         compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
-    return rows_elem, filters_elem
+    return row_elements, filters_elem
+
+
+def get_report_element(report_data_cache, report_config, data_source, deferred_fields, filter_options_by_field, row_to_element):
+    """
+    :param row_to_element: function (
+                deferred_fields, filter_options_by_field, row, index, is_total_row
+            ) -> row_element
+    """
+    if data_source.has_total_row:
+        total_row_calculator = IterativeTotalRowCalculator(data_source)
+    else:
+        total_row_calculator = MockTotalRowCalculator()
+
+
+    row_elements = []
+    row_index = 0
+    rows = report_data_cache.get_data(report_config.uuid, data_source)
+    for row_index, row in enumerate(rows):
+        row_elements.append(row_to_element(deferred_fields, filter_options_by_field, row, row_index))
+        total_row_calculator.update_totals(row)
+
+    if data_source.has_total_row:
+        total_row = total_row_calculator.get_total_row()
+        row_elements.append(row_to_element(
+            deferred_fields, filter_options_by_field,
+            dict(
+                zip(
+                    list(data_source.final_column_ids),
+                    list(map(str, total_row))
+                )
+            ),
+            row_index + 1,
+            is_total_row=True,
+        ))
+    return row_elements
 
 
 def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
@@ -467,7 +460,15 @@ def _get_report_and_data_source(report_id, domain):
     return report, data_source
 
 
-class IterativeTotalRowCalculator(object):
+class MockTotalRowCalculator(object):
+    def update_totals(self, row):
+        pass
+
+    def get_total_row(self):
+        pass
+
+
+class IterativeTotalRowCalculator(MockTotalRowCalculator):
     def __init__(self, data_source):
         self.data_source = data_source
         self.total_column_ids = data_source.total_column_ids
