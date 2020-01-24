@@ -15,6 +15,7 @@ class PopulateSQLCommand(BaseCommand):
     """
         Base class for migrating couch docs to sql models.
     """
+    AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
     def add_arguments(self, parser):
         parser.add_argument(

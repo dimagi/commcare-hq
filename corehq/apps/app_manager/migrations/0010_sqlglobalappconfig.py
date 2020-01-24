@@ -7,12 +7,12 @@ import traceback
 from django.core.management import call_command
 from django.db import migrations
 
+from corehq.apps.app_manager.management.commands.populate_sql_global_app_config import Command
 from corehq.apps.app_manager.models import GlobalAppConfig, SQLGlobalAppConfig
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
-AUTO_MIGRATE_ITEMS_LIMIT = 1000
 AUTO_MIGRATE_FAILED_MESSAGE = """
     A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
     This migration is run using the management command populate_sql_global_app_config.
@@ -32,7 +32,7 @@ def _verify_sql_global_app_config(apps, schema_editor):
     if migrated:
         return
 
-    if to_migrate < AUTO_MIGRATE_ITEMS_LIMIT:
+    if to_migrate < Command.AUTO_MIGRATE_ITEMS_LIMIT:
         try:
             call_command('populate_sql_global_app_config')
             migrated = count_items_to_be_migrated() == 0

@@ -7,12 +7,12 @@ import traceback
 from django.core.management import call_command
 from django.db import migrations
 
+from corehq.apps.cloudcare.management.commands.populate_application_access import Command
 from corehq.apps.cloudcare.models import SQLApplicationAccess
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
-AUTO_MIGRATE_ITEMS_LIMIT = 1000
 AUTO_MIGRATE_FAILED_MESSAGE = """
     A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
     This migration is run using the management command populate_application_access.
@@ -36,7 +36,7 @@ def _verify_sql_application_access(apps, schema_editor):
     if migrated:
         return
 
-    if to_migrate < AUTO_MIGRATE_ITEMS_LIMIT:
+    if to_migrate < Command.AUTO_MIGRATE_ITEMS_LIMIT:
         try:
             call_command('populate_application_access')
             migrated = count_items_to_be_migrated() == 0
