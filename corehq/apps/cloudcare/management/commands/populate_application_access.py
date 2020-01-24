@@ -20,6 +20,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.cloudcare.models import SQLApplicationAccess
         return SQLApplicationAccess
 
+    @classmethod
+    def command_name(cls):
+        return __name__.split('.')[-1]
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             domain=doc['domain'],

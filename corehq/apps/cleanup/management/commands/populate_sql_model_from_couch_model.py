@@ -1,9 +1,10 @@
 import logging
+import sys
+import traceback
 
 from django.core.management.base import BaseCommand
+from django.core.management import call_command
 from django.db import transaction
-
-from dimagi.utils.couch.database import iter_docs
 
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
@@ -19,6 +20,16 @@ class PopulateSQLCommand(BaseCommand):
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
     @classmethod
+    def command_name(cls):
+        """
+            This needs to be implemented in each subclass even though the implementation
+            is always the same. Implementation:
+
+            return __name__.split('.')[-1]
+        """
+        raise NotImplementedError()
+
+    @classmethod
     def couch_db_slug(cls):
         # Override this if couch model was not stored in the main commcarehq database
         return None
@@ -30,7 +41,7 @@ class PopulateSQLCommand(BaseCommand):
     @classmethod
     def couch_key(cls):
         """
-        Set of doc keys to uniquely identify a couch document.
+            Set of doc keys to uniquely identify a couch document.
         For most documents this is set(["id"]), but sometimes it's useful to use a more
         human-readable key, typically for documents that have at most one doc per domain.
         """
@@ -44,17 +55,41 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
-    def auto_migrate_failed_message(self):
-        return """
-            A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
-            This migration is run using the management command {}.
-        """.format(__name__.split('.')[-1])
-
-    @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
         sql_count = cls.sql_class().objects.count()
         return couch_count - sql_count
+
+    @classmethod
+    def migrate_from_migration(cls, apps, schema_editor):
+        """
+            Should only be called from within a django migration.
+            Calls sys.exit on failure.
+        """
+        to_migrate = cls.count_items_to_be_migrated()
+        migrated = to_migrate == 0
+        if migrated:
+            return
+
+        if to_migrate < cls.AUTO_MIGRATE_ITEMS_LIMIT:
+            try:
+                call_command(cls.command_name())
+                remaining = cls.count_items_to_be_migrated()
+                if remaining != 0:
+                    migrated = False
+                    print("Automatic migration failed, {} items remain to migrate.")
+            except Exception:
+                traceback.print_exc()
+        else:
+            print("Found {} items that need to be migrated.".format(to_migrate))
+            print("Too many to migrate automatically.")
+
+        if not migrated:
+            print("""
+                A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
+                This migration is run using the management command {}.
+            """).format(cls.command_name())
+            sys.exit(1)
 
     @classmethod
     def couch_db(cls):
