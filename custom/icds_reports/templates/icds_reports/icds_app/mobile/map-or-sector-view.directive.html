@@ -1,4 +1,5 @@
 <div class="map-or-sector-view-directive">
+    <div id="chartPopup" class="chartPopup nvtooltip"></div>
     <div ng-if="$ctrl.mode === 'map' && $ctrl.data.mapData">
         <div>
             <indie-map template-popup="$ctrl.templatePopup(loc)" legend-title="{$ $ctrl.data.legendTitle $}" data="$ctrl.data.mapData"></indie-map>

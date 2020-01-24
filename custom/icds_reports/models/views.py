@@ -594,6 +594,10 @@ class AggAwcMonthly(models.Model):
                                      help_text="num of valid home visits")
     expected_visits = models.ImageField(blank=True, null=True,
                                         help_text="num of expected home visits")
+    electricity_awc = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_cbe = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_vhnd = models.IntegerField(blank=True, null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

@@ -7,15 +7,11 @@ class Command(PopulateSQLCommand):
     """
 
     @property
-    def couch_class(self):
-        try:
-            from corehq.motech.dhis2.models import Dhis2Connection
-            return Dhis2Connection
-        except ImportError:
-            return None
+    def couch_doc_type(self):
+        return 'Dhis2Connection'
 
     @property
-    def couch_class_key(self):
+    def couch_key(self):
         return set(['domain'])
 
     @property
@@ -30,7 +26,7 @@ class Command(PopulateSQLCommand):
                 'server_url': doc.get('server_url'),
                 'username': doc.get('username'),
                 'password': doc.get('password'),
-                'skip_cert_verify': doc.get('skip_cert_verify'),
+                'skip_cert_verify': doc.get('skip_cert_verify') or False,
             }
         )
         return (model, created)

@@ -320,6 +320,7 @@ def process_reporting_metadata_staging():
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
             if not user or user.is_deleted():
+                record.delete()
                 continue
 
             save = False

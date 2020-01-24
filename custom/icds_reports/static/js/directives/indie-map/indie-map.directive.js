@@ -163,6 +163,20 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     projection.scale(scaleCenter.scale)
                         .center(scaleCenter.center)
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+
+                    //setting zoom out limit
+                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                    $(function () {
+                        // DOM Ready
+                        var svg = d3.select('#map svg'); //selects svg in datamap component
+                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                            // this function redraws the map rendered on zoom event
+                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                            svg.selectAll('g').attr("transform",
+                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                        });
+                        svg.call(zoom); //connects zoom event to map
+                    });
                 } else {
                     projection = d3.geo.equirectangular()
                         .center(options.center)
@@ -324,12 +338,16 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     function renderPopup(html) {
+        return vm.renderPopup(html, 'locPopup');
+    }
+
+    vm.renderPopup = function (html, divId) {
         var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
-        var popup = d3.select('#locPopup');
+        var popup = d3.select('#' + divId);
         popup.classed("hidden", false);
         popup.attr('style', css).html(html);
         $compile(popup[0])($scope);
-    }
+    };
 
     function showSecondaryLocationSelectionPopup(geography) {
         var html = vm.getSecondaryLocationSelectionHtml(geography);
@@ -346,15 +364,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.attemptToDrillToLocation = function (geography) {
         var location = getLocationNameFromGeography(geography);
-        locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
-            var location = locations[0];
-            if (!location) {
-                return;
-            }
-            $location.search('location_name', (geography.id || geography));
-            $location.search('location_id', location.location_id);
-            storageService.setKey('search', $location.search());
-        });
+        locationsService.tryToNavigateToLocation(location, location_id);
     };
 
     vm.handleMobileDrilldown = function () {

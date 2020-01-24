@@ -1348,6 +1348,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
 )
 
+FILTERED_LOCATION_DOWNLOAD = StaticToggle(
+    'filtered_location_download',
+    "Ability to filter location download to include only a specified location and its descendants.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
+)
+
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1798,4 +1806,13 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     To allow a gradual rollout and testing of using the standby
     databases to generate restore payloads.
     """
+)
+
+
+EXCEL_EXPORT_DATA_TYPING = StaticToggle(
+    'excel_export_data_typing',
+    'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
+    'and case exports, so that excel export cells are correctly data-typed.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
