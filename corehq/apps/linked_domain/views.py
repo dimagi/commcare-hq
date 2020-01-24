@@ -21,6 +21,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.suite_xml.post_process.resources import copy_xform_resource_overrides
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -145,6 +146,13 @@ def pull_missing_multimedia(request, domain, app_id):
         app = get_app(domain, app_id)
         pull_missing_multimedia_for_app(app)
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
+
+
+@require_can_edit_apps
+def copy_resource_overrides(request, domain, app_id):
+    id_map = request.POST.get('id_map')
+    copy_xform_resource_overrides(domain, app_id, id_map)
+    return JsonResponse({'success': 1})
 
 
 class DomainLinkView(BaseAdminProjectSettingsView):
