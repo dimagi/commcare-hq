@@ -204,7 +204,7 @@ class Command(BaseCommand):
 def find_test_awc_locations():
     test_locations = set()
     for location in SQLLocation.active_objects.filter(location_type__code='state', domain=DOMAIN):
-        if loc.metadata.get('is_test_location') == 'test':
+        if location.metadata.get('is_test_location') == 'test':
             test_locations.update(
                 location.get_descendants(include_self=True).
                 filter(location_type='awc').values_list('location_id', flat=True)
