@@ -25,10 +25,6 @@ class Command(PopulateSQLCommand):
         from corehq.apps.app_manager.models import SQLGlobalAppConfig
         return SQLGlobalAppConfig
 
-    @classmethod
-    def command_name(cls):
-        return __name__.split('.')[-1]
-
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.get_or_create(
             domain=doc['domain'],

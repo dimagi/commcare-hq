@@ -20,16 +20,6 @@ class PopulateSQLCommand(BaseCommand):
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
     @classmethod
-    def command_name(cls):
-        """
-            This needs to be implemented in each subclass even though the implementation
-            is always the same. Implementation:
-
-            return __name__.split('.')[-1]
-        """
-        raise NotImplementedError()
-
-    @classmethod
     def couch_db_slug(cls):
         # Override this if couch model was not stored in the main commcarehq database
         return None
@@ -53,7 +43,6 @@ class PopulateSQLCommand(BaseCommand):
 
     def update_or_create_sql_object(self, doc):
         raise NotImplementedError()
-
     @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
@@ -71,9 +60,10 @@ class PopulateSQLCommand(BaseCommand):
         if migrated:
             return
 
+        command_name = cls.__module__.split('.')[-1]
         if to_migrate < cls.AUTO_MIGRATE_ITEMS_LIMIT:
             try:
-                call_command(cls.command_name())
+                call_command(command_name)
                 remaining = cls.count_items_to_be_migrated()
                 if remaining != 0:
                     migrated = False
@@ -88,7 +78,7 @@ class PopulateSQLCommand(BaseCommand):
             print("""
                 A migration must be performed before this environment can be upgraded to the latest version
                 of CommCareHQ. This migration is run using the management command {}.
-            """).format(cls.command_name())
+            """).format(command_name)
             sys.exit(1)
 
     @classmethod
