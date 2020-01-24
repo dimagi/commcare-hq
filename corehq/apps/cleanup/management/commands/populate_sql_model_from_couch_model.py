@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 class PopulateSQLCommand(BaseCommand):
     """
         Base class for migrating couch docs to sql models.
+        Override all methods that raise NotImplementedError and, optionoally, couch_db_slug.
     """
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
