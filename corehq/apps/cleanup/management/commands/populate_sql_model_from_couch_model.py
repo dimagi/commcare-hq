@@ -43,6 +43,7 @@ class PopulateSQLCommand(BaseCommand):
 
     def update_or_create_sql_object(self, doc):
         raise NotImplementedError()
+
     @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
