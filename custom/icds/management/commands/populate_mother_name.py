@@ -210,5 +210,8 @@ class Command(BaseCommand):
 def find_test_locations():
     test_locations = set()
     for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=DOMAIN):
-        test_locations.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
+        test_locations.update(
+            location.get_descendants(include_self=True).
+            filter(location_type='awc').values_list('location_id', flat=True)
+        )
     return test_locations
