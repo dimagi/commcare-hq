@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 class PopulateSQLCommand(BaseCommand):
     """
         Base class for migrating couch docs to sql models.
+        Adds a SQL object for any couch doc that doesn't yet have one.
+        Override all methods that raise NotImplementedError and, optionoally, couch_db_slug.
     """
 
     def add_arguments(self, parser):
