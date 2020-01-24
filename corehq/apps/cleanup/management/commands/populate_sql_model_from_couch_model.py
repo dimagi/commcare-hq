@@ -17,26 +17,6 @@ class PopulateSQLCommand(BaseCommand):
     """
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
-    @classmethod
-    def auto_migrate_failed_message(self):
-        return """
-            A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
-            This migration is run using the management command {}.
-        """.format(__name__.split('.')[-1])
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            dest='dry_run',
-            default=False,
-            help='Do not actually modify the database, just verbosely log what will happen',
-        )
-
-    @property
-    def couch_db(self):
-        return couch_config.get_db(self.couch_db_slug)
-
     @property
     def couch_db_slug(self):
         # Override this if couch model was not stored in the main commcarehq database
@@ -59,11 +39,31 @@ class PopulateSQLCommand(BaseCommand):
     def sql_class(self):
         raise NotImplementedError()
 
+    def update_or_create_sql_object(self, doc):
+        raise NotImplementedError()
+
+    @classmethod
+    def auto_migrate_failed_message(self):
+        return """
+            A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
+            This migration is run using the management command {}.
+        """.format(__name__.split('.')[-1])
+
+    @property
+    def couch_db(self):
+        return couch_config.get_db(self.couch_db_slug)
+
     def doc_key(self, doc):
         return {key: doc[key] for key in doc if key in self.couch_key}
 
-    def update_or_create_sql_object(self, doc):
-        raise NotImplementedError()
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            dest='dry_run',
+            default=False,
+            help='Do not actually modify the database, just verbosely log what will happen',
+        )
 
     def handle(self, dry_run=False, **options):
         log_prefix = "[DRY RUN] " if dry_run else ""
