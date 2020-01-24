@@ -24,6 +24,16 @@ class CaseRules(object):
 
 
 class CaseMessagingSyncProcessor(BulkPillowProcessor):
+    """
+
+    Reads from:
+      - Case data source
+      - Update Rules
+
+    Writes to:
+      - PhoneNumber
+      - Runs rules for SMS (can be many different things)
+    """
     def __init__(self):
         self.rules_by_domain = {}
 

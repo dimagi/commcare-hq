@@ -8,10 +8,11 @@ from corehq.apps.users.analytics import (
     get_count_of_inactive_commcare_users_in_domain,
     get_inactive_commcare_users_in_domain,
 )
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.chunked import chunked
 
 
-class UserQuerySetAdapter(object):
+class UserQuerySetAdapterCouch(object):
 
     def __init__(self, domain, show_archived):
         self.domain = domain
@@ -34,28 +35,43 @@ class UserQuerySetAdapter(object):
             'Invalid type of argument. Item should be an instance of slice class.')
 
 
-class GroupQuerySetAdapterCouch(object):
-    def __init__(self, domain):
+class UserQuerySetAdapterES(object):
+
+    def __init__(self, domain, show_archived):
         self.domain = domain
+        self.show_archived = show_archived
 
     def count(self):
-        return get_doc_count_in_domain_by_class(self.domain, Group)
+        return self._query.count()
+
+    __len__ = count
+
+    @property
+    def _query(self):
+        if self.show_archived:
+            return UserES().mobile_users().domain(self.domain).show_only_inactive().sort('username.exact')
+        else:
+            return UserES().mobile_users().domain(self.domain).sort('username.exact')
 
     def __getitem__(self, item):
         if isinstance(item, slice):
             limit = item.stop - item.start
-            groups = get_docs_in_domain_by_class(self.domain, Group, limit=limit, skip=item.start)
-        else:
-            raise ValueError(
-                'Invalid type of argument. Item should be an instance of slice class.')
+            result = self._query.size(limit).start(item.start).run()
+            return [WrappedUser.wrap(user) for user in result.hits]
+        raise ValueError(
+            'Invalid type of argument. Item should be an instance of slice class.')
 
-        for group in groups:
-            # precompute the return value of get_users_ids here
-            # so that all the work happens here instead of in an external hidden step
-            # Not any faster, but brings it more under our direct control for optimization
-            group._precomputed_active_users = group.get_user_ids()
-            group.__class__ = WrappedGroup
-        return groups
+
+class WrappedUser(CommCareUser):
+
+    @classmethod
+    def wrap(cls, data):
+        self = super().wrap(data)
+        self._group_ids = sorted(data['__group_ids'])
+        return self
+
+    def get_group_ids(self):
+        return self._group_ids
 
 
 class GroupQuerySetAdapterES(object):

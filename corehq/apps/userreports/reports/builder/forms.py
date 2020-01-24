@@ -379,7 +379,8 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         self.source_type = source_type
         # source_id is a case type of form id
         self.source_id = source_id
-        self.data_source_meta = get_app_data_source_meta(self.domain, self.source_type, self.source_id)
+        self.data_source_meta = get_app_data_source_meta(self.domain, self.app.id,
+                                                         self.source_type, self.source_id)
         if self.source_type == 'form':
             self.source_form = self.data_source_meta.source_form
             self.source_xform = self.data_source_meta.source_xform

@@ -26,10 +26,12 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
 
         cls.loc_types = setup_location_types(cls.domain, ['awc'])
         cls.loc = make_loc('awc', type='awc', domain=cls.domain)
+        cls.loc2 = make_loc('awc2', type='awc', domain=cls.domain)
         cls.user = make_user('user', cls.loc)
-        cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc)
+        cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc2)
         cls.agg_inactive_aww = AggregateInactiveAWW.objects.create(
             awc_site_code=cls.user.raw_username,
+            awc_id=cls.loc._id,
             last_submission=None,
         )
 
@@ -37,7 +39,6 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super(TestAWWSubmissionPerformanceIndicator, cls).tearDownClass()
-        # warehouse entities are cleaned up by db transaction rollback
 
     @property
     def now(self):
@@ -83,7 +84,7 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
-    def test_no_app_status_fact(self, patch):
+    def test_no_agg_rows(self, patch):
         messages = run_indicator_for_user(
             self.user_sans_aggregation,
             AWWSubmissionPerformanceIndicator,

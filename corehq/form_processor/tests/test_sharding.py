@@ -9,7 +9,7 @@ from django.test.utils import override_settings
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 
 DOMAIN = 'sharding-test'
 
@@ -24,7 +24,7 @@ class ShardingTests(TestCase):
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
         super(ShardingTests, cls).setUpClass()
-        assert len(partition_config.get_form_processing_dbs()) > 1
+        assert len(plproxy_config.form_processing_dbs) > 1
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -37,7 +37,7 @@ class ShardingTests(TestCase):
 
         dbs_with_form = []
         dbs_with_case = []
-        for db in partition_config.get_form_processing_dbs():
+        for db in plproxy_config.form_processing_dbs:
             form_in_db = XFormInstanceSQL.objects.using(db).filter(form_id=form.form_id).exists()
             if form_in_db:
                 dbs_with_form.append(db)
@@ -59,7 +59,7 @@ class ShardingTests(TestCase):
 
         forms_per_db = {}
         cases_per_db = {}
-        for db in partition_config.get_form_processing_dbs():
+        for db in plproxy_config.form_processing_dbs:
             forms_per_db[db] = XFormInstanceSQL.objects.using(db).filter(domain=DOMAIN).count()
             cases_per_db[db] = CommCareCaseSQL.objects.using(db).filter(domain=DOMAIN).count()
 
@@ -104,31 +104,34 @@ class ShardingTests(TestCase):
             self.assertEqual(new_db_alias, old_db_alias)
 
 
-DATABASES = {
-    key: {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': key,
-    } for key in ['default', 'proxy', 'p1', 'p2', 'p3', 'p4', 'p5']
-}
+def _mock_databases():
+    databases = {
+        key: {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': key,
+        } for key in ['default', 'proxy', 'p1', 'p2', 'p3', 'p4', 'p5']
+    }
 
-
-PARTITION_DATABASE_CONFIG = {
-    'shards': {
+    databases['proxy']['PLPROXY'] = {
+        'PROXY': True
+    }
+    shards = {
         'p1': [0, 204],
         'p2': [205, 409],
         'p3': [410, 614],
         'p4': [615, 819],
         'p5': [820, 1023]
-    },
-    'groups': {
-        'proxy': ['proxy'],
-        'form_processing': ['p1', 'p2', 'p3', 'p4', 'p5'],
     }
-}
+    for db, config in databases.items():
+        if db in shards:
+            config['PLPROXY'] = {
+                'SHARDS': shards[db]
+            }
+    return databases
 
 
 @use_sql_backend
-@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES)
+@override_settings(DATABASES=_mock_databases())
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
 
@@ -138,15 +141,15 @@ class ShardAccessorTests(TestCase):
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
         super(ShardAccessorTests, cls).setUpClass()
-        partition_config.get_django_shard_map.reset_cache(partition_config)
-        partition_config.get_shards.reset_cache(partition_config)
-        partition_config._get_django_shards.reset_cache(partition_config)
+        plproxy_config.get_django_shard_map.reset_cache(plproxy_config)
+        plproxy_config.get_shards.reset_cache(plproxy_config)
+        plproxy_config._get_django_shards.reset_cache(plproxy_config)
 
     @classmethod
     def tearDownClass(cls):
-        partition_config.get_django_shard_map.reset_cache(partition_config)
-        partition_config.get_shards.reset_cache(partition_config)
-        partition_config._get_django_shards.reset_cache(partition_config)
+        plproxy_config.get_django_shard_map.reset_cache(plproxy_config)
+        plproxy_config.get_shards.reset_cache(plproxy_config)
+        plproxy_config._get_django_shards.reset_cache(plproxy_config)
         super(ShardAccessorTests, cls).tearDownClass()
 
     def test_hash_doc_ids(self):
@@ -166,7 +169,7 @@ class ShardAccessorTests(TestCase):
         for db_alias in doc_db_map.values():
             doc_count_per_db[db_alias] += 1
 
-        num_dbs = len(partition_config.get_form_processing_dbs())
+        num_dbs = len(plproxy_config.form_processing_dbs)
         even_split = int(N // num_dbs)
         tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]

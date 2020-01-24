@@ -1,10 +1,11 @@
 import hashlib
 import logging
 
-from django.db import transaction
+from django.db import transaction, router
+
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import (
     AggregationHelper,
@@ -61,21 +62,61 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
 
 class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    """Helper for tables distributed across Citus with no partitioning
+
+    Attributes:
+        months_required - The number of months that the table should keep in the table.
+    """
+    months_required = None
+
     def aggregate(self, cursor):
-        delete_query, delete_params = self.delete_old_data_query()
+        if self.delete_previous_run_query():
+            delete_query, delete_params = self.delete_previous_run_query()
         agg_query, agg_params = self.aggregation_query()
 
-        logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
-        cursor.execute(delete_query, delete_params)
+        if self.months_required and self.delete_old_data_query():
+            logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
+
+            cursor.execute(*self.delete_old_data_query())
+        if self.delete_previous_run_query():
+            logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
+            cursor.execute(delete_query, delete_params)
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
         logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
-    def delete_old_data_query(self):
+    def delete_previous_run_query(self):
         return (
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
         )
+
+    def delete_old_data_query(self):
+        if self.months_required is None:
+            return
+
+        month = self.month - relativedelta(months=self.months_required)
+        return (
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s AND state_id = %(state)s',
+            {'month': month_formatter(month), 'state': self.state_id}
+        )
+
+    def delete_queries(self):
+        queries = [(
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s',
+            {'month': month_formatter(self.month)}
+        )]
+
+        if self.months_required is None:
+            return queries
+
+        month = self.month - relativedelta(months=self.months_required)
+        queries.append((
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s',
+            {'month': month_formatter(month)}
+        ))
+
+        return queries
 
 
 class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
@@ -135,30 +176,56 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = None
     monthly_tablename = None
     model = None
+    previous_agg_table_name = None
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
-    def aggregate(self, cursor):
+    def aggregate_temp(self, cursor):
         staging_queries = self.staging_queries()
+        logger.info(f"Creating temporary distributed table for {self.helper_key}")
+
+
+        cursor.execute(self.drop_temporary_table())
+        cursor.execute(self.create_temporary_table())
+
+        logger.info(f"Inserting inital data into distributed temp table for {self.helper_key}")
+        i = 0
+        for staging_query, params in staging_queries:
+            logger.info(f"Running staging query {i}")
+            cursor.execute(staging_query, params)
+            i += 1
+
+    def update_table(self, cursor):
         update_queries = self.update_queries()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        if getattr(self, 'rollup_query', None):
+            rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        else:
+            rollup_queries = []
 
         logger.info(f"Creating staging table for {self.helper_key}")
-        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
-
-        logger.info(f"Inserting inital data into staging table for {self.helper_key}")
-        for staging_query, params in staging_queries:
-            cursor.execute(staging_query, params)
+        self.cleanup(cursor)
+        cursor.execute(f"""
+        CREATE TABLE {self.staging_tablename} (
+            LIKE {self.base_tablename}
+            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
+            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
+        )
+        """)
 
         logger.info(f"Updating data into staging table for {self.helper_key}")
+        i = 0
         for query, params in update_queries:
+            logger.info(f"Running update query {i}")
             cursor.execute(query, params)
+            i += 1
 
         logger.info(f"Rolling up data into staging table for {self.helper_key}")
+        i = 0
         for query in rollup_queries:
+            logger.info(f"Running rollup query {i}")
             cursor.execute(query)
+            i += 1
 
         logger.info(f"Creating new table for {self.helper_key} {self.month}")
         cursor.execute(f"""
@@ -168,30 +235,47 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         INHERITS ({self.base_tablename})
         """)
 
-        logger.info(f"Creating indexes for {self.helper_key} {self.month}")
-        for index_query in self.indexes():
-            cursor.execute(index_query)
+        logger.info(f"Deleting previous day's agg table for {self.helper_key} {self.month}")
+        cursor.execute(f'DROP TABLE IF EXISTS "{self.previous_agg_table_name}"')
 
-        db_alias = db_for_read_write(self.model)
+        logger.info(f"Creating indexes for {self.helper_key} {self.month}")
+        i = 0
+        for index_query in self.indexes():
+            logger.info(f"creating index {i}")
+            cursor.execute(index_query)
+            i += 1
+
+        db_alias = router.db_for_write(self.model)
         with transaction.atomic(using=db_alias):
             logger.info(f"Dropping legacy tables for {self.helper_key} {self.month}")
             for i in range(1, 6):
                 cursor.execute(f'DROP TABLE IF EXISTS "{self._legacy_tablename_func(i)}"')
 
-            logger.info(f"Removing current data for {self.helper_key} {self.month}")
-            cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
-
-            logger.info(f"Inserting new data for {self.helper_key} {self.month}")
+            logger.info(f"Detaching previous table for {self.helper_key} {self.month}")
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" NO INHERIT "{self.base_tablename}"')
+            logger.info(f"Renaming previous table for {self.helper_key} {self.month}")
             cursor.execute(f"""
-            INSERT INTO "{self.monthly_tablename}" (
-                SELECT * FROM "{self.staging_tablename}"
-                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
-            )
+            ALTER TABLE IF EXISTS "{self.monthly_tablename}" RENAME TO "{self.previous_agg_table_name}"
             """)
+            logger.info(f"Renaming new table for {self.helper_key} {self.month}")
+            cursor.execute(f"""
+            ALTER TABLE IF EXISTS "{self.staging_tablename}" RENAME TO "{self.monthly_tablename}"
+            """)
+            logger.info(f"Attaching new table for {self.helper_key} {self.month}")
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
 
-        logger.info(f"Dropping staging table for {self.helper_key} {self.month}")
+        self.cleanup(cursor)
+
+    def aggregate(self, cursor):
+        if getattr(self, 'temporary_tablename', None):
+            self.aggregate_temp(cursor)
+        self.update_table(cursor)
+
+
+    def cleanup(self, cursor):
+        logger.info(f'Start {self.helper_key} cleanup')
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        logger.info(f"Finished aggregation for {self.helper_key} {self.month}")
+        logger.info(f'Finish {self.helper_key}cleanup')
 
     def _legacy_tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)

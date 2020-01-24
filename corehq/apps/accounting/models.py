@@ -20,6 +20,7 @@ import stripe
 from django_prbac.models import Role
 from memoized import memoized
 
+from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -135,16 +136,19 @@ class SoftwarePlanEdition(object):
     ENTERPRISE = "Enterprise"
     RESELLER = "Reseller"
     MANAGED_HOSTING = "Managed Hosting"
+    PAUSED = "Paused"
     CHOICES = (
         (COMMUNITY, COMMUNITY),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
         (ENTERPRISE, ENTERPRISE),
+        (PAUSED, PAUSED),
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     SELF_SERVICE_ORDER = [
+        PAUSED,
         COMMUNITY,
         STANDARD,
         PRO,
@@ -850,7 +854,7 @@ class SoftwarePlanVersion(models.Model):
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
             ]:
-                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+                return DESC_BY_EDITION[plan.edition]['description'].format(monthly_limit)
             else:
                 return DESC_BY_EDITION[plan.edition]['description']
 
@@ -911,6 +915,10 @@ class SoftwarePlanVersion(models.Model):
                 if calc.get_usage() > feature_rate.monthly_limit:
                     return True
         return False
+
+    @property
+    def is_paused(self):
+        return self.plan.edition == SoftwarePlanEdition.PAUSED
 
 
 class SubscriberManager(models.Manager):
@@ -1123,16 +1131,19 @@ class Subscription(models.Model):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         get_overdue_invoice.clear(self.subscriber.domain)
 
-        try:
-            Domain.get_by_name(self.subscriber.domain).save()
-        except Exception:
-            # If a subscriber doesn't have a valid domain associated with it
-            # we don't care the pillow won't be updated
-            pass
+        domain = Domain.get_by_name(self.subscriber.domain)
+        # If a subscriber doesn't have a valid domain associated with it
+        # we don't care the pillow won't be updated
+        if domain:
+            publish_domain_saved(domain)
 
     def delete(self, *args, **kwargs):
         super(Subscription, self).delete(*args, **kwargs)
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+
+    @property
+    def is_community(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
 
     @property
     def allowed_attr_changes(self):
@@ -1151,6 +1162,13 @@ class Subscription(models.Model):
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
+    def previous_subscription_filter(self):
+        return Subscription.visible_objects.filter(
+            subscriber=self.subscriber,
+            date_start__lt=self.date_start - datetime.timedelta(days=1)
+        ).exclude(pk=self.pk)
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
@@ -1162,6 +1180,13 @@ class Subscription(models.Model):
     def next_subscription(self):
         try:
             return self.next_subscription_filter.order_by('date_start')[0]
+        except (Subscription.DoesNotExist, IndexError):
+            return None
+
+    @property
+    def previous_subscription(self):
+        try:
+            return self.previous_subscription_filter.order_by('-date_end')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 

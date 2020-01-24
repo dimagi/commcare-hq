@@ -321,6 +321,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
     def create_survey_content(self):
         return SMSSurveyContent(
+            app_id='456',
             form_unique_id='123',
             expire_after=60,
         )
@@ -382,7 +383,7 @@ class DeactivateScheduleTest(TransactionTestCase):
         elif isinstance(obj, ImmediateBroadcast):
             schedule = AlertSchedule.objects.get(schedule_id=obj.schedule_id)
         elif isinstance(obj, AutomaticUpdateRule):
-            schedule = AlertSchedule.objects.get(schedule_id=obj.get_messaging_rule_schedule().schedule_id)
+            schedule = AlertSchedule.objects.get(schedule_id=obj.get_schedule().schedule_id)
         else:
             raise TypeError("Expected ScheduledBroadcast, ImmediateBroadcast, or AutomaticUpdateRule")
 

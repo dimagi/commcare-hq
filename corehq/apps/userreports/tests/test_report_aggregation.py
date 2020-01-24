@@ -1,7 +1,8 @@
 from django.http import HttpRequest
 from django.test import TestCase
+from datetime import datetime, timedelta
 
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -12,7 +13,30 @@ from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
 
 
-class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
+class ConfigurableReportAggregationTestMixin(ConfigurableReportTestMixin):
+    def _create_report(self, aggregation_columns, columns, filters=None, sort_expression=None):
+        report_config = ReportConfiguration(
+            domain=self.domain,
+            config_id=self.data_source._id,
+            title='foo',
+            aggregation_columns=aggregation_columns,
+            columns=columns,
+            filters=filters or [],
+        )
+        if sort_expression:
+            report_config.sort_expression = sort_expression
+        report_config.save()
+        return report_config
+
+    def _create_view(self, report_config):
+        view = ConfigurableReportView(request=HttpRequest())
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
+        return view
+
+
+class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
     """
@@ -23,9 +47,9 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         Populate the database with some cases
         """
         for row in [
-            {"first_name": "Alan", "number": 4},
-            {"first_name": "Alan", "number": 2},
-            {"first_name": "Ada", "number": 3},
+            {"first_name": "Alan", "number": 4, "rank": 2},
+            {"first_name": "Alan", "number": 2, "rank": 1},
+            {"first_name": "Ada", "number": 3, "rank": 1},
         ]:
             cls._new_case(row).save()
 
@@ -65,6 +89,15 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
                     "column_id": 'indicator_col_id_number',
                     "datatype": "integer"
                 },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'rank'
+                    },
+                    "column_id": 'indicator_col_id_rank',
+                    "datatype": "integer"
+                },
             ],
         )
         cls.data_source.validate()
@@ -83,26 +116,6 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         cls.adapter.drop_table()
         cls._delete_everything()
         super(TestReportAggregationSQL, cls).tearDownClass()
-
-    def _create_report(self, aggregation_columns, columns, sort_expression=None):
-        report_config = ReportConfiguration(
-            domain=self.domain,
-            config_id=self.data_source._id,
-            title='foo',
-            aggregation_columns=aggregation_columns,
-            columns=columns,
-        )
-        if sort_expression:
-            report_config.sort_expression = sort_expression
-        report_config.save()
-        return report_config
-
-    def _create_view(self, report_config):
-        view = ConfigurableReportView(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
-        return view
 
     def test_aggregation_by_column_not_in_report(self):
         """
@@ -153,6 +166,13 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
                     "field": 'indicator_col_id_number',
                     'column_id': 'report_column_col_id_number',
                     'aggregation': 'sum'
+                },
+                {
+                    "type": "array_agg_last_value",
+                    "display": "report_column_display_last_number",
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_id_last_number',
+                    'order_by_col': 'indicator_col_id_rank'
                 }
             ]
         )
@@ -163,9 +183,10 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
             [[
                 'foo',
                 [
-                    ['report_column_display_first_name', 'report_column_display_number'],
-                    ['Ada', 3],
-                    ['Alan', 6]
+                    ['report_column_display_first_name', 'report_column_display_number',
+                     'report_column_display_last_number'],
+                    ['Ada', 3, 3],
+                    ['Alan', 6, 4]
                 ]
             ]]
         )
@@ -559,14 +580,57 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         )
 
 
-class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
+class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
+    # Note that these constants are subtracted from today's date, so the month parts of the names
+    # are approximations: the first one will usually fall one year and two months ago, but will
+    # sometimes fall one year and three months ago. The only place this matters in tests is
+    # test_aggregate_date, which groups by month, so it matters which rows are in the same month.
+    ONE_YEAR_TWO_MONTHS = 365 + 28 * 2 + 5
+    ONE_YEAR_THREE_MONTHS = 365 + 28 * 3 + 4
+    ONE_YEAR_THREE_MONTHS_OTHER = 365 + 28 * 3 + 5
+    MORE_THAN_TWO_YEARS = 365 * 2 + 75
+
+    @classmethod
+    def _relative_date(cls, days_offset):
+        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m-%d")
+
+    @classmethod
+    def _relative_month(cls, days_offset):
+        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m")
+
     @classmethod
     def _create_data(cls):
+        # This data uses relative dates because if the dates were hard-coded, eventually the
+        # age_in_months_buckets tests would break.
         for row in [
-            {"state": "MA", "city": "Boston", "number": 4, "age_at_registration": 1, "date": "2018-01-03"},
-            {"state": "MA", "city": "Boston", "number": 3, "age_at_registration": 5, "date": "2018-02-18"},
-            {"state": "MA", "city": "Cambridge", "number": 2, "age_at_registration": 8, "date": "2018-01-22"},
-            {"state": "TN", "city": "Nashville", "number": 1, "age_at_registration": 14, "date": "2017-01-03"},
+            {
+                "state": "MA",
+                "city": "Boston",
+                "number": 4,
+                "age_at_registration": 1,
+                "date": cls._relative_date(cls.ONE_YEAR_TWO_MONTHS),
+            },
+            {
+                "state": "MA",
+                "city": "Boston",
+                "number": 3,
+                "age_at_registration": 5,
+                "date": cls._relative_date(cls.ONE_YEAR_THREE_MONTHS),
+            },
+            {
+                "state": "MA",
+                "city": "Cambridge",
+                "number": 2,
+                "age_at_registration": 8,
+                "date": cls._relative_date(cls.ONE_YEAR_THREE_MONTHS_OTHER),
+            },
+            {
+                "state": "TN",
+                "city": "Nashville",
+                "number": 1,
+                "age_at_registration": 14,
+                "date": cls._relative_date(cls.MORE_THAN_TWO_YEARS),
+            },
         ]:
             cls._new_case(row).save()
 
@@ -665,18 +729,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         cls._delete_everything()
         super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns, filters=None):
-        report_config = ReportConfiguration(
-            domain=self.domain,
-            config_id=self.data_source._id,
-            title='foo',
-            aggregation_columns=aggregation_columns,
-            columns=columns,
-            filters=filters or [],
-        )
-        report_config.save()
-        return report_config
-
     def _create_default_report(self, filters=None):
         return self._create_report(
             aggregation_columns=[
@@ -708,13 +760,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             ],
             filters=filters,
         )
-
-    def _create_view(self, report_config):
-        view = ConfigurableReportView(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
-        return view
 
     def test_with_multiple_agg_columns(self):
         report_config = self._create_default_report()
@@ -835,18 +880,41 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 }
             ],
             filters=None,
+            sort_expression=[
+                {
+                    "field": "month",
+                    "order": "DESC"
+                },
+            ],
         )
         view = self._create_view(report_config)
-        self.assertEqual(
-            view.export_table,
-            [['foo',
-              [['report_column_display_state', 'month', 'report_column_display_number'],
-               ['MA', '2018-01', 6],
-               ['MA', '2018-02', 3],
-               ['TN', '2017-01', 1]]]]
-        )
+        if (
+            self._relative_month(self.ONE_YEAR_THREE_MONTHS)
+            == self._relative_month(self.ONE_YEAR_THREE_MONTHS_OTHER)
+        ):
+            # Typical use case, the two of the MA rows that are a day apart fall in the same month
+            self.assertEqual(
+                view.export_table,
+                [['foo',
+                  [['report_column_display_state', 'month', 'report_column_display_number'],
+                   ['MA', self._relative_month(self.ONE_YEAR_TWO_MONTHS), 4],
+                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS), 5],
+                   ['TN', self._relative_month(self.MORE_THAN_TWO_YEARS), 1]]]]
+            )
+        else:
+            # One day each month, those two rows will be in different months.
+            # This no longer tests that the aggregation is summing, it just makes sure this test doesn't fail.
+            self.assertEqual(
+                view.export_table,
+                [['foo',
+                  [['report_column_display_state', 'month', 'report_column_display_number'],
+                   ['MA', self._relative_month(self.ONE_YEAR_TWO_MONTHS), 4],
+                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS), 3],
+                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS_OTHER), 2],
+                   ['TN', self._relative_month(self.MORE_THAN_TWO_YEARS), 1]]]]
+            )
 
-    def test_conditional_aggregation(self):
+    def test_integer_buckets(self):
         report_config = self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
@@ -861,12 +929,13 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'simple'
                 },
                 {
-                    'type': 'conditional_aggregation',
+                    'type': 'integer_buckets',
                     'display': 'age_range',
                     'column_id': 'age_range',
-                    'whens': {
-                        "age_at_registration between 0 and 6": "0-6",
-                        "age_at_registration between 7 and 12": "7-12",
+                    'field': 'age_at_registration',
+                    'ranges': {
+                        '0-6': [0, 6],
+                        '7-12': [7, 12],
                     },
                     'else_': '13+'
                 },
@@ -891,6 +960,114 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         ]:
             self.assertIn(table_row, table)
 
+    def test_bad_integer_buckets_specs(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'age_range',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'integer_buckets',
+                    'display': 'age_range',
+                    'column_id': 'age_range',
+                    'field': 'age_at_registration',
+                    'ranges': {
+                        '0-6': [0],         # badly-formed range
+                        '7-12': [7, 12],
+                    },
+                    'else_': '13+'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
+
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'age_range',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'integer_buckets',
+                    'display': 'age_range',
+                    'column_id': 'age_range',
+                    'field': 'age_at_registration',
+                    'ranges': {
+                        '0-6': [0, '6; select'],    # not a number
+                        '7-12': [7, 12],
+                    },
+                    'else_': '13+'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
+
+    def test_age_in_months_buckets(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'months_ago',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'age_in_months_buckets',
+                    'display': 'months_ago',
+                    'column_id': 'months_ago',
+                    'field': 'date',
+                    'ranges': {
+                        '0-12': [0, 12],
+                        '12-24': [12, 24],
+                    },
+                    'else_': '24+'
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 3)
+        for table_row in [
+            ['state', 'months_ago', 'report_column_display_number'],
+            ['MA', '12-24', 9],
+            ['TN', '24+', 1],
+        ]:
+            self.assertIn(table_row, table)
+
     def test_sum_when(self):
         report_config = self._create_report(
             aggregation_columns=[
@@ -909,9 +1086,23 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'display': 'under_six_month_olds',
                     'field': 'age_at_registration',
                     'column_id': 'under_six_month_olds',
-                    'whens': {
-                        "age_at_registration < 6": 1,
-                    },
+                    'whens': [
+                        ["age_at_registration < 6", 1],
+                    ],
+                    'else_': 0
+                },
+                {
+                    'type': 'sum_when_template',
+                    'display': 'under_x_month_olds_template',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_x_month_olds_template',
+                    'whens': [
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6],
+                            'then': 1,
+                        },
+                    ],
                     'else_': 0
                 },
                 {
@@ -928,11 +1119,56 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         table = view.export_table[0][1]
         self.assertEqual(len(table), 3)
         for table_row in [
-            ['state', 'under_six_month_olds', 'report_column_display_number'],
-            ['MA', 2, 9],
-            ['TN', 0, 1],
+            [
+                'state',
+                'under_six_month_olds',
+                'under_x_month_olds_template',
+                'report_column_display_number',
+            ],
+            ['MA', 2, 2, 9],
+            ['TN', 0, 0, 1],
         ]:
             self.assertIn(table_row, table)
+
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'sum_when_template',
+                    'display': 'under_six_month_olds',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_six_month_olds',
+                    'whens': [
+                        {
+                            'type': 'under_x_months',
+                            'binds': [6, 7],            # Too many binds
+                            'then': 1,
+                        },
+                    ],
+                    'else_': 0
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
 
     def test_doc_id_aggregation(self):
         # this uses a cheat to get all rows in the table

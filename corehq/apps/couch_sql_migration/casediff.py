@@ -2,17 +2,21 @@ import logging
 import os
 import signal
 from collections import defaultdict
+from contextlib import ExitStack, contextmanager
+from functools import partial
 from itertools import chain, count
 
+import attr
 import gevent
 import gipc
 from gevent.pool import Group, Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
-from casexml.apps.stock.models import StockReport
+from casexml.apps.stock.models import StockReport, StockTransaction
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
     CaseAccessorCouch,
@@ -24,20 +28,28 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
+from corehq.util.datadog.gauges import datadog_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
+from .rebuildcase import (
+    rebuild_case,
+    rebuild_case_with_couch_action_order,
+    should_sort_sql_transactions,
+    was_rebuilt,
+)
 from .statedb import StateDB
 from .status import run_status_logger
-from .util import exit_on_error
+from .util import ProcessError, exit_on_error, gipc_process_error_handler
 
 log = logging.getLogger(__name__)
 
 STATUS_INTERVAL = 300  # 5 minutes
 MAX_FORMS_PER_MEMORIZED_CASE = 20
+MAX_FORMS_PER_DIFF = 1000
 
 
-class CaseDiffQueue(object):
+class CaseDiffQueue:
     """A queue that diffs cases when all relevant forms have been processed
 
     Cases in the queue are moved through the following phases:
@@ -63,7 +75,7 @@ class CaseDiffQueue(object):
     """
 
     BATCH_SIZE = 100
-    MAX_DIFF_WORKERS = 20
+    MAX_DIFF_WORKERS = 10
     MAX_MEMORIZED_CASES = 4096
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL):
@@ -73,7 +85,7 @@ class CaseDiffQueue(object):
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
-        self.cases_to_diff = []  # case ids ready to diff
+        self.cases_to_diff = {}  # case id ready to diff -> form count
         self.pool = Group()
         # The diff pool is used for case diff jobs. It has limited
         # concurrency to prevent OOM conditions caused by loading too
@@ -87,6 +99,7 @@ class CaseDiffQueue(object):
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
         self.cache_hits = [0, 0]
+        self.clean_break = False
         self._is_flushing = False
 
     def __enter__(self):
@@ -95,6 +108,10 @@ class CaseDiffQueue(object):
             self._load_resume_state(state)
         self._stop_status_logger = run_status_logger(
             log_status, self.get_status, self.status_interval)
+        domain = self.statedb.domain
+        get_forms = self.statedb.get_no_action_case_forms
+        self._global_state = ExitStack()
+        self._global_state.enter_context(global_diff_state(domain, get_forms))
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -103,6 +120,7 @@ class CaseDiffQueue(object):
                 self.process_remaining_diffs()
             log.info("preparing to save resume state... DO NOT BREAK!")
         finally:
+            self._global_state.close()
             self._save_resume_state()
             self._stop_status_logger()
 
@@ -145,7 +163,7 @@ class CaseDiffQueue(object):
                     self._async_load_cases(batch)
                     batch = self.pending_loads = defaultdict(int)
             elif total_forms <= processed_forms:
-                self.enqueue(case_id)
+                self.enqueue(case_id, processed_forms)
             else:
                 update_lru(case_id)
         if self._is_flushing and batch:
@@ -181,20 +199,26 @@ class CaseDiffQueue(object):
             result = self.statedb.update_cases(case_records)
             for case_id, total_forms, processed_forms in result:
                 if total_forms <= processed_forms:
-                    self.enqueue(case_id)
+                    self.enqueue(case_id, processed_forms)
         missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
-    def enqueue(self, case_id):
-        self.cases_to_diff.append(case_id)
-        if len(self.cases_to_diff) >= self.BATCH_SIZE:
+    def enqueue(self, case_id, num_forms=None):
+        if num_forms is None:
+            num_forms = self.statedb.get_forms_count(case_id)
+        if self.cases_to_diff:
+            total_forms = sum(self.cases_to_diff.values()) + num_forms
+            if total_forms > MAX_FORMS_PER_DIFF:
+                self._diff_cases()
+        self.cases_to_diff[case_id] = num_forms
+        if len(self.cases_to_diff) >= self.BATCH_SIZE or num_forms > MAX_FORMS_PER_DIFF:
             self._diff_cases()
 
     def _diff_cases(self):
         def diff(case_ids):
-            couch_cases = {}
+            couch_cases = []
             to_load = []
             pop_case = self.cases.pop
             for case_id in case_ids:
@@ -202,24 +226,34 @@ class CaseDiffQueue(object):
                 if case is None:
                     to_load.append(case_id)
                 else:
-                    couch_cases[case_id] = case.to_json()
-            for case in CaseAccessorCouch.get_cases(to_load):
-                couch_cases[case.case_id] = case.to_json()
-            diff_cases(couch_cases, statedb=self.statedb)
-            self.cache_hits[0] += len(case_ids) - len(to_load)
-            self.cache_hits[1] += len(case_ids)
-            self.num_diffed_cases += len(case_ids)
+                    couch_cases.append(case)
+            popped_cases = list(couch_cases)
+            couch_cases.extend(CaseAccessorCouch.get_cases(to_load))
+            prune = (iter if self._is_flushing
+                else partial(prune_premature_diffs, statedb=self.statedb))
+            json_by_id = {c.case_id: c.to_json() for c in prune(couch_cases)}
+            restore_cached(popped_cases, json_by_id)
+            if json_by_id:
+                diff_cases_and_save_state(json_by_id, statedb=self.statedb)
+                self.cache_hits[0] += len(json_by_id.keys() - to_load)
+                self.cache_hits[1] += len(json_by_id)
+                self.num_diffed_cases += len(json_by_id)
+
+        def restore_cached(popped_cases, diff_ids):
+            for case in popped_cases:
+                if case.case_id not in diff_ids:
+                    self.cases[case.case_id] = case
 
         def spawn_diff(case_ids):
             # may block due to concurrency limit on diff pool
             self.diff_batcher.spawn(diff, case_ids)
 
-        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
-        self.cases_to_diff = []
+        self.diff_spawner.spawn(spawn_diff, list(self.cases_to_diff))
+        self.cases_to_diff = {}
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
-        self.flush()
+        self.flush(complete=not self.clean_break)
         for batcher, action in [
             (self.case_batcher, "loaded"),
             (self.diff_spawner, "spawned to diff"),
@@ -250,8 +284,9 @@ class CaseDiffQueue(object):
             join(pool)
             if complete:
                 log.info("Diffing cases with unprocessed forms...")
-                for case_id in self.statedb.iter_cases_with_unprocessed_forms():
-                    self.enqueue(case_id)
+                unproc = self.statedb.iter_cases_with_unprocessed_forms()
+                for case_id, num_forms in unproc:
+                    self.enqueue(case_id, num_forms)
             while self.cases_to_diff or pool or diff_pool:
                 if self.cases_to_diff:
                     self._diff_cases()
@@ -275,11 +310,15 @@ class CaseDiffQueue(object):
             # use dict to approximate ordered set (remove duplicates)
             to_diff = dict.fromkeys(chain.from_iterable(self.diff_batcher))
             to_diff.update((k, None) for k in chain.from_iterable(self.diff_spawner))
-            to_diff.update((k, None) for k in self.cases_to_diff)
+            to_diff.update(self.cases_to_diff)
             state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
-        self.statedb.set_resume_state(type(self).__name__, state)
+        try:
+            self.statedb.set_resume_state(type(self).__name__, state)
+        except Exception:
+            log.warning("unable to save state\n%r", state)
+            raise
         log_state = state if log.isEnabledFor(logging.DEBUG) else {
             k: len(v) if hasattr(v, "__len__") else v for k, v in state.items()
         }
@@ -298,6 +337,7 @@ class CaseDiffQueue(object):
     def get_status(self):
         cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
+            "workers": len(self.pool or []) + len(self.diff_pool or []),
             "pending": (
                 len(self.pending_cases)
                 + len(self.pending_loads)
@@ -320,61 +360,14 @@ class CaseDiffQueue(object):
 
 def log_status(status):
     log.info("cases pending=%(pending)s cached=%(cached)s "
-             "loaded=%(loaded)s diffed=%(diffed)s", status)
+             "loaded=%(loaded)s workers=%(workers)s diffed=%(diffed)s", status)
 
 
 def task_switch():
     gevent.sleep()
 
 
-class CaseRecord(object):
-
-    def __init__(self, case, stock_forms, processed_forms):
-        self.id = case.case_id
-        case_forms = get_case_form_ids(case)
-        self.total_forms = len(case_forms) + len(stock_forms)
-        self.processed_forms = processed_forms
-
-    def __repr__(self):
-        return "case {id} with {n} of {m} forms processed".format(
-            id=self.id,
-            n=self.processed_forms,
-            m=self.total_forms,
-        )
-
-    @property
-    def should_memorize_case(self):
-        # do not keep cases with large history in memory
-        return self.total_forms <= MAX_FORMS_PER_MEMORIZED_CASE
-
-
-def get_case_form_ids(couch_case):
-    """Get the set of form ids that touched the given couch case object"""
-    form_ids = set(couch_case.xform_ids)
-    for action in couch_case.actions:
-        if action.xform_id:
-            form_ids.add(action.xform_id)
-    return form_ids
-
-
-def get_stock_forms_by_case_id(case_ids):
-    """Get a dict of form id sets by case id for the given list of case ids
-
-    This function loads Couch stock forms (even though they are
-    technically stored in SQL).
-    """
-    form_ids_by_case_id = defaultdict(set)
-    for case_id, form_id in (
-        StockReport.objects
-        .filter(stocktransaction__case_id__in=case_ids)
-        .values_list("stocktransaction__case_id", "form_id")
-        .distinct()
-    ):
-        form_ids_by_case_id[case_id].add(form_id)
-    return form_ids_by_case_id
-
-
-class BatchProcessor(object):
+class BatchProcessor:
     """Process batches of items with a worker pool
 
     Each batch of items is retained until its processing job has
@@ -433,7 +426,7 @@ class BatchProcessor(object):
         return iter(self.batches.values())
 
 
-class CaseDiffProcess(object):
+class CaseDiffProcess:
     """Run CaseDiffQueue in a separate process"""
 
     def __init__(self, statedb, queue_class=CaseDiffQueue):
@@ -444,6 +437,7 @@ class CaseDiffProcess(object):
         self.state_path = get_casediff_state_path(statedb.db_filepath)
         self.status_interval = STATUS_INTERVAL
         self.queue_class = queue_class
+        self.num_cases_sent = 0
 
     def __enter__(self):
         log.debug("starting case diff process")
@@ -453,7 +447,15 @@ class CaseDiffProcess(object):
         self.stats, stats = self.stats_pipe.__enter__()
         debug = log.isEnabledFor(logging.DEBUG)
         is_rebuild = self.statedb.is_rebuild
-        args = (self.queue_class, calls, stats, self.state_path, is_rebuild, debug)
+        args = (
+            self.queue_class,
+            calls,
+            stats,
+            self.statedb.domain,
+            self.state_path,
+            is_rebuild,
+            debug,
+        )
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -461,26 +463,40 @@ class CaseDiffProcess(object):
     def __exit__(self, *exc_info):
         is_error = exc_info[0] is not None
         if is_error:
+            if isinstance(exc_info[1], ProcessError):
+                return
             log.error("stopping process with error", exc_info=exc_info)
         else:
             log.info("stopping case diff process")
         self.request_status()
         self.calls.put((TERMINATE, is_error))
-        self.status_logger.join(timeout=30)
+        self.status_logger.join()
         self.process.join(timeout=30)
         self.statedb.clone_casediff_data_from(self.state_path)
+        log.info("casediff state copied to %s", self.statedb)
         self.stats_pipe.__exit__(*exc_info)
         self.calls_pipe.__exit__(*exc_info)
 
+    @gipc_process_error_handler()
     def update(self, case_ids, form_id):
+        self.num_cases_sent += len(case_ids)
         self.calls.put(("update", case_ids, form_id))
 
+    @gipc_process_error_handler()
     def enqueue(self, case_id):
+        self.num_cases_sent += 1
         self.calls.put(("enqueue", case_id))
 
+    @gipc_process_error_handler()
     def request_status(self):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
+
+    def log_status(self, status):
+        sending = self.num_cases_sent - status.pop("received")
+        if sending:
+            status["pending"] = f"{sending}+{status['pending']}"
+        log_status(status)
 
     @exit_on_error
     def run_status_logger(self):
@@ -494,15 +510,17 @@ class CaseDiffProcess(object):
         result = requested = object()
         action = STATUS
         while action != TERMINATE:
-            with gevent.Timeout(self.status_interval, False) as timeout:
+            with gevent.Timeout(self.status_interval, False) as timeout, \
+                    gipc_process_error_handler():
                 result = self.stats.get(timeout=timeout)
             if result is None:
                 self.request_status()
                 result = requested
             elif result is not requested:
                 action, status = result
-                log_status(status)
+                self.log_status(status)
                 result = None
+        log.info("casediff process status logger terminated")
 
 
 STATUS = "status"
@@ -515,12 +533,20 @@ def get_casediff_state_path(path):
     return path[:-3] + "-casediff.db"
 
 
-def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug):
+def run_case_diff_queue(queue_class, calls, stats, domain, state_path, is_rebuild, debug):
     def status():
         stats.put((STATUS, queue.get_status()))
 
     def terminate(is_error):
         raise (ParentError if is_error else GracefulExit)
+
+    def consume(calls, stop=False):
+        while True:
+            action, *args = calls.get()
+            if stop and action != STATUS:
+                log.warning("ignoring %s%r", action, args)
+            else:
+                dispatch(action, *args)
 
     def dispatch(action, *args):
         log.debug("case diff dispatch: %s", action)
@@ -530,28 +556,30 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
             getattr(queue, action)(*args)
 
     def on_break(signum, frame):
-        nonlocal clean_break
-        if clean_break:
+        if queue.clean_break:
             raise KeyboardInterrupt
         log.info("clean break... (Ctrl+C to abort)")
-        clean_break = True
+        queue.clean_break = True
 
-    clean_break = False
     signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
-    statedb = StateDB.init(state_path)
+    statedb = StateDB.init(domain, state_path)
     statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
     queue = None
+    consumer = None
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
+                queue = CasesReceivedCounter(queue)
                 try:
-                    while True:
-                        call = calls.get()
-                        dispatch(*call)
+                    consume(calls)
                 except GracefulExit:
                     pass
+                finally:
+                    consumer = gevent.spawn(consume, calls, stop=True)
+            if consumer is not None:
+                consumer.kill()
         except ParentError:
             log.error("stopped due to error in parent process")
         except Exception:
@@ -584,7 +612,73 @@ class ProcessNotAllowed(Exception):
     pass
 
 
-def diff_cases(couch_cases, statedb):
+class CasesReceivedCounter:
+
+    def __init__(self, queue):
+        self.queue = queue
+        self.num_cases_received = 0
+
+    def update(self, case_ids, form_id):
+        self.num_cases_received += len(case_ids)
+        self.queue.update(case_ids, form_id)
+
+    def enqueue(self, case_id):
+        self.num_cases_received += 1
+        self.queue.enqueue(case_id)
+
+    def get_status(self):
+        status = self.queue.get_status()
+        status["received"] = self.num_cases_received
+        return status
+
+    @property
+    def clean_break(self):
+        return self.queue.clean_break
+
+    @clean_break.setter
+    def clean_break(self, value):
+        self.queue.clean_break = value
+
+
+class NoCaseDiff:
+
+    def __init__(self, statedb):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        pass
+
+    def update(self, case_ids, form_id):
+        pass
+
+    def enqueue(self, case_id):
+        pass
+
+
+def prune_premature_diffs(couch_cases, statedb):
+    n_forms = 0
+    case_ids = []
+    cases_by_id = {c.case_id: c for c in couch_cases}
+    stock_forms = get_stock_forms_by_case_id(list(cases_by_id))
+    recs = [CaseRecord(c, stock_forms.get(c.case_id, [])) for c in couch_cases]
+    for case_id, total_forms, processed_forms in statedb.update_cases(recs):
+        if total_forms <= processed_forms:
+            yield cases_by_id[case_id]
+            case_ids.append(case_id)
+            n_forms += total_forms
+        else:
+            log.debug("pruned premature diff: %s (%s total > %s processed)",
+                case_id, total_forms, processed_forms)
+    if n_forms > MAX_FORMS_PER_DIFF * 5:
+        # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
+        cid = case_ids[0] if len(case_ids) == 1 else case_ids
+        log.warning("diff case %s with %s forms", cid, n_forms)
+
+
+def diff_cases_and_save_state(couch_cases, statedb):
     """Diff a batch of cases
 
     There is a small chance that two concurrent calls to this function,
@@ -600,72 +694,163 @@ def diff_cases(couch_cases, statedb):
     :param couch_cases: dict `{<case_id>: <case_json>, ...}`
     """
     log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
-    counts = defaultdict(int)
-    case_ids = list(couch_cases)
-    sql_cases = CaseAccessorSQL.get_cases(case_ids)
-    sql_case_ids = set()
-    for sql_case in sql_cases:
-        sql_case_ids.add(sql_case.case_id)
-        couch_case = couch_cases[sql_case.case_id]
-        couch_case, diffs = diff_case(sql_case, couch_case, statedb)
-        statedb.replace_case_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
-        counts[couch_case['doc_type']] += 1
+    data = diff_cases(couch_cases)
+    make_result_saver(statedb)(data)
 
-    diff_ledgers(case_ids, statedb)
 
-    if len(case_ids) != len(sql_case_ids):
-        couch_ids = set(case_ids)
-        assert not (sql_case_ids - couch_ids), sql_case_ids - couch_ids
-        missing_cases = [couch_cases[x] for x in couch_ids - sql_case_ids]
-        log.debug("Found %s missing SQL cases", len(missing_cases))
-        for doc_type, doc_ids in filter_missing_cases(missing_cases):
+def make_result_saver(statedb, count_cases=lambda n: None):
+    def save_result(data):
+        count_cases(len(data.doc_ids))
+        statedb.add_diffed_cases(data.doc_ids)
+        statedb.replace_case_diffs(data.diffs)
+        for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
-            counts[doc_type] += len(doc_ids)
-
-    for doc_type, count_ in counts.items():
-        statedb.increment_counter(doc_type, count_)
+    return save_result
 
 
-def diff_case(sql_case, couch_case, statedb):
-    sql_case_json = sql_case.to_json()
-    diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-    diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
-    if diffs and not sql_case.is_deleted:
+def diff_cases(couch_cases, log_cases=False):
+    """Diff cases and return diff data
+
+    :param couch_cases: dict `{<case_id>: <case_json>, ...}`
+    :returns: `DiffData`
+    """
+    assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
+    assert "_diff_state" in globals()
+    data = DiffData()
+    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
+    case_ids = list(couch_cases)
+    sql_case_ids = set()
+    for sql_case in CaseAccessorSQL.get_cases(case_ids):
+        case_id = sql_case.case_id
+        sql_case_ids.add(case_id)
+        couch_case, diffs = diff_case(sql_case, couch_cases[case_id], dd_count)
+        data.doc_ids.append(case_id)
+        data.diffs.append((couch_case['doc_type'], case_id, diffs))
+        if log_cases:
+            log.info("case %s -> %s diffs", case_id, len(diffs))
+
+    data.diffs.extend(iter_ledger_diffs(case_ids, dd_count))
+    add_missing_docs(data, couch_cases, sql_case_ids, dd_count)
+    return data
+
+
+def diff_case(sql_case, couch_case, dd_count):
+    def diff(couch_json, sql_json):
+        diffs = json_diff(couch_json, sql_json, track_list_indices=False)
+        return filter_case_diffs(couch_json, sql_json, diffs, _diff_state)
+    case_id = couch_case['_id']
+    sql_json = sql_case.to_json()
+    dd_count("commcare.couchsqlmigration.case.diffed")
+    diffs = check_domains(case_id, couch_case, sql_json)
+    if diffs:
+        dd_count("commcare.couchsqlmigration.case.has_diff")
+        return couch_case, diffs
+    diffs = diff(couch_case, sql_json)
+    if diffs:
+        domain = couch_case["domain"]
         try:
-            couch_case, diffs = rebuild_couch_case_and_re_diff(
-                couch_case, sql_case_json, statedb)
-        except Exception as err:
-            log.warning('Case {} rebuild -> {}: {}'.format(
-                sql_case.case_id, type(err).__name__, err))
+            with convert_rebuild_error():
+                couch_case = FormProcessorCouch.hard_rebuild_case(
+                    domain, case_id, None, save=False, lock=False
+                ).to_json()
+            dd_count("commcare.couchsqlmigration.case.rebuild.couch")
+            diffs = diff(couch_case, sql_json)
+            if diffs:
+                if should_sort_sql_transactions(sql_case, couch_case):
+                    with convert_rebuild_error():
+                        sql_case = rebuild_case_with_couch_action_order(sql_case)
+                    dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
+                    diffs = diff(couch_case, sql_case.to_json())
+                elif not was_rebuilt(sql_case):
+                    with convert_rebuild_error():
+                        sql_case = rebuild_case(sql_case)
+                    dd_count("commcare.couchsqlmigration.case.rebuild.sql")
+                    diffs = diff(couch_case, sql_case.to_json())
+        except RebuildError as err:
+            dd_count("commcare.couchsqlmigration.case.rebuild.error")
+            log.warning(f"Case {case_id} rebuild -> {err}")
+    if diffs:
+        dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
 
 
-def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):
-    assert couch_case["domain"] == sql_case_json["domain"], \
-        (couch_case["domain"], sql_case_json["domain"])
-    rebuilt_case = FormProcessorCouch.hard_rebuild_case(
-        couch_case["domain"], couch_case['_id'], None, save=False, lock=False
-    )
-    rebuilt_case_json = rebuilt_case.to_json()
-    diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
-    diffs = filter_case_diffs(rebuilt_case_json, sql_case_json, diffs, statedb)
-    return rebuilt_case_json, diffs
+def check_domains(case_id, couch_json, sql_json):
+    if couch_json["domain"] == _diff_state.domain:
+        if sql_json["domain"] == _diff_state.domain:
+            return []
+        log.warning("sql case %s has wrong domain: %s", case_id, sql_json["domain"])
+        diffs = json_diff({"domain": _diff_state.domain}, {"domain": sql_json["domain"]})
+    else:
+        log.warning("couch case %s has wrong domain: %s", case_id, couch_json["domain"])
+        diffs = json_diff({"domain": couch_json["domain"]}, {"domain": _diff_state.domain})
+    assert diffs, "expected domain diff"
+    return diffs
 
 
-def diff_ledgers(case_ids, statedb):
-    log.debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
+def iter_ledger_diffs(case_ids, dd_count):
     couch_state_map = {
         state.ledger_reference: state
         for state in StockState.objects.filter(case_id__in=case_ids)
     }
+    sql_refs = set()
     for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
-        couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-        couch_json = couch_state.to_json() if couch_state is not None else {}
+        ref = ledger_value.ledger_reference
+        sql_refs.add(ref)
+        couch_state = couch_state_map.get(ref, None)
+        if couch_state is None:
+            couch_json = get_stock_state_json(ledger_value)
+            dd_count("commcare.couchsqlmigration.ledger.rebuild")
+        else:
+            couch_json = couch_state.to_json()
+        dd_count("commcare.couchsqlmigration.ledger.diffed")
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
-        statedb.add_diffs(
-            'stock state', ledger_value.ledger_reference.as_id(),
-            filter_ledger_diffs(diffs)
-        )
+        diffs = filter_ledger_diffs(diffs)
+        if diffs:
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
+        yield "stock state", ref.as_id(), diffs
+    for ref, couch_state in couch_state_map.items():
+        if ref not in sql_refs:
+            diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
+            dd_count("commcare.couchsqlmigration.ledger.diffed")
+            dd_count("commcare.couchsqlmigration.ledger.has_diff")
+            yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+
+
+def get_stock_state_json(sql_ledger):
+    """Build stock state JSON from latest transaction
+
+    Returns empty dict if stock transactions do not exist.
+    """
+    # similar to StockTransaction.latest(), but more efficient
+    transactions = list(StockTransaction.get_ordered_transactions_for_stock(
+        sql_ledger.case_id,
+        sql_ledger.section_id,
+        sql_ledger.product_id,
+    ).select_related("report")[:1])
+    if not transactions:
+        return {}
+    transaction = transactions[0]
+    return StockState(
+        case_id=sql_ledger.case_id,
+        section_id=sql_ledger.section_id,
+        product_id=sql_ledger.product_id,
+        sql_location=SQLLocation.objects.get_or_None(supply_point_id=sql_ledger.case_id),
+        last_modified_date=transaction.report.server_date,
+        last_modified_form_id=transaction.report.form_id,
+        stock_on_hand=transaction.stock_on_hand,
+    ).to_json()
+
+
+def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
+    if len(couch_cases) != len(sql_case_ids):
+        only_in_sql = sql_case_ids - couch_cases.keys()
+        assert not only_in_sql, only_in_sql
+        only_in_couch = couch_cases.keys() - sql_case_ids
+        data.doc_ids.extend(only_in_couch)
+        missing_cases = [couch_cases[x] for x in only_in_couch]
+        dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(missing_cases))
+        for doc_type, doc_ids in filter_missing_cases(missing_cases):
+            data.missing_docs.append((doc_type, doc_ids))
 
 
 def filter_missing_cases(missing_cases):
@@ -678,6 +863,59 @@ def filter_missing_cases(missing_cases):
     return result.items()
 
 
+@contextmanager
+def convert_rebuild_error():
+    try:
+        yield
+    except Exception as err:
+        raise RebuildError(f"{type(err).__name__}: {err}")
+
+
+class RebuildError(Exception):
+    pass
+
+
+@contextmanager
+def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
+    from .couchsqlmigration import migration_patches
+    global _diff_state
+    _diff_state = WorkerState(domain, no_action_case_forms, cutoff_date)
+    try:
+        with migration_patches():
+            yield
+    finally:
+        del _diff_state
+
+
+@attr.s
+class DiffData:
+    doc_ids = attr.ib(factory=list)
+    diffs = attr.ib(factory=list)
+    missing_docs = attr.ib(factory=list)
+
+
+@attr.s
+class WorkerState:
+    domain = attr.ib()
+    forms = attr.ib(repr=lambda v: repr(v) if callable(v) else f"[{len(v)} ids]")
+    cutoff_date = attr.ib()
+
+    def __attrs_post_init__(self):
+        if callable(self.forms):
+            self.get_no_action_case_forms = self.forms
+        if self.cutoff_date is None:
+            self.should_diff = lambda case: True
+
+    def get_no_action_case_forms(self):
+        return self.forms
+
+    def should_diff(self, case):
+        return (
+            case.server_modified_on is None
+            or case.server_modified_on < self.cutoff_date
+        )
+
+
 def is_orphaned_case(couch_case):
     def references_case(form_id):
         form = FormAccessorCouch.get_form(form_id)
@@ -688,3 +926,50 @@ def is_orphaned_case(couch_case):
 
     case_id = couch_case["_id"]
     return not any(references_case(x) for x in couch_case["xform_ids"])
+
+
+class CaseRecord:
+
+    def __init__(self, case, stock_forms, processed_forms=0):
+        self.id = case.case_id
+        case_forms = get_case_form_ids(case)
+        self.total_forms = len(case_forms) + len(stock_forms)
+        self.processed_forms = processed_forms
+
+    def __repr__(self):
+        return "case {id} with {n} of {m} forms processed".format(
+            id=self.id,
+            n=self.processed_forms,
+            m=self.total_forms,
+        )
+
+    @property
+    def should_memorize_case(self):
+        # do not keep cases with large history in memory
+        return self.total_forms <= MAX_FORMS_PER_MEMORIZED_CASE
+
+
+def get_case_form_ids(couch_case):
+    """Get the set of form ids that touched the given couch case object"""
+    form_ids = set(couch_case.xform_ids)
+    for action in couch_case.actions:
+        if action.xform_id:
+            form_ids.add(action.xform_id)
+    return form_ids
+
+
+def get_stock_forms_by_case_id(case_ids):
+    """Get a dict of form id sets by case id for the given list of case ids
+
+    This function loads Couch stock forms (even though they are
+    technically stored in SQL).
+    """
+    form_ids_by_case_id = defaultdict(set)
+    for case_id, form_id in (
+        StockReport.objects
+        .filter(stocktransaction__case_id__in=case_ids)
+        .values_list("stocktransaction__case_id", "form_id")
+        .distinct()
+    ):
+        form_ids_by_case_id[case_id].add(form_id)
+    return form_ids_by_case_id

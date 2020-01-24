@@ -32,6 +32,9 @@
         {% endblocktrans %}
       </h1>
     </div>
+    {% if is_paused %}
+      {% include 'hqwebapp/partials/paused_plan_notice.html' %}
+    {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
         <div class="col-md-3">
@@ -193,7 +196,7 @@
       </p>
     </div>
   {% endif %}
-  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and request|feature_preview_enabled:"BI_INTEGRATION_PREVIEW" %}
+  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and user_can_view_odata_feed %}
     <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
          style="position: absolute; width: 200px;"
          data-target="#ProjectDataTab"
@@ -204,9 +207,8 @@
       </button>
       <p class="lead">
         {% blocktrans %}
-          Impress your stakeholders with powerful data insights and
-          visualizations. Check out our new and most direct integration
-          with PowerBi and Tableau!
+          Analyze your data in Power BI and Tableau! Easily connect CommCare
+          to both Power BI and Tableau with the new OData feed integration.
         {% endblocktrans %}
       </p>
     </div>

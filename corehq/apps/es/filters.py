@@ -48,7 +48,21 @@ def AND(*filters):
 
 def NOT(filter_):
     """Exclude docs matching the filter passed in"""
-    return {"not": filter_}
+    if 'or' in filter_:
+        # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
+        # but accepts the same logic
+        # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
+        return AND(*(NOT(condition) for condition in filter_['or']))
+    elif 'and' in filter_:
+        # Same ES 2.4 issue as above.
+        # Rewrite "not (A and B)" as "not A or not B"
+        return OR(*(NOT(condition) for condition in filter_['and']))
+    elif 'not' in filter_:
+        # This may not be strictly necessary
+        # but prevents {'not': {'not': A}}, in favor of just A
+        return filter_['not']
+    else:
+        return {"not": filter_}
 
 
 def not_term(field, value):

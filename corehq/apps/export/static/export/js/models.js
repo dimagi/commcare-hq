@@ -108,10 +108,32 @@ hqDefine('export/js/models', [
 
         // True if the form has no errors
         self.isValid = ko.pureComputed(function () {
+            if (self.is_odata_config() && self.hasDuplicateColumnLabels()) {
+                return false;
+            }
             if (!self.hasDailySavedAccess && self.is_daily_saved_export()) {
                 return false;
             }
             return true;
+        });
+
+        self.duplicateLabel = ko.observable();
+
+        self.hasDuplicateColumnLabels = ko.pureComputed(function () {
+            self.duplicateLabel('');
+            var hasDuplicates = false;
+            _.each(self.tables(), function (table) {
+                var labels = [];
+                _.each(table.columns(), function (column) {
+                    if (column.selected() && labels.indexOf(column.label()) === -1) {
+                        labels.push(column.label());
+                    } else if (column.selected()) {
+                        hasDuplicates = true;
+                        self.duplicateLabel(column.label());
+                    }
+                });
+            });
+            return hasDuplicates;
         });
 
         // The url to save the export to.
@@ -348,7 +370,7 @@ hqDefine('export/js/models', [
             return false;
         }
         if (tableId === 0) {
-            return column.formatProperty() === 'formid' || column.formatProperty() === 'caseid';
+            return (column.formatProperty() === 'formid' || column.formatProperty() === 'caseid') && column.tags().indexOf('info') !== -1;
         }
         return column.formatProperty() === 'number';
     };
@@ -485,6 +507,7 @@ hqDefine('export/js/models', [
             'export_format',
             'split_multiselects',
             'transform_dates',
+            'format_data_in_excel',
             'include_errors',
             'is_deidentified',
             'domain',

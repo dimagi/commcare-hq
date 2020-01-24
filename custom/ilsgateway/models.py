@@ -2,7 +2,6 @@ from datetime import datetime
 
 import jsonfield
 from django.dispatch.dispatcher import receiver
-from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models, connection
@@ -490,51 +489,6 @@ class OneOffTaskProgress(models.Model):
 
     class Meta(object):
         app_label = 'ilsgateway'
-
-
-@receiver(commcare_domain_pre_delete)
-def domain_pre_delete_receiver(domain, **kwargs):
-    from corehq.apps.domain.deletion import ModelDeletion, CustomDeletion
-
-    def _delete_ilsgateway_data(domain_name):
-        locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
-        if not locations_ids:
-            return
-
-        DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM ilsgateway_alert WHERE location_id IN "
-                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-            )
-            cursor.execute(
-                "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
-                "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
-                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
-            )
-
-            cursor.execute(
-                "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
-                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-            )
-
-            cursor.execute(
-                "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
-                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-            )
-
-            cursor.execute(
-                "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
-                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-            )
-
-    return [
-        CustomDeletion('ilsgateway', _delete_ilsgateway_data),
-        ModelDeletion('ilsgateway', 'ReportRun', 'domain'),
-        ModelDeletion('ilsgateway', 'ILSNotes', 'domain'),
-        ModelDeletion('ilsgateway', 'SupervisionDocument', 'domain'),
-    ]
 
 
 @receiver(location_edited)

@@ -1,5 +1,4 @@
-from django.conf import settings
-from elasticsearch import TransportError
+from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.es_utils import ElasticsearchIndexInfo

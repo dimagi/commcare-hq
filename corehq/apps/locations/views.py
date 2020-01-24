@@ -47,7 +47,7 @@ from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
-from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm
+from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm, LocationFilterForm
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
@@ -194,7 +194,12 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
+        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+            bulk_download_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("location_export", args=[self.domain])
         return {
+            'bulk_download_url': bulk_download_url,
             'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
@@ -220,6 +225,20 @@ class LocationsListView(BaseLocationView):
             return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+
+@location_safe
+@method_decorator(require_can_edit_or_view_locations, name='dispatch')
+class FilteredLocationDownload(BaseLocationView):
+    urlname = 'filter_and_download_locations'
+    page_title = ugettext_noop('Filter and Download Locations')
+    template_name = 'locations/filter_and_download.html'
+
+    @property
+    def page_context(self):
+        return {
+            'form': LocationFilterForm(self.request.GET, domain=self.domain),
+        }
 
 
 class LocationOptionsController(EmwfOptionsController):
@@ -351,6 +370,7 @@ class LocationTypesView(BaseDomainView):
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+            loc_type['name'] = loc_type['name'].strip()
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
@@ -981,9 +1001,10 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
+    root_location_id = request.GET.get('root_location_id')
     download = DownloadBase()
-    res = download_locations_async.delay(domain, download.download_id,
-                                         include_consumption, headers_only)
+    res = download_locations_async.delay(domain, download.download_id, include_consumption,
+                                         headers_only, root_location_id)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
@@ -1012,6 +1033,12 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
+        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+            next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+            next_url_text = _("Go back to organization download")
+        else:
+            next_url = reverse("location_export", args=[self.domain])
+            next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
@@ -1019,8 +1046,8 @@ class DownloadLocationStatusView(BaseLocationView):
             'title': _("Download Organization Structure Status"),
             'progress_text': _("Preparing organization structure download."),
             'error_text': _("There was an unexpected error! Please try again or report an issue."),
-            'next_url': reverse(LocationsListView.urlname, args=[self.domain]),
-            'next_url_text': _("Go back to organization structure"),
+            'next_url': next_url,
+            'next_url_text': next_url_text,
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
 
@@ -1049,7 +1076,7 @@ def child_locations_for_select2(request, domain):
     paginator = Paginator(locs, 10)
     return json_response({
         'results': list(map(loc_to_payload, paginator.page(page))),
-        'total_count': paginator.count,
+        'total': paginator.count,
     })
 
 

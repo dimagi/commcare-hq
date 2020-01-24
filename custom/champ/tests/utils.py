@@ -3,6 +3,10 @@ from django.test.testcases import TestCase
 from django.test.client import RequestFactory
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
+
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.domain.models import Domain
@@ -16,7 +20,7 @@ from couchforms.models import XFormInstance
 import os
 
 
-class ChampTestCase(TestCase):
+class ChampTestCase(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -27,6 +31,7 @@ class ChampTestCase(TestCase):
         domain.is_active = True
         domain.save()
         cls.domain = domain
+        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.ADVANCED)
         cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
@@ -35,8 +40,15 @@ class ChampTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.teardown_subscriptions()
         cls.user.delete()
+        clear_plan_version_cache()
         super().tearDownClass()
+
+    @classmethod
+    def add_request_attrs(cls, request):
+        request.user = cls.user
+        request.domain = cls.domain.name
 
 
 class TestDataSourceExpressions(SimpleTestCase):

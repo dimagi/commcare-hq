@@ -11,6 +11,7 @@ from corehq.elastic import (
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -27,13 +28,9 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
 
     user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc_dict)
 
-    if user_id in WEIRD_USER_IDS:
-        user_id = None
-
-    if not user_id:
-        return
-
-    if _user_exists_in_couch(user_id):
+    if (not user_id
+            or user_id in WEIRD_USER_IDS
+            or _user_exists_in_couch(user_id)):
         return
 
     if not doc_exists_in_es(USER_INDEX_INFO, user_id):
@@ -47,7 +44,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        es.create(USER_INDEX, ES_META['users'].type, body=doc, id=user_id)
+        ElasticsearchInterface(es).create_doc(USER_INDEX, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):
@@ -85,6 +82,15 @@ def _get_user_fields_from_form_doc(form_doc):
 
 
 class UnknownUsersProcessor(PillowProcessor):
+    """Monitors forms for user_ids we don't know about and creates an entry in ES for the user.
+
+    Reads from:
+      - Kafka topics: form-sql, form
+      - XForm data source
+
+    Writes to:
+      - UserES index
+    """
 
     def __init__(self):
         self._es = get_es_new()
@@ -133,6 +139,12 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
 
 def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """Processes users and sends them to ES and UCRs.
+
+    Processors:
+      - :py:func:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)

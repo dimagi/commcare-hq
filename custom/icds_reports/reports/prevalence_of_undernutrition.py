@@ -10,8 +10,8 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, format_decimal
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
+    format_decimal
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -33,7 +33,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            queryset = queryset.exclude(age_tranche=72)
+            queryset = queryset.filter(age_tranche__lt=72)
         return queryset
 
     data_for_map = defaultdict(lambda: {
@@ -162,7 +162,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         chart_data = apply_exclude(domain, chart_data)
 
     if 'age_tranche' not in config:
-        chart_data = chart_data.exclude(age_tranche=72)
+        chart_data = chart_data.filter(age_tranche__lt=72)
 
     data = {
         'peach': OrderedDict(),
@@ -287,7 +287,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         data = apply_exclude(domain, data)
 
     if 'age_tranche' not in config:
-        data = data.exclude(age_tranche=72)
+        data = data.filter(age_tranche__lt=72)
 
     chart_data = {
         'blue': []
@@ -301,14 +301,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         'total': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         weighed = row['weighed']
         total = row['total']
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
@@ -324,10 +320,6 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
             name,
             ((moderately_underweight or 0) + (severely_underweight or 0)) / float(weighed or 1)
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(
         chart_data['blue'],

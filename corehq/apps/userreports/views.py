@@ -915,9 +915,7 @@ def evaluate_expression(request, domain):
         )
     except BadSpecError as e:
         return json_response(
-            {"error": _("Problem with expression: {}.").format(
-                e
-            )},
+            {"error": _("Problem with expression: {}").format(e)},
             status_code=400,
         )
     except Exception as e:
@@ -1092,7 +1090,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             except DataSourceConfigurationNotFoundError:
                 _soft_assert = soft_assert(to=[
                     '{}@{}'.format(name, 'dimagi.com')
-                    for name in ['jemord', 'cellowitz', 'frener']
+                    for name in ['cellowitz', 'frener']
                 ])
                 _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
                     report._id, self.domain

@@ -11,6 +11,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
     helper_key = 'postnatal-care-forms-ccs-record'
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CCS_RECORD_PNC_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -83,9 +84,10 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             ucr.is_ebf as is_ebf,
             COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
+          FULL OUTER JOIN (
+             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+          ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
             AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
             AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s

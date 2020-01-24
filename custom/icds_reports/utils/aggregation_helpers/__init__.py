@@ -1,5 +1,3 @@
-
-
 def transform_day_to_month(day):
     return day.replace(day=1)
 
@@ -10,6 +8,17 @@ def month_formatter(day):
 
 def date_to_string(date):
     return date.strftime('%Y-%m-%d')
+
+
+def get_child_health_temp_tablename(month):
+    from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
+    base_tablename = ChildHealthMonthlyAggregationDistributedHelper.base_tablename
+    month_string = month.strftime("%Y-%m-%d")
+    return f"tmp_{base_tablename}_{month_string}"
+
+
+def get_agg_child_temp_tablename():
+    return 'tmp_agg_child_health_5'
 
 
 class AggregationHelper(object):

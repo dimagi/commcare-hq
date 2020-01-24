@@ -41,24 +41,24 @@ ATOM_FEED_NAMES = (
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 
-# To match cases against their OpenMRS Person UUID, in case config (Project Settings > Data Forwarding > Forward to
-# OpenMRS > Configure > Case config) "patient_identifiers", set the identifier's key to the value of
-# PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
+# To match cases against their OpenMRS Person UUID, in case config
+# (Project Settings > Data Forwarding > Forward to OpenMRS > Configure >
+# Case config) "patient_identifiers", set the identifier's key to the
+# value of PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
 #
 #     "patient_identifiers": {
 #         /* ... */
 #         "uuid": {
-#             "doc_type": "CaseProperty",
-#             "case_property": "openmrs_uuid",
+#             "case_property": "openmrs_uuid"
 #         }
 #     }
 #
-# To match against any other OpenMRS identifier, set the key to the UUID of the OpenMRS Identifier Type. e.g.::
+# To match against any other OpenMRS identifier, set the key to the UUID
+# of the OpenMRS Identifier Type. e.g.::
 #
 #     "patient_identifiers": {
 #         /* ... */
 #         "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
-#             "doc_type": "CaseProperty",
 #             "case_property": "nid"
 #         }
 #     }
@@ -74,6 +74,7 @@ OPENMRS_DATA_TYPE_DATE = 'omrs_date'
 OPENMRS_DATA_TYPE_TIME = 'omrs_time'
 OPENMRS_DATA_TYPE_DATETIME = 'omrs_datetime'
 OPENMRS_DATA_TYPE_BOOLEAN = 'omrs_boolean'
+OPENMRS_DATA_TYPE_MILLISECONDS = 'posix_milliseconds'
 OPENMRS_DATA_TYPES = (
     OPENMRS_DATA_TYPE_NUMERIC,
     OPENMRS_DATA_TYPE_TEXT,
@@ -81,6 +82,7 @@ OPENMRS_DATA_TYPES = (
     OPENMRS_DATA_TYPE_TIME,
     OPENMRS_DATA_TYPE_DATETIME,
     OPENMRS_DATA_TYPE_BOOLEAN,
+    OPENMRS_DATA_TYPE_MILLISECONDS,
 )
 
 # Standard OpenMRS property names and their data types

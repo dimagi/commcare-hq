@@ -1,13 +1,15 @@
 import json
-from collections import defaultdict
 from itertools import chain
+from typing import Iterable
 
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 import attr
+from jsonobject.containers import JsonDict
 from memoized import memoized
+from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.signals import successful_form_received
@@ -20,13 +22,12 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
@@ -43,7 +44,7 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
 )
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -73,9 +74,26 @@ class AtomFeedStatus(DocumentSchema):
     last_page = StringProperty(default=None)
 
 
-# it actually triggers on forms,
-# but I wanted to get a case type, and this is the easiest way
 class OpenmrsRepeater(CaseRepeater):
+    """
+    ``OpenmrsRepeater`` is responsible for updating OpenMRS patients
+    with changes made to cases in CommCare. It is also responsible for
+    creating OpenMRS "visits", "encounters" and "observations" when a
+    corresponding visit form is submitted in CommCare.
+
+    The ``OpenmrsRepeater`` class is different from most repeater
+    classes in three details:
+
+    1. It has a case type and it updates the OpenMRS equivalent of cases
+       like the ``CaseRepeater`` class, but it reads forms like the
+       ``FormRepeater`` class. So it subclasses ``CaseRepeater`` but its
+       payload format is ``form_json``.
+
+    2. It makes many API calls for each payload.
+
+    3. It can have a location.
+
+    """
     class Meta(object):
         app_label = 'repeaters'
 
@@ -105,6 +123,9 @@ class OpenmrsRepeater(CaseRepeater):
             self.get_id == other.get_id
         )
 
+    def __str__(self):
+        return Repeater.__str__(self)
+
     @classmethod
     def wrap(cls, data):
         if 'atom_feed_last_polled_at' in data:
@@ -118,6 +139,11 @@ class OpenmrsRepeater(CaseRepeater):
 
     @cached_property
     def requests(self):
+        # Used by atom_feed module and views that don't have a payload
+        # associated with the request
+        return self.get_requests()
+
+    def get_requests(self, payload_id=None):
         return Requests(
             self.domain,
             self.url,
@@ -125,20 +151,12 @@ class OpenmrsRepeater(CaseRepeater):
             self.plaintext_password,
             verify=self.verify,
             notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
         )
 
     @cached_property
-    def observation_mappings(self):
-        obs_mappings = defaultdict(list)
-        for form_config in self.openmrs_config.form_configs:
-            for obs_mapping in form_config.openmrs_observations:
-                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
-                    # It's possible that an OpenMRS concept appears more
-                    # than once in form_configs. We are using a
-                    # defaultdict(list) so that earlier definitions
-                    # don't get overwritten by later ones:
-                    obs_mappings[obs_mapping.concept].append(obs_mapping)
-        return obs_mappings
+    def first_user(self):
+        return get_one_commcare_user_at_location(self.domain, self.location_id)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -195,7 +213,7 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_sources = chain(
+        value_source_configs: Iterable[JsonDict] = chain(
             self.openmrs_config.case_config.patient_identifiers.values(),
             self.openmrs_config.case_config.person_properties.values(),
             self.openmrs_config.case_config.person_preferred_name.values(),
@@ -204,17 +222,22 @@ class OpenmrsRepeater(CaseRepeater):
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-
-        return send_openmrs_data(
-            self.requests,
-            self.domain,
-            payload,
-            self.openmrs_config,
-            case_trigger_infos,
-        )
+        requests = self.get_requests(payload_id=repeat_record.payload_id)
+        try:
+            response = send_openmrs_data(
+                requests,
+                self.domain,
+                payload,
+                self.openmrs_config,
+                case_trigger_infos,
+            )
+        except Exception as err:
+            requests.notify_exception(str(err))
+            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+        return response
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
@@ -236,7 +259,14 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        patient = get_patient(requests, domain, info, openmrs_config)
+        try:
+            patient = get_patient(requests, domain, info, openmrs_config)
+        except (RequestException, HTTPError) as err:
+            errors.append(_(
+                "Unable to create an OpenMRS patient for case "
+                f"{info.case_id!r}: {err}"
+            ))
+            continue
         if patient is None:
             warnings.append(
                 f"CommCare case '{info.case_id}' was not matched to a "
@@ -279,7 +309,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         )
 
     if errors:
-        logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        requests.notify_error(f'Errors encountered sending OpenMRS data: {errors}')
         # If the form included multiple patients, some workflows may
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
@@ -287,7 +317,6 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        logger.warning("Warnings encountered sending OpenMRS data: %s", warnings)
         return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
     return OpenmrsResponse(200, "OK")

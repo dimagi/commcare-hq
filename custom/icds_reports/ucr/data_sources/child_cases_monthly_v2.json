@@ -24,16 +24,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
-  ],
   "config": {
     "table_id": "static-child_cases_monthly_v2",
     "display_name": "Cases - Child Health (Monthly) (Static) v2",
@@ -2226,7 +2216,7 @@
                   "related_doc_type": "CommCareCase",
                   "value_expression": {
                     "type": "property_name",
-                    "property_name": "migrated_status"
+                    "property_name": "migration_status"
                   }
                 },
                 "property_value": "yes"
@@ -3295,7 +3285,7 @@
                   "related_doc_type": "CommCareCase",
                   "value_expression": {
                     "type": "property_name",
-                    "property_name": "migrated_status"
+                    "property_name": "migration_status"
                   }
                 },
                 "property_value": "yes"
@@ -3306,7 +3296,7 @@
       }
     },
     "asynchronous": true,
-    "engine_id": "icds-ucr-non-dashboard",
+    "engine_id": "icds-ucr-citus",
     "sql_column_indexes": [
       {
         "column_ids": [

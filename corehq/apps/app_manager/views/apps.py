@@ -315,7 +315,7 @@ def get_app_view_context(request, app):
         context.update({
             'master_briefs': master_briefs,
             'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': len(master_briefs) > 1 and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain),
+            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
@@ -535,7 +535,7 @@ def load_app_from_slug(domain, username, slug):
 def _build_sample_app(app):
     errors = app.validate_app()
     if not errors:
-        comment = _("A sample application you can try out in Web Apps")
+        comment = _("A sample CommCare application for you to explore")
         copy = app.make_build(comment=comment)
         copy.is_released = True
         copy.save(increment_version=False)
@@ -637,42 +637,6 @@ def new_app(request, domain):
     main_args.extend(form_args)
 
     return back_to_main(*main_args)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def rename_language(request, domain, form_unique_id):
-    old_code = request.POST.get('oldCode')
-    new_code = request.POST.get('newCode')
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceConflict:
-        raise Http404()
-    if app.domain != domain:
-        raise Http404()
-    try:
-        form.rename_xform_language(old_code, new_code)
-        app.save()
-        return HttpResponse(json.dumps({"status": "ok"}))
-    except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': str(e)}), status=409)
-        return response
-
-
-@require_GET
-@login_and_domain_required
-def validate_language(request, domain, app_id):
-    app = get_app(domain, app_id)
-    term = request.GET.get('term', '').lower()
-    if term in [lang.lower() for lang in app.langs]:
-        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
-    else:
-        return HttpResponseRedirect(
-            "%s?%s" % (
-                reverse('langcodes.views.validate', args=[]),
-                django_urlencode({'term': term})
-            )
-        )
 
 
 @no_conflict_require_POST

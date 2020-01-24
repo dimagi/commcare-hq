@@ -1,6 +1,8 @@
+import json
 import re
 from collections import namedtuple
 
+from django.conf import settings
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -11,9 +13,11 @@ from couchforms.models import DefaultAuthContext
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 
 
 def get_submit_url(domain, app_id=None):
@@ -73,29 +77,6 @@ def get_version_from_build_id(domain, build_id):
         return None
     else:
         return build.version
-
-
-@quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
-def get_version_and_app_from_build_id(domain, build_id):
-    """
-    fast lookup of app version number given build_id
-
-    implemented as simple caching around _get_version_from_build_id
-
-    """
-    if not build_id:
-        return None, None
-
-    try:
-        build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
-        return None, None
-    if not build.copy_of:
-        return None, None
-    elif domain and build.domain != domain:
-        return None, None
-    else:
-        return build.version, build.copy_of
 
 
 def get_version_from_appversion_text(appversion_text):
@@ -224,16 +205,65 @@ def from_demo_user(form_json):
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+
+
+def _submitted_by_demo_user(form_meta, domain):
+    from corehq.apps.users.util import DEMO_USER_ID
+    user_id = form_meta.get('userID')
+    if user_id and user_id != DEMO_USER_ID:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if user and user.is_demo_user:
+            return True
+    return False
+
+
+def _notify_ignored_form_submission(request, form_meta):
+    _assert = soft_assert(['mkangia@dimagi.com', 'sgoyal@dimagi.com'],
+                          exponential_backoff=False, send_to_ops=False)
+    _assert(False, "Unexpected practice mobile user submission received", {
+        'Method': request.method,
+        'URL': request.get_raw_uri(),
+        'GET Params': json.dumps(request.GET),
+        'Form Meta': json.dumps(form_meta),
+    })
+
 
 def should_ignore_submission(request):
     """
+    If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
+    Else
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
+    form_json = None
+    if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+        try:
+            form_json = convert_xform_to_json(instance)
+        except couchforms.XMLSyntaxError:
+            # let the usual workflow handle response for invalid xml
+            return False
+        else:
+            form_meta = form_json.get('meta')
+            if form_meta and _submitted_by_demo_user(form_meta, request.domain):
+                _notify_submission_if_applicable(request, form_meta)
+                return True
+
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
-    instance, _ = couchforms.get_instance_and_attachment(request)
-    form_json = convert_xform_to_json(instance)
-
+    if form_json is None:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+        form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
+
+
+def _notify_submission_if_applicable(request, form_meta):
+    # notify the submission if form would have gotten processed due to missing param
+    if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        app_version_text = form_meta.get('appVersion')
+        if app_version_text:
+            commcare_version = get_commcare_version_from_appversion_text(app_version_text)
+            if commcare_version and commcare_version >= '2.44.0':
+                _notify_ignored_form_submission(request, form_meta)

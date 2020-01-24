@@ -36,7 +36,7 @@ hqDefine("export/js/export_list", [
     utils
 ) {
     var exportModel = function (options, pageOptions) {
-        assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
+        assertProperties.assert(pageOptions, ['is_deid', 'is_odata', 'model_type', 'urls']);
 
         _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData'], function (key) {
             options[key] = options[key] || false;
@@ -168,6 +168,7 @@ hqDefine("export/js/export_list", [
                     export_id: self.id(),
                     is_auto_rebuild_enabled: self.isAutoRebuildEnabled(),
                     is_deid: pageOptions.is_deid,
+                    is_odata: pageOptions.is_odata,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
@@ -266,6 +267,7 @@ hqDefine("export/js/export_list", [
                 data: {
                     export_id: exportId,
                     is_deid: pageOptions.is_deid,
+                    is_odata: pageOptions.is_odata,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
@@ -320,10 +322,10 @@ hqDefine("export/js/export_list", [
                 url: self.urls.getExportsPage,
                 data: {
                     is_deid: self.isDeid,
+                    is_odata: self.isOData ? 1 : 0,
                     model_type: self.modelType,
                     is_daily_saved_export: self.isDailySavedExport ? 1 : 0,
                     is_feed: self.isFeed ? 1 : 0,
-                    is_odata: self.isOData ? 1 : 0,
                     my_exports: self.myExports ? 1 : 0,
                     page: page,
                     limit: self.itemsPerPage(),
@@ -336,6 +338,7 @@ hqDefine("export/js/export_list", [
                     self.exports(_.map(data.exports, function (e) {
                         return exportModel(e, {
                             is_deid: self.isDeid,
+                            is_odata: self.isOData,
                             model_type: self.modelType,
                             urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update'),
                         });
@@ -566,6 +569,7 @@ hqDefine("export/js/export_list", [
                         end_date: self.endDate(),
                     }),
                     is_deid: self.isDeid,
+                    is_odata: self.isOData,
                     model_type: self.modelType,
                 },
                 success: function (data) {

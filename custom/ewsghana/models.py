@@ -1,12 +1,10 @@
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from casexml.apps.stock.models import DocDomainMapping
-from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 from django.db import models
 
 
@@ -52,8 +50,6 @@ class EWSGhanaConfig(Document):
     def save(self, **params):
         super(EWSGhanaConfig, self).save(**params)
 
-        self.update_toggle()
-
         try:
             DocDomainMapping.objects.get(doc_id=self._id,
                                          domain_name=self.domain,
@@ -62,14 +58,6 @@ class EWSGhanaConfig(Document):
             DocDomainMapping.objects.create(doc_id=self._id,
                                             domain_name=self.domain,
                                             doc_type='EWSGhanaConfig')
-
-    def update_toggle(self):
-        """
-        This turns on the special stock handler when EWS is enabled.
-        """
-
-        if self.enabled:
-            STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
     class Meta(object):
         app_label = 'ewsghana'
@@ -120,12 +108,3 @@ class SQLNotification(models.Model):
 
     class Meta(object):
         app_label = 'ewsghana'
-
-
-@receiver(commcare_domain_pre_delete)
-def domain_pre_delete_receiver(domain, **kwargs):
-    from corehq.apps.domain.deletion import ModelDeletion
-    return [
-        ModelDeletion('ewsghana', 'FacilityInCharge', 'location__domain'),
-        ModelDeletion('ewsghana', 'EWSExtension', 'domain')
-    ]

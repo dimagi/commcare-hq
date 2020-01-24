@@ -110,22 +110,24 @@
       {
         "display": "pregnant_resident_count",
         "column_id": "pregnant_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1": 1
-        }
+        "whens": [{
+          "type": "open_pregnant_resident",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "pregnant_migrant_count",
         "column_id": "pregnant_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1": 1
-        }
+        "whens": [{
+          "type": "open_pregnant_migrant",
+          "binds": [],
+          "then": 1
+        }]
       }
     ],
     "sort_expression": [],

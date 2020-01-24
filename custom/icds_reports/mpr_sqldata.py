@@ -1568,7 +1568,7 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                     'alias': 'M_sev_mod_resident_weighted'
                 },
                 {
-                    'columns': ('F_sev_mod_resident_weighted', 'M_sev_mod_resident_weighted'),
+                    'columns': ('F_sum_sev_resident_weighted', 'M_sev_mod_resident_weighted'),
                     'alias': 'all_sev_resident_weighted'
                 }
             ),

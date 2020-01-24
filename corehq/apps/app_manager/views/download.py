@@ -1,4 +1,5 @@
 import json
+import pytz
 import re
 from collections import OrderedDict, defaultdict
 
@@ -35,6 +36,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -207,7 +209,11 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     @property
     def zip_name(self):
-        return 'commcare_v{}.ccz'.format(self.app.version)
+        return '{} - {} - v{}.ccz'.format(
+            self.app.domain,
+            self.app.name,
+            self.app.version,
+        )
 
     def check_before_zipping(self):
         if self.app.is_remote_app():
@@ -293,7 +299,9 @@ def download_file(request, domain, app_id, path):
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
-            response['X-CommCareHQ-AppReleasedOn'] = request.app.last_released.isoformat()
+            last_released = request.app.last_released.replace(microsecond=0)    # mobile doesn't want microseconds
+            last_released = ServerTime(last_released).user_time(pytz.UTC).done().isoformat()
+            response['X-CommCareHQ-AppReleasedOn'] = last_released
         response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
@@ -423,6 +431,8 @@ def download_index(request, domain, app_id):
         )
     enabled_build_profiles = []
     latest_enabled_build_profiles = {}
+    build_profiles = [{'id': build_profile_id, 'name': build_profile.name}
+                      for build_profile_id, build_profile in request.app.build_profiles.items()]
     if request.app.is_released and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
         enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
@@ -432,6 +442,7 @@ def download_index(request, domain, app_id):
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'supports_j2me': request.app.build_spec.supports_j2me(),
+        'build_profiles': build_profiles,
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
     })

@@ -1,10 +1,12 @@
 import logging
+import numbers
 import uuid
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.translation import ugettext
 
 from lxml.builder import E
 
@@ -35,7 +37,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -212,7 +214,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         report_elem.append(rows_elem)
         return [report_elem]
 
-    def _get_v1_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync=None):
+    def _get_v1_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -222,18 +224,26 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            restore_user.username, NAMESPACE_USER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
+
         rows_elem = E.rows()
         row_index = 0
 
         rows = self.report_data_cache.get_data(report_config.uuid, data_source)
         for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = self.report_data_cache.get_total_row(report_config.uuid, data_source)
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(data_source.final_column_ids),
                         list(map(str, total_row))
                     )
                 ),
@@ -345,7 +355,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
 
-    def _get_v2_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync):
+    def _get_v2_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync, restore_user):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -355,23 +365,31 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_row_calculator = SQLTotalRowCalculator(data_source)
+        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
+            restore_user.username, NAMESPACE_USER
+        ):
+            total_row_calculator = IterativeTotalRowCalculator(data_source)
+
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
         rows = self.report_data_cache.get_data(report_config.uuid, data_source)
         for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
+            total_row_calculator.update_totals(row)
+
         if data_source.has_total_row:
-            total_row = self.report_data_cache.get_total_row(report_config.uuid, data_source)
+            total_row = total_row_calculator.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(data_source.final_column_ids),
                         list(map(str, total_row))
                     )
                 ),
                 row_index + 1,
                 is_total_row=True,
-            ))
+                ))
         return rows_elem
 
     @staticmethod
@@ -460,3 +478,36 @@ def _get_report_and_data_source(report_id, domain):
     report = get_report_config(report_id, domain)[0]
     data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
     return report, data_source
+
+
+class SQLTotalRowCalculator(object):
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+    def update_totals(self, row):
+        pass
+
+    def get_total_row(self):
+        return self.data_source.get_total_row()
+
+
+class IterativeTotalRowCalculator(SQLTotalRowCalculator):
+    def __init__(self, data_source):
+        super(IterativeTotalRowCalculator, self).__init__(data_source)
+        self.total_column_ids = data_source.total_column_ids
+        self.total_cols = {col_id: 0 for col_id in self.total_column_ids}
+
+    def update_totals(self, row):
+        for col_id in self.total_column_ids:
+            val = row[col_id]
+            if isinstance(val, numbers.Number):
+                self.total_cols[col_id] += val
+
+    def get_total_row(self):
+        total_row = [
+            self.total_cols.get(col_id, '')
+            for col_id in self.data_source.final_column_ids
+        ]
+        if total_row and total_row[0] == '':
+            total_row[0] = ugettext('Total')
+        return total_row

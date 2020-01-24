@@ -12,9 +12,10 @@ from django.views.decorators.http import require_POST
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.post import simple_post
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -51,6 +52,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     template_name = 'repeaters/repeaters.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -80,6 +82,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     template_name = 'repeaters/add_form_repeater.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
@@ -322,6 +325,7 @@ class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.retire()
@@ -331,6 +335,7 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def pause_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.pause()
@@ -340,6 +345,7 @@ def pause_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def resume_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.resume()
@@ -349,6 +355,7 @@ def resume_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']

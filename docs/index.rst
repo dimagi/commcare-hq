@@ -27,7 +27,6 @@ Welcome to CommCareHQ's documentation!
    class_views
    testing
    forms
-   management_commands
    migrations
    commtrack
    cloudcare
@@ -46,7 +45,9 @@ Welcome to CommCareHQ's documentation!
    couchdb
    celery
    ucr
+   openmrs
    js-guide/README
+   databases
 
 Tips for documenting
 --------------------

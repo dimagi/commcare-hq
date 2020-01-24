@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -11,11 +13,12 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
+from corehq.apps.receiverwrapper.util import get_version_from_build_id
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeviceAppMeta,
+    UserReportingMetadataStaging,
     WebUser,
 )
 from corehq.apps.users.util import (
@@ -34,8 +37,10 @@ SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
 def get_user_sync_history_pillow(
         pillow_id='UpdateUserSyncHistoryPillow', num_processes=1, process_num=0, **kwargs):
-    """
-    This gets a pillow which iterates through all synclogs
+    """Synclog pillow
+
+    Processors:
+      - :py:func:`corehq.pillows.synclog.UserSyncHistoryProcessor`
     """
     change_feed = KafkaChangeFeed(
         topics=[topics.SYNCLOG_SQL], client_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
@@ -53,38 +58,72 @@ def get_user_sync_history_pillow(
 
 
 class UserSyncHistoryProcessor(PillowProcessor):
+    """Updates the user document with reporting metadata when a user syncs
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately.
+
+    Reads from:
+      - CouchDB (user)
+      - SynclogSQL table
+
+    Writes to:
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
+    """
 
     def process_change(self, change):
         synclog = change.get_document()
         if not synclog:
             return
 
-        version = None
-        app_id = None
+        user_id = synclog.get('user_id')
+        domain = synclog.get('domain')
+
+        if not user_id or not domain:
+            return
+
         try:
             sync_date = string_to_utc_datetime(synclog.get('date'))
         except (ValueError, AttributeError):
             return
+
         build_id = synclog.get('build_id')
-        if build_id:
-            version, app_id = get_version_and_app_from_build_id(synclog.get('domain'), build_id)
-        user_id = synclog.get('user_id')
+        device_id = synclog.get('device_id')
+        app_id = synclog.get('app_id')
 
-        if user_id:
+        # WebApps syncs do not provide the app_id.
+        # For those syncs we go ahead and mark the last synclog synchronously.
+        if app_id and settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+            UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
+        else:
             user = CouchUser.get_by_user_id(user_id)
-            save = update_last_sync(user, app_id, sync_date, version)
-            if version:
-                save |= update_latest_builds(user, app_id, sync_date, version)
+            if not user:
+                return
 
-            app_meta = None
-            device_id = synclog.get('device_id')
-            if device_id:
-                if app_id:
-                    app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
-                save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
+            device_app_meta = None
+            if device_id and app_id:
+                device_app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
+            mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id, device_app_meta)
 
-            if save:
-                user.save(fire_signals=False)
+
+def mark_last_synclog(domain, user, app_id, build_id, sync_date, device_id,
+        device_app_meta, commcare_version=None, build_profile_id=None, save_user=True):
+    version = None
+    if build_id:
+        version = get_version_from_build_id(domain, build_id)
+
+    local_save = update_last_sync(user, app_id, sync_date, version)
+    if version:
+        local_save |= update_latest_builds(user, app_id, sync_date, version, build_profile_id=build_profile_id)
+
+    if device_id:
+        local_save |= update_device_meta(user, device_id, commcare_version=commcare_version,
+            device_app_meta=device_app_meta, save=False)
+
+    if local_save and save_user:
+        user.save(fire_signals=False)
+    return local_save
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):

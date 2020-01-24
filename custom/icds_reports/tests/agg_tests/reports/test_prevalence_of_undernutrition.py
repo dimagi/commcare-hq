@@ -49,69 +49,53 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                'st4': {
-                    'severely_underweight': 0,
-                    'normal': 0,
-                    'original_name': ['st4'],
-                    'weighed': 0,
-                    'moderately_underweight': 0,
-                    'total': 2,
-                    'fillKey': '0%-20%'
-                },
-                'st5': {
-                    'severely_underweight': 0,
-                    'normal': 0,
-                    'original_name': ['st5'],
-                    'weighed': 0,
-                    'moderately_underweight': 0,
-                    'total': 3,
-                    'fillKey': '0%-20%'
-                },
-                'st6': {
-                    'severely_underweight': 0,
-                    'normal': 0,
-                    'original_name': ['st6'],
-                    'weighed': 0,
-                    'moderately_underweight': 0,
-                    'total': 4,
-                    'fillKey': '0%-20%'
-                },
-                'st7': {
-                    'severely_underweight': 0,
-                    'normal': 0,
-                    'original_name': ['st7'],
-                    'weighed': 0,
-                    'moderately_underweight': 0,
-                    'total': 5,
-                    'fillKey': '0%-20%'
-                },
-                'st1': {
-                    'severely_underweight': 40,
-                    'normal': 1225,
-                    'original_name': ['st1'],
-                    'weighed': 1585,
-                    'moderately_underweight': 320,
-                    'total': 2375,
-                    'fillKey': '20%-35%'
-                },
-                'st2': {
-                    'severely_underweight': 60,
-                    'normal': 1505,
-                    'original_name': ['st2'],
-                    'weighed': 1895,
-                    'moderately_underweight': 330,
-                    'total': 2570,
-                    'fillKey': '20%-35%'
-                },
-                'st3': {
-                    'severely_underweight': 0,
-                    'normal': 0,
-                    'original_name': ['st3'],
-                    'weighed': 0,
-                    'moderately_underweight': 0,
-                    'total': 1,
-                    'fillKey': '0%-20%'
-                }
+                'st1': {'moderately_underweight': 320,
+                     'severely_underweight': 40,
+                     'normal': 1225,
+                     'weighed': 1585,
+                     'total': 2375,
+                     'original_name': ['st1'],
+                     'fillKey': '20%-35%'},
+                'st2': {'moderately_underweight': 325,
+                     'severely_underweight': 60,
+                     'normal': 1505,
+                     'weighed': 1890,
+                     'total': 2565,
+                     'original_name': ['st2'],
+                     'fillKey': '20%-35%'},
+                'st3': {'moderately_underweight': 0,
+                     'severely_underweight': 0,
+                     'normal': 0,
+                     'weighed': 0,
+                     'total': 1,
+                     'original_name': ['st3'],
+                     'fillKey': '0%-20%'},
+                'st4': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 2,
+                        'original_name': ['st4'],
+                        'fillKey': '0%-20%'},
+                'st5': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 3,
+                        'original_name': ['st5'],
+                        'fillKey': '0%-20%'},
+                'st6': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 4,
+                        'original_name': ['st6'], 'fillKey': '0%-20%'},
+                'st7': {'moderately_underweight': 0,
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 5,
+                        'original_name': ['st7'], 'fillKey': '0%-20%'}
             }
         )
 
@@ -134,7 +118,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], '21.55')
+        self.assertEqual(data['rightLegend']['average'], '21.44')
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -147,11 +131,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,475'},
                 {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,480'},
-                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.87%'},
-                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.68%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '78.45%'}
+                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.88%'},
+                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.56%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '78.56%'}
             ]
         )
 
@@ -266,7 +250,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
@@ -286,7 +270,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
-                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0}
             ]
         )
 
@@ -328,15 +312,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.7467438494934877,
+                        "y": 0.7478260869565218,
                         "x": 1491004800000,
-                        "weighed": 3455,
+                        "weighed": 3450,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.7844827586206896,
+                        "y": 0.7856115107913669,
                         "x": 1493596800000,
-                        "weighed": 3480,
+                        "weighed": 3475,
                         "unweighed": 1480
                     }
                 ],
@@ -372,15 +356,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.23154848046309695,
+                        "y": 0.23043478260869565,
                         "x": 1491004800000,
-                        "weighed": 3455,
+                        "weighed": 3450,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.1867816091954023,
+                        "y": 0.1856115107913669,
                         "x": 1493596800000,
-                        "weighed": 3480,
+                        "weighed": 3475,
                         "unweighed": 1480
                     }
                 ],
@@ -416,15 +400,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.02170767004341534,
+                        "y": 0.021739130434782608,
                         "x": 1491004800000,
-                        "weighed": 3455,
+                        "weighed": 3450,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.028735632183908046,
+                        "y": 0.02877697841726619,
                         "x": 1493596800000,
-                        "weighed": 3480,
+                        "weighed": 3475,
                         "unweighed": 1480
                     }
                 ],
@@ -448,7 +432,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )

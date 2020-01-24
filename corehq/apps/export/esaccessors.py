@@ -1,4 +1,4 @@
-from elasticsearch import ElasticsearchException
+from corehq.util.es.elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES

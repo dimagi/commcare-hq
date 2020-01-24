@@ -50,7 +50,6 @@ class CustomDataField(JsonObject):
     choices = StringListProperty()
     regex = StringProperty()
     regex_msg = StringProperty()
-    is_multiple_choice = BooleanProperty(default=False)
 
 
 class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):

@@ -58,6 +58,8 @@ REWIND = "rewind"
 STATS = "stats"
 DIFF = "diff"
 
+CASE_DIFF = {"process": True, "local": False, "none": None}
+
 
 class Command(BaseCommand):
     help = """
@@ -119,13 +121,28 @@ class Command(BaseCommand):
                 in SQL, which means that some cases that were previously
                 queued to diff may not be diffed.
             """)
-        parser.add_argument('--no-diff-process',
-            dest='diff_process', action='store_false', default=True,
+        parser.add_argument('--case-diff',
+            dest='case_diff', default="process",
+            choices=["process", "local", "none"],
             help='''
-                Migrate forms and diff cases in the same process. The
-                case diff queue will run in a separate process if this
-                option is not specified.
+                process: diff cases in a separate process (default).
+                local: diff cases in the migration process.
+                none: do not diff cases.
             ''')
+        parser.add_argument('--forms', default=None,
+            help="""
+                Migrate specific forms. The value of this option should
+                be a space-delimited list of form ids OR a file path to
+                a file having one form id per line OR 'skipped' to
+                migrate forms skipped by previous migration. The file
+                path must begin with / or ./
+            """)
+        parser.add_argument('-x', '--stop-on-error',
+            dest="stop_on_error", action='store_true', default=False,
+            help="""
+                Stop on form migration error rather than recording diffs
+                and continuing with next form.
+            """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
 
     def handle(self, domain, action, **options):
@@ -137,8 +154,10 @@ class Command(BaseCommand):
             "verbose",
             "state_dir",
             "live_migrate",
-            "diff_process",
+            "case_diff",
             "rebuild_state",
+            "stop_on_error",
+            "forms",
             "rewind",
         ]:
             setattr(self, opt, options[opt])
@@ -149,6 +168,10 @@ class Command(BaseCommand):
             raise CommandError("--live only allowed with `MIGRATE`")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
+        if action != MIGRATE and self.forms:
+            raise CommandError("--forms only allowed with `MIGRATE`")
+        if action != MIGRATE and self.stop_on_error:
+            raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
         if action != REWIND and self.rewind:
@@ -166,8 +189,10 @@ class Command(BaseCommand):
             self.state_dir,
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
-            diff_process=self.diff_process,
+            diff_process=CASE_DIFF[self.case_diff],
             rebuild_state=self.rebuild_state,
+            stop_on_error=self.stop_on_error,
+            forms=self.forms,
         )
 
         return_code = 0
