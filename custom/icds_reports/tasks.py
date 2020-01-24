@@ -104,7 +104,6 @@ from custom.icds_reports.models.aggregate import (
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard
 )
-
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
 from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
@@ -279,6 +278,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                                func_name='_agg_adolescent_girls_registration_table')
                 for state_id in state_ids
             ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274

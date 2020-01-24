@@ -60,7 +60,7 @@ STATE_TASKS = {
     'agg_ls_vhnd_form': (None, _agg_ls_vhnd_form, None),
     'agg_beneficiary_form': (None, _agg_beneficiary_form, None),
     'aggregate_df_forms': (drop_df_indices, _aggregate_df_forms, create_df_indices),
-    'aggregate_ag_forms': (None, _agg_adolescent_girls_registration_table, None)
+    'aggregate_ag_forms': (None, _agg_adolescent_girls_registration_table, None),
 
 }
 
