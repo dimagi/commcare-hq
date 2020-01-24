@@ -37,12 +37,6 @@ MAX_RESCUE_EXCEPTIONS_ON_UPDATE = 5
 
 CSV_HEADERS = ['Case ID', 'Mother Case ID', 'Mother Name']
 
-TEST_STATES = []
-
-for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=DOMAIN):
-    if loc.metadata.get('is_test_location') == 'test':
-        TEST_STATES.append(loc.name)
-
 
 class Command(BaseCommand):
     help = """
@@ -75,7 +69,7 @@ class Command(BaseCommand):
     def handle(self, db_alias, log_progress, **options):
         self.db_alias = db_alias
         self.log_progress = log_progress
-        self.test_locations = find_test_locations()
+        self.test_locations = find_test_awc_locations()
 
         filename = self._find_case_ids_without_mother_name()
         if self.log_progress:
@@ -207,11 +201,12 @@ class Command(BaseCommand):
         return case_ids_list
 
 
-def find_test_locations():
+def find_test_awc_locations():
     test_locations = set()
-    for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=DOMAIN):
-        test_locations.update(
-            location.get_descendants(include_self=True).
-            filter(location_type='awc').values_list('location_id', flat=True)
-        )
+    for location in SQLLocation.active_objects.filter(location_type__code='state', domain=DOMAIN):
+        if loc.metadata.get('is_test_location') == 'test':
+            test_locations.update(
+                location.get_descendants(include_self=True).
+                filter(location_type='awc').values_list('location_id', flat=True)
+            )
     return test_locations
