@@ -11,6 +11,7 @@ from django.db.models import Count
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import UserES
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
 from custom.icds_reports.models import ICDSAuditEntryRecord, AwcLocation
@@ -32,10 +33,27 @@ def cache_to_file(cache_name):
     return _outer
 
 
+def _get_from_file(filename):
+    if os.path.exists(filename):
+        print(f'Fetching data from file: {filename}')
+        with open(filename, 'r') as f:
+            reader = csv.reader(f)
+            return [
+                r[0] if len(r) == 1 else r for r in list(reader)
+            ]
+
+
+def _write_to_file(filename, rows):
+    print(f'Writing {len(rows)} to file {filename}')
+    with open(filename, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerows([
+            r if isinstance(r, list) else [r] for r in rows
+        ])
+
 class Command(BaseCommand):
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
-    agg_required_fields = ['state_id', 'district_id', 'block_id', 'is_launched']
     location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
                             'awc_is_test']
 
@@ -72,6 +90,11 @@ class Command(BaseCommand):
             help='The end date (exclusive). format YYYY-MM-DD'
         )
 
+    def get_users(self, domain):
+        user_query = UserES().mobile_users().domain(domain).fields(['username',
+                                                                     'assigned_location_ids'])
+        return [u for u in user_query.run().hits]
+
     def handle(self, start_date, end_date, **options):
         domain = 'icds-cas'
         start_date = start_date.replace(tzinfo=timezone.utc)
@@ -87,7 +110,7 @@ class Command(BaseCommand):
         self.get_request_data(all_users, usage_counts, indicators_count)
         print(f'Request data written to file {REQUEST_DATA_CACHE}')
 
-    def convert_rows_to_list(self, results_queryset):
+    def get_matrix_and_location_id_type_mapping_from_queryset(self, results_queryset):
         """
         :param results_queryset: AwcLocation values queryset
         :return: location matrix similar to a dataframe and locations ids of all the locations below the given and
@@ -95,17 +118,16 @@ class Command(BaseCommand):
          location
         """
         location_matrix = []
-        location_id_name_mapping = defaultdict(str)
+        location_id_type_mapping = defaultdict(str)
 
         for result in results_queryset:
             row_data = [result['state_id'], result['state_name'], result['district_id'],
                         result['district_name'], result['block_id'], result['block_name']]
             location_matrix.append(row_data)
             for location_type in self.location_types:
-                if result[location_type] not in location_id_name_mapping.keys():
-                    location_id_name_mapping[result[location_type]] =\
-                        result[self.get_location_name_string_from_location_id(location_type)]
-        return location_matrix
+                if result[location_type] not in location_id_type_mapping.keys():
+                    location_id_type_mapping[result[location_type]] = location_type
+        return location_matrix, location_id_type_mapping
 
     def get_dashboard_usage_counts(self, start_date, end_date, usernames):
         print(f'Compiling usage counts for {len(usernames)} users')
@@ -131,10 +153,15 @@ class Command(BaseCommand):
                 return value
         return 'N/A'
 
-    def get_location_name_string_from_location_id(self, location_id):
-        return location_id.replace('_id', 'name')
+    def get_location_type_string_from_location_id(self, location_id):
+        return location_id.replace('_id', '')
 
-    def get_request_data(self, users, user_indicators, user_counts):
+    def get_request_data(self, users, user_total_counts, user_indicators_count):
+        headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
+                   'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
+                   'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
+                   'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
+                   'Take Home Ration']
         request_data = []
         location_type_filter = {
             'aggregation_level': 5
@@ -143,12 +170,13 @@ class Command(BaseCommand):
             location_type_filter[test_location] = 0
         all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
 
-        location_matrix, location_mapping = self.convert_rows_to_list(all_awc_locations)
+        location_matrix, location_mapping = self.get_matrix_and_location_id_type_mapping_from_queryset(
+            all_awc_locations)
 
         print(f'Compiling request data for {len(users)} users')
         for chunk in with_progress_bar(chunked(users, 50), prefix='\tProcessing'):
             for user in chunk:
-                indicator_count = user_indicators[user['username']]
+                indicator_count = user_indicators_count[user['username']]
                 user_sql_location_ids = user['assigned_location_ids']
                 if isinstance(user_sql_location_ids, str):
                     user_sql_location_ids = [user_sql_location_ids]
@@ -156,7 +184,7 @@ class Command(BaseCommand):
                 for user_sql_location in user_sql_location_ids:
                     if user_sql_location not in location_mapping:
                         continue
-                    location_type_id = self.sql_locations[user_sql_location]
+                    location_type_id = location_mapping[user_sql_location]
                     column_index = self.location_types.index(location_type_id)
                     user_location_row = None
                     # iterating and getting the db row from matrix
@@ -175,26 +203,10 @@ class Command(BaseCommand):
 
                         excel = [0, user_location_row[1], user_location_row[3],
                                  user_location_row[5], user['username'].split('@')[0], user_location_type,
-                                 self.get_role_from_username(user['username']), user_counts[user['username']]]
+                                 self.get_role_from_username(user['username']), user_total_counts[user['username']]]
                         excel.extend(indicator_count)
                         request_data.append(excel)
+        request_data = sorted(request_data, key=lambda x: (x[1], x[2], x[3]))
+        request_data.insert(0, headers)
         _write_to_file(REQUEST_DATA_CACHE, request_data)
 
-
-def _get_from_file(filename):
-    if os.path.exists(filename):
-        print(f'Fetching data from file: {filename}')
-        with open(filename, 'r') as f:
-            reader = csv.reader(f)
-            return [
-                r[0] if len(r) == 1 else r for r in list(reader)
-            ]
-
-
-def _write_to_file(filename, rows):
-    print(f'Writing {len(rows)} to file {filename}')
-    with open(filename, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerows([
-            r if isinstance(r, list) else [r] for r in rows
-        ])
