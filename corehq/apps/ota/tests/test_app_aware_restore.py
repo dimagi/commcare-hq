@@ -1,6 +1,4 @@
-
 from django.test import TestCase
-from lxml import etree
 
 from mock import patch
 
