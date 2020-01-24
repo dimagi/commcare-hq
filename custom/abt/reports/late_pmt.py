@@ -156,7 +156,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         return {(sms['date'].date(), sms['couch_recipient']) for sms in data}
 
     @cached_property
-    def sms_events(self):
+    def valid_smss_received(self):
         data = MessagingSubEvent.objects.filter(
             parent__domain=self.domain,
             parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
@@ -207,10 +207,10 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             for date in dates:
                 for user in users:
                     sms_received = (date.date(), user['user_id']) in self.smss_received
-                    sms_event_exists = (date.date(), user['user_id']) in self.sms_events
+                    valid_sms = (date.date(), user['user_id']) in self.valid_smss_received
                     if not sms_received and sub_status != 'group_b':
                         error_msg = _('No PMT data Submitted')
-                    elif not sms_event_exists and sms_received and sub_status != 'group_a':
+                    elif sms_received and not valid_sms and sub_status != 'group_a':
                         error_msg = _('Incorrect PMT data Submitted')
                     else:
                         continue
