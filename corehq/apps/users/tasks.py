@@ -319,41 +319,7 @@ def process_reporting_metadata_staging():
         )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            if not user or user.is_deleted():
-                record.delete()
-                continue
-
-            save = False
-            if record.received_on:
-                save = mark_latest_submission(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on, save_user=False
-                )
-            if record.device_id or record.sync_date or record.last_heartbeat:
-                device_app_meta = DeviceAppMeta(
-                    app_id=record.app_id,
-                    build_id=record.build_id,
-                    build_version=record.app_version,
-                    last_heartbeat=record.last_heartbeat,
-                    last_sync=record.sync_date,
-                    num_unsent_forms=record.num_unsent_forms,
-                    num_quarantined_forms=record.num_quarantined_forms
-                )
-                if not record.last_heartbeat:
-                    # coming from sync
-                    latest_build_date = record.sync_date
-                else:
-                    # coming from hearbeat
-                    latest_build_date = record.modified_on
-                save |= mark_last_synclog(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, latest_build_date, record.device_id, device_app_meta,
-                    commcare_version=record.commcare_version, build_profile_id=record.build_profile_id,
-                    save_user=False
-                )
-            if save:
-                user.save(fire_signals=False)
-
+            record.process_record(user)
             record.delete()
 
     if UserReportingMetadataStaging.objects.exists():

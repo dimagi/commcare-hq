@@ -2911,5 +2911,40 @@ class UserReportingMetadataStaging(models.Model):
                 WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
 
+    def process_record(self, couch_user):
+        save = False
+        if not user or user.is_deleted():
+            return
+
+        if self.received_on:
+            save = mark_latest_submission(
+                self.domain, user, self.app_id, self.build_id,
+                self.xform_version, self.form_meta, self.received_on, save_user=False
+            )
+        if self.device_id or self.sync_date or self.last_heartbeat:
+            device_app_meta = DeviceAppMeta(
+                app_id=self.app_id,
+                build_id=self.build_id,
+                build_version=self.app_version,
+                last_heartbeat=self.last_heartbeat,
+                last_sync=self.sync_date,
+                num_unsent_forms=self.num_unsent_forms,
+                num_quarantined_forms=self.num_quarantined_forms
+            )
+            if not self.last_heartbeat:
+                # coming from sync
+                latest_build_date = self.sync_date
+            else:
+                # coming from hearbeat
+                latest_build_date = self.modified_on
+            save |= mark_last_synclog(
+                self.domain, user, self.app_id, self.build_id,
+                self.sync_date, latest_build_date, self.device_id, device_app_meta,
+                commcare_version=self.commcare_version, build_profile_id=self.build_profile_id,
+                save_user=False
+            )
+        if save:
+            user.save(fire_signals=False)
+
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
