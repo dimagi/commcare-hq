@@ -370,7 +370,7 @@ hqDefine('export/js/models', [
             return false;
         }
         if (tableId === 0) {
-            return column.formatProperty() === 'formid' || column.formatProperty() === 'caseid';
+            return (column.formatProperty() === 'formid' || column.formatProperty() === 'caseid') && column.tags().indexOf('info') !== -1;
         }
         return column.formatProperty() === 'number';
     };
@@ -507,6 +507,7 @@ hqDefine('export/js/models', [
             'export_format',
             'split_multiselects',
             'transform_dates',
+            'format_data_in_excel',
             'include_errors',
             'is_deidentified',
             'domain',

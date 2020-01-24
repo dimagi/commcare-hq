@@ -591,7 +591,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
-    notification_emails=['jemord']
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -1349,6 +1348,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
 )
 
+FILTERED_LOCATION_DOWNLOAD = StaticToggle(
+    'filtered_location_download',
+    "Ability to filter location download to include only a specified location and its descendants.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
+)
+
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1419,6 +1426,13 @@ LINKED_DOMAINS = StaticToggle(
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
+    'MULTI_MASTER_BYPASS_VERSION_CHECK',
+    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
@@ -1499,7 +1513,6 @@ RELATED_LOCATIONS = StaticToggle(
     'REACH: Enable experimental location many-to-many mappings',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
@@ -1621,13 +1634,6 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
 )
 
 
-DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
-    'demo_workflow_v2_ab_variant',
-    'Enables the "variant" version of the Demo Workflow A/B test after login',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_USER],
-)
-
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',
@@ -1722,6 +1728,14 @@ mwcd_indicators = StaticToggle(
     [NAMESPACE_USER],
 )
 
+ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
+    'governance_apis',
+    'ICDS: Dashboard Governance dashboard API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
 RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
     'rate_limit_submissions',
     'Rate limit submissions with a 429 TOO MANY REQUESTS response',
@@ -1773,5 +1787,25 @@ USE_NEW_GET_COLUMN = StaticToggle(
     'Uses the new get_column method when loading edit exports '
     '(strictly for QA right now).',
     TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+    'livequery_read_from_standbys',
+    'Allow livequery restore to read data from plproxy standbys if they are available',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description="""
+    To allow a gradual rollout and testing of using the standby
+    databases to generate restore payloads.
+    """
+)
+
+
+EXCEL_EXPORT_DATA_TYPING = StaticToggle(
+    'excel_export_data_typing',
+    'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
+    'and case exports, so that excel export cells are correctly data-typed.',
+    TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )

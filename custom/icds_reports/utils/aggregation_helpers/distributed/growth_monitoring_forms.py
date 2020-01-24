@@ -11,6 +11,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
     helper_key = 'growth-monitoring-forms'
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
     aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -182,3 +183,9 @@ class GrowthMonitoringFormsAggregationDistributedHelper(StateBasedAggregationDis
             ucr_table_query=ucr_query,
             tablename=self.aggregate_parent_table
         ), query_params
+
+    def delete_old_data_query(self):
+        pass
+
+    def delete_previous_run_query(self):
+        pass

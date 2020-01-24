@@ -169,8 +169,6 @@ def overwrite_app(app, master_build, report_map=None):
     master_json = master_build.to_json()
     app_json = app.to_json()
 
-    old_form_ids_by_xmlns = _get_historical_form_ids_by_xmlns(app)  # before updating anything
-
     for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
@@ -188,8 +186,12 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    ids_map = _map_old_form_ids_to_new(wrapped_app, old_form_ids_by_xmlns)
-    wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
+    # Legacy linked apps have different form unique ids than their master app(s). These mappings
+    # are stored as ResourceOverride objects. Look up to see if this app has any.
+    from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
+    overrides = get_xform_resource_overrides(domain=wrapped_app.domain, app_id=wrapped_app.get_id)
+    ids_map = {pre_id: override.post_id for pre_id, override in overrides.items()}
+    wrapped_app = _update_forms(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
     for path in wrapped_app.multimedia_map.keys():
@@ -200,37 +202,7 @@ def overwrite_app(app, master_build, report_map=None):
     return wrapped_app
 
 
-def _get_historical_form_ids_by_xmlns(app):
-    # Corresponding forms in a master app and linked app need to have the same
-    # XMLNS but different unique ids, so the linked app needs to know if there
-    # are any new forms and, if so, assign those forms new unique ids. To do
-    # this lookup, get the XMLNSes from the the most recent versions of this
-    # app pulled from each master and compare those to the XMLNSes present in
-    # this app.
-    unknown_xmlnses = set(_get_form_ids_by_xmlns(app).keys())
-    form_ids_by_xmlns = {}
-    for brief in app.get_master_app_briefs():
-        if len(unknown_xmlnses):
-            previous_app = app.get_latest_build_from_upstream(brief.master_id)
-            if previous_app:
-                form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
-                unknown_xmlnses = unknown_xmlnses.difference(form_ids_by_xmlns.keys())
-    # Add in any forms from the current linked app, before the source is overwritten.
-    # This is particularly important if there's no previous version.
-    if len(unknown_xmlnses):
-        form_ids_by_xmlns.update(_get_form_ids_by_xmlns(app))
-    return form_ids_by_xmlns
-
-
-def _map_old_form_ids_to_new(app, old_form_ids_by_xmlns):
-    return {
-        form.unique_id: old_form_ids_by_xmlns[form['xmlns']]
-        for form in app.get_forms()
-        if form['xmlns'] in old_form_ids_by_xmlns and form.form_type != 'shadow_form'
-    }
-
-
-def _update_form_ids(app, master_app, ids_map):
+def _update_forms(app, master_app, ids_map):
 
     _attachments = master_app.get_attachments()
 
@@ -238,17 +210,12 @@ def _update_form_ids(app, master_app, ids_map):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    updated_source = update_form_unique_ids(app_source, ids_map)
+    updated_source = update_form_unique_ids(app_source, ids_map, update_all=False)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
-
-
-def _get_form_ids_by_xmlns(app):
-    return {form['xmlns']: form.unique_id
-            for form in app.get_forms() if form.form_type != 'shadow_form'}
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
@@ -377,7 +344,11 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     master_app_id = master_build.master_id
 
     previous = app.get_latest_build_from_upstream(master_app_id)
-    if previous is None or master_build.version > previous.upstream_version:
+    if (
+        previous is None
+        or master_build.version > previous.upstream_version
+        or toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain)
+    ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
 

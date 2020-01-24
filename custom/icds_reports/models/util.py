@@ -161,6 +161,12 @@ class UcrReconciliationStatus(models.Model):
                 ],
                 "static-visitorbook_forms": [
                     'http://openrosa.org/formdesigner/08583F46-ED60-4864-B54F-CA725D5C230E',
+                ],
+                'static-dashboard_thr_forms': [
+                    'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
+                ],
+                'static-thr_forms_v2': [
+                    'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
                 ]
             },
             cls.CommCareCase: {

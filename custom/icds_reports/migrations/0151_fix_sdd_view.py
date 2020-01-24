@@ -14,4 +14,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0150_update_agg_awc_monthly_view'),
     ]
 
-    operations = [migrator.get_migration('service_delivery_monthly.sql')]
+    operations = []

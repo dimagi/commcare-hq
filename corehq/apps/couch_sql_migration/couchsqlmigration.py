@@ -25,7 +25,6 @@ from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -89,7 +88,7 @@ from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
-from .util import exit_on_error
+from .util import get_ids_from_string_or_file, exit_on_error, str_to_datetime
 
 log = logging.getLogger(__name__)
 
@@ -158,7 +157,7 @@ class CouchSqlDomainMigrator:
             domain=self.domain,
             state=self.statedb.unique_id,
         ))
-        patch = patch_case_property_validators()
+        patch = migration_patches()
         with self.counter, patch, self.case_diff_queue, self.stopper:
             if self.forms:
                 self._process_forms_subset(self.forms)
@@ -185,12 +184,7 @@ class CouchSqlDomainMigrator:
         self._migrate_form_and_associated_models(couch_form)
         self.case_diff_queue.update(case_ids, form_id)
 
-    def _migrate_form_and_associated_models(
-        self,
-        couch_form,
-        form_is_processed=True,
-        replace_diffs=False,
-    ):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
         """
         Copies `couch_form` into a new sql form
         """
@@ -241,12 +235,12 @@ class CouchSqlDomainMigrator:
                 raise err from None
         finally:
             if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form, replace_diffs)
+                self._save_diffs(couch_form, sql_form)
 
-    def _save_diffs(self, couch_form, sql_form, replace):
+    def _save_diffs(self, couch_form, sql_form):
         couch_json = couch_form.to_json()
         sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json, replace)
+        self.statedb.save_form_diffs(couch_json, sql_json)
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -351,12 +345,7 @@ class CouchSqlDomainMigrator:
         if forms == "skipped":
             self._process_skipped_forms()
             return
-        if forms.startswith(("./", "/")):
-            log.info("loading form ids from file: %s", forms)
-            with open(forms, encoding="utf-8") as fh:
-                form_ids = [x.rstrip("\n") for x in fh if x.strip()]
-        else:
-            form_ids = [x for x in forms.split() if x]
+        form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
         form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
         migrated_ids = orig_ids - set(form_ids)
@@ -366,7 +355,7 @@ class CouchSqlDomainMigrator:
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
-            self._migrate_form_and_associated_models(form, replace_diffs=True)
+            self._migrate_form_and_associated_models(form)
         self._rediff_already_migrated_forms(migrated_ids)
 
     def _rediff_already_migrated_forms(self, form_ids):
@@ -389,7 +378,7 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form, replace_diffs=True)
+                    self._migrate_form_and_associated_models(form)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
@@ -412,7 +401,7 @@ class CouchSqlDomainMigrator:
     def _with_progress(self, doc_types, iterable, progress_name='Migrating', offset_key=None):
         doc_count = sum([
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-            for doc_type in doc_types
+            for doc_type in (d.split(".", 1)[0] for d in doc_types)
         ])
         if offset_key is None:
             offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
@@ -433,7 +422,7 @@ class CouchSqlDomainMigrator:
         yield from _iter_skipped_forms(
             self.domain, migration_id, self.stopper, self._with_progress)
 
-    def _get_resumable_iterator(self, doc_types):
+    def _get_resumable_iterator(self, doc_types, **kw):
         # resumable iteration state is associated with statedb.unique_id,
         # so it will be reset (orphaned in couch) if that changes
         migration_id = self.statedb.unique_id
@@ -441,7 +430,7 @@ class CouchSqlDomainMigrator:
             yield from iter_unmigrated_docs(
                 self.domain, doc_types, migration_id, self.counter)
         docs = self._iter_docs(doc_types, migration_id)
-        yield from self._with_progress(doc_types, docs)
+        yield from self._with_progress(doc_types, docs, **kw)
 
     def _iter_docs(self, doc_types, migration_id):
         for doc_type in doc_types:
@@ -455,6 +444,12 @@ class CouchSqlDomainMigrator:
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
 NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
+
+
+@contextmanager
+def migration_patches():
+    with patch_case_property_validators(), patch_XFormInstance_get_xml():
+        yield
 
 
 @contextmanager
@@ -474,6 +469,33 @@ def patch_case_property_validators():
         yield
     finally:
         PROPERTY_TYPE_MAPPING.update(original)
+
+
+@contextmanager
+def patch_XFormInstance_get_xml():
+    @memoized
+    def get_xml(self):
+        try:
+            return self._unsafe_get_xml()
+        except MissingFormXml as err:
+            try:
+                data = self.to_json()
+            except Exception:
+                raise err
+            return convert_form_to_xml(data["form"]).encode('utf-8')
+
+    if hasattr(XFormInstance, "_unsafe_get_xml"):
+        # noop when already patched
+        yield
+        return
+
+    XFormInstance._unsafe_get_xml = XFormInstance.get_xml
+    XFormInstance.get_xml = get_xml
+    try:
+        yield
+    finally:
+        XFormInstance.get_xml = XFormInstance._unsafe_get_xml
+        del XFormInstance._unsafe_get_xml
 
 
 def _wrap_form(doc):
@@ -559,7 +581,7 @@ def _migrate_form_attachments(sql_form, couch_form):
 
     def get_form_xml_metadata(meta):
         try:
-            couch_form.get_xml()
+            couch_form._unsafe_get_xml()
             assert meta is not None, couch_form.form_id
             return meta
         except MissingFormXml:
@@ -763,12 +785,9 @@ def _get_case_and_ledger_updates(domain, sql_form):
             case_db.mark_changed(case)
         cases = case_result.cases
 
-        try:
-            stock_result = process_stock(xforms, case_db)
-            cases = case_db.get_cases_for_saving(sql_form.received_on)
-            stock_result.populate_models()
-        except MissingFormXml:
-            stock_result = None
+        stock_result = process_stock(xforms, case_db)
+        cases = case_db.get_cases_for_saving(sql_form.received_on)
+        stock_result.populate_models()
 
     return CaseStockProcessingResult(
         case_result=case_result,
@@ -879,7 +898,11 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = self._convert_date(key_date)
+        try:
+            key_date = str_to_datetime(key_date)
+        except ValueError:
+            log.warn("could not get date from last element of key %r", results[-1]['key'])
+            return
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -889,14 +912,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
-
-    @staticmethod
-    def _convert_date(value):
-        try:
-            return datetime.strptime(value, ISO_DATETIME_FORMAT)
-        except ValueError:
-            sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
-            return datetime.strptime(value, sans_micros)
 
     def stop(self):
         if self.should_stop is not None:
@@ -931,7 +946,18 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    return (row[row_key] for row in rows)
+    log.info("iteration state: %r", rows.state.to_json())
+    row = None
+    try:
+        for row in rows:
+            assert row['key'][0] == domain, row
+            yield row[row_key]
+    finally:
+        if row is not None:
+            row_copy = dict(row)
+            row_copy.pop("doc", None)
+            log.info("last item: %r", row_copy)
+        log.info("final iteration state: %r", rows.state.to_json())
 
 
 _iter_docs.chunk_size = 1000
@@ -1009,13 +1035,14 @@ class DocCounter:
 
     def __init__(self, statedb):
         self.statedb = statedb
-        self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.counts = defaultdict(int, self.statedb.get(self.STATE_KEY, {}))
         self.timing = TimingContext("couch_sql_migration")
         self.dd_session = 0
         self.state_session = 0
 
     def __enter__(self):
         self.timing.start()
+        return self
 
     def __exit__(self, *exc_info):
         self.timing.stop()

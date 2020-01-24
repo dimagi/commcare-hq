@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.views.utils import (
@@ -11,6 +11,7 @@ from corehq.apps.app_manager.views.utils import (
     get_new_multimedia_between_builds,
 )
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq import toggles
 from corehq.util.quickcache import quickcache
 
 
@@ -24,12 +25,27 @@ def multimedia_ajax(request, domain, app_id):
             return JsonResponse(
                 {"message": _("One of the Report menus is misconfigured, please try again after they are fixed")},
                 status=500)
+
         context = {
             'multimedia_state': multimedia_state,
             'domain': domain,
             'app': app,
             'is_linked_app': is_linked_app(app),
         }
+
+        if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled_for_request(request):
+            missing_paths = {p for p in app.all_media_paths() if p not in app.multimedia_map}
+            import_apps = get_apps_in_domain(domain, include_remote=False)
+            import_app_counts = {
+                a.id: len(missing_paths.intersection(a.multimedia_map.keys()))
+                for a in import_apps
+            }
+            import_apps = [a for a in import_apps if import_app_counts[a.id]]
+            context.update({
+                'import_apps': import_apps,
+                'import_app_counts': import_app_counts,
+            })
+
         return render(request, "app_manager/partials/settings/multimedia_ajax.html", context)
     else:
         raise Http404()

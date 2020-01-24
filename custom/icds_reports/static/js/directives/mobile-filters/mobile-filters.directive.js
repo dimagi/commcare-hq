@@ -1,7 +1,7 @@
 function MobileFiltersController($scope) {
     const MONTH = 'month';
     const LOCATION = 'location';
-    $scope.selectedTab = MONTH;
+    $scope.selectedTab = LOCATION;
     $scope.filterData = {};
     $scope.closeFilters = function () {
         $scope.$emit('closeFilterMenu', {});
@@ -17,6 +17,9 @@ function MobileFiltersController($scope) {
         $scope.hasDate = false;
         $scope.filterData = {};
         $scope.$broadcast('request_filter_data',{});
+    };
+    $scope.resetFilters = function () {
+        $scope.$broadcast('reset_filter_data',{});
     };
     $scope.$on('filter_data', function (event, data) {
         if (data.hasLocation) {
@@ -44,6 +47,7 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
         restrict:'E',
         scope: {
             selectedLocations: '=',
+            selectAwc: '=?',
         },
         bindToController: true,
         templateUrl: function () {

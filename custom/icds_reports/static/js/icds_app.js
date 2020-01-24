@@ -123,9 +123,13 @@ MainController.$inject = [
     'isAlertActive',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
+window.angular.module('icdsApp', [
+        'ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3',
+        'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader',
+        'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+        var utils = hqImport("js/icds_dashboard_utils");
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
         $routeProvider
@@ -157,101 +161,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/health_tabular_report", {
                 template: "health_tabular_report",
             })
-            .when("/demographics", {
-                redirectTo: "/demographics/registered_household/map",
-            })
-            .when("/demographics/registered_household", {
-                redirectTo: "/demographics/registered_household/map",
-            })
-            .when("/demographics/registered_household/:step", {
-                template: "<registered-household></registered-household>",
-            })
-            .when("/demographics/enrolled_children", {
-                redirectTo: "/demographics/enrolled_children/map",
-            })
-            .when("/demographics/enrolled_children/:step", {
-                template: "<enrolled-children></enrolled-children>",
-            })
-            .when("/demographics/enrolled_women", {
-                redirectTo: "/demographics/enrolled_women/map",
-            })
-            .when("/demographics/enrolled_women/:step", {
-                template: "<enrolled-women></enrolled-women>",
-            })
-            .when("/demographics/lactating_enrolled_women", {
-                redirectTo: "/demographics/lactating_enrolled_women/map",
-            })
-            .when("/demographics/lactating_enrolled_women/:step", {
-                template: "<lactating-enrolled-women></lactating-enrolled-women>",
-            })
-            .when("/demographics/adolescent_girls", {
-                redirectTo: "/demographics/adolescent_girls/map",
-            })
-            .when("/demographics/adolescent_girls/:step", {
-                template: "<adolescent-girls></adolescent-girls>",
-            })
-            .when("/demographics/adhaar", {
-                redirectTo: "/demographics/adhaar/map",
-            })
-            .when("/demographics/adhaar/:step", {
-                template: "<adhaar-beneficiary></adhaar-beneficiary>",
-            })
-            .when("/awc_infrastructure", {
-                redirectTo: "/awc_infrastructure/clean_water/map",
-            })
-            .when("/awc_infrastructure/clean_water", {
-                redirectTo: "/awc_infrastructure/clean_water/map",
-            })
-            .when("/awc_infrastructure/clean_water/:step", {
-                template: "<clean-water></clean-water>",
-            })
-            .when("/awc_infrastructure/functional_toilet", {
-                redirectTo: "/awc_infrastructure/functional_toilet/map",
-            })
-            .when("/awc_infrastructure/functional_toilet/:step", {
-                template: "<functional-toilet></functional-toilet>",
-            })
-            .when("/awc_infrastructure/medicine_kit", {
-                redirectTo: "/awc_infrastructure/medicine_kit/map",
-            })
-            .when("/awc_infrastructure/medicine_kit/:step", {
-                template: "<medicine-kit></medicine-kit>",
-            })
-            .when("/awc_infrastructure/infantometer", {
-                redirectTo: "/awc_infrastructure/infantometer/map",
-            })
-            .when("/awc_infrastructure/infantometer/:step", {
-                template: "<infantometer></infantometer>",
-            })
-            .when("/awc_infrastructure/stadiometer", {
-                redirectTo: "/awc_infrastructure/stadiometer/map",
-            })
-            .when("/awc_infrastructure/stadiometer/:step", {
-                template: "<stadiometer></stadiometer>",
-            })
-            .when("/awc_infrastructure/infants_weight_scale", {
-                redirectTo: "/awc_infrastructure/infants_weight_scale/map",
-            })
-            .when("/awc_infrastructure/infants_weight_scale/:step", {
-                template: "<infants-weight-scale></infants-weight-scale>",
-            })
-            .when("/awc_infrastructure/adult_weight_scale", {
-                redirectTo: "/awc_infrastructure/adult_weight_scale/map",
-            })
-            .when("/awc_infrastructure/adult_weight_scale/:step", {
-                template: "<adult-weight-scale></adult-weight-scale>",
-            })
-            .when("/awc_reports", {
-                redirectTo: "/awc_reports/pse",
-            })
             .when("/service_delivery_dashboard", {
                 redirectTo: "/service_delivery_dashboard/pw_lw_children",
             })
             .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
-            })
-            .when("/awc_reports/:step", {
-                template: "<awc-reports></awc-reports>",
             })
             .when("/lady_supervisor", {
                 template: "<lady-supervisor></lady-supervisor>",
@@ -271,7 +185,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });
-        hqImport("js/icds_dashboard_utils").addMaternalChildRoutes($routeProvider);
-        hqImport("js/icds_dashboard_utils").addCasReachRoutes($routeProvider);
+        utils.addSharedRoutes($routeProvider, 'map');
     }]);
 

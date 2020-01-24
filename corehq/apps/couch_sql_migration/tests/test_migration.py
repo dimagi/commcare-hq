@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from functools import wraps
 from signal import SIGINT
@@ -129,9 +129,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration(self, domain=None, action=MIGRATE, **options):
+    def _do_migration(self, domain=None, action=MIGRATE, chunk_size=0, **options):
         if domain is None:
             domain = self.domain_name
+        if chunk_size:
+            patch_chunk_size = self.patch_migration_chunk_size(chunk_size)
+        else:
+            patch_chunk_size = suppress()  # until nullcontext with py3.7
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
@@ -140,7 +144,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
-        ):
+        ), patch_chunk_size:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
@@ -213,10 +217,10 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             assert backend == "couch", "typo? unknown backend: %s" % backend
             self.assertFalse(is_sql, "sql backend is active")
 
-    def submit_form(self, xml, received_on=None):
+    def submit_form(self, xml, received_on=None, domain=None):
         # NOTE freezegun.freeze_time does not work with the blob db
         # boto3 and/or minio -> HeadBucket 403 Forbidden
-        form = submit_form_locally(xml, self.domain_name).xform
+        form = submit_form_locally(xml, domain or self.domain_name).xform
         if received_on is not None:
             if isinstance(received_on, timedelta):
                 received_on = datetime.utcnow() + received_on
@@ -261,6 +265,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with raise_context, mock.patch(path, iter_docs):
             yield
 
+    @contextmanager
+    def diff_without_rebuild(self):
+        with mock.patch("corehq.form_processor.backends.couch.processor"
+                        ".FormProcessorCouch.hard_rebuild_case") as mock_:
+            mock_.side_effect = Exception("fail!")
+            yield
+
 
 @contextmanager
 def null_context():
@@ -284,6 +295,22 @@ def get_report_domain():
 
 
 class MigrationTestCase(BaseMigrationTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # disable hard rebuild SQL case to prevent deadlock in
+        # publish_case_saved related to kafka threading and gipc locking??
+        cls.rebuild_sql_case_patch = mock.patch(
+            "corehq.apps.couch_sql_migration.casediff.was_rebuilt",
+            lambda *a: True,
+        )
+        cls.rebuild_sql_case_patch.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.rebuild_sql_case_patch.stop()
+        super().tearDownClass()
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
@@ -871,7 +898,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         case.save()
 
         # migration should re-diff previously migrated form-1
-        self._do_migration_and_assert_flags(self.domain_name)
+        with self.diff_without_rebuild():
+            self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1", "case-2"})
         self._compare_diffs([
             ('CommCareCase-Deleted', Diff('diff', ['age'], old='35', new='27')),
@@ -1413,7 +1441,8 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        mod._migrate_form_attachments(sql_form, couch_form)
+        with mod.patch_XFormInstance_get_xml():
+            mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()
         self.assertEqual(convert_xform_to_json(xml), couch_form.form_data)
@@ -1464,15 +1493,22 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
+def make_test_form(form_id, **data):
+    fields = {
+        "age": (27, ">{}<", 2),
+        "case_id": ("test-case", '"{}"', 1),
+        "case_name": ("Xeenax", ">{}<", 2),
+        "date": ("2015-08-04T18:25:56.656Z", "{}", 2),
+    }
     form = TEST_FORM
-    assert form.count(">test-form<") == 1
-    assert form.count(">27<") == 2
-    assert form.count('"test-case"') == 1
-    assert form.count('>Xeenax<') == 2
-    form = form.replace(">27<", f">{age}<")
-    form = form.replace('"test-case"', f'"{case_id}"')
-    form = form.replace('>Xeenax<', f'>{case_name}<')
+    for name, value in data.items():
+        if name not in fields:
+            raise ValueError(f"unknown field: {name}")
+        default_value, template, occurs = fields[name]
+        old = template.format(default_value)
+        new = template.format(value)
+        assert form.count(old) == occurs, (name, old, new, occurs)
+        form = form.replace(old, new)
     return form.replace(">test-form<", f">{form_id}<")
 
 

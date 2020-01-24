@@ -9,15 +9,11 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'icds_cas_reach';
     vm.usePercentage = false;
     vm.serviceDataFunction = icdsCasReachService.getAwcsCoveredData;
 
     vm.label = "AWCs Launched";
-    vm.steps = {
-        'map': {route: '/icds_cas_reach/awcs_covered/map', label: 'Map View'},
-        'chart': {route: '/icds_cas_reach/awcs_covered/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/icds_cas_reach/awcs_covered/');
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',

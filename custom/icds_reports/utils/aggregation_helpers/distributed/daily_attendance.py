@@ -29,6 +29,8 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
         return get_table_name(self.domain, self.ucr_daily_attendance_table)
 
     def aggregate_query(self):
+        # This query uses DISTINCT ON and ORDER BY to find the most recent form of each day
+        # inserted_at is used as a proxy for received_on or timeend as those are not in this table.
         return """
             INSERT INTO "{tablename}" (
               SELECT DISTINCT ON (awc_id, submitted_on)
@@ -46,7 +48,8 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
                 form_location_long as form_location_long,
                 image_name as image_name,
                 pse_conducted as pse_conducted,
-                supervisor_id as supervisor_id
+                supervisor_id as supervisor_id,
+                state_id as state_id
               FROM "{ucr_daily_attendance_tablename}"
               WHERE month = %(start_month)s and (awc_open_count=1 OR awc_not_open = 1)
               ORDER BY awc_id, submitted_on, inserted_at DESC

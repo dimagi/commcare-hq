@@ -271,7 +271,7 @@ class SqlData(ReportDataSource):
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context(start=start, limit=limit)
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             return qc.resolve(session.connection(), self.filter_values)
 
@@ -281,7 +281,7 @@ class SqlData(ReportDataSource):
 
     def get_sql_queries(self):
         qc = self.query_context()
-        session_helper = connection_manager.get_session_helper(self.engine_id)
+        session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
             return qc.get_query_strings(session.connection())
 

@@ -9,14 +9,10 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
-    vm.sectionSlug = 'maternal_child';
     vm.serviceDataFunction = maternalChildService.getInstitutionalDeliveriesData;
 
     vm.label = "Institutional deliveries";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/institutional_deliveries/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/institutional_deliveries/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/institutional_deliveries/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };

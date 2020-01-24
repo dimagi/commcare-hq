@@ -1,3 +1,4 @@
+from datetime import date
 import pytz
 from django.conf import settings
 
@@ -108,12 +109,15 @@ AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
-
+AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
+AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE = 'icds_dashboard_adolescent_girls_registration'
+AGG_GOV_DASHBOARD_TABLE = 'agg_gov_dashboard'
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
+
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
@@ -151,3 +155,15 @@ CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Serv
 PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
 LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
 ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'
+OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Out of school Adolescent girls (11-14 years)'
+NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
+NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
+
+
+GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION = 10000
+
+# need to add more steps
+GOVERNANCE_API_STEPS = [
+    'home_visit',
+    'state_names'
+]

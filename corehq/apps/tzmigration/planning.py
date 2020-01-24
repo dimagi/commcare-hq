@@ -85,10 +85,11 @@ class PlanningStockReportHelper(Base):
 
 class BaseDB(object):
 
-    def __init__(self, db_filepath, readonly=False):
+    def __init__(self, domain, db_filepath, readonly=False):
         def connect():
             return sqlite3.connect(f"file:{db_filepath}{mode}", uri=True)
         mode = "?mode=ro" if readonly else ""
+        self.domain = domain
         self.readonly = readonly
         self.db_filepath = db_filepath
         self.engine = create_engine("sqlite://", creator=connect)
@@ -96,23 +97,23 @@ class BaseDB(object):
 
     def __repr__(self):
         readonly = ", readonly=True" if self.readonly else ""
-        return f"{type(self).__name__}({self.db_filepath!r}{readonly})"
+        return f"{type(self).__name__}({self.domain!r}, {self.db_filepath!r}{readonly})"
 
     def __getstate__(self):
-        return self.db_filepath
+        return self.domain, self.db_filepath
 
-    def __setstate__(self, db_filepath):
-        self.__init__(db_filepath)
+    def __setstate__(self, args):
+        self.__init__(*args)
 
     @classmethod
-    def init(cls, db_filepath):
-        self = cls(db_filepath)
+    def init(cls, domain, db_filepath):
+        self = cls(domain, db_filepath)
         Base.metadata.create_all(self.engine)
         return self
 
     @classmethod
-    def open(cls, db_filepath, readonly=False):
-        return cls(db_filepath, readonly=readonly)
+    def open(cls, domain, db_filepath, readonly=False):
+        return cls(domain, db_filepath, readonly=readonly)
 
 
 class DiffDB(BaseDB):

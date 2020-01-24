@@ -1,3 +1,4 @@
+from django.db import models
 from itertools import chain
 
 from dimagi.ext.couchdbkit import (
@@ -35,6 +36,29 @@ class Dhis2Connection(Document):
     def wrap(cls, data):
         data.pop('log_level', None)
         return super(Dhis2Connection, cls).wrap(data)
+
+    def save(self, *args, **kwargs):
+        # Save to SQL
+        model, created = SQLDhis2Connection.objects.update_or_create(
+            domain=self.domain,
+            defaults={
+                'server_url': self.server_url,
+                'username': self.username,
+                'password': self.password,
+                'skip_cert_verify': self.skip_cert_verify,
+            }
+        )
+
+        # Save to couch
+        super().save(*args, **kwargs)
+
+
+class SQLDhis2Connection(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+    server_url = models.CharField(max_length=255, null=True)
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255, null=True)
+    skip_cert_verify = models.BooleanField(default=False)
 
 
 class DataValueMap(DocumentSchema):
