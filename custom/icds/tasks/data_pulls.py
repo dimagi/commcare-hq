@@ -22,7 +22,7 @@ def run_data_pull(data_pull_slug, month, location_id=None, email=None):
         filename = DataExporter(
             data_pull_slug, "icds-ucr-citus", month=month, location_id=location_id
         ).export()
-    except Exception as e:
+    except Exception:
         if email:
             message = _("""
                             Hi,
@@ -31,7 +31,7 @@ def run_data_pull(data_pull_slug, month, location_id=None, email=None):
                         """)
             send_html_email_async.delay(subject, [email], message,
                                         email_from=settings.DEFAULT_FROM_EMAIL)
-        raise e
+        raise
     else:
         if email and filename:
             exposed_download = expose_blob_download(
