@@ -25,7 +25,7 @@ from corehq.motech.dhis2.utils import (
 from corehq.util.quickcache import quickcache
 
 
-class SQLDhis2Connection(models.Model):
+class Dhis2Connection(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     server_url = models.CharField(max_length=255, null=True)
     username = models.CharField(max_length=255)
