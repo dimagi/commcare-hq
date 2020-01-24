@@ -17,6 +17,13 @@ class PopulateSQLCommand(BaseCommand):
     """
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
+    @classmethod
+    def auto_migrate_failed_message(self):
+        return """
+            A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
+            This migration is run using the management command {}.
+        """.format(__name__.split('.')[-1])
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--dry-run',

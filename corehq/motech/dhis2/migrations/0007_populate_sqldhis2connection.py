@@ -13,12 +13,6 @@ from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
-AUTO_MIGRATE_FAILED_MESSAGE = """
-    A migration must be performed before this environment can be upgraded to the latest version of CommCareHQ.
-    This migration is run using the management command populate_sql_dhis2_connection.
-"""
-
-
 def count_items_to_be_migrated():
     try:
         from corehq.motech.dhis2.models import Dhis2Connection
@@ -50,7 +44,7 @@ def _verify_sql_dhis2_connection(apps, schema_editor):
 
     if not migrated:
         print("")
-        print(AUTO_MIGRATE_FAILED_MESSAGE)
+        print(Command.auto_migrate_failed_message())
         sys.exit(1)
 
 
