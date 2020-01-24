@@ -70,7 +70,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
 
             report_datasource.from_spec.return_value = self.get_data_source_mock()
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
@@ -96,7 +96,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
              patch(
                  'corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-            patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
+            patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
             mock = self.get_data_source_mock()
             mock.has_total_row = True
             mock.total_column_ids = ['baz']
@@ -150,7 +150,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             configs = provider._relevant_report_configs(restore_state, [])
             self.assertEqual(configs, ([], {report_app_config.uuid}))
 
-    @patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time')
+    @patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time')
     def test_get_report_index_fixture(self, last_sync_time_patch):
         last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
         restore_user = Mock(domain='mock-domain', user_id='mock-user-id')
@@ -166,3 +166,32 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             </fixture>
             """
         )
+
+    def _test_get_oldest_sync_time(self, utcnow, synced_ids, purged_ids, expected):
+        sync_log = Mock()
+        sync_log.last_ucr_sync_times = [
+            Mock(report_uuid='a', datetime=datetime(2018, 9, 11, 6, 35, 20)),
+            Mock(report_uuid='b', datetime=datetime(2017, 9, 11, 6, 35, 20))
+        ]
+        restore_state = Mock()
+        restore_state.last_sync_log = sync_log
+        restore_state.overwrite_cache = False
+        synced_fixtures = [
+            Mock(uuid=_id) for _id in synced_ids
+        ]
+        with patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
+            utcnow_patch.return_value = utcnow
+            oldest_sync_time = ReportFixturesProviderV2._get_oldest_sync_time(
+                restore_state, synced_fixtures, purged_ids
+            )
+        self.assertEqual(oldest_sync_time, expected)
+
+    def test_get_oldest_sync_time_all_sync(self):
+        utcnow = datetime.utcnow()
+        self._test_get_oldest_sync_time(utcnow, ['a', 'b'], set(), utcnow)
+
+    def test_get_oldest_sync_time_old(self):
+        self._test_get_oldest_sync_time(datetime.utcnow(), ['c'], set(), datetime(2017, 9, 11, 6, 35, 20))
+
+    def test_get_oldest_sync_time_excluded(self):
+        self._test_get_oldest_sync_time(datetime.utcnow(), ['c'], {'b'}, datetime(2018, 9, 11, 6, 35, 20))
