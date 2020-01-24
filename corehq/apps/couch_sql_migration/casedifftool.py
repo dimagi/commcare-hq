@@ -9,12 +9,8 @@ from dimagi.utils.chunked import chunked
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 
-from .casediff import (
-    ProcessNotAllowed,
-    global_diff_state,
-    get_casediff_state_path,
-    make_result_saver,
-)
+from .casediff import global_diff_state, make_result_saver
+from .casediffqueue import ProcessNotAllowed, get_casediff_state_path
 from .couchsqlmigration import (
     CouchSqlDomainMigrator,
     get_main_forms_iteration_stop_date,

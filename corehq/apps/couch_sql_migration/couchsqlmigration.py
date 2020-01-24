@@ -82,7 +82,7 @@ from corehq.util.pagination import (
 from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
-from .casediff import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
+from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
