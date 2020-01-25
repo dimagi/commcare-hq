@@ -1,14 +1,11 @@
-import io
 import zipfile
 
-from django.db import connections
 from django.utils.functional import cached_property
 
 from corehq.util.context_managers import prevent_parallel_execution
 from custom.icds.const import DATA_PULL_CACHE_KEY
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
 from custom.icds_reports.data_pull.data_pulls import DirectDataPull
-from custom.icds_reports.data_pull.exceptions import DataPullInProgressError
 
 
 class DataExporter(object):
