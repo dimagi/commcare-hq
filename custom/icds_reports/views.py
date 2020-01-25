@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -446,8 +446,10 @@ class ProgramSummaryView(BaseReportView):
 class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
+        state = request.GET.get('state')
         district = request.GET.get('district')
-        topojson = get_topojson_for_district(district)
+
+        topojson = get_topojson_for_district(state, district)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 
@@ -565,19 +567,18 @@ class LocationView(View):
                 location_id=location_id
             )
 
-            map_location_name = location.name
-            if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
-                map_location_name = location.metadata['map_location_name']
             return JsonResponse({
                 'name': location.name,
-                'map_location_name': map_location_name,
+                'map_location_name': get_map_name(location),
                 'location_type': location.location_type.code,
                 'location_type_name': location.location_type_name,
                 'user_have_access': user_can_access_location_id(
                     self.kwargs['domain'],
                     request.couch_user, location.location_id
                 ),
-                'user_have_access_to_parent': location.location_id in parent_ids
+                'user_have_access_to_parent': location.location_id in parent_ids,
+                'parent_name': location.parent.name if location.parent else None,
+                'parent_map_name': get_map_name(location.parent),
             })
 
         parent_id = request.GET.get('parent_id')
@@ -2220,7 +2221,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
             return HttpResponse(error_message, status=400)
 
         query_filters = {'aggregation_level': AggregationLevels.AWC,
-                         # 'num_launched_awcs': 1,
+                         'num_launched_awcs': 1,
                          'awc_id__gt': last_awc_id,
                          'state_id': state_id
                          }
@@ -2255,8 +2256,9 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
             return HttpResponse(error_message, status=400)
 
         query_filters = {
-                         'state_id': state_id,
-                         'awc_id__gt': last_awc_id}
+            'state_id': state_id,
+            'awc_launched': 1,
+            'awc_id__gt': last_awc_id}
         order = ['awc_id']
 
         data, count = get_beneficiary_data(

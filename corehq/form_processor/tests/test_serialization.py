@@ -46,6 +46,6 @@ class SerializationTests(TestCase):
             self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))
 
         # this query goes through pl_proxy
-        with self.assertNumQueries(1, using=self.using):
+        with self.assertNumQueries(1, using=form.db):
             # lazy evaluation of history
             self.assertEqual(0, len(form_json['history']))

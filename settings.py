@@ -325,7 +325,6 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.apps.wisepill',
     'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
@@ -371,6 +370,7 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.aaa',
+    'custom.inddex',
 
     'custom.ccqa',
 )
@@ -950,6 +950,7 @@ SESSION_BYPASS_URLS = [
 ]
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+RATE_LIMIT_SUBMISSIONS = False
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1373,7 +1374,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'wisepill',
     'crs_reports',
     'grapevine',
     'openclinica',
@@ -1912,6 +1912,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
+    os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
@@ -2043,6 +2044,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
+
+    'inddex-reports': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

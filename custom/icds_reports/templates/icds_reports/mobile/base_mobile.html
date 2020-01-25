@@ -18,9 +18,7 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     {% block head %}{% endblock head %}
-    {% if less_debug %}
-      <script src="{% static 'less/dist/less.min.js' %}"></script>
-    {% endif %}
+    {% include "hqwebapp/partials/less_debug.html" %}
   </head>
   <body>
     {% block body %}{% endblock body %}

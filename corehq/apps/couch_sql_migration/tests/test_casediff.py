@@ -43,7 +43,7 @@ class TestCaseDiffQueue(SimpleTestCase):
 
         for patcher in self.patches:
             patcher.start()
-        self.statedb = StateDB.init(":memory:")  # in-memory db for test speed
+        self.statedb = StateDB.init("test", ":memory:")  # in-memory db for test speed
         self.cases = {}
         self.processed_forms = defaultdict(set)
         self.stock_forms = defaultdict(set)
@@ -594,14 +594,14 @@ class TestDiffCases(SimpleTestCase):
         for patcher in self.patches:
             patcher.start()
             self.addCleanup(patcher.stop)
-        self.statedb = StateDB.init(":memory:")
+        self.statedb = StateDB.init("test", ":memory:")
         self.addCleanup(self.statedb.close)
         self.sql_cases = {}
         self.sql_ledgers = {}
         self.couch_cases = {}
         self.couch_ledgers = {}
         stack = ExitStack()
-        stack.enter_context(mod.global_diff_state({}))
+        stack.enter_context(mod.global_diff_state("test", {}))
         self.addCleanup(stack.close)
 
     def test_clean(self):
@@ -614,6 +614,12 @@ class TestDiffCases(SimpleTestCase):
         couch_json["prop"] = 2
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
+
+    def test_wrong_domain(self):
+        couch_json = self.add_case("a", prop=1, domain="wrong")
+        couch_json["prop"] = 2
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs([Diff("a", path=["domain"], old="wrong", new="test")])
 
     def test_replace_diff(self):
         self.add_case("a", prop=1)
@@ -644,7 +650,7 @@ class TestDiffCases(SimpleTestCase):
     def add_case(self, case_id, **props):
         assert case_id not in self.sql_cases, self.sql_cases[case_id]
         assert case_id not in self.couch_cases, self.couch_cases[case_id]
-        props.setdefault("domain", "test")
+        props.setdefault("domain", self.statedb.domain)
         props.setdefault("doc_type", "CommCareCase")
         props.setdefault("_id", case_id)
         self.sql_cases[case_id] = Config(
