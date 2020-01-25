@@ -1,5 +1,7 @@
 from contextlib import contextmanager
 
+from django.core.cache import cache
+
 from corehq.const import DEFAULT_PARALLEL_EXECUTION_TIMEOUT
 from corehq.util.exceptions import ParallelExecutionError
 from corehq.util.soft_assert import soft_assert
@@ -53,4 +55,4 @@ def prevent_parallel_execution(cache_key, timeout=DEFAULT_PARALLEL_EXECUTION_TIM
     try:
         yield
     finally:
-        cache.set(DATA_PULL_CACHE_KEY, False)
+        cache.set(cache_key, False)
