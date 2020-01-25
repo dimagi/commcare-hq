@@ -82,6 +82,8 @@ def diff_cases(couch_cases, log_cases=False):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
         couch_case, diffs = diff_case(sql_case, couch_cases[case_id], dd_count)
+        if diffs:
+            dd_count("commcare.couchsqlmigration.case.has_diff")
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         if log_cases:
@@ -101,7 +103,6 @@ def diff_case(sql_case, couch_case, dd_count):
     dd_count("commcare.couchsqlmigration.case.diffed")
     diffs = check_domains(case_id, couch_case, sql_json)
     if diffs:
-        dd_count("commcare.couchsqlmigration.case.has_diff")
         return couch_case, diffs
     diffs = diff(couch_case, sql_json)
     if diffs:
@@ -122,8 +123,6 @@ def diff_case(sql_case, couch_case, dd_count):
                     sql_case = rebuild_case(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql")
                     diffs = diff(couch_case, sql_case.to_json())
-    if diffs:
-        dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
 
 
