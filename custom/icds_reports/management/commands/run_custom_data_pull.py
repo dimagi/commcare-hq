@@ -6,10 +6,10 @@ from custom.icds_reports.data_pull.exporter import DataExporter
 
 class Command(BaseCommand):
     help = """
-            Dump data from a pre-defined custom query for ICDS data pull requests 
-            or a sql file to generate a result zip file in the current directory.
-            The command returns the zip file name.
-           """
+    Dump data from a pre-defined custom query for ICDS data pull requests
+    or a sql file to generate a result zip file in the current directory.
+    The command returns the zip file name.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('name', help="slug of a custom data pull or a sql file name/path")
