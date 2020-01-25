@@ -1,6 +1,7 @@
 from custom.icds_reports.data_pull.exceptions import UnboundDataPullException
 from custom.icds_reports.data_pull.queries import (
     CBEConducted,
+    DirectQuery,
     LunchAbove3Years,
     LunchAbove5Years,
     PSEAbove3Years,
@@ -20,14 +21,29 @@ class BaseDataPull:
         self.db_alias = db_alias
 
     def get_queries(self):
-        if not self.queries:
-            return []
-        return [query_class().sql_query for query_class in self.queries]
+        raise NotImplementedError
 
     def run(self):
-        if not self.queries:
-            return []
-        return [query_class().run(self.db_alias) for query_class in self.queries]
+        raise NotImplementedError
+
+
+class DirectDataPull(BaseDataPull):
+
+    def __init__(self, db_alias, *args, **kwargs):
+        super(DirectDataPull, self).__init__(db_alias, *args, **kwargs)
+        self.query_file_path = kwargs.pop('query_file_path')
+        self.name = self.query_file_path.rsplit('/')[-1].rsplit('.')[0]
+        self.kwargs = kwargs
+
+    def get_queries(self):
+        query_obj = DirectQuery(self.name, self.query_file_path, **self.kwargs)
+        return [query_obj.sql_query]
+
+    def run(self):
+        query_obj = DirectQuery(self.name, self.query_file_path, **self.kwargs)
+        return {
+            query_obj.result_file_name: query_obj.run(self.db_alias)
+        }
 
 
 class MonthlyDataPull(BaseDataPull):
@@ -41,7 +57,11 @@ class MonthlyDataPull(BaseDataPull):
         return [query_class(self.month).sql_query for query_class in self.queries]
 
     def run(self):
-        return [query_class(self.month).run(self.db_alias) for query_class in self.queries]
+        result = {}
+        for query_class in self.queries:
+            query_obj = query_class(self.month)
+            result[query_obj.result_file_name] = query_obj.run(self.db_alias)
+        return result
 
 
 class LocationAndMonthBasedDataPull(MonthlyDataPull):
@@ -55,7 +75,11 @@ class LocationAndMonthBasedDataPull(MonthlyDataPull):
         return [query_class(self.location_id, self.month).sql_query for query_class in self.queries]
 
     def run(self):
-        return [query_class(self.location_id, self.month).run(self.db_alias) for query_class in self.queries]
+        result = {}
+        for query_class in self.queries:
+            query_obj = query_class(self.location_id, self.month)
+            result[query_obj.result_file_name] = query_obj.run(self.db_alias)
+        return result
 
 
 class MonthlyPerformance(LocationAndMonthBasedDataPull):
