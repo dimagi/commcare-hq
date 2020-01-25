@@ -1448,14 +1448,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         _get_domain_list.clear(self)
 
     @classmethod
-    def get_by_default_phone(cls, phone_number):
-        result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
-        if result:
-            return cls.wrap_correctly(result['doc'])
-        else:
-            return None
-
-    @classmethod
     @quickcache(['userID', 'domain'])
     def get_by_user_id(cls, userID, domain=None):
         """
