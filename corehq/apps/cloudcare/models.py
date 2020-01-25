@@ -15,7 +15,7 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
 
 
-class SQLApplicationAccess(models.Model):
+class ApplicationAccess(models.Model):
     domain = models.CharField(max_length=255, null=False, unique=True)
     restrict = models.BooleanField(default=False)
 
@@ -67,10 +67,10 @@ class SQLApplicationAccess(models.Model):
         }
 
 
-class SQLAppGroup(models.Model):
+class AppGroup(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     group_id = models.CharField(max_length=255)
-    application_access = models.ForeignKey('SQLApplicationAccess', on_delete=models.CASCADE)
+    application_access = models.ForeignKey('ApplicationAccess', on_delete=models.CASCADE)
 
     class Meta(object):
         unique_together = ('app_id', 'group_id')

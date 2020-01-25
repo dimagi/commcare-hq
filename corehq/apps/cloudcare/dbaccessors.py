@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.cloudcare.models import SQLApplicationAccess
+from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.util.quickcache import quickcache
 
 
@@ -9,7 +9,7 @@ def get_application_access_for_domain(domain):
     There should only be one of these per domain,
      return it if found, otherwise create it.
     """
-    return SQLApplicationAccess.objects.get_or_create(domain=domain)[0]
+    return ApplicationAccess.objects.get_or_create(domain=domain)[0]
 
 
 def get_cloudcare_apps(domain):
