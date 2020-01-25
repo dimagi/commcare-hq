@@ -105,25 +105,23 @@ def diff_case(sql_case, couch_case, dd_count):
         return couch_case, diffs
     diffs = diff(couch_case, sql_json)
     if diffs:
+        dd_count("commcare.couchsqlmigration.case.rebuild.couch")
         try:
-            with convert_rebuild_error("couch"):
-                couch_case = hard_rebuild(couch_case)
-            dd_count("commcare.couchsqlmigration.case.rebuild.couch")
+            couch_case = hard_rebuild(couch_case)
+        except Exception as err:
+            dd_count("commcare.couchsqlmigration.case.rebuild.error")
+            log.warning(f"Case {case_id} rebuild -> {type(err).__name__}: {err}")
+        else:
             diffs = diff(couch_case, sql_json)
             if diffs:
                 if should_sort_sql_transactions(sql_case, couch_case):
-                    with convert_rebuild_error("sql"):
-                        sql_case = rebuild_case_with_couch_action_order(sql_case)
+                    sql_case = rebuild_case_with_couch_action_order(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
                     diffs = diff(couch_case, sql_case.to_json())
                 elif not was_rebuilt(sql_case):
-                    with convert_rebuild_error("sql"):
-                        sql_case = rebuild_case(sql_case)
+                    sql_case = rebuild_case(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql")
                     diffs = diff(couch_case, sql_case.to_json())
-        except RebuildError as err:
-            dd_count("commcare.couchsqlmigration.case.rebuild.error")
-            log.warning(f"Case {case_id} rebuild -> {err}")
     if diffs:
         dd_count("commcare.couchsqlmigration.case.has_diff")
     return couch_case, diffs
@@ -223,18 +221,6 @@ def filter_missing_cases(missing_cases):
         else:
             result[couch_case["doc_type"]].append(couch_case["_id"])
     return result.items()
-
-
-@contextmanager
-def convert_rebuild_error(backend):
-    try:
-        yield
-    except Exception as err:
-        raise RebuildError(f"{backend} {type(err).__name__}: {err}")
-
-
-class RebuildError(Exception):
-    pass
 
 
 @contextmanager
