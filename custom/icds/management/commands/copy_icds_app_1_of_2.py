@@ -8,7 +8,15 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class Command(BaseCommand):
-    help = "Make a copy of a specific version of an application"
+    help = """
+        For use when creating a new master app for ICDS.
+
+        Makes a copy of a specific version of an application using the normal
+        copy app workflow and then does a find and replace on report UUIDs in
+        all form XML.
+
+        This command is necessary until the ICDS apps are migrated to UCR v2.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('app_id')
