@@ -36,7 +36,7 @@ class Command(BaseCommand):
         ))
 
         print("""
-            Next, make a build of the new app, release it, and then run copy_icds_app_2_of_2
+            Next, make a build of the new app and then run copy_icds_app_2_of_2
             for all linked apps that use this app as a master app.
         """)
 

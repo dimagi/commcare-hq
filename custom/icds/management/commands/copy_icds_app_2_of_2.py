@@ -4,7 +4,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.suite_xml.post_process.resources import copy_xform_resource_overrides
-from corehq.apps.linked_domain.applications import get_latest_master_app_release
+from corehq.apps.linked_domain.applications import get_master_app_by_version
 
 
 class Command(BaseCommand):
@@ -26,12 +26,19 @@ class Command(BaseCommand):
         parser.add_argument('linked_domain')
         parser.add_argument('linked_app_id')
         parser.add_argument('original_master_app_id')
+        parser.add_argument('original_master_app_version')
         parser.add_argument('copy_master_app_id')
+        parser.add_argument('copy_master_app_version')
 
-    def handle(self, linked_domain, linked_app_id, original_master_app_id, copy_master_app_id, **options):
-        linked_app = get_app(linked_domain, linked_app_id)
-        original_master_app = get_latest_master_app_release(linked_app.domain_link, original_master_app_id)
-        copy_master_app = get_latest_master_app_release(linked_app.domain_link, copy_master_app_id)
+    def handle(self, linked_domain, linked_app_id, original_master_app_id, original_master_app_version,
+               copy_master_app_id, copy_master_app_version, **options):
+        domain_link = get_app(linked_domain, linked_app_id).domain_link
+        original_master_app = get_master_app_by_version(domain_link,
+                                                        original_master_app_id,
+                                                        original_master_app_version)
+        copy_master_app = get_master_app_by_version(domain_link,
+                                                    copy_master_app_id,
+                                                    copy_master_app_version)
 
         if not original_master_app:
             print("Could not find original master app")
@@ -52,7 +59,7 @@ class Command(BaseCommand):
 
         new_overrides = copy_xform_resource_overrides(linked_domain, linked_app_id, id_map)
 
-        print("Complete, created {} new overrides.".format(len(new_overrides))
+        print("Complete, created {} new overrides.".format(len(new_overrides)))
 
 
 def get_xmlns_unique_id_map(app):
