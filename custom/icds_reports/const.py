@@ -4,7 +4,7 @@ from django.conf import settings
 
 import pytz
 
-from custom.icds_reports.data_pull.data_pulls import MonthlyPerformance
+from custom.icds_reports.data_pull.data_pulls import AndhraPradeshMonthly
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
@@ -174,5 +174,5 @@ GOVERNANCE_API_STEPS = [
 ]
 
 CUSTOM_DATA_PULLS = {
-    MonthlyPerformance.slug: MonthlyPerformance
+    AndhraPradeshMonthly.slug: AndhraPradeshMonthly
 }

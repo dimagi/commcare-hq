@@ -82,9 +82,9 @@ class LocationAndMonthBasedDataPull(MonthlyDataPull):
         return result
 
 
-class MonthlyPerformance(LocationAndMonthBasedDataPull):
-    slug = "monthly_performance"
-    name = "Monthly Performance"
+class AndhraPradeshMonthly(LocationAndMonthBasedDataPull):
+    slug = "andhra_pradesh_monthly"
+    name = "Andhra Pradesh Monthly"
     queries = [
         CBEConducted,
         LunchAbove3Years,
