@@ -25,35 +25,7 @@ from corehq.motech.dhis2.utils import (
 from corehq.util.quickcache import quickcache
 
 
-class Dhis2Connection(Document):
-    domain = StringProperty()
-    server_url = StringProperty()
-    username = StringProperty()
-    password = StringProperty()
-    skip_cert_verify = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, data):
-        data.pop('log_level', None)
-        return super(Dhis2Connection, cls).wrap(data)
-
-    def save(self, *args, **kwargs):
-        # Save to SQL
-        model, created = SQLDhis2Connection.objects.update_or_create(
-            domain=self.domain,
-            defaults={
-                'server_url': self.server_url,
-                'username': self.username,
-                'password': self.password,
-                'skip_cert_verify': self.skip_cert_verify,
-            }
-        )
-
-        # Save to couch
-        super().save(*args, **kwargs)
-
-
-class SQLDhis2Connection(models.Model):
+class Dhis2Connection(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     server_url = models.CharField(max_length=255, null=True)
     username = models.CharField(max_length=255)
