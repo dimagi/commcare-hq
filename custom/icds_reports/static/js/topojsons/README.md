@@ -1,4 +1,4 @@
-# State of Topojson files as of Decemer 2019
+# State of Topojson files as of December 2019
 
 | File Name | Description | Used by | Format |
 | --------- | ----------- | ------- | ------ |

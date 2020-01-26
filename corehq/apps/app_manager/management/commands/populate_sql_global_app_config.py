@@ -8,25 +8,25 @@ class Command(PopulateSQLCommand):
         Adds a SQLGlobalAppConfig for any GlobalAppConfig doc that doesn't yet have one.
     """
 
-    @property
-    def couch_class(self):
-        try:
-            from corehq.apps.app_manager.models import GlobalAppConfig
-            return GlobalAppConfig
-        except ImportError:
-            return None
+    @classmethod
+    def couch_db_slug(cls):
+        return 'apps'
 
-    @property
-    def couch_class_key(self):
+    @classmethod
+    def couch_doc_type(cls):
+        return 'GlobalAppConfig'
+
+    @classmethod
+    def couch_key(cls):
         return set(['domain', 'app_id'])
 
-    @property
-    def sql_class(self):
+    @classmethod
+    def sql_class(cls):
         from corehq.apps.app_manager.models import SQLGlobalAppConfig
         return SQLGlobalAppConfig
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class.objects.get_or_create(
+        model, created = self.sql_class().objects.get_or_create(
             domain=doc['domain'],
             app_id=doc['app_id'],
             defaults={
