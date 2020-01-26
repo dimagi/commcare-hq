@@ -46,9 +46,9 @@ class DirectDataPull(BaseDataPull):
         }
 
 
-class MonthlyDataPull(BaseDataPull):
+class MonthBasedDataPull(BaseDataPull):
     def __init__(self, db_alias, *args, **kwargs):
-        super(MonthlyDataPull, self).__init__(db_alias, *args, **kwargs)
+        super(MonthBasedDataPull, self).__init__(db_alias, *args, **kwargs)
         self.month = kwargs.get('month')
         if not self.month:
             raise UnboundDataPullException("Month not defined")
@@ -64,7 +64,7 @@ class MonthlyDataPull(BaseDataPull):
         return result
 
 
-class LocationAndMonthBasedDataPull(MonthlyDataPull):
+class LocationAndMonthBasedDataPull(MonthBasedDataPull):
     def __init__(self, db_alias, *args, **kwargs):
         super(LocationAndMonthBasedDataPull, self).__init__(db_alias, *args, **kwargs)
         self.location_id = kwargs.get('location_id')
