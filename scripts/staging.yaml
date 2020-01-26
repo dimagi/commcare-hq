@@ -61,7 +61,6 @@ branches:
   - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
   - bmb/SAASP-10249 # Biyeun Jan 21
-  - jls/migrate-Dhis2Connection-3 # Jenny Jan 24
   - dmr/smarter-wait  # Danny Jan 22
   - dmr/RATE_LIMIT_SUBMISSIONS-setting  # Danny Jan 22
 submodules: {}
