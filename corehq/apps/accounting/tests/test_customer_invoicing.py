@@ -18,7 +18,6 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FeatureType,
     InvoicingPlan,
-    SoftwarePlan,
     SoftwarePlanEdition,
     Subscription,
 )
@@ -115,8 +114,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             user.delete()
 
         if self.is_using_test_plans:
-            for software_plan in SoftwarePlan.objects.all():
-                SoftwarePlan.get_version.clear(software_plan)
+            utils.clear_plan_version_cache()
 
         super(BaseAccountingTest, self).tearDown()
 
