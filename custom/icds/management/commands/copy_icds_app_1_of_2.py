@@ -2,8 +2,6 @@ from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version, wrap_app
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.linked_domain.applications import copy_resource_overrides
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -29,13 +27,18 @@ class Command(BaseCommand):
         old_app = get_app_by_version(source_domain, app_id, version)
         new_app = import_app(old_app.to_json(), target_domain, source_properties={'name': new_name})
 
-        copy_resource_overrides_from_new_app(old_app, new_app)
         find_and_replace_report_ids(old_app, new_app)
 
         new_app.save()
+
         print("App succesfully copied, you can view it at\n{}".format(
             absolute_reverse('view_app', args=[target_domain, new_app.get_id])
         ))
+
+        print("""
+            Next, make a build of the new app, release it, and then run copy_icds_app_2_of_2
+            for all linked apps that use this app as a master app.
+        """)
 
 
 def get_app_by_version(domain, app_id, version):
@@ -44,19 +47,6 @@ def get_app_by_version(domain, app_id, version):
         raise Exception("No app found with id '{}' and version '{}', on '{}'"
                         .format(app_id, version, domain))
     return wrap_app(app)
-
-
-def copy_resource_overrides_from_new_app(old_app, new_app):
-    old_map = get_xmlns_unique_id_map(old_app)
-    new_map = get_xmlns_unique_id_map(new_app)
-    override_map = {old_unique_id: new_map[xmlns] for xmlns, old_unique_id in old_map.items()}
-
-    for domain_link in get_linked_domains(old_app.domain):
-        copy_resource_overrides(domain_link, override_map)
-
-
-def get_xmlns_unique_id_map(app):
-    return {f.xmlns: f.unique_id for f in app.get_forms() if f.form_type != 'shadow_form'}
 
 
 def find_and_replace_report_ids(old_app, new_app):
