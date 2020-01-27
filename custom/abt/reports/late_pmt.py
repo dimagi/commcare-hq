@@ -201,16 +201,17 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             until=self.enddate,
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
+        include_missing_pmt_data = self.report_config['submission_status'] != 'group_b'
+        include_incorrect_pmt_data = self.report_config['submission_status'] != 'group_a'
         rows = []
-        sub_status = self.report_config['submission_status']
         if users:
             for date in dates:
                 for user in users:
                     sms_received = (date.date(), user['user_id']) in self.smss_received
                     valid_sms = (date.date(), user['user_id']) in self.valid_smss_received
-                    if not sms_received and sub_status != 'group_b':
+                    if not sms_received and include_missing_pmt_data:
                         error_msg = _('No PMT data Submitted')
-                    elif sms_received and not valid_sms and sub_status != 'group_a':
+                    elif sms_received and not valid_sms and include_incorrect_pmt_data:
                         error_msg = _('Incorrect PMT data Submitted')
                     else:
                         continue
