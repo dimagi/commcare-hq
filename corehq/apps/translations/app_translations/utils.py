@@ -28,7 +28,7 @@ def get_bulk_app_sheet_headers(app, single_sheet=False, lang=None, eligible_for_
     `eligible_for_transifex_only` will skip modules and forms that have "SKIP
     TRANSIFEX" in their comment.
     '''
-    langs = [lang] if single_sheet else app.langs
+    langs = [lang] if lang else app.langs
 
     default_lang_list = ['default_' + l for l in langs]
     audio_lang_list = ['audio_' + l for l in langs]
