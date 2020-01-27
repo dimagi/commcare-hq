@@ -57,70 +57,77 @@ class DetailContributor(SectionContributor):
         def include_sort(detail_type, detail):
             return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
 
-        r = []
-        if not self.app.use_custom_suite:
-            uses_report_context_tile = False
-            for module in self.modules:
-                for detail_type, detail, enabled in module.get_details():
-                    if enabled:
-                        if detail.custom_xml:
-                            d = load_xmlobject_from_string(
-                                detail.custom_xml,
-                                xmlclass=Detail
-                            )
-                            expected = id_strings.detail(module, detail_type)
-                            if not id_strings.is_custom_app_string(d.id) and d.id != expected:
-                                raise SuiteValidationError(
-                                    "Menu {}, \"{}\", uses custom case list xml. The "
-                                    "specified detail ID is '{}', expected '{}'"
-                                    .format(module.id, module.default_name(), d.id, expected)
-                                )
-                            r.append(d)
+        if self.app.use_custom_suite:
+            return []
+
+        elements = []
+        uses_report_context_tile = False
+        for module in self.modules:
+            for detail_type, detail, enabled in module.get_details():
+                if not enabled:
+                    continue
+
+                if detail.custom_xml:
+                    d = load_xmlobject_from_string(
+                        detail.custom_xml,
+                        xmlclass=Detail
+                    )
+                    expected = id_strings.detail(module, detail_type)
+                    if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+                        raise SuiteValidationError(
+                            "Menu {}, \"{}\", uses custom case list xml. The "
+                            "specified detail ID is '{}', expected '{}'"
+                            .format(module.id, module.default_name(), d.id, expected)
+                        )
+                    elements.append(d)
+                else:
+                    detail_column_infos = get_detail_column_infos(
+                        detail_type,
+                        detail,
+                        include_sort=include_sort(detail_type, detail),
+                    )  # list of DetailColumnInfo named tuples
+                    if detail_column_infos:
+                        if detail.use_case_tiles:
+                            helper = CaseTileHelper(self.app, module, detail,
+                                                    detail_type, self.build_profile_id)
+                            elements.append(helper.build_case_tile_detail())
                         else:
-                            detail_column_infos = get_detail_column_infos(
+                            print_template_path = None
+                            if detail.print_template:
+                                print_template_path = detail.print_template['path']
+                            locale_id = id_strings.detail_title_locale(detail_type)
+                            title = Text(locale_id=locale_id) if locale_id else Text()
+                            d = self.build_detail(
+                                module,
                                 detail_type,
                                 detail,
-                                include_sort=include_sort(detail_type, detail),
-                            )  # list of DetailColumnInfo named tuples
-                            if detail_column_infos:
-                                if detail.use_case_tiles:
-                                    helper = CaseTileHelper(self.app, module, detail,
-                                                            detail_type, self.build_profile_id)
-                                    r.append(helper.build_case_tile_detail())
-                                else:
-                                    print_template_path = None
-                                    if detail.print_template:
-                                        print_template_path = detail.print_template['path']
-                                    locale_id = id_strings.detail_title_locale(detail_type)
-                                    title = Text(locale_id=locale_id) if locale_id else Text()
-                                    d = self.build_detail(
-                                        module,
-                                        detail_type,
-                                        detail,
-                                        detail_column_infos,
-                                        tabs=list(detail.get_tabs()),
-                                        id=id_strings.detail(module, detail_type),
-                                        title=title,
-                                        print_template=print_template_path,
-                                    )
-                                    if d:
-                                        r.append(d)
-                        # add the persist case context if needed and if
-                        # case tiles are present and have their own persistent block
-                        if (detail.persist_case_context and
-                                not (detail.use_case_tiles and detail.persist_tile_on_forms)):
-                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
-                            r.append(d)
-                    if getattr(detail, 'report_context_tile', False):
-                        uses_report_context_tile = True
-                if module.fixture_select.active:
-                    d = self._get_fixture_detail(module)
-                    r.append(d)
+                                detail_column_infos,
+                                tabs=list(detail.get_tabs()),
+                                id=id_strings.detail(module, detail_type),
+                                title=title,
+                                print_template=print_template_path,
+                            )
+                            if d:
+                                elements.append(d)
 
-            if uses_report_context_tile and toggles.MOBILE_UCR_TILE.enabled(self.app.domain):
-                r.append(self._get_report_context_tile_detail())
+                    # add the persist case context if needed and if
+                    # case tiles are present and have their own persistent block
+                    if (detail.persist_case_context and
+                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                        d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
+                        elements.append(d)
 
-        return r
+                if getattr(detail, 'report_context_tile', False):
+                    uses_report_context_tile = True
+
+            if module.fixture_select.active:
+                d = self._get_fixture_detail(module)
+                elements.append(d)
+
+        if uses_report_context_tile and toggles.MOBILE_UCR_TILE.enabled(self.app.domain):
+            elements.append(self._get_report_context_tile_detail())
+
+        return elements
 
     def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
                      title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
