@@ -16,7 +16,7 @@ SELECT DISTINCT ON (ucr.child_health_case_id)
             ucr.state_id = daily_attendance.state_id AND
             daily_attendance.month='2019-12-01'
           )
-          WHERE ucr.timeend >= '2019-12-01' AND ucr.timeend < '2020-02-01'
+          WHERE ucr.timeend >= '2019-12-01' AND ucr.timeend < '2020-01-01'
               AND ucr.child_health_case_id IS NOT NULL
               AND ucr.state_id = 'c7985cd779924b62b9eb863cea8e63b7'
           WINDOW w AS (PARTITION BY ucr.supervisor_id, ucr.child_health_case_id)
