@@ -51,6 +51,7 @@ def _write_to_file(filename, rows):
             r if isinstance(r, list) else [r] for r in rows
         ])
 
+
 class Command(BaseCommand):
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
@@ -158,10 +159,9 @@ class Command(BaseCommand):
 
     def get_request_data(self, users, user_total_counts, user_indicators_count):
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
-                   'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
-                   'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
-                   'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
-                   'Take Home Ration']
+                   'Total', 'Child', 'Pregnant Women', 'Demographics', 'System Usage', 'AWC infrastructure',
+                   'Child Growth Monitoring List', 'ICDS - CAS Monthly Register', 'AWW Performance Report',
+                   'LS Performance Report', 'Take Home Ration']
         request_data = []
         location_type_filter = {
             'aggregation_level': 5
