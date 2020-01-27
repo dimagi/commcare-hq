@@ -25,12 +25,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 from corehq.util.datadog.gauges import datadog_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
-from .rebuildcase import (
-    rebuild_case,
-    rebuild_case_with_couch_action_order,
-    should_sort_sql_transactions,
-    was_rebuilt,
-)
+from .rebuildcase import rebuild_and_diff_cases
 
 log = logging.getLogger(__name__)
 
@@ -115,14 +110,7 @@ def diff_case(sql_case, couch_case, dd_count):
         else:
             diffs = diff(couch_case, sql_json)
             if diffs:
-                if should_sort_sql_transactions(sql_case, couch_case):
-                    sql_case = rebuild_case_with_couch_action_order(sql_case)
-                    dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
-                    diffs = diff(couch_case, sql_case.to_json())
-                elif not was_rebuilt(sql_case):
-                    sql_case = rebuild_case(sql_case)
-                    dd_count("commcare.couchsqlmigration.case.rebuild.sql")
-                    diffs = diff(couch_case, sql_case.to_json())
+                diffs = rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count)
     return couch_case, diffs
 
 
