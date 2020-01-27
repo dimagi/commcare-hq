@@ -2,7 +2,7 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
-from corehq.apps.cloudcare.models import SQLApplicationAccess, SQLAppGroup
+from corehq.apps.cloudcare.models import ApplicationAccess, AppGroup
 
 
 class MockApplication(object):
@@ -21,7 +21,7 @@ class ModelsTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        SQLApplicationAccess.objects.all().delete()
+        ApplicationAccess.objects.all().delete()
         get_application_access_for_domain.clear(cls.domain)
         super().tearDownClass()
 
@@ -33,9 +33,9 @@ class ModelsTest(TestCase):
 
         o = get_application_access_for_domain(self.domain)
         o.sqlappgroup_set.set([
-            SQLAppGroup(app_id=app1._id, group_id="321"),
-            SQLAppGroup(app_id=app2._id, group_id="432"),
-            SQLAppGroup(app_id=app3._id, group_id="543"),
+            AppGroup(app_id=app1._id, group_id="321"),
+            AppGroup(app_id=app2._id, group_id="432"),
+            AppGroup(app_id=app3._id, group_id="543"),
         ], bulk=False)
         o.save()
 
