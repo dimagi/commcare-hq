@@ -4,10 +4,6 @@ from corehq.apps.app_manager.models import LATEST_APK_VALUE, LATEST_APP_VALUE
 
 
 class Command(PopulateSQLCommand):
-    help = """
-        Adds a SQLGlobalAppConfig for any GlobalAppConfig doc that doesn't yet have one.
-    """
-
     @classmethod
     def couch_db_slug(cls):
         return 'apps'
@@ -22,8 +18,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(cls):
-        from corehq.apps.app_manager.models import SQLGlobalAppConfig
-        return SQLGlobalAppConfig
+        from corehq.apps.app_manager.models import GlobalAppConfig
+        return GlobalAppConfig
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.get_or_create(
