@@ -263,15 +263,6 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
     )]
 
 
-def _check_workbook_length(workbook, lang):
-    if lang and len(workbook.worksheets) > 1:
-        return _("Expected a single sheet. If you are uploading a multi-sheet file, "
-                 "please select 'All Languages'.")
-    if not lang and len(workbook.worksheets) == 1:
-        return _("File contains only one sheet. If you are uploading a single-language file, "
-                 "please select a language.")
-
-
 def _check_for_sheet_error(sheet, expected_headers, processed_sheets=Ellipsis):
 
     if sheet.worksheet.title in processed_sheets:
