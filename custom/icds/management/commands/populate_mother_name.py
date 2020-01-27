@@ -207,6 +207,6 @@ def find_test_awc_locations():
         if location.metadata.get('is_test_location') == 'test':
             test_locations.update(
                 location.get_descendants(include_self=True).
-                filter(location_type='awc').values_list('location_id', flat=True)
+                filter(location_type__code='awc').values_list('location_id', flat=True)
             )
     return test_locations
