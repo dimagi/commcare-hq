@@ -129,6 +129,19 @@ def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
 
 
+def is_single_sheet_workbook(workbook):
+    sheets_count = len(workbook.worksheets)
+
+    if sheets_count != 1:
+        return False
+
+    first_sheet = workbook.worksheets[0]
+    if is_single_sheet(first_sheet.title):
+        return True
+
+    return False
+
+
 def get_menu_or_form_by_sheet_name(app, sheet_name):
     if '_' in sheet_name:
         return get_form_from_sheet_name(app, sheet_name)

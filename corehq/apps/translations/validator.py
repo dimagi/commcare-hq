@@ -14,6 +14,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
+    is_single_sheet_workbook,
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
@@ -52,7 +53,7 @@ class UploadedTranslationsValidator(object):
         self._setup()
 
     def _setup(self):
-        self.single_sheet = self._is_single_sheet()
+        self.single_sheet = is_single_sheet_workbook(self.uploaded_workbook)
         if self.single_sheet:
             self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         else:
@@ -65,13 +66,6 @@ class UploadedTranslationsValidator(object):
             self.lang_prefix)
         self.current_sheet_name_to_module_or_form_type_and_id = dict()
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
-
-    def _is_single_sheet(self):
-        sheets_count = len(self.uploaded_workbook.worksheets)
-        first_sheet = self.uploaded_workbook.worksheets[0]
-        if sheets_count == 1 and is_single_sheet(first_sheet.title):
-            return True
-        return False
 
     def _generate_current_headers_and_rows(self):
         self.current_headers = {
