@@ -886,7 +886,7 @@ class EntriesHelper(object):
                 )
                 if module_for_persistent_context:
                     return id_strings.detail(module_for_persistent_context, detail_type)
-            if self._has_persistent_tile(detail):
+            if detail.has_persistent_tile():
                 return id_strings.detail(detail_module, detail_type)
             elif getattr(detail, 'report_context_tile', False):
                 if toggles.MOBILE_UCR_TILE.enabled(module.get_app().domain):
@@ -911,7 +911,7 @@ class EntriesHelper(object):
                     module, detail.persistent_case_tile_from_module)
                 if inline_attr:
                     return inline_attr
-            if self._has_persistent_tile(detail):
+            if self.has_persistent_tile(detail):
                 list_type = "case_long" if detail_type == "case_short" else "product_long"
                 return self.details_helper.get_detail_id_safe(detail_module, list_type)
         return None
@@ -923,9 +923,3 @@ class EntriesHelper(object):
         details = {d[0]: d for d in module.get_details()}
         _, detail, detail_enabled = details[detail_type]
         return detail, detail_enabled
-
-    def _has_persistent_tile(self, detail):
-        """
-        Return True if the given Detail is configured to persist a case tile on forms
-        """
-        return detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml)

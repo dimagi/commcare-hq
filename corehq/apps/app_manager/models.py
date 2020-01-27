@@ -2024,6 +2024,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
+    def has_persistent_tile(self):
+        """
+        Return True if configured to persist a case tile on forms
+        """
+        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
