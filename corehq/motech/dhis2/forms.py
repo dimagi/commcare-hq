@@ -71,7 +71,8 @@ class Dhis2ConnectionForm(forms.Form):
                 # Don't save it if it hasn't been changed. Use simple symmetric encryption. We don't need it to be
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
-                dhis2_conn.password = b64encode(bz2.compress(self.cleaned_data['password']))
+                plaintext = self.cleaned_data['password'].encode('utf8')
+                dhis2_conn.password = b64encode(bz2.compress(plaintext))
             dhis2_conn.skip_cert_verify = self.cleaned_data['skip_cert_verify']
             dhis2_conn.save()
             return True

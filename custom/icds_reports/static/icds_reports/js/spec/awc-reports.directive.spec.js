@@ -15,7 +15,7 @@ describe('AWC Reports Directive', function () {
     pageData.registerUrl('awc_reports', 'beneficiary_details');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false);
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("haveAccessToFeatures", false);
     }));
 
