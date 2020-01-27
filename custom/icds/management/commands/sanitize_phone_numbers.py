@@ -99,6 +99,7 @@ class Command(BaseCommand):
 
         start_date = date.today() - timedelta(days=100)
         reindex_accessor = CaseReindexAccessor(
+            domain=DOMAIN,
             case_type='person', limit_db_aliases=[self.db_alias],
             start_date=start_date
         )
