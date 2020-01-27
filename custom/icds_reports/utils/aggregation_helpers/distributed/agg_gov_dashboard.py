@@ -167,7 +167,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
                     ORDER BY date_cbe_organise, submitted_on
                     )
 
-            FROM "ucr_icds-cas_static-cbe_form_f7988a04" ucr
+            FROM "{cbe_ucr_table}" ucr
             WHERE ucr.date_cbe_organise>=%(start_date)s AND ucr.date_cbe_organise<%(next_month_start_date)s;
         """.format(
             cbe_ucr_table=get_table_name(self.domain, 'static-cbe_form')
