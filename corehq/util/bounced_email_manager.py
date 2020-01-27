@@ -9,7 +9,9 @@ from django.conf import settings
 
 from corehq.util.models import (
     BouncedEmail,
+    BounceType,
     NotificationType,
+    PermanentBounceMeta,
     AwsMeta,
 )
 from corehq.util.soft_assert import soft_assert
@@ -172,6 +174,27 @@ class BouncedEmailManager(object):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', ' '.join(labels))
         self.mail.expunge()
 
+    def _record_permanent_bounce(self, aws_meta, uid):
+        bounced_email, _ = BouncedEmail.objects.update_or_create(
+            email=aws_meta.email,
+        )
+        exists = PermanentBounceMeta.objects.filter(
+            bounced_email=bounced_email,
+            timestamp=aws_meta.timestamp,
+            sub_type=aws_meta.sub_type,
+        ).exists()
+        if not exists:
+            PermanentBounceMeta.objects.create(
+                bounced_email=bounced_email,
+                timestamp=aws_meta.timestamp,
+                sub_type=aws_meta.sub_type,
+                headers=aws_meta.headers,
+                reason=aws_meta.reason,
+                destination=aws_meta.destination,
+            )
+        if self.delete_processed_messages:
+            self._delete_message_with_uid(uid)
+
     def process_aws_notifications(self):
         self.mail.select('inbox')
         for uid, message in self._get_messages(
@@ -180,6 +203,10 @@ class BouncedEmailManager(object):
         ):
             try:
                 aws_info = self._get_aws_info(message, uid)
+                for aws_meta in aws_info:
+                    if aws_meta.notification_type == NotificationType.BOUNCE:
+                        if aws_meta.main_type == BounceType.PERMANENT:
+                            self._record_permanent_bounce(aws_meta, uid)
             except Exception as e:
                 self._label_problem_email(
                     uid,
