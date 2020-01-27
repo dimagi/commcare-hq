@@ -133,7 +133,7 @@ related to angular not being defined. But if we split it here it works fine.
                               <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                   <div class="nav-settings-bar pull-right">
                                       <ul class="nav navbar-nav" role="menu">
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span class="pointer">
                                                   <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
                                                       <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
@@ -143,12 +143,12 @@ related to angular not being defined. But if we split it here it works fine.
                                                   </a>
                                               </span>
                                           </li>
-                                          <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
+                                          <li class="nav-menu-icon" ng-hide="$location.path().indexOf('download') !== -1">
                                               <span>
                                                   <print-report></print-report>
                                               </span>
                                           </li>
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span ng-if="!isWebUser" id="settingsmenu-projectSettings"
                                                     ng-click="reportAnIssue()"
                                                     class="dropdown-toggle dropdown-toggle-with-icon pointer"
@@ -170,7 +170,7 @@ related to angular not being defined. But if we split it here it works fine.
 
                                               </span>
                                           </li>
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span id="settingsmenu-projectSettings"
                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                  data-toggle="dropdown">
