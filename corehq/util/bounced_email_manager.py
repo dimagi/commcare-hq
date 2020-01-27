@@ -166,6 +166,12 @@ class BouncedEmailManager(object):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', '\\Trash')
         self.mail.expunge()
 
+    def _label_problem_email(self, uid, extra_labels=()):
+        labels = ['problem']
+        labels.extend(extra_labels)
+        self.mail.uid('STORE', uid, '+X-GM-LABELS', ' '.join(labels))
+        self.mail.expunge()
+
     def process_aws_notifications(self):
         self.mail.select('inbox')
         for uid, message in self._get_messages(
@@ -175,6 +181,10 @@ class BouncedEmailManager(object):
             try:
                 aws_info = self._get_aws_info(message, uid)
             except Exception as e:
+                self._label_problem_email(
+                    uid,
+                    extra_labels=["FormattingIssues"]
+                )
                 _bounced_email_soft_assert(
                     False,
                     f'[{settings.SERVER_ENVIRONMENT}] '
