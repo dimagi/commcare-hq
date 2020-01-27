@@ -363,10 +363,10 @@ MOTECH sends case updates as changes to patient properties and
 attributes. Form submissions can also create Visits, Encounters and
 Observations in OpenMRS.
 
-Configure this in the "Form configs" section of the OpenMRS Forwarder
-configuration.
+Configure this in the "Encounters config" section of the OpenMRS
+Forwarder configuration.
 
-An example value of Form configs might look like this:
+An example value of "Encounters config" might look like this:
 
 .. code-block:: javascript
 

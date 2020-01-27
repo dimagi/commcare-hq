@@ -18,7 +18,7 @@ from corehq.motech.openmrs.const import (
 class OpenmrsConfigForm(forms.Form):
     openmrs_provider = forms.CharField(label=_("Provider UUID"), required=False)
     patient_config = JsonField(expected_type=dict)
-    form_configs = JsonField(expected_type=list)
+    encounters_config = JsonField(expected_type=list)
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsConfigForm, self).__init__(*args, **kwargs)
