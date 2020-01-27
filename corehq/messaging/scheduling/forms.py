@@ -19,7 +19,7 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, Select, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
 
@@ -2763,6 +2763,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     visit_scheduler_app_and_form_unique_id = CharField(
         label=ugettext_lazy("Scheduler: Form"),
         required=False,
+        widget=Select(choices=[]),
     )
 
     visit_number = IntegerField(
