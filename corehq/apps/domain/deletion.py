@@ -243,7 +243,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
-    ModelDeletion('dhis2', 'SQLDhis2Connection', 'domain'),
+    ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     CustomDeletion('custom_data_fields', _delete_custom_data_fields),
