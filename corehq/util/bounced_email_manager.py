@@ -211,6 +211,14 @@ class BouncedEmailManager(object):
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
 
+    def _handle_undetermined_bounce(self, aws_meta, uid):
+        _bounced_email_soft_assert(
+            False,
+            f'[{settings.SERVER_ENVIRONMENT}] '
+            f'Received undetermined bounce from {aws_meta.email}, investigate.'
+        )
+        self._record_permanent_bounce(aws_meta, uid)
+
     def _record_complaint(self, aws_meta, uid):
         bounced_email, _ = BouncedEmail.objects.update_or_create(
             email=aws_meta.email,
@@ -245,6 +253,18 @@ class BouncedEmailManager(object):
                             self._record_permanent_bounce(aws_meta, uid)
                         elif aws_meta.main_type == BounceType.TRANSIENT:
                             self._record_transient_bounce(aws_meta, uid)
+                        elif aws_meta.main_type == BounceType.UNDETERMINED:
+                            self._handle_undetermined_bounce(aws_meta, uid)
+                        else:
+                            self._label_problem_email(
+                                uid,
+                                extra_labels=["UnexpectedBounceType"]
+                            )
+                            _bounced_email_soft_assert(
+                                False,
+                                f'[{settings.SERVER_ENVIRONMENT}] '
+                                f'Unexpected bounce type received. Check inbox.'
+                            )
                     elif aws_meta.notification_type == NotificationType.COMPLAINT:
                         self._record_complaint(aws_meta, uid)
             except Exception as e:
