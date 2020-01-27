@@ -12,6 +12,7 @@ from corehq.util.models import (
     BounceType,
     NotificationType,
     PermanentBounceMeta,
+    TransientBounceEmail,
     AwsMeta,
 )
 from corehq.util.soft_assert import soft_assert
@@ -195,6 +196,20 @@ class BouncedEmailManager(object):
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
 
+    def _record_transient_bounce(self, aws_meta, uid):
+        exists = TransientBounceEmail.objects.filter(
+            email=aws_meta.email,
+            timestamp=aws_meta.timestamp,
+        ).exists()
+        if not exists:
+            TransientBounceEmail.objects.create(
+                email=aws_meta.email,
+                timestamp=aws_meta.timestamp,
+                headers=aws_meta.headers,
+            )
+        if self.delete_processed_messages:
+            self._delete_message_with_uid(uid)
+
     def process_aws_notifications(self):
         self.mail.select('inbox')
         for uid, message in self._get_messages(
@@ -207,6 +222,8 @@ class BouncedEmailManager(object):
                     if aws_meta.notification_type == NotificationType.BOUNCE:
                         if aws_meta.main_type == BounceType.PERMANENT:
                             self._record_permanent_bounce(aws_meta, uid)
+                        elif aws_meta.main_type == BounceType.TRANSIENT:
+                            self._record_transient_bounce(aws_meta, uid)
             except Exception as e:
                 self._label_problem_email(
                     uid,
