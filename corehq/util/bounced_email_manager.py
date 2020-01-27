@@ -12,6 +12,7 @@ from corehq.util.models import (
     BounceType,
     NotificationType,
     PermanentBounceMeta,
+    ComplaintBounceMeta,
     TransientBounceEmail,
     AwsMeta,
 )
@@ -210,6 +211,26 @@ class BouncedEmailManager(object):
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
 
+    def _record_complaint(self, aws_meta, uid):
+        bounced_email, _ = BouncedEmail.objects.update_or_create(
+            email=aws_meta.email,
+        )
+        exists = ComplaintBounceMeta.objects.filter(
+            bounced_email=bounced_email,
+            timestamp=aws_meta.timestamp,
+        ).exists()
+        if not exists:
+            ComplaintBounceMeta.objects.create(
+                bounced_email=bounced_email,
+                timestamp=aws_meta.timestamp,
+                headers=aws_meta.headers,
+                feedback_type=aws_meta.main_type,
+                sub_type=aws_meta.sub_type,
+                destination=aws_meta.destination,
+            )
+        if self.delete_processed_messages:
+            self._delete_message_with_uid(uid)
+
     def process_aws_notifications(self):
         self.mail.select('inbox')
         for uid, message in self._get_messages(
@@ -224,6 +245,8 @@ class BouncedEmailManager(object):
                             self._record_permanent_bounce(aws_meta, uid)
                         elif aws_meta.main_type == BounceType.TRANSIENT:
                             self._record_transient_bounce(aws_meta, uid)
+                    elif aws_meta.notification_type == NotificationType.COMPLAINT:
+                        self._record_complaint(aws_meta, uid)
             except Exception as e:
                 self._label_problem_email(
                     uid,
