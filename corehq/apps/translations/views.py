@@ -32,6 +32,7 @@ from corehq.apps.translations.app_translations.upload_app import (
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
 )
+from corehq.apps.translations.exceptions import BulkAppTranslationsException
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
@@ -132,7 +133,10 @@ def upload_bulk_app_translations(request, domain, app_id):
             if not lang:
                 msgs = [(messages.error, _("Please select language to validate."))]
             else:
-                msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+                try:
+                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+                except BulkAppTranslationsException as e:
+                    msgs = [(messages.error, str(e))]
         else:
             sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
             msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
