@@ -43,7 +43,7 @@ class WrappedUser(CommCareUser):
         return self._group_ids
 
 
-class GroupQuerySetAdapterES(object):
+class GroupQuerySetAdapter(object):
     def __init__(self, domain):
         self.domain = domain
 
