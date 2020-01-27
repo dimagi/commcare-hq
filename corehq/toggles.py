@@ -989,6 +989,12 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
+ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
+    'icds_dashboard_show_mobile_apk',
+    'Show a "Mobile APK" download link on the ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     'icds_dashboard_temporary_downtime',
