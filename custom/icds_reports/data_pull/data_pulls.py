@@ -23,8 +23,20 @@ class BaseDataPull:
     def get_queries(self):
         raise NotImplementedError
 
-    def run(self):
+    def _get_data_files(self):
         raise NotImplementedError
+
+    def run(self):
+        data_files = self._get_data_files()
+        return self.post_run(data_files)
+
+    def post_run(self, data_files):
+        """
+        any tasks to be done post data pull
+        :param data_files: file name mapped to string buffer for file content
+        :return processed data_files
+        """
+        return data_files
 
 
 class DirectDataPull(BaseDataPull):
@@ -39,7 +51,7 @@ class DirectDataPull(BaseDataPull):
         query_obj = DirectQuery(self.name, self.query_file_path, **self.kwargs)
         return [query_obj.sql_query]
 
-    def run(self):
+    def _get_data_files(self):
         query_obj = DirectQuery(self.name, self.query_file_path, **self.kwargs)
         return {
             query_obj.result_file_name: query_obj.run(self.db_alias)
@@ -56,7 +68,7 @@ class MonthBasedDataPull(BaseDataPull):
     def get_queries(self):
         return [query_class(self.month).sql_query for query_class in self.queries]
 
-    def run(self):
+    def _get_data_files(self):
         result = {}
         for query_class in self.queries:
             query_obj = query_class(self.month)
@@ -74,12 +86,12 @@ class LocationAndMonthBasedDataPull(MonthBasedDataPull):
     def get_queries(self):
         return [query_class(self.location_id, self.month).sql_query for query_class in self.queries]
 
-    def run(self):
+    def _get_data_files(self):
         result = {}
         for query_class in self.queries:
             query_obj = query_class(self.location_id, self.month)
             result[query_obj.result_file_name] = query_obj.run(self.db_alias)
-        return result
+        return self.post_run(result)
 
 
 class AndhraPradeshMonthly(LocationAndMonthBasedDataPull):

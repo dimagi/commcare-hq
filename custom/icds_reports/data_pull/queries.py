@@ -9,8 +9,11 @@ from dateutil.relativedelta import relativedelta
 
 class BaseQuery:
     query_file_path = ""
+    setup_sql_file_path = ""
 
     def run(self, db_alias):
+        if self.setup_sql_file_path:
+            self._setup(db_alias)
         string_buffer = StringIO()
         db_conn = connections[db_alias]
         cursor = db_conn.cursor()
@@ -20,6 +23,13 @@ class BaseQuery:
             "COPY ({query}) TO STDOUT DELIMITER ',' CSV HEADER;".format(query=query),
             string_buffer)
         return string_buffer
+
+    def _setup(self, db_alias):
+        db_conn = connections[db_alias]
+        cursor = db_conn.cursor()
+        with open(self.setup_sql_file_path) as _sql:
+            sql = _sql.read().format(month=self.month).replace('\n', ' ')
+            cursor.execute(sql)
 
     @property
     def result_file_name(self):
