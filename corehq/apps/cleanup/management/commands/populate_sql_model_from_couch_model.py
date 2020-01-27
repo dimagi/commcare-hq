@@ -68,7 +68,7 @@ class PopulateSQLCommand(BaseCommand):
                 remaining = cls.count_items_to_be_migrated()
                 if remaining != 0:
                     migrated = False
-                    print("Automatic migration failed, {} items remain to migrate.")
+                    print("Automatic migration failed, {} items remain to migrate.".format(remaining))
             except Exception:
                 traceback.print_exc()
         else:
@@ -79,7 +79,7 @@ class PopulateSQLCommand(BaseCommand):
             print("""
                 A migration must be performed before this environment can be upgraded to the latest version
                 of CommCareHQ. This migration is run using the management command {}.
-            """).format(command_name)
+            """.format(command_name))
             sys.exit(1)
 
     @classmethod
