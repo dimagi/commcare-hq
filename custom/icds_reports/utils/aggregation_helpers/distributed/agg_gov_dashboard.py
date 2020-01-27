@@ -159,14 +159,13 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
                 FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
                 FIRST_VALUE(asha_present=1) over w as asha_present,
                 FIRST_VALUE(child_immu=1) over w as child_immu,
-                FIRST_VALUE(anc_today=1) over w as anc_today,
-                %(start_date)s::DATE AS month
+                FIRST_VALUE(anc_today=1) over w as anc_today
             FROM "{ucr_tablename}" WHERE
                 vhsnd_date_past_month >= %(start_date)s AND
                 vhsnd_date_past_month < %(end_date)s WINDOW w AS(
                 PARTITION BY awc_id
                 ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-            ) ORDER BY awc_id, month
+            ) ORDER BY awc_id
         ) ut
         WHERE agg_gov.awc_id = ut.awc_id;
         """.format(

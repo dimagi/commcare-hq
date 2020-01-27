@@ -150,19 +150,19 @@ class GovernanceApiTest(TestCase):
         test tp check if the first record is getting retrieved if there are multiple vhnds per month per awc
         """
         limit = GOVERNANCE_API_RECORDS_PAGINATION
-        query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41', 'awc_launched': True}
+        query_filters = {'state_id': 'st2', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_row = {
-            "awc_id": "a49", "awc_code": "a49", "vhsnd_conducted": "yes",
-            "vhsnd_date": datetime.date(2017, 5, 2), "anm_present": "no", "asha_present": "yes",
-            "any_child_immunized": "yes", "anc_conducted": "no"
+            "awc_id": "a22", "awc_code": "a22", "vhsnd_conducted": "yes",
+            "vhsnd_date": datetime.date(2017, 5, 16), "anm_present": "yes", "asha_present": "yes",
+            "any_child_immunized": "yes", "anc_conducted": "yes"
         }
         expected_counter = 1
         actual_row = None
         counter = 0
         for row in data:
-            if row['awc_id'] == 'a49':
+            if row['awc_id'] == 'a22':
                 actual_row = row
                 counter += 1
 

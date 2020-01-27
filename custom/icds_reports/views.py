@@ -2191,7 +2191,6 @@ class GovernanceAPIBaseView(View):
         if state_site_code is not None:
             state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
-
         last_awc_id = request.GET.get('last_awc_id', '')
         return  last_awc_id, month, year, state_id
 
@@ -2201,7 +2200,7 @@ class GovernanceAPIBaseView(View):
 
         is_valid = True
         error_message = ''
-        if not (date(2019, 12, 1) <= selected_month <= current_month):
+        if not (date(2016, 12, 1) <= selected_month <= current_month):
             is_valid = False
             error_message = "Month should not be in future and can only be from Dec 2019"
         if state_id is None:
@@ -2297,7 +2296,7 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
 
         query_filters = {'awc_id__gt': last_awc_id, 'awc_launched': True}
         order = ['awc_id']
-        if state_id != '':
+        if state_id is not None:
             query_filters['state_id'] = state_id
         data, count = get_vhnd_data(GOVERNANCE_API_RECORDS_PAGINATION, year,
                                     month, order, query_filters)

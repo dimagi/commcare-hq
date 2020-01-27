@@ -1591,7 +1591,6 @@ class AggGovernanceDashboard(models.Model, AggregateMixin):
     asha_present = models.NullBooleanField(null=True)
     child_immu = models.NullBooleanField(null=True)
     anc_today = models.NullBooleanField(null=True)
-    awc_id = models.TextField(primary_key=True)
     month = models.DateField(null=True)
 
     class Meta(object):
