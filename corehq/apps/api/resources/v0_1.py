@@ -5,7 +5,7 @@ from tastypie.exceptions import BadRequest
 
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.api.query_adapters import UserQuerySetAdapterES
+from corehq.apps.api.query_adapters import UserQuerySetAdapter
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -105,7 +105,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return UserQuerySetAdapterES(domain, show_archived=show_archived)
+            return UserQuerySetAdapter(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):

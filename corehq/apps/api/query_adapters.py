@@ -4,7 +4,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.chunked import chunked
 
 
-class UserQuerySetAdapterES(object):
+class UserQuerySetAdapter(object):
 
     def __init__(self, domain, show_archived):
         self.domain = domain
