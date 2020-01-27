@@ -26,6 +26,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
+    is_single_sheet_workbook,
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
@@ -92,12 +93,7 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
         return expected_headers_by_sheet_name.get(sheet_name, [])
 
     msgs = []
-    error = _check_workbook_length(workbook, lang)
-    if error:
-        msgs.append((messages.error, error))
-        return msgs
-    # if there is a lang selected, assume that user submitted a single sheet
-    single_sheet = bool(lang)
+    single_sheet = is_single_sheet_workbook(workbook)
     expected_headers_by_sheet_name = {k: v for k, v in get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
                                                                                   lang=lang)}
     expected_headers_by_id = {k: v for k, v in get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
@@ -265,15 +261,6 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
         messages.error,
         _('Did not recognize "%s", skipping row.') % sheet_name
     )]
-
-
-def _check_workbook_length(workbook, lang):
-    if lang and len(workbook.worksheets) > 1:
-        return _("Expected a single sheet. If you are uploading a multi-sheet file, "
-                 "please select 'All Languages'.")
-    if not lang and len(workbook.worksheets) == 1:
-        return _("File contains only one sheet. If you are uploading a single-language file, "
-                 "please select a language.")
 
 
 def _check_for_sheet_error(sheet, expected_headers, processed_sheets=Ellipsis):
