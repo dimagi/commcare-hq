@@ -59,6 +59,7 @@ class DetailContributor(SectionContributor):
 
         r = []
         if not self.app.use_custom_suite:
+            uses_report_context_tile = False
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
                     if enabled:
@@ -110,9 +111,15 @@ class DetailContributor(SectionContributor):
                                 not (detail.use_case_tiles and detail.persist_tile_on_forms)):
                             d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
+                    if getattr(detail, 'report_context_tile', False):
+                        uses_report_context_tile = True
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
                     r.append(d)
+
+            if uses_report_context_tile and toggles.MOBILE_UCR_TILE.enabled(self.app.domain):
+                r.append(self._get_report_context_tile_detail())
+
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
@@ -331,6 +338,29 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
+            )]
+        )
+
+    @staticmethod
+    def _get_report_context_tile_detail():
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+        return Detail(
+            id=MOBILE_UCR_TILE_DETAIL_ID,
+            title=Text(),
+            fields=[Field(
+                style=Style(
+                    horz_align="left",
+                    font_size="small",
+                    grid_height=1,
+                    grid_width=12,
+                    grid_x=0,
+                    grid_y=0,
+                ),
+                header=Header(text=Text()),
+                template=Template(text=Text(xpath=Xpath(
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))",
+                    variables=[XpathVariable(name='message', locale_id=id_strings.report_last_sync())],
+                ))),
             )]
         )
 

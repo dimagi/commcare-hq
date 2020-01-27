@@ -34,6 +34,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq import toggles
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
@@ -887,6 +888,10 @@ class EntriesHelper(object):
                     return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
+            elif getattr(detail, 'report_context_tile', False):
+                if toggles.MOBILE_UCR_TILE.enabled(module.get_app().domain):
+                    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+                    return MOBILE_UCR_TILE_DETAIL_ID
             if detail.persist_case_context and detail_type == "case_short":
                 # persistent_case_context will not work on product lists.
                 return id_strings.persistent_case_context_detail(detail_module)
