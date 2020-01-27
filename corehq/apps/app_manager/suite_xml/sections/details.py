@@ -68,18 +68,7 @@ class DetailContributor(SectionContributor):
                     continue
 
                 if detail.custom_xml:
-                    d = load_xmlobject_from_string(
-                        detail.custom_xml,
-                        xmlclass=Detail
-                    )
-                    expected = id_strings.detail(module, detail_type)
-                    if not id_strings.is_custom_app_string(d.id) and d.id != expected:
-                        raise SuiteValidationError(
-                            "Menu {}, \"{}\", uses custom case list xml. The "
-                            "specified detail ID is '{}', expected '{}'"
-                            .format(module.id, module.default_name(), d.id, expected)
-                        )
-                    elements.append(d)
+                    elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
                     detail_column_infos = get_detail_column_infos(
                         detail_type,
@@ -328,6 +317,22 @@ class DetailContributor(SectionContributor):
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action
+
+    def _get_custom_xml_detail(self, module, detail, detail_type):
+        d = load_xmlobject_from_string(
+            detail.custom_xml,
+            xmlclass=Detail
+        )
+
+        expected = id_strings.detail(module, detail_type)
+        if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+            raise SuiteValidationError(
+                "Menu {}, \"{}\", uses custom case list xml. The "
+                "specified detail ID is '{}', expected '{}'"
+                .format(module.id, module.default_name(), d.id, expected)
+            )
+
+        return d
 
     @staticmethod
     def _get_persistent_case_context_detail(module, xml):
