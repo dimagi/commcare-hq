@@ -76,10 +76,10 @@ class PopulateSQLCommand(BaseCommand):
             print("Too many to migrate automatically.")
 
         if not migrated:
-            print("""
+            print(f"""
                 A migration must be performed before this environment can be upgraded to the latest version
-                of CommCareHQ. This migration is run using the management command {}.
-            """.format(command_name))
+                of CommCareHQ. This migration is run using the management command {command_name}.
+            """)
             sys.exit(1)
 
     @classmethod
