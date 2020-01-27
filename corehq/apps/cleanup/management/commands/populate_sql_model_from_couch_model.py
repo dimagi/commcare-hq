@@ -68,7 +68,7 @@ class PopulateSQLCommand(BaseCommand):
                 remaining = cls.count_items_to_be_migrated()
                 if remaining != 0:
                     migrated = False
-                    print("Automatic migration failed, {} items remain to migrate.".format(remaining))
+                    print(f"Automatic migration failed, {remaining} items remain to migrate.")
             except Exception:
                 traceback.print_exc()
         else:
