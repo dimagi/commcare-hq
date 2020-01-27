@@ -97,15 +97,14 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
             self.locks.append(lock)
 
         if case:
-            self._validate_case(case)
-            self.cache[case_id] = case
-            self._track_load()
+            self.set(case_id, case)
         return case
 
     def set(self, case_id, case):
         assert isinstance(case, self.case_model_classes)
         if case_id not in self.cache:
             self._track_load()
+        self._validate_case(case)
         self.cache[case_id] = case
 
     def in_cache(self, case_id):
@@ -152,6 +151,7 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
         submitted form.  Doesn't save anything. Returns a CaseUpdateMetadata object.
         """
         case = self.get(case_update.id)
+        actions = {action.action_type_slug for action in case_update.actions}
         if case is None:
             if xform.metadata and xform.metadata.commcare_version:
                 from distutils.version import LooseVersion
@@ -172,11 +172,11 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
                 )
             case = self.case_update_strategy.case_from_case_update(case_update, xform)
             self.set(case.case_id, case)
-            return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None)
+            return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None, actions=actions)
         else:
             previous_owner = case.owner_id
             self.case_update_strategy(case).update_from_case_update(case_update, xform, self.get_cached_forms())
-            return CaseUpdateMetadata(case, is_creation=False, previous_owner_id=previous_owner)
+            return CaseUpdateMetadata(case, is_creation=False, previous_owner_id=previous_owner, actions=actions)
 
     def post_process_case(self, case, xform):
         pass
