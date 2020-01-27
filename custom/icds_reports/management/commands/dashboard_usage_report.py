@@ -15,6 +15,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
+from custom.icds_reports.const import ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.models import ICDSAuditEntryRecord, AwcLocation
 from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 
@@ -109,6 +110,7 @@ class Command(BaseCommand):
 
         self.get_request_data(usernames, usage_counts, indicators_count)
         print(f'Request data written to file {REQUEST_DATA_CACHE}')
+        print(f'Request data written to file {CAS_DATA_CACHE}')
 
     def get_location_id_vs_name_mapping_from_queryset(self, results_queryset):
         """
@@ -133,8 +135,8 @@ class Command(BaseCommand):
         """
         print(f'Compiling usage counts for {len(usernames)} users')
         user_counts = defaultdict(int)
-        user_indicators = defaultdict(list)
-        for chunk in with_progress_bar(chunked(usernames, 50), prefix='\tProcessing'):
+        user_indicators = defaultdict(lambda: [0] * 11)
+        for chunk in chunked(with_progress_bar(usernames), 500):
             query = (
                     ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
                                                         username__in=chunk, time_of_use__gte=start_date,
@@ -144,7 +146,7 @@ class Command(BaseCommand):
                     .annotate(count=Count('indicator')).order_by('username', 'indicator'))
             for record in query:
                 user_counts[record['username']] += record['count']
-                user_indicators[record['username']].append(record['count'])
+                user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
 
         return user_counts, user_indicators
 
@@ -189,7 +191,7 @@ class Command(BaseCommand):
 
         location_mapping = self.get_location_id_vs_name_mapping_from_queryset(all_awc_locations)
         usage_data = list()
-        date = datetime.datetime.now()
+        date = datetime.now()
         # fetching the last available dashboard activity report
         while not usage_data:
             usage_data = self.get_data_for_usage_report(date)
@@ -204,7 +206,7 @@ class Command(BaseCommand):
         cas_dict = defaultdict(int)
 
         print(f'Compiling request data for {len(usernames)} users')
-        for chunk in with_progress_bar(chunked(usernames, 50), prefix='\tProcessing'):
+        for chunk in chunked(with_progress_bar(usernames), 500):
             for username in chunk:
                 indicator_count = user_indicators_count[username]
 
@@ -219,12 +221,11 @@ class Command(BaseCommand):
                            self.user_level_list[location_details[3] - 1],
                            self.get_role_from_username(username), user_total_counts[username]]
 
-                csv_row.extend(indicator_count)
+                # excluding the dashboard usage report
+                csv_row.extend(indicator_count[:10])
                 request_data.append(csv_row)
-                try:
-                    cas_count = indicator_count[6]
-                except IndexError:
-                    cas_count = 0
+
+                cas_count = indicator_count[ISSNIP_MONTHLY_REGISTER_PDF - 1]
                 if location_details[0] not in cas_dict:
                     cas_dict[location_details[0]] = cas_count
                 else:
