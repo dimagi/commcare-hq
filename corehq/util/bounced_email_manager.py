@@ -1,10 +1,17 @@
 import imaplib
 import email
+import json
 import re
+
+from dateutil.parser import parse as parse_datetime
 
 from django.conf import settings
 
-from corehq.util.models import BouncedEmail
+from corehq.util.models import (
+    BouncedEmail,
+    NotificationType,
+    AwsMeta,
+)
 from corehq.util.soft_assert import soft_assert
 
 _bounced_email_soft_assert = soft_assert(
@@ -69,6 +76,75 @@ class BouncedEmailManager(object):
             parts.append(message.get_payload())
         return " ".join(parts)
 
+    def _get_message_json(self, message):
+        body_text = self._get_message_body(message)
+        return json.loads(body_text)
+
+    def _get_aws_info(self, message, uid):
+        """
+        This gets the most important details from AWS SNS notifications for
+        Complaints and Bounces.
+
+        Relevant AWS Dcoumentation:
+        https://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-examples.html
+
+        :param message: raw message
+        :param uid: SMTP uid of message
+        :return: list of AwsMeta objects
+        """
+        aws_info = []
+        base_info = self._get_message_json(message)
+
+        if base_info.get('notificationType'):
+            message_info = base_info
+        else:
+            message_info = base_info.get('Message')
+            if isinstance(message_info, str):
+                message_info = json.loads(message_info)
+
+        if not message_info:
+            return aws_info
+
+        mail_info = message_info.get('mail', {})
+        if message_info['notificationType'] == NotificationType.BOUNCE:
+            bounce_info = message_info['bounce']
+            for recipient in bounce_info['bouncedRecipients']:
+                aws_info.append(AwsMeta(
+                    notification_type=message_info['notificationType'],
+                    main_type=bounce_info['bounceType'],
+                    sub_type=bounce_info['bounceSubType'],
+                    timestamp=parse_datetime(bounce_info['timestamp']),
+                    email=recipient['emailAddress'],
+                    reason=recipient.get('diagnosticCode'),
+                    headers=mail_info.get('commonHeaders', {}),
+                    destination=mail_info.get('destination', []),
+                ))
+        elif message_info['notificationType'] == NotificationType.COMPLAINT:
+            complaint_info = message_info['complaint']
+            for recipient in complaint_info['complainedRecipients']:
+                aws_info.append(AwsMeta(
+                    notification_type=message_info['notificationType'],
+                    main_type=message_info.get('complaintFeedbackType'),
+                    sub_type=complaint_info.get('complaintSubType'),
+                    timestamp=parse_datetime(complaint_info['timestamp']),
+                    email=recipient['emailAddress'],
+                    reason=None,
+                    headers=mail_info.get('commonHeaders', {}),
+                    destination=mail_info.get('destination', []),
+                ))
+        else:
+            self._label_problem_email(
+                uid,
+                extra_labels=['UnknownAWSNotificationType']
+            )
+            _bounced_email_soft_assert(
+                False,
+                f'[{settings.SERVER_ENVIRONMENT}] '
+                f'Unknown AWS Notification Type sent to Inbox. '
+            )
+
+        return aws_info
+
     @staticmethod
     def _get_message_recipient(message):
         failed_recipient = message.get('X-Failed-Recipients')
@@ -89,6 +165,21 @@ class BouncedEmailManager(object):
     def _delete_message_with_uid(self, uid):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', '\\Trash')
         self.mail.expunge()
+
+    def process_aws_notifications(self):
+        self.mail.select('inbox')
+        for uid, message in self._get_messages(
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'Subject "AWS Notification Message")'
+        ):
+            try:
+                aws_info = self._get_aws_info(message, uid)
+            except Exception as e:
+                _bounced_email_soft_assert(
+                    False,
+                    f'[{settings.SERVER_ENVIRONMENT}] '
+                    f'Issue processing AWS Notification Message: {e}'
+                )
 
     def process_complaints(self):
         processed_emails = []
