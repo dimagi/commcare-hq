@@ -275,8 +275,8 @@ class BouncedEmailManager(object):
                     notification = part.get_payload().split('\n')
                     # we can be pretty confident of this email's formatting
                     # as the standard AWS hard bounce notification
-                    is_recognized_bounce = 'following recipients' in notification[0]
-                    return [n.rstrip('\r') for n in notification[1:]]
+                    if 'following recipients' in notification[0]:
+                        return [n.rstrip('\r') for n in notification[1:]]
 
                 if part.get_content_maintype() == 'message':
                     for forwarded_message in part.get_payload():
