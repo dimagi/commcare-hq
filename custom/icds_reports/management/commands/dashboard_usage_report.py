@@ -1,6 +1,5 @@
 import csv
 import os
-import re
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
@@ -8,19 +7,19 @@ from functools import wraps
 from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.base import BaseCommand
-from django.db.models import Count
+from django.db.models import Count, IntegerField
 
 from dimagi.utils.chunked import chunked
+from django.db.models.functions import Cast
 
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
-from custom.icds_reports.const import ISSNIP_MONTHLY_REGISTER_PDF
+from custom.icds_reports.const import THR_REPORT_EXPORT
 from custom.icds_reports.models import ICDSAuditEntryRecord, AwcLocation
 from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 
 prefix = 'dashboard_usage_data_'
-REQUEST_DATA_CACHE = f'{prefix}request_data.csv'
+REQUEST_DATA_CACHE = f'{prefix}tabular_data.csv'
 CAS_DATA_CACHE = f'{prefix}cas_export_data.csv'
 
 
@@ -95,21 +94,54 @@ class Command(BaseCommand):
             type=date_type,
             help='The end date (exclusive). format YYYY-MM-DD'
         )
+        parser.add_argument('domain')
 
-    def handle(self, start_date, end_date, **options):
-        domain = 'icds-cas'
+    def get_user_vs_state_mapping_and_usernames(self, user_data):
+        """
+        :param user_data: Dashboard activity records
+        :return: username vs state map and username vs location ids map
+        """
+        user_state_map = defaultdict(str)
+        user_location_dict = defaultdict(list)
 
+        for record in user_data:
+            if record['state_id'] not in user_state_map:
+                user_state_map[record['username']] = record['state_id']
+            if record['username'] not in user_location_dict:
+                user_location_dict[record['username']] = [record['state_id'], record['district_id'],
+                                                          record['block_id'], record['user_level']]
+        return user_state_map, user_location_dict
+
+    def handle(self, start_date, end_date, domain, **options):
         print(f'fetching users data')
-        all_usernames = get_all_usernames_by_domain(domain)
 
-        dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
+        user_data = list()
+        date = datetime.now()
+        # fetching the last available dashboard activity report
+        while not user_data:
+            user_data = self.get_activity_report_data(date)
+            date -= relativedelta(days=1)
+        # fetching username vs state_id map for cas export data and username vs location ids map
+        user_state_map, usernames_location_map = self.get_user_vs_state_mapping_and_usernames(user_data)
 
-        usernames = [username for username in all_usernames if dashboard_uname_rx.match(username)]
+        # fetching dashboard usage counts
+        tab_usage_counts, tab_indicators_count, cas_counts =\
+            self.get_dashboard_usage_counts(start_date, end_date, domain, usernames_location_map.keys(),
+                                            user_state_map)
+        location_type_filter = {
+            'aggregation_level': 5
+        }
+        for test_location in self.location_test_fields:
+            location_type_filter[test_location] = 0
+        all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
 
-        usage_counts, indicators_count = self.get_dashboard_usage_counts(start_date, end_date, usernames)
+        # fetching location_is vs name mapping since dashboard activity table stores only location ids
+        location_mapping = self.get_location_id_vs_name_mapping_from_queryset(all_awc_locations)
 
-        self.get_request_data(usernames, usage_counts, indicators_count)
+        self.get_tabular_data(usernames_location_map.keys(), tab_usage_counts, tab_indicators_count,
+                              location_mapping, usernames_location_map)
         print(f'Request data written to file {REQUEST_DATA_CACHE}')
+        self.get_cas_data(cas_counts)
         print(f'Request data written to file {CAS_DATA_CACHE}')
 
     def get_location_id_vs_name_mapping_from_queryset(self, results_queryset):
@@ -126,29 +158,37 @@ class Command(BaseCommand):
                         result[self.get_location_name_string_from_location_id(location_type)]
         return location_id_name_mapping
 
-    def get_dashboard_usage_counts(self, start_date, end_date, usernames):
+    def get_dashboard_usage_counts(self, start_date, end_date, domain, usernames, user_state_map):
         """
         :param start_date: start date of the filter
         :param end_date: end date of the filter
+        :param domain
         :param usernames: list of usernames
+        :param user_state_map: username vs state_id map
         :return: returns the counts of no of downloads of each and total reports for  all usernames
         """
         print(f'Compiling usage counts for {len(usernames)} users')
-        user_counts = defaultdict(int)
-        user_indicators = defaultdict(lambda: [0] * 11)
+        tabular_user_counts = defaultdict(int)
+        cas_user_counts = defaultdict(int)
+        tabular_user_indicators = defaultdict(lambda: [0] * 10)
+
+        urls = ['/a/' + domain + '/cas_export', '/a/' + domain + '/icds_export_indicator']
         for chunk in chunked(with_progress_bar(usernames), 500):
             query = (
-                    ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
+                    ICDSAuditEntryRecord.objects.filter(url__in=urls,
                                                         username__in=chunk, time_of_use__gte=start_date,
                                                         time_of_use__lte=end_date)
-                    .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
-                                                                                           'username')
+                    .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                        .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username', 'url')
                     .annotate(count=Count('indicator')).order_by('username', 'indicator'))
             for record in query:
-                user_counts[record['username']] += record['count']
-                user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
+                if record['url'] == urls[0]:
+                    cas_user_counts[user_state_map[record['username']]] += record['count']
+                else:
+                    tabular_user_counts[record['username']] += record['count']
+                    tabular_user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
 
-        return user_counts, user_indicators
+        return tabular_user_counts, tabular_user_indicators, cas_user_counts
 
     def get_role_from_username(self, username):
         """
@@ -160,7 +200,7 @@ class Command(BaseCommand):
                 return value
         return 'N/A'
 
-    def get_data_for_usage_report(self, date):
+    def get_activity_report_data(self, date):
         """
         :param date: Date for which the report is needed
         :return:Returns a list of activity report records based on the filters
@@ -172,45 +212,20 @@ class Command(BaseCommand):
     def get_location_name_string_from_location_id(self, location_id):
         return location_id.replace('_id', '_name')
 
-    def get_request_data(self, usernames, user_total_counts, user_indicators_count):
-        first_sheet_headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level',
-                               'Role', 'Total', 'Child', 'Pregnant Women', 'Demographics', 'System Usage',
-                               'AWC infrastructure', 'Child Growth Monitoring List', 'ICDS - CAS Monthly Register',
-                               'AWW Performance Report', 'LS Performance Report', 'Take Home Ration']
-        second_sheet_headers = ['Sr.No', 'State/UT Name',
-                                'No. of times CAS data export downloaded (December 2019)']
-        request_data = list()
-        cas_data = list()
-
-        location_type_filter = {
-            'aggregation_level': 5
-        }
-        for test_location in self.location_test_fields:
-            location_type_filter[test_location] = 0
-        all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
-
-        location_mapping = self.get_location_id_vs_name_mapping_from_queryset(all_awc_locations)
-        usage_data = list()
-        date = datetime.now()
-        # fetching the last available dashboard activity report
-        while not usage_data:
-            usage_data = self.get_data_for_usage_report(date)
-            date -= relativedelta(days=1)
-
-        user_location_dict = defaultdict(list)
-        for data in usage_data:
-            if data['username'] not in user_location_dict:
-                user_location_dict[data['username']] = [data['state_id'], data['district_id'],
-                                                        data['block_id'], data['user_level']]
-
-        cas_dict = defaultdict(int)
+    def get_tabular_data(self, usernames, tab_total_counts, tab_indicators_count, location_mapping,
+                         user_location_mapping):
+        sheet_headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level',
+                         'Role', 'Total', 'Child', 'Pregnant Women', 'Demographics', 'System Usage',
+                         'AWC infrastructure', 'Child Growth Monitoring List', 'ICDS - CAS Monthly Register',
+                         'AWW Performance Report', 'LS Performance Report', 'Take Home Ration']
+        tab_data = list()
 
         print(f'Compiling request data for {len(usernames)} users')
         for chunk in chunked(with_progress_bar(usernames), 500):
             for username in chunk:
-                indicator_count = user_indicators_count[username]
+                indicator_count = tab_indicators_count[username]
 
-                location_details = user_location_dict[username]
+                location_details = user_location_mapping[username]
 
                 for index, value in enumerate(location_details):
                     if value != 'All' and index < 3:
@@ -219,26 +234,26 @@ class Command(BaseCommand):
                 csv_row = [0, location_details[0], location_details[1],
                            location_details[2], username.split('@')[0],
                            self.user_level_list[location_details[3] - 1],
-                           self.get_role_from_username(username), user_total_counts[username]]
+                           self.get_role_from_username(username), tab_total_counts[username]]
 
-                # excluding the dashboard usage report
-                csv_row.extend(indicator_count[:10])
-                request_data.append(csv_row)
+                csv_row.extend(indicator_count)
+                tab_data.append(csv_row)
 
-                cas_count = indicator_count[ISSNIP_MONTHLY_REGISTER_PDF - 1]
-                if location_details[0] not in cas_dict:
-                    cas_dict[location_details[0]] = cas_count
-                else:
-                    cas_dict[location_details[0]] += cas_count
+        tab_data = sorted(tab_data, key=lambda x: (x[1], x[2], x[3]))
+        for index, data in enumerate(tab_data):
+            data[0] += (index + 1)
+        tab_data.insert(0, sheet_headers)
+        _write_to_file(REQUEST_DATA_CACHE, tab_data)
+
+    def get_cas_data(self, cas_total_counts):
+        sheet_headers = ['Sr.No', 'State/UT Name',
+                         'No. of times CAS data export downloaded (December 2019)']
+        cas_data = list()
         # constructing the cas export data
         serial = 0
-        for key, value in cas_dict.items():
+        for key, value in cas_total_counts.items():
             serial += 1
             cas_data.append([serial, key, value])
 
-        request_data = sorted(request_data, key=lambda x: (x[1], x[2], x[3]))
-        request_data.insert(0, first_sheet_headers)
-        cas_data.insert(0, second_sheet_headers)
-        _write_to_file(REQUEST_DATA_CACHE, request_data)
+        cas_data.insert(0, sheet_headers)
         _write_to_file(CAS_DATA_CACHE, cas_data)
-
