@@ -149,23 +149,6 @@ class BouncedEmailManager(object):
 
         return aws_info
 
-    @staticmethod
-    def _get_message_recipient(message):
-        failed_recipient = message.get('X-Failed-Recipients')
-        if failed_recipient:
-            return failed_recipient
-
-        maintype = message.get_content_maintype()
-        if maintype == 'multipart':
-            for part in message.get_payload():
-                if part.get_content_maintype() == 'message':
-                    for forwarded_message in part.get_payload():
-                        original_recipient = forwarded_message.get(
-                            'Original-Rcpt-To'
-                        ) or forwarded_message.get('To')
-                        if original_recipient:
-                            return original_recipient
-
     def _delete_message_with_uid(self, uid):
         self.mail.uid('STORE', uid, '+X-GM-LABELS', '\\Trash')
         self.mail.expunge()
@@ -278,71 +261,121 @@ class BouncedEmailManager(object):
                     f'Issue processing AWS Notification Message: {e}'
                 )
 
-    def process_complaints(self):
-        processed_emails = []
+    @staticmethod
+    def _get_raw_bounce_recipients(message):
+        failed_recipient = message.get('X-Failed-Recipients')
+        if failed_recipient:
+            return [failed_recipient]
 
-        self.mail.select('inbox')
-        for uid, message in self._get_messages(
-            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
-            f'From "{COMPLAINTS_DAEMON}")'
-        ):
-            complaint_email = self._get_message_recipient(message)
-            if complaint_email:
-                self._mark_email_as_bounced(complaint_email, uid)
-                processed_emails.append(complaint_email)
+        maintype = message.get_content_maintype()
+        if maintype == 'multipart':
+            for part in message.get_payload():
+                if (part.get('Content-Description') == 'Notification'
+                        and part.get('Content-Type') == 'text/plain; charset=us-ascii'):
+                    notification = part.get_payload().split('\n')
+                    # we can be pretty confident of this email's formatting
+                    # as the standard AWS hard bounce notification
+                    is_recognized_bounce = 'following recipients' in notification[0]
+                    return [n.rstrip('\r') for n in notification[1:]]
 
-        return processed_emails
+                if part.get_content_maintype() == 'message':
+                    for forwarded_message in part.get_payload():
+                        original_recipient = forwarded_message.get(
+                            'Original-Rcpt-To'
+                        ) or forwarded_message.get('To')
+                        if original_recipient:
+                            # if original_recipient is a list of emails, we
+                            # cannot be confident which email is bouncing
+                            return [original_recipient]
 
-    def _process_bounced_emails_with_subject(self, subject):
-        processed_emails = []
-        self.mail.select('inbox')
-        for uid, message in self._get_messages(
-            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
-            f'Subject "{subject}" '
-            f'From "{BOUNCE_DAEMON}")'
-        ):
-            bounced_email = self._get_message_recipient(message)
-            if not bounced_email:
-                # fall back to using the REGEX as a last resort, in case these
-                # messages don't contain a forwarded email
-                email_regex = re.search(
-                    EMAIL_REGEX,
-                    self._get_message_body(message)
+        subject = message.get('Subject')
+
+        if subject == 'Email Delivery Failure':
+            body_text = message.get_payload().split('\n')
+            if len(body_text) >= 3 and body_text[2].startswith('-- '):
+                return [body_text[2].lstrip('-- ').rstrip('\r')]
+
+        if subject == 'failure notice':
+            body_text = message.get_payload().split('\n')
+            if len(body_text) >= 5 and 'qmail-send' in body_text[0]:
+                return [body_text[4].lstrip('<').rstrip('>:\r')]
+
+    def _handle_raw_transient_bounces(self, uid):
+        """
+        We will not handle the raw transient bounces by hand because it is
+        not possible to reliably obtain the message recipient from these emails.
+        """
+        if self.delete_processed_messages:
+            self._delete_message_with_uid(uid)
+
+    def _handle_raw_bounced_recipients(self, recipients, uid):
+        for recipient in recipients:
+            exists = BouncedEmail.objects.filter(
+                email=recipient,
+            ).exists()
+            if not exists and re.search(EMAIL_REGEX_VALIDATION, recipient):
+                # an email will only show up here if there was no prior
+                # SNS notification for it. add the email to the bounce list and
+                # mark the email in the bounces inbox for further investigation
+                BouncedEmail.objects.update_or_create(
+                    email=recipient,
                 )
-                if email_regex:
-                    bounced_email = email_regex.group()
-
-            if bounced_email:
-                self._mark_email_as_bounced(bounced_email, uid)
-                processed_emails.append(bounced_email)
-        return processed_emails
-
-    def process_bounces(self):
-        processed_emails = []
-        for subject in [
-            "Delivery Status Notification (Failure)",
-            "Undelivered Mail Returned to Sender",
-            "Returned mail: see transcript for details",
-            "Undeliverable: Scheduled report from CommCare HQ",
-        ]:
-            processed_emails.extend(
-                self._process_bounced_emails_with_subject(subject)
-            )
-        return processed_emails
-
-    def _mark_email_as_bounced(self, bounced_email, uid):
-        if re.search(EMAIL_REGEX_VALIDATION, bounced_email):
-            BouncedEmail.objects.update_or_create(
-                email=bounced_email,
-            )
-            if self.delete_processed_messages:
+                self._label_problem_email(
+                    uid,
+                    extra_labels=["SNSNotificationMissing"]
+                )
+                _bounced_email_soft_assert(
+                    False,
+                    f'[{settings.SERVER_ENVIRONMENT}] '
+                    f'An email bounced that was not caught by SNS: {recipient}'
+                )
+            elif not exists:
+                # this email failed to validate, find out why
+                self._label_problem_email(
+                    uid,
+                    extra_labels=["ValidationFailed"]
+                )
+                _bounced_email_soft_assert(
+                    False,
+                    f'[{settings.SERVER_ENVIRONMENT}] '
+                    f'Tried to mark "{recipient}" as BOUNCED and failed '
+                    f'because it was not a valid email.'
+                )
+            elif self.delete_processed_messages:
                 self._delete_message_with_uid(uid)
-        else:
-            _bounced_email_soft_assert(
-                False,
-                f'[{settings.SERVER_ENVIRONMENT}] '
-                f'Tried to mark "{bounced_email}" as BOUNCED and failed.'
-            )
+
+    def _process_raw_messages(self, sender):
+        """
+        This processes the messages sent directly from known bounce and
+        complaints daemons.
+        :param sender: a known daemon email (string)
+        """
+        self.mail.select('inbox')
+        for uid, message in self._get_messages(
+            f'(Header Delivered-To "{settings.RETURN_PATH_EMAIL}" '
+            f'From "{sender}")'
+        ):
+            if message.get('X-Autoreply') or message.get('Auto-Submitted'):
+                self._handle_raw_transient_bounces(uid)
+            else:
+                recipients = self._get_raw_bounce_recipients(message)
+                if recipients:
+                    self._handle_raw_bounced_recipients(recipients, uid)
+                else:
+                    self._label_problem_email(
+                        uid,
+                        extra_labels=["RecipientUnknown"]
+                    )
+                    _bounced_email_soft_assert(
+                        False,
+                        f'[{settings.SERVER_ENVIRONMENT}] '
+                        f'Could not find a bounced email recipients. '
+                        f'Check inbox for "RecipientUnknown" tag'
+                    )
+
+    def process_daemon_messages(self):
+        for sender in [BOUNCE_DAEMON, COMPLAINTS_DAEMON]:
+            self._process_raw_messages(sender)
 
     def logout(self):
         self.mail.close()
