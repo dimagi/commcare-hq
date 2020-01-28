@@ -1,6 +1,9 @@
+import csv
 import io
 from collections import defaultdict
+from copy import copy
 
+from custom.icds.utils.location import find_test_state_locations
 from custom.icds_reports.data_pull.exceptions import UnboundDataPullException
 from custom.icds_reports.data_pull.queries import (
     AWCSElectricityAndCBECount,
@@ -151,11 +154,33 @@ class MonthlyPerformance(MonthBasedDataPull):
 
     def _consolidate_data(self, data_files):
         result = defaultdict(dict)
-        # ToDo: Consolidate data for all files into a single file
+        test_state_names = self._get_test_state_names()
+        state_name_column = 'state_name'
+        for filename, filestream in data_files.items():
+            filestream.seek(0)
+            reader = csv.DictReader(filestream)
+            for row in reader:
+                state_name = row[state_name_column]
+                if row[state_name] in test_state_names:
+                    continue
+                for column_name, value in row.items():
+                    if column_name != state_name_column:
+                        result[state_name][column_name] = value
         return result
+
+    @staticmethod
+    def _get_test_state_names():
+        return map(lambda loc: loc.name, find_test_state_locations())
 
     @staticmethod
     def _dump_consolidated_data(result):
         result_file = io.StringIO()
-        # ToDo: dump data in a csv file
+        headers = list(list(result.values())[0].keys())
+        fieldnames = ['State'] + headers
+        writer = csv.DictWriter(result_file, fieldnames)
+        writer.writeheader()
+        for state_name, col_values in result.items():
+            row = copy(col_values)
+            row['State'] = state_name
+            writer.writerow(row)
         return result_file
