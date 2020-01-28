@@ -2,6 +2,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.locations.util import location_hierarchy_config
+from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.utils import icds_pre_release_features
 
@@ -23,6 +24,8 @@ def get_dashboard_template_context(domain, couch_user):
         )]
     )
     context['have_access_to_features'] = icds_pre_release_features(couch_user)
+    context['show_mobile_apk'] = ICDS_DASHBOARD_SHOW_MOBILE_APK.enabled(couch_user.username,
+                                                                        namespace=NAMESPACE_USER)
     context['have_access_to_all_locations'] = couch_user.has_permission(
         domain, 'access_all_locations'
     )

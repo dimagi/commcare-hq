@@ -131,7 +131,7 @@ def _get_or_update_cases(xforms, case_db):
     """
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
-    _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
+    _validate_indices(case_db, touched_cases.values())
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
     return CaseProcessingResult(
         domain,
@@ -213,8 +213,12 @@ def _get_dirtiness_flags_for_reassigned_case(case_metas):
             yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
 
 
-def _validate_indices(case_db, cases):
-    for case in cases:
+def _validate_indices(case_db, case_updates):
+    for case_update in case_updates:
+        if not case_update.index_change:
+            continue
+
+        case = case_update.case
         if case.indices:
             for index in case.indices:
                 try:

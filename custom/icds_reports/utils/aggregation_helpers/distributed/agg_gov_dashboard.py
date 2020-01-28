@@ -1,3 +1,6 @@
+from dateutil.relativedelta import relativedelta
+
+from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
@@ -148,6 +151,36 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         """.format(
             tmp_tablename=self.staging_tablename,
         ), {}
+
+        yield """
+        UPDATE "{tmp_tablename}" agg_gov
+        SET vhsnd_date_past_month = ut.vhsnd_date_past_month,
+            anm_mpw_present = ut.anm_mpw_present,
+            asha_present = ut.asha_present,
+            child_immu = ut.child_immu,
+            anc_today = ut.anc_today
+        FROM (
+            SELECT DISTINCT awc_id as awc_id,
+                FIRST_VALUE(vhsnd_date_past_month) over w as vhsnd_date_past_month,
+                FIRST_VALUE(anm_mpw=1) over w as anm_mpw_present,
+                FIRST_VALUE(asha_present=1) over w as asha_present,
+                FIRST_VALUE(child_immu=1) over w as child_immu,
+                FIRST_VALUE(anc_today=1) over w as anc_today
+            FROM "{ucr_tablename}" WHERE
+                vhsnd_date_past_month >= %(start_date)s AND
+                vhsnd_date_past_month < %(end_date)s WINDOW w AS(
+                PARTITION BY awc_id
+                ORDER BY vhsnd_date_past_month RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            ) ORDER BY awc_id
+        ) ut
+        WHERE agg_gov.awc_id = ut.awc_id;
+        """.format(
+            tmp_tablename=self.staging_tablename,
+            ucr_tablename=get_table_name(self.domain, 'static-vhnd_form')
+        ), {
+            'start_date': self.month,
+            'end_date': self.month + relativedelta(months=1)
+        }
 
         yield """
         DROP TABLE temp_gov_dashboard;

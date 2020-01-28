@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district
+from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -64,7 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION)
+    GOVERNANCE_API_RECORDS_PAGINATION)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -233,6 +233,7 @@ from custom.icds_reports.utils.data_accessor import (
 
 from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
+    get_vhnd_data,
     get_beneficiary_data,
     get_state_names,
     get_cbe_data)
@@ -447,8 +448,10 @@ class ProgramSummaryView(BaseReportView):
 class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
+        state = request.GET.get('state')
         district = request.GET.get('district')
-        topojson = get_topojson_for_district(district)
+
+        topojson = get_topojson_for_district(state, district)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 
@@ -566,19 +569,18 @@ class LocationView(View):
                 location_id=location_id
             )
 
-            map_location_name = location.name
-            if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
-                map_location_name = location.metadata['map_location_name']
             return JsonResponse({
                 'name': location.name,
-                'map_location_name': map_location_name,
+                'map_location_name': get_map_name(location),
                 'location_type': location.location_type.code,
                 'location_type_name': location.location_type_name,
                 'user_have_access': user_can_access_location_id(
                     self.kwargs['domain'],
                     request.couch_user, location.location_id
                 ),
-                'user_have_access_to_parent': location.location_id in parent_ids
+                'user_have_access_to_parent': location.location_id in parent_ids,
+                'parent_name': location.parent.name if location.parent else None,
+                'parent_map_name': get_map_name(location.parent),
             })
 
         parent_id = request.GET.get('parent_id')
@@ -2191,7 +2193,6 @@ class GovernanceAPIBaseView(View):
         if state_site_code is not None:
             state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
-
         last_awc_id = request.GET.get('last_awc_id', '')
         return  last_awc_id, month, year, state_id
 
@@ -2228,7 +2229,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            GOVERNANCE_API_RECORDS_PAGINATION,
             year,
             month,
             order,
@@ -2262,7 +2263,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            GOVERNANCE_API_RECORDS_PAGINATION,
             year,
             month,
             order,
@@ -2287,6 +2288,33 @@ class GovernanceStateListAPI(GovernanceAPIBaseView):
         return JsonResponse(data={'data': get_state_names()})
 
 
+class GovernanceVHNDSAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {'awc_id__gt': last_awc_id, 'awc_launched': True}
+        order = ['awc_id']
+        if state_id is not None:
+            query_filters['state_id'] = state_id
+        data, count = get_vhnd_data(GOVERNANCE_API_RECORDS_PAGINATION, year,
+                                    month, order, query_filters)
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)
+
+
 class GovernanceCBEAPI(GovernanceAPIBaseView):
 
     def get(self, request, *args, **kwargs):
@@ -2298,12 +2326,12 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
 
         query_filters = {
             'state_id': state_id,
-            'awc_launched': 1,
+            'awc_launched': True,
             'awc_id__gt': last_awc_id}
         order = ['awc_id']
 
         data, count = get_cbe_data(
-            GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION,
+            GOVERNANCE_API_RECORDS_PAGINATION,
             year,
             month,
             order,
