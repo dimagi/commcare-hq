@@ -27,9 +27,14 @@ class BaseQuery:
     def _setup(self, db_alias):
         db_conn = connections[db_alias]
         cursor = db_conn.cursor()
-        with open(self.setup_sql_file_path) as _sql:
-            sql = _sql.read().format(month=self.month).replace('\n', ' ')
-            cursor.execute(sql)
+        sql = self.setup_sql.replace('\n', ' ')
+        cursor.execute(sql)
+
+    @cached_property
+    def setup_sql(self):
+        if self.setup_sql_file_path:
+            with open(self.setup_sql_file_path) as _sql:
+                return _sql.read().format(month=self.month)
 
     @property
     def result_file_name(self):

@@ -84,7 +84,13 @@ class MonthBasedDataPull(BaseDataPull):
             raise UnboundDataPullException("Month not defined")
 
     def get_queries(self):
-        return [query_class(self.month).sql_query for query_class in self.queries]
+        queries = []
+        for query_class in self.queries:
+            query_obj = query_class(self.month)
+            if query_obj.setup_sql:
+                queries.append(query_obj.setup_sql)
+            queries.append(query_obj.sql_query)
+        return queries
 
     def _get_data_files(self):
         result = {}
