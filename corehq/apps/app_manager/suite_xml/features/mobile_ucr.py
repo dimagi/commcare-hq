@@ -287,7 +287,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             Field(
                 header=Header(
                     text=Text(
-                        locale=Locale(id=id_strings.report_last_sync())
+                        locale=Locale(id=id_strings.report_oldest_sync())
                     )
                 ),
                 template=Template(text=_get_last_sync(config))
