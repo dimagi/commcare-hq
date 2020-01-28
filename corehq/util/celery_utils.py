@@ -234,9 +234,9 @@ def run_periodic_task_again(run_every, last_run_start: datetime, last_duration: 
     if isinstance(run_every, crontab):
         state = run_every.is_due(last_run_start)
         return (
-            not state.is_due and
-            datetime.utcnow().hour in run_every.hour and
-            state.next > last_duration.total_seconds()
+            not state.is_due
+            and datetime.utcnow().hour in run_every.hour
+            and state.next > last_duration.total_seconds()
         )
     elif isinstance(run_every, timedelta):
         next_start = last_run_start + run_every
