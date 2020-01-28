@@ -128,3 +128,66 @@ class CBEConducted(LocationAndMonthBasedQuery):
         till_date = str(parse_date(from_date) + relativedelta(months=1))
         return self._raw_query.format(location_id=self.location_id,
                                       from_date=from_date, till_date=till_date)
+
+
+class AWCSLaunched(MonthBasedQuery):
+    name = "AWCs launched"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/awcs_launched.sql"
+
+
+class AWCSInfraFormsCount(MonthBasedQuery):
+    name = "AWCs Infra Forms Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/awcs_infra_forms_count.sql"
+
+
+class AWCSFacilitiesCount(MonthBasedQuery):
+    name = "AWCs Facilities Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/awcs_facilities_count.sql"
+
+
+class AWCSElectricityAndCBECount(MonthBasedQuery):
+    name = "AWCs Electricity And CBE Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/awcs_electricity_and_cbe_count.sql"
+
+
+class ChildrenTHRCount(MonthBasedQuery):
+    name = "Children THR Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/children_thr_count.sql"
+    setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_tmp_thr_table.sql"
+
+
+class ChildrenPSECount(MonthBasedQuery):
+    name = "Children PSE Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/children_pse_count.sql"
+    setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_tmp_pse_table.sql"
+
+
+class PWAndLMTHRCount(MonthBasedQuery):
+    name = "Pregnant Women and Lactating Mother THR Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/pw_and_lm_thr_count.sql"
+    setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_dummy_thr_table.sql"
+
+
+class ChildrenStuntedAndWastedCount(MonthBasedQuery):
+    name = "Children Stunted And Wasted Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/children_stunted_and_wasted_count.sql"
+
+
+class ChildrenHeightAndWeightCount(MonthBasedQuery):
+    name = "Children Height And Weight Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/children_height_and_weight_count.sql"
+
+
+class DeliveriesAndRationCount(MonthBasedQuery):
+    name = "Deliveries And Ration Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/deliveries_and_ration_count.sql"
+
+
+class HotCookedMealStats(MonthBasedQuery):
+    name = "Hot Cooked Meal Stats"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/hot_cooked_meal_stats.sql"
+
+
+class ChildrenCount(MonthBasedQuery):
+    name = "Children Count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/children_count.sql"

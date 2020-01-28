@@ -1,11 +1,26 @@
+import io
+from collections import defaultdict
+
 from custom.icds_reports.data_pull.exceptions import UnboundDataPullException
 from custom.icds_reports.data_pull.queries import (
+    AWCSElectricityAndCBECount,
+    AWCSFacilitiesCount,
+    AWCSInfraFormsCount,
+    AWCSLaunched,
     CBEConducted,
+    ChildrenCount,
+    ChildrenHeightAndWeightCount,
+    ChildrenPSECount,
+    ChildrenStuntedAndWastedCount,
+    ChildrenTHRCount,
+    DeliveriesAndRationCount,
     DirectQuery,
+    HotCookedMealStats,
     LunchAbove3Years,
     LunchAbove5Years,
     PSEAbove3Years,
     PSEAbove5Years,
+    PWAndLMTHRCount,
     THRChildren,
     THRLactating,
     THRPregnant,
@@ -107,3 +122,40 @@ class AndhraPradeshMonthly(LocationAndMonthBasedDataPull):
         THRLactating,
         THRPregnant,
     ]
+
+
+class MonthlyPerformance(MonthBasedDataPull):
+    slug = "monthly_performance"
+    name = "Monthly Performance"
+    queries = [
+        AWCSLaunched,
+        AWCSInfraFormsCount,
+        AWCSFacilitiesCount,
+        AWCSElectricityAndCBECount,
+        ChildrenTHRCount,
+        ChildrenPSECount,
+        PWAndLMTHRCount,
+        ChildrenStuntedAndWastedCount,
+        ChildrenHeightAndWeightCount,
+        DeliveriesAndRationCount,
+        HotCookedMealStats,
+        ChildrenCount
+    ]
+
+    def post_run(self, data_files):
+        result = self._consolidate_data(data_files)
+        filestream = self._dump_consolidated_data(result)
+        return {
+            "Consolidated_monthly_report.csv": filestream
+        }
+
+    def _consolidate_data(self, data_files):
+        result = defaultdict(dict)
+        # ToDo: Consolidate data for all files into a single file
+        return result
+
+    @staticmethod
+    def _dump_consolidated_data(result):
+        result_file = io.StringIO()
+        # ToDo: dump data in a csv file
+        return result_file
