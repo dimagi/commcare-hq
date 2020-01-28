@@ -5,18 +5,17 @@ from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from django_prbac.utils import has_privilege
 
-from corehq.apps.users.models import Permissions, CommCareUser
-from corehq.apps.groups.models import Group, DeleteGroupRecord
-from corehq.apps.users.decorators import require_permission
-from corehq.privileges import CASE_SHARING_GROUPS
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.signals import update_user_in_es
+from corehq.privileges import CASE_SHARING_GROUPS
+from django_prbac.utils import has_privilege
 
 require_can_edit_groups = require_permission(Permissions.edit_groups)
 
@@ -168,14 +167,21 @@ def _update_group_membership(request, domain, group_id):
     selected_users = request.POST.getlist('selected_ids')
 
     # check to make sure no users were deleted at time of making group
-    all_users = CommCareUser.ids_by_domain(domain)
-    safe_ids = [u for u in selected_users if u in all_users]
+    users = iter_docs(CouchUser.get_db(), selected_users)
+    safe_users = [
+        CouchUser.wrap_correctly(user) for user in users
+        if user['doc_type'] == 'CommCareUser' and user.get('domain') == domain
+    ]
+    safe_ids = [user.user_id for user in safe_users]
 
     group.users = safe_ids
 
     _ensure_case_sharing_privilege(request, group)
 
     group.save()
+
+    for user in safe_users:
+        update_user_in_es(None, user)
     messages.success(request, _("Group %s updated!") % group.name)
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
 
