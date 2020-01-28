@@ -51,7 +51,7 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import MOBILE_UCR, MOBILE_UCR, NAMESPACE_DOMAIN
+from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
 from corehq.util.test_utils import flag_enabled
 
 
