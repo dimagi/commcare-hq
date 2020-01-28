@@ -32,6 +32,7 @@ COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
 COLUMN_XPATH_TEMPLATE_V2 = "{}"
 COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
 COLUMN_XPATH_CLIENT_TEMPLATE_V2 = "<%= id %>"
+MOBILE_UCR_TILE_DETAIL_ID = "report_context_tile"
 
 
 def _get_column_xpath_template(new_mobile_ucr_restore):

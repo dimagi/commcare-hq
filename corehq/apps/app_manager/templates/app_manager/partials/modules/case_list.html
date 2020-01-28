@@ -35,6 +35,14 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
+      {% if request|toggle_enabled:'MOBILE_UCR' %}
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: reportContextTile">
+            {% trans "Throughout this menu, include a persistent report tile displaying the last time UCR data was synced" %}
+          </label>
+        </div>
+      {% endif %}
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
           <div class="col-sm-6">

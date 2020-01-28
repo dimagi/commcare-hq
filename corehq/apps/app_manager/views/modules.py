@@ -776,6 +776,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
+    report_context_tile = params.get("reportContextTile", None)
     pull_down_tile = params.get("enableTilePullDown", None)
     sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
@@ -810,6 +811,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             detail.short.persistent_case_context_xml = persistent_case_context_xml
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
+        if report_context_tile is not None:
+            detail.short.report_context_tile = report_context_tile
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if persistent_case_tile_from_module is not None:
