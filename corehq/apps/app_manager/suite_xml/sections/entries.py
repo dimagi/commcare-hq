@@ -911,7 +911,7 @@ class EntriesHelper(object):
                     module, detail.persistent_case_tile_from_module)
                 if inline_attr:
                     return inline_attr
-            if self.has_persistent_tile(detail):
+            if detail.has_persistent_tile():
                 list_type = "case_long" if detail_type == "case_short" else "product_long"
                 return self.details_helper.get_detail_id_safe(detail_module, list_type)
         return None
