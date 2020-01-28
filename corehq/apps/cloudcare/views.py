@@ -55,7 +55,7 @@ from corehq.apps.cloudcare.const import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
-from corehq.apps.cloudcare.models import SQLAppGroup
+from corehq.apps.cloudcare.models import AppGroup
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -456,7 +456,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         access.restrict = body['restrict']
         access.sqlappgroup_set.all().delete()
         access.sqlappgroup_set.set([
-            SQLAppGroup(app_id=app_group['app_id'], group_id=app_group.get('group_id'))
+            AppGroup(app_id=app_group['app_id'], group_id=app_group.get('group_id'))
             for app_group in body['app_groups']
         ], bulk=False)
         access.save()
