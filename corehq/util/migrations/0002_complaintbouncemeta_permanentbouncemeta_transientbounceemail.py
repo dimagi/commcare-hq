@@ -24,8 +24,17 @@ class Migration(migrations.Migration):
                 ('headers', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
                 ('feedback_type', models.CharField(blank=True, max_length=50, null=True)),
                 ('sub_type', models.CharField(blank=True, max_length=50, null=True)),
-                ('destination', django.contrib.postgres.fields.ArrayField(base_field=models.EmailField(max_length=254), blank=True, default=list, null=True, size=None)),
-                ('bounced_email', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='util.BouncedEmail')),
+                ('destination', django.contrib.postgres.fields.ArrayField(
+                    base_field=models.EmailField(max_length=254),
+                    blank=True,
+                    default=list,
+                    null=True,
+                    size=None
+                )),
+                ('bounced_email', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='util.BouncedEmail'
+                )),
             ],
         ),
         migrations.CreateModel(
@@ -34,17 +43,36 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('timestamp', models.DateTimeField()),
-                ('sub_type', models.CharField(choices=[('General', 'General'), ('Suppressed', 'Suppressed'), ('Undetermined', 'Undetermined')], max_length=20)),
+                ('sub_type', models.CharField(
+                    choices=[
+                        ('General', 'General'),
+                        ('Suppressed', 'Suppressed'),
+                        ('Undetermined', 'Undetermined')
+                    ], max_length=20)),
                 ('headers', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
                 ('reason', models.TextField(blank=True, null=True)),
-                ('destination', django.contrib.postgres.fields.ArrayField(base_field=models.EmailField(max_length=254), blank=True, default=list, null=True, size=None)),
-                ('bounced_email', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='util.BouncedEmail')),
+                ('destination', django.contrib.postgres.fields.ArrayField(
+                    base_field=models.EmailField(max_length=254),
+                    blank=True,
+                    default=list,
+                    null=True,
+                    size=None
+                )),
+                ('bounced_email', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='util.BouncedEmail'
+                )),
             ],
         ),
         migrations.CreateModel(
             name='TransientBounceEmail',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID'
+                )),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('email', models.EmailField(db_index=True, max_length=254)),
                 ('timestamp', models.DateTimeField(db_index=True)),
