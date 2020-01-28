@@ -178,14 +178,13 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             yield case
 
 
-def MockPool(initializer=lambda: None, initargs=(), maxtasksperchild=None):
-    return NoProcessPool(initializer, initargs)
-
-
 @attr.s
-class NoProcessPool:
+class MockPool:
+    """Pool that uses greenlets rather than processes"""
     initializer = attr.ib()
     initargs = attr.ib()
+    processes = attr.ib(default=None)
+    maxtasksperchild = attr.ib(default=None)
     pool = attr.ib(factory=Pool, init=False)
 
     def imap_unordered(self, *args, **kw):
