@@ -237,6 +237,28 @@ def init_worker(domain, *args):
         clean_break = True
 
     clean_break = False
+    reset_django_db_connections()
+    reset_couchdb_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
+
+
+def reset_django_db_connections():
+    # cannot use db.connections.close_all() because that results in
+    # InterfaceError: connection already closed
+    # see also https://github.com/psycopg/psycopg2/blob/master/psycopg/connection_type.c
+    #   /* close the connection only if this is the same process it was created
+    #    * into, otherwise using multiprocessing we may close the connection
+    #    * belonging to another process. */
+    from django import db
+    for alias in db.connections:
+        del db.connections[alias]
+
+
+def reset_couchdb_connections():
+    from couchdbkit.ext.django.loading import CouchdbkitHandler
+    dbs = CouchdbkitHandler.__shared_state__["_databases"]
+    for db in dbs.values():
+        server = db[0] if isinstance(db, tuple) else db.server
+        server.cloudant_client.r_session.close()
