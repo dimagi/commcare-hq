@@ -29,6 +29,7 @@ install:
 before_script:
   - docker version
   - docker-compose version
+  - ./manage.py showmigrations dhis2
 script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
