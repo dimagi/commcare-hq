@@ -78,6 +78,11 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open', '0'),
             ('num_awcs',),
+            ('num_launched_states', '0'),
+            ('num_launched_districts', '0'),
+            ('num_launched_blocks', '0'),
+            ('num_launched_supervisors', '0'),
+            ('num_launched_awcs', '0'),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', "state_is_test"),
@@ -145,7 +150,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         FROM (
             SELECT * FROM "{temp_table}"
         ) ut
-        WHERE ut.owner_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
+        WHERE ut.owner_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id and aggregation_level=5;
         """.format(
             tablename=self.tablename, temp_table="temp_launched_{}".format(self.tablename),
             household_cases=get_table_name(self.domain, 'static-household_cases'),
