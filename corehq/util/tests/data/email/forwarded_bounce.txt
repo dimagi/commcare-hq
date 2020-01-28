@@ -1,0 +1,62 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Return-Path: <>
+From: MAILER-DAEMON@amazonses.com
+To: commcarehq-bounces+production@dimagi.com
+Subject: Delivery Status Notification (Failure)
+MIME-Version: 1.0
+Content-Type: multipart/report; boundary="----=_Part_1262136_1664729052.1579478885297"; report-type=delivery-status
+Date: Mon, 20 Jan 2020 00:08:05 +0000
+
+------=_Part_1262136_1664729052.1579478885297
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+This is a nonstandard forward of a bounced message
+------=_Part_1262136_1664729052.1579478885297
+Content-Type: message/delivery-status
+Content-Transfer-Encoding: 7bit
+Content-Description: Delivery Status Notification
+
+
+------=_Part_1262136_1664729052.1579478885297
+Content-Type: message/rfc822
+Content-Description: Undelivered Message
+
+Content-Type: multipart/alternative; boundary="===============8059403940475160788=="
+MIME-Version: 1.0
+Subject: Please update your project settings for fake-project
+From: commcarehq-noreply@dimagi.com
+To: bouncedemail@gmail.com
+Cc: commcarehq-noreply@dimagi.com
+Date: Mon, 20 Jan 2020 00:01:46 +0000
+
+--===============8059403940475160788==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+Hey,
+
+This is a bounced message.
+
+Thanks!
+CommCareHQ
+
+--===============8059403940475160788==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+<p>
+  Hey,
+</p>
+
+<p>
+  This is a bounced message
+</p>
+
+
+--===============8059403940475160788==--
+
+------=_Part_1262136_1664729052.1579478885297--
