@@ -872,13 +872,6 @@ MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MOBILE_UCR_TILE = StaticToggle(
-    'mobile_ucr_tile',
-    'Mobile UCR: Support a persistent tile displaying the last time report data was synced.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),

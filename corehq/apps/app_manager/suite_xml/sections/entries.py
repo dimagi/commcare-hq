@@ -889,7 +889,7 @@ class EntriesHelper(object):
             if detail.has_persistent_tile():
                 return id_strings.detail(detail_module, detail_type)
             elif getattr(detail, 'report_context_tile', False):
-                if toggles.MOBILE_UCR_TILE.enabled(module.get_app().domain):
+                if toggles.MOBILE_UCR.enabled(module.get_app().domain):
                     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
                     return MOBILE_UCR_TILE_DETAIL_ID
             if detail.persist_case_context and detail_type == "case_short":

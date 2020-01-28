@@ -51,7 +51,7 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import MOBILE_UCR, MOBILE_UCR_TILE, NAMESPACE_DOMAIN
+from corehq.toggles import MOBILE_UCR, MOBILE_UCR, NAMESPACE_DOMAIN
 from corehq.util.test_utils import flag_enabled
 
 
@@ -155,7 +155,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             username='ralph',
         )
         MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
-        MOBILE_UCR_TILE.set(cls.domain, True, NAMESPACE_DOMAIN)
 
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 

@@ -113,7 +113,7 @@ class DetailContributor(SectionContributor):
                 d = self._get_fixture_detail(module)
                 elements.append(d)
 
-        if uses_report_context_tile and toggles.MOBILE_UCR_TILE.enabled(self.app.domain):
+        if uses_report_context_tile and toggles.MOBILE_UCR.enabled(self.app.domain):
             elements.append(self._get_report_context_tile_detail())
 
         return elements
