@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0163_update_agg_awc_monthly_view'),
+        ('icds_reports', '0164_auto_20200123_0702'),
     ]
 
     operations = [
