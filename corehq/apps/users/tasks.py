@@ -30,7 +30,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.util.celery_utils import deserialize_run_every_setting
+from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
 
@@ -301,14 +301,21 @@ def update_domain_date(user_id, domain):
             pass
 
 
+process_reporting_metadata_staging_schedule = deserialize_run_every_setting(
+    settings.USER_REPORTING_METADATA_BATCH_SCHEDULE
+)
+
+
 @periodic_task(
-    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    run_every=process_reporting_metadata_staging_schedule,
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
         CouchUser, UserReportingMetadataStaging
     )
+
+    start = datetime.utcnow()
 
     with transaction.atomic():
         records = (
@@ -319,5 +326,7 @@ def process_reporting_metadata_staging():
             record.process_record(user)
             record.delete()
 
-    if UserReportingMetadataStaging.objects.exists():
+    duration = datetime.utcnow() - start
+    run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
+    if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
