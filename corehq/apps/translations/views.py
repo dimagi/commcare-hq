@@ -32,6 +32,7 @@ from corehq.apps.translations.app_translations.upload_app import (
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
 )
+from corehq.apps.translations.exceptions import BulkAppTranslationsException
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
@@ -95,13 +96,13 @@ def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
     app = get_app(domain, app_id)
-    is_single_sheet = request.GET.get('format') == "single"
-    headers = get_bulk_app_sheet_headers(app, single_sheet=is_single_sheet,
+    single_sheet = request.GET.get('format') == "single"
+    headers = get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
                                          lang=lang, eligible_for_transifex_only=skip_blacklisted)
-    if is_single_sheet:
+    if single_sheet:
         sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
     else:
-        sheets = get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=skip_blacklisted)
+        sheets = get_bulk_app_sheets_by_name(app, lang=lang, eligible_for_transifex_only=skip_blacklisted)
 
     temp = io.BytesIO()
     data = [(k, v) for k, v in sheets.items()]
@@ -109,7 +110,7 @@ def download_bulk_app_translations(request, domain, app_id):
     filename = '{app_name} v.{app_version} - App Translations{lang}{transifex_only}'.format(
         app_name=app.name,
         app_version=app.version,
-        lang=' ' + lang if is_single_sheet else '',
+        lang=' ' + lang if lang else '',
         transifex_only=' (Transifex only)' if skip_blacklisted else '',
     )
     return export_response(temp, Format.XLS_2007, filename)
@@ -132,7 +133,10 @@ def upload_bulk_app_translations(request, domain, app_id):
             if not lang:
                 msgs = [(messages.error, _("Please select language to validate."))]
             else:
-                msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+                try:
+                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+                except BulkAppTranslationsException as e:
+                    msgs = [(messages.error, str(e))]
         else:
             sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
             msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
