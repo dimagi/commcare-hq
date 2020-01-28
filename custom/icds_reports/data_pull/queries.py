@@ -41,7 +41,7 @@ class BaseQuery:
         return "%s.csv" % self.name
 
     @cached_property
-    def _raw_query(self):
+    def _raw_sql_query(self):
         with open(self.query_file_path) as _sql:
             return _sql.read()
 
@@ -58,7 +58,7 @@ class DirectQuery(BaseQuery):
 
     @cached_property
     def sql_query(self):
-        return self._raw_query.format(**self.kwargs)
+        return self._raw_sql_query.format(**self.kwargs)
 
 
 class MonthBasedQuery(BaseQuery):
@@ -71,7 +71,7 @@ class MonthBasedQuery(BaseQuery):
 
     @cached_property
     def sql_query(self):
-        return self._raw_query.format(month=self.month)
+        return self._raw_sql_query.format(month=self.month)
 
 
 class LocationAndMonthBasedQuery(MonthBasedQuery):
@@ -85,7 +85,7 @@ class LocationAndMonthBasedQuery(MonthBasedQuery):
 
     @cached_property
     def sql_query(self):
-        return self._raw_query.format(location_id=self.location_id, month=self.month)
+        return self._raw_sql_query.format(location_id=self.location_id, month=self.month)
 
 
 class PSEAbove3Years(LocationAndMonthBasedQuery):
@@ -131,8 +131,8 @@ class CBEConducted(LocationAndMonthBasedQuery):
     def sql_query(self):
         from_date = self.month
         till_date = str(parse_date(from_date) + relativedelta(months=1))
-        return self._raw_query.format(location_id=self.location_id,
-                                      from_date=from_date, till_date=till_date)
+        return self._raw_sql_query.format(location_id=self.location_id,
+                                          from_date=from_date, till_date=till_date)
 
 
 class AWCSLaunched(MonthBasedQuery):
