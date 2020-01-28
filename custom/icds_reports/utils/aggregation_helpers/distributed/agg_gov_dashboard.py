@@ -1,6 +1,3 @@
-from dateutil.relativedelta import relativedelta
-
-from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
