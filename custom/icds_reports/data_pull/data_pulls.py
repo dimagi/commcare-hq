@@ -115,7 +115,7 @@ class LocationAndMonthBasedDataPull(MonthBasedDataPull):
         for query_class in self.queries:
             query_obj = query_class(self.location_id, self.month)
             result[query_obj.result_file_name] = query_obj.run(self.db_alias)
-        return self.post_run(result)
+        return result
 
 
 class AndhraPradeshMonthly(LocationAndMonthBasedDataPull):
