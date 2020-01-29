@@ -100,12 +100,12 @@ class Command(BaseCommand):
         tabular_user_indicators = defaultdict(lambda: [0] * 10)
 
         records = list(
-                ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
-                                                    time_of_use__gte=start_date,
-                                                    time_of_use__lte=end_date)
-                .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
-                .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
-                .annotate(count=Count('indicator')).order_by('username', 'indicator'))
+                      ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
+                                                time_of_use__gte=start_date,
+                                                time_of_use__lte=end_date)
+                      .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                      .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
+                      .annotate(count=Count('indicator')).order_by('username', 'indicator'))
         for record in records:
             tabular_user_counts[record['username'].split('@')[0]] += record['count']
             tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
@@ -124,11 +124,11 @@ class Command(BaseCommand):
         cas_user_counts = defaultdict(int)
 
         records = list(
-                ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export', time_of_use__gte=start_date,
+                      ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export', time_of_use__gte=start_date,
                                                     time_of_use__lte=end_date)
-                .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
-                .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator')
-                .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
+                      .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                      .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator')
+                      .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
         for record in records:
             cas_user_counts[record['username'].split('@')[0]] += record['count']
         print(cas_user_counts)
