@@ -9,157 +9,6 @@ from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter,
     BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
 
 
-class ReportMixin(DatespanMixin):
-    request = domain = None
-
-    @property
-    def fields(self):
-        return [DateRangeFilter]
-
-    @property
-    def report_config(self):
-        return {
-            'domain': self.domain,
-            'startdate': self.start_date,
-            'enddate': self.end_date
-        }
-
-    @property
-    def start_date(self):
-        start_date = self.request.GET.get('startdate')
-
-        return start_date if start_date else str(datetime.datetime.now().date())
-
-    @property
-    def end_date(self):
-        end_date = self.request.GET.get('end_date')
-
-        return end_date if end_date else str(datetime.datetime.now().date())
-
-
-class ReportBaseMixin:
-    request = None
-
-    @staticmethod
-    def get_base_fields():
-        return [
-            GenderFilter,
-            AgeRangeFilter,
-            PregnancyFilter,
-            BreastFeedingFilter,
-            SettlementAreaFilter,
-            RecallStatusFilter
-        ]
-
-    @staticmethod
-    def get_base_report_config(obj):
-        return {
-            'gender': obj.gender,
-            'age_range': obj.age_range,
-            'pregnant': obj.pregnant,
-            'breastfeeding': obj.breastfeeding,
-            'urban_rural': obj.urban_rural,
-            'supplements': obj.supplements,
-            'recall_status': obj.recall_status
-        }
-
-    @property
-    def age_range(self):
-        return self.request.GET.get('age_range') or ''
-
-    @property
-    def gender(self):
-        return self.request.GET.get('gender') or ''
-
-    @property
-    def urban_rural(self):
-        return self.request.GET.get('urban_rural') or ''
-
-    @property
-    def breastfeeding(self):
-        return self.request.GET.get('breastfeeding') or ''
-
-    @property
-    def pregnant(self):
-        return self.request.GET.get('pregnant') or ''
-
-    @property
-    def supplements(self):
-        return self.request.GET.get('supplements') or ''
-
-    @property
-    def recall_status(self):
-        return self.request.GET.get('recall_status') or ''
-
-
-class SingleTableReport(ReportMixin, CustomProjectReport):
-    title = 'Single Report'
-    name = title
-    slug = 'single_report'
-    report_template_path = 'inddex/tabular_report.html'
-    default_rows = 10
-    exportable = True
-
-    @property
-    def rows(self):
-        return []
-
-    @property
-    def headers(self):
-        return []
-
-    @property
-    def export_format(self):
-        return 'xlsx'
-
-    def prepare_table_for_export(self):
-        report = [
-            [self.name, []]
-        ]
-        headers = [x.html for x in self.headers]
-        rows = self.rows
-        report[0][1].append(headers)
-
-        for row in rows:
-            report[0][1].append(row)
-
-        return report
-
-    @property
-    def export_table(self):
-        return self.prepare_table_for_export()
-
-    @property
-    @memoized
-    def report_context(self):
-        if not self.needs_filters:
-            return {
-                'report': self.get_report_context(),
-                'title': self.name
-            }
-        return {}
-
-    def get_report_context(self):
-        if self.needs_filters:
-            headers = []
-            rows = []
-        else:
-            rows = self.rows
-            headers = self.headers
-
-        context = {
-            'report_table': {
-                'title': self.name,
-                'slug': self.slug,
-                'headers': headers,
-                'rows': rows,
-                'default_rows': self.default_rows,
-            }
-        }
-
-        return context
-
-
 class MultiSheetReportExport(ReportExport):
 
     def __init__(self, title, table_data):
@@ -185,7 +34,7 @@ class MultiSheetReportExport(ReportExport):
         return self.build_export_data()
 
 
-class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport):
+class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     title = 'Multi report'
     name = 'Multi Report'
     slug = 'multi_report'
@@ -193,6 +42,18 @@ class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport)
     flush_layout = True
     default_rows = 10
     exportable = True
+
+    @property
+    def fields(self):
+        return [DateRangeFilter]
+
+    @property
+    def report_config(self):
+        return {
+            'domain': self.domain,
+            'startdate': self.datespan.startdate,
+            'enddate': self.datespan.enddate,
+        }
 
     @property
     def data_providers(self):
@@ -241,3 +102,31 @@ class MultiTabularReport(ReportMixin, CustomProjectReport, GenericTabularReport)
         title = data_provider.slug
 
         return title, exported_rows
+
+
+class BaseNutrientReport(MultiTabularReport):
+
+    @property
+    def fields(self):
+        return [
+            DateRangeFilter,
+            GenderFilter,
+            AgeRangeFilter,
+            PregnancyFilter,
+            BreastFeedingFilter,
+            SettlementAreaFilter,
+            RecallStatusFilter
+        ]
+
+    @property
+    def filters_config(self):
+        request_slugs = [
+            'gender',
+            'age_range',
+            'pregnant',
+            'breastfeeding',
+            'urban_rural',
+            'supplements',
+            'recall_status',
+        ]
+        return {slug: self.request.GET.get(slug, '') for slug in request_slugs}

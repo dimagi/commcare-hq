@@ -188,7 +188,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         form = forms[0]
         self.assertEqual(form_with_pic.form_id, form.form_id)
-        with self.assertNumQueries(0, using=self.using):
+        with self.assertNumQueries(0, using=form.db):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -197,7 +197,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0, using=self.using):
+        with self.assertNumQueries(0, using=forms[1].db):
             expected = {
                 'form.xml': 'text/xml',
             }

@@ -6,7 +6,15 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class Command(BaseCommand):
-    help = "Make a copy of a specific version of an application"
+    help = """
+        For use when creating a new master app for ICDS.
+
+        Makes a copy of a specific version of an application using the normal
+        copy app workflow and then does a find and replace on report UUIDs in
+        all form XML.
+
+        This command is necessary until the ICDS apps are migrated to UCR v2.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('app_id')
@@ -19,16 +27,18 @@ class Command(BaseCommand):
         old_app = get_app_by_version(source_domain, app_id, version)
         new_app = import_app(old_app.to_json(), target_domain, source_properties={'name': new_name})
 
-        old_to_new = get_old_to_new_config_ids(old_app, new_app)
-        for form in new_app.get_forms():
-            if form.form_type != 'shadow_form':
-                for old_id, new_id in old_to_new:
-                    form.source = form.source.replace(old_id, new_id)
+        find_and_replace_report_ids(old_app, new_app)
 
         new_app.save()
+
         print("App succesfully copied, you can view it at\n{}".format(
             absolute_reverse('view_app', args=[target_domain, new_app.get_id])
         ))
+
+        print("""
+            Next, make a build of the new app and then run copy_icds_app_2_of_2
+            for all linked apps that use this app as a master app.
+        """)
 
 
 def get_app_by_version(domain, app_id, version):
@@ -37,6 +47,14 @@ def get_app_by_version(domain, app_id, version):
         raise Exception("No app found with id '{}' and version '{}', on '{}'"
                         .format(app_id, version, domain))
     return wrap_app(app)
+
+
+def find_and_replace_report_ids(old_app, new_app):
+    old_to_new = get_old_to_new_config_ids(old_app, new_app)
+    for form in new_app.get_forms():
+        if form.form_type != 'shadow_form':
+            for old_id, new_id in old_to_new:
+                form.source = form.source.replace(old_id, new_id)
 
 
 def get_old_to_new_config_ids(old_app, new_app):

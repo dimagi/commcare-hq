@@ -287,9 +287,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 mapConfiguration(location, resp);
             });
         } else if (useNewMaps && locationLevel === 1) {
-            topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
-                mapConfiguration(location, resp.topojson);
-            });
+            topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
+                function (resp) {
+                    mapConfiguration(location, resp.topojson);
+                }
+            );
         } else {
             mapConfiguration(location);
         }

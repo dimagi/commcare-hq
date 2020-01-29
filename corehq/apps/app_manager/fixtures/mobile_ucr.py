@@ -36,7 +36,7 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER, MOBILE_UCR_TOTAL_ROW_ITERATIVE, NAMESPACE_USER
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -123,6 +123,14 @@ class BaseReportFixturesProvider(FixtureProvider):
         return filters_elem
 
 
+def _get_report_index_fixture(restore_user, oldest_sync_time=None):
+    last_sync_time = _format_last_sync_time(restore_user.domain, restore_user.user_id, oldest_sync_time)
+    return E.fixture(
+        E.report_index(E.reports(last_update=last_sync_time)),
+        id='commcare-reports:index', user_id=restore_user.user_id,
+    )
+
+
 class ReportFixturesProvider(BaseReportFixturesProvider):
     id = 'commcare:reports'
 
@@ -143,6 +151,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
+            fixtures.append(_get_report_index_fixture(restore_user))
             fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
@@ -155,7 +164,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
     def _v1_fixture(self, restore_user, report_configs):
         user_id = restore_user.user_id
         root = E.fixture(id=self.id, user_id=user_id)
-        reports_elem = E.reports(last_sync=_last_sync_time(restore_user.domain, user_id))
+        reports_elem = E.reports(last_sync=_format_last_sync_time(restore_user.domain, user_id))
         for report_config in report_configs:
             try:
                 reports_elem.append(self.report_config_to_v1_fixture(report_config, restore_user))
@@ -231,11 +240,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_row_calculator = SQLTotalRowCalculator(data_source)
-        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            restore_user.username, NAMESPACE_USER
-        ):
-            total_row_calculator = IterativeTotalRowCalculator(data_source)
+        total_row_calculator = IterativeTotalRowCalculator(data_source)
 
         rows_elem = E.rows()
         row_index = 0
@@ -281,13 +286,36 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
             report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
+
+            oldest_sync_time = self._get_oldest_sync_time(restore_state, synced_fixtures, purged_fixture_ids)
+            fixtures.append(_get_report_index_fixture(restore_user, oldest_sync_time))
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:
                 fixtures.extend(self._empty_v2_fixtures(report_uuid))
 
         return fixtures
 
-    def _relevant_report_configs(self, restore_state, report_configs):
+    @staticmethod
+    def _get_oldest_sync_time(restore_state, synced_fixtures, purged_fixture_ids):
+        """
+        Get the oldest sync time for all reports.
+        """
+        last_sync_log = restore_state.last_sync_log
+        now = _utcnow()
+        if not last_sync_log or restore_state.overwrite_cache:
+            return now
+
+        # ignore reports that are being purged or are being synced now
+        reports_to_ignore = purged_fixture_ids | {config.uuid for config in synced_fixtures}
+        last_sync_times = [
+            log.datetime
+            for log in last_sync_log.last_ucr_sync_times
+            if log.report_uuid not in reports_to_ignore
+        ]
+        return sorted(last_sync_times)[0] if last_sync_times else now
+
+    @staticmethod
+    def _relevant_report_configs(restore_state, report_configs):
         """
         Filter out any UCRs that are already synced. This can't exist in V1,
         because in V1 we send all reports as one fixture.
@@ -390,7 +418,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             data_source,
             {f.field for f in defer_filters},
             filter_options_by_field,
-            _last_sync_time(domain, restore_user.user_id),
+            _format_last_sync_time(domain, restore_user.user_id),
             restore_user
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
@@ -420,11 +448,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        total_row_calculator = SQLTotalRowCalculator(data_source)
-        if data_source.has_total_row and MOBILE_UCR_TOTAL_ROW_ITERATIVE.enabled(
-            restore_user.username, NAMESPACE_USER
-        ):
-            total_row_calculator = IterativeTotalRowCalculator(data_source)
+        total_row_calculator = IterativeTotalRowCalculator(data_source)
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
@@ -460,29 +484,19 @@ def _utcnow():
     return datetime.utcnow()
 
 
-def _last_sync_time(domain, user_id):
+def _format_last_sync_time(domain, user_id, sync_time=None):
+    sync_time = sync_time or _utcnow()
     timezone = get_timezone_for_user(user_id, domain)
-    return ServerTime(_utcnow()).user_time(timezone).done().isoformat()
+    return ServerTime(sync_time).user_time(timezone).done().isoformat()
 
 
 report_fixture_generator = ReportFixturesProvider()
 report_fixture_v2_generator = ReportFixturesProviderV2()
 
 
-class SQLTotalRowCalculator(object):
+class IterativeTotalRowCalculator(object):
     def __init__(self, data_source):
         self.data_source = data_source
-
-    def update_totals(self, row):
-        pass
-
-    def get_total_row(self):
-        return self.data_source.get_total_row()
-
-
-class IterativeTotalRowCalculator(SQLTotalRowCalculator):
-    def __init__(self, data_source):
-        super(IterativeTotalRowCalculator, self).__init__(data_source)
         self.total_column_ids = data_source.total_column_ids
         self.total_cols = {col_id: 0 for col_id in self.total_column_ids}
 
