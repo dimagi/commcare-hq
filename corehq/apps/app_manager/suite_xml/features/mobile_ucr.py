@@ -112,7 +112,8 @@ class ReportModuleSuiteHelper(object):
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, self.new_mobile_ucr_restore),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug,
+                                                                      self.new_mobile_ucr_restore),
                 value='./@value',
             )
             for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)

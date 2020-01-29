@@ -34,7 +34,6 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
-from corehq import toggles
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
