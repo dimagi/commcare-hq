@@ -15,7 +15,7 @@ XFORM_MULTI_CASES = {
     "_id": "multi-case-test",
     "domain": "test_pillows",
     "form": {
-        "@xmlns": "http://www.commcarehq.org/wisepill/patient",
+        "@xmlns": "http://openrosa.org/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AB",
         "case": [
             {
                 "@xmlns": "http://commcarehq.org/case/transaction/v2",

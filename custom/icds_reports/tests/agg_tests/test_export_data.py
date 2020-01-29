@@ -1,6 +1,6 @@
 from datetime import date, datetime
 import json
-from custom.icds_reports.utils import india_now
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -24,7 +24,7 @@ class TestExportData(TestCase):
         super(TestExportData, cls).setUpClass()
         now = '16:21:11 15 November 2017'
         cls.india_now_mock = mock.patch(
-            'custom.icds_reports.utils.india_now',
+            'custom.icds_reports.reports.take_home_ration.india_now',
             new=mock.Mock(return_value=now)
         )
         cls.india_now_mock.start()
@@ -2470,7 +2470,7 @@ class TestExportData(TestCase):
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
              ['Export Info', [
-                 ['Generated at', india_now()],
+                 ['Generated at', '16:21:11 15 November 2017'],
                  ['State', 'st1'],
                  ['District', 'd1'],
                  ['Block', 'b1'],
@@ -2581,7 +2581,7 @@ class TestExportData(TestCase):
                 ['st6', 'd7', 'b8', 's23', 'a104', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
                 ['st7', 'd8', 'b9', 's24', 'a105', 'Data Not Entered', 'Data Not Entered', 1, 0, 0]]],
              ['Export Info', [
-                 ['Generated at', india_now()],
+                 ['Generated at', '16:21:11 15 November 2017'],
                  ['Location', 'National'],
                  ['Month', 'May'],
                  ['Year', 2017]]

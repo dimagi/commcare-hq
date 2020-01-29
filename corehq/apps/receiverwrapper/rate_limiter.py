@@ -56,7 +56,7 @@ global_submission_rate_limiter = RateLimiter(
 )
 
 
-SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
 @run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
@@ -70,11 +70,12 @@ def rate_limit_submission(domain):
     if should_allow_usage:
         allow_usage = True
     elif RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
-        allow_usage = False
-        _report_rate_limit_submission(domain)
+        allow_usage = _delay_and_report_rate_limit_submission(
+            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited')
     else:
         allow_usage = True
-        _delay_and_report_rate_limit_submission_test(domain, max_wait=15)
+        _delay_and_report_rate_limit_submission(
+            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited.test')
 
     return not allow_usage
 
@@ -88,31 +89,29 @@ def report_submission_usage(domain):
     _report_current_global_submission_thresholds()
 
 
-def _report_rate_limit_submission(domain):
-    datadog_counter('commcare.xform_submissions.rate_limited', tags=[
-        'domain:{}'.format(domain),
-    ])
-
-
-def _delay_and_report_rate_limit_submission_test(domain, max_wait):
+def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
     with TimingContext() as timer:
         acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
     if acquired:
-        duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+        duration_tag = bucket_value(timer.duration, [.5, 1, 5, 10, 15], unit='s')
+    elif timer.duration < max_wait:
+        duration_tag = 'quick_reject'
     else:
-        duration_tag = 'timeout'
-    datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
-        'domain:{}'.format(domain),
-        'duration:{}'.format(duration_tag)
+        duration_tag = 'delayed_reject'
+    datadog_counter(datadog_metric, tags=[
+        f'domain:{domain}',
+        f'duration:{duration_tag}',
+        f'throttle_method:{"delay" if acquired else "reject"}'
     ])
+    return acquired
 
 
 @quickcache([], timeout=60)  # Only report up to once a minute
 def _report_current_global_submission_thresholds():
     for window, value, threshold in global_submission_rate_limiter.iter_rates():
         datadog_gauge('commcare.xform_submissions.global_threshold', threshold, tags=[
-            'window:{}'.format(window)
+            f'window:{window}'
         ])
         datadog_gauge('commcare.xform_submissions.global_usage', value, tags=[
-            'window:{}'.format(window)
+            f'window:{window}'
         ])

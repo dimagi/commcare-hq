@@ -1881,8 +1881,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
                         'On <span data-bind="text: end_date"></span> '
-                        'the project space will automatically be subscribed to the '
-                        'Community plan.</p>'
+                        'the project space will be automatically paused.</p>'
                     )),
                     css_class='col-sm-offset-3 col-md-offset-2'
                 ),

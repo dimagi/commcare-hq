@@ -200,10 +200,10 @@ def get_excel_format_value(value):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, value)
     if isinstance(value, Decimal):
         return ExcelFormatValue(numbers.FORMAT_NUMBER_00, float(value))
-    if isinstance(value, datetime.date):
-        return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, value)
     if isinstance(value, datetime.datetime):
         return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, value)
+    if isinstance(value, datetime.date):
+        return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, value)
     if isinstance(value, bytes):
         value = value.decode('utf-8')
     elif value is None:
@@ -247,6 +247,15 @@ def get_excel_format_value(value):
         try:
             # always use standard yyy-mm-dd h:mm:ss format for excel
             return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, dateutil.parser.parse(value))
+        except (ValueError, OverflowError):
+            pass
+
+    # datetime ISO format (couch datetimes)
+    if re.match(r"^\d{4}(-)\d{2}(-)\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$", value):
+        try:
+            # always use standard yyy-mm-dd h:mm:ss format for excel
+            return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME,
+                                    dateutil.parser.parse(value))
         except (ValueError, OverflowError):
             pass
 

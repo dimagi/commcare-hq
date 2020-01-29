@@ -234,7 +234,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
                                 lambda domain, include_remote: [cls.app]):
                     with mock_datasource_config():
-                        fixture, = call_fixture_generator(report_fixture_generator, cls.user)
+                        fixtures = call_fixture_generator(report_fixture_generator, cls.user)
+                        fixture = [f for f in fixtures if f.attrib.get('id') == report_fixture_generator.id][0]
         cls.fixture = ElementTree.tostring(fixture)
 
     def test_filter_entry(self):
