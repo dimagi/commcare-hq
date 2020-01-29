@@ -4,9 +4,14 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Max, Min
 
+from pillowtop import get_pillow_by_name
 from pillowtop.models import KafkaCheckpoint
 
 logger = logging.getLogger('__name__')
+
+
+def confirm(msg):
+    return input(msg) == 'y'
 
 
 class Command(BaseCommand):
@@ -14,14 +19,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'checkpoint_ids', nargs='+',
+            'pillow_names', nargs='+',
             help="Merge all pillow checkpoints into the last one named"
         )
 
-    def handle(self, checkpoint_ids, **options):
-        from_checkpoints = checkpoint_ids[:-1]
-        to_checkpoint = checkpoint_ids[-1]
-        logging.info(f"Attempting to merge {from_checkpoints} into {to_checkpoint}")
+    def handle(self, pillow_names, **options):
+        from_pillows = pillow_names[:-1]
+        to_pillow = pillow_names[-1]
+        logging.info(f"Attempting to merge {from_pillows} into {to_pillow}")
+
+        from_checkpoints = [
+            get_pillow_by_name(pillow).checkpoint.checkpoint_id
+            for pillow in from_pillows
+        ]
+        to_checkpoint = get_pillow_by_name(to_pillow).checkpoint.checkpoint_id
 
         if KafkaCheckpoint.objects.filter(checkpoint_id=to_checkpoint).exists():
             logging.error(f'{to_checkpoint} already exists. Aborting pillow merging')

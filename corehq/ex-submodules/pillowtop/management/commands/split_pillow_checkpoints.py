@@ -4,6 +4,7 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db.models import Max
 
+from pillowtop import get_pillow_by_name
 from pillowtop.models import KafkaCheckpoint
 
 logger = logging.getLogger('__name__')
@@ -18,14 +19,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'checkpoint_ids', nargs='+',
+            'pillow_names', nargs='+',
             help="Split the first pillow checkpoint into all others named"
         )
 
-    def handle(self, checkpoint_ids, **options):
-        from_checkpoint = checkpoint_ids[0]
-        to_checkpoints = checkpoint_ids[1:]
-        logging.info(f"Attempting to split {from_checkpoint} into {to_checkpoints}")
+    def handle(self, pillow_names, **options):
+        from_pillow = pillow_names[0]
+        to_pillows = pillow_names[1:]
+        logging.info(f"Attempting to split {from_pillow} into {to_pillows}")
+
+        from_checkpoint = get_pillow_by_name(from_pillow).checkpoint.checkpoint_id
+        to_checkpoints = [
+            get_pillow_by_name(pillow).checkpoint.checkpoint_id
+            for pillow in to_pillows
+        ]
 
         existing_checkpoints = list(
             KafkaCheckpoint.objects.filter(checkpoint_id__in=to_checkpoints)
