@@ -108,7 +108,27 @@ class ReportModuleSuiteHelper(object):
         else:
             nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-        detail_persistent = MOBILE_UCR_TILE_DETAIL_ID if self.report_module.report_context_tile else None
+        datums = [
+            SessionDatum(
+                detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, self.new_mobile_ucr_restore),
+                value='./@value',
+            )
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)
+        ] + [
+            SessionDatum(
+                detail_confirm=_get_summary_detail_id(config),
+                detail_select=_get_select_detail_id(config),
+                id='report_id_{}'.format(config.uuid),
+                nodeset=nodeset,
+                value='./@id',
+                autoselect="true"
+            ),
+        ]
+
+        if self.report_module.report_context_tile:
+            datums.append(get_report_context_tile_datum())
 
         return Entry(
             command=Command(
@@ -117,25 +137,7 @@ class ReportModuleSuiteHelper(object):
                     locale=Locale(id=id_strings.report_name(config.uuid)),
                 ),
             ),
-            datums=[
-                SessionDatum(
-                    detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                    id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                    nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, self.new_mobile_ucr_restore),
-                    value='./@value',
-                )
-                for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)
-            ] + [
-                SessionDatum(
-                    detail_confirm=_get_summary_detail_id(config),
-                    detail_select=_get_select_detail_id(config),
-                    detail_persistent=detail_persistent,
-                    id='report_id_{}'.format(config.uuid),
-                    nodeset=nodeset,
-                    value='./@id',
-                    autoselect="true"
-                ),
-            ]
+            datums=datums,
         )
 
 
