@@ -108,7 +108,8 @@ class Command(BaseCommand):
                 cas_user_counts[record['username'].split('@')[0]] += record['count']
             else:
                 tabular_user_counts[record['username'].split('@')[0]] += record['count']
-                tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1] = record['count']
+                tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
+                    = record['count']
 
         return tabular_user_counts, tabular_user_indicators, cas_user_counts
 
