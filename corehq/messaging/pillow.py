@@ -76,6 +76,11 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
 def get_case_messaging_sync_pillow(pillow_id='case_messaging_sync_pillow', topics=None,
                          num_processes=1, process_num=0,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """Pillow for synchronizing messaging data with case data.
+
+        Processors:
+          - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
+    """
     if topics:
         assert set(topics).issubset(CASE_TOPICS), set(topics) - set(CASE_TOPICS)
     topics = topics or CASE_TOPICS
