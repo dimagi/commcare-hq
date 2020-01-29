@@ -3,7 +3,11 @@ SELECT
     district_name,
     SUM(num_launched_awcs),
     SUM(CASE WHEN awc_days_open/31.0 *100 < 60 THEN 1 ELSE 0 END) AS "Num AWCs open on less that 60% of days",
-    SUM(CASE WHEN (wer_weighed/wer_eligible::float)*100<60 THEN 1 ELSE 0 END) AS "Num AWCs with less than 60% Weighing efficiency",
+    SUM(CASE WHEN wer_eligible > 0 THEN
+             CASE WHEN(wer_weighed/wer_eligible::float)*100<60 THEN 1 ELSE 0 END
+        ELSE 0
+        END
+    ) AS "Num AWCs with less than 60% Weighing efficiency",
     SUM(CASE WHEN contact_phone_number IS NULL OR contact_phone_number!='' THEN 1 ELSE 0 END) AS "Num AWWs without phone number",
     SUM(CASE WHEN num_awc_infra_last_update<>1 THEN 1 ELSE 0 END ) AS "Num AWCs that havent submitted infra form in last 6 months",
     count(*) FILTER (WHERE infra_clean_water=0 OR infra_clean_water IS NULL) AS "Num AWCs that with no drinking water",
