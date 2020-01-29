@@ -72,9 +72,9 @@ class EntriesHelper(object):
         self.build_profile_id = build_profile_id
         self.details_helper = DetailsHelper(self.app, self.modules)
 
-    def get_datums_meta_for_form_generic(self, form, module=None):
-        if not module:
-            module = form.get_module()
+    def get_datums_meta_for_form_generic(self, form):
+        module = form.get_module()
+
         if form.form_type == 'module_form':
             datums_meta = self.get_case_datums_basic_module(module, form)
         elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
