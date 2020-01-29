@@ -61,7 +61,6 @@ class DetailContributor(SectionContributor):
             return []
 
         elements = []
-        uses_report_context_tile = False
         for module in self.modules:
             for detail_type, detail, enabled in module.get_details():
                 if not enabled:
@@ -106,15 +105,13 @@ class DetailContributor(SectionContributor):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
-                if getattr(detail, 'report_context_tile', False):
-                    uses_report_context_tile = True
-
             if module.fixture_select.active:
                 d = self._get_fixture_detail(module)
                 elements.append(d)
 
-        if uses_report_context_tile and toggles.MOBILE_UCR.enabled(self.app.domain):
-            elements.append(self._get_report_context_tile_detail())
+        if toggles.MOBILE_UCR.enabled(self.app.domain):
+            if any([getattr(m, 'report_context_tile', False) for m in app.get_modules()]):
+                elements.append(self._get_report_context_tile_detail())
 
         return elements
 
