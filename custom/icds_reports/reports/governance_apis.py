@@ -162,7 +162,6 @@ def get_cbe_data(length, year, month, order, query_filters):
     def base_data(row_data):
         return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
 
-
     # To apply pagination on database query with data size length
     paginated_data = list(data[:length])
     return [base_data(row) for row in paginated_data], data.count()
