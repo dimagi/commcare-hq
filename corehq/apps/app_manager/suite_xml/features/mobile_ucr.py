@@ -99,6 +99,8 @@ class ReportModuleSuiteHelper(object):
         else:
             nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
+        detail_persistent = MOBILE_UCR_TILE_DETAIL_ID if self.report_module.report_context_tile else None
+
         return Entry(
             command=Command(
                 id='reports.{}'.format(config.uuid),
@@ -118,6 +120,7 @@ class ReportModuleSuiteHelper(object):
                 SessionDatum(
                     detail_confirm=_get_summary_detail_id(config),
                     detail_select=_get_select_detail_id(config),
+                    detail_persistent=detail_persistent,
                     id='report_id_{}'.format(config.uuid),
                     nodeset=nodeset,
                     value='./@id',
