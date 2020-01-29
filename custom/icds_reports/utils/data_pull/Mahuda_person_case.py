@@ -25,7 +25,8 @@ headers = [
     'Caste',
     'BPL/APL',
     'Minority',
-    'HH Number',
+    'HH Number FROM PERSON CASE',
+    'HH Number FROM HH CASE',
     'Religion',
     'Name',
     'Aadhar Present',
@@ -46,7 +47,11 @@ headers = [
     'Referral Status',
     'Resident',
     'Alive',
-    'Closed_date'
+    'Closed_date',
+    'HH GPS Location FROM PERSON CASE',
+    'HH GPS Location FROM HH CASE',
+    'HH Member Number FROM PERSON CASE',
+    'HH Member Number FROM HH CASE',
             ]
 
 data_rows = [headers]
@@ -82,6 +87,7 @@ def fetch_case_properties(case, awc):
         get_household_case(case).get_case_property('hh_bpl_apl'),
         get_household_case(case).get_case_property('hh_minority'),
         case.get_case_property('hh_num'),
+        get_household_case(case).get_case_property('hh_num'),
         get_household_case(case).get_case_property('hh_religion'),
         case.get_case_property('name'),
         case.get_case_property('has_aadhar'),
@@ -103,6 +109,10 @@ def fetch_case_properties(case, awc):
         case.get_case_property('resident'),
         case.get_case_property('died') != 'yes',
         case.get_case_property('closed_on'),
+        case.get_case_property('hh_gps_location'),
+        get_household_case(case).get_case_property('hh_gps_location'),
+        case.get_case_property('hh_member_number'),
+        get_household_case(case).get_case_property('hh_member_number')
     ]
 
 
