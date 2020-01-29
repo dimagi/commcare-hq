@@ -662,7 +662,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.containsSearchConfiguration = options.containsSearchConfiguration;
                 self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 self.allowsTabs = options.allowsTabs;
-                self.reportContextTile = ko.observable(spec[self.columnKey].report_context_tile || false);
                 self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
                 self.showCaseTileColumn = ko.computed(function () {
                     return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
@@ -760,9 +759,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     },
                 });
                 self.on('change', function () {
-                    self.saveButton.fire('change');
-                });
-                self.reportContextTile.subscribe(function () {
                     self.saveButton.fire('change');
                 });
                 self.useCaseTiles.subscribe(function () {
@@ -879,7 +875,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     ));
 
-                    data.reportContextTile = self.reportContextTile();
                     data.useCaseTiles = self.useCaseTiles() === "yes";
                     data.persistCaseContext = self.persistCaseContext();
                     data.persistentCaseContextXML = self.persistentCaseContextXML();

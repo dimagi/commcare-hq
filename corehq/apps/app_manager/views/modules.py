@@ -138,6 +138,11 @@ def get_module_view_context(request, app, module, lang=None):
     }
     case_property_builder = _setup_case_property_builder(app)
     show_advanced_settings = False
+    if toggles.MOBILE_UCR.enabled(app.domain):
+        show_advanced_settings = True
+        module_brief.update({
+            'report_context_tile': module.report_context_tile,
+        })
     if isinstance(module, AdvancedModule):
         show_advanced_settings = True
         module_brief.update({
@@ -308,6 +313,7 @@ def _get_report_module_context(app, module):
             'languages': app.langs,
             'mobileUcrV1': app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
+            'reportContextTile': module.report_context_tile,
         },
         'static_data_options': {
             'filterChoices': filter_choices,

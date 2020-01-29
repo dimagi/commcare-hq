@@ -53,6 +53,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             $('#module-filter'),
             $('#report-list'),
             $('#add-report-btn'),
+            $('#report-context-tile'),
         ]).each(function ($element) {
             // never call applyBindings with null as the second arg!
             if ($element.get(0)) {

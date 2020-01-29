@@ -152,6 +152,11 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $moduleFilter.koApplyBindings({xpath: initial_page_data("module_filter") || ''});
         }
 
+        // UCR last updated tile
+        $('#report-context-tile').koApplyBindings({
+            report_context_tile: ko.observable(moduleBrief.report_context_tile),
+        });
+
         // Registration in case list
         if ($('#case-list-form').length) {
             var caseListFormModel = function (originalFormId, formOptions, postFormWorkflow) {
