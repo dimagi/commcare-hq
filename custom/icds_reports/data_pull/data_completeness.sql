@@ -18,29 +18,9 @@ SELECT
     count(*) FILTER (WHERE infra_infant_weighing_scale=0 OR infra_infant_weighing_scale IS NULL) AS "Num AWCs that with no baby scale",
     count(*) FILTER (WHERE infra_adult_weighing_scale=0 OR infra_adult_weighing_scale IS NULL) AS "Num AWCs that with no adult scale",
     count(*) FILTER (WHERE electricity_awc=0 OR electricity_awc IS NULL) AS "Num AWCs that with no electricty"
-FROM agg_awc_monthly WHERE month='2019-12-01' AND aggregation_level=5 AND state_is_test<>1
+FROM agg_awc_monthly WHERE month='2019-12-01' AND aggregation_level=1 AND state_is_test<>1 AND num_launched_awcs=1
 GROUP BY state_name, district_name;
 
-/*
-GroupAggregate  (cost=187235.58..187236.16 rows=6 width=123)
-   Group Key: awc_location.state_name, awc_location.district_name
-   ->  Sort  (cost=187235.58..187235.59 rows=6 width=83)
-         Sort Key: awc_location.state_name, awc_location.district_name
-         ->  Nested Loop  (cost=1000.00..187235.50 rows=6 width=83)
-               ->  Gather  (cost=1000.00..187210.44 rows=1 width=87)
-                     Workers Planned: 4
-                     ->  Nested Loop  (cost=0.00..186210.34 rows=1 width=87)
-                           ->  Parallel Seq Scan on awc_location_local awc_location  (cost=0.00..71121.43 rows=181398 width=195)
-                                 Filter: (aggregation_level = 5)
-                           ->  Append  (cost=0.00..0.61 rows=2 width=225)
-                                 ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=220)
-                                       Filter: ((state_is_test <> 1) AND (month = '2019-12-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id) AND (awc_location.doc_id = awc_id))
-                                 ->  Index Scan using "agg_awc_2019-12-01_5_awc_id_idx" on "agg_awc_2019-12-01_5" agg_awc_1  (cost=0.42..0.60 rows=1 width=225)
-                                       Index Cond: (awc_id = awc_location.doc_id)
-                                       Filter: ((state_is_test <> 1) AND (month = '2019-12-01'::date) AND (aggregation_level = 5) AND (awc_location.state_id = state_id) AND (awc_location.district_id = district_id) AND (awc_location.block_id = block_id) AND (awc_location.supervisor_id = supervisor_id))
-               ->  Seq Scan on icds_months_local months  (cost=0.00..25.00 rows=6 width=4)
-                     Filter: (start_date = '2019-12-01'::date)
-*/
 
 # find just launched awcs in last month to evaluate AWCS launched in original month only
 SELECT
