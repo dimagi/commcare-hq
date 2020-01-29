@@ -110,7 +110,7 @@ class DetailContributor(SectionContributor):
                 elements.append(d)
 
         if toggles.MOBILE_UCR.enabled(self.app.domain):
-            if any([getattr(m, 'report_context_tile', False) for m in app.get_modules()]):
+            if any([getattr(m, 'report_context_tile', False) for m in self.app.get_modules()]):
                 elements.append(self._get_report_context_tile_detail())
 
         return elements
