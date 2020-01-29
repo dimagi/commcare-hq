@@ -4,7 +4,10 @@ from django.conf import settings
 
 import pytz
 
-from custom.icds_reports.data_pull.data_pulls import AndhraPradeshMonthly
+from custom.icds_reports.data_pull.data_pulls import (
+    AndhraPradeshMonthly,
+    MonthlyPerformance,
+)
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
@@ -168,5 +171,6 @@ NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adoles
 GOVERNANCE_API_RECORDS_PAGINATION = 10000
 
 CUSTOM_DATA_PULLS = {
-    AndhraPradeshMonthly.slug: AndhraPradeshMonthly
+    AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
+    MonthlyPerformance.slug: MonthlyPerformance,
 }
