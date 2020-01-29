@@ -1,0 +1,20 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Date: Tue, 28 Jan 2020 09:29:03 +0000
+From: SES Production Bounces <no-reply@sns.amazonaws.com>
+To: commcarehq-bounces+production@dimagi.com
+Subject: AWS Notification Message
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "Type" : "Notification",
+  "MessageId" : "<redacted>",
+  "TopicArn" : "arn:aws:sns:<redacted>",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Permanent\",\"bounceSubType\":\"General\",\"bouncedRecipients\":[{\"emailAddress\":\"fake@gmail.com\",\"action\":\"failed\",\"status\":\"5.1.1\",\"diagnosticCode\":\"smtp; 550-5.1.1 The email account that you tried to reach does not exist. Please try\\n550-5.1.1 double-checking the recipient's email address for typos or\\n550-5.1.1 unnecessary spaces. Learn more at\\n550 5.1.1  https://support.google.com/mail/?p=NoSuchUser h6si12061056qtp.98 - gsmtp\"}],\"timestamp\":\"2020-01-28T09:29:03.030Z\",\"feedbackId\":\"<redacted>\",\"remoteMtaIp\":\"<redacted>\",\"reportingMTA\":\"<redacted>\"},\"mail\":{\"timestamp\":\"2020-01-28T09:29:02.000Z\",\"source\":\"commcarehq-noreply-production@dimagi.com\",\"sourceArn\":\"<redacted>/commcarehq-noreply-production@dimagi.com\",\"sourceIp\":\"<redacted>\",\"sendingAccountId\":\"<redacted>\",\"messageId\":\"<redacted>\",\"destination\":[\"fake@gmail.com\"],\"headersTruncated\":false,\"headers\":[{\"name\":\"Received\",\"value\":\"from <redacted> for fake@gmail.com; Tue, 28 Jan 2020 09:29:02 +0000 (UTC)\"},{\"name\":\"Content-Type\",\"value\":\"multipart/alternative; boundary=\\\"===============5771062270904911960==\\\"\"},{\"name\":\"MIME-Version\",\"value\":\"1.0\"},{\"name\":\"Subject\",\"value\":\"Activate your CommCare project\"},{\"name\":\"From\",\"value\":\"commcarehq-noreply-production@dimagi.com\"},{\"name\":\"To\",\"value\":\"fake@gmail.com\"},{\"name\":\"Date\",\"value\":\"Tue, 28 Jan 2020 09:29:02 -0000\"},{\"name\":\"Message-ID\",\"value\":\"<redacted>\"},{\"name\":\"Return-Path\",\"value\":\"commcarehq-bounces+production@dimagi.com\"}],\"commonHeaders\":{\"returnPath\":\"commcarehq-bounces+production@dimagi.com\",\"from\":[\"commcarehq-noreply-production@dimagi.com\"],\"date\":\"Tue, 28 Jan 2020 09:29:02 -0000\",\"to\":[\"fake@gmail.com\"],\"messageId\":\"<redacted>\",\"subject\":\"Activate your CommCare project\"}}}",
+  "Timestamp" : "2020-01-28T09:29:03.061Z",
+  "SignatureVersion" : "1",
+  "Signature" : "<redacted>",
+  "SigningCertURL" : "<redacted>",
+  "UnsubscribeURL" : "<redacted>"
+}
