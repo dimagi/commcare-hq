@@ -128,6 +128,9 @@ def system_ajax(request):
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
+        active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
+        if active_pillows:
+            pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
         return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
