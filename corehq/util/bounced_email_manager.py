@@ -152,8 +152,8 @@ class BouncedEmailManager(object):
         else:
             _bounced_email_soft_assert(
                 False,
-                f'[{settings.SERVER_ENVIRONMENT}] '
-                f'Tried to mark "{bounced_email}" as BOUNCED and failed.'
+                f'[{settings.SERVER_ENVIRONMENT}] Tried to mark emails as BOUNCED and failed.',
+                {'bounced_email': bounced_email},
             )
 
     def logout(self):
