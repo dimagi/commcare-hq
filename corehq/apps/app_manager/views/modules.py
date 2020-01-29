@@ -476,6 +476,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
+        "report_context_tile": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -556,6 +557,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("report_context_tile"):
+        module["report_context_tile"] = request.POST.get("report_context_tile") == "true"
     if should_edit("display_style"):
         module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
@@ -787,7 +790,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
-    report_context_tile = params.get("reportContextTile", None)
     pull_down_tile = params.get("enableTilePullDown", None)
     sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
@@ -822,8 +824,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             detail.short.persistent_case_context_xml = persistent_case_context_xml
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
-        if report_context_tile is not None:
-            detail.short.report_context_tile = report_context_tile
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if persistent_case_tile_from_module is not None:
@@ -944,6 +944,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     assert isinstance(module, ReportModule)
     module.name = params['name']
+    module.report_context_tile = params['report_context_tile']
 
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
