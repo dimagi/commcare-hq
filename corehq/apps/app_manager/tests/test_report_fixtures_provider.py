@@ -18,7 +18,6 @@ from corehq.apps.app_manager.tests.test_report_config import (
     mock_report_configuration_get,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.util.test_utils import flag_enabled
 from lxml import etree
 from lxml.builder import E
 from mock import Mock, patch
@@ -51,7 +50,10 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource:
 
-            report_datasource.from_spec.return_value = self.get_data_source_mock()
+            mock = self.get_data_source_mock()
+            mock.has_total_row = False
+            mock.total_column_ids = ['baz']
+            report_datasource.from_spec.return_value = mock
             report = provider.report_config_to_v1_fixture(report_app_config, user)
             self.assertEqual(
                 etree.tostring(report, pretty_print=True),
@@ -71,8 +73,10 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
-
-            report_datasource.from_spec.return_value = self.get_data_source_mock()
+            mock = self.get_data_source_mock()
+            mock.has_total_row = False
+            mock.total_column_ids = ['baz']
+            report_datasource.from_spec.return_value = mock
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
             fixtures = provider.report_config_to_v2_fixture(report_app_config, user)
             report = E.restore()
@@ -82,7 +86,6 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
                 self.get_xml('expected_v2_report').decode('utf-8')
             )
 
-    @flag_enabled('MOBILE_UCR_TOTAL_ROW_ITERATIVE')
     def test_v2_report_fixtures_provider_iterative_total_row(self):
         report_id = 'deadbeef'
         provider = ReportFixturesProviderV2()

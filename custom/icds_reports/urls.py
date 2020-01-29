@@ -186,7 +186,7 @@ urlpatterns = [
     url(r'^governance_apis/home_visit/', GovernanceHomeVisitAPI.as_view(), name='governance_apis_home_visit'),
     url(r'^governance_apis/beneficiary/', GovernanceBeneficiaryAPI.as_view(), name='governance_apis_beneficiary'),
     url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
-    url(r'^governance_apis/vhnds/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
+    url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
 
 ]
 

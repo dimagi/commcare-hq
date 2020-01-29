@@ -66,4 +66,6 @@ branches:
   - jls/migrate-GlobalAppConfig-3 # Jenny Jan 25
   - jls/sql-application-access-3 # Jenny Jan 25
   - jls/migrate-Dhis2Connection-3 # Jenny Jan 25
+  - jls/bulk-app-trans-format-fixes # Jenny Jan 27
+  - jls/persistent-detail-ucr-liveness-debug # Jenny Jan 28
 submodules: {}

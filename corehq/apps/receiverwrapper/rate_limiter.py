@@ -99,9 +99,9 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
     else:
         duration_tag = 'delayed_reject'
     datadog_counter(datadog_metric, tags=[
-        'domain:{}'.format(domain),
-        'duration:{}'.format(duration_tag),
-        'throttle_method:{}'.format('delay' if acquired else 'reject')
+        f'domain:{domain}',
+        f'duration:{duration_tag}',
+        f'throttle_method:{"delay" if acquired else "reject"}'
     ])
     return acquired
 
@@ -110,8 +110,8 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
 def _report_current_global_submission_thresholds():
     for window, value, threshold in global_submission_rate_limiter.iter_rates():
         datadog_gauge('commcare.xform_submissions.global_threshold', threshold, tags=[
-            'window:{}'.format(window)
+            f'window:{window}'
         ])
         datadog_gauge('commcare.xform_submissions.global_usage', value, tags=[
-            'window:{}'.format(window)
+            f'window:{window}'
         ])

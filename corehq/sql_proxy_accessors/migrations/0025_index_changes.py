@@ -20,9 +20,4 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
         migrator.get_migration('get_case_indices_reverse_1.sql'),
-        migrations.RunSQL(
-            "DROP FUNCTION IF EXISTS get_case_indices(TEXT);",
-            "SELECT 1"
-        ),
-        migrator.get_migration('get_case_indices_1.sql'),
     ]
