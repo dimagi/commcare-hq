@@ -91,41 +91,40 @@ class ReportModuleSuiteHelper(object):
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config, self.domain, self.new_mobile_ucr_restore)
+            yield self._get_config_entry(config)
 
+    def _get_config_entry(self, config):
+        if self.new_mobile_ucr_restore:
+            nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
+        else:
+            nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
-    if new_mobile_ucr_restore:
-        nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
-    else:
-        nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
-
-    return Entry(
-        command=Command(
-            id='reports.{}'.format(config.uuid),
-            text=Text(
-                locale=Locale(id=id_strings.report_name(config.uuid)),
+        return Entry(
+            command=Command(
+                id='reports.{}'.format(config.uuid),
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid)),
+                ),
             ),
-        ),
-        datums=[
-            SessionDatum(
-                detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, new_mobile_ucr_restore),
-                value='./@value',
-            )
-            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
-        ] + [
-            SessionDatum(
-                detail_confirm=_get_summary_detail_id(config),
-                detail_select=_get_select_detail_id(config),
-                id='report_id_{}'.format(config.uuid),
-                nodeset=nodeset,
-                value='./@id',
-                autoselect="true"
-            ),
-        ]
-    )
+            datums=[
+                SessionDatum(
+                    detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                    id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
+                    nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, self.new_mobile_ucr_restore),
+                    value='./@value',
+                )
+                for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)
+            ] + [
+                SessionDatum(
+                    detail_confirm=_get_summary_detail_id(config),
+                    detail_select=_get_select_detail_id(config),
+                    id='report_id_{}'.format(config.uuid),
+                    nodeset=nodeset,
+                    value='./@id',
+                    autoselect="true"
+                ),
+            ]
+        )
 
 
 def _get_select_detail_id(config):
