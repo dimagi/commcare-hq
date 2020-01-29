@@ -84,8 +84,7 @@ class Command(BaseCommand):
 
         if maximum_difference > 0:
             logger.warning(f"At least one checkpoint will need to reprocess {maximum_difference} changes")
-            confirm = input("Is this amount of reprocessing acceptable y/N?")
-            if confirm != 'y':
+            if confirm("Is this amount of reprocessing acceptable y/N?"):
                 sys.exit(3)
         else:
             logger.info("All pillows have the same offsets")
