@@ -103,7 +103,7 @@ def get_beneficiary_data(length, year, month, order, query_filters):
         'total_3_6_male_reg_in_month'
     )
 
-    # To apply pagination on database query with offset and limit
+    # To apply pagination on database query with data size length
     paginated_data = data[:length]
 
     def get_value_or_data_not_entered(value):
