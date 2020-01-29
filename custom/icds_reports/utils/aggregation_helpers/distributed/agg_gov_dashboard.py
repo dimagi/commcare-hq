@@ -41,9 +41,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_lact_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_reg_in_month,0)'),
             ('total_preg_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_reg_in_month,0)'),
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
-            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)'),
-            ('cbe_conducted_1', "'no'"),
-            ('cbe_conducted_2', "'no'"),
+            ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
 
         )
         yield """
@@ -208,12 +206,10 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
 
         yield """
         UPDATE "{tmp_tablename}" gov_table
-        SET cbe_conducted_1= ut.cbe_conducted_1,
-            cbe_type_1=ut.cbe_type_1,
+        SET cbe_type_1=ut.cbe_type_1,
             cbe_date_1=ut.cbe_date_1,
             num_target_beneficiaries_1=ut.num_target_beneficiaries_1,
             num_other_beneficiaries_1=ut.num_other_beneficiaries_1,
-            cbe_conducted_2=ut.cbe_conducted_2,
             cbe_type_2=ut.cbe_type_2,
             cbe_date_2=ut.cbe_date_2,
             num_target_beneficiaries_2=ut.num_target_beneficiaries_2,
@@ -222,12 +218,10 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         (
         SELECT
             awc_id,
-            MIN(CASE WHEN rank=1 THEN 'yes' END) as cbe_conducted_1,
             MIN(CASE WHEN rank=1 THEN theme_cbe END) as cbe_type_1,
             MIN(CASE WHEN rank=1 THEN date_cbe_organise  END) as cbe_date_1,
             MIN(CASE WHEN rank=1 THEN count_targeted_beneficiaries  END) as num_target_beneficiaries_1,
             MIN(CASE WHEN rank=1 THEN count_other_beneficiaries  END) as num_other_beneficiaries_1,
-            MIN(CASE WHEN rank=2 THEN 'yes'  END) as cbe_conducted_2,
             MIN(CASE WHEN rank=2 THEN theme_cbe END) as cbe_type_2,
             MIN(CASE WHEN rank=2 THEN date_cbe_organise  END) as cbe_date_2,
             MIN(CASE WHEN rank=2 THEN count_targeted_beneficiaries  END) as num_target_beneficiaries_2,

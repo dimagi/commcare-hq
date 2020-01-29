@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.db.models import F, Case, When, BooleanField
+from django.db.models import F, Case, When, BooleanField, TextField, Value
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggGovernanceDashboard
@@ -128,7 +128,18 @@ def get_cbe_data(length, year, month, order, query_filters):
     data = AggGovernanceDashboard.objects.filter(
         month=date(year, month, 1),
         **query_filters
-    ).order_by(*order).values(
+    ).order_by(*order).annotate(
+        cbe_conducted_1=Case(
+            When(cbe_date_1__isnull=False, then=Value('yes')),
+            default=Value('no'),
+            output_field=TextField(),
+        ),
+        cbe_conducted_2=Case(
+            When(cbe_date_2__isnull=False, then=Value('yes')),
+            default=Value('no'),
+            output_field=TextField(),
+        ),
+    ).values(
         'awc_id',
         'awc_code',
         'cbe_conducted_1',
@@ -143,6 +154,15 @@ def get_cbe_data(length, year, month, order, query_filters):
         'num_other_beneficiaries_2',
     )
 
-    # To apply pagination on database query with offset and limit
+    def get_value_or_data_not_entered(value):
+        if value is None:
+            return DATA_NOT_ENTERED
+        return value
+
+    def base_data(row_data):
+        return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
+
+
+    # To apply pagination on database query with data size length
     paginated_data = list(data[:length])
-    return paginated_data, data.count()
+    return [base_data(row) for row in paginated_data], data.count()

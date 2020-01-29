@@ -14,16 +14,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='agggovernancedashboard',
-            name='cbe_conducted_1',
-            field=models.TextField(null=True),
-        ),
-        migrations.AddField(
-            model_name='agggovernancedashboard',
-            name='cbe_conducted_2',
-            field=models.TextField(null=True),
-        ),
-        migrations.AddField(
-            model_name='agggovernancedashboard',
             name='cbe_date_1',
             field=models.DateField(null=True),
         ),
