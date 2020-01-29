@@ -17,7 +17,7 @@ from corehq.util.view_utils import absolute_reverse
 
 
 def get_toggles_previews(domain_link):
-    return _do_simple_request_to_master('linked_domain:toggles', domain_link)
+    return _do_simple_request('linked_domain:toggles', domain_link)
 
 
 def get_custom_data_models(domain_link, limit_types=None):
@@ -29,16 +29,11 @@ def get_custom_data_models(domain_link, limit_types=None):
 
 
 def get_user_roles(domain_link):
-    return _do_simple_request_to_master('linked_domain:user_roles', domain_link)['user_roles']
+    return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
 def get_brief_apps(domain_link):
-    apps = _do_simple_request_to_master('linked_domain:brief_apps', domain_link)['brief_apps']
-    return [wrap_app(app) for app in apps]
-
-
-def get_brief_linked_apps(domain_link):
-    apps = _do_simple_request_to_linked('linked_domain:brief_apps', domain_link)['brief_apps']
+    apps = _do_simple_request('linked_domain:brief_apps', domain_link)['brief_apps']
     return [wrap_app(app) for app in apps]
 
 
@@ -51,7 +46,7 @@ def get_app_by_version(domain_link, upstream_app_id, upstream_version):
 
 
 def get_case_search_config(domain_link):
-    return _do_simple_request_to_master('linked_domain:case_search_config', domain_link)
+    return _do_simple_request('linked_domain:case_search_config', domain_link)
 
 
 def get_released_app(master_domain, app_id, linked_domain, remote_details):
@@ -61,7 +56,7 @@ def get_released_app(master_domain, app_id, linked_domain, remote_details):
 
 
 def get_latest_released_versions_by_app_id(domain_link):
-    return _do_simple_request_to_master('linked_domain:released_app_versions', domain_link)['versions']
+    return _do_simple_request('linked_domain:released_app_versions', domain_link)['versions']
 
 
 def _convert_app_from_remote_linking_source(app_json):
@@ -87,21 +82,9 @@ def _fetch_remote_media_content(media_item, remote_app_details):
     return response.content
 
 
-def copy_xform_resource_overrides_remote(domain_link, app_id, id_map):
-    url = reverse('linked_domain:copy_resource_overrides', args=[domain_link.linked_domain, app_id])
-    return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.master_domain, {
-        "id_map": id_map,
-    }, method='post')
-
-
-def _do_simple_request_to_master(url_name, domain_link):
+def _do_simple_request(url_name, domain_link):
     url = reverse(url_name, args=[domain_link.master_domain])
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
-
-
-def _do_simple_request_to_linked(url_name, domain_link):
-    url = reverse(url_name, args=[domain_link.linked_domain])
-    return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.master_domain)
 
 
 def _do_request_to_remote_hq_json(relative_url, remote_details, linked_domain, params=None, method='get'):

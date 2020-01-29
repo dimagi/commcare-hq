@@ -5,13 +5,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
     wrap_app,
 )
-from corehq.apps.app_manager.suite_xml.post_process.resources import copy_xform_resource_overrides
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.remote_accessors import (
-    copy_xform_resource_overrides_remote,
     get_app_by_version,
     get_brief_apps,
-    get_brief_linked_apps,
     get_latest_released_versions_by_app_id,
     get_released_app,
 )
@@ -51,24 +48,6 @@ def get_latest_master_releases_versions(domain_link):
         return get_latest_released_versions_by_app_id(domain_link)
     else:
         return get_latest_released_app_versions_by_app_id(domain_link.master_domain)
-
-
-def copy_resource_overrides(domain_link, id_map):
-    """
-    Given a domain link, fetch all apps in the linked domain, and potentially add xform resource overrides
-    for each of them. The keys in id_map are a set of form unique ids from a master app, and each value
-    is the corresponding new form unique id from a copy of the app. A new resource override will be added
-    for any linked app that already has a override for one of the original app's forms.
-    """
-    if domain_link.is_remote:
-        apps = get_brief_linked_apps(domain_link)
-        apps = [app for app in apps if app.doc_type == 'LinkedApplication']
-        for app in apps:
-            copy_xform_resource_overrides_remote(domain_link.linked_domain, app.get_id, id_map)
-    else:
-        for app in get_brief_apps_in_domain(domain_link.linked_domain):
-            if app.doc_type == 'LinkedApplication':
-                copy_xform_resource_overrides(domain_link.linked_domain, app.get_id, id_map)
 
 
 def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):

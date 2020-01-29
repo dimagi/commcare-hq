@@ -850,6 +850,8 @@ class DomainForms(Resource):
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
+        limit = 200
+        max_limit = 1000
 
     def obj_get_list(self, bundle, **kwargs):
         application_id = bundle.request.GET.get('application_id')
@@ -896,6 +898,8 @@ class DomainCases(Resource):
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
+        limit = 100
+        max_limit = 1000
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']

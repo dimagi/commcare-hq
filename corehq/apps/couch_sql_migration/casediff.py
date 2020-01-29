@@ -14,6 +14,7 @@ from gevent.pool import Group, Pool
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport, StockTransaction
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -187,7 +188,7 @@ class CaseDiffQueue:
         loaded_case_ids = set()
         case_records = []
         stock_forms = get_stock_forms_by_case_id(case_ids)
-        for case in CaseAccessorCouch.get_cases(case_ids):
+        for case in get_couch_cases(case_ids):
             loaded_case_ids.add(case.case_id)
             case_stock_forms = stock_forms.get(case.case_id, [])
             rec = CaseRecord(case, case_stock_forms, pending[case.case_id])
@@ -228,7 +229,7 @@ class CaseDiffQueue:
                 else:
                     couch_cases.append(case)
             popped_cases = list(couch_cases)
-            couch_cases.extend(CaseAccessorCouch.get_cases(to_load))
+            couch_cases.extend(get_couch_cases(to_load))
             prune = (iter if self._is_flushing
                 else partial(prune_premature_diffs, statedb=self.statedb))
             json_by_id = {c.case_id: c.to_json() for c in prune(couch_cases)}
@@ -747,22 +748,19 @@ def diff_case(sql_case, couch_case, dd_count):
         return couch_case, diffs
     diffs = diff(couch_case, sql_json)
     if diffs:
-        domain = couch_case["domain"]
         try:
-            with convert_rebuild_error():
-                couch_case = FormProcessorCouch.hard_rebuild_case(
-                    domain, case_id, None, save=False, lock=False
-                ).to_json()
+            with convert_rebuild_error("couch"):
+                couch_case = hard_rebuild(couch_case)
             dd_count("commcare.couchsqlmigration.case.rebuild.couch")
             diffs = diff(couch_case, sql_json)
             if diffs:
                 if should_sort_sql_transactions(sql_case, couch_case):
-                    with convert_rebuild_error():
+                    with convert_rebuild_error("sql"):
                         sql_case = rebuild_case_with_couch_action_order(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
                     diffs = diff(couch_case, sql_case.to_json())
                 elif not was_rebuilt(sql_case):
-                    with convert_rebuild_error():
+                    with convert_rebuild_error("sql"):
                         sql_case = rebuild_case(sql_case)
                     dd_count("commcare.couchsqlmigration.case.rebuild.sql")
                     diffs = diff(couch_case, sql_case.to_json())
@@ -785,6 +783,13 @@ def check_domains(case_id, couch_json, sql_json):
         diffs = json_diff({"domain": couch_json["domain"]}, {"domain": _diff_state.domain})
     assert diffs, "expected domain diff"
     return diffs
+
+
+@retry_on_couch_error
+def hard_rebuild(couch_case):
+    return FormProcessorCouch.hard_rebuild_case(
+        couch_case["domain"], couch_case['_id'], None, save=False, lock=False
+    ).to_json()
 
 
 def iter_ledger_diffs(case_ids, dd_count):
@@ -864,11 +869,11 @@ def filter_missing_cases(missing_cases):
 
 
 @contextmanager
-def convert_rebuild_error():
+def convert_rebuild_error(backend):
     try:
         yield
     except Exception as err:
-        raise RebuildError(f"{type(err).__name__}: {err}")
+        raise RebuildError(f"{backend} {type(err).__name__}: {err}")
 
 
 class RebuildError(Exception):
@@ -947,6 +952,11 @@ class CaseRecord:
     def should_memorize_case(self):
         # do not keep cases with large history in memory
         return self.total_forms <= MAX_FORMS_PER_MEMORIZED_CASE
+
+
+@retry_on_couch_error
+def get_couch_cases(case_ids):
+    return CaseAccessorCouch.get_cases(case_ids)
 
 
 def get_case_form_ids(couch_case):
