@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 
 
-from custom.icds_reports.const import GOVERNANCE_API_RECORDS_PAGINATION
+from custom.icds_reports.const import GOVERNANCE_API_PAGE_SIZE
 from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, get_vhnd_data,\
     get_beneficiary_data, get_cbe_data
 
@@ -20,7 +20,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -32,7 +32,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the home visit api without start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -47,7 +47,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the home visit api with start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5, 'awc_id__gt': 'a1'}
         order = ['awc_id']
 
@@ -62,7 +62,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the no records are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -75,7 +75,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5, 'state_id': 'st1'}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -95,7 +95,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the vhnds api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit,
@@ -107,7 +107,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the vhnds api without start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit,
@@ -123,7 +123,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the vhnds api with start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
@@ -138,7 +138,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the no records are returned from the vhnds api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2018, 6, order, query_filters)
@@ -150,7 +150,7 @@ class GovernanceApiTest(TestCase):
         """
         test tp check if the first record is getting retrieved if there are multiple vhnds per month per awc
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st2', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
