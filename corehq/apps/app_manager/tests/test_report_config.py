@@ -431,7 +431,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <text>
                   <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))">
                     <variable name="message">
-                      <locale id="cchq.report_oldest_sync"/>
+                      <locale id="cchq.reports_last_updated_on"/>
                     </variable>
                   </xpath>
                 </text>

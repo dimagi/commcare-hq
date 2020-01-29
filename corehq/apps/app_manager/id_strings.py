@@ -317,9 +317,9 @@ def report_last_sync():
     return 'cchq.report_last_sync'
 
 
-@pattern('cchq.report_oldest_sync', default='Reports last updated on')
-def report_oldest_sync():
-    return 'cchq.report_oldest_sync'
+@pattern('cchq.reports_last_updated_on', default='Reports last updated on')
+def reports_last_updated_on():
+    return 'cchq.reports_last_updated_on'
 
 
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)

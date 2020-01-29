@@ -368,7 +368,7 @@ class DetailContributor(SectionContributor):
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=Xpath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.report_oldest_sync())],
+                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
