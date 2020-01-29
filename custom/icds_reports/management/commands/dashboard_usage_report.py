@@ -18,7 +18,7 @@ from custom.icds_reports.models import ICDSAuditEntryRecord
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 
 prefix = 'dashboard_usage_data_'
-REQUEST_DATA_CACHE = f'{prefix}tabular_data.csv'
+TABULAR_DATA_CACHE = f'{prefix}tabular_data.csv'
 CAS_DATA_CACHE = f'{prefix}cas_export_data.csv'
 
 
@@ -75,50 +75,74 @@ class Command(BaseCommand):
         user = CouchUser.get_by_username(username)
         usage_data = DashBoardUsage(couch_user=user, domain=domain).get_excel_data()[0][1]
 
-        # fetching dashboard usage counts
-        tab_usage_counts, tab_indicators_count, cas_counts = \
-            self.get_dashboard_usage_counts(start_date, end_date, domain)
+        # fetching username to state mapping
+        username_vs_state_name = defaultdict()
+        for data in usage_data[1:]:
+            username = data[4]
+            state_name = data[1]
+            if username not in username_vs_state_name.keys():
+                username_vs_state_name[username] = state_name
 
-        username_state_mapping = self.get_tabular_data(usage_data, tab_usage_counts, tab_indicators_count)
-        print(f'Request data written to file {REQUEST_DATA_CACHE}')
-        self.get_cas_data(cas_counts, username_state_mapping)
+        self.get_tabular_data(usage_data, start_date, end_date, domain)
+        print(f'Request data written to file {TABULAR_DATA_CACHE}')
+        self.get_cas_data(username_vs_state_name, start_date, end_date, domain)
         print(f'Request data written to file {CAS_DATA_CACHE}')
 
-    def get_dashboard_usage_counts(self, start_date, end_date, domain):
+    def get_dashboard_tabular_usage_counts(self, start_date, end_date, domain):
         """
         :param start_date: start date of the filter
         :param end_date: end date of the filter
         :param domain
         :return: returns the counts of no of downloads of each and total reports for  all usernames
         """
-        print(f'Compiling usage counts for users')
+        print(f'Compiling tabular usage counts for users')
         tabular_user_counts = defaultdict(int)
-        cas_user_counts = defaultdict(int)
         tabular_user_indicators = defaultdict(lambda: [0] * 10)
 
-        urls = ['/a/' + domain + '/cas_export', '/a/' + domain + '/icds_export_indicator']
-        query = list(
-                ICDSAuditEntryRecord.objects.filter(url__in=urls, time_of_use__gte=start_date,
+        records = list(
+                ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
+                                                    time_of_use__gte=start_date,
                                                     time_of_use__lte=end_date)
                 .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
-                .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username', 'url')
+                .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
                 .annotate(count=Count('indicator')).order_by('username', 'indicator'))
-        for record in query:
-            if record['url'] == urls[0]:
-                cas_user_counts[record['username'].split('@')[0]] += record['count']
-            else:
-                tabular_user_counts[record['username'].split('@')[0]] += record['count']
-                tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
-                    = record['count']
+        for record in records:
+            tabular_user_counts[record['username'].split('@')[0]] += record['count']
+            tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
+                = record['count']
 
-        return tabular_user_counts, tabular_user_indicators, cas_user_counts
+        return tabular_user_counts, tabular_user_indicators
 
-    def get_tabular_data(self, usage_data, tab_total_counts, tab_indicators_count):
+    def get_dashboard_cas_usage_counts(self, start_date, end_date, domain):
+        """
+        :param start_date: start date of the filter
+        :param end_date: end date of the filter
+        :param domain
+        :return: returns the counts of no of downloads of each and total reports for  all usernames
+        """
+        print(f'Compiling cas export usage counts for users')
+        cas_user_counts = defaultdict(int)
+
+        records = list(
+                ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export', time_of_use__gte=start_date,
+                                                    time_of_use__lte=end_date)
+                .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator')
+                .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
+        for record in records:
+            cas_user_counts[record['username'].split('@')[0]] += record['count']
+        print(cas_user_counts)
+        return cas_user_counts
+
+    def get_tabular_data(self, usage_data, start_date, end_date, domain):
         tab_data = list()
+
+        tab_usage_counts, tab_indicators_count = \
+            self.get_dashboard_tabular_usage_counts(start_date, end_date, domain)
+
         extra_headers = ['Total', 'Child', 'Pregnant Women', 'Demographics', 'System Usage',
                          'AWC infrastructure', 'Child Growth Monitoring List', 'ICDS - CAS Monthly Register',
                          'AWW Performance Report', 'LS Performance Report', 'Take Home Ration']
-        username_vs_state_name = defaultdict()
         print(f'Compiling request data for {len(usage_data)} users')
         headers = usage_data[0][:7]
         headers.extend(extra_headers)
@@ -128,16 +152,15 @@ class Command(BaseCommand):
                 username = data[4]
                 indicator_count = tab_indicators_count[username]
                 csv_row = data[:7]
-                csv_row.append(tab_total_counts[username])
+                csv_row.append(tab_usage_counts[username])
                 csv_row.extend(indicator_count)
                 tab_data.append(csv_row)
-                if username not in username_vs_state_name.keys():
-                    username_vs_state_name[username] = data[1]
-        tab_data.insert(0, headers)
-        _write_to_file(REQUEST_DATA_CACHE, tab_data)
-        return username_vs_state_name
 
-    def get_cas_data(self, cas_total_counts, username_state_mapping):
+        tab_data.insert(0, headers)
+        _write_to_file(TABULAR_DATA_CACHE, tab_data)
+
+    def get_cas_data(self, username_state_mapping, start_date, end_date, domain):
+        cas_total_counts = self.get_dashboard_cas_usage_counts(start_date, end_date, domain)
         sheet_headers = ['Sr.No', 'State/UT Name',
                          'No. of times CAS data export downloaded (December 2019)']
         cas_data = list()
