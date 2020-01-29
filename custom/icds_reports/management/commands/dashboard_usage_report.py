@@ -101,8 +101,8 @@ class Command(BaseCommand):
 
         records = list(
                       ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
-                                                time_of_use__gte=start_date,
-                                                time_of_use__lte=end_date)
+                                                          time_of_use__gte=start_date,
+                                                          time_of_use__lte=end_date)
                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
                       .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
                       .annotate(count=Count('indicator')).order_by('username', 'indicator'))
@@ -124,8 +124,9 @@ class Command(BaseCommand):
         cas_user_counts = defaultdict(int)
 
         records = list(
-                      ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export', time_of_use__gte=start_date,
-                                                    time_of_use__lte=end_date)
+                      ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export',
+                                                          time_of_use__gte=start_date,
+                                                          time_of_use__lte=end_date)
                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
                       .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator')
                       .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
