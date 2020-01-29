@@ -1,0 +1,28 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Return-Path: <>
+Date: Mon, 13 Jan 2020 08:57:03 +0000
+From: MAILER-DAEMON@amazonses.com
+To: commcarehq-bounces+production@dimagi.com
+Subject: Email Delivery Failure
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+This is a delivery failure notification message indicating that
+an email you addressed to email address :
+-- fakeemail5555@sydney.edu.au
+
+could not be delivered. The problem appears to be :
+-- Recipient email address is possibly incorrect
+
+Additional information follows :
+-- 5.1.1 <fakeemail5555@sydney.edu.au>: Recipient address rejected: The e-mail a=
+ddress you entered couldn't be found. Please check the recipient's e-mail a=
+ddress and try to resend the message
+
+This condition occurred after 1 attempt(s) to deliver over
+a period of 0 hour(s).
+
+If you sent the email to multiple recipients, you will receive one
+of these messages for each one which failed delivery,  otherwise
+they have been sent.
