@@ -477,7 +477,8 @@ class AggAwc(models.Model, AggregateMixin):
 
     num_awcs_conducted_cbe = models.IntegerField(null=True)
     num_awcs_conducted_vhnd = models.IntegerField(null=True)
-
+    cbe_conducted = models.IntegerField(null=True)
+    vhnd_conducted = models.IntegerField(null=True)
     cases_household = models.IntegerField(null=True)
     cases_person = models.IntegerField(null=True)
     cases_person_all = models.IntegerField(null=True)
