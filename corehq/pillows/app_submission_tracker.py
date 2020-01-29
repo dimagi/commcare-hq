@@ -18,7 +18,7 @@ from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
+def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerPillow',
                                                 num_processes=1, process_num=0, **kwargs):
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
