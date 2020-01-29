@@ -43,6 +43,15 @@ def get_column_xpath_client_template(new_mobile_ucr_restore):
     return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
 
 
+def get_report_context_tile_datum():
+    return SessionDatum(
+        id='tile_holder',
+        nodeset="instance('commcare-reports:index')/report_index/reports",
+        value='./@last_update',
+        detail_persistent=MOBILE_UCR_TILE_DETAIL_ID,
+    )
+
+
 @quickcache(['report_module.unique_id'])
 def _load_reports(report_module):
     if not report_module._loaded:
