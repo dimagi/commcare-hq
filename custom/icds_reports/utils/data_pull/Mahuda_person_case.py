@@ -5,33 +5,6 @@ from datetime import date
 from custom.icds_reports.models.aggregate import AwcLocation
 
 case_accessor = CaseAccessors('icds-cas')
-# awcs = [
-#     {
-#         'awc_id':'edd091dafb6a8a01adb93c99a2679a69',
-#         'awc_name': 'Mahuda 01',
-#         'awc_site_code': '22409080401'
-#     },
-#     {
-#         'awc_id':'edd091dafb6a8a01adb93c99a2679133',
-#         'awc_name': 'Mahuda 02',
-#         'awc_site_code': '22409080402'
-#     }
-#     ,{
-#         'awc_id': 'edd091dafb6a8a01adb93c99a2678bb6',
-#         'awc_name': 'Mahuda 03',
-#         'awc_site_code': '22409080403'
-#     },
-#     {
-#         'awc_id':'edd091dafb6a8a01adb93c99a26780a2',
-#         'awc_name': 'Mahuda 04',
-#         'awc_site_code': '22409080404'
-#     },
-#     {
-#         'awc_id':'edd091dafb6a8a01adb93c99a26772b5',
-#         'awc_name': 'Mahuda 05',
-#         'awc_site_code': '22409080405'
-#     }
-# ]
 
 
 awcs = AwcLocation.objects.filter(aggregation_level=5, state_id='f9b47ea2ee2d8a02acddeeb491d3e175',
@@ -65,10 +38,12 @@ headers = [
     'Phone_Number',
     'Marital Status',
     'Age at Marriage',
+    'Is Disabled',
+    'Disability Type',
     'Father Name',
     'Mother Name',
     'Husband Name',
-    'Referral Status'
+    'Referral Status',
     'Resident',
     'Alive',
     'Closed_date'
@@ -82,24 +57,36 @@ def calculate_age(born):
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
 
+def get_father_name(val):
+    if val and len(val) == 36:
+        case = case_accessor.get_cases([val])[0]
+        return case.get_case_property('name')
+    else:
+        return val
+
+def get_household_case(case):
+    for parent in case.get_parent():
+        if parent.get_case_property('type')=='household':
+            return parent
+
 def fetch_case_properties(case, awc):
     return [
         awc['supervisor_name'],
         awc['awc_name'],
         awc['awc_name'],
         awc['awc_site_code'],
-        case.get_parent()[0].get_case_property('case_id'),
-        case.get_parent()[0].get_case_property('name'),
-        case.get_parent()[0].get_case_property('hh_reg_date'),
-        case.get_parent()[0].get_case_property('hh_caste'),
-        case.get_parent()[0].get_case_property('hh_bpl_apl'),
-        case.get_parent()[0].get_case_property('hh_minority'),
-        case.get_case_property('has_aadhar'),
-        case.get_parent()[0].get_case_property('hh_religion'),
+        get_household_case(case).get_case_property('case_id'),
+        get_household_case(case).get_case_property('name'),
+        get_household_case(case).get_case_property('hh_reg_date'),
+        get_household_case(case).get_case_property('hh_caste'),
+        get_household_case(case).get_case_property('hh_bpl_apl'),
+        get_household_case(case).get_case_property('hh_minority'),
+        case.get_case_property('hh_num'),
+        get_household_case(case).get_case_property('hh_religion'),
         case.get_case_property('name'),
         case.get_case_property('has_aadhar'),
         case.get_case_property('age_at_reg'),
-        calculate_age(parser.parse(case.get_case_property('dob'))),
+        '' if case.get_case_property('dob') is None else calculate_age(parser.parse(case.get_case_property('dob'))),
         case.get_case_property('dob'),
         case.get_case_property('sex'),
         case.get_case_property('rch_id'),
@@ -107,11 +94,14 @@ def fetch_case_properties(case, awc):
         case.get_case_property('phone_number'),
         case.get_case_property('marital_status'),
         case.get_case_property('age_marriage'),
-        case.get_case_property('father_name'),
+        case.get_case_property('disabled'),
+        case.get_case_property('disability_type'),
+        get_father_name(case.get_case_property('father_name')),
         case.get_case_property('mother_name'),
         case.get_case_property('husband_name'),
         case.get_case_property('referral_status'),
-        case.get_case_property('died'),
+        case.get_case_property('resident'),
+        case.get_case_property('died') != 'yes',
         case.get_case_property('closed_on'),
     ]
 
