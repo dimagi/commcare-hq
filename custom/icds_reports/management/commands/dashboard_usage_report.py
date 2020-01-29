@@ -67,7 +67,7 @@ class Command(BaseCommand):
             help='The end date (exclusive). format YYYY-MM-DD'
         )
         parser.add_argument('domain')
-        parser.add_argument('email', help='The username of the logged in user')
+        parser.add_argument('username', help='The username of the logged in user')
 
     def handle(self, start_date, end_date, domain, username, **options):
         print(f'fetching users data')
@@ -105,17 +105,23 @@ class Command(BaseCommand):
                 .annotate(count=Count('indicator')).order_by('username', 'indicator'))
         for record in query:
             if record['url'] == urls[0]:
-                cas_user_counts[record['username']] += record['count']
+                cas_user_counts[record['username'].split('@')[0]] += record['count']
             else:
-                tabular_user_counts[record['username']] += record['count']
-                tabular_user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
+                tabular_user_counts[record['username'].split('@')[0]] += record['count']
+                tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1] = record['count']
 
         return tabular_user_counts, tabular_user_indicators, cas_user_counts
 
     def get_tabular_data(self, usage_data, tab_total_counts, tab_indicators_count):
         tab_data = list()
+        extra_headers = ['Total', 'Child', 'Pregnant Women', 'Demographics', 'System Usage',
+                         'AWC infrastructure', 'Child Growth Monitoring List', 'ICDS - CAS Monthly Register',
+                         'AWW Performance Report', 'LS Performance Report', 'Take Home Ration']
         username_vs_state_name = defaultdict()
         print(f'Compiling request data for {len(usage_data)} users')
+        headers = usage_data[0][:7]
+        headers.extend(extra_headers)
+        usage_data = usage_data[1:]
         for chunk in chunked(with_progress_bar(usage_data), 500):
             for data in chunk:
                 username = data[4]
@@ -124,8 +130,9 @@ class Command(BaseCommand):
                 csv_row.append(tab_total_counts[username])
                 csv_row.extend(indicator_count)
                 tab_data.append(csv_row)
-                if username not in username_vs_state_name:
+                if username not in username_vs_state_name.keys():
                     username_vs_state_name[username] = data[1]
+        tab_data.insert(0, headers)
         _write_to_file(REQUEST_DATA_CACHE, tab_data)
         return username_vs_state_name
 
@@ -134,10 +141,11 @@ class Command(BaseCommand):
                          'No. of times CAS data export downloaded (December 2019)']
         cas_data = list()
         cas_data_dict = defaultdict(int)
+
         # converting usernames to state names
         for key, value in cas_total_counts.items():
-            if username_state_mapping[key] not in cas_data_dict:
-                cas_data_dict[username_state_mapping[key]] += value
+            cas_data_dict[username_state_mapping[key]] += value
+
         # creating cas data
         serial = 0
         for key, value in cas_data_dict.items():
