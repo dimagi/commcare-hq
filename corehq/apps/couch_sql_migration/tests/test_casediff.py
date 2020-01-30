@@ -39,13 +39,13 @@ class TestDiffCases(SimpleTestCase):
             ),
             patch.object(
                 mod.StockTransactionLoader,
-                "dedup_stock_state",
-                lambda *a: None,
+                "get_transactions",
+                self.get_stock_transactions,
             ),
             patch.object(
                 mod.StockTransactionLoader,
-                "get_transactions",
-                lambda *a: [],
+                "iter_stock_transactions",
+                self.iter_stock_transactions,
             ),
             patch.object(
                 mod.StockTransactionLoader,
@@ -63,6 +63,8 @@ class TestDiffCases(SimpleTestCase):
         self.sql_ledgers = {}
         self.couch_cases = {}
         self.couch_ledgers = {}
+        self.stock_transactions = {}
+        self.form_transactions = {}
         stack = ExitStack()
         stack.enter_context(mod.global_diff_state("test", {}))
         self.addCleanup(stack.close)
@@ -105,8 +107,9 @@ class TestDiffCases(SimpleTestCase):
 
     def test_ledger_missing_stock_state(self):
         self.add_case("a")
-        self.add_ledger("a", balance=1)
+        stock = self.add_ledger("a", balance=1)
         del self.couch_ledgers["a"]
+        self.stock_transactions[stock.ledger_reference] = []
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
         self.assert_changes([
@@ -117,6 +120,25 @@ class TestDiffCases(SimpleTestCase):
                 diff_type="missing",
                 path=["balance"],
                 old_value=MISSING,
+                new_value=1,
+            ),
+        ])
+
+    def test_ledger_duplicate_stock_transaction(self):
+        self.add_case("a")
+        stock = self.add_ledger("a", balance=1)
+        stock.values["balance"] = 2
+        self.stock_transactions[stock.ledger_reference] *= 3  # 2 dups
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs()
+        self.assert_changes([
+            Change(
+                kind="stock state",
+                doc_id="a/stock/a",
+                reason="duplicate stock transaction",
+                diff_type="diff",
+                path=["balance"],
+                old_value=2,
                 new_value=1,
             ),
         ])
@@ -162,6 +184,13 @@ class TestDiffCases(SimpleTestCase):
             to_json=lambda: dict(couch_values, ledger_reference=ref.as_id()),
         )
         self.couch_ledgers[case_id] = stock
+        tx = Config(
+            report=Config(form_id="form", type="transfer"),
+            ledger_reference=ref,
+        )
+        tx_helper = Config(ledger_reference=ref)
+        self.stock_transactions[ref] = [tx]
+        self.form_transactions["form"] = [("transfer", tx_helper)]
         return stock
 
     def get_sql_cases(self, case_ids):
@@ -174,6 +203,12 @@ class TestDiffCases(SimpleTestCase):
     def get_stock_states(self, case_id__in):
         ledgers = self.couch_ledgers
         return [ledgers[c] for c in case_id__in if c in ledgers]
+
+    def get_stock_transactions(self, ref):
+        return self.stock_transactions[ref]
+
+    def iter_stock_transactions(self, form_id):
+        yield from self.form_transactions[form_id]
 
     def hard_rebuild_case(self, *args, **kw):
         raise Exception("rebuild disabled")

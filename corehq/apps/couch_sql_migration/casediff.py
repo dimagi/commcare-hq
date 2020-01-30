@@ -176,16 +176,10 @@ def diff_ledgers(case_ids, dd_count):
             changes = diffs_to_changes(diffs[:1], "missing stock transactions")
             all_changes.append(("stock state", ref.as_id(), changes))
             diffs = []
-        elif diffs:
-            couch_state = stock_tx.dedup_stock_state(ref)
-            if couch_state is not None:
-                changes = diffs
-                diffs = diff(couch_state, ledger_value)
-                if diffs:
-                    diffs = changes
-                else:
-                    changes = diffs_to_changes(changes, "duplicate stock transaction")
-                    all_changes.append(("stock state", ref.as_id(), changes))
+        elif diffs and stock_tx.has_duplicate_transactions(ref):
+            changes = diffs_to_changes(diffs, "duplicate stock transaction")
+            all_changes.append(("stock state", ref.as_id(), changes))
+            diffs = []
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
         all_diffs.append(("stock state", ref.as_id(), diffs))
@@ -218,16 +212,20 @@ class StockTransactionLoader:
         transaction = transactions[0]
         return self.new_stock_state(ref, transaction)
 
-    def dedup_stock_state(self, ref):
-        def key(tx):
-            return (tx.form_id, tx.type)
-        transactions = self.get_transactions(ref)
-        if len(transactions) != 2:
-            log.warning("possible duplicate stock: %s", transactions)
-            return None
-        if self.is_duplicated(ref, transactions):
-            return self.new_stock_state(ref, transactions[1])
-        return None
+    def has_duplicate_transactions(self, ref):
+        """Return true if any of ref's transactions are duplicates
+
+        A transaction is a duplicate if there are less ledger references
+        of its report type in the form than there are transactions of
+        the same report type referencing that form.
+        """
+        txx = defaultdict(int)
+        for tx in self.get_transactions(ref):
+            txx[(tx.report.form_id, tx.report.type)] += 1
+        return any(
+            self.count_ledger_refs(form_id, report_type, ref) < num_tx
+            for (form_id, report_type), num_tx in txx.items() if num_tx > 1
+        )
 
     def get_transactions(self, ref):
         cache = self.stock_transactions
@@ -260,27 +258,22 @@ class StockTransactionLoader:
             self.case_locations[case_id] = loc
         return loc
 
-    def is_duplicated(self, ref, transactions):
-        assert len(transactions) == 2, transactions
-        tx1, tx0 = transactions
-        if tx1.report.form_id != tx0.report.form_id or tx1.report.type != tx0.report.type:
-            return False
-        return self.count_ledger_refs(tx1.report.form_id, ref) == 1
-
-    def count_ledger_refs(self, form_id, ref):
+    def count_ledger_refs(self, form_id, report_type, ref):
         if form_id not in self.ledger_refs:
-            refs = defaultdict(int)
-            for ledger_reference in self.iter_ledger_references(form_id):
-                refs[ledger_reference] += 1
-            self.ledger_refs[form_id] = dict(refs)
-        return self.ledger_refs[form_id][ref]
+            ref_counts = defaultdict(lambda: defaultdict(int))
+            for tx_report_type, tx in self.iter_stock_transactions(form_id):
+                ref_counts[tx_report_type][tx.ledger_reference] += 1
+            self.ledger_refs[form_id] = ref_counts
+        num = self.ledger_refs[form_id][report_type][ref]
+        assert num > 0, (form_id, report_type, ref)
+        return num
 
-    def iter_ledger_references(self, form_id):
+    def iter_stock_transactions(self, form_id):
         xform = XFormInstance.get(form_id)
         assert xform.domain == _diff_state.domain, xform
-        for helper in get_all_stock_report_helpers_from_form(xform):
-            for tx in helper.transactions:
-                yield tx.ledger_reference
+        for report in get_all_stock_report_helpers_from_form(xform):
+            for tx in report.transactions:
+                yield report.report_type, tx
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
