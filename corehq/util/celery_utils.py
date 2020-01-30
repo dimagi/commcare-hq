@@ -214,3 +214,32 @@ def periodic_task_on_envs(envs, *args, **kwargs):
         return periodic_task(*args, **kwargs)
     else:
         return lambda fn: fn
+
+
+def run_periodic_task_again(run_every, last_run_start: datetime, last_duration: timedelta) -> bool:
+    """
+    Check if a task can be run again in the schedule window without overlapping the next scheduled task.
+    This is a fairly naive implementation that assumes a simple schedule where a task is being run
+    periodically (either all the time or only during a certain window of the day).
+
+    Examples:
+     * crontab('*/5', '17-23') - every 5 minutes between 17h00 and 23h00
+     * timedelta(minutes=30) - every 30 minutes
+
+    :param run_every: an instance of timedelta or crontab
+    :param last_run_start: datetime of the last start time of the task
+    :param last_duration:  duration (timedelta) of the last task run
+    :return: True if task should be run again based on timing information given
+    """
+    if isinstance(run_every, crontab):
+        state = run_every.is_due(last_run_start)
+        return (
+            not state.is_due
+            and datetime.utcnow().hour in run_every.hour
+            and state.next > last_duration.total_seconds()
+        )
+    elif isinstance(run_every, timedelta):
+        next_start = last_run_start + run_every
+        return datetime.utcnow() + last_duration < next_start
+
+    raise ValueError("run_every must be a timedelta or a crontab instance")
