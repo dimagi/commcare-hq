@@ -183,8 +183,9 @@
       },
       {
         "column_id": "date_left",
-        "datetype": "datetime",
+        "datatype": "datetime",
         "type": "expression",
+        "is_nullable": true,
         "expression": {
           "type": "root_doc",
           "expression": {
