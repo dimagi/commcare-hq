@@ -36,7 +36,7 @@ def rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count):
             publish_case_saved(new_case)
     finally:
         release_lock(lock, degrade_gracefully=True)
-    return diffs
+    return new_case.to_json(), diffs
 
 
 def should_sort_sql_transactions(sql_case, couch_json):

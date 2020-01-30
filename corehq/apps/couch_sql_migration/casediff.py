@@ -30,6 +30,7 @@ from corehq.util.datadog.gauges import datadog_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .rebuildcase import rebuild_and_diff_cases
+from .statedb import Change
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ def make_result_saver(statedb, count_cases=lambda n: None):
         count_cases(len(data.doc_ids))
         statedb.add_diffed_cases(data.doc_ids)
         statedb.replace_case_diffs(data.diffs)
+        statedb.replace_case_changes(data.changes)
         for doc_type, doc_ids in data.missing_docs:
             statedb.add_missing_docs(doc_type, doc_ids)
     return save_result
@@ -80,15 +82,18 @@ def diff_cases(couch_cases, log_cases=False):
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
-        couch_case, diffs = diff_case(sql_case, couch_cases[case_id], dd_count)
+        couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
         if diffs:
             dd_count("commcare.couchsqlmigration.case.has_diff")
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
+        data.changes.append((couch_case['doc_type'], case_id, changes))
         if log_cases:
             log.info("case %s -> %s diffs", case_id, len(diffs))
 
-    data.diffs.extend(iter_ledger_diffs(case_ids, dd_count))
+    diffs, changes = diff_ledgers(case_ids, dd_count)
+    data.diffs.extend(diffs)
+    data.changes.extend(changes)
     add_missing_docs(data, couch_cases, sql_case_ids, dd_count)
     return data
 
@@ -101,8 +106,10 @@ def diff_case(sql_case, couch_case, dd_count):
     sql_json = sql_case.to_json()
     dd_count("commcare.couchsqlmigration.case.diffed")
     diffs = check_domains(case_id, couch_case, sql_json)
+    changes = []
     if diffs:
-        return couch_case, diffs
+        return couch_case, diffs, changes
+    original_couch_case = couch_case
     diffs = diff(couch_case, sql_json)
     if diffs:
         dd_count("commcare.couchsqlmigration.case.rebuild.couch")
@@ -114,8 +121,13 @@ def diff_case(sql_case, couch_case, dd_count):
         else:
             diffs = diff(couch_case, sql_json)
             if diffs:
-                diffs = rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count)
-    return couch_case, diffs
+                sql_json, diffs = rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count)
+            if not diffs:
+                changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
+            elif not diff(original_couch_case, sql_json):
+                log.warning("original couch case matches rebuilt SQL case "
+                    "(unexpected, rebuild not saved)")
+    return couch_case, diffs, changes
 
 
 def check_domains(case_id, couch_json, sql_json):
@@ -138,7 +150,7 @@ def hard_rebuild(couch_case):
     ).to_json()
 
 
-def iter_ledger_diffs(case_ids, dd_count):
+def diff_ledgers(case_ids, dd_count):
     def diff(couch_state, ledger_value):
         couch_json = couch_state.to_json() if couch_state is not None else {}
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
@@ -149,6 +161,8 @@ def iter_ledger_diffs(case_ids, dd_count):
         for state in StockState.objects.filter(case_id__in=case_ids)
     }
     sql_refs = set()
+    all_diffs = []
+    all_changes = []
     for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
         ref = ledger_value.ledger_reference
         sql_refs.add(ref)
@@ -161,16 +175,24 @@ def iter_ledger_diffs(case_ids, dd_count):
         if diffs and couch_state is not None:
             couch_state = stock_tx.dedup_stock_state(ref)
             if couch_state is not None:
+                changes = diffs
                 diffs = diff(couch_state, ledger_value)
+                if diffs:
+                    diffs = changes
+                else:
+                    changes = diffs_to_changes(changes, "duplicate transaction")
+                    all_changes.append(("stock state", ref.as_id(), changes))
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
-        yield "stock state", ref.as_id(), diffs
+        all_diffs.append(("stock state", ref.as_id(), diffs))
     for ref, couch_state in couch_state_map.items():
         if ref not in sql_refs:
             diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
             dd_count("commcare.couchsqlmigration.ledger.diffed")
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
-            yield "stock state", ref.as_id(), filter_ledger_diffs(diffs)
+            diffs = filter_ledger_diffs(diffs)
+            all_diffs.append(("stock state", ref.as_id(), diffs))
+    return all_diffs, all_changes
 
 
 class StockTransactionLoader:
@@ -296,6 +318,20 @@ class DiffData:
     doc_ids = attr.ib(factory=list)
     diffs = attr.ib(factory=list)
     missing_docs = attr.ib(factory=list)
+
+    # Changes are diffs that cannot be resolved due to a feature or bug
+    # in the Couch form processor that is not present in the SQL form
+    # processor. Examples:
+    # - Couch rebuild changes the state of the case
+    # - duplicate stock transactions in Couch resulting in incorrect balances
+    changes = attr.ib(factory=list)
+
+
+def diffs_to_changes(diffs, reason):
+    return [
+        Change(kind=None, doc_id=None, reason=reason, **diff._asdict())
+        for diff in diffs
+    ]
 
 
 @attr.s

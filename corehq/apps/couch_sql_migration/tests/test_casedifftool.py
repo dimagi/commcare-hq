@@ -15,7 +15,7 @@ from corehq.util.test_utils import capture_log_output
 from .test_migration import BaseMigrationTestCase, Diff, make_test_form
 from .. import casediff
 from .. import casedifftool as mod
-from ..statedb import open_state_db
+from ..statedb import Change, open_state_db
 
 
 class TestCouchSqlDiff(BaseMigrationTestCase):
@@ -172,12 +172,25 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.assertIn("couch case test-case has wrong domain: wrong", logs)
 
     def test_ledger_dup_transaction_diff(self):
-        self.create_form_with_duplicate_stock_transaction()
+        product_id = self.create_form_with_duplicate_stock_transaction()
         self._do_migration(case_diff='none')
         self._compare_diffs([])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
         self._compare_diffs([])
+        db = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(
+            list(db.iter_changes()),
+            [Change(
+                kind="stock state",
+                doc_id=f"test-case/things/{product_id}",
+                reason="duplicate transaction",
+                diff_type="diff",
+                path=["balance"],
+                old_value=2,
+                new_value=1,
+            )],
+        )
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product

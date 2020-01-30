@@ -36,6 +36,11 @@ class TestDiffCases(SimpleTestCase):
                 ".FormProcessorCouch.hard_rebuild_case",
                 self.hard_rebuild_case,
             ),
+            patch.object(
+                mod.StockTransactionLoader,
+                "dedup_stock_state",
+                lambda *a: None,
+            ),
         ]
 
         for patcher in self.patches:

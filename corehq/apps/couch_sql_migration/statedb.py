@@ -9,6 +9,7 @@ from datetime import datetime
 from functools import partial
 from itertools import groupby
 
+import attr
 from memoized import memoized
 from sqlalchemy import (
     Column,
@@ -333,7 +334,7 @@ class StateDB(DiffDB):
         if diffs:
             dd_count("commcare.couchsqlmigration.form.has_diffs")
 
-    def replace_case_diffs(self, case_diffs):
+    def replace_case_diffs(self, case_diffs, **kw):
         diffs_by_doc = defaultdict(list)
         for kind, doc_id, diffs in case_diffs:
             assert all(isinstance(d.path, (list, tuple)) for d in diffs), diffs
@@ -347,16 +348,12 @@ class StateDB(DiffDB):
             else:
                 diffs_by_doc[(kind, doc_id)].extend(diffs)
         for (doc_type, case_id), diffs in diffs_by_doc.items():
-            self.add_diffs(doc_type, case_id, diffs)
+            self.add_diffs(doc_type, case_id, diffs, **kw)
 
-    def add_diffs(self, kind, doc_id, diffs, *, session=None):
-        def to_dict(diff):
-            data = {"type": diff.diff_type, "path": diff.path}
-            if diff.old_value is not MISSING:
-                data["old_value"] = diff.old_value
-            if diff.new_value is not MISSING:
-                data["new_value"] = diff.new_value
-            return data
+    def add_diffs(self, kind, doc_id, diffs, *, session=None, _model=None):
+        if _model is None:
+            _model = DocDiffs
+        to_dict = _model.diff_to_dict
         assert kind != "stock state", ("stock state diffs should be "
             "combined with other diffs for the same case")
         if diffs:
@@ -372,18 +369,26 @@ class StateDB(DiffDB):
                 )
         else:
             with self.session(session) as session:
-                session.query(DocDiffs).filter(
-                    DocDiffs.kind == kind,
-                    DocDiffs.doc_id == doc_id,
+                session.query(_model).filter(
+                    _model.kind == kind,
+                    _model.doc_id == doc_id,
                 ).delete(synchronize_session=False)
 
-    def iter_diffs(self):
+    def replace_case_changes(self, changes):
+        self.replace_case_diffs(changes, _model=DocChanges)
+
+    def iter_diffs(self, *, _model=None):
+        if _model is None:
+            _model = DocDiffs
         with self.session() as session:
-            for kind, in list(session.query(DocDiffs.kind).distinct()):
-                query = session.query(DocDiffs).filter_by(kind=kind)
-                for doc in iter_large(query, DocDiffs.doc_id):
-                    for diff in json.loads(doc.diffs):
-                        yield self._get_planning_diff(doc.kind, doc.doc_id, diff)
+            for kind, in list(session.query(_model.kind).distinct()):
+                query = session.query(_model).filter_by(kind=kind)
+                for doc in iter_large(query, _model.doc_id):
+                    for data in json.loads(doc.diffs):
+                        yield _model.dict_to_diff(doc.kind, doc.doc_id, data)
+
+    def iter_changes(self):
+        return self.iter_diffs(_model=DocChanges)
 
     def iter_doc_diffs(self, kind):
         """Iterate over diffs of the given kind
@@ -400,28 +405,9 @@ class StateDB(DiffDB):
             query = session.query(DocDiffs).filter_by(kind=kind)
             for doc in iter_large(query, DocDiffs.doc_id):
                 yield doc.doc_id, [
-                    self._get_planning_diff(doc.kind, doc.doc_id, diff)
-                    for diff in json.loads(doc.diffs)
+                    DocDiffs.dict_to_diff(doc.kind, doc.doc_id, data)
+                    for data in json.loads(doc.diffs)
                 ]
-
-    def _get_planning_diff(self, kind, doc_id, diff):
-        def json_or_none(diff, key):
-            return json.dumps(diff[key]) if key in diff else None
-        path = diff["path"]
-        if len(path) == 2 and isinstance(path, dict):
-            assert path.keys() == {"stock_id", "path"}, path
-            assert path["stock_id"].startswith(doc_id + "/"), (doc_id, path)
-            kind = "stock state"
-            doc_id = path["stock_id"]
-            path = path["path"]
-        return Diff(
-            kind=kind,
-            doc_id=doc_id,
-            diff_type=diff["type"],
-            path=json.dumps(path),
-            old_value=json_or_none(diff, "old_value"),
-            new_value=json_or_none(diff, "new_value"),
-        )
 
     def get_diffs(self):
         """DEPRECATED use iter_diffs(); the result may be very large"""
@@ -471,6 +457,7 @@ class StateDB(DiffDB):
         - KeyValue - casediff r/w, main r/w (different keys)
         - DocCount - casediff w, main r
         - DocDiffs - casediff w (case and stock kinds), main r/w
+        - DocChanges - casediff w (case and stock kinds), main r/w
         - MissingDoc - casediff w, main r
         - NoActionCaseForm - main r/w
         - ProblemForm - main r/w
@@ -504,6 +491,7 @@ class StateDB(DiffDB):
                 "stock state",
             }
             casediff_kinds = {k for k, in cddb.query(DocDiffs.kind).distinct()}
+            casediff_kinds.update(k for k, in cddb.query(DocChanges.kind).distinct())
             assert not casediff_kinds - expect_casediff_kinds, casediff_kinds
 
             resume_keys = [
@@ -524,6 +512,7 @@ class StateDB(DiffDB):
             copy(CaseForms, session)
             copy(Diff, session, f"kind IN {quotelist(expect_casediff_kinds)}")
             copy(DocDiffs, session, f"kind IN {quotelist(expect_casediff_kinds)}")
+            copy(DocChanges, session, f"kind IN {quotelist(expect_casediff_kinds)}")
             copy(KeyValue, session, f"key IN {quotelist(resume_keys)}")
             copy(DocCount, session)
             copy(MissingDoc, session)
@@ -613,6 +602,71 @@ class DocDiffs(Base):
     kind = Column(String(50), nullable=False, primary_key=True)
     doc_id = Column(String(50), nullable=False, primary_key=True)
     diffs = Column(Text(), nullable=False)
+
+    def diff_to_dict(diff):
+        data = {"type": diff.diff_type, "path": diff.path}
+        if diff.old_value is not MISSING:
+            data["old_value"] = diff.old_value
+        if diff.new_value is not MISSING:
+            data["new_value"] = diff.new_value
+        return data
+
+    def dict_to_diff(kind, doc_id, data, *, _make_diff=Diff):
+        def json_or_none(data, key):
+            return json.dumps(data[key]) if key in data else None
+        path = data["path"]
+        if len(path) == 2 and isinstance(path, dict):
+            assert path.keys() == {"stock_id", "path"}, path
+            assert path["stock_id"].startswith(doc_id + "/"), (doc_id, path)
+            kind = "stock state"
+            doc_id = path["stock_id"]
+            path = path["path"]
+        return _make_diff(
+            kind=kind,
+            doc_id=doc_id,
+            diff_type=data["type"],
+            path=json.dumps(path),
+            old_value=json_or_none(data, "old_value"),
+            new_value=json_or_none(data, "new_value"),
+        )
+
+
+class DocChanges(Base):
+    __tablename__ = 'doc_changes'
+
+    kind = Column(String(50), nullable=False, primary_key=True)
+    doc_id = Column(String(50), nullable=False, primary_key=True)
+    diffs = Column(Text(), nullable=False)
+
+    def diff_to_dict(diff):
+        data = DocDiffs.diff_to_dict(diff)
+        data["reason"] = diff.reason
+        return data
+
+    def dict_to_diff(kind, doc_id, data):
+        def change(**kw):
+            for key in ["path", "old_value", "new_value"]:
+                kw[key] = MISSING if kw[key] is None else json.loads(kw[key])
+            return Change(reason=data["reason"], **kw)
+        return DocDiffs.dict_to_diff(kind, doc_id, data, _make_diff=change)
+
+
+@attr.s
+class Change:
+    kind = attr.ib()
+    doc_id = attr.ib()
+    reason = attr.ib()
+    diff_type = attr.ib()
+    path = attr.ib()
+    old_value = attr.ib()
+    new_value = attr.ib()
+
+    def _replace(self, **data):
+        cls = type(self)
+        for att in attr.fields(cls):
+            if att.name not in data:
+                data[att.name] = getattr(self, att.name)
+        return cls(**data)
 
 
 class KeyValue(Base):
