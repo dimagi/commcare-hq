@@ -14,6 +14,7 @@ class TestMigrationForms(BaseFormsTest):
         self._test_data_source_results(
             'migration_form_v31895',
             [{
+                "date_left": None,
                 "doc_id": None,
                 "timeend": None,
                 "migration_status": 'migrated',

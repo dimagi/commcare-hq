@@ -451,7 +451,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
-        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table
+        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
+        '_agg_migration_table': _agg_migration_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
