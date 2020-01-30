@@ -1574,6 +1574,7 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
     person_case_id = models.CharField(max_length=40, primary_key=True)
 
     is_migrated = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Migration")
+    migration_date = models.DateTimeField(help_text="Migration Date", null=True)
 
     class Meta(object):
         db_table = AGG_MIGRATION_TABLE

@@ -29,7 +29,16 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             supervisor_id,
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
-            LAST_VALUES(is_migrated) OVER w AS is_migrated,
+            LAST_VALUES(is_migrated) OVER w AS migration_status,
+            CASE
+                WHEN LAST_VALUES(date_left) OVER w IS NULL
+                    THEN LAST_VALUES(timeend)
+                ELSE LAST_VALUES(date_left) OVER w
+            END AS migration_date,
+            CASE
+                WHEN (migration_status=1 AND migration_date::DATE < current_month_start) THEN 1
+                ELSE 0
+            END AS is_migrated, 
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -57,14 +66,15 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, person_case_id, is_migrated
+          state_id, supervisor_id, month, person_case_id, is_migrated, migration_date
         ) (
           SELECT
             %(state_id)s AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s::DATE AS month,
             COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
-            COALESCE(ucr.is_migrated, prev_month.is_migrated) as is_migrated
+            COALESCE(ucr.is_migrated, prev_month.is_migrated) as is_migrated,
+            COALESCE(ucr.migration_date, prev_month.migration_date) as migration_date
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
              SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
