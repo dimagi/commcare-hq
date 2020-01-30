@@ -184,7 +184,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             [Change(
                 kind="stock state",
                 doc_id=f"test-case/things/{product_id}",
-                reason="duplicate transaction",
+                reason="duplicate stock transaction",
                 diff_type="diff",
                 path=["balance"],
                 old_value=2,

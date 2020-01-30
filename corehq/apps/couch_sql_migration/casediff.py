@@ -172,7 +172,11 @@ def diff_ledgers(case_ids, dd_count):
             couch_state = stock_tx.get_stock_state(ref)
             dd_count("commcare.couchsqlmigration.ledger.rebuild")
         diffs = diff(couch_state, ledger_value)
-        if diffs and couch_state is not None:
+        if couch_state is None:
+            changes = diffs_to_changes(diffs[:1], "missing stock transactions")
+            all_changes.append(("stock state", ref.as_id(), changes))
+            diffs = []
+        elif diffs:
             couch_state = stock_tx.dedup_stock_state(ref)
             if couch_state is not None:
                 changes = diffs
@@ -180,7 +184,7 @@ def diff_ledgers(case_ids, dd_count):
                 if diffs:
                     diffs = changes
                 else:
-                    changes = diffs_to_changes(changes, "duplicate transaction")
+                    changes = diffs_to_changes(changes, "duplicate stock transaction")
                     all_changes.append(("stock state", ref.as_id(), changes))
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
@@ -198,7 +202,7 @@ def diff_ledgers(case_ids, dd_count):
 class StockTransactionLoader:
 
     def __init__(self):
-        self.stock_transactions = defaultdict(list)
+        self.stock_transactions = {}
         self.case_locations = {}
         self.ledger_refs = {}
 
@@ -227,15 +231,15 @@ class StockTransactionLoader:
 
     def get_transactions(self, ref):
         cache = self.stock_transactions
-        if ref not in cache:
+        if ref.case_id not in cache:
             case_txx = list(StockTransaction.objects
                 .filter(case_id=ref.case_id)
                 .order_by('-report__date', '-pk')
                 .select_related("report"))
+            case_cache = cache[ref.case_id] = defaultdict(list)
             for tx in case_txx:
-                cache[tx.ledger_reference].append(tx)
-        assert ref in cache, ref
-        return cache[ref]
+                case_cache[tx.ledger_reference].append(tx)
+        return cache[ref.case_id][ref]
 
     def new_stock_state(self, ref, transaction):
         return StockState(

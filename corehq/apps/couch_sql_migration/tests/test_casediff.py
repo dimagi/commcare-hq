@@ -7,10 +7,11 @@ import attr
 from mock import patch
 from testil import Config
 
+from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
-from ..statedb import StateDB
+from ..statedb import Change, StateDB
 
 
 class TestDiffCases(SimpleTestCase):
@@ -39,6 +40,16 @@ class TestDiffCases(SimpleTestCase):
             patch.object(
                 mod.StockTransactionLoader,
                 "dedup_stock_state",
+                lambda *a: None,
+            ),
+            patch.object(
+                mod.StockTransactionLoader,
+                "get_transactions",
+                lambda *a: [],
+            ),
+            patch.object(
+                mod.StockTransactionLoader,
+                "get_location",
                 lambda *a: None,
             ),
         ]
@@ -92,12 +103,35 @@ class TestDiffCases(SimpleTestCase):
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
 
+    def test_ledger_missing_stock_state(self):
+        self.add_case("a")
+        self.add_ledger("a", balance=1)
+        del self.couch_ledgers["a"]
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs()
+        self.assert_changes([
+            Change(
+                kind="stock state",
+                doc_id="a/stock/a",
+                reason="missing stock transactions",
+                diff_type="missing",
+                path=["balance"],
+                old_value=MISSING,
+                new_value=1,
+            ),
+        ])
+
     def assert_diffs(self, expected=None):
         actual = [
             Diff(diff.doc_id, diff.kind, *diff.json_diff)
             for diff in self.statedb.get_diffs()
         ]
         self.assertEqual(actual, expected or [])
+
+    def assert_changes(self, expected=None):
+        changes = list(self.statedb.iter_changes())
+        self.assertEqual(changes, expected or [],
+            "all changes:\n" + "\n".join(repr(c) for c in changes))
 
     def add_case(self, case_id, **props):
         assert case_id not in self.sql_cases, self.sql_cases[case_id]
