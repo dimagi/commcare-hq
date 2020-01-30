@@ -358,8 +358,9 @@ def bulk_fetch_changes_docs(changes, domain=None):
 
 def get_errors_with_ids(es_action_errors):
     return [
-        (item['_id'], item['error'])
+        (item['_id'], item.get('error'))
         for op_type, item in _changes_to_list(es_action_errors)
+        if not (item.get('op_type') == 'delete' and item.get('status') == 404)
     ]
 
 
