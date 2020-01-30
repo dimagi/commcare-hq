@@ -86,5 +86,14 @@ hqDefine('icds_reports/js/spec/utils', function () {
         provideOverrideOrDefault("haveAccessToAllLocations", false);
         provideOverrideOrDefault("isMobile", false);
     };
+
+    module.getStateTopojson = function () {
+        var request = new XMLHttpRequest();
+        // synchronous request
+        request.open('GET', '/static/js/topojsons/states_v3_small.topojson', false);
+        request.send(null);
+        return JSON.parse(request.responseText);
+    };
+
     return module;
 });

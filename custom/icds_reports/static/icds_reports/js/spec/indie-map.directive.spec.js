@@ -4,11 +4,27 @@
 var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
+function assertTopojsonsEqual(actual, expected) {
+    console.log('comparing actual', actual);
+    console.log('comparing expected', expected);
+    var expectedGeometries = expected['objects']['ind']['geometries'];
+    var actualGeometries = actual['objects']['ind']['geometries'];
+    assert.equal(expectedGeometries.length, actualGeometries.length);
+    // for (var i = 0; i < expectedGeometries.length; i++) {
+    for (var i = 0; i < 5; i++) {
+        console.log('expected id', expectedGeometries[i]['id']);
+        console.log('expected name', expectedGeometries[i]['properties']['name']);
+        console.log('actual id', actualGeometries[i]['id']);
+        console.log('actual name', actualGeometries[i]['properties']['name']);
+        // assert.equal(expectedGeometries[i].id, actualGeometries[i].id);
+        // assert.equal(expectedGeometries[i].properties.name, actualGeometries[i].properties.name);
+    }
+}
+
 describe('Indie Map Directive', function () {
     this.timeout(10000);  // bump timeout for maps tests because they are slow...
 
-    var $scope, $location, controller, $httpBackend, $storageService;
-
+    var $scope, $location, controller, $httpBackend, $storageService, $topojsonService;
     pageData.registerUrl('icds_locations', 'icds_locations');
     pageData.registerUrl('icds-ng-template', 'template');
 
@@ -49,11 +65,12 @@ describe('Indie Map Directive', function () {
 
     }));
 
-    beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService) {
+    beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService, topojsonService) {
         $scope = $rootScope.$new();
         $location = _$location_;
         $httpBackend = _$httpBackend_;
         $storageService = storageService;
+        $topojsonService = topojsonService;
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
@@ -64,7 +81,6 @@ describe('Indie Map Directive', function () {
 
         $httpBackend.flush();
         $scope.$digest();
-
         controller = compiled.controller('indieMap');
     }));
 

@@ -47,10 +47,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.mapHeight = 0;
 
     vm.initTopoJson = function (locationLevel, location, topojson) {
+        console.log('inittopojson', locationLevel, location, topojson);
         if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             vm.rawTopojson = topojson;
+            console.log("set to national view");
         } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
@@ -62,6 +64,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
         if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
             Datamap.prototype[vm.type] = vm.rawTopojson;
+            console.log("overriding datamap");
             if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
                 vm.mapHeight = 750;
             } else {
@@ -76,6 +79,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     vm.mapHeight = availableHeight;
                 }
             }
+        } else {
+            console.log("not touching datamap");
+            console.log('vm.rawTopojson ', vm.rawTopojson );
+            // console.log('vm.rawTopojson.objects[vm.scope] ', vm.rawTopojson.objects[vm.scope]);
         }
     };
 
@@ -126,6 +133,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     }
 
     var mapConfiguration = function (location, topojson) {
+        console.log('mapConfiguration', location, topojson);
         var locationLevel = getLocationLevelFromType(location.location_type);
         vm.initTopoJson(locationLevel, location, topojson);
         vm.map = {
@@ -276,9 +284,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
+        console.log('location service callback', location);
         var locationLevel = getLocationLevelFromType(location.location_type);
         if (locationLevel === -1) {
+            console.log('state');
             topojsonService.getStateTopoJson().then(function (resp) {
+                console.log('state callback', resp);
                 mapConfiguration(location, resp);
             });
         } else if (locationLevel === 0) {
@@ -292,6 +303,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 }
             );
         } else {
+            console.log('map configuration for empty topojson');
             mapConfiguration(location);
         }
     });

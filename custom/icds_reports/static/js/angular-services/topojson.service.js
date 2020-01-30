@@ -9,12 +9,19 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
         blocks: {},
     };
     function getStaticTopojson(topojsonUrl, cacheKey) {
+        console.log('static topojson', topojsonUrl);
         if (cacheKey in CACHE) {
             // https://javascript.info/promise-api#promise-resolve-reject
             return Promise.resolve(CACHE[cacheKey]);
         } else {
             return $http.get(topojsonUrl).then(
                 function (response) {
+                    console.log('http callback', topojsonUrl);
+                    console.log('response', response);
+                    console.log('response keys', Object.keys(response));
+                    console.log('response json', JSON.stringify(response));
+                    console.log('response data', response.data);
+
                     CACHE[cacheKey] = response.data;
                     return response.data;
                 }
