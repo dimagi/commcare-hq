@@ -253,7 +253,10 @@ def reset_django_db_connections():
     #    * belonging to another process. */
     from django import db
     for alias in db.connections:
-        del db.connections[alias]
+        try:
+            del db.connections[alias]
+        except AttributeError:
+            pass
 
 
 def reset_couchdb_connections():
