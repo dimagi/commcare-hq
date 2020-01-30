@@ -166,7 +166,6 @@ class CaseDiffTool:
             processes=os.cpu_count() * 2,
             initializer=init_worker,
             initargs=self.initargs,
-            maxtasksperchild=100,
         )
 
     @property
