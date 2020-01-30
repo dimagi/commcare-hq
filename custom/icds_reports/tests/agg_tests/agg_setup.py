@@ -248,7 +248,7 @@ def partition_child_health():
         "ALTER TABLE child_health_monthly RENAME TO child_health_old_partition",
         "CREATE TABLE child_health_monthly (LIKE child_health_old_partition) PARTITION BY LIST (month)",
         "SELECT create_distributed_table('child_health_monthly', 'supervisor_id')",
-        "ALTER TABLE child_health_monthly ATTACH PARTITION child_health_old_partition FOR VALUES IN ('2017-03-01')"
+        "ALTER TABLE child_health_monthly ATTACH PARTITION child_health_old_partition DEFAULT"
         ]
     with engine.begin() as connection:
         # check if we have already partitioned this table (necessary for reusedb)
