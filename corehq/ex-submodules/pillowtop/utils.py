@@ -153,8 +153,12 @@ def _get_consumer():
     ))
 
 
-def get_all_pillows_json():
+def get_all_pillows_json(active_only=True):
     pillow_configs = get_all_pillow_configs()
+    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
+    if active_only and active_pillows:
+        pillow_configs = [config for config in pillow_configs if config.name in active_pillows]
+
     consumer = _get_consumer()
     with consumer:
         return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
