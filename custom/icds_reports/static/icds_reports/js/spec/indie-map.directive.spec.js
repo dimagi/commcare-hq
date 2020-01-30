@@ -77,6 +77,8 @@ describe('Indie Map Directive', function () {
         assert.equal(locationLevel, null);
         assert.equal(controller.scope, 'ind');
         assert.equal(controller.type, 'indTopo');
+        // topojson comparisons temporarily commented out until I can figure out how to test
+        // them again.
         // assert.equal(Datamap.prototype['indTopo'], STATES_TOPOJSON);
     });
     it('tests init topo json when location level equal -1', function () {
