@@ -146,7 +146,7 @@ related to angular not being defined. But if we split it here it works fine.
                                       {% if show_mobile_apk %}
                                           <li class="nav-menu-icon mobile-phone">
                                               <span class="pointer">
-                                                  <a href="{% static 'media/cas-mobile-dashboard.apk' %}" download>
+                                                  <a href="{% url 'icds_mobile_dashboard_download' domain %}" >
                                                       <i class="fa fa-mobile-phone nav-main-icon fa-2x light-grey"
                                                           uib-popover-html="'Get Mobile Application'"
                                                           popover-placement="left"
