@@ -133,7 +133,7 @@ class StateDB(DiffDB):
         with self.session() as session:
             session.execute(
                 """
-                INSERT OR REPLACE INTO {table} (case_id, total_forms, processed_forms)
+                REPLACE INTO {table} (case_id, total_forms, processed_forms)
                 VALUES (
                     :case,
                     MAX(COALESCE((
@@ -361,8 +361,7 @@ class StateDB(DiffDB):
             with self.session(session) as session:
                 session.execute(
                     f"""
-                    INSERT OR REPLACE
-                    INTO {DocDiffs.__tablename__} (kind, doc_id, diffs)
+                    REPLACE INTO {_model.__tablename__} (kind, doc_id, diffs)
                     VALUES (:kind, :doc_id, :diffs)
                     """,
                     [{"kind": kind, "doc_id": doc_id, "diffs": diff_json}],
