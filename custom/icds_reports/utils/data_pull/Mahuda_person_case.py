@@ -25,7 +25,6 @@ headers = [
     'Caste',
     'BPL/APL',
     'Minority',
-    'HH Number FROM PERSON CASE',
     'HH Number FROM HH CASE',
     'Religion',
     'Name',
@@ -48,10 +47,8 @@ headers = [
     'Resident',
     'Alive',
     'Closed_date',
-    'HH GPS Location FROM PERSON CASE',
     'HH GPS Location FROM HH CASE',
     'HH Member Number FROM PERSON CASE',
-    'HH Member Number FROM HH CASE',
     'HH HEAD',
     'HH HEAD NAME',
     'PERSON CASE ID'
@@ -114,7 +111,6 @@ def fetch_case_properties(case, awc):
         get_household_case(case).get_case_property('hh_caste'),
         get_household_case(case).get_case_property('hh_bpl_apl'),
         get_household_case(case).get_case_property('hh_minority'),
-        case.get_case_property('hh_num'),
         get_household_case(case).get_case_property('hh_num'),
         get_household_case(case).get_case_property('hh_religion'),
         case.get_case_property('name'),
@@ -137,10 +133,8 @@ def fetch_case_properties(case, awc):
         case.get_case_property('resident'),
         case.get_case_property('died') != 'yes',
         case.get_case_property('closed_on'),
-        case.get_case_property('hh_gps_location'),
         get_household_case(case).get_case_property('hh_gps_location'),
         case.get_case_property('hh_member_number'),
-        get_household_case(case).get_case_property('hh_member_number'),
         get_household_case(case).get_case_property('hh_head'),
         get_household_case(case).get_case_property('hh_head_name'),
         case.get_case_property('case_id'),
@@ -167,7 +161,7 @@ def fetch_case_properties(case, awc):
         case.get_case_property('time_birth'),
         case.get_case_property('child_alive'),
         case.get_case_property('last_reported_fever_date'),
-        case.get_case_property('date_death'),
+        case.get_case_property('date_death')
     ]
 
 
