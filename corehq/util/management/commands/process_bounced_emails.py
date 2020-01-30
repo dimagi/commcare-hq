@@ -41,12 +41,11 @@ class Command(BaseCommand):
             with BouncedEmailManager(
                 delete_processed_messages=delete_messages
             ) as bounced_manager:
+                self.stdout.write('\n\nProcessing AWS Notifications\n')
+                bounced_manager.process_aws_notifications()
 
-                self.stdout.write('\n\nProcessing Bounces\n')
-                self._print_processed_emails(bounced_manager.process_bounces())
-
-                self.stdout.write('\n\nProcessing Complaints\n')
-                self._print_processed_emails(bounced_manager.process_complaints())
+                self.stdout.write('\n\nProcessing Mailer Daemon Emails\n')
+                bounced_manager.process_daemon_messages()
 
             self.stdout.write('\nDone\n\n')
         except OSError:

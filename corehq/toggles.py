@@ -989,6 +989,12 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
+ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
+    'icds_dashboard_show_mobile_apk',
+    'Show a "Mobile APK" download link on the ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     'icds_dashboard_temporary_downtime',
@@ -1692,17 +1698,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-
-# todo: remove after Dec 25, 2019 if no one is using
-USER_API_USE_COUCH_BACKEND = StaticToggle(
-    'user_api_use_couch_backend',
-    'Use Old Couch backend for User API. '
-    'This is an escape hatch for support '
-    'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 
