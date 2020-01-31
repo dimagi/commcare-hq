@@ -51,7 +51,7 @@ headers = [
     'HH Member Number FROM PERSON CASE',
     'HH HEAD',
     'HH HEAD NAME',
-    'PERSON CASE ID'
+    'PERSON CASE ID',
     'is_pregnant',
     'private_admit',
     'primary_admit',
