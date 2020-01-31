@@ -157,7 +157,7 @@ class UploadedTranslationsValidator(object):
         }
         if None in header_indices.values():
             raise BulkAppTranslationsException(_("Could not find column(s) '{}'").format(
-                ", ".join([str(k) for k, v in header_indices.items() if v == None])
+                ", ".join([str(k) for k, v in header_indices.items() if v is None])
             ))
 
         if module_or_form_id not in self.current_rows:
