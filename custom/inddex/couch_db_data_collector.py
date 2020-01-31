@@ -77,7 +77,7 @@ class CouchDbDataCollector:
         return record_as_dict
 
     @memoized
-    def get_data_from_table_as_dict(self, key_field, table_name=None, fields_and_values: Optional[Tuple] = None):
+    def get_data_from_table_as_dict(self, key_field, fields_and_values: Optional[Tuple], table_name=None):
         """
         does the same filtering as get_data_from_table, but returns the data in
         form of a dictionary with values of :param key_field as keys
