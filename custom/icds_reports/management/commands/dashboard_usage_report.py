@@ -80,8 +80,7 @@ class Command(BaseCommand):
         for data in usage_data[1:]:
             username = data[4]
             state_name = data[1]
-            if username not in username_vs_state_name.keys():
-                username_vs_state_name[username] = state_name
+            username_vs_state_name[username] = state_name
 
         self.get_tabular_data(usage_data, start_date, end_date, domain)
         print(f'Request data written to file {TABULAR_DATA_CACHE}')
@@ -126,7 +125,7 @@ class Command(BaseCommand):
                                                            time_of_use__gte=start_date,
                                                            time_of_use__lte=end_date)
                        .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
-                       .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator')
+                       .values('indicator')
                        .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
         for record in records:
             cas_user_counts[record['username'].split('@')[0]] += record['count']
