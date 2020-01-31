@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.db.models import F, Case, When, BooleanField, TextField, Value, Q
+from django.db.models import F, Case, When, TextField, Value
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggGovernanceDashboard
