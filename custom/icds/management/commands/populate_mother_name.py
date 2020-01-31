@@ -145,9 +145,9 @@ class Command(BaseCommand):
                     counter += 1
                     if counter > 0 and counter % 100 == 0:
                         case_ids_list = self._reassured_case_ids_to_update(list(updates.keys()))
-                        for case_id in updates:
-                            if case_id not in case_ids_list:
-                                updates.pop(case_id)
+                        skip_ids = set(updates.keys()) - set(case_ids_list)
+                        for case_id in skip_ids:
+                            updates.pop(case_id)
                         for case_id, mother_name in updates.items():
                             writer.writerow([case_id, mother_name])
                         exceptions_raised = self._submit_update_form(updates, exceptions_raised)
