@@ -378,32 +378,50 @@ class StateDB(DiffDB):
                 ).delete(synchronize_session=False)
 
     def iter_diffs(self):
-        def get_planning_diff(kind, doc_id, diff):
-            path = diff["path"]
-            if len(path) == 2 and isinstance(path, dict):
-                assert path.keys() == {"stock_id", "path"}, path
-                assert path["stock_id"].startswith(doc_id + "/"), (doc_id, path)
-                kind = "stock state"
-                doc_id = path["stock_id"]
-                path = path["path"]
-            return Diff(
-                kind=kind,
-                doc_id=doc_id,
-                diff_type=diff["type"],
-                path=json.dumps(path),
-                old_value=json_or_none(diff, "old_value"),
-                new_value=json_or_none(diff, "new_value"),
-            )
-
-        def json_or_none(diff, key):
-            return json.dumps(diff[key]) if key in diff else None
-
         with self.session() as session:
             for kind, in list(session.query(DocDiffs.kind).distinct()):
                 query = session.query(DocDiffs).filter_by(kind=kind)
                 for doc in iter_large(query, DocDiffs.doc_id):
                     for diff in json.loads(doc.diffs):
-                        yield get_planning_diff(doc.kind, doc.doc_id, diff)
+                        yield self._get_planning_diff(doc.kind, doc.doc_id, diff)
+
+    def iter_doc_diffs(self, kind):
+        """Iterate over diffs of the given kind
+
+        "stock state" diffs cannot be queried directly with this method.
+        They are grouped with diffs of the corresponding case
+        (kind="CommCareCase", doc_id=<case_id>).
+
+        :yeilds: two-tuples `(doc_id, diffs)`. The diffs yielded here are
+        `PlanningDiff` objects, which should not be confused with json
+        diffs (`<PlanningDiff>.json_diff`).
+        """
+        with self.session() as session:
+            query = session.query(DocDiffs).filter_by(kind=kind)
+            for doc in iter_large(query, DocDiffs.doc_id):
+                yield doc.doc_id, [
+                    self._get_planning_diff(doc.kind, doc.doc_id, diff)
+                    for diff in json.loads(doc.diffs)
+                ]
+
+    def _get_planning_diff(self, kind, doc_id, diff):
+        def json_or_none(diff, key):
+            return json.dumps(diff[key]) if key in diff else None
+        path = diff["path"]
+        if len(path) == 2 and isinstance(path, dict):
+            assert path.keys() == {"stock_id", "path"}, path
+            assert path["stock_id"].startswith(doc_id + "/"), (doc_id, path)
+            kind = "stock state"
+            doc_id = path["stock_id"]
+            path = path["path"]
+        return Diff(
+            kind=kind,
+            doc_id=doc_id,
+            diff_type=diff["type"],
+            path=json.dumps(path),
+            old_value=json_or_none(diff, "old_value"),
+            new_value=json_or_none(diff, "new_value"),
+        )
 
     def get_diffs(self):
         """DEPRECATED use iter_diffs(); the result may be very large"""

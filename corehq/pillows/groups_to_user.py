@@ -35,6 +35,11 @@ class GroupsToUsersProcessor(PillowProcessor):
 
 
 def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, process_num=0, **kwargs):
+    """Group pillow that updates user data in Elasticsearch with group membership
+
+    Processors:
+      - :py:class:`corehq.pillows.groups_to_user.GroupsToUsersProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])

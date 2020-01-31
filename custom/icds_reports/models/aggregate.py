@@ -1586,6 +1586,11 @@ class AggGovernanceDashboard(models.Model, AggregateMixin):
     total_3_6_male_benefit_in_month = models.IntegerField(null=True)
     total_3_6_female_reg_in_month = models.IntegerField(null=True)
     total_3_6_male_reg_in_month = models.IntegerField(null=True)
+    vhsnd_date_past_month = models.DateField(null=True)
+    anm_mpw_present = models.NullBooleanField(null=True)
+    asha_present = models.NullBooleanField(null=True)
+    child_immu = models.NullBooleanField(null=True)
+    anc_today = models.NullBooleanField(null=True)
     month = models.DateField(null=True)
 
     class Meta(object):

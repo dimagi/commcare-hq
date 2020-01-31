@@ -46,9 +46,6 @@
                     <div class="small-table">
                         <div class="small-table-title">
                             <span>{$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking</span>
-                            <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
-                                popover-placement="top"
-                                popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="loc in $ctrl.all_locations">
                             <span class="circle-blue" ng-bind="$index + 1"></span>

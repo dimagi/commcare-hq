@@ -112,8 +112,8 @@ def process_bounced_emails():
             with BouncedEmailManager(
                 delete_processed_messages=True
             ) as bounced_manager:
-                bounced_manager.process_bounces()
-                bounced_manager.process_complaints()
+                bounced_manager.process_aws_notifications()
+                bounced_manager.process_daemon_messages()
         except Exception as e:
             notify_exception(
                 None,

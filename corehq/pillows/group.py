@@ -28,10 +28,12 @@ def get_group_to_elasticsearch_processor():
 
 
 def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
+    """Group pillow (old). Sends Group data to Elasticsearch
+
+    Processors:
+      - :py:class:`corehq.pillows.group.get_group_to_elasticsearch_processor`
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
-    """
     assert pillow_id == 'GroupPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO, [topics.GROUP])
     processor = get_group_to_elasticsearch_processor()

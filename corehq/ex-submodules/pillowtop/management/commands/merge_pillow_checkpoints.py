@@ -4,9 +4,14 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Max, Min
 
+from pillowtop import get_pillow_by_name
 from pillowtop.models import KafkaCheckpoint
 
 logger = logging.getLogger('__name__')
+
+
+def confirm(msg):
+    return input(msg) == 'y'
 
 
 class Command(BaseCommand):
@@ -14,18 +19,37 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'checkpoint_ids', nargs='+',
+            'pillow_names', nargs='+',
             help="Merge all pillow checkpoints into the last one named"
         )
 
-    def handle(self, checkpoint_ids, **options):
-        from_checkpoints = checkpoint_ids[:-1]
-        to_checkpoint = checkpoint_ids[-1]
-        logging.info(f"Attempting to merge {from_checkpoints} into {to_checkpoint}")
+    def handle(self, pillow_names, **options):
+        from_pillows = pillow_names[:-1]
+        to_pillow = pillow_names[-1]
+        logging.info(f"Attempting to merge {from_pillows} into {to_pillow}")
 
-        if KafkaCheckpoint.objects.filter(checkpoint_id=to_checkpoint).exists():
-            logging.error(f'{to_checkpoint} already exists. Aborting pillow merging')
-            sys.exit(1)
+        from_checkpoints = [
+            get_pillow_by_name(pillow).checkpoint.checkpoint_id
+            for pillow in from_pillows
+        ]
+        to_checkpoint = get_pillow_by_name(to_pillow).checkpoint.checkpoint_id
+
+        existing_checkpoints = list(
+            KafkaCheckpoint.objects.filter(checkpoint_id=to_checkpoint)
+                .values('checkpoint_id').annotate(Max('last_modified'))
+        )
+        if existing_checkpoints:
+            print(f'{to_checkpoint} already exists:')
+            for checkpoint in existing_checkpoints:
+                print(f"{checkpoint['checkpoint_id']} last updated {checkpoint['last_modified__max']}")
+
+            if not confirm("Do you want to continue and overwrite existing checkpoints? [y/n]"):
+                sys.exit(1)
+
+            if not confirm("Are you sure you want to DELETE existing checkpoints? [y/n]"):
+                sys.exit(1)
+
+            KafkaCheckpoint.objects.filter(checkpoint_id=to_checkpoint).delete()
 
         checkpoint_info = (
             KafkaCheckpoint.objects
@@ -60,18 +84,18 @@ class Command(BaseCommand):
 
         if maximum_difference > 0:
             logger.warning(f"At least one checkpoint will need to reprocess {maximum_difference} changes")
-            confirm = input("Is this amount of reprocessing acceptable y/N?")
-            if confirm != 'y':
+            if confirm("Is this amount of reprocessing acceptable y/N?"):
                 sys.exit(3)
         else:
             logger.info("All pillows have the same offsets")
 
-        checkpoints = [
-            KafkaCheckpoint(
-                checkpoint_id=to_checkpoint, topic=info['topic'], partition=info['partition'],
-                offset=info['offset__min']
+        for info in checkpoint_info:
+            KafkaCheckpoint.objects.update_or_create(
+                checkpoint_id=to_checkpoint,
+                topic=info['topic'],
+                partition=info['partition'],
+                defaults={
+                    'offset': info['offset__min']
+                }
             )
-            for info in checkpoint_info
-        ]
-        KafkaCheckpoint.objects.bulk_create(checkpoints)
         logger.info(f"{to_checkpoint} checkpoints created")

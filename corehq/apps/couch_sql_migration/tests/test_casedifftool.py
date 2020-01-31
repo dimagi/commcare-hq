@@ -14,7 +14,7 @@ from corehq.util.test_utils import capture_log_output
 
 from .test_migration import BaseMigrationTestCase, Diff, make_test_form
 from .. import casediff
-from ..management.commands import couch_sql_diff as mod
+from .. import casedifftool as mod
 from ..statedb import open_state_db
 
 
@@ -88,7 +88,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.addCleanup(self.pool_mock.start)
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self._do_migration(case_diff="none")
-        with patch("corehq.apps.couch_sql_migration.casediff.diff_case") as mock, \
+        # patch init_worker to make subprocesses use the same database
+        # connections as this process (which is operating in a transaction)
+        init_worker_path = "corehq.apps.couch_sql_migration.casedifftool.init_worker"
+        with patch(init_worker_path, mod.global_diff_state), \
+                patch("corehq.apps.couch_sql_migration.casediff.diff_case") as mock, \
                 capture_log_output("corehq.apps.couch_sql_migration.parallel") as log:
             mock.side_effect = Exception("diff failed!")
             self.do_case_diffs()
@@ -178,18 +182,17 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             yield case
 
 
-def MockPool(initializer=lambda: None, initargs=(), maxtasksperchild=None):
-    return NoProcessPool(initializer, initargs)
-
-
 @attr.s
-class NoProcessPool:
-    initializer = attr.ib()
+class MockPool:
+    """Pool that uses greenlets rather than processes"""
+    initializer = attr.ib()  # not used
     initargs = attr.ib()
+    processes = attr.ib(default=None)
+    maxtasksperchild = attr.ib(default=None)
     pool = attr.ib(factory=Pool, init=False)
 
     def imap_unordered(self, *args, **kw):
-        with self.initializer(*self.initargs):
+        with mod.global_diff_state(*self.initargs):
             yield from self.pool.imap_unordered(*args, **kw)
 
 
