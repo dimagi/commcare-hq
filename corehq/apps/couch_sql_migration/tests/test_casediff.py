@@ -44,11 +44,8 @@ class TestDiffCases(SimpleTestCase):
                 ".FormAccessorCouch.form_exists",
                 lambda *a: False,
             ),
-            patch(
-                "corehq.form_processor.backends.couch.processor"
-                ".FormProcessorCouch.hard_rebuild_case",
-                self.hard_rebuild_case,
-            ),
+            patch.object(mod, "hard_rebuild", lambda couch_case: couch_case),
+            patch.object(mod, 'rebuild_and_diff_cases', self.rebuild_and_diff_cases),
             patch.object(
                 mod.StockTransactionLoader,
                 "get_transactions",
@@ -106,6 +103,30 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
+
+    def test_case_with_missing_form(self):
+        self.add_case("a", actions=[{"xform_id": "a"}], xform_ids=["a"])
+        different_cases = deepcopy(self.couch_cases)
+        acase = different_cases["a"]
+        acase["actions"].append({"xform_id": "b"})
+        acase["xform_ids"].append("b")
+        mod.diff_cases_and_save_state(different_cases, self.statedb)
+        self.assert_diffs([
+            Diff(
+                doc_id='a',
+                kind='CommCareCase',
+                type='set_mismatch',
+                path=['xform_ids', '[*]'],
+                old='b',
+                new='',
+            ),
+            Diff(
+                doc_id="a",
+                path=["?"],
+                old={"forms": {"b": "missing, blob present"}},
+                new={"forms": {"b": "missing"}},
+            ),
+        ])
 
     def test_replace_ledger_diff(self):
         self.add_case("a")
@@ -180,6 +201,7 @@ class TestDiffCases(SimpleTestCase):
         props.setdefault("domain", self.statedb.domain)
         props.setdefault("doc_type", "CommCareCase")
         props.setdefault("_id", case_id)
+        props.setdefault("actions", [])
         self.sql_cases[case_id] = Config(
             case_id=case_id,
             props=props,
@@ -231,8 +253,9 @@ class TestDiffCases(SimpleTestCase):
     def iter_stock_transactions(self, form_id):
         yield from self.form_transactions[form_id]
 
-    def hard_rebuild_case(self, *args, **kw):
-        raise Exception("rebuild disabled")
+    def rebuild_and_diff_cases(self, sql_case, couch_case, diff, dd_count):
+        sql_json = sql_case.to_json()
+        return sql_json, diff(couch_case, sql_json)
 
 
 @attr.s

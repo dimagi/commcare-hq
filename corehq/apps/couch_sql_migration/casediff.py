@@ -129,6 +129,9 @@ def diff_case(sql_case, couch_case, dd_count):
             elif not diff(original_couch_case, sql_json):
                 log.warning("original couch case matches rebuilt SQL case "
                     "(unexpected, rebuild not saved)")
+            else:
+                assert diffs
+                diffs.extend(diff_case_forms(couch_case, sql_json))
     return couch_case, diffs, changes
 
 
@@ -234,13 +237,7 @@ class StockTransactionLoader:
         (`LedgerValue` or `StockState`).
         """
         form_id = ledger.last_modified_form_id
-        in_couch = form_id in self.ledger_refs or FormAccessorCouch.form_exists(form_id)
-        in_sql = FormAccessorSQL.form_exists(form_id)
-        couch_miss = "missing"
-        if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-            couch_miss = "missing, blob present"
-        old = {"form_state": "present" if in_couch else couch_miss}
-        new = {"form_state": "present" if in_sql else "missing"}
+        old, new = diff_form_state(form_id, in_couch=form_id in self.ledger_refs)
         if sql_miss:
             old["ledger"] = ledger.to_json()
         else:
@@ -294,6 +291,39 @@ class StockTransactionLoader:
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
+
+
+def diff_case_forms(couch_json, sql_json):
+    couch_ids = {a["xform_id"] for a in couch_json["actions"] if a["xform_id"]}
+    sql_ids = {t["xform_id"] for t in sql_json["actions"] if t["xform_id"]}
+    only_in_couch = couch_ids - sql_ids
+    if not only_in_couch:
+        return []
+    old_forms = {}
+    new_forms = {}
+    for form_id in only_in_couch:
+        old, new = diff_form_state(form_id)
+        old_forms[form_id] = old["form_state"]
+        new_forms[form_id] = new["form_state"]
+    if any(v.startswith("missing") for v in old_forms.values()):
+        return [Diff(
+            "diff",
+            path=["?"],
+            old_value={"forms": old_forms},
+            new_value={"forms": new_forms},
+        )]
+    return []
+
+
+def diff_form_state(form_id, *, in_couch=False):
+    in_couch = in_couch or FormAccessorCouch.form_exists(form_id)
+    in_sql = FormAccessorSQL.form_exists(form_id)
+    couch_miss = "missing"
+    if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
+        couch_miss = "missing, blob present"
+    old = {"form_state": "present" if in_couch else couch_miss}
+    new = {"form_state": "present" if in_sql else "missing"}
+    return old, new
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
