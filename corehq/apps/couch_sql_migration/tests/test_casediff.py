@@ -253,7 +253,7 @@ class TestDiffCases(SimpleTestCase):
     def iter_stock_transactions(self, form_id):
         yield from self.form_transactions[form_id]
 
-    def rebuild_and_diff_cases(self, sql_case, couch_case, diff, dd_count):
+    def rebuild_and_diff_cases(self, sql_case, couch_case, orig, diff, dd_count):
         sql_json = sql_case.to_json()
         return sql_json, diff(couch_case, sql_json)
 
