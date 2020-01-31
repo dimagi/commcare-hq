@@ -29,8 +29,8 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
     }
     function tryToNavigateToLocation(locationName, parentLocationId) {
         getLocationByNameAndParent(locationName, parentLocationId).then(function (locations) {
-            var location = locations[0];
-            if (location) {
+            if (locations.length > 0) {
+                var location = locations[0];
                 $location.search('location_name', location.name);
                 $location.search('location_id', location.location_id);
                 storageService.setKey('search', $location.search());

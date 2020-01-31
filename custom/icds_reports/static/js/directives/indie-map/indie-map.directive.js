@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $location, $filter, storageService, locationsService,
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
     var useNewMaps = haveAccessToFeatures || isMobile;
@@ -287,9 +287,11 @@ function IndieMapController($scope, $location, $filter, storageService, location
                 mapConfiguration(location, resp);
             });
         } else if (useNewMaps && locationLevel === 1) {
-            topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
-                mapConfiguration(location, resp.topojson);
-            });
+            topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
+                function (resp) {
+                    mapConfiguration(location, resp.topojson);
+                }
+            );
         } else {
             mapConfiguration(location);
         }
@@ -338,8 +340,16 @@ function IndieMapController($scope, $location, $filter, storageService, location
     };
 
     function renderPopup(html) {
-        return vm.renderPopup({html: html, divId: 'locPopup'});
+        return vm.renderPopup(html, 'locPopup');
     }
+
+    vm.renderPopup = function (html, divId) {
+        var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+        var popup = d3.select('#' + divId);
+        popup.classed("hidden", false);
+        popup.attr('style', css).html(html);
+        $compile(popup[0])($scope);
+    };
 
     function showSecondaryLocationSelectionPopup(geography) {
         var html = vm.getSecondaryLocationSelectionHtml(geography);
@@ -384,7 +394,7 @@ function IndieMapController($scope, $location, $filter, storageService, location
 }
 
 IndieMapController.$inject = [
-    '$scope', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
+    '$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService',
     'haveAccessToFeatures', 'isMobile',
 ];
 
@@ -398,7 +408,6 @@ window.angular.module('icdsApp').directive('indieMap', ['templateProviderService
             legendTitle: '@?',
             bubbles: '=?',
             templatePopup: '&',
-            renderPopup: '&',
         },
         templateUrl: templateProviderService.getTemplate('indie-map.directive'),
         bindToController: true,

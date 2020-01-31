@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.http import (
     Http404,
     HttpResponse,
@@ -311,13 +312,13 @@ def heartbeat(request, domain, app_build_id):
 
     else:
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user._id, request)
+            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)
 
 
-def update_user_reporting_data(app_build_id, app_id, build_profile_id, user_id, request):
+def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_user, request):
     def _safe_int(val):
         try:
             return int(val)
@@ -341,10 +342,23 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, user_id, 
         except (ValueError, OverflowError):
             last_sync = None
 
-    UserReportingMetadataStaging.add_heartbeat(
-        request.domain, user_id, app_id, app_build_id, last_sync, device_id,
-        app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id
-    )
+    if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+        UserReportingMetadataStaging.add_heartbeat(
+            request.domain, couch_user._id, app_id, app_build_id, last_sync, device_id,
+            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id
+        )
+    else:
+        record = UserReportingMetadataStaging(domain=request.domain, user_id=couch_user._id, app_id=app_id,
+            build_id=app_build_id, sync_date=last_sync, device_id=device_id, app_version=app_version,
+            num_unsent_forms=num_unsent_forms, num_quarantined_forms=num_quarantined_forms,
+            commcare_version=commcare_version, build_profile_id=build_profile_id,
+            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow())
+        try:
+            record.process_record(couch_user)
+        except ResourceConflict:
+            # https://sentry.io/dimagi/commcarehq/issues/521967014/
+            couch_user = CouchUser.get(couch_user.user_id)
+            record.process_record(couch_user)
 
 
 def _should_force_log_submission(request):

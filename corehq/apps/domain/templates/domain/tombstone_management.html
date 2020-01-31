@@ -25,6 +25,7 @@
                 {% else %}
                   Normal Project
                 {% endif %}
+                (<a href="{% url "raw_doc" %}?id={{ project.get_id }}">raw doc</a>)
               {% endwith %}
             {% else %}
               Multiple Projects with this name!
@@ -38,6 +39,7 @@
                   Normal Projects:
                 {% endif %}
                 {{ doc_type.list|length }}
+                ({% for project in doc_type.list %}{% if not forloop.first %}, {% endif %}<a href="{% url "raw_doc" %}?id={{ project.get_id }}">raw doc</a>{% endfor %})
                 </li>
               {% endfor %}
               </ul>

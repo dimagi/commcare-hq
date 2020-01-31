@@ -2,6 +2,8 @@ from django.http import HttpRequest
 from django.test import TestCase
 from datetime import datetime, timedelta
 
+from freezegun import freeze_time
+
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -47,9 +49,9 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         Populate the database with some cases
         """
         for row in [
-            {"first_name": "Alan", "number": 4},
-            {"first_name": "Alan", "number": 2},
-            {"first_name": "Ada", "number": 3},
+            {"first_name": "Alan", "number": 4, "rank": 2},
+            {"first_name": "Alan", "number": 2, "rank": 1},
+            {"first_name": "Ada", "number": 3, "rank": 1},
         ]:
             cls._new_case(row).save()
 
@@ -87,6 +89,15 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                         "property_name": 'number'
                     },
                     "column_id": 'indicator_col_id_number',
+                    "datatype": "integer"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'rank'
+                    },
+                    "column_id": 'indicator_col_id_rank',
                     "datatype": "integer"
                 },
             ],
@@ -157,6 +168,13 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                     "field": 'indicator_col_id_number',
                     'column_id': 'report_column_col_id_number',
                     'aggregation': 'sum'
+                },
+                {
+                    "type": "array_agg_last_value",
+                    "display": "report_column_display_last_number",
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_id_last_number',
+                    'order_by_col': 'indicator_col_id_rank'
                 }
             ]
         )
@@ -167,9 +185,10 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
             [[
                 'foo',
                 [
-                    ['report_column_display_first_name', 'report_column_display_number'],
-                    ['Ada', 3],
-                    ['Alan', 6]
+                    ['report_column_display_first_name', 'report_column_display_number',
+                     'report_column_display_last_number'],
+                    ['Ada', 3, 3],
+                    ['Alan', 6, 4]
                 ]
             ]]
         )
@@ -563,6 +582,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
+@freeze_time("2020-01-15")
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     # Note that these constants are subtracted from today's date, so the month parts of the names
     # are approximations: the first one will usually fall one year and two months ago, but will

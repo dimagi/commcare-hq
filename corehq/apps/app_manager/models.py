@@ -4038,7 +4038,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return SQLGlobalAppConfig.for_app(self)
+        return GlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -5703,7 +5703,7 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
-class SQLGlobalAppConfig(models.Model):
+class GlobalAppConfig(models.Model):
     choices = [(c, c) for c in ("on", "off", "forced")]
 
     domain = models.CharField(max_length=255, null=False)
@@ -5731,10 +5731,6 @@ class SQLGlobalAppConfig(models.Model):
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
-
-
-class GlobalAppConfig(Document):
-    pass
 
 
 class AppReleaseByLocation(models.Model):
