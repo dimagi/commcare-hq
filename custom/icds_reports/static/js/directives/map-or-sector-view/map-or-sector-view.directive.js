@@ -16,15 +16,17 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
     }
 
     function getWrappableText(text) {
-        words = text.text().split(/\s+/);
+        words = text.text().split(/\s+/).reverse();
         var wrappableWords = [];
-        words.forEach(word => {
+        var word = words.pop();
+        while (word) {
             var j = 0;
             while (12*j < word.length) {
                 wrappableWords.push(word.substring(12*j, 12*(j+1)));
                 j++;
             }
-        });
+            word = words.pop();
+        }
         return wrappableWords;
     }
 
