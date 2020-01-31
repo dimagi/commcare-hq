@@ -3,7 +3,6 @@
 function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
                             topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
-    var useNewMaps = haveAccessToFeatures || isMobile;
 
     $scope.$watch(function () {
         return vm.data;
@@ -51,15 +50,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (locationLevel === void(0) || isNaN(locationLevel) || locationLevel === -1 || locationLevel === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
-            vm.rawTopojson = useNewMaps ? topojson : STATES_TOPOJSON;
+            vm.rawTopojson = topojson;
         } else if (locationLevel === 0) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            vm.rawTopojson = useNewMaps ? topojson : DISTRICT_TOPOJSON;
+            vm.rawTopojson = topojson;
         } else if (locationLevel === 1) {
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
-            vm.rawTopojson = useNewMaps ? topojson : BLOCK_TOPOJSON;
+            vm.rawTopojson = topojson;
         }
         if (vm.rawTopojson && vm.rawTopojson.objects[vm.scope] !== void(0)) {
             Datamap.prototype[vm.type] = vm.rawTopojson;
@@ -278,15 +277,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     locationsService.getLocation(location_id).then(function (location) {
         var locationLevel = getLocationLevelFromType(location.location_type);
-        if (useNewMaps && locationLevel === -1) {
+        if (locationLevel === -1) {
             topojsonService.getStateTopoJson().then(function (resp) {
                 mapConfiguration(location, resp);
             });
-        } else if (useNewMaps && locationLevel === 0) {
+        } else if (locationLevel === 0) {
             topojsonService.getDistrictTopoJson().then(function (resp) {
                 mapConfiguration(location, resp);
             });
-        } else if (useNewMaps && locationLevel === 1) {
+        } else if (locationLevel === 1) {
             topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
                 function (resp) {
                     mapConfiguration(location, resp.topojson);
