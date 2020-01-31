@@ -13,7 +13,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions
-from corehq.apps.users.signals import update_user_in_es
 from corehq.privileges import CASE_SHARING_GROUPS
 from django_prbac.utils import has_privilege
 
@@ -173,15 +172,12 @@ def _update_group_membership(request, domain, group_id):
         if user['doc_type'] == 'CommCareUser' and user.get('domain') == domain
     ]
     safe_ids = [user.user_id for user in safe_users]
-
-    group.users = safe_ids
+    group.set_user_ids(safe_ids)
 
     _ensure_case_sharing_privilege(request, group)
 
     group.save()
 
-    for user in safe_users:
-        update_user_in_es(None, user)
     messages.success(request, _("Group %s updated!") % group.name)
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
 
