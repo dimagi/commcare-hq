@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('couch_id', models.CharField(db_index=True, max_length=126, null=True)),
             ],
             options={
-                'db_table': 'hqdeploy',
+                'db_table': 'hqadmin_hqdeploy',
             },
         ),
     ]
