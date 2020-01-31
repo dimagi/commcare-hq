@@ -6,6 +6,13 @@ from django.db import migrations
 from corehq.apps.cloudcare.management.commands.populate_application_access import Command
 
 
+def _migrate_from_migration(apps, schema_editor):
+    sql_class = Command.sql_class()
+    sql_class.objects.model._meta.db_table = "cloudcare_sqlapplicationaccess"
+    Command.migrate_from_migration(apps, schema_editor)
+    sql_class.objects.model._meta.db_table = "cloudcare_applicationaccess"
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,7 +20,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(Command.migrate_from_migration,
+        migrations.RunPython(_migrate_from_migration,
                              reverse_code=migrations.RunPython.noop,
                              elidable=True),
     ]
