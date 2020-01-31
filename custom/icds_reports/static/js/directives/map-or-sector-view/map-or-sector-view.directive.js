@@ -15,6 +15,19 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         });
     }
 
+    function getWrappableText(text) {
+        words = text.text().split(/\s+/);
+        var wrappableWords = [];
+        words.forEach(word => {
+            var j = 0;
+            while (12*j < word.length) {
+                wrappableWords.push(word.substring(12*j, 12*(j+1)));
+                j++;
+            }
+        });
+        return wrappableWords;
+    }
+
     function wrapXAxisLabels() {
         //This wrap te text on the xAxis label if text length is longer than 100
         //Found on stackoverflow: https://stackoverflow.com/questions/16701522/how-to-linebreak-an-svg-text-within-javascript/28553412#28553412
@@ -22,7 +35,9 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         //<text><tspan></tspan><tspan></tspan>...<text>
         d3.selectAll(".nv-x.nv-axis .tick text").each(function () {
             var text = d3.select(this),
-                words = text.text().split(/\s+/).reverse(),
+                //any word more than 12 letters is going out of view (with the provided chart styling).
+                // So splitting words of size greater than 12 into smaller words
+                words = getWrappableText(text).reverse(),
                 word, line = [],
                 lineNumber = 0,
                 lineHeight = 1.1, // ems
@@ -116,7 +131,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 axisLabelDistance: 20,
             },
             tooltip: {
-                enabled: !isMobile,
+                enabled: true,
                 contentGenerator: getChartTooltip,
             },
             callback: function (chart) {
@@ -126,12 +141,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     var locName = e.data[0];
-                    if (isMobile) {
-                        // disable click navigation on mobile and instead trigger the tooltip
-                        vm.selectedLocation = locName;
-                        var popupHtml = getTooltipHtml(locName);
-                        vm.renderPopup(popupHtml, 'chartPopup');
-                    } else {
+                    if (!isMobile) {
                         locationsService.tryToNavigateToLocation(locName, location_id);
                     }
                 });

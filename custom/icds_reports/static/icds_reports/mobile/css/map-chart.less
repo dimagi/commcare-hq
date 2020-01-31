@@ -118,12 +118,16 @@ a:active, a:hover, a:focus {
   font-size: 10px;
 }
 
-// reduce width of tooltip
-.nvtooltip .hoverinfo {
-  width: 160px !important;
+//wrapping text if it goes beyond the width of tooltip
+.nvtooltip {
+  width: 150px !important;
+  word-break: break-word;
+  white-space: normal;
+  padding: 5px;
 }
 
-// move tooltip 40px to the left to accommodate margins
-.nvtooltip {
-  margin-left: -40px;
+//by default labels and vertical lines opacity is made 0 instead of
+// wrapping when label is long to avoid overlap
+#mobile-bar-chart text, #mobile-bar-chart line {
+  opacity: 1 !important;
 }
