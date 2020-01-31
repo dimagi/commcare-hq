@@ -16,7 +16,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
     }
 
     function getWrappableText(text) {
-        words = text.text().split(/\s+/).reverse();
+        var words = text.text().split(/\s+/).reverse();
         var wrappableWords = [];
         var word = words.pop();
         while (word) {
