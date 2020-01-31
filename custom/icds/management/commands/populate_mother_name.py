@@ -144,7 +144,7 @@ class Command(BaseCommand):
                     updates[row['Case ID']] = row['Mother Name']
                     counter += 1
                     if counter > 0 and counter % 100 == 0:
-                        case_ids_list = self._reassured_case_ids_to_update(updates.keys())
+                        case_ids_list = self._reassured_case_ids_to_update(list(updates.keys()))
                         for case_id in updates:
                             if case_id not in case_ids_list:
                                 updates.pop(case_id)
