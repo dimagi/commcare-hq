@@ -205,7 +205,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
 
 def format_diffs(diff_dict):
     def dedup(diffs):
-        return list(dict.fromkeys(hashable(d) for d in diffs))
+        return sorted(dict.fromkeys(hashable(d) for d in diffs), key=key)
+
+    def key(diff):
+        return diff.diff_type, diff.path
 
     def hashable(diff):
         return diff._replace(path=tuple(diff.path))

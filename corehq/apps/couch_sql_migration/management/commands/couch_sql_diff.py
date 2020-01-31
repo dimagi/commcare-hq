@@ -51,6 +51,9 @@ class Command(BaseCommand):
 
                 With the "show" action, this option should be a doc type.
             ''')
+        parser.add_argument('--changes',
+            dest="changes", action='store_true', default=False,
+            help="Show changes instead of diffs. Only valid with 'show' action")
         parser.add_argument('-x', '--stop',
             dest="stop", action='store_true', default=False,
             help='''
@@ -73,12 +76,15 @@ class Command(BaseCommand):
             "live",
             "cases",
             "stop",
+            "changes",
             "batch_size",
         ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
+        if self.changes and action != SHOW:
+            raise CommandError('--changes only allowed with "show" action')
 
         if action != "show":
             assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
@@ -115,7 +121,11 @@ class Command(BaseCommand):
         else:
             sys.exit(f"file or directory not found:\n{self.state_dir}")
         print(f"showing diffs from {statedb}")
-        json_diffs = iter_json_diffs(statedb.iter_doc_diffs(self.cases))
+        if self.changes:
+            items = statedb.iter_changes()
+        else:
+            items = statedb.iter_doc_diffs(self.cases)
+        json_diffs = iter_json_diffs(items)
         for chunk in chunked(json_diffs, self.batch_size, list):
             print(format_diffs(dict(chunk)))
             if not confirm("show more?"):

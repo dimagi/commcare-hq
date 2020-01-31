@@ -7,7 +7,6 @@ import attr
 from mock import patch
 from testil import Config
 
-from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
@@ -20,8 +19,16 @@ class TestDiffCases(SimpleTestCase):
         super(TestDiffCases, self).setUp()
         self.patches = [
             patch(
+                "corehq.blobs.metadata.MetaDB.get_for_parent",
+                lambda *a: [1],
+            ),
+            patch(
                 "corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.get_cases",
                 self.get_sql_cases,
+            ),
+            patch(
+                "corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.form_exists",
+                lambda *a: False,
             ),
             patch(
                 "corehq.form_processor.backends.sql.dbaccessors"
@@ -31,6 +38,11 @@ class TestDiffCases(SimpleTestCase):
             patch(
                 "corehq.apps.commtrack.models.StockState.objects.filter",
                 self.get_stock_states,
+            ),
+            patch(
+                "corehq.form_processor.backends.couch.dbaccessors"
+                ".FormAccessorCouch.form_exists",
+                lambda *a: False,
             ),
             patch(
                 "corehq.form_processor.backends.couch.processor"
@@ -111,16 +123,11 @@ class TestDiffCases(SimpleTestCase):
         del self.couch_ledgers["a"]
         self.stock_transactions[stock.ledger_reference] = []
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
-        self.assert_diffs()
-        self.assert_changes([
-            Change(
-                kind="stock state",
-                doc_id="a/stock/a",
-                reason="missing stock transactions",
-                diff_type="missing",
-                path=["balance"],
-                old_value=MISSING,
-                new_value=1,
+        self.assert_diffs([
+            Diff(
+                "a/stock/a", "stock state", "missing", ["*"],
+                old={'form_state': 'missing, blob present'},
+                new={'form_state': 'missing', 'ledger': self.sql_ledgers["a"].to_json()},
             ),
         ])
 
@@ -130,8 +137,7 @@ class TestDiffCases(SimpleTestCase):
         stock.values["balance"] = 2
         self.stock_transactions[stock.ledger_reference] *= 3  # 2 dups
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
-        self.assert_diffs()
-        self.assert_changes([
+        self.assert_diffs(changes=[
             Change(
                 kind="stock state",
                 doc_id="a/stock/a",
@@ -143,16 +149,29 @@ class TestDiffCases(SimpleTestCase):
             ),
         ])
 
-    def assert_diffs(self, expected=None):
+    def test_missing_sql_ledger(self):
+        self.add_case("a")
+        stock = self.add_ledger("a", balance=1)
+        stock.values["balance"] = 2
+        del self.sql_ledgers["a"]
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs([
+            Diff(
+                "a/stock/a", "stock state", "missing", ["*"],
+                old={'form_state': 'missing, blob present', 'ledger': stock.to_json()},
+                new={'form_state': 'missing'},
+            ),
+        ])
+
+    def assert_diffs(self, expected=None, changes=None):
         actual = [
             Diff(diff.doc_id, diff.kind, *diff.json_diff)
             for diff in self.statedb.get_diffs()
         ]
         self.assertEqual(actual, expected or [])
-
-    def assert_changes(self, expected=None):
-        changes = list(self.statedb.iter_changes())
-        self.assertEqual(changes, expected or [],
+        changes = changes or []
+        saved_changes = list(self.statedb.iter_changes())
+        self.assertEqual(saved_changes, changes,
             "all changes:\n" + "\n".join(repr(c) for c in changes))
 
     def add_case(self, case_id, **props):
@@ -175,12 +194,14 @@ class TestDiffCases(SimpleTestCase):
         self.sql_ledgers[case_id] = Config(
             ledger_reference=ref,
             values=values,
+            last_modified_form_id="form",
             to_json=lambda: dict(values, ledger_reference=ref.as_id()),
         )
         couch_values = dict(values)
         stock = Config(
             ledger_reference=ref,
             values=couch_values,
+            last_modified_form_id="form",
             to_json=lambda: dict(couch_values, ledger_reference=ref.as_id()),
         )
         self.couch_ledgers[case_id] = stock

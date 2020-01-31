@@ -7,12 +7,13 @@ import attr
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockTransaction
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
+from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.couch.dbaccessors import (
     CaseAccessorCouch,
     FormAccessorCouch,
@@ -20,6 +21,7 @@ from corehq.form_processor.backends.couch.dbaccessors import (
 from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
+    FormAccessorSQL,
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
@@ -171,24 +173,22 @@ def diff_ledgers(case_ids, dd_count):
         if couch_state is None:
             couch_state = stock_tx.get_stock_state(ref)
             dd_count("commcare.couchsqlmigration.ledger.rebuild")
-        diffs = diff(couch_state, ledger_value)
         if couch_state is None:
-            changes = diffs_to_changes(diffs[:1], "missing stock transactions")
-            all_changes.append(("stock state", ref.as_id(), changes))
-            diffs = []
-        elif diffs and stock_tx.has_duplicate_transactions(ref):
-            changes = diffs_to_changes(diffs, "duplicate stock transaction")
-            all_changes.append(("stock state", ref.as_id(), changes))
-            diffs = []
+            diffs = [stock_tx.diff_missing_ledger(ledger_value)]
+        else:
+            diffs = diff(couch_state, ledger_value)
+            if diffs and stock_tx.has_duplicate_transactions(ref):
+                changes = diffs_to_changes(diffs, "duplicate stock transaction")
+                all_changes.append(("stock state", ref.as_id(), changes))
+                diffs = []
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
         all_diffs.append(("stock state", ref.as_id(), diffs))
     for ref, couch_state in couch_state_map.items():
         if ref not in sql_refs:
-            diffs = json_diff(couch_state.to_json(), {}, track_list_indices=False)
+            diffs = [stock_tx.diff_missing_ledger(couch_state, sql_miss=True)]
             dd_count("commcare.couchsqlmigration.ledger.diffed")
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
-            diffs = filter_ledger_diffs(diffs)
             all_diffs.append(("stock state", ref.as_id(), diffs))
     return all_diffs, all_changes
 
@@ -226,6 +226,26 @@ class StockTransactionLoader:
             self.count_ledger_refs(form_id, report_type, ref) < num_tx
             for (form_id, report_type), num_tx in txx.items() if num_tx > 1
         )
+
+    def diff_missing_ledger(self, ledger, *, sql_miss=False):
+        """Get the state of the form reference by ledger
+
+        :param ledger: Object having `last_modified_form_id` attribute
+        (`LedgerValue` or `StockState`).
+        """
+        form_id = ledger.last_modified_form_id
+        in_couch = form_id in self.ledger_refs or FormAccessorCouch.form_exists(form_id)
+        in_sql = FormAccessorSQL.form_exists(form_id)
+        couch_miss = "missing"
+        if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
+            couch_miss = "missing, blob present"
+        old = {"form_state": "present" if in_couch else couch_miss}
+        new = {"form_state": "present" if in_sql else "missing"}
+        if sql_miss:
+            old["ledger"] = ledger.to_json()
+        else:
+            new["ledger"] = ledger.to_json()
+        return Diff("missing", path=["*"], old_value=old, new_value=new)
 
     def get_transactions(self, ref):
         cache = self.stock_transactions
@@ -269,7 +289,7 @@ class StockTransactionLoader:
         return num
 
     def iter_stock_transactions(self, form_id):
-        xform = XFormInstance.get(form_id)
+        xform = FormAccessorCouch.get_form(form_id)
         assert xform.domain == _diff_state.domain, xform
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
