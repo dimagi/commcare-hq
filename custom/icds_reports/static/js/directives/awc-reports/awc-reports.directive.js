@@ -2023,7 +2023,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         chart: {
             type: 'multiBarChart',
             height: isMobile ? 350 : 450,
-            width: isMobile ? 600 : 1100,
+            wrapLabels: true,
             margin: {
                 top: 20,
                 right: 20,
