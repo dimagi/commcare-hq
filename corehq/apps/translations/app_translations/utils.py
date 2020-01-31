@@ -132,11 +132,8 @@ def is_single_sheet(identifier):
 def is_single_sheet_workbook(workbook):
     sheets_count = len(workbook.worksheets)
 
-    if sheets_count != 1:
-        return False
-
     first_sheet = workbook.worksheets[0]
-    if is_single_sheet(first_sheet.title):
+    if sheets_count == 1 and is_single_sheet(first_sheet.title):
         return True
 
     return False
