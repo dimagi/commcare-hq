@@ -134,9 +134,8 @@ def diff_case(sql_case, couch_case, dd_count):
             elif not diff(original_couch_case, sql_json):
                 log.warning("original couch case matches rebuilt SQL case "
                     "(unexpected, rebuild not saved)")
-            else:
-                assert diffs
-                diffs.extend(diff_case_forms(couch_case, sql_json))
+        if diffs:
+            diffs.extend(diff_case_forms(couch_case, sql_json))
     return couch_case, diffs, changes
 
 
