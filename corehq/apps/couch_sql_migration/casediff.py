@@ -123,7 +123,12 @@ def diff_case(sql_case, couch_case, dd_count):
         else:
             diffs = diff(couch_case, sql_json)
             if diffs:
-                sql_json, diffs = rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count)
+                try:
+                    sql_json, diffs = rebuild_and_diff_cases(
+                        sql_case, couch_case, diff, dd_count)
+                except Exception as err:
+                    dd_count("commcare.couchsqlmigration.case.rebuild.error")
+                    log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
             if not diffs:
                 changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
             elif not diff(original_couch_case, sql_json):
