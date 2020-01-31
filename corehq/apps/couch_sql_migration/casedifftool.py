@@ -204,20 +204,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
 
 
 def format_diffs(diff_dict):
-    def dedup(diffs):
-        return sorted(dict.fromkeys(hashable(d) for d in diffs), key=key)
-
-    def key(diff):
-        return diff.diff_type, diff.path
-
-    def hashable(diff):
-        return diff._replace(path=tuple(diff.path))
-
     lines = []
     for doc_id, diffs in sorted(diff_dict.items()):
         lines.append(doc_id)
-        unique_diffs = dedup(diffs)
-        for diff in unique_diffs:
+        for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
                 lines.append(f"    - {diff.old_value!r}")
