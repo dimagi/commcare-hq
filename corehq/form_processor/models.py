@@ -1378,8 +1378,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
-        This will not do a DB lookup for the transaction but will check for new
-        transactions being tracked on the case
         """
         action_types = action_types or []
 
@@ -1409,8 +1407,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     @classmethod
     def ledger_transaction(cls, case, xform):
         """Get or create a ledger transaction for a the given form and case.
-        This will not do a DB lookup for the transaction but will check for new
-        transactions being tracked on the case
         """
         return cls._from_form(
             case,
@@ -1420,7 +1416,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        transaction = case._get_unsaved_transaction_for_form(xform.form_id)
+        if xform.is_saved():
+            transaction = case.get_transaction_by_form_id(xform.form_id)
+        else:
+            transaction = case._get_unsaved_transaction_for_form(xform.form_id)
         if transaction:
             transaction.type |= transaction_type
             return transaction
