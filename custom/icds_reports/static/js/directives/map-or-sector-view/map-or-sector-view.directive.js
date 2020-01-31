@@ -21,8 +21,8 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         var word = words.pop();
         while (word) {
             var j = 0;
-            while (12*j < word.length) {
-                wrappableWords.push(word.substring(12*j, 12*(j+1)));
+            while (12 * j < word.length) {
+                wrappableWords.push(word.substring(12 * j, 12 * (j + 1)));
                 j++;
             }
             word = words.pop();
