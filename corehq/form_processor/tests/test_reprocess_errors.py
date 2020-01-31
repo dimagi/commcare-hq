@@ -15,7 +15,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
-from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
+from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub, reprocess_form
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
@@ -341,7 +341,20 @@ class ReprocessSubmissionStubTests(TestCase):
 
 @use_sql_backend
 class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
-    pass
+    def test_reprocess_normal_form(self):
+        case_id = uuid.uuid4().hex
+        form, cases = submit_case_blocks(
+            CaseBlock(case_id=case_id, create=True, case_type='box').as_text(),
+            self.domain
+        )
+        self.assertTrue(form.is_normal)
+
+        result = reprocess_form(form, save=True, lock_form=False)
+        self.assertIsNone(result.error)
+
+        case = self.casedb.get_case(case_id)
+        transactions = case.actions
+        self.assertEqual([trans.form_id for trans in transactions], [form.form_id])
 
 
 class TestReprocessDuringSubmission(TestCase):
