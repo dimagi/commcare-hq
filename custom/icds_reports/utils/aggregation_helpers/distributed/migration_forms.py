@@ -9,7 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
 
 class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'migration-forms'
-    ucr_date_source_id = 'static-migration_form'
+    ucr_data_source_id = 'static-migration_form'
     aggregate_parent_table = AGG_MIGRATION_TABLE
 
     def data_from_ucr_query(self):
@@ -34,7 +34,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
                 WHEN LAST_VALUE(date_left) OVER w IS NULL
                     THEN LAST_VALUE(timeend) OVER w
                 ELSE LAST_VALUE(date_left) OVER w
-            END AS migration_date,
+            END AS migration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
