@@ -4,7 +4,7 @@ SELECT    state_name,
           sum(num_awcs_conducted_cbe)  AS "# AWCs conducted at least 2 CBE events",
           sum(num_awcs_conducted_vhnd) AS "# AWCs conducted at least 1 VHNSD"
 FROM      "public"."awc_location_months_local" "awc_location_months"
-LEFT JOIN "public"."agg_awc" "agg_awc"
+INNER JOIN "public"."agg_awc" "agg_awc"
 ON        (("awc_location_months"."month" = "agg_awc"."month") AND
            ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
            ("awc_location_months"."state_id" = "agg_awc"."state_id") AND

@@ -4,7 +4,7 @@ SELECT district_name,
        awc_name,
        cbe_table.cbe_conducted
 FROM awc_location_local awc_location
-LEFT JOIN
+INNER JOIN
   (SELECT awc_id,
           count(*) AS cbe_conducted
    FROM "ucr_icds-cas_static-cbe_form_f7988a04"

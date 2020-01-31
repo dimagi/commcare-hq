@@ -86,7 +86,7 @@ SELECT district_name,
        END AS percent_gt_21,
        month
 FROM awc_location
-LEFT JOIN "child_health_monthly" child_health ON (awc_location.doc_id=child_health.awc_id
+INNER JOIN "child_health_monthly" child_health ON (awc_location.doc_id=child_health.awc_id
                                                   AND awc_location.state_id='{location_id}'
                                                   AND district_is_test=0
                                                   AND awc_location.supervisor_id = child_health.supervisor_id
