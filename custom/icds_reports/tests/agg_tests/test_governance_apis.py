@@ -113,9 +113,9 @@ class GovernanceApiTest(TestCase):
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
-            "anm_present": "Data Not Entered", "asha_present": "Data Not Entered",
-            "any_child_immunized": "Data Not Entered", "anc_conducted": "Data Not Entered"
+            "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": None,
+            "anm_present": None, "asha_present": None,
+            "children_immunized": None, "anc_conducted": None
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -128,9 +128,9 @@ class GovernanceApiTest(TestCase):
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a43", "awc_code": "a43", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
-            "anm_present": "Data Not Entered", "asha_present": "Data Not Entered",
-            "any_child_immunized": "Data Not Entered", "anc_conducted": "Data Not Entered"
+            "awc_id": "a43", "awc_code": "a43", "vhsnd_conducted": "no", "vhsnd_date": None,
+            "anm_present": None, "asha_present": None,
+            "children_immunized": None, "anc_conducted": None
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -157,7 +157,7 @@ class GovernanceApiTest(TestCase):
         expected_row = {
             "awc_id": "a22", "awc_code": "a22", "vhsnd_conducted": "yes",
             "vhsnd_date": datetime.date(2017, 5, 16), "anm_present": "yes", "asha_present": "yes",
-            "any_child_immunized": "yes", "anc_conducted": "yes"
+            "children_immunized": "yes", "anc_conducted": "yes"
         }
         expected_counter = 1
         actual_row = None
@@ -181,22 +181,22 @@ class GovernanceApiTest(TestCase):
                            'total_lact_reg_till_date': 3, 'total_lact_benefit_in_month': 1,
                            'total_preg_benefit_in_month': 1, 'total_lact_reg_in_month': 1,
                            'total_preg_reg_in_month': 1,
-                           'total_0_3_female_benefit_till_date': 'Data Not Entered',
-                           'total_0_3_male_benefit_till_date': 'Data Not Entered',
-                           'total_0_3_female_reg_till_date': 'Data Not Entered',
-                           'total_0_3_male_reg_till_date': 'Data Not Entered',
-                           'total_3_6_female_benefit_till_date': 'Data Not Entered',
-                           'total_3_6_male_benefit_till_date': 'Data Not Entered',
-                           'total_3_6_female_reg_till_date': 'Data Not Entered',
-                           'total_3_6_male_reg_till_date': 'Data Not Entered',
-                           'total_0_3_female_benefit_in_month': 'Data Not Entered',
-                           'total_0_3_male_benefit_in_month': 'Data Not Entered',
-                           'total_0_3_female_reg_in_month': 'Data Not Entered',
-                           'total_0_3_male_reg_in_month': 'Data Not Entered',
-                           'total_3_6_female_benefit_in_month': 'Data Not Entered',
-                           'total_3_6_male_benefit_in_month': 'Data Not Entered',
-                           'total_3_6_female_reg_in_month': 'Data Not Entered',
-                           'total_3_6_male_reg_in_month': 'Data Not Entered'},
+                           'total_0_3_female_benefit_till_date': None,
+                           'total_0_3_male_benefit_till_date': None,
+                           'total_0_3_female_reg_till_date': None,
+                           'total_0_3_male_reg_till_date': None,
+                           'total_3_6_female_benefit_till_date': None,
+                           'total_3_6_male_benefit_till_date': None,
+                           'total_3_6_female_reg_till_date': None,
+                           'total_3_6_male_reg_till_date': None,
+                           'total_0_3_female_benefit_in_month': None,
+                           'total_0_3_male_benefit_in_month': None,
+                           'total_0_3_female_reg_in_month': None,
+                           'total_0_3_male_reg_in_month': None,
+                           'total_3_6_female_benefit_in_month': None,
+                           'total_3_6_male_benefit_in_month': None,
+                           'total_3_6_female_reg_in_month': None,
+                           'total_3_6_male_reg_in_month': None},
                           ], data)
 
     def test_fetch_cbe_data(self):

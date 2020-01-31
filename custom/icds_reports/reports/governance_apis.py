@@ -1,12 +1,11 @@
 from datetime import date
 
-from django.db.models import F, Case, When, BooleanField, TextField, Value
+from django.db.models import F, Case, When, BooleanField, TextField, Value, Q
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggGovernanceDashboard
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models import AggAwcMonthly, AwcLocation
-from custom.icds_reports.utils import DATA_NOT_ENTERED
 
 
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
@@ -17,56 +16,46 @@ def get_home_visit_data(length, year, month, order, query_filters):
     ).order_by(*order).annotate(awc_code=F('awc_site_code')).values(
         'awc_id', 'awc_code', 'valid_visits', 'expected_visits'
     )
-    paginated_data = data[:length]
+    paginated_data = list(data[:length])
 
-    def get_value_or_data_not_entered(value):
-        if value is None:
-            return DATA_NOT_ENTERED
-        return value
-
-    def base_data(row_data):
-        return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
-
-    return [base_data(row) for row in paginated_data], data.count()
+    return paginated_data, data.count()
 
 
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
 def get_vhnd_data(length, year, month, order, query_filters):
-    fields_mapping = {
-        'vhsnd_date': 'vhsnd_date_past_month',
-        'anm_present': 'anm_mpw_present',
-        'any_child_immunized': 'child_immu',
-        'anc_conducted': 'anc_today'
-    }
+
+    def yes_no_or_null(col_name):
+        when_true = {col_name: 1, 'then': Value('yes')}
+        when_false = {col_name: 0, 'then': Value('no')}
+        return Case(
+            When(**when_true),
+            When(**when_false),
+            default=None,
+            output_field=TextField()
+        )
+
     data = AggGovernanceDashboard.objects.filter(
         month=date(year, month, 1),
         **query_filters
-    ).order_by(*order).extra(
-        select=fields_mapping
-    ).annotate(vhsnd_conducted=Case(
-        When(vhsnd_date_past_month__isnull=False, then=True),
-        default=False,
-        output_field=BooleanField()
-    )).values(
-        'awc_id', 'awc_code', 'vhsnd_conducted', 'vhsnd_date', 'anm_present', 'asha_present',
-        'any_child_immunized', 'anc_conducted'
+    ).order_by(*order).values(
+        'awc_id',
+        'awc_code'
+    ).annotate(
+        asha_present=yes_no_or_null('asha_present'),
+        vhsnd_date=F('vhsnd_date_past_month'),
+        anm_present=yes_no_or_null('anm_mpw_present'),
+        children_immunized=yes_no_or_null('child_immu'),
+        anc_conducted=yes_no_or_null('anc_today'),
+        vhsnd_conducted=Case(
+            When(vhsnd_date_past_month__isnull=False, then=Value('yes')),
+            default=Value('no'),
+            output_field=TextField()
+        ),
     )
 
-    paginated_data = data[:length]
+    paginated_data = list(data[:length])
 
-    def get_value_or_data_not_entered(value):
-        if type(value) is bool:
-            if value:
-                return 'yes'
-            return 'no'
-        elif value is None:
-            return DATA_NOT_ENTERED
-        return value
-
-    def base_data(row_data):
-        return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
-
-    return [base_data(row) for row in paginated_data], data.count()
+    return paginated_data, data.count()
 
 
 @icds_quickcache(['length', 'year', 'month', 'order', 'query_filters'], timeout=30 * 60)
@@ -104,17 +93,9 @@ def get_beneficiary_data(length, year, month, order, query_filters):
     )
 
     # To apply pagination on database query with data size length
-    paginated_data = data[:length]
+    paginated_data = list(data[:length])
 
-    def get_value_or_data_not_entered(value):
-        if value is None:
-            return DATA_NOT_ENTERED
-        return value
-
-    def base_data(row_data):
-        return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
-
-    return [base_data(row) for row in paginated_data], data.count()
+    return paginated_data, data.count()
 
 
 @icds_quickcache([], timeout=30 * 60)
@@ -154,14 +135,7 @@ def get_cbe_data(length, year, month, order, query_filters):
         'num_other_beneficiaries_2',
     )
 
-    def get_value_or_data_not_entered(value):
-        if value is None:
-            return DATA_NOT_ENTERED
-        return value
-
-    def base_data(row_data):
-        return {key: get_value_or_data_not_entered(value) for key, value in row_data.items()}
-
     # To apply pagination on database query with data size length
     paginated_data = list(data[:length])
-    return [base_data(row) for row in paginated_data], data.count()
+
+    return paginated_data, data.count()
