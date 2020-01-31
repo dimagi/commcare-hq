@@ -2,24 +2,16 @@ from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model
 
 
 class Command(PopulateSQLCommand):
-    help = """
-        Adds a SQLHqDeploy for any HqDeploy doc that doesn't yet have one.
-    """
+    @classmethod
+    def couch_doc_type(cls):
+        return 'HqDeploy'
 
-    @property
-    def couch_class(self):
-        try:
-            from corehq.apps.hqadmin.models import HqDeploy
-            return HqDeploy
-        except ImportError:
-            return None
-
-    @property
-    def couch_class_key(self):
+    @classmethod
+    def couch_key(cls):
         return set(['_id'])
 
-    @property
-    def sql_class(self):
+    @classmethod
+    def sql_class(cls):
         from corehq.apps.hqadmin.models import SQLHqDeploy
         return SQLHqDeploy
 
