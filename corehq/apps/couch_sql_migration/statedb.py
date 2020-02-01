@@ -40,12 +40,12 @@ def init_state_db(domain, state_dir):
     return StateDB.init(domain, db_filepath)
 
 
-def open_state_db(domain, state_dir):
+def open_state_db(domain, state_dir, *, readonly=True):
     """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
     if not os.path.exists(db_filepath):
-        db_filepath = ":memory:"
-    return StateDB.open(domain, db_filepath, readonly=True)
+        raise Error(f"not found: {db_filepath}")
+    return StateDB.open(domain, db_filepath, readonly=readonly)
 
 
 def delete_state_db(domain, state_dir):
@@ -559,6 +559,14 @@ class StateDB(DiffDB):
             diffs_by_doc[key].append(stock_json_diff)
         for (doc_type, case_id), diffs in diffs_by_doc.items():
             self.add_diffs(doc_type, case_id, diffs, session=session)
+
+    def vacuum(self):
+        with self.session() as session:
+            session.execute("VACUUM")
+
+
+class Error(Exception):
+    pass
 
 
 class ResumeError(Exception):
