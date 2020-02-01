@@ -68,5 +68,5 @@ branches:
   - jls/persistent-detail-ucr-liveness # Jenny Jan 28
   - jls/fix-populate-sql-model # Jenny Jan 31
   #- jls/temp # Jenny Jan 31
-  - jls/migrate-HqDeploy-1-debug # Jenny Feb 1
+  #- jls/migrate-HqDeploy-1-debug # Jenny Feb 1
 submodules: {}
