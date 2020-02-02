@@ -3,7 +3,7 @@ import hashlib
 import re
 from lxml import etree
 
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models, transaction
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
@@ -247,12 +247,55 @@ class OpenClinicaSettings(Document):
             wrapper=cls.wrap)
         return res[0] if len(res) > 0 else None
 
+    def save(self, *args, **kwargs):
+        if kwargs.pop('from_sql', False):
+            return
+
+        # Save to SQL
+        with transaction.atomic():
+            model, created = SQLOpenClinicaSettings.objects.update_or_create(domain=self.domain, defaults={
+                'sqlstudysettings': SQLStudySettings(
+                    is_ws_enabled=self.study.is_ws_enabled,
+                    url=self.study.url,
+                    username=self.study.username,
+                    password=self.study.password,
+                    protocol_id=self.study.protocol_id,
+                    metadata=self.study.metadata,
+                )
+            })
+
+        # Save to couch
+        super().save(*args, **kwargs)
+
 
 class SQLOpenClinicaSettings(models.Model):
     domain = models.CharField(max_length=255, unique=True)
 
     class Meta(object):
         db_table = "openclinica_openclinicasettings"
+
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
+        # Update or create couch doc
+        doc = OpenClinicaSettings.for_domain(self.domain)
+        if not doc:
+            doc = OpenClinicaSettings(
+                domain=self.domain,
+                study=StudySettings(
+                    is_ws_enabled=self.sqlstudysettings.is_ws_enabled,
+                    url=self.sqlstudysettings.url,
+                    username=self.sqlstudysettings.username,
+                    password=self.sqlstudysettings.password,
+                    protocol_id=self.sqlstudysettings.protocol_id,
+                    metadata=self.sqlstudysettings.metadata,
+                ),
+            )
+        doc.save(from_sql=True)
+
+        # Save to SQL
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
+        self.sqlstudysettings.save()
 
 
 class SQLStudySettings(models.Model):
