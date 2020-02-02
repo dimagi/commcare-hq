@@ -236,17 +236,6 @@ class OpenClinicaSettings(Document):
     domain = StringProperty()
     study = SchemaProperty(StudySettings)  # One study per domain prevents cases from getting mixed up
 
-    @classmethod
-    def for_domain(cls, domain):
-        res = cache_core.cached_view(
-            cls.get_db(),
-            "by_domain_doc_type_date/view",
-            key=[domain, 'OpenClinicaSettings', None],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap)
-        return res[0] if len(res) > 0 else None
-
     def save(self, *args, **kwargs):
         if kwargs.pop('from_sql', False):
             return
@@ -273,6 +262,10 @@ class SQLOpenClinicaSettings(models.Model):
 
     class Meta(object):
         db_table = "openclinica_openclinicasettings"
+
+    @classmethod
+    def for_domain(cls, domain):
+        return cls.objects.filter(domain=domain).first()
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         # Update or create couch doc

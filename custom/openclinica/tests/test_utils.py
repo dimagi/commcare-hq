@@ -1,6 +1,6 @@
 import doctest
 from django.test import TestCase, SimpleTestCase
-from custom.openclinica.models import StudySettings, OpenClinicaSettings
+from custom.openclinica.models import SQLStudySettings, SQLOpenClinicaSettings
 import custom.openclinica.utils
 from custom.openclinica.utils import get_study_metadata_string
 
@@ -23,9 +23,9 @@ TEST_METADATA = '''<?xml version="1.0" encoding="UTF-8"?>
 class UtilsTests(TestCase):
 
     def setUp(self):
-        oc_settings = OpenClinicaSettings(
+        oc_settings = SQLOpenClinicaSettings(
             domain=DOMAIN,
-            study=StudySettings(
+            sqlstudysettings=SQLStudySettings(
                 is_ws_enabled=False,
                 metadata=TEST_METADATA
             )
