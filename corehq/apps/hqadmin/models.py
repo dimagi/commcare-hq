@@ -19,7 +19,7 @@ class SQLHqDeploy(models.Model):
     diff_url = models.CharField(max_length=126, null=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         db_table = "hqadmin_hqdeploy"
 
 
