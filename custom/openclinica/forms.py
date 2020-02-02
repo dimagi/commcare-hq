@@ -6,7 +6,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from custom.openclinica.models import OpenClinicaSettings
+from custom.openclinica.models import SQLOpenClinicaSettings
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
@@ -73,18 +73,18 @@ class OpenClinicaSettingsForm(forms.Form):
 
     def save(self, domain):
         try:
-            settings = OpenClinicaSettings.for_domain(domain.name)
+            settings = SQLOpenClinicaSettings.for_domain(domain.name)
             if settings is None:
-                settings = OpenClinicaSettings(domain=domain.name)
-            settings.study.is_ws_enabled = self.cleaned_data['is_ws_enabled']
-            settings.study.url = self.cleaned_data['url']
-            settings.study.username = self.cleaned_data['username']
+                settings = SQLOpenClinicaSettings(domain=domain.name)
+            settings.sqlstudysettings.is_ws_enabled = self.cleaned_data['is_ws_enabled']
+            settings.sqlstudysettings.url = self.cleaned_data['url']
+            settings.sqlstudysettings.username = self.cleaned_data['username']
             if self.cleaned_data['password']:
                 # Simple symmetric encryption. We don't need it to be strong, considering we'd have to store the
                 # algorithm and the key together anyway; it just shouldn't be plaintext.
-                settings.study.password = b64encode(bz2.compress(self.cleaned_data['password']))
-            settings.study.protocol_id = self.cleaned_data['protocol_id']
-            settings.study.metadata = self.cleaned_data['metadata']
+                settings.sqlstudysettings.password = b64encode(bz2.compress(self.cleaned_data['password']))
+            settings.sqlstudysettings.protocol_id = self.cleaned_data['protocol_id']
+            settings.sqlstudysettings.metadata = self.cleaned_data['metadata']
             settings.save()
             return True
         except Exception as err:

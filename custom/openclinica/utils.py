@@ -90,20 +90,20 @@ def get_study_metadata_string(domain):
 
     Metadata is fetched from the OpenClinica web service
     """
-    from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
+    from custom.openclinica.models import OpenClinicaAPI, SQLOpenClinicaSettings
 
-    oc_settings = OpenClinicaSettings.for_domain(domain)
-    if oc_settings.study.is_ws_enabled:
-        password = bz2.decompress(b64decode(oc_settings.study.password))
+    oc_settings = SQLOpenClinicaSettings.for_domain(domain)
+    if oc_settings.sqlstudysettings.is_ws_enabled:
+        password = bz2.decompress(b64decode(oc_settings.sqlstudysettings.password))
         api = OpenClinicaAPI(
-            oc_settings.study.url,
-            oc_settings.study.username,
+            oc_settings.sqlstudysettings.url,
+            oc_settings.sqlstudysettings.username,
             password,
-            oc_settings.study.protocol_id
+            oc_settings.sqlstudysettings.protocol_id
         )
-        string = api.get_study_metadata_string(oc_settings['STUDY'])
+        string = api.get_study_metadata_string()
     else:
-        string = oc_settings.study.metadata
+        string = oc_settings.sqlstudysettings.metadata
     # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
     if isinstance(string, str):
         match = re.match(r'<\?xml .*?encoding="([\w-]+)".*?\?>', string)  # Assumes no whitespace up front

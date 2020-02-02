@@ -586,17 +586,17 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
                 self.context['subjects'].append(dict(zip(self.subject_keys, row)))
 
     def _close(self):
-        from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
+        from custom.openclinica.models import OpenClinicaAPI, SQLOpenClinicaSettings
 
         # Create the subjects and events that are in the ODM export using the API
-        oc_settings = OpenClinicaSettings.for_domain(self.context['domain'])
-        if oc_settings.study.is_ws_enabled:
-            password = bz2.decompress(b64decode(oc_settings.study.password))
+        oc_settings = SQLOpenClinicaSettings.for_domain(self.context['domain'])
+        if oc_settings.sqlstudysettings.is_ws_enabled:
+            password = bz2.decompress(b64decode(oc_settings.sqlstudysettings.password))
             api = OpenClinicaAPI(
-                oc_settings.study.url,
-                oc_settings.study.username,
+                oc_settings.sqlstudysettings.url,
+                oc_settings.sqlstudysettings.username,
                 password,
-                oc_settings.study.protocol_id
+                oc_settings.sqlstudysettings.protocol_id
             )
             subject_keys = api.get_subject_keys()
             for subject in self.context['subjects']:

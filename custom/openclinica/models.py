@@ -269,7 +269,7 @@ class SQLOpenClinicaSettings(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         # Update or create couch doc
-        doc = OpenClinicaSettings.for_domain(self.domain)
+        doc = SQLOpenClinicaSettings.for_domain(self.domain)
         if not doc:
             doc = OpenClinicaSettings(
                 domain=self.domain,
