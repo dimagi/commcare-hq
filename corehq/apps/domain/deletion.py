@@ -233,7 +233,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('openclinica', 'SQLOpenClinicaSettings', 'domain'),
+    ModelDeletion('openclinica', 'OpenClinicaSettings', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),

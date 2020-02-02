@@ -223,11 +223,8 @@ class OpenClinicaAPI(object):
             )
 
 
-class SQLOpenClinicaSettings(models.Model):
+class OpenClinicaSettings(models.Model):
     domain = models.CharField(max_length=255, unique=True)
-
-    class Meta(object):
-        db_table = "openclinica_openclinicasettings"
 
     @classmethod
     def for_domain(cls, domain):
@@ -240,7 +237,7 @@ class SQLOpenClinicaSettings(models.Model):
         self.sqlstudysettings.save()
 
 
-class SQLStudySettings(models.Model):
+class StudySettings(models.Model):
     is_ws_enabled = models.BooleanField(default=False)
     url = models.CharField(max_length=255, null=True)
     username = models.CharField(max_length=255, null=True)
@@ -250,13 +247,10 @@ class SQLStudySettings(models.Model):
 
     # One study per domain prevents cases from getting mixed up
     open_clinica_settings = models.OneToOneField(
-        SQLOpenClinicaSettings,
+        OpenClinicaSettings,
         on_delete=models.CASCADE,
         null=True,
     )
-
-    class Meta(object):
-        db_table = "openclinica_studysettings"
 
 
 class ItemGroup(object):

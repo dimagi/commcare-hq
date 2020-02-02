@@ -110,7 +110,7 @@ from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
 from corehq.motech.dhis2.models import Dhis2Connection
-from custom.openclinica.models import SQLOpenClinicaSettings, SQLStudySettings
+from custom.openclinica.models import OpenClinicaSettings, StudySettings
 
 
 class TestDeleteDomain(TestCase):
@@ -850,13 +850,13 @@ class TestDeleteDomain(TestCase):
 
     def _assert_custom_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLOpenClinicalSettings.objects.filter(domain=domain_name),
-            SQLStudySettings.objects.filter(domain=domain_name),
+            OpenClinicalSettings.objects.filter(domain=domain_name),
+            StudySettings.objects.filter(domain=domain_name),
         ], count)
 
     def test_custom_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            SQLOpenClinicalSettings.objects.create(domain=domain_name, sqlstudysettings=SQLStudySettings(
+            OpenClinicalSettings.objects.create(domain=domain_name, studysettings=StudySettings(
                 is_ws_enabled=True,
                 username='Sergei',
                 password='123',

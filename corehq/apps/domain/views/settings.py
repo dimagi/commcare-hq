@@ -53,7 +53,7 @@ from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
-from custom.openclinica.models import SQLOpenClinicaSettings, SQLStudySettings
+from custom.openclinica.models import OpenClinicaSettings, StudySettings
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -267,14 +267,14 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def openclinica_settings_form(self):
-        oc_settings = SQLOpenClinicaSettings.for_domain(self.domain_object.name)
-        initial = SQLStudySettings(
-            is_ws_enabled=oc_settings.sqlstudysettings.is_ws_enabled,
-            url=oc_settings.sqlstudysettings.url,
-            username=oc_settings.sqlstudysettings.username,
-            password=oc_settings.sqlstudysettings.password,
-            protocol_id=oc_settings.sqlstudysettings.protocol_id,
-            metadata=oc_settings.sqlstudysettings.metadata,
+        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
+        initial = StudySettings(
+            is_ws_enabled=oc_settings.studysettings.is_ws_enabled,
+            url=oc_settings.studysettings.url,
+            username=oc_settings.studysettings.username,
+            password=oc_settings.studysettings.password,
+            protocol_id=oc_settings.studysettings.protocol_id,
+            metadata=oc_settings.studysettings.metadata,
         ) if oc_settings else {}
         if self.request.method == 'POST':
             return OpenClinicaSettingsForm(self.request.POST, initial=initial)
