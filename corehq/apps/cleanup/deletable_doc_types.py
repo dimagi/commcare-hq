@@ -22,5 +22,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'ForwardingRule': (MAIN_DB,),
     'ForwardingRule-Deleted': (MAIN_DB,),
     'GlobalAppConfig': (settings.NEW_APPS_DB,),
+    'OpenClinicaSettings': (settings.NEW_APPS_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
 }
