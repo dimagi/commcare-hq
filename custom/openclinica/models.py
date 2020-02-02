@@ -2,6 +2,9 @@ from collections import defaultdict
 import hashlib
 import re
 from lxml import etree
+
+from django.db import models
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
@@ -243,6 +246,32 @@ class OpenClinicaSettings(Document):
             include_docs=True,
             wrapper=cls.wrap)
         return res[0] if len(res) > 0 else None
+
+
+class SQLOpenClinicaSettings(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+
+    class Meta(object):
+        db_table = "openclinica_openclinicasettings"
+
+
+class SQLStudySettings(models.Model):
+    is_ws_enabled = models.BooleanField(default=False)
+    url = models.CharField(max_length=255, null=True)
+    username = models.CharField(max_length=255, null=True)
+    password = models.CharField(max_length=255, null=True)
+    protocol_id = models.CharField(max_length=255, null=True)
+    metadata = models.CharField(max_length=255, null=True)
+
+    # One study per domain prevents cases from getting mixed up
+    open_clinica_settings = models.OneToOneField(
+        SQLOpenClinicaSettings,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+
+    class Meta(object):
+        db_table = "openclinica_studysettings"
 
 
 class ItemGroup(object):
