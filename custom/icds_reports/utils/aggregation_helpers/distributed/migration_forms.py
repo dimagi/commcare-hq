@@ -24,7 +24,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             "next_month_start": next_month_start,
         }
         return """
-        SELECT DISTINCT ON (person_case_id)
+        SELECT DISTINCT
             %(state_id)s AS state_id,
             supervisor_id,
             %(month)s::DATE AS month,
