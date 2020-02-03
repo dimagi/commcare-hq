@@ -1162,7 +1162,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
@@ -1352,6 +1351,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
+)
+
+BULK_USER_DELETE = StaticToggle(
+    'bulk_user_delete',
+    "Allow bulk deletion of users based on a username upload.",
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
