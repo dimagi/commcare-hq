@@ -57,63 +57,63 @@ class DetailContributor(SectionContributor):
         def include_sort(detail_type, detail):
             return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
 
-        r = []
-        if not self.app.use_custom_suite:
-            for module in self.modules:
-                for detail_type, detail, enabled in module.get_details():
-                    if enabled:
-                        if detail.custom_xml:
-                            d = load_xmlobject_from_string(
-                                detail.custom_xml,
-                                xmlclass=Detail
-                            )
-                            expected = id_strings.detail(module, detail_type)
-                            if not id_strings.is_custom_app_string(d.id) and d.id != expected:
-                                raise SuiteValidationError(
-                                    "Menu {}, \"{}\", uses custom case list xml. The "
-                                    "specified detail ID is '{}', expected '{}'"
-                                    .format(module.id, module.default_name(), d.id, expected)
-                                )
-                            r.append(d)
+        if self.app.use_custom_suite:
+            return []
+
+        elements = []
+        for module in self.modules:
+            for detail_type, detail, enabled in module.get_details():
+                if not enabled:
+                    continue
+
+                if detail.custom_xml:
+                    elements.append(self._get_custom_xml_detail(module, detail, detail_type))
+                else:
+                    detail_column_infos = get_detail_column_infos(
+                        detail_type,
+                        detail,
+                        include_sort=include_sort(detail_type, detail),
+                    )  # list of DetailColumnInfo named tuples
+                    if detail_column_infos:
+                        if detail.use_case_tiles:
+                            helper = CaseTileHelper(self.app, module, detail,
+                                                    detail_type, self.build_profile_id)
+                            elements.append(helper.build_case_tile_detail())
                         else:
-                            detail_column_infos = get_detail_column_infos(
+                            print_template_path = None
+                            if detail.print_template:
+                                print_template_path = detail.print_template['path']
+                            locale_id = id_strings.detail_title_locale(detail_type)
+                            title = Text(locale_id=locale_id) if locale_id else Text()
+                            d = self.build_detail(
+                                module,
                                 detail_type,
                                 detail,
-                                include_sort=include_sort(detail_type, detail),
-                            )  # list of DetailColumnInfo named tuples
-                            if detail_column_infos:
-                                if detail.use_case_tiles:
-                                    helper = CaseTileHelper(self.app, module, detail,
-                                                            detail_type, self.build_profile_id)
-                                    r.append(helper.build_case_tile_detail())
-                                else:
-                                    print_template_path = None
-                                    if detail.print_template:
-                                        print_template_path = detail.print_template['path']
-                                    locale_id = id_strings.detail_title_locale(detail_type)
-                                    title = Text(locale_id=locale_id) if locale_id else Text()
-                                    d = self.build_detail(
-                                        module,
-                                        detail_type,
-                                        detail,
-                                        detail_column_infos,
-                                        tabs=list(detail.get_tabs()),
-                                        id=id_strings.detail(module, detail_type),
-                                        title=title,
-                                        print_template=print_template_path,
-                                    )
-                                    if d:
-                                        r.append(d)
-                        # add the persist case context if needed and if
-                        # case tiles are present and have their own persistent block
-                        if (detail.persist_case_context and
-                                not (detail.use_case_tiles and detail.persist_tile_on_forms)):
-                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
-                            r.append(d)
-                if module.fixture_select.active:
-                    d = self._get_fixture_detail(module)
-                    r.append(d)
-        return r
+                                detail_column_infos,
+                                tabs=list(detail.get_tabs()),
+                                id=id_strings.detail(module, detail_type),
+                                title=title,
+                                print_template=print_template_path,
+                            )
+                            if d:
+                                elements.append(d)
+
+                    # add the persist case context if needed and if
+                    # case tiles are present and have their own persistent block
+                    if (detail.persist_case_context and
+                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                        d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
+                        elements.append(d)
+
+            if module.fixture_select.active:
+                d = self._get_fixture_detail(module)
+                elements.append(d)
+
+        if toggles.MOBILE_UCR.enabled(self.app.domain):
+            if any([getattr(m, 'report_context_tile', False) for m in self.app.get_modules()]):
+                elements.append(self._get_report_context_tile_detail())
+
+        return elements
 
     def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
                      title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
@@ -315,6 +315,22 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
+    def _get_custom_xml_detail(self, module, detail, detail_type):
+        d = load_xmlobject_from_string(
+            detail.custom_xml,
+            xmlclass=Detail
+        )
+
+        expected = id_strings.detail(module, detail_type)
+        if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+            raise SuiteValidationError(
+                "Menu {}, \"{}\", uses custom case list xml. The "
+                "specified detail ID is '{}', expected '{}'"
+                .format(module.id, module.default_name(), d.id, expected)
+            )
+
+        return d
+
     @staticmethod
     def _get_persistent_case_context_detail(module, xml):
         return Detail(
@@ -331,6 +347,29 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
+            )]
+        )
+
+    @staticmethod
+    def _get_report_context_tile_detail():
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+        return Detail(
+            id=MOBILE_UCR_TILE_DETAIL_ID,
+            title=Text(),
+            fields=[Field(
+                style=Style(
+                    horz_align="left",
+                    font_size="small",
+                    grid_height=1,
+                    grid_width=12,
+                    grid_x=0,
+                    grid_y=0,
+                ),
+                header=Header(text=Text()),
+                template=Template(text=Text(xpath=Xpath(
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))",
+                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                ))),
             )]
         )
 

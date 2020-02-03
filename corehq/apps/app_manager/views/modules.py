@@ -123,7 +123,6 @@ def get_module_template(user, module):
 
 
 def get_module_view_context(request, app, module, lang=None):
-    # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
     }
@@ -138,7 +137,14 @@ def get_module_view_context(request, app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
+    show_advanced_settings = False
+    if toggles.MOBILE_UCR.enabled(app.domain):
+        show_advanced_settings = True
+        module_brief.update({
+            'report_context_tile': module.report_context_tile,
+        })
     if isinstance(module, AdvancedModule):
+        show_advanced_settings = True
         module_brief.update({
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,
@@ -152,6 +158,16 @@ def get_module_view_context(request, app, module, lang=None):
         context.update(_get_basic_module_view_context(request, app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
+
+    show_advanced_settings = (
+        show_advanced_settings
+        or add_ons.show("register_from_case_list", request, app, module)
+        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
+    )
+    context.update({
+        'show_advanced_settings': show_advanced_settings,
+    })
+
     context.update({'module_brief': module_brief})
     return context
 
@@ -297,6 +313,7 @@ def _get_report_module_context(app, module):
             'languages': app.langs,
             'mobileUcrV1': app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
+            'reportContextTile': module.report_context_tile,
         },
         'static_data_options': {
             'filterChoices': filter_choices,
@@ -465,6 +482,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
+        "report_context_tile": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -545,6 +563,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("report_context_tile"):
+        module["report_context_tile"] = request.POST.get("report_context_tile") == "true"
     if should_edit("display_style"):
         module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
@@ -930,6 +950,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     assert isinstance(module, ReportModule)
     module.name = params['name']
+    module.report_context_tile = params['report_context_tile']
 
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
