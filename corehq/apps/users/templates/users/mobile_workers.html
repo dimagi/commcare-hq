@@ -60,6 +60,12 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
+            {% if request|toggle_enabled:"BULK_USER_DELETE" %}
+              <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
+                <i class="fa fa-trash"></i>
+                {% trans "Bulk Delete Users" %}
+              </a>
+            {% endif %}
           {% endif %}
         </div>
       </div>

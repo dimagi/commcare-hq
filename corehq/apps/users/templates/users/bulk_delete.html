@@ -1,0 +1,35 @@
+{% extends 'hqwebapp/base_section.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
+
+{% block page_content %}
+  {% blocktrans %}
+    <h2>
+      Bulk Delete Mobile Workers
+    </h2>
+
+    <div class="alert alert-danger">
+      <i class="fa fa-warning"></i>
+      This is a permanent action.
+      <br><br>Deleted users:
+      <ul>
+        <li>Will no longer be able to sync or submit any data from their mobile devices.</li>
+        <li>Will have all of their form submissions deleted.</li>
+        <li>Cannot be recovered for any reason, nor can their data.</li>
+      </ul>
+      <br>We strongly recommend instead using the <strong>Deactivate User</strong> option
+      <a
+      href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly%22Archive%22)andDeleteMobileWorkers" target="_blank">described here</a>.
+    </div>
+
+    <p class="help-block">
+      To delete users in bulk, please upload an Excel file with a single <strong>username</strong> column.
+    </p>
+  {% endblocktrans %}
+
+  {% crispy bulk_upload_form %}
+{% endblock page_content %}

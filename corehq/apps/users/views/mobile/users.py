@@ -1126,6 +1126,24 @@ class FilteredUserDownload(BaseManageCommCareUserView):
         )
 
 
+class DeleteCommCareUsers(BaseManageCommCareUserView):
+    urlname = 'delete_commcare_users'
+    page_title = ugettext_noop('Bulk Delete')
+    template_name = 'users/bulk_delete.html'
+
+    @property
+    def page_context(self):
+        context = self.main_context
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # TODO
+        return self.get(request, *args, **kwargs)
+
+
 @require_can_edit_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
