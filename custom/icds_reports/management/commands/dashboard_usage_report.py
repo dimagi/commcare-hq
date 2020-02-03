@@ -1,7 +1,5 @@
 import csv
-import os
 from collections import defaultdict
-from functools import wraps
 
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.base import BaseCommand
@@ -20,29 +18,6 @@ from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 prefix = 'dashboard_usage_data_'
 TABULAR_DATA_CACHE = f'{prefix}tabular_data.csv'
 CAS_DATA_CACHE = f'{prefix}cas_export_data.csv'
-
-
-def cache_to_file(cache_name):
-    def _outer(fn):
-        @wraps(fn)
-        def _inner(*args, **kwargs):
-            data = _get_from_file(cache_name)
-            if not data:
-                data = fn(*args, **kwargs)
-                _write_to_file(cache_name, data)
-            return data
-        return _inner
-    return _outer
-
-
-def _get_from_file(filename):
-    if os.path.exists(filename):
-        print(f'Fetching data from file: {filename}')
-        with open(filename, 'r') as f:
-            reader = csv.reader(f)
-            return [
-                r[0] if len(r) == 1 else r for r in list(reader)
-            ]
 
 
 def _write_to_file(filename, rows):
