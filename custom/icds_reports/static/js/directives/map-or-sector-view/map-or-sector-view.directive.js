@@ -133,7 +133,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 axisLabelDistance: 20,
             },
             tooltip: {
-                enabled: true,
+                enabled: !isMobile,
                 contentGenerator: getChartTooltip,
             },
             callback: function (chart) {
@@ -143,7 +143,12 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     var locName = e.data[0];
-                    if (!isMobile) {
+                    if (isMobile) {
+                        // disable click navigation on mobile and instead trigger the tooltip
+                        vm.selectedLocation = locName;
+                        var popupHtml = getTooltipHtml(locName);
+                        vm.renderPopup(popupHtml, 'chartPopup');
+                    } else {
                         locationsService.tryToNavigateToLocation(locName, location_id);
                     }
                 });

@@ -79,7 +79,7 @@ a:active, a:hover, a:focus {
 }
 
 // maps and charts popup handling. modified from datamaps css.
-.locPopup {
+.locPopup, .chartPopup {
   position: absolute;
   z-index: @zindexMapsPopup;
   pointer-events: inherit !important;  // nvd3 disables pointer-events on some shared classes
@@ -89,6 +89,10 @@ a:active, a:hover, a:focus {
   background-color: rgba(255, 255, 255, 0.9);
 }
 
+.chartPopup .hoverinfo {
+  background-color: rgba(255, 255, 255, 1);
+  padding: .25em;
+}
 
 .locPopup .secondary-location-selector {
   background-color: white;
@@ -114,8 +118,14 @@ a:active, a:hover, a:focus {
   font-size: 10px;
 }
 
+// reduce width of tooltip
+.nvtooltip .hoverinfo {
+  width: 150px !important;
+}
+
 //wrapping text if it goes beyond the width of tooltip
 .nvtooltip {
+  margin-left: -40px;
   width: 150px !important;
   word-break: break-word;
   white-space: normal;
