@@ -113,10 +113,11 @@ def request_new_domain(request, form, is_new_user=True):
         new_domain.save()  # we need to get the name from the _id
 
     with transaction.atomic():
-        ensure_community_or_paused_subscription(
-            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-            web_user=current_user.username,
-        )
+        if not settings.ENTERPRISE_MODE:
+            ensure_community_or_paused_subscription(
+                new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+                web_user=current_user.username,
+            )
 
     UserRole.init_domain_with_presets(new_domain.name)
 
