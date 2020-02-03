@@ -1140,7 +1140,33 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # TODO
+        try:
+            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return self.get(request, *args, **kwargs)
+
+        try:
+            sheet = workbook.get_worksheet()
+        except WorksheetNotFound:
+            messages.error(request, _("Workbook has no worksheets"))
+            return self.get(request, *args, **kwargs)
+
+        deleted_count = 0
+        for row in sheet:
+            try:
+                username = row['username']
+            except KeyError:
+                messages.error(request, _("Please upload a file with a 'username' column."))
+                return self.get(request, *args, **kwargs)
+
+            user = CommCareUser.get_by_username(f"{username}@{request.domain}.commcarehq.org")
+            if user:
+                user.delete()
+                deleted_count += 1
+
+
+        messages.success(request, f"{deleted_count} user(s) deleted.")
         return self.get(request, *args, **kwargs)
 
 
