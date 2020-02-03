@@ -56,6 +56,7 @@
             {% endif %}
             {% if can_add_extra_users and can_access_all_locations %}
               <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                <i class="fa fa-edit"></i>
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
