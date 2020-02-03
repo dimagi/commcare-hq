@@ -40,7 +40,7 @@ ES_ENV_SETTINGS = {
     },
 }
 
-ES_META = {
+ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
@@ -84,12 +84,12 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
-        meta_settings = deepcopy(ES_META['default'])
+        meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
-            ES_META.get(self.alias, {})
+            ES_INDEX_SETTINGS.get(self.alias, {})
         )
         meta_settings.update(
-            ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
 
         overrides = copy(ES_ENV_SETTINGS)
