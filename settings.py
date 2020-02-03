@@ -951,6 +951,11 @@ SESSION_BYPASS_URLS = [
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
+# If set to a positive number, exports requested more than this many seconds ago
+# without the email option will be quickly rejected.
+# This is useful for load-shedding in times of crisis.
+STALE_EXPORT_THRESHOLD = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
