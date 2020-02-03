@@ -14,8 +14,8 @@ from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.app_mapping import APP_INDEX, APP_INDEX_INFO
+from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
@@ -157,21 +157,19 @@ def refresh_elasticsearch_index(index_name):
     es.indices.refresh(index=es_meta.index)
 
 
-EsMeta = namedtuple('EsMeta', 'index, type')
-
 ES_META = {
-    "forms": EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type),
-    "cases": EsMeta(CASE_INDEX, 'case'),
-    "active_cases": EsMeta(CASE_INDEX, 'case'),
-    "users": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "users_all": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "domains": EsMeta(DOMAIN_INDEX_INFO.index, DOMAIN_INDEX_INFO.type),
-    "apps": EsMeta(APP_INDEX, 'app'),
-    "groups": EsMeta(GROUP_INDEX_INFO.index, GROUP_INDEX_INFO.type),
-    "sms": EsMeta(SMS_INDEX_INFO.index, SMS_INDEX_INFO.type),
-    "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
-    "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
-    "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
+    "forms": XFORM_INDEX_INFO,
+    "cases": CASE_INDEX_INFO,
+    "active_cases": CASE_INDEX_INFO,
+    "users": USER_INDEX_INFO,
+    "users_all": USER_INDEX_INFO,
+    "domains": DOMAIN_INDEX_INFO,
+    "apps": APP_INDEX_INFO,
+    "groups": GROUP_INDEX_INFO,
+    "sms": SMS_INDEX_INFO,
+    "report_cases": REPORT_CASE_INDEX,
+    "report_xforms": REPORT_XFORM_INDEX,
+    "case_search": CASE_SEARCH_INDEX_INFO,
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -200,14 +198,8 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
     es_interface = ElasticsearchInterface(es_instance)
 
-    try:
-        es_meta = ES_META[index_name]
-    except KeyError:
-        from corehq.apps.userreports.util import is_ucr_table
-        if is_ucr_table(index_name):
-            es_meta = EsMeta(index_name, 'indicator')
-        else:
-            raise
+    es_meta = ES_META[index_name]
+
     try:
         results = es_interface.search(es_meta.index, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
