@@ -379,6 +379,7 @@ class DashboardView(TemplateView):
         return super().get_context_data(**kwargs)
 
 
+@location_safe
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class MobileDashboardDownloadView(TemplateView):
     template_name = 'icds_reports/mobile_dashboard_download.html'
