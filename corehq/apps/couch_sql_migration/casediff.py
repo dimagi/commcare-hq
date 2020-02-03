@@ -12,7 +12,7 @@ from dimagi.utils.couch.database import retry_on_couch_error
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
-from corehq.apps.tzmigration.timezonemigration import json_diff
+from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
 from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.couch.dbaccessors import (
     CaseAccessorCouch,
@@ -64,8 +64,6 @@ def make_result_saver(statedb, count_cases=lambda n: None):
         statedb.add_diffed_cases(data.doc_ids)
         statedb.replace_case_diffs(data.diffs)
         statedb.replace_case_changes(data.changes)
-        for doc_type, doc_ids in data.missing_docs:
-            statedb.add_missing_docs(doc_type, doc_ids)
     return save_result
 
 
@@ -333,20 +331,17 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
         assert not only_in_sql, only_in_sql
         only_in_couch = couch_cases.keys() - sql_case_ids
         data.doc_ids.extend(only_in_couch)
-        missing_cases = [couch_cases[x] for x in only_in_couch]
-        dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(missing_cases))
-        for doc_type, doc_ids in filter_missing_cases(missing_cases):
-            data.missing_docs.append((doc_type, doc_ids))
-
-
-def filter_missing_cases(missing_cases):
-    result = defaultdict(list)
-    for couch_case in missing_cases:
-        if is_orphaned_case(couch_case):
-            log.info("Ignoring orphaned case: %s", couch_case["_id"])
-        else:
-            result[couch_case["doc_type"]].append(couch_case["_id"])
-    return result.items()
+        dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(only_in_couch))
+        for case_id in only_in_couch:
+            couch_case = couch_cases[case_id]
+            if is_orphaned_case(couch_case):
+                log.info("Ignoring orphaned case: %s", couch_case["_id"])
+                continue
+            data.diffs.append((
+                couch_case["doc_type"],
+                case_id,
+                [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
+            ))
 
 
 @contextmanager
@@ -365,7 +360,6 @@ def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
 class DiffData:
     doc_ids = attr.ib(factory=list)
     diffs = attr.ib(factory=list)
-    missing_docs = attr.ib(factory=list)
 
     # Changes are diffs that cannot be resolved due to a feature or bug
     # in the Couch form processor that is not present in the SQL form
