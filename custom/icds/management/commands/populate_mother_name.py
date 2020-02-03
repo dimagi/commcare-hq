@@ -145,7 +145,7 @@ class Command(BaseCommand):
                     counter += 1
                     if counter > 0 and counter % 100 == 0:
                         case_ids_list = self._reassured_case_ids_to_update(list(updates.keys()))
-                        skip_ids = set(updates.keys()) - set(case_ids_list)
+                        skip_ids = updates.keys() - set(case_ids_list)
                         for case_id in skip_ids:
                             updates.pop(case_id)
                         for case_id, mother_name in updates.items():
