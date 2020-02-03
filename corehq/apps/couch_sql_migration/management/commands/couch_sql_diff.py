@@ -140,7 +140,7 @@ class Command(BaseCommand):
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}")
         if self.changes:
-            items = statedb.iter_changes()
+            items = statedb.iter_doc_changes(self.cases)
         else:
             items = statedb.iter_doc_diffs(self.cases)
         json_diffs = iter_json_diffs(items)
@@ -160,11 +160,12 @@ class Command(BaseCommand):
             self.reset_statedb(action, db, itr_state)
 
     def open_state_db(self, domain, *, readonly=True):
-        if os.path.isdir(self.state_path):
-            return open_state_db(domain, self.state_path, readonly=readonly)
-        if os.path.isfile(self.state_path):
-            return StateDB.open(domain, self.state_path, readonly=readonly)
-        sys.exit(f"file or directory not found:\n{self.state_path}")
+        state_path = os.path.expanduser(self.state_path)
+        if os.path.isdir(state_path):
+            return open_state_db(domain, state_path, readonly=readonly)
+        if os.path.isfile(state_path):
+            return StateDB.open(domain, state_path, readonly=readonly)
+        sys.exit(f"file or directory not found:\n{state_path}")
 
     def prepare_reset(self, action, db, itr_state):
         self.setup_reset_logging()

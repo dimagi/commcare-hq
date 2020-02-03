@@ -389,7 +389,7 @@ class StateDB(DiffDB):
     def iter_changes(self):
         return self.iter_diffs(_model=DocChanges)
 
-    def iter_doc_diffs(self, kind):
+    def iter_doc_diffs(self, kind=None, _model=None):
         """Iterate over diffs of the given kind
 
         "stock state" diffs cannot be queried directly with this method.
@@ -400,13 +400,20 @@ class StateDB(DiffDB):
         `PlanningDiff` objects, which should not be confused with json
         diffs (`<PlanningDiff>.json_diff`).
         """
+        if _model is None:
+            _model = DocDiffs
         with self.session() as session:
-            query = session.query(DocDiffs).filter_by(kind=kind)
-            for doc in iter_large(query, DocDiffs.doc_id):
+            query = session.query(_model)
+            if kind is not None:
+                query = query.filter_by(kind=kind)
+            for doc in iter_large(query, _model.doc_id):
                 yield doc.doc_id, [
-                    DocDiffs.dict_to_diff(doc.kind, doc.doc_id, data)
+                    _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]
+
+    def iter_doc_changes(self, kind=None):
+        return self.iter_doc_diffs(kind, _model=DocChanges)
 
     def get_diffs(self):
         """DEPRECATED use iter_diffs(); the result may be very large"""
@@ -667,6 +674,10 @@ class Change:
     path = attr.ib()
     old_value = attr.ib()
     new_value = attr.ib()
+
+    @property
+    def json_diff(self):
+        return self
 
     def _replace(self, **data):
         cls = type(self)
