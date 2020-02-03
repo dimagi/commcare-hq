@@ -104,7 +104,6 @@ class Command(BaseCommand):
                        .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
         for record in records:
             cas_user_counts[record['username'].split('@')[0]] += record['count']
-        print(cas_user_counts)
         return cas_user_counts
 
     def get_tabular_data(self, usage_data, start_date, end_date, domain):
