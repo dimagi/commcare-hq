@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.db import models
 
@@ -10,6 +10,14 @@ from pillowtop.utils import (
     get_pillow_by_name,
     safe_force_seq_int,
 )
+
+
+class SQLHqDeploy(models.Model):
+    date = models.DateTimeField(default=datetime.utcnow, db_index=True)
+    user = models.CharField(max_length=100)
+    environment = models.CharField(max_length=100)
+    diff_url = models.CharField(max_length=126, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
 
 class HqDeploy(Document):
@@ -42,6 +50,21 @@ class HqDeploy(Document):
             limit=limit,
             include_docs=False
         ).all()
+
+    def save(self, *args, **kwargs):
+        # Save to SQL
+        model, created = SQLHqDeploy.objects.update_or_create(
+            couch_id=self.get_id,
+            defaults={
+                'date': self.date,
+                'user': self.user,
+                'environment': self.environment,
+                'diff_url': self.diff_url,
+            }
+        )
+
+        # Save to couch
+        super().save(*args, **kwargs)
 
 
 class HistoricalPillowCheckpoint(models.Model):
