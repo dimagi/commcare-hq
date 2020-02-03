@@ -127,7 +127,7 @@ def _get_nav_menu_items():
                                         'demographics/enrolled_women'),
                         NavMenuSubPages(_('Lactating Mothers enrolled for Anganwadi Services'),
                                         'demographics/lactating_enrolled_women'),
-                        NavMenuSubPages(_('Out of school Adolescent girls(11-14 years)'),
+                        NavMenuSubPages(_('Out of school Adolescent girls (11-14 years)'),
                                         'demographics/adolescent_girls')],
                        'demographics', 'fa-users', 'threegroup-sidebar.png'
                        ),
