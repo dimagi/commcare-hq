@@ -317,6 +317,7 @@ class StateDB(DiffDB):
                 assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
+        """DEPRECATED use diffs instead"""
         with self.session() as session:
             session.bulk_save_objects([
                 MissingDoc(kind=kind, doc_id=doc_id)

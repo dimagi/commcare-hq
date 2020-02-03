@@ -247,6 +247,7 @@ class Command(BaseCommand):
             delete(DocDiffs, "CommCareCase")
             delete(DocChanges, "CommCareCase")
             delete(MissingDoc, "CommCareCase")
+            delete(MissingDoc, "CommCareCase-Deleted")
             delete(MissingDoc, "CommCareCase-couch")
             delete_all(CaseToDiff)
             delete_all(DiffedCase)
