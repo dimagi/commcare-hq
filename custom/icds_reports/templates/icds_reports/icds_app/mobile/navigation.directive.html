@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div>
-                <div id="nutrition" ng-show="expandedSectionId===menuItem['sectionId']">
+                <div ng-show="expandedSectionId===menuItem['sectionId']">
                     <div ng-repeat="subPage in menuItem['sub_pages']"
                          class="navigation-font pl-3 pr-3 mb-0" ng-show="subPage['showInMobile'] && !subPage['featureFlagOnly']"
                          ng-class="{'active-mobile-link': $location.path().indexOf(subPage['route']) !== -1}">
