@@ -1,12 +1,42 @@
+from contextlib import contextmanager
 from datetime import timedelta
 
+from dimagi.utils.couch import acquire_lock, release_lock
 from dimagi.ext.jsonobject import DictProperty, StringProperty
 
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.backends.sql.update_strategy import (
-    _transaction_sort_key_function as transaction_key
-)
 from corehq.form_processor.models import RebuildWithReason
+
+
+def rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count):
+    """Try rebuilding SQL case and save if rebuild resolves diffs
+
+    :param sql_case: CommCareCaseSQL object.
+    :param couch_case: JSON-ified version of CommCareCase.
+    :param diff: function to produce diffs between couch and SQL case JSON.
+    :param dd_count: metrics recording counter function.
+    :returns: list of diffs returned by `diff(couch_case, rebuilt_case_json)`
+    """
+    lock = CommCareCaseSQL.get_obj_lock_by_id(sql_case.case_id)
+    acquire_lock(lock, degrade_gracefully=False)
+    try:
+        if should_sort_sql_transactions(sql_case, couch_case):
+            new_case = rebuild_case_with_couch_action_order(sql_case, couch_case)
+            dd_count("commcare.couchsqlmigration.case.rebuild.sql.sort")
+        else:
+            new_case = rebuild_case(sql_case)
+            dd_count("commcare.couchsqlmigration.case.rebuild.sql")
+        diffs = diff(couch_case, new_case.to_json())
+        if not diffs:
+            # save case only if rebuild resolves diffs
+            CaseAccessorSQL.save_case(new_case)
+            publish_case_saved(new_case)
+    finally:
+        release_lock(lock, degrade_gracefully=True)
+    return diffs
 
 
 def should_sort_sql_transactions(sql_case, couch_json):
@@ -18,50 +48,81 @@ def should_sort_sql_transactions(sql_case, couch_json):
     """
     def dedup(items):
         return dict.fromkeys(items)
-    if was_rebuilt(sql_case):
-        return False
     sql_ids = dedup(t.form_id for t in sql_case.transactions if t.form_id)
     couch_ids = dedup(a["xform_id"] for a in couch_json["actions"] if a["xform_id"])
     return sql_ids == couch_ids and list(sql_ids) != list(couch_ids)
 
 
-def was_rebuilt(sql_case):
-    """Check if most recent case transaction is a sort rebuild"""
-    details = sql_case.transactions[-1].details if sql_case.transactions else None
-    return details and (
-        details.get("reason") == SortTransactionsRebuild._REASON
-        or details.get("reason") == COUCH_SQL_REBUILD_REASON
-    )
+def rebuild_case_with_couch_action_order(sql_case, couch_case):
+    """Sort transactions to match Couch actions and rebuild case
 
-
-def rebuild_case_with_couch_action_order(sql_case):
-    server_dates = update_transaction_order(sql_case)
+    This does not save the case. This function should be wrapped in a
+    case lock if the case will be saved afterward.
+    """
+    transactions, server_dates = update_transaction_order(sql_case, couch_case)
     detail = SortTransactionsRebuild(original_server_dates=server_dates)
-    return rebuild_case(sql_case, detail)
+    with patch_transactions(sql_case, transactions):
+        return rebuild_case(sql_case, detail)
+
+
+@contextmanager
+def patch_transactions(sql_case, transactions):
+    def get_transactions(case, updated_xforms=None):
+        if case.case_id == sql_case.case_id:
+            assert not updated_xforms, (case.case_id, updated_xforms)
+            len_before_fetch = len(transactions)
+            CaseAccessorSQL.fetch_case_transaction_forms(
+                case, transactions, updated_xforms)
+            assert len(transactions) == len_before_fetch, (case.case_id, transactions)
+            return transactions
+        return real_get_transactions(case, updated_xforms)
+    real_get_transactions = CaseAccessorSQL.get_case_transactions_by_case_id
+    CaseAccessorSQL.get_case_transactions_by_case_id = get_transactions
+    try:
+        yield
+    finally:
+        CaseAccessorSQL.get_case_transactions_by_case_id = real_get_transactions
 
 
 def rebuild_case(sql_case, detail=None):
+    """Rebuild SQL case
+
+    This does not save the case. This function should be wrapped in a
+    case lock if the case will be saved afterward.
+    """
     if detail is None:
         detail = RebuildWithReason(reason=COUCH_SQL_REBUILD_REASON)
-    return FormProcessorSQL.hard_rebuild_case(sql_case.domain, sql_case.case_id, detail)
+    new_case = FormProcessorSQL.hard_rebuild_case(
+        sql_case.domain, sql_case.case_id, detail, lock=False, save=False)
+    return new_case
 
 
-def update_transaction_order(sql_case):
+def update_transaction_order(sql_case, couch_case):
     """Update SQL case transactions so they match couch actions
 
     SQL case transactions are sorted by `transaction.server_date`.
     See corehq/sql_accessors/sql_templates/get_case_transactions_by_type.sql
     """
+    def sort_key(tx):
+        return indices.get(tx.form_id, at_end)
+
+    at_end = len(couch_case["actions"])
+    indices = {}
+    for i, action in enumerate(couch_case["actions"]):
+        form_id = action["xform_id"]
+        if form_id and form_id not in indices:
+            indices[form_id] = i
+
     server_dates = {}
-    transactions = sorted(sql_case.transactions, key=transaction_key(sql_case))
+    transactions = sorted(sql_case.transactions, key=sort_key)
     old_dates = [t.server_date for t in transactions]
     new_dates = iter_ascending_dates(old_dates)
     for trans, new_date in zip(transactions, new_dates):
         if trans.server_date != new_date:
             server_dates[trans.id] = trans.server_date
             trans.server_date = new_date
-            trans.save()
-    return server_dates
+            sql_case.track_update(trans)
+    return transactions, server_dates
 
 
 class SortTransactionsRebuild(RebuildWithReason):

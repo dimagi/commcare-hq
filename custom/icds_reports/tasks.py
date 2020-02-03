@@ -825,7 +825,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test
+            show_test=include_test,
+            beta=beta
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
@@ -1624,7 +1625,7 @@ def create_reconciliation_records():
         reconcile_data_not_in_ucr.delay(status.pk)
 
 
-@task(queue='background_queue')
+@task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0

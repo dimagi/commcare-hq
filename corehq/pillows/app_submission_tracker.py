@@ -18,14 +18,16 @@ from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
+def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerPillow',
                                                 num_processes=1, process_num=0, **kwargs):
     """
-    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     This gets a pillow which iterates through all forms and marks the corresponding app
-    as having submissions. This could be expanded to be more generic and include
-    other processing that needs to happen on each form
+    as having submissions.
+
+        Processors:
+          - :py:class:`pillowtop.processors.form.FormSubmissionMetadataTrackerProcessor`
     """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     change_feed = KafkaChangeFeed(
         topics=topics.FORM_TOPICS, client_id='form-processsor',
         num_processes=num_processes, process_num=process_num

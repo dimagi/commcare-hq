@@ -480,6 +480,11 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
@@ -503,6 +508,13 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0,
                                 processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+    Only processes `static` UCR datasources (configuration lives in the codebase instead of the database).
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]

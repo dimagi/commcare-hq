@@ -462,7 +462,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         yield """
          UPDATE "{tablename}" agg_awc SET num_awc_infra_last_update =
           CASE WHEN infra_last_update_date IS NOT NULL AND
-             %(month_start_6m)s < infra_last_update_date THEN 1 ELSE 0 END
+             %(month_start_6m)s <= infra_last_update_date THEN 1 ELSE 0 END
         """.format(
             tablename=self.temporary_tablename
         ), {

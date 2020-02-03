@@ -1,0 +1,77 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Return-Path: <>
+Date: Tue, 14 Jan 2020 07:01:58 +0000
+From: MAILER-DAEMON@amazonses.com
+To: commcarehq-bounces+production@dimagi.com
+Subject: failure notice
+MIME-Version: 1.0
+
+Hi. This is the qmail-send program at yahoo.com.
+I'm afraid I wasn't able to deliver your message to the following addresses.
+This is a permanent error; I've given up. Sorry it didn't work out.
+
+<fakemail555@yahoo.com.br>:
+Requested mail action aborted, error in processing
+I'm not going to try again; this message has been in the queue too long.
+
+--- Below this line is a copy of the message.
+
+
+Content-Type: multipart/mixed; boundary="===============3455756338510502096=="
+MIME-Version: 1.0
+Subject:
+ =?utf-8?q?Relat=C3=B3rios_Semanais_das_Atividades_dos_APEs_de_Cabo_Delgado?=
+From: commcarehq-noreply@dimagi.com
+To: fakemail555@yahoo.com.br
+Date: Mon, 13 Jan 2020 06:01:54 +0000
+
+--===============3455756338510502096==
+Content-Type: multipart/alternative;
+ boundary="===============8853429737433652531=="
+MIME-Version: 1.0
+
+--===============8853429737433652531==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+
+This is an email from CommCare HQ. You're seeing this message because your
+email client chose to display the plaintext version of an email that CommCare
+HQ can only provide in HTML.  Please set your email client to view this email
+in HTML or read this email in a client that supports HTML email.
+
+Thanks,
+The CommCare HQ Team
+--===============8853429737433652531==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+
+<head>
+  <style>
+    h1 {
+      font-size: 130%;
+    }
+    th, td {
+      padding-right: 1em;
+    }
+    td.null-entry {
+      color: #ccc;
+    }
+    .pagebreak {
+      page-break-after: always;
+    }
+  </style>
+</head>
+<body>
+
+
+  <p>
+
+      This is a scheduled report from <a href="https://www.commcarehq.org">CommCareHQ</a> for the project 'fake-project'.
+
+  </p>
+
+--- End of message stripped.

@@ -139,6 +139,11 @@ def transform_xform_for_elasticsearch(doc_dict):
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
+    """XForm change processor that sends form data to Elasticsearch
+
+    Processors:
+      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)

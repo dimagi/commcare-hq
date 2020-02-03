@@ -14,13 +14,16 @@ from custom.icds_reports.views import (
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
-    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI, GovernanceCBEAPI)
+    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
+    MobileDashboardDownloadView, GovernanceCBEAPI)
 
 
 dashboard_urls = [
+    url('^mobile_app/$', MobileDashboardDownloadView.as_view(), name='icds_mobile_dashboard_download'),
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
     url('^', DashboardView.as_view(), name='icds_dashboard'),
+
 ]
 
 maternal_and_child_urls = [
