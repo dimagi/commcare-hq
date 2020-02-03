@@ -49,6 +49,7 @@ def get_report_context_tile_datum():
         nodeset="instance('commcare-reports:index')/report_index/reports",
         value='./@last_update',
         detail_persistent=MOBILE_UCR_TILE_DETAIL_ID,
+        autoselect="true",
     )
 
 
