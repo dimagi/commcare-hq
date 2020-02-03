@@ -286,7 +286,7 @@ def get_excel_format_value(value):
     if re.match(r"^[+-]?\d+%$", value):
         try:
             return ExcelFormatValue(numbers.FORMAT_PERCENTAGE,
-                                    float(int(value.replace('%', ''))/100))
+                                    float(int(value.replace('%', '')) / 100))
         except (ValueError, OverflowError):
             pass
 
@@ -294,7 +294,7 @@ def get_excel_format_value(value):
     if re.match(r"^[+-]?\d+(\.)\d*%$", value):
         try:
             return ExcelFormatValue(numbers.FORMAT_PERCENTAGE_00,
-                                    float(float(value.replace('%', ''))/100))
+                                    float(float(value.replace('%', '')) / 100))
         except (ValueError, OverflowError):
             pass
 
