@@ -84,6 +84,7 @@ class Dhis2EntityRepeater(CaseRepeater):
         value_sources = []
         for case_config in self.dhis2_entity_config.case_configs:
             value_sources.append(as_value_source(case_config.org_unit_id))
+            value_sources.append(as_value_source(case_config.tei_id))
             for value_source_config in case_config.attributes.values():
                 value_sources.append(as_value_source(value_source_config))
 
