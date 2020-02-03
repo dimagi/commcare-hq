@@ -23,6 +23,12 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
         'nsr_post_cooking_conv_method_code', 'nsr_post_cooking_conv_option_code',
         'nsr_post_cooking_conv_option_desc', 'nsr_post_cooking_conv_size', 'nsr_same_conv_method'
     ]
+    OBLIGATORY_TABLE_NAMES = ['reference_food_code', 'conv_method', 'conv_option']
+    OBLIGATORY_COUCH_NAMES = [
+        'conv_factor_gap_code', 'fct_gap_code', 'conv_factor_reference_food_code',
+        'fct_reference_food_code_exists', 'fao_who_gift_food_group_description', 'conv_factor_gap_desc',
+        'fct_gap_desc', 'fct_used', 'report_data_type'
+    ]
 
     @property
     def filters(self):
@@ -44,16 +50,18 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
         ]
 
     @property
-    def ds_columns(self):
+    def not_ds_columns(self):
         return [
             DatabaseColumn(header, SimpleColumn(header))
-            for header in self.headers_in_order if header not in self.TABLE_NAMES
+            for header in self.headers_in_order
+            if header not in set(self.TABLE_NAMES + self.OBLIGATORY_TABLE_NAMES)
         ]
 
     @property
     def group_by(self):
         return [
-            header for header in self.headers_in_order if header in self.TABLE_NAMES
+            header for header in self.headers_in_order
+            if header in set(self.TABLE_NAMES + self.OBLIGATORY_TABLE_NAMES)
         ]
 
     @property
@@ -82,7 +90,7 @@ class GapsReportSummaryDataMixin(ReportDataMixin):
     @property
     def filters(self):
         filters = []
-        if self.filters_config['recall_status']:
+        if self.config['recall_status']:
             filters.append(EQ('recall_status', 'recall_status'))
         return filters
 
@@ -92,17 +100,17 @@ class NutrientIntakesDataMixin(ReportDataMixin):
     @property
     def filters(self):
         filters = []
-        if self.filters_config['gender']:
+        if self.config['gender']:
             filters.append(EQ('gender', 'gender'))
-        if self.filters_config['pregnant']:
+        if self.config['pregnant']:
             filters.append(EQ('pregnant', 'pregnant'))
-        if self.filters_config['breastfeeding']:
+        if self.config['breastfeeding']:
             filters.append(EQ('breastfeeding', 'breastfeeding'))
-        if self.filters_config['urban_rural']:
+        if self.config['urban_rural']:
             filters.append(EQ('urban_rural', 'urban_rural'))
-        if self.filters_config['supplements']:
+        if self.config['supplements']:
             filters.append(EQ('supplements', 'supplements'))
-        if self.filters_config['recall_status']:
+        if self.config['recall_status']:
             filters.append(EQ('recall_status', 'recall_status'))
         return filters
 
