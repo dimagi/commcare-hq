@@ -39,6 +39,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
@@ -1153,6 +1154,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             return self.get(request, *args, **kwargs)
 
         deleted_count = 0
+        usernames_with_forms = []
         for row in sheet:
             try:
                 username = row['username']
@@ -1162,11 +1164,20 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
 
             user = CommCareUser.get_by_username(f"{username}@{request.domain}.commcarehq.org")
             if user:
-                user.delete()
-                deleted_count += 1
+                if FormES().domain(request.domain).user_id(user.get_id).count():
+                    usernames_with_forms.append(username)
+                else:
+                    user.delete()
+                    deleted_count += 1
 
+        message = f"{deleted_count} user(s) deleted."
+        if usernames_with_forms:
+            message += f"""
+                The following users have form submissions and
+                must be deleted individually: {", ".join(usernames_with_forms)}.
+            """
+        messages.success(request, message)
 
-        messages.success(request, f"{deleted_count} user(s) deleted.")
         return self.get(request, *args, **kwargs)
 
 
