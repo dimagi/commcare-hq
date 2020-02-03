@@ -22,7 +22,7 @@ class CouchDbDataCollector:
                 self.tables[table.tag] = table.get_id
 
     @memoized
-    def get_data_from_table(self, table_name=None, fields_and_values: Optional[Tuple] = None, as_dict=False):
+    def get_data_from_table(self, table_name=None, fields_and_values: Optional[Tuple] = None):
         """
         filters and collects data from the desired table based on fields_and_values
 
@@ -37,10 +37,8 @@ class CouchDbDataCollector:
                 ('name', ('Mary', 'Steve'))
             )
 
-        :param as_dict: determines whether collected data should be returned as dictionary
         :return: list of filtered data collected from the table OR all rows from the table
         """
-        data = []
         if table_name is None and len(self.tables) == 1:
             table_name = list(self.tables.keys())[0]
         elif not table_name:
@@ -51,21 +49,34 @@ class CouchDbDataCollector:
 
         if not fields_and_values:
             return records
-        values = {x[0]: x[1] for x in fields_and_values}
+        values = dict(fields_and_values)
 
-        for record in records:
-            if self._is_record_valid(record, values):
-                if as_dict:
-                    data.append(self.record_to_dict(record))
-                else:
-                    data.append(record)
+        return [r for r in records if self._is_record_valid(r, values)]
+
+    @memoized
+    def get_data_from_table_as_dict(self, key_field, fields_and_values: Optional[Tuple], table_name=None):
+        """
+        does the same filtering as get_data_from_table, but returns the data in
+        form of a dictionary with values of :param key_field as keys
+        """
+        if key_field not in dict(fields_and_values):
+            raise ValueError('\'key_field\'s name must be in \'fields_and_values\'')
+
+        data = {}
+        for record in self.get_data_from_table(table_name, fields_and_values):
+            rdict = self.records_data_as_dict(record)
+            rdict_without_id = {k: v for k, v in rdict.items() if k != key_field}
+            data[rdict[key_field]] = rdict_without_id
 
         return data
 
     @staticmethod
-    def record_to_dict(record):
+    def records_data_as_dict(record, fields_to_filter=None):
         """
-        transforms :param record from FixtureDataItem object into a dictionary
+        transforms FixtureDataItem object into a dictionary
+        :param record FixtureDataItem object
+        :param fields_to_filter: if not None only desired fields from the record will be returned
+        :return: returns record or some of it's fields as dictionary
         """
         record_as_dict = {}
         fields = record.fields
@@ -74,36 +85,14 @@ class CouchDbDataCollector:
             value = None if not field_list else field_list[0].field_value
             record_as_dict[field] = value
 
-        return record_as_dict
+        if not fields_to_filter:
+            return record_as_dict
 
-    @memoized
-    def get_data_from_table_as_dict(self, key_field, fields_and_values: Optional[Tuple], table_name=None):
-        """
-        does the same filtering as get_data_from_table, but returns the data in
-        form of a dictionary with values of :param key_field as keys
-        """
-        if key_field not in (element[0] for element in fields_and_values):
-            raise ValueError('\'key_field\'s name must be in \'fields_and_values\'')
-        messy_dicts = self.get_data_from_table(
-            table_name=table_name, fields_and_values=fields_and_values, as_dict=True
-        )
-        clean_dicts = {}
-
-        for messy_dict in messy_dicts:
-            clean_dicts[messy_dict[key_field]] = self._get_dict(key_field, messy_dict)
-
-        return clean_dicts
-
-    @staticmethod
-    def _get_dict(id_key, dict_):
-        tmp_dict = dict_.copy()
-        tmp_dict.pop(id_key)
-
-        return tmp_dict
+        return {k: v for k, v in record_as_dict.items() if k in fields_to_filter}
 
     def _is_record_valid(self, record, values):
         if values:
-            fields_values = self._get_fields_values_if_fields_exist(
+            fields_values = self.records_data_as_dict(
                 record, [x for x in values.keys()]
             )
             if fields_values and self._values_match(fields_values, values):
@@ -112,22 +101,5 @@ class CouchDbDataCollector:
         return None
 
     @staticmethod
-    def _get_fields_values_if_fields_exist(record, fields):
-        values_for_field = {}
-        for field in fields:
-            field_ = record.fields.get(field)
-            if not field_:
-                return False
-            elif field_ and field_.field_list:
-                values_for_field[field] = field_.field_list[0].field_value
-
-        return values_for_field
-
-    @staticmethod
     def _values_match(field_values, values):
-        matching_fields = set()
-        for key in values:
-            if field_values[key] in values[key]:
-                matching_fields.add(key)
-
-        return len(matching_fields) == len(field_values)
+        return all(field_values[key] in values[key] for key in values)
