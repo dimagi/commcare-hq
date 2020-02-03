@@ -34,28 +34,28 @@ class CouchDbDataCollectorTest(TestCase):
 
     @patch.object(FixtureDataItem, 'by_data_type', return_value=[('test_field', ('test_value',))])
     @patch.object(CouchDbDataCollector, '_is_record_valid', return_value=True)
-    @patch.object(CouchDbDataCollector, 'record_to_dict', return_value={'test_field': 'test_value'})
-    def test_get_data_from_table_with_record_valid_and_as_dict_true_returns_list_with_dict(
-        self, mock_record_to_dict, mock__is_record_valid, mock_by_data_type
+    def test_get_data_from_table_with_record_valid_returns_list_with_record(
+        self, mock__is_record_valid, mock_by_data_type
     ):
-        res = self.couch_db.get_data_from_table(fields_and_values=(('test_field', ('test_value',)),), as_dict=True)
-        self.assertIn(mock_record_to_dict.return_value, res)
+        res = self.couch_db.get_data_from_table(fields_and_values=(('test_field', ('test_value',)),))
+        self.assertEqual(mock_by_data_type.return_value, res)
 
-    @patch.object(FixtureDataItem, 'by_data_type', return_value=[('test_field', ('test_value',))])
-    @patch.object(CouchDbDataCollector, '_is_record_valid', return_value=True)
-    def test_get_data_from_table_with_record_valid_as_dict_false_return_list_record(self, mock__is_record_valid,
-                                                                                    mock_by_data_type):
-        res = self.couch_db.get_data_from_table(
-            fields_and_values=(('test_field', ('test_value',)),), as_dict=False
+    def test_get_data_from_table_as_dict_key_field_not_in_fields_and_values(self):
+        with self.assertRaises(ValueError):
+            self.couch_db.get_data_from_table_as_dict('test_key_field', (('test_field', ('test_value',)),))
+
+    @patch.object(CouchDbDataCollector, 'get_data_from_table', return_value=[Mock(fields={
+        'test_key_field': Mock(field_list=[Mock(field_value='test_key_value')]),
+        'test_field': Mock(field_list=[Mock(field_value='test_value')])
+    })])
+    def test_get_data_from_table_as_dict_returns_dict(self, mock_get_data_from_table):
+        res = self.couch_db.get_data_from_table_as_dict(
+            'test_key_field', (('test_key_field', ('test_key_value',)),)
         )
-        self.assertIn(mock_by_data_type.return_value[0], res)
+        self.assertEqual(res, {'test_key_value': {'test_field': 'test_value'}})
 
-    def test_record_to_dict_record_with_no_fields_returns_empty_dict(self):
-        res = self.couch_db.record_to_dict(Mock(fields={}))
-        self.assertEqual(res, {})
-
-    def test_record_to_dict_record_with_fields_returns_not_empty_dict(self):
-        res = self.couch_db.record_to_dict(Mock(fields={
+    def test_records_data_as_dict_fields_to_filter_none_returns_record_as_dict(self):
+        res = self.couch_db.records_data_as_dict(Mock(fields={
             'test_field_1': Mock(field_list=[Mock(field_value='test_value')]),
             'test_field_2': Mock(field_list=[]),
         }))
@@ -64,19 +64,11 @@ class CouchDbDataCollectorTest(TestCase):
             'test_field_2': None,
         })
 
-    def test_get_data_from_table_as_dict_key_filed_not_in_fields_and_values(self):
-        with self.assertRaises(ValueError):
-            self.couch_db.get_data_from_table_as_dict('test_key_field', (('test_field', ('test_value',)),))
-
-    @patch.object(CouchDbDataCollector, 'get_data_from_table', return_value=[
-        {'test_key_field': 'test_key_value', 'test_field': 'test_value'},
-    ])
-    def test_get_data_from_table_as_dict_returns_dict(self, mock_get_data_from_table):
-        res = self.couch_db.get_data_from_table_as_dict(
-            'test_key_field', (('test_key_field', ('test_key_value',)),)
-        )
-        mock_get_data_from_table.assert_called_with(
-            fields_and_values=(('test_key_field', ('test_key_value',)),),
-            table_name=None, as_dict=True
-        )
-        self.assertEqual(res, {'test_key_value': {'test_field': 'test_value'}})
+    def test_records_data_as_dict_fields_to_filter_not_none_returns_fields_as_dict(self):
+        res = self.couch_db.records_data_as_dict(Mock(fields={
+            'test_field_1': Mock(field_list=[Mock(field_value='test_value')]),
+            'test_field_2': Mock(field_list=[]),
+        }), fields_to_filter=('test_field_1',))
+        self.assertEqual(res, {
+            'test_field_1': 'test_value',
+        })
