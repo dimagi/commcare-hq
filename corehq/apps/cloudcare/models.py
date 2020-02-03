@@ -15,7 +15,7 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
 
 
-class SQLApplicationAccess(models.Model):
+class ApplicationAccess(models.Model):
     domain = models.CharField(max_length=255, null=False, unique=True)
     restrict = models.BooleanField(default=False)
 
@@ -70,57 +70,7 @@ class SQLApplicationAccess(models.Model):
 class SQLAppGroup(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     group_id = models.CharField(max_length=255)
-    application_access = models.ForeignKey('SQLApplicationAccess', on_delete=models.CASCADE)
+    application_access = models.ForeignKey('ApplicationAccess', on_delete=models.CASCADE)
 
     class Meta(object):
         unique_together = ('app_id', 'group_id')
-
-
-class AppGroup(DocumentSchema):
-    app_id = StringProperty()
-    group_id = StringProperty()
-
-    @property
-    @memoized
-    def group(self):
-        try:
-            group = Group.get(self.group_id)
-            assert group.doc_type is 'Group'
-            return group
-        except (ResourceNotFound, AssertionError):
-            return None
-
-    @property
-    @memoized
-    def group_stub(self):
-        return {
-            'name': self.group.name,
-            '_id': self.group.get_id,
-            }
-
-    @property
-    @memoized
-    def app(self):
-        try:
-            app = Application.get(self.app_id)
-            assert app.doc_type is 'Application'
-            return app
-        except (ResourceNotFound, AssertionError):
-            return None
-
-    @property
-    @memoized
-    def app_stub(self):
-        return {
-            'name': self.app.name,
-            '_id': self.app.get_id,
-            }
-
-
-class ApplicationAccess(QuickCachedDocumentMixin, Document):
-    """
-    This is used to control which users/groups can access which applications on cloudcare.
-    """
-    domain = StringProperty()
-    app_groups = SchemaListProperty(AppGroup, default=[])
-    restrict = BooleanProperty(default=False)
