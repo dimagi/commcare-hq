@@ -174,7 +174,7 @@
             supervisor_id,
             sum(has_aadhar_id) as child_has_aadhar,
             sum(immunization_in_month) AS num_children_immunized
-        FROM "tmp_child_health_monthly_2019-01-01"
+        FROM "child_health_monthly_2019-01-01"
         WHERE month = %(month)s and valid_in_month = 1
         GROUP BY awc_id, supervisor_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id = agg_awc.supervisor_id;
