@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from custom.inddex.sqldata import FoodCodeData, FoodBaseTermData
+from custom.inddex.sqldata import FiltersData
 from corehq.apps.reports.filters.dates import DatespanFilter
 
 
@@ -11,7 +11,7 @@ class DateRangeFilter(DatespanFilter):
 
 class AgeRangeFilter(BaseSingleOptionFilter):
     slug = 'age_range'
-    label = _('Age range')
+    label = _('Age Range')
     default_text = _('All')
 
     @property
@@ -51,8 +51,6 @@ class PregnancyFilter(BaseSingleOptionFilter):
         return [
             ('yes', _('Yes')),
             ('no', _('No')),
-            ('refuse_to_answer', _('Refuse to answer')),
-            ('dont_know', _('Don\'t know'))
         ]
 
 
@@ -64,6 +62,7 @@ class SettlementAreaFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
+            ('per-urban', _('Peri-urban')),
             ('urban', _('Urban')),
             ('rural', _('Rural'))
         ]
@@ -76,11 +75,9 @@ class BreastFeedingFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        # TODO: Check value in production application ?? refuse_de_rpondre
         return [
             ('yes', _('Yes')),
             ('no', _('No')),
-            ('refuse_de_rpondre', _('Refuse to answer'))
         ]
 
 
@@ -93,7 +90,7 @@ class SupplementsFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('yes', _('Yes')),
-            ('no', _('No'))
+            ('no', _('Not'))
         ]
 
 
@@ -144,38 +141,6 @@ class GapTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class FoodCodeFilter(BaseSingleOptionFilter):
-    slug = 'food_code'
-    label = _('Food Code')
-    default_text = _('All')
-
-    @property
-    def food_codes(self):
-        return FoodCodeData(config={'domain': self.domain}).rows
-
-    @property
-    def options(self):
-        return [
-            (str(x), str(x)) for x in self.food_codes
-        ]
-
-
-class FoodBaseTermFilter(BaseSingleOptionFilter):
-    slug = 'food_base_term'
-    label = _('Food base term')
-    default_text = _('All')
-
-    @property
-    def food_base_terms(self):
-        return FoodBaseTermData(config={'domain': self.domain}).rows
-
-    @property
-    def options(self):
-        return [
-            (x, x) for x in self.food_base_terms
-        ]
-
-
 class FoodTypeFilter(BaseSingleOptionFilter):
     slug = 'food_type'
     label = _('Food type')
@@ -184,5 +149,47 @@ class FoodTypeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            (x, x) for x in ['food_item', 'non_std_food_item', 'non_std_recipe', 'std_recipe']
+            (x, x) for x in ['food_item', 'non_std_food_item', 'std_recipe', 'non_std_recipe']
+        ]
+
+
+class CaseOwnersFilter(BaseSingleOptionFilter):
+    slug = 'case_owners'
+    label = _('Case Owners')
+    default_text = _('All')
+
+    @property
+    def options(self):
+        return [
+            (x, x) for x in FiltersData(config={'domain': self.domain}).rows[0]
+        ]
+
+
+class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):
+    slug = 'fao_who_gift_food_group_description'
+    label = _('FAO/WHO GIFT Food Group Description')
+    default_text = _('All')
+
+    @property
+    def options(self):
+        return [
+            ('1', 'Cereals and their products (1)'),
+            ('2', 'Roots, tubers, plantains and their products (2)'),
+            ('3', 'Pulses, seeds and nuts and their products (3)'),
+            ('4', 'Milk and milk products (4)'),
+            ('5', 'Eggs and their products (5)'),
+            ('6', 'Fish, shellfish and their products (6)'),
+            ('7', 'Meat and meat products (7)'),
+            ('8', 'Insects, grubs and their products (8)'),
+            ('9', 'Vegetables and their products( 9)'),
+            ('10', 'Fruits and their products (10)'),
+            ('11', 'Fats and oils (11)'),
+            ('12', 'Sweets and sugars (12)'),
+            ('13', 'Spices and condiments (13)'),
+            ('14', 'Beverages (14)'),
+            ('15', 'Foods for particular nutritional uses (15)'),
+            ('16', 'Food supplements and similar (16)'),
+            ('17', 'Food additives (17)'),
+            ('18', 'Composite foods (18)'),
+            ('19', 'Savoury snacks (19)'),
         ]

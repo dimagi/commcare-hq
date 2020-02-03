@@ -15,13 +15,8 @@ class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
         'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc'
     ]
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         self.config = config
-        self.filters_config = filters_config
-
-    @property
-    def filter_values(self):
-        return self.filters_config
 
     @property
     @memoized
@@ -151,13 +146,8 @@ class NutrientIntakesByRespondentData(NutrientIntakesDataMixin):
         'urban_rural', 'pregnant', 'breastfeeding', 'energy_kcal', 'water_g', 'protein_g', '<all other nutrients>'
     ]
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         super().__init__(config)
-        self.filters_config = filters_config
-
-    @property
-    def filter_values(self):
-        return self.filters_config
 
     @property
     @memoized

@@ -1,3 +1,4 @@
+from memoized import memoized
 from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -28,67 +29,37 @@ class DataSourceMixin(SqlData):
 
 class FoodConsumptionDataSourceMixin(DataSourceMixin):
     total_row = None
-    filters_config = {}
 
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
 
 
-class FoodCodeDataSource(FoodConsumptionDataSourceMixin):
+class FiltersData(FoodConsumptionDataSourceMixin):
 
     @property
     def group_by(self):
-        return ['food_code']
+        return ['owner_name']
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn('Food code'))
+        return [
+            DataTablesColumn('Case owner'),
+        ]
 
     @property
     def columns(self):
         return [
-            DatabaseColumn('Food code', SimpleColumn('food_code')),
+            DatabaseColumn('Case owner', SimpleColumn('owner_name')),
         ]
 
-
-class FoodCodeData(FoodCodeDataSource):
-    slug = 'food_code'
-    comment = 'Food codes'
-    title = 'Food code'
-    show_total = False
-
     @property
+    @memoized
     def rows(self):
-        food_codes = {int(x['food_code']) for x in self.get_data() if x['food_code']}
-        return sorted(food_codes)
+        case_owners = []
+        for element in self.get_data():
+            case_owner = element.get('owner_name')
+            if case_owner and case_owner not in case_owners:
+                case_owners.append(element['owner_name'])
 
-
-class FoodBaseTermDataSource(FoodConsumptionDataSourceMixin):
-
-    @property
-    def group_by(self):
-        return ['food_base_term']
-
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn('Food base term'))
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('Food base term', SimpleColumn('food_base_term')),
-        ]
-
-
-class FoodBaseTermData(FoodBaseTermDataSource):
-    slug = 'food_base_term'
-    comment = 'Food base terms'
-    title = 'Food base term'
-    show_total = False
-
-    @property
-    def rows(self):
-        food_base_terms = [x['food_base_term'] for x in self.get_data() if x['food_base_term'] is not None]
-
-        return sorted(set(food_base_terms))
+        return case_owners,

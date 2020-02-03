@@ -1,5 +1,6 @@
 from memoized import memoized
 
+from custom.inddex.filters import FaoWhoGiftFoodGroupDescriptionFilter
 from custom.inddex.ucr.data_providers.nutrient_intakes_data import (
     NutrientIntakesByFoodData,
     NutrientIntakesByRespondentData,
@@ -15,17 +16,32 @@ class NutrientIntakesReport(BaseNutrientReport):
     show_filters = True
 
     @property
+    def fields(self):
+        fields = super().fields
+        fields.insert(-1, FaoWhoGiftFoodGroupDescriptionFilter)
+        return fields
+
+    @property
     def report_context(self):
         context = super().report_context
         context['export_only'] = self.export_only
         return context
 
     @property
+    def report_config(self):
+        report_config = super().report_config
+        report_config.update(self.filters_config)
+        report_config.update(fao_who_gift_food_group_description=self.fao_who_gift_food_group_description)
+        return report_config
+
+    @property
+    def fao_who_gift_food_group_description(self):
+        return self.request.GET.get('fao_who_gift_food_group_description') or ''
+
+    @property
     @memoized
     def data_providers(self):
-        config = self.report_config
-        filters_config = self.filters_config
         return [
-            NutrientIntakesByFoodData(config=config, filters_config=filters_config),
-            NutrientIntakesByRespondentData(config=config, filters_config=filters_config)
+            NutrientIntakesByFoodData(config=self.report_config),
+            NutrientIntakesByRespondentData(config=self.report_config)
         ]

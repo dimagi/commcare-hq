@@ -1,12 +1,11 @@
-import datetime
-
 from memoized import memoized
 
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.userreports.reports.util import ReportExport
 from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter, PregnancyFilter, \
-    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
+    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter, CaseOwnersFilter, \
+    FaoWhoGiftFoodGroupDescriptionFilter, SupplementsFilter
 
 
 class MultiSheetReportExport(ReportExport):
@@ -15,7 +14,6 @@ class MultiSheetReportExport(ReportExport):
         """
         Allows to export multitabular reports in one xmlns file, different report tables are
         presented as different sheets in document
-
         :param title: Exported file title
         :param table_data: list of tuples, first element of tuple is sheet title, second is list of rows
         """
@@ -45,7 +43,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
     @property
     def fields(self):
-        return [DateRangeFilter]
+        return [CaseOwnersFilter, DateRangeFilter]
 
     @property
     def report_config(self):
@@ -53,7 +51,12 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             'domain': self.domain,
             'startdate': self.datespan.startdate,
             'enddate': self.datespan.enddate,
+            'case_owners': self.case_owner
         }
+
+    @property
+    def case_owner(self):
+        return self.request.GET.get('case_owners') or ''
 
     @property
     def data_providers(self):
@@ -108,13 +111,13 @@ class BaseNutrientReport(MultiTabularReport):
 
     @property
     def fields(self):
-        return [
-            DateRangeFilter,
+        return super().fields + [
             GenderFilter,
             AgeRangeFilter,
             PregnancyFilter,
             BreastFeedingFilter,
             SettlementAreaFilter,
+            SupplementsFilter,
             RecallStatusFilter
         ]
 
@@ -129,4 +132,7 @@ class BaseNutrientReport(MultiTabularReport):
             'supplements',
             'recall_status',
         ]
-        return {slug: self.request.GET.get(slug, '') for slug in request_slugs}
+        filters_config = super().report_config
+        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
+
+        return filters_config

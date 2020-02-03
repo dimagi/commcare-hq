@@ -1,5 +1,5 @@
-from custom.inddex.filters import GapTypeFilter, GapDescriptionFilter, FoodTypeFilter, FoodCodeFilter, \
-    RecallStatusFilter
+from custom.inddex.filters import GapTypeFilter, GapDescriptionFilter, FoodTypeFilter, \
+    RecallStatusFilter, FaoWhoGiftFoodGroupDescriptionFilter
 from custom.inddex.ucr.data_providers.gaps_report_by_item_data import GapsReportByItemDetailsData, \
     GapsReportByItemSummaryData
 from custom.inddex.utils import MultiTabularReport
@@ -16,8 +16,8 @@ class GapsReportByItem(MultiTabularReport):
         fields += [
             GapTypeFilter,
             GapDescriptionFilter,
+            FaoWhoGiftFoodGroupDescriptionFilter,
             FoodTypeFilter,
-            FoodCodeFilter,
             RecallStatusFilter
         ]
 
@@ -27,14 +27,18 @@ class GapsReportByItem(MultiTabularReport):
     def report_config(self):
         report_config = super().report_config
         report_config.update(
+            fao_who_gift_food_group_description=self.fao_who_gift_food_group_description,
             gap_type=self.gap_type,
             gap_description=self.gap_description,
-            food_code=self.food_code,
             food_type=self.food_type,
             recall_status=self.recall_status
         )
 
         return report_config
+
+    @property
+    def fao_who_gift_food_group_description(self):
+        return self.request.GET.get('fao_who_gift_food_group_description') or ''
 
     @property
     def gap_type(self):
@@ -43,10 +47,6 @@ class GapsReportByItem(MultiTabularReport):
     @property
     def gap_description(self):
         return self.request.GET.get('gap_description') or ''
-
-    @property
-    def food_code(self):
-        return self.request.GET.get('food_code') or ''
 
     @property
     def food_type(self):

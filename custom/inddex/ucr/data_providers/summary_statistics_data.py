@@ -12,13 +12,8 @@ class SummaryStatsNutrientDataProvider(SummaryStatisticsDataMixin):
         '50_percent', '75_percent', '95_percent'
     ]
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         self.config = config
-        self.filters_config = filters_config
-
-    @property
-    def filter_values(self):
-        return self.filters_config
 
     @property
     @memoized

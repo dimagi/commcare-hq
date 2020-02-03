@@ -20,8 +20,6 @@ class SummaryStatisticsReport(BaseNutrientReport):
     @property
     @memoized
     def data_providers(self):
-        config = self.report_config
-        filters_config = self.filters_config
         return [
-            SummaryStatsNutrientDataProvider(config=config, filters_config=filters_config)
+            SummaryStatsNutrientDataProvider(config=self.report_config)
         ]

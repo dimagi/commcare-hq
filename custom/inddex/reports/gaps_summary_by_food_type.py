@@ -18,10 +18,7 @@ class GapsSummaryByFoodTypeReport(MultiTabularReport):
 
     @property
     def fields(self):
-        return [
-            GapTypeFilter,
-            RecallStatusFilter
-        ]
+        return super().fields + [GapTypeFilter, RecallStatusFilter]
 
     @property
     def report_context(self):
@@ -31,19 +28,21 @@ class GapsSummaryByFoodTypeReport(MultiTabularReport):
         return context
 
     @property
+    def report_config(self):
+        report_config = super().report_config
+        report_config.update(recall_status=self.recall_status)
+
+        return report_config
+
+    @property
     def recall_status(self):
         return self.request.GET.get('recall_status') or ''
 
     @property
     @memoized
     def data_providers(self):
-        config = self.report_config
-        filters_config = {
-            'recall_status': self.recall_status
-        }
-
         return [
-            GapsSummaryMasterOutputData(config=config, filters_config=filters_config),
-            ConvFactorGapsSummaryData(config=config, filters_config=filters_config),
-            FCTGapsSummaryData(config=config, filters_config=filters_config)
+            GapsSummaryMasterOutputData(config=self.report_config),
+            ConvFactorGapsSummaryData(config=self.report_config),
+            FCTGapsSummaryData(config=self.report_config)
         ]

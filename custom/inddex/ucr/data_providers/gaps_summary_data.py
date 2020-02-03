@@ -28,9 +28,8 @@ class GapsSummaryMasterOutputData(GapsReportSummaryDataMixin):
         'fct_gap_desc'
     ]
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         self.config = config
-        self.filters_config = filters_config
 
     @property
     def filter_values(self):
@@ -567,9 +566,8 @@ class ConvFactorGapsSummaryData(GapsReportSummaryDataMixin):
     slug = 'conv_factor_gaps_summary_by_food_type'
     headers_in_order = ['conv_factor_gap_code', 'conv_factor_gap_desc', 'food_type', 'conv_gap_food_type_total']
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         self.config = config
-        self.filters_config = filters_config
 
     @property
     @memoized
@@ -599,9 +597,8 @@ class FCTGapsSummaryData(GapsReportSummaryDataMixin):
     slug = 'fct_gaps_summary_by_food_type'
     headers_in_order = ['fct_gap_code', 'fct_gap_desc', 'food_type', 'fct_gap_food_type_total']
 
-    def __init__(self, config, filters_config):
+    def __init__(self, config):
         self.config = config
-        self.filters_config = filters_config
 
     @property
     @memoized
