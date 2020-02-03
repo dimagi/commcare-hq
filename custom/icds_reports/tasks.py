@@ -1625,7 +1625,7 @@ def create_reconciliation_records():
         reconcile_data_not_in_ucr.delay(status.pk)
 
 
-@task(queue='background_queue')
+@task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
