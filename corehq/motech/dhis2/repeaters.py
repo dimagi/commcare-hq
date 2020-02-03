@@ -81,16 +81,17 @@ class Dhis2EntityRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
-        value_sources = []
+        value_source_configs = []
         for case_config in self.dhis2_entity_config.case_configs:
-            value_sources.append(as_value_source(case_config.org_unit_id))
-            value_sources.append(as_value_source(case_config.tei_id))
+            value_source_configs.append(case_config.org_unit_id)
+            value_source_configs.append(case_config.tei_id)
             for value_source_config in case_config.attributes.values():
-                value_sources.append(as_value_source(value_source_config))
+                value_source_configs.append(value_source_config)
 
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            extra_fields=[c['case_property'] for c in value_source_configs
+                          if 'case_property' in c],
             form_question_values=get_form_question_values(payload),
         )
         requests = get_requests(self, repeat_record.payload_id)
