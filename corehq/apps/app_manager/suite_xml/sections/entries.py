@@ -71,9 +71,9 @@ class EntriesHelper(object):
         self.build_profile_id = build_profile_id
         self.details_helper = DetailsHelper(self.app, self.modules)
 
-    def get_datums_meta_for_form_generic(self, form, module=None):
-        if not module:
-            module = form.get_module()
+    def get_datums_meta_for_form_generic(self, form):
+        module = form.get_module()
+
         if form.form_type == 'module_form':
             datums_meta = self.get_case_datums_basic_module(module, form)
         elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
@@ -191,6 +191,10 @@ class EntriesHelper(object):
                 )
                 e.datums.append(datum)
                 e.assertions.extend(assertions)
+
+            if module.report_context_tile:
+                from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
+                e.datums.append(get_report_context_tile_datum())
 
             results.append(e)
 
@@ -885,7 +889,7 @@ class EntriesHelper(object):
                 )
                 if module_for_persistent_context:
                     return id_strings.detail(module_for_persistent_context, detail_type)
-            if self._has_persistent_tile(detail):
+            if detail.has_persistent_tile():
                 return id_strings.detail(detail_module, detail_type)
             if detail.persist_case_context and detail_type == "case_short":
                 # persistent_case_context will not work on product lists.
@@ -906,7 +910,7 @@ class EntriesHelper(object):
                     module, detail.persistent_case_tile_from_module)
                 if inline_attr:
                     return inline_attr
-            if self._has_persistent_tile(detail):
+            if detail.has_persistent_tile():
                 list_type = "case_long" if detail_type == "case_short" else "product_long"
                 return self.details_helper.get_detail_id_safe(detail_module, list_type)
         return None
@@ -918,9 +922,3 @@ class EntriesHelper(object):
         details = {d[0]: d for d in module.get_details()}
         _, detail, detail_enabled = details[detail_type]
         return detail, detail_enabled
-
-    def _has_persistent_tile(self, detail):
-        """
-        Return True if the given Detail is configured to persist a case tile on forms
-        """
-        return detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml)
