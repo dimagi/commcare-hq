@@ -12,7 +12,7 @@ describe('Map Or Sector View Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false);
+        utils.provideDefaultConstants($provide, {});
     }));
 
     beforeEach(inject(function ($controller, $rootScope, _$location_, storageService, locationsService) {

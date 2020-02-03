@@ -225,7 +225,7 @@ class CaseAccessorTestsSQL(TestCase):
         ))
         CaseAccessorSQL.save_case(case)
 
-        with self.assertNumQueries(1, using=self.using):
+        with self.assertNumQueries(1, using=case.db):
             attachments = CaseAccessorSQL.get_attachments(case.case_id)
 
         self.assertEqual(2, len(attachments))

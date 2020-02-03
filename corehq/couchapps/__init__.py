@@ -21,5 +21,4 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'forms_by_app_info': settings.NEW_APPS_DB,
     'apps_with_submissions': settings.NEW_APPS_DB,
     'saved_apps_auto_generated': settings.NEW_APPS_DB,
-    'global_app_config_by_app_id': settings.NEW_APPS_DB,
 })

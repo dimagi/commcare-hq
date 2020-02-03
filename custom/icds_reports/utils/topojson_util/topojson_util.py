@@ -63,13 +63,39 @@ def copy_custom_metadata(from_topojson, to_topojson):
         location_data['scale'] = from_topojson['objects'][location_name]['scale']
 
 
-def get_topojson_for_district(district):
+def get_topojson_for_district(state, district):
     path = get_topojson_directory()
+    district_topojson_data = get_district_topojson_data()
+    # if we have the state name already use that
+    filename = None
+    if state in district_topojson_data:
+        filename = district_topojson_data[state]['file_name']
+    else:
+        # legacy support - missing state name so look for the district by name across all states
+        # todo: add soft assert and/or remove this
+        for state, data in district_topojson_data.items():
+            if district in data['districts']:
+                filename = data['file_name']
+                break
+    if filename:
+        with open(os.path.join(path, 'blocks/' + filename), encoding='utf-8') as f:
+            return json.loads(f.read())
 
-    district_topojson_data_path = os.path.join(path, 'district_topojson_data.json')
-    district_topojson_data = json.loads(open(district_topojson_data_path, encoding='utf-8').read())
 
-    for state, data in district_topojson_data.items():
-        if district in data['districts']:
-            with open(os.path.join(path, 'blocks/' + data['file_name']), encoding='utf-8') as f:
-                return json.loads(f.read())
+def get_district_topojson_data():
+    district_topojson_data_path = os.path.join(get_topojson_directory(), 'district_topojson_data.json')
+    with open(district_topojson_data_path, encoding='utf-8') as f:
+        return json.loads(f.read())
+
+
+def get_map_name(location):
+    """
+    Gets the "map name" of a SQLLocation, defaulting to the location's name if not available.
+    """
+    if not location:
+        return
+
+    if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
+        return location.metadata['map_location_name']
+    else:
+        return location.name

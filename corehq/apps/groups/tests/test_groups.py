@@ -99,6 +99,19 @@ class GroupTest(TestCase):
         self.assertNotIn(self.active_user._id, group1.removed_users)
         self.assertIn(self.active_user._id, group1.users)
 
+    def test_set_user_ids(self):
+        group = Group(
+            domain=DOMAIN,
+            name='group1',
+            users=[self.active_user._id, self.inactive_user._id]
+        )
+        group.save()
+
+        group.set_user_ids([self.inactive_user._id, self.deleted_user._id])
+
+        self.assertEqual(set(group.users), {self.inactive_user._id, self.deleted_user._id})
+        self.assertEqual(set(group.removed_users), {self.active_user._id})
+
 
 class TestDeleteAllGroups(TestCase):
 

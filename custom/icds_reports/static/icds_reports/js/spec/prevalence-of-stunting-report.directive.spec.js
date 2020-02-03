@@ -14,7 +14,7 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, true, true);
+        utils.provideDefaultConstants($provide, {includeGenders: true, includeAges: true});
         $provide.constant("haveAccessToFeatures", false);
     }));
 
@@ -241,7 +241,7 @@ describe('Prevalence Of Stunting Directive  feature flag enable', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, true, true);
+        utils.provideDefaultConstants($provide, {includeGenders: true, includeAges: true});
         $provide.constant("haveAccessToFeatures", true);
     }));
 

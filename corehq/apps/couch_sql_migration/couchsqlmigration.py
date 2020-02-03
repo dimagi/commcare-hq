@@ -23,7 +23,7 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, retry_on_couch_error
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -32,7 +32,6 @@ from corehq.apps.tzmigration.api import (
     force_phone_timezones_should_be_processed,
 )
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -83,7 +82,7 @@ from corehq.util.pagination import (
 from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
-from .casediff import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
+from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
@@ -401,7 +400,7 @@ class CouchSqlDomainMigrator:
     def _with_progress(self, doc_types, iterable, progress_name='Migrating', offset_key=None):
         doc_count = sum([
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-            for doc_type in doc_types
+            for doc_type in (d.split(".", 1)[0] for d in doc_types)
         ])
         if offset_key is None:
             offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
@@ -898,7 +897,11 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = str_to_datetime(key_date)
+        try:
+            key_date = str_to_datetime(key_date)
+        except ValueError:
+            log.warn("could not get date from last element of key %r", results[-1]['key'])
+            return
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -917,8 +920,13 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
 
 def _iter_docs(domain, doc_type, resume_key, stopper):
+    @retry_on_couch_error
     def data_function(**view_kwargs):
-        return couch_db.view('by_domain_doc_type_date/view', **view_kwargs)
+        view_name = 'by_domain_doc_type_date/view'
+        results = list(couch_db.view(view_name, **view_kwargs))
+        assert all(r['key'][0] == domain for r in results), \
+            _repr_bad_results(view_name, view_kwargs, results, domain)
+        return results
 
     if "." in doc_type:
         doc_type, row_key = doc_type.split(".")
@@ -942,10 +950,46 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    return (row[row_key] for row in rows)
+    log.info("iteration state: %r", rows.state.to_json())
+    row = None
+    try:
+        for row in rows:
+            yield row[row_key]
+    finally:
+        if row is not None:
+            row_copy = dict(row)
+            row_copy.pop("doc", None)
+            log.info("last item: %r", row_copy)
+        log.info("final iteration state: %r", rows.state.to_json())
 
 
 _iter_docs.chunk_size = 1000
+
+
+def _repr_bad_results(view, kwargs, results, domain):
+    def dropdoc(row):
+        if kwargs["include_docs"]:
+            row = dict(row)
+            row.pop("doc")
+        return row
+
+    def itr_ix(i, seen=set()):
+        if i > 0 and (i - 1) not in seen:
+            yield i - 1, "good"
+        seen.add(i)
+        yield i, "bad"
+
+    context_rows = [
+        f"{j} {status} {dropdoc(results[j])}"
+        for i, result in enumerate(results)
+        if result['key'][0] != domain
+        for j, status in itr_ix(i)
+    ]
+    if len(context_rows) > 20:
+        context_rows = context_rows[:20]
+        context_rows.append(f"... {len(context_rows) - 20} results omitted")
+    context = '\n'.join(context_rows)
+    return f"bad results from {view} {kwargs}:\n{context}"
 
 
 def _iter_skipped_forms(domain, migration_id, stopper, with_progress):
@@ -1020,7 +1064,7 @@ class DocCounter:
 
     def __init__(self, statedb):
         self.statedb = statedb
-        self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.counts = defaultdict(int, self.statedb.get(self.STATE_KEY, {}))
         self.timing = TimingContext("couch_sql_migration")
         self.dd_session = 0
         self.state_session = 0

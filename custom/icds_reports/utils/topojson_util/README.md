@@ -58,4 +58,3 @@ The following is a brain dump of todos to improve this setup:
 - Maybe load the data via a static view instead of having it pass through django so it
   can be served by nginx (would require porting some logic to the front end)
 - Or else, do some caching on the data so we aren't hitting the filesystem with every request
-- Confirm there are no duplcate district names

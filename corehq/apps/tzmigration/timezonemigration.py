@@ -121,7 +121,7 @@ def get_planning_db_filepath(domain):
 
 def get_planning_db(domain):
     db_filepath = get_planning_db_filepath(domain)
-    return PlanningDB.open(db_filepath)
+    return PlanningDB.open(domain, db_filepath)
 
 
 def delete_planning_db(domain):
@@ -137,7 +137,7 @@ def delete_planning_db(domain):
 
 def prepare_planning_db(domain):
     db_filepath = get_planning_db_filepath(domain)
-    planning_db = PlanningDB.init(db_filepath)
+    planning_db = PlanningDB.init(domain, db_filepath)
     xform_ids = get_form_ids_by_type(domain, 'XFormInstance')
     xform_db = XFormInstance.get_db()
 

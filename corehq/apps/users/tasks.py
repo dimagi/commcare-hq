@@ -30,7 +30,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.util.celery_utils import deserialize_run_every_setting
+from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
 
@@ -301,17 +301,21 @@ def update_domain_date(user_id, domain):
             pass
 
 
+process_reporting_metadata_staging_schedule = deserialize_run_every_setting(
+    settings.USER_REPORTING_METADATA_BATCH_SCHEDULE
+)
+
+
 @periodic_task(
-    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    run_every=process_reporting_metadata_staging_schedule,
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
-        CouchUser,
-        UserReportingMetadataStaging, DeviceAppMeta
+        CouchUser, UserReportingMetadataStaging
     )
-    from corehq.pillows.synclog import mark_last_synclog
-    from pillowtop.processors.form import mark_latest_submission
+
+    start = datetime.utcnow()
 
     with transaction.atomic():
         records = (
@@ -319,35 +323,10 @@ def process_reporting_metadata_staging():
         )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            if not user or user.is_deleted():
-                record.delete()
-                continue
-
-            save = False
-            if record.received_on:
-                save = mark_latest_submission(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on, save_user=False
-                )
-            if record.device_id or record.sync_date or record.last_heartbeat:
-                device_app_meta = DeviceAppMeta(
-                    app_id=record.app_id,
-                    build_id=record.build_id,
-                    build_version=record.app_version,
-                    last_heartbeat=record.last_heartbeat,
-                    last_sync=record.sync_date,
-                    num_unsent_forms=record.num_unsent_forms,
-                    num_quarantined_forms=record.num_quarantined_forms
-                )
-                save |= mark_last_synclog(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, record.device_id, device_app_meta,
-                    commcare_version=record.commcare_version, build_profile_id=record.build_profile_id, save_user=False
-                )
-            if save:
-                user.save(fire_signals=False)
-
+            record.process_record(user)
             record.delete()
 
-    if UserReportingMetadataStaging.objects.exists():
+    duration = datetime.utcnow() - start
+    run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
+    if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()

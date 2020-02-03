@@ -28,16 +28,17 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
         getDistrictTopoJson: function () {
             return getStaticTopojson(districtTopoJsonUrl, 'districts');
         },
-        getTopoJsonForDistrict: function (district) {
-            if (district in CACHE["blocks"]) {
+        getTopoJsonForDistrict: function (district, state) {
+            var cacheKey = state + district;
+            if (cacheKey in CACHE["blocks"]) {
                 // https://javascript.info/promise-api#promise-resolve-reject
-                return Promise.resolve(CACHE["blocks"][district]);
+                return Promise.resolve(CACHE["blocks"][cacheKey]);
             } else {
                 return $http.get(url('topojson'), {
-                    params: {district: district},
+                    params: {district: district, state: state},
                 }).then(
                     function (response) {
-                        CACHE['blocks'][district] = response.data;
+                        CACHE['blocks'][cacheKey] = response.data;
                         return response.data;
                     }
                 );

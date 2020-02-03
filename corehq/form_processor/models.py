@@ -878,13 +878,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         """For compatability with CommCareCase. Please use transactions when possible"""
         return self.non_revoked_transactions
 
-    def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    def _get_unsaved_transaction_for_form(self, form_id):
         transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
-        transaction = transactions[0] if transactions else None
+        return transactions[0] if transactions else None
 
-        if not transaction:
+    def get_transaction_by_form_id(self, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        transaction = self._get_unsaved_transaction_for_form(form_id)
+
+        if not transaction and self.is_saved():
             transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
@@ -1374,6 +1377,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
+        """Get or create a form transaction for a the given form and case.
+        """
         action_types = action_types or []
 
         if any([not cls._valid_action_type(action_type) for action_type in action_types]):
@@ -1401,6 +1406,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def ledger_transaction(cls, case, xform):
+        """Get or create a ledger transaction for a the given form and case.
+        """
         return cls._from_form(
             case,
             xform,
@@ -1409,7 +1416,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        transaction = case.get_transaction_by_form_id(xform.form_id)
+        if xform.is_saved():
+            transaction = case.get_transaction_by_form_id(xform.form_id)
+        else:
+            transaction = case._get_unsaved_transaction_for_form(xform.form_id)
         if transaction:
             transaction.type |= transaction_type
             return transaction

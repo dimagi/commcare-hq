@@ -14,13 +14,16 @@ from custom.icds_reports.views import (
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
-    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI)
+    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
+    MobileDashboardDownloadView)
 
 
 dashboard_urls = [
+    url('^mobile_app/$', MobileDashboardDownloadView.as_view(), name='icds_mobile_dashboard_download'),
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
     url('^', DashboardView.as_view(), name='icds_dashboard'),
+
 ]
 
 maternal_and_child_urls = [
@@ -186,6 +189,7 @@ urlpatterns = [
     url(r'^governance_apis/home_visit/', GovernanceHomeVisitAPI.as_view(), name='governance_apis_home_visit'),
     url(r'^governance_apis/beneficiary/', GovernanceBeneficiaryAPI.as_view(), name='governance_apis_beneficiary'),
     url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
+    url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
 
 ]
 

@@ -14,7 +14,7 @@ describe('Adolescent Girls Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false);
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("haveAccessToFeatures", false);
     }));
 

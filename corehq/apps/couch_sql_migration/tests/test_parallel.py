@@ -66,6 +66,23 @@ def test_consume_error():
             # error should not cause deadlock
 
 
+@timelimit
+def test_produce_error():
+    class Error(Exception):
+        pass
+
+    def producer():
+        yield 1
+        yield 2
+        raise Error
+
+    results = set()
+    with assert_raises(Error):
+        for result in mod.Pool().imap_unordered(square, producer()):
+            results.add(result)
+    eq(results, {1, 4})
+
+
 def test_race_conditions():
     # This test is slow and is not very useful except for finding race
     # conditions which often result in a hung process.

@@ -7,25 +7,21 @@ class Command(PopulateSQLCommand):
         Adds a SQLApplicationAccess for any ApplicationAccess doc that doesn't yet have one.
     """
 
-    @property
-    def couch_class(self):
-        try:
-            from corehq.apps.cloudcare.models import ApplicationAccess
-            return ApplicationAccess
-        except ImportError:
-            return None
+    @classmethod
+    def couch_doc_type(cls):
+        return 'ApplicationAccess'
 
-    @property
-    def couch_class_key(self):
+    @classmethod
+    def couch_key(cls):
         return set(['domain'])
 
-    @property
-    def sql_class(self):
+    @classmethod
+    def sql_class(cls):
         from corehq.apps.cloudcare.models import SQLApplicationAccess
         return SQLApplicationAccess
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class.objects.update_or_create(
+        model, created = self.sql_class().objects.update_or_create(
             domain=doc['domain'],
             defaults={
                 "restrict": doc['restrict'],

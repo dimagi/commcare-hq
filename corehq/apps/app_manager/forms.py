@@ -12,7 +12,7 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.toggles import LINKED_DOMAINS
+from corehq import toggles
 
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
@@ -47,7 +47,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if LINKED_DOMAINS.enabled(self.from_domain):
+        if toggles.LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -69,12 +69,17 @@ class CopyApplicationForm(forms.Form):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
+        if toggles.MULTI_MASTER_BYPASS_VERSION_CHECK.enabled(domain):
+            raise forms.ValidationError("""
+                Copying an app to a domain that uses multi-master linked apps and bypasses
+                the minimum CommCare version check requires developer intervention.
+            """)
         return domain
 
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not LINKED_DOMAINS.enabled(domain):
+            if not toggles.LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:

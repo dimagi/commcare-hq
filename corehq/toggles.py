@@ -989,6 +989,12 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
+ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
+    'icds_dashboard_show_mobile_apk',
+    'Show a "Mobile APK" download link on the ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     'icds_dashboard_temporary_downtime',
@@ -1695,17 +1701,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Dec 25, 2019 if no one is using
-USER_API_USE_COUCH_BACKEND = StaticToggle(
-    'user_api_use_couch_backend',
-    'Use Old Couch backend for User API. '
-    'This is an escape hatch for support '
-    'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1734,13 +1729,6 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
-)
-
-MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
-    'mobile_ucr_total_row_iterative_calculation',
-    'Calculate total rows for mobile UCR during iteration instead of using a DB query',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
 )
 
 RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
@@ -1806,4 +1794,13 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     To allow a gradual rollout and testing of using the standby
     databases to generate restore payloads.
     """
+)
+
+
+EXCEL_EXPORT_DATA_TYPING = StaticToggle(
+    'excel_export_data_typing',
+    'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
+    'and case exports, so that excel export cells are correctly data-typed.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )

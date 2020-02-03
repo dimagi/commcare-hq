@@ -15,7 +15,7 @@ describe('Adult Weight Scale Directive', function () {
 
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false);
+        utils.provideDefaultConstants($provide, {});
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

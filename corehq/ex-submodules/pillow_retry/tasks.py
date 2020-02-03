@@ -17,6 +17,5 @@ def record_pillow_error_queue_size():
         datadog_gauge('commcare.pillowtop.error_queue', row['num_errors'], tags=[
             'pillow_name:%s' % row['pillow'],
             'host:celery',
-            'group:celery',
-            'error_type:%s' % row['error_type']
+            'group:celery'
         ])

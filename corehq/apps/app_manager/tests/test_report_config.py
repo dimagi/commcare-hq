@@ -13,6 +13,7 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
+from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProviderV1
 from corehq.apps.app_manager.models import (
     Application,
     GraphConfiguration,
@@ -234,7 +235,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
                                 lambda domain, include_remote: [cls.app]):
                     with mock_datasource_config():
-                        fixture, = call_fixture_generator(report_fixture_generator, cls.user)
+                        fixtures = call_fixture_generator(report_fixture_generator, cls.user)
+                        fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
         cls.fixture = ElementTree.tostring(fixture)
 
     def test_filter_entry(self):

@@ -13,11 +13,6 @@ def pillow_datadog_metrics():
         return pillow['seq_format'] == 'text'
 
     pillow_meta = get_all_pillows_json()
-
-    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
-    if active_pillows:
-        pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
-
     for pillow in pillow_meta:
         # The host and group tags are added here to ensure they remain constant
         # regardless of which celery worker the task get's executed on.

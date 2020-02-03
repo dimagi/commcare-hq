@@ -11,6 +11,7 @@ from gevent.queue import Empty, Queue
 
 from .util import ProcessError, gipc_process_error_handler
 
+__all__ = ["Pool"]
 log = logging.getLogger(__name__)
 RESULT_TIMEOUT = 5  # seconds
 
@@ -51,52 +52,57 @@ class Pool:
         :param iterable: A sequence of items, each to be passed to
         `func`. Each item must be pickleable.
         """
-        stop = Event()
         itemq = Queue(self.processes)
         resultq = Queue(self.processes * 2)
-        running = list(range(self.processes))
+        status = Status(list(range(self.processes)))
         worker_args = self._worker_args + (func, itemq, resultq)
         workers = _thread(_worker_pool, worker_args, self.processes)
-        producer = _thread(_produce_items, iterable, itemq, running, stop)
+        producer = _thread(_produce_items, iterable, itemq, status)
         with workers, producer:
             try:
-                yield from _consume_results(resultq, running)
+                yield from _consume_results(resultq, status)
             finally:
                 log.debug("finishing up...")
-                stop.set()
-                if running:
-                    _discard(_consume_results(resultq, running))
+                status.stop()
+                if status.running:
+                    _discard(_consume_results(resultq, status))
 
     @property
     def _worker_args(self):
         return self.initializer, self.initargs, self.maxtasksperchild
 
 
-def _produce_items(iterable, itemq, running, stop):
-    for item in iterable:
-        itemq.put(item)
-        if stop.is_set() or not running:
-            log.debug("stopped producing")
-            break
-    for x in list(running):
-        itemq.put(_Stop)
-    log.debug("finished producing")
+def _produce_items(iterable, itemq, status):
+    try:
+        for item in iterable:
+            itemq.put(item)
+            if status.is_stopped():
+                log.debug("stopped producing")
+                break
+    except Exception as err:
+        status.producer_error = err
+    finally:
+        for x in list(status.running):
+            itemq.put(STOP)
+        log.debug("finished producing")
 
 
-def _consume_results(resultq, running):
-    while running:
+def _consume_results(resultq, status):
+    while status.running:
         try:
             result = resultq.get(timeout=RESULT_TIMEOUT)
         except Empty:
             continue
-        if result is _Stop:
+        if result is STOP:
             log.debug("got worker stop token")
-            running.pop()
-        elif isinstance(result, _Error):
+            status.running.pop()
+        elif isinstance(result, WorkerError):
             log.error("error processing item in worker: %s\n%s",
                 result.pid, result.value)
         else:
             yield result
+    if status.producer_error is not None:
+        raise status.producer_error
 
 
 def _worker_pool(worker_args, processes):
@@ -109,7 +115,7 @@ def _worker_pool(worker_args, processes):
         while procs:
             for proc in gevent.wait(procs, count=1):
                 procs.remove(proc)
-                if proc.get() == _Stop:
+                if proc.get() == STOP:
                     continue
                 procs.add(start_worker())
                 log.debug("replaced worker")
@@ -131,13 +137,13 @@ def _worker(init, initargs, func, itemq, resultq):
     with itemq, resultq, context:
         while True:
             item = itemq.get()
-            if item is _Stop:
-                resultq.put(_Stop)
+            if item is STOP:
+                resultq.put(STOP)
                 break
             try:
                 result = func(item)
             except Exception:
-                result = _Error(traceback.format_exc())
+                result = WorkerError(traceback.format_exc())
             resultq.put(result)
 
 
@@ -147,12 +153,25 @@ def _discard(results):
         log.warn("discarding result: %r", item)
 
 
-class _Stop:
-    pass
+@attr.s
+class Status:
+    running = attr.ib()
+    _stop = attr.ib(factory=Event, init=False)
+    producer_error = None
+
+    def stop(self):
+        self._stop.set()
+
+    def is_stopped(self):
+        return self._stop.is_set() or not self.running
+
+
+class STOP:
+    """Constant/singleton stop token"""
 
 
 @attr.s
-class _Error:
+class WorkerError:
     value = attr.ib()
     pid = attr.ib(factory=os.getpid, init=False)
 
@@ -184,10 +203,10 @@ def _process(init, initargs, maxtasksperchild, func, itemq, resultq):
                     items.put(itemq.get())
                     result = results.get()
                     resultq.put(result)
-                    if result is _Stop:
+                    if result is STOP:
                         log.debug("worker stopped: %s", proc.pid)
-                        return _Stop
-                items.put(_Stop)
+                        return STOP
+                items.put(STOP)
         except ProcessError:
             log.error("process error %s", proc.pid)
         finally:

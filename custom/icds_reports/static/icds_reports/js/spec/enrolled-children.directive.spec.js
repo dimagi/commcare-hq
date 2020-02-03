@@ -14,7 +14,7 @@ describe('Enrolled Children Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, true, true);
+        utils.provideDefaultConstants($provide, {includeGenders: true, includeAges: true});
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

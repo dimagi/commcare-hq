@@ -160,10 +160,4 @@ NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
 NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
 
 
-GOVERNANCE_API_HOME_VISIT_RECORDS_PAGINATION = 10000
-
-# need to add more steps
-GOVERNANCE_API_STEPS = [
-    'home_visit',
-    'state_names'
-]
+GOVERNANCE_API_RECORDS_PAGINATION = 10000
