@@ -232,9 +232,11 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                                 'type': 'string'}},
                                   'type': 'multi_field'}}}
 
+USER_ES_ALIAS = 'hqusers'
+
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,
-    alias='hqusers',
+    alias=USER_ES_ALIAS,
     type='user',
     mapping=USER_MAPPING,
 )
