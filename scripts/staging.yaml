@@ -65,5 +65,5 @@ branches:
   - jls/sql-application-access-3 # Jenny Jan 25
   - jls/bulk-app-trans-format-fixes # Jenny Jan 27
   - jls/persistent-detail-ucr-liveness # Jenny Jan 28
-  - jls/migrate-HqDeploy-1-debug # Jenny Feb 1
+  #- jls/migrate-HqDeploy-1-debug # Jenny Feb 1
 submodules: {}
