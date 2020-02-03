@@ -121,7 +121,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.index, index_info.type, doc_id)
+    return get_es_new().exists(index_info.alias, index_info.type, doc_id)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -129,16 +129,14 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
     """
-    from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
-    es_meta = ES_META[index_name]
-    index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
+    index_info = ES_META[index_name]
     doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
-        index=es_meta.index,
-        doc_type=es_meta.type,
+        alias=index_info.alias,
+        doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
@@ -154,7 +152,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
 def refresh_elasticsearch_index(index_name):
     es_meta = ES_META[index_name]
     es = get_es_new()
-    es.indices.refresh(index=es_meta.index)
+    es.indices.refresh(index=es_meta.alias)
 
 
 ES_META = {
@@ -201,7 +199,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
     es_meta = ES_META[index_name]
 
     try:
-        results = es_interface.search(es_meta.index, es_meta.type, body=q)
+        results = es_interface.search(es_meta.alias, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
@@ -215,7 +213,7 @@ def mget_query(index_name, ids):
     es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
+        return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -251,7 +249,7 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     try:
         return scan(
             get_es_instance(es_instance_alias),
-            index=es_meta.index,
+            index=es_meta.alias,
             doc_type=es_meta.type,
             query=q,
         )
