@@ -380,6 +380,12 @@ class DashboardView(TemplateView):
 
 
 @location_safe
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class MobileDashboardDownloadView(TemplateView):
+    template_name = 'icds_reports/mobile_dashboard_download.html'
+
+
+@location_safe
 class IcdsDynamicTemplateViewBase(TemplateView):
     template_directory = None
 

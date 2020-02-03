@@ -11,7 +11,7 @@ from corehq.util.exceptions import AccessRestricted
 
 def raise_access_restricted(queryset):
     if not queryset._db and 'partition_value' not in queryset._hints and 'using' not in queryset._hints:
-        raise AccessRestricted("This model can be partitioned. Please specify which"
+        raise AccessRestricted("This model can be partitioned. Please specify which "
             "partitioned database with `using` or look for an appropriate dbaccessors "
             "method.")
 
