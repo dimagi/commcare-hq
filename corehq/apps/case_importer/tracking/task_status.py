@@ -79,13 +79,27 @@ def get_task_status_json(task_id):
         return TaskStatus(
             state=STATES.failed,
             progress=None,
-            result=TaskStatusResult(errors=[TaskStatusResultError(title='Unknown Failure')]),
+            result=TaskStatusResult(errors=[TaskStatusResultError(description='Unknown Failure')]),
         )
 
-    return TaskStatus(
-        state=task_status.state,
-        progress=TaskStatusProgress(
-            percent=task_status.progress.percent,
-        ),
-        result=normalize_task_status_result(task_status.result),
-    )
+    if task_status.state == STATES.failed:
+        errors = (
+            task_status.error if isinstance(task_status.error, (list, tuple))
+            else [task_status.error]
+        )
+        return TaskStatus(
+            state=task_status.state,
+            progress=TaskStatusProgress(
+                percent=task_status.progress.percent,
+            ),
+            result=TaskStatusResult(errors=[TaskStatusResultError(description=error)
+                                            for error in errors]),
+        )
+    else:
+        return TaskStatus(
+            state=task_status.state,
+            progress=TaskStatusProgress(
+                percent=task_status.progress.percent,
+            ),
+            result=normalize_task_status_result(task_status.result),
+        )

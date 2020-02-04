@@ -24,7 +24,7 @@ def bulk_import_async(config, domain, excel_id):
     try:
         case_upload.check_file()
     except ImporterError as e:
-        update_task_state(bulk_import_async, states.FAILURE, {'errors': get_importer_error_message(e)})
+        update_task_state(bulk_import_async, states.FAILURE, Exception(get_importer_error_message(e)))
         raise Ignore()
 
     try:
@@ -39,7 +39,7 @@ def bulk_import_async(config, domain, excel_id):
             'messages': result
         }
     except ImporterError as e:
-        update_task_state(bulk_import_async, states.FAILURE, {'errors': get_importer_error_message(e)})
+        update_task_state(bulk_import_async, states.FAILURE, Exception(get_importer_error_message(e)))
         raise Ignore()
     finally:
         store_task_result.delay(excel_id)
