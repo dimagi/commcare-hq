@@ -1160,14 +1160,18 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _("No users found. Please check your file contains a 'username' column."))
             return self.get(request, *args, **kwargs)
 
-        user_docs = get_user_docs_by_username(usernames)
-        usernames_not_found = set(usernames).difference(set([doc['username'] for doc in user_docs]))
-        usernames_with_forms = []
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        usernames_not_found = set(usernames).difference(set([doc['username'] for doc in user_docs_by_id.values()]))
+        user_ids_with_forms = (
+            FormES()
+            .domain(request.domain)
+            .user_id([doc['_id'] for doc in user_docs_by_id.values()])
+            .terms_aggregation('form.meta.userID', 'user_id')
+        ).run().aggregations.user_id.keys
+
         deleted_count = 0
-        for doc in user_docs:
-            if FormES().domain(request.domain).user_id(doc['_id']).count():
-                usernames_with_forms.append(doc['username'])
-            else:
+        for user_id, doc in user_docs_by_id.items():
+            if user_id not in user_ids_with_forms:
                 CommCareUser.wrap(doc).delete()
                 deleted_count += 1
 
@@ -1176,10 +1180,11 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
                 ", ".join(map(raw_username, usernames_not_found)))
             messages.error(request, message)
 
-        if usernames_with_forms:
+        if user_ids_with_forms:
             message = _("""
                 The following users have form submissions and must be deleted individually: {}.
-            """).format(", ".join(map(raw_username, usernames_with_forms)))
+            """).format(", ".join([raw_username(user_docs_by_id[user_id]['username'])
+                                   for user_id in user_ids_with_forms]))
             messages.error(request, message)
 
         if deleted_count:
