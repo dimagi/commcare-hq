@@ -57,7 +57,6 @@ branches:
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
   - dmr/smarter-wait  # Danny Jan 22
   - jls/sql-application-access-3 # Jenny Jan 25
