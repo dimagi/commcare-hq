@@ -39,8 +39,7 @@ class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
         doc = RegistrationRequest.view("registration/requests_by_guid",
             key=self.activation_guid,
             reduce=False,
-            include_docs=True,
-        ).first()
+            include_docs=True).first()
 
         if not doc:
             doc = RegistrationRequest(
