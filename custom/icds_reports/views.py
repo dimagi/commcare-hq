@@ -2208,7 +2208,7 @@ class GovernanceAPIBaseView(View):
 
         is_valid = True
         error_message = ''
-        if not (date(2019, 12, 1) <= selected_month <= current_month):
+        if not (date(2019, 4, 1) <= selected_month <= current_month):
             is_valid = False
             error_message = "Month should not be in future and can only be from Dec 2019"
         if state_id is None:
