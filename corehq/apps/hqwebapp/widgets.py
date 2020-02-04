@@ -152,9 +152,12 @@ class SelectToggle(forms.Select):
                            params="name: '{name}',
                                    id: '{id}',
                                    value: {value},
-                                   options: {options}"></select-toggle>
+                                   options: {options}">
+                {pre_js_select}
+            </select-toggle>
         '''.format(apply_bindings="true" if self.apply_bindings else "false",
                    name=name,
                    id=html_attr(attrs.get('id', '')),
                    value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
-                   options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
+                   options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])),
+                   pre_js_select=super().render(name, value, attrs=attrs))
