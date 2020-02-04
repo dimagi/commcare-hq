@@ -43,6 +43,8 @@ def get_column_xpath_client_template(new_mobile_ucr_restore):
     return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
 
 
+# This datum, a persistent tile based on data in a fixture, should be the first datum in an entry
+# so it appears even on the screens where other datums are being selected.
 def get_report_context_tile_datum():
     return SessionDatum(
         id='tile_holder',
@@ -109,7 +111,12 @@ class ReportModuleSuiteHelper(object):
         else:
             nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-        datums = [
+        datums = []
+
+        if self.report_module.report_context_tile:
+            datums.append(get_report_context_tile_datum())
+
+        datums += [
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
@@ -128,9 +135,6 @@ class ReportModuleSuiteHelper(object):
                 autoselect="true"
             ),
         ]
-
-        if self.report_module.report_context_tile:
-            datums.append(get_report_context_tile_datum())
 
         return Entry(
             command=Command(

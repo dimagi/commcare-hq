@@ -142,6 +142,11 @@ class EntriesHelper(object):
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
+
+            if module.report_context_tile:
+                from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
+                e.datums.append(get_report_context_tile_datum())
+
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
                 form_custom_icon = form.custom_icon
@@ -191,10 +196,6 @@ class EntriesHelper(object):
                 )
                 e.datums.append(datum)
                 e.assertions.extend(assertions)
-
-            if module.report_context_tile:
-                from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
-                e.datums.append(get_report_context_tile_datum())
 
             results.append(e)
 
