@@ -1,6 +1,13 @@
 from datetime import date
-import pytz
+
 from django.conf import settings
+
+import pytz
+
+from custom.icds_reports.data_pull.data_pulls import (
+    AndhraPradeshMonthly,
+    MonthlyPerformance,
+)
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
@@ -155,9 +162,15 @@ CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Serv
 PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
 LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
 ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'
+
 OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Out of school Adolescent girls (11-14 years)'
 NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
 NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
 
 
 GOVERNANCE_API_RECORDS_PAGINATION = 10000
+
+CUSTOM_DATA_PULLS = {
+    AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
+    MonthlyPerformance.slug: MonthlyPerformance,
+}

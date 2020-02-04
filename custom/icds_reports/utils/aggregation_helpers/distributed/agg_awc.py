@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_tablename, transform_day_to_month, get_agg_child_temp_tablename
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -29,7 +29,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def child_temp_tablename(self):
-        return get_child_health_temp_tablename(self.month_start)
+        return get_child_health_tablename(self.month_start)
 
     @property
     def agg_child_temp_tablename(self):

@@ -3,7 +3,13 @@ import datetime
 from celery.signals import before_task_publish, task_prerun, task_postrun
 from django.core.cache import cache
 
+from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_utc_datetime
+
+
+@quickcache(['task_id'])
+def get_task_time_to_start(task_id):
+    pass  # Actual values are set by the celery event hooks below
 
 
 class TimingNotAvailable(Exception):
@@ -80,6 +86,7 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
         datadog_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
     else:
         datadog_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags)
+        get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
 
     TimeToRunTimer(task_id).start_timing()
 
@@ -88,6 +95,8 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
 def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
     from corehq.util.datadog.gauges import bucket_value, datadog_counter
     from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS
+
+    get_task_time_to_start.clear(task_id)
 
     tags = [
         'celery_task_name:{}'.format(task.name),
