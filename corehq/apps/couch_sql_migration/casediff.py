@@ -410,6 +410,10 @@ def is_orphaned_case(couch_case):
     return not any(references_case(x) for x in couch_case["xform_ids"])
 
 
+def should_diff(case):
+    return _diff_state.should_diff(case)
+
+
 @retry_on_couch_error
 def get_couch_cases(case_ids):
     return CaseAccessorCouch.get_cases(case_ids)

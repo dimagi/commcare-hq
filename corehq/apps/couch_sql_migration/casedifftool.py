@@ -18,6 +18,7 @@ from .casediff import (
     get_couch_cases,
     global_diff_state,
     make_result_saver,
+    should_diff,
 )
 from .casediffqueue import ProcessNotAllowed, get_casediff_state_path
 from .couchsqlmigration import (
@@ -183,8 +184,6 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    from .casediff import _diff_state
-    should_diff = _diff_state.should_diff
     couch_cases = {c.case_id: c.to_json()
         for c in get_couch_cases(case_ids) if should_diff(c)}
     if log_cases:
