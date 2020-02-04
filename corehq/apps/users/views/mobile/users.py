@@ -60,7 +60,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
+from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username, user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
@@ -86,6 +86,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    raw_username,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -1153,30 +1154,36 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _("Workbook has no worksheets"))
             return self.get(request, *args, **kwargs)
 
-        deleted_count = 0
+        try:
+            usernames = [format_username(row['username'], request.domain) for row in sheet]
+        except KeyError:
+            messages.error(request, _("No users found. Please check your file contains a 'username' column."))
+            return self.get(request, *args, **kwargs)
+
+        user_docs = get_user_docs_by_username(usernames)
+        usernames_not_found = set(usernames).difference(set([doc['username'] for doc in user_docs]))
         usernames_with_forms = []
-        for row in sheet:
-            try:
-                username = row['username']
-            except KeyError:
-                messages.error(request, _("Please upload a file with a 'username' column."))
-                return self.get(request, *args, **kwargs)
+        deleted_count = 0
+        for doc in user_docs:
+            if FormES().domain(request.domain).user_id(doc['_id']).count():
+                usernames_with_forms.append(doc['username'])
+            else:
+                CommCareUser.wrap(doc).delete()
+                deleted_count += 1
 
-            user = CommCareUser.get_by_username(f"{username}@{request.domain}.commcarehq.org")
-            if user:
-                if FormES().domain(request.domain).user_id(user.get_id).count():
-                    usernames_with_forms.append(username)
-                else:
-                    user.delete()
-                    deleted_count += 1
+        if usernames_not_found:
+            message = _("The following users were not found: {}.").format(
+                ", ".join(map(raw_username, usernames_not_found)))
+            messages.error(request, message)
 
-        message = f"{deleted_count} user(s) deleted."
         if usernames_with_forms:
-            message += f"""
-                The following users have form submissions and
-                must be deleted individually: {", ".join(usernames_with_forms)}.
-            """
-        messages.success(request, message)
+            message = _("""
+                The following users have form submissions and must be deleted individually: {}.
+            """).format(", ".join(map(raw_username, usernames_with_forms)))
+            messages.error(request, message)
+
+        if deleted_count:
+            messages.success(request, f"{deleted_count} user(s) deleted.")
 
         return self.get(request, *args, **kwargs)
 
