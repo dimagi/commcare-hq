@@ -6,6 +6,7 @@ from celery import states
 from celery.exceptions import Ignore
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
@@ -221,5 +222,13 @@ def exit_celery_with_error_message(task, error_message):
     setting task metadata and raising Ignore,
     but the internals could change to do this through a return value instead.
     """
-    update_task_state(task, states.FAILURE, Exception(error_message))
+    update_task_state(task, states.FAILURE, get_interned_exception(error_message))
     raise Ignore()
+
+
+@memoized
+def get_interned_exception(message):
+    """
+    In tests, it's important that the error message is exactly the same object.
+    """
+    return Exception(message)
