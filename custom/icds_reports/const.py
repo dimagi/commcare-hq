@@ -168,7 +168,7 @@ NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
 NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
 
 
-GOVERNANCE_API_RECORDS_PAGINATION = 10000
+GOVERNANCE_API_PAGE_SIZE = 10000
 
 CUSTOM_DATA_PULLS = {
     AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
