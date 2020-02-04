@@ -15,7 +15,7 @@ from .do_import import do_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
-from .util import get_importer_error_message
+from .util import get_importer_error_message, exit_celery_with_error_message
 
 
 @task(serializer='pickle', queue='case_import_queue')
@@ -24,8 +24,7 @@ def bulk_import_async(config, domain, excel_id):
     try:
         case_upload.check_file()
     except ImporterError as e:
-        update_task_state(bulk_import_async, states.FAILURE, Exception(get_importer_error_message(e)))
-        raise Ignore()
+        return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
 
     try:
         with case_upload.get_spreadsheet() as spreadsheet:
@@ -39,8 +38,7 @@ def bulk_import_async(config, domain, excel_id):
             'messages': result
         }
     except ImporterError as e:
-        update_task_state(bulk_import_async, states.FAILURE, Exception(get_importer_error_message(e)))
-        raise Ignore()
+        return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
     finally:
         store_task_result.delay(excel_id)
 

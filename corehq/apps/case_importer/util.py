@@ -2,6 +2,8 @@ import json
 from collections import OrderedDict, namedtuple
 from contextlib import contextmanager
 
+from celery import states
+from celery.exceptions import Ignore
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -21,6 +23,7 @@ from corehq.util.workbook_reading import (
     Workbook,
     open_any_workbook,
 )
+from soil.progress import update_task_state
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
 # owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
@@ -205,3 +208,18 @@ def get_importer_error_message(e):
         return _("The file uploaded has the following error: {}").format(str(e))
     else:
         return _("Error: {}").format(str(e))
+
+
+def exit_celery_with_error_message(task, error_message):
+    """
+    Call this function and return the value from within a celery task to abort
+
+    with an error message that gets passed on in a way that case importer
+    will pick up and display.
+
+    Currently it doesn't return anything and does all its magic by manually
+    setting task metadata and raising Ignore,
+    but the internals could change to do this through a return value instead.
+    """
+    update_task_state(task, states.FAILURE, Exception(error_message))
+    raise Ignore()
