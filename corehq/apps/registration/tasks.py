@@ -11,7 +11,7 @@ from celery.task import periodic_task, task
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import SQLRegistrationRequest
 from corehq.apps.users.models import WebUser
 
 
@@ -23,7 +23,7 @@ def activation_24hr_reminder_email():
     """
     Reminds inactive users registered 24 hrs ago to activate their account.
     """
-    request_reminders = RegistrationRequest.get_requests_24hrs_ago()
+    request_reminders = SQLRegistrationRequest.get_requests_24hrs_ago()
 
     DNS_name = get_site_domain()
 

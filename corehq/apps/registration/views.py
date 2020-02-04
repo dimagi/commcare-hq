@@ -44,7 +44,7 @@ from corehq.apps.registration.forms import (
     DomainRegistrationForm,
     RegisterWebUserForm,
 )
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import SQLRegistrationRequest
 from corehq.apps.registration.utils import (
     activate_new_user,
     request_new_domain,
@@ -321,7 +321,7 @@ class RegisterDomainView(TemplateView):
             })
             return render(request, 'error.html', context)
 
-        reqs_today = RegistrationRequest.get_requests_today()
+        reqs_today = SQLRegistrationRequest.get_requests_today()
         max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
         if reqs_today >= max_req:
             context.update({
@@ -376,7 +376,7 @@ class RegisterDomainView(TemplateView):
 @login_required
 def resend_confirmation(request):
     try:
-        dom_req = RegistrationRequest.get_request_for_username(request.user.username)
+        dom_req = SQLRegistrationRequest.get_request_for_username(request.user.username)
     except Exception:
         dom_req = None
 
@@ -429,7 +429,7 @@ def confirm_domain(request, guid=''):
 
         # Does guid exist in the system?
         else:
-            req = RegistrationRequest.get_by_guid(guid)
+            req = SQLRegistrationRequest.get_by_guid(guid)
             if not req:
                 error = _('The account activation key "%s" provided is invalid. If you '
                           'think this is an error, please contact the system '
