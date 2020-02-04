@@ -8,7 +8,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
 )
-from django.db import DEFAULT_DB_ALIAS, models
+from django.db import models
 
 from corehq.apps.domain.models import Domain
 
