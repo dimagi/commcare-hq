@@ -184,24 +184,43 @@ def get_enrollments(case_trigger_info, case_config):
     for that. Cases/TEIs are enrolled in a program when the first event
     in that program occurs.
     """
-    events_by_program = get_events_by_program(case_trigger_info, case_config)
+    programs_by_id = get_programs_by_id(case_trigger_info, case_config)
     enrollments = []
-    for program, events in events_by_program.items():
+    for program_id, program in programs_by_id.items():
         enrollment = {
-            "program": program,
-            "events": events,
+            "program": program_id,
+            "events": program["events"],
         }
+        if program.get("enrollmentDate"):
+            enrollment["enrollmentDate"] = program["enrollmentDate"]
+        if program.get("incidentDate"):
+            enrollment["incidentDate"] = program["incidentDate"]
         enrollments.append(enrollment)
     return enrollments
 
 
-def get_events_by_program(case_trigger_info, case_config):
-    events_by_program = defaultdict(list)
+def get_programs_by_id(case_trigger_info, case_config):
+    programs_by_id = defaultdict(lambda: {"events": []})
     for form_config in case_config.form_configs:
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         if event:
-            events_by_program[event["program"]].append(event)
-    return events_by_program
+            program = programs_by_id[event["program"]]
+            program["events"].append(event)
+            program.update(get_program_dates(form_config, case_trigger_info))
+    return programs_by_id
+
+
+def get_program_dates(form_config, case_trigger_info):
+    program = {}
+    if form_config.enrollment_date:
+        enrollment_date = get_value(form_config.enrollment_date, case_trigger_info)
+        if enrollment_date:
+            program["enrollmentDate"] = enrollment_date
+    if form_config.incident_date:
+        incident_date = get_value(form_config.incident_date, case_trigger_info)
+        if incident_date:
+            program["incidentDate"] = incident_date
+    return program
 
 
 def save_tracked_entity_instance_id(domain, tracked_entity, case_trigger_info, case_config):
