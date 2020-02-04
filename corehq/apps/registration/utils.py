@@ -111,6 +111,7 @@ def request_new_domain(request, form, is_new_user=True):
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
+    dom_req.domain = new_domain.name
 
     with transaction.atomic():
         if not settings.ENTERPRISE_MODE:
@@ -119,15 +120,13 @@ def request_new_domain(request, form, is_new_user=True):
                 web_user=current_user.username,
             )
 
-    UserRole.init_domain_with_presets(new_domain.name)
-
     # add user's email as contact email for billing account for the domain
     account = BillingAccount.get_account_by_domain(new_domain.name)
     billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
     billing_contact.email_list = [current_user.email]
     billing_contact.save()
 
-    dom_req.domain = new_domain.name
+    UserRole.init_domain_with_presets(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:
