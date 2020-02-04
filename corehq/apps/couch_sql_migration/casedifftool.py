@@ -4,12 +4,21 @@ import pdb
 import signal
 from contextlib import contextmanager, suppress
 
+from django.db import close_old_connections
+from django.db.utils import DatabaseError, InterfaceError
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.retry import retry_on
 
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 
-from .casediff import global_diff_state, make_result_saver
+from .casediff import (
+    diff_cases,
+    get_couch_cases,
+    global_diff_state,
+    make_result_saver,
+)
 from .casediffqueue import ProcessNotAllowed, get_casediff_state_path
 from .couchsqlmigration import (
     CouchSqlDomainMigrator,
@@ -174,7 +183,7 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    from .casediff import _diff_state, get_couch_cases, diff_cases
+    from .casediff import _diff_state
     should_diff = _diff_state.should_diff
     couch_cases = {c.case_id: c.to_json()
         for c in get_couch_cases(case_ids) if should_diff(c)}
@@ -182,7 +191,19 @@ def load_and_diff_cases(case_ids, log_cases=False):
         skipped = [id for id in case_ids if id not in couch_cases]
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases(couch_cases, log_cases=log_cases)
+    return diff_cases_with_retry(couch_cases, log_cases=log_cases)
+
+
+def _close_connections(err):
+    """Close old connections, then return true to retry"""
+    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
+    close_old_connections()
+    return True
+
+
+@retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
+def diff_cases_with_retry(*args, **kw):
+    return diff_cases(*args, **kw)
 
 
 def iter_sql_cases_with_sorted_transactions(domain):

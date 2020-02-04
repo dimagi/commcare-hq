@@ -64,7 +64,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
-            with patch("corehq.apps.couch_sql_migration.casediff.diff_cases", diff_none):
+            with patch("corehq.apps.couch_sql_migration.casedifftool.diff_cases", diff_none):
                 result = self.do_case_diffs()
             self.assertEqual(result, mod.PENDING_WARNING)
             self.do_case_diffs(cases="pending")
