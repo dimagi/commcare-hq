@@ -4,8 +4,8 @@ from custom.inddex.ucr.data_providers.mixins import GapsReportSummaryDataMixin
 
 
 class MasterDataFileData(GapsReportSummaryDataMixin):
-    title = 'Master Output'
-    slug = 'master_output'
+    title = 'Master Data'
+    slug = 'master_data'
     headers_in_order = [
         'unique_respondent_id', 'recall_case_id', 'opened_date', 'opened_by_username', 'owner_name', 'recall_date',
         'recall_status', 'gender', 'age_years', 'age_months', 'age_range', 'pregnant', 'breastfeeding',

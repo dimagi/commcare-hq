@@ -6,6 +6,15 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.inddex.sqldata import FoodConsumptionDataSourceMixin
 
 
+def get_slugs(slugs, config):
+    filters = []
+    for slug in slugs:
+        if config.get(slug):
+            filters.append(EQ(slug, slug))
+
+    return filters
+
+
 class ReportDataMixin(FoodConsumptionDataSourceMixin):
     title = None
     table_names = []
@@ -32,7 +41,11 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
 
     @property
     def filters(self):
-        return []
+        filters = [GTE('recall_date', 'startdate'), LTE('recall_date', 'enddate')]
+        if self.config['case_owners']:
+            filters.append(EQ('owner_name', 'case_owners'))
+
+        return filters
 
     @property
     def additional_filters(self):
@@ -77,46 +90,45 @@ class GapsReportByItemDataMixin(ReportDataMixin):
 
     @property
     def filters(self):
-        filters = [GTE('recall_date', 'startdate'), LTE('recall_date', 'enddate')]
-        for slug in ['food_code', 'food_type', 'recall_status']:
-            if self.config[slug]:
-                filters.append(EQ(slug, slug))
+        filters = super().filters
+        filters += get_slugs(['food_type', 'recall_status'], self.config)
 
         return filters
+
+    @property
+    def additional_filters(self):
+        return {
+            'fct_gap_type': self.config['gap_type'],
+            'conv_gap_type': self.config['gap_type'],
+            'fao_who_gift_food_group_desc': self.config['fao_who_gift_food_group_description'],
+            'fct_gap_desc': self.config['gap_description'],
+            'conv_factor_gap_desc': self.config['gap_description'],
+        }
 
 
 class GapsReportSummaryDataMixin(ReportDataMixin):
 
     @property
     def filters(self):
-        filters = []
-        if self.config['recall_status']:
-            filters.append(EQ('recall_status', 'recall_status'))
+        filters = super().filters
+        filters += get_slugs([], self.config)
+
         return filters
+
+    @property
+    def additional_filters(self):
+        return {
+            'fct_gap_type': self.config['gap_type'],
+            'conv_gap_type': self.config['gap_type'],
+        }
 
 
 class NutrientIntakesDataMixin(ReportDataMixin):
 
     @property
     def filters(self):
-        filters = []
-        if self.config['gender']:
-            filters.append(EQ('gender', 'gender'))
-        if self.config['pregnant']:
-            filters.append(EQ('pregnant', 'pregnant'))
-        if self.config['breastfeeding']:
-            filters.append(EQ('breastfeeding', 'breastfeeding'))
-        if self.config['urban_rural']:
-            filters.append(EQ('urban_rural', 'urban_rural'))
-        if self.config['supplements']:
-            filters.append(EQ('supplements', 'supplements'))
-        if self.config['recall_status']:
-            filters.append(EQ('recall_status', 'recall_status'))
+        filters = super().filters
+        slugs = ['gender', 'pregnant', 'breastfeeding', 'urban_rural', 'supplements', 'recall_status']
+        filters += get_slugs(slugs, self.config)
+
         return filters
-
-
-class SummaryStatisticsDataMixin(NutrientIntakesDataMixin):
-
-    @property
-    def filters(self):
-        return super().filters + [GTE('recall_date', 'startdate'), LTE('recall_date', 'enddate')]

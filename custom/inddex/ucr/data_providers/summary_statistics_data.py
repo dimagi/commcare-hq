@@ -1,12 +1,12 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import SummaryStatisticsDataMixin
+from custom.inddex.ucr.data_providers.mixins import NutrientIntakesDataMixin
 
 
-class SummaryStatsNutrientDataProvider(SummaryStatisticsDataMixin):
+class SummaryStatsNutrientDataProvider(NutrientIntakesDataMixin):
     total_row = None
-    title = 'Group-level Summary Statistics by Nutrient Intake'
-    slug = 'group_level_summary_statistics_by_nutrient_intake'
+    title = 'Nutrient Intake Summary Stats'
+    slug = 'nutr_intake_summary_stats'
     headers_in_order = [
         'nutrient', 'mean', 'median', 'std.Dev', '5_percent', '25_percent',
         '50_percent', '75_percent', '95_percent'

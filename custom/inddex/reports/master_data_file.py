@@ -1,6 +1,6 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.master_data_file import MasterDataFileData
+from custom.inddex.ucr.data_providers.master_data_file_data import MasterDataFileData
 from custom.inddex.utils import BaseGapsSummaryReport
 
 

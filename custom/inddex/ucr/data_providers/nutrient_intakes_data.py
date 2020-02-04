@@ -6,8 +6,8 @@ from custom.inddex.ucr.data_providers.mixins import NutrientIntakesDataMixin
 
 
 class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
-    title = 'Nutrient Intakes By Food'
-    slug = 'nutrient_intake_by_food_data'
+    title = 'Disaggregated Intake Data By Food'
+    slug = 'disaggr_intake_data_by_food'
     headers_in_order = [
         'food_name', 'recipe_name', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
         'user_food_group', 'food_type', 'include_in_analysis', 'is_ingredient', 'food_status', 'total_grams',
@@ -138,8 +138,8 @@ class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
 
 
 class NutrientIntakesByRespondentData(NutrientIntakesDataMixin):
-    title = 'Nutrient Intakes By Respondent'
-    slug = 'nutrient_intakes_by_respondent'
+    title = 'Aggregated Daily Intake By Respondent'
+    slug = 'aggr_daily_intake_by_rspndnt'
     headers_in_order = [
         'unique_respondent_id', 'recall_case_id', 'opened_by_username', 'owner_name',
         'recall_date', 'recall_status', 'gender', 'age_years', 'age_months', 'age_range', 'supplements',

@@ -6,9 +6,9 @@ from custom.inddex.utils import MultiTabularReport
 
 
 class GapsReportByItem(MultiTabularReport):
-    title = '1b: Gaps Report By Item'
+    title = 'Output 2b - Detailed Information on Gaps'
     name = title
-    slug = 'gaps_report_by_item'
+    slug = 'output_2b_detailed_information_on_gaps'
 
     @property
     def fields(self):

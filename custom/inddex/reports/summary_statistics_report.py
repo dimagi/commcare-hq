@@ -7,9 +7,9 @@ from custom.inddex.utils import BaseNutrientReport
 
 
 class SummaryStatisticsReport(BaseNutrientReport):
-    title = '3: Summary Statistics Report'
+    title = 'Output 4 - Nutrient Intake Summary Statistics'
     name = title
-    slug = 'summary_statistics_report'
+    slug = 'output_4_nutrient_intake_summary_statistics'
 
     @property
     def report_config(self):

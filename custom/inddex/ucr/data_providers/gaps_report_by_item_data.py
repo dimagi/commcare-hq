@@ -5,8 +5,8 @@ from custom.inddex.ucr.data_providers.mixins import GapsReportByItemDataMixin
 
 class GapsReportByItemSummaryData(GapsReportByItemDataMixin):
     total_row = None
-    title = 'Gaps Report By Item - Summary'
-    slug = 'gaps_report_by_item_summary'
+    title = 'Gaps By Item Summary'
+    slug = 'gaps_by_item_summary'
     headers_in_order = [
         'food_code', 'food_name', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_desc',
         'user_food_group',
@@ -17,13 +17,6 @@ class GapsReportByItemSummaryData(GapsReportByItemDataMixin):
     def __init__(self, config):
         super().__init__()
         self.config = config
-
-    @property
-    def additional_filters(self):
-        return {
-            'fct_gap_desc': self.config['gap_description'],
-            'conv_factor_gap_desc': self.config['gap_description'],
-        }
 
     @property
     @memoized
@@ -95,8 +88,8 @@ class GapsReportByItemSummaryData(GapsReportByItemDataMixin):
 
 class GapsReportByItemDetailsData(GapsReportByItemDataMixin):
     total_row = None
-    title = 'Gaps Report By Item - Details'
-    slug = 'gaps_report_by_item_details'
+    title = 'Gaps By Item Details'
+    slug = 'gaps_by_item_details'
     headers_in_order = [
         'gap_type', 'gap_code', 'gap_desc', 'food_type', 'caseid', 'food_code', 'food_name', 'short_name',
         'time_of_day', 'time_block', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_desc',

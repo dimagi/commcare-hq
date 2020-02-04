@@ -49,8 +49,8 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     def report_config(self):
         return {
             'domain': self.domain,
-            'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'startdate': str(self.datespan.startdate),
+            'enddate': str(self.datespan.enddate),
             'case_owners': self.case_owner
         }
 

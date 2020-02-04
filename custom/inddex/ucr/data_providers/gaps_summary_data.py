@@ -4,8 +4,8 @@ from custom.inddex.ucr.data_providers.mixins import GapsReportSummaryDataMixin
 
 
 class ConvFactorGapsSummaryData(GapsReportSummaryDataMixin):
-    title = 'Conv Factor Gaps Summary by Food Type'
-    slug = 'conv_factor_gaps_summary_by_food_type'
+    title = 'Conv Factor Gaps Summary'
+    slug = 'conv_factor_gaps_summary'
     headers_in_order = ['conv_factor_gap_code', 'conv_factor_gap_desc', 'food_type', 'conv_gap_food_type_total']
 
     def __init__(self, config):
@@ -35,8 +35,8 @@ class ConvFactorGapsSummaryData(GapsReportSummaryDataMixin):
 
 
 class FCTGapsSummaryData(GapsReportSummaryDataMixin):
-    title = 'FCT Gaps Summary by Food Type'
-    slug = 'fct_gaps_summary_by_food_type'
+    title = 'FCT Gaps Summary'
+    slug = 'fct_gaps_summary'
     headers_in_order = ['fct_gap_code', 'fct_gap_desc', 'food_type', 'fct_gap_food_type_total']
 
     def __init__(self, config):

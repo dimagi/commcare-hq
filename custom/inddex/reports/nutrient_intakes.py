@@ -9,9 +9,9 @@ from custom.inddex.utils import BaseNutrientReport
 
 
 class NutrientIntakesReport(BaseNutrientReport):
-    title = '2: Nutrient Intakes by Food and by Respondent'
+    title = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
     name = title
-    slug = 'nutrient_intakes_by_food_and_by_respondent'
+    slug = 'output_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'
     export_only = False
     show_filters = True
 

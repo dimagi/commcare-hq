@@ -8,9 +8,9 @@ from custom.inddex.utils import BaseGapsSummaryReport
 
 
 class GapsSummaryByFoodTypeSummaryReport(BaseGapsSummaryReport):
-    title = '1a: Gaps Report Summary by Food Type'
+    title = 'Output 2a - Gaps Summary by Food Type'
     name = title
-    slug = 'gaps_report_summary_by_food_type'
+    slug = 'output_2a_gaps_summary_by_food_type'
     export_only = False
     show_filters = True
 

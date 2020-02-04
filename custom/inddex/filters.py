@@ -173,23 +173,14 @@ class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('1', 'Cereals and their products (1)'),
-            ('2', 'Roots, tubers, plantains and their products (2)'),
-            ('3', 'Pulses, seeds and nuts and their products (3)'),
-            ('4', 'Milk and milk products (4)'),
-            ('5', 'Eggs and their products (5)'),
-            ('6', 'Fish, shellfish and their products (6)'),
-            ('7', 'Meat and meat products (7)'),
-            ('8', 'Insects, grubs and their products (8)'),
-            ('9', 'Vegetables and their products( 9)'),
-            ('10', 'Fruits and their products (10)'),
-            ('11', 'Fats and oils (11)'),
-            ('12', 'Sweets and sugars (12)'),
-            ('13', 'Spices and condiments (13)'),
-            ('14', 'Beverages (14)'),
-            ('15', 'Foods for particular nutritional uses (15)'),
-            ('16', 'Food supplements and similar (16)'),
-            ('17', 'Food additives (17)'),
-            ('18', 'Composite foods (18)'),
-            ('19', 'Savoury snacks (19)'),
+            (x, x) for x in [
+                'Cereals and their products (1)', 'Roots, tubers, plantains and their products (2)',
+                'Pulses, seeds and nuts and their products (3)', 'Milk and milk products (4)',
+                'Eggs and their products (5)', 'Fish, shellfish and their products (6)',
+                'Meat and meat products (7)', 'Insects, grubs and their products (8)',
+                'Vegetables and their products( 9)', 'Fruits and their products (10)',
+                'Fats and oils (11)', 'Sweets and sugars (12)', 'Spices and condiments (13)', 'Beverages (14)',
+                'Foods for particular nutritional uses (15)', 'Food supplements and similar (16)',
+                'Food additives (17)', 'Composite foods (18)', 'Savoury snacks (19)',
+            ]
         ]
