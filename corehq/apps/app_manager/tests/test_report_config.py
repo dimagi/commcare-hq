@@ -188,6 +188,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         }
         cls.app = Application.new_app(cls.domain, "Report Filter Test App")
         report_module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
+        report_module.report_context_tile = True
         report_module.report_configs.append(
             ReportAppConfig(
                 report_id=cls.report_id,
@@ -222,14 +223,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 uuid=cls.hidden_column_mobile_id,
             )
         )
+
         case_module = cls.app.add_module(Module.new_module("Case Module", 'en'))
         case_module.case_type = "fish"
-        form = case_module.new_form("Untitled Form", None)
-        form.requires = "case"
-        form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF"
-        detail_id, detail, dummy = case_module.get_details()[0]
-        assert detail_id == "case_short"
-        case_module.case_details.short.report_context_tile = True
+        case_module.report_context_tile = True
+        case_form = case_module.new_form("Update Fish", None)
+        case_form.requires = "case"
+        case_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF"
+
+        survey_module = cls.app.add_module(Module.new_module("Survey Module", 'en'))
+        survey_module.report_context_tile = True
+        survey_form = survey_module.new_form("Survey", None)
+        survey_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE"
 
         with mock_report_configurations(cls.report_configs_by_id):
             cls.suite = cls.app.create_suite()
@@ -256,9 +261,11 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="commcaresession" src="jr://instance/session"/>
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
+              <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1" />
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
               <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
@@ -275,8 +282,10 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
+              <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
               <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary" detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae" nodeset="instance('reports')/reports/report[@id='45152061d8dc4d2a8d987a0568abe1ae']" value="./@id"/>
             </session>
           </entry>
@@ -441,10 +450,15 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         </partial>
         """, self.suite, "detail[@id='report_context_tile']")
 
+        # Entry for form from case module
         self.assertXmlPartialEqual("""
         <partial>
           <entry>
             <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF</form>
+            <session>
+              <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
+              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='fish'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+            </session>
             <command id="m1-f0">
               <text>
                 <locale id="forms.m1f0"/>
@@ -452,12 +466,27 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
-            <session>
-              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='fish'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" detail-persistent="report_context_tile"/>
-            </session>
           </entry>
         </partial>
         """, self.suite, "entry[3]")
+
+        # Entry for form from survey module
+        self.assertXmlPartialEqual("""
+        <partial>
+          <entry>
+            <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE</form>
+            <session>
+              <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
+            </session>
+            <command id="m2-f0">
+              <text>
+                <locale id="forms.m2f0"/>
+              </text>
+            </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
+          </entry>
+        </partial>
+        """, self.suite, "entry[4]")
 
 
 class TestReportAutoFilters(SimpleTestCase):
