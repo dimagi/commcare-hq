@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_tablename, transform_day_to_month, get_agg_child_temp_tablename
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -29,7 +29,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def child_temp_tablename(self):
-        return get_child_health_temp_tablename(self.month_start)
+        return get_child_health_tablename(self.month_start)
 
     @property
     def agg_child_temp_tablename(self):
@@ -462,7 +462,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         yield """
          UPDATE "{tablename}" agg_awc SET num_awc_infra_last_update =
           CASE WHEN infra_last_update_date IS NOT NULL AND
-             %(month_start_6m)s < infra_last_update_date THEN 1 ELSE 0 END
+             %(month_start_6m)s <= infra_last_update_date THEN 1 ELSE 0 END
         """.format(
             tablename=self.temporary_tablename
         ), {

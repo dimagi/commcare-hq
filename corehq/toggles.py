@@ -1701,17 +1701,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Dec 25, 2019 if no one is using
-USER_API_USE_COUCH_BACKEND = StaticToggle(
-    'user_api_use_couch_backend',
-    'Use Old Couch backend for User API. '
-    'This is an escape hatch for support '
-    'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1807,11 +1796,17 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     """
 )
 
-
 EXCEL_EXPORT_DATA_TYPING = StaticToggle(
     'excel_export_data_typing',
     'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
     'and case exports, so that excel export cells are correctly data-typed.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
+)
+
+RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
+    'run_custom_data_pull_requests',
+    '[ICDS] Initiate custom data pull requests from UI',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

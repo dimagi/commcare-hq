@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 class PopulateSQLCommand(BaseCommand):
     """
         Base class for migrating couch docs to sql models.
-        Override all methods that raise NotImplementedError and, optionally, couch_db_slug.
+
+        Adds a SQL object for any couch doc that doesn't yet have one.
+        Override all methods that raise NotImplementedError and, optionoally, couch_db_slug.
     """
     AUTO_MIGRATE_ITEMS_LIMIT = 1000
 
@@ -68,7 +70,9 @@ class PopulateSQLCommand(BaseCommand):
                 remaining = cls.count_items_to_be_migrated()
                 if remaining != 0:
                     migrated = False
-                    print("Automatic migration failed, {} items remain to migrate.")
+                    print(f"Automatic migration failed, {remaining} items remain to migrate.")
+                else:
+                    migrated = True
             except Exception:
                 traceback.print_exc()
         else:
@@ -76,10 +80,10 @@ class PopulateSQLCommand(BaseCommand):
             print("Too many to migrate automatically.")
 
         if not migrated:
-            print("""
+            print(f"""
                 A migration must be performed before this environment can be upgraded to the latest version
-                of CommCareHQ. This migration is run using the management command {}.
-            """).format(command_name)
+                of CommCareHQ. This migration is run using the management command {command_name}.
+            """)
             sys.exit(1)
 
     @classmethod

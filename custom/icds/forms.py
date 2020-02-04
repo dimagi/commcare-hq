@@ -1,25 +1,23 @@
 from django import forms
-from django.utils.translation import (
-    ugettext_lazy,
-    ugettext as _,
-)
-from django.forms.widgets import Select
 from django.core.exceptions import ValidationError
+from django.forms.widgets import Select
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from crispy_forms import layout as crispy
 
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
     get_version_build_id,
 )
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from custom.icds.models import (
-    HostedCCZ,
-    HostedCCZLink,
-)
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from custom.icds.models import HostedCCZ, HostedCCZLink
+from custom.icds.tasks.data_pulls import run_data_pull
+from custom.icds_reports.const import CUSTOM_DATA_PULLS
 
 
 class HostedCCZLinkForm(forms.ModelForm):
@@ -130,3 +128,50 @@ class HostedCCZForm(forms.Form):
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
+
+
+class CustomDataPullForm(forms.Form):
+    data_pull = forms.ChoiceField(label=ugettext_lazy("Data Pull"), choices=(
+        (pull.slug, pull.name) for pull in CUSTOM_DATA_PULLS.values()
+    ))
+    month = forms.DateField(required=True, widget=forms.DateInput())
+    location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        super(CustomDataPullForm, self).__init__(*args, **kwargs)
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Field('data_pull'),
+            crispy.Field('month', id="month_select", css_class="date-picker"),
+            crispy.Field('location_id', id='location_search_select'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', ugettext_lazy("Submit"))
+                )
+            )
+        )
+
+    def clean_month(self):
+        month = self.cleaned_data['month']
+        if month and month.day != 1:
+            self.add_error("month", "Only first of month should be selected")
+        return month
+
+    def clean_location_id(self):
+        location_id_slug = self.cleaned_data['location_id']
+        if location_id_slug:
+            return self._extract_location_id(location_id_slug)
+        return location_id_slug
+
+    @staticmethod
+    def _extract_location_id(location_id_slug):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
+        return selected_ids[0] if selected_ids else None
+
+    def submit(self, email):
+        run_data_pull.delay(self.cleaned_data['data_pull'],
+                            self.cleaned_data['month'],
+                            self.cleaned_data['location_id'],
+                            email)

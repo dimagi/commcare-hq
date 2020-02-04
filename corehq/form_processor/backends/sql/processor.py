@@ -261,7 +261,8 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail, lock=True):
+    def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
+        assert save or not lock, f"refusing to lock when not saving"
         if lock:
             # only record metric if locking since otherwise it has been
             # (most likley) recorded elsewhere
@@ -281,8 +282,9 @@ class FormProcessorSQL(object):
                 return None
 
             case.server_modified_on = rebuild_transaction.server_date
-            CaseAccessorSQL.save_case(case)
-            publish_case_saved(case)
+            if save:
+                CaseAccessorSQL.save_case(case)
+                publish_case_saved(case)
             return case
         finally:
             release_lock(lock_obj, degrade_gracefully=True)
