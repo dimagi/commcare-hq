@@ -50,7 +50,7 @@ from corehq.apps.case_search.models import (
     IgnorePatterns,
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
-from corehq.apps.cloudcare.models import SQLApplicationAccess
+from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -473,7 +473,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_cloudcare_counts(self, domain_name, count):
         self._assert_queryset_count([
-            SQLApplicationAccess.objects.filter(domain=domain_name),
+            ApplicationAccess.objects.filter(domain=domain_name),
         ], count)
 
     def test_cloudcare(self):
