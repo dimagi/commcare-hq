@@ -23,8 +23,13 @@ def _get_topojson_file(filename, truncate_before):
     path = os.path.join(get_topojson_directory(), filename)
     with open(path) as f:
         content = f.read()
-        # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
-        topojson_text = content[truncate_before:][:-2]
+        if not truncate_before:
+            # no truncation necessary if it's already a json file
+            topojson_text = content
+        else:
+            # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+            topojson_text = content[truncate_before:][:-2]
+
         return TopojsonFile(path, topojson_text, json.loads(topojson_text))
 
 
@@ -41,7 +46,7 @@ def get_state_topojson_file():
 
 
 def get_state_v3_topojson_file():
-    return _get_topojson_file('states_v3_small.topojson.js', truncate_before=21)
+    return _get_topojson_file('states_v3_small.topojson', truncate_before=0)
 
 
 def get_topojson_file_for_level(level):
