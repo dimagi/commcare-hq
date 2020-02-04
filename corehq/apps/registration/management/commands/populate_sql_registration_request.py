@@ -12,8 +12,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.registration.models import SQLRegistrationRequest
-        return SQLRegistrationRequest
+        from corehq.apps.registration.models import RegistrationRequest
+        return RegistrationRequest
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.get_or_create(
