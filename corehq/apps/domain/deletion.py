@@ -213,7 +213,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'AppReleaseByLocation', 'domain'),
     ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
-    ModelDeletion('app_manager', 'SQLGlobalAppConfig', 'domain'),
+    ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),

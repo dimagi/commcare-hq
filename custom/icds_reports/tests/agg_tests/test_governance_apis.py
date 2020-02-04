@@ -2,9 +2,10 @@ import datetime
 
 from django.test import TestCase
 
-from custom.icds_reports.const import GOVERNANCE_API_RECORDS_PAGINATION
+
+from custom.icds_reports.const import GOVERNANCE_API_PAGE_SIZE
 from custom.icds_reports.reports.governance_apis import get_home_visit_data, get_state_names, get_vhnd_data,\
-    get_beneficiary_data
+    get_beneficiary_data, get_cbe_data
 
 from custom.icds_reports.tasks import _agg_governance_dashboard
 from datetime import date
@@ -19,7 +20,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -31,7 +32,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the home visit api without start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -46,7 +47,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the home visit api with start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5, 'awc_id__gt': 'a1'}
         order = ['awc_id']
 
@@ -61,7 +62,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the no records are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -74,7 +75,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the home visit api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'aggregation_level': 5, 'state_id': 'st1'}
         order = ['awc_id']
         data, count = get_home_visit_data(limit,
@@ -94,7 +95,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the total count of records that are returned from the vhnds api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit,
@@ -106,15 +107,15 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the vhnds api without start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit,
                                     2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
-            "anm_present": "Data Not Entered", "asha_present": "Data Not Entered",
-            "any_child_immunized": "Data Not Entered", "anc_conducted": "Data Not Entered"
+            "awc_id": "a10", "awc_code": "a10", "vhsnd_conducted": "no", "vhsnd_date": None,
+            "anm_present": None, "asha_present": None,
+            "children_immunized": None, "anc_conducted": None
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -122,14 +123,14 @@ class GovernanceApiTest(TestCase):
         """
         test to check the first record that is returned from the vhnds api with start parameter
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_id__gt': 'a41', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_first_row = {
-            "awc_id": "a43", "awc_code": "a43", "vhsnd_conducted": "no", "vhsnd_date": "Data Not Entered",
-            "anm_present": "Data Not Entered", "asha_present": "Data Not Entered",
-            "any_child_immunized": "Data Not Entered", "anc_conducted": "Data Not Entered"
+            "awc_id": "a43", "awc_code": "a43", "vhsnd_conducted": "no", "vhsnd_date": None,
+            "anm_present": None, "asha_present": None,
+            "children_immunized": None, "anc_conducted": None
         }
         self.assertEqual(data[0], expected_first_row)
 
@@ -137,7 +138,7 @@ class GovernanceApiTest(TestCase):
         """
         test to check the no records are returned from the vhnds api
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st1', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2018, 6, order, query_filters)
@@ -149,14 +150,14 @@ class GovernanceApiTest(TestCase):
         """
         test tp check if the first record is getting retrieved if there are multiple vhnds per month per awc
         """
-        limit = GOVERNANCE_API_RECORDS_PAGINATION
+        limit = GOVERNANCE_API_PAGE_SIZE
         query_filters = {'state_id': 'st2', 'awc_launched': True}
         order = ['awc_id']
         data, count = get_vhnd_data(limit, 2017, 5, order, query_filters)
         expected_row = {
             "awc_id": "a22", "awc_code": "a22", "vhsnd_conducted": "yes",
             "vhsnd_date": datetime.date(2017, 5, 16), "anm_present": "yes", "asha_present": "yes",
-            "any_child_immunized": "yes", "anc_conducted": "yes"
+            "children_immunized": "yes", "anc_conducted": "yes"
         }
         expected_counter = 1
         actual_row = None
@@ -180,20 +181,41 @@ class GovernanceApiTest(TestCase):
                            'total_lact_reg_till_date': 3, 'total_lact_benefit_in_month': 1,
                            'total_preg_benefit_in_month': 1, 'total_lact_reg_in_month': 1,
                            'total_preg_reg_in_month': 1,
-                           'total_0_3_female_benefit_till_date': 'Data Not Entered',
-                           'total_0_3_male_benefit_till_date': 'Data Not Entered',
-                           'total_0_3_female_reg_till_date': 'Data Not Entered',
-                           'total_0_3_male_reg_till_date': 'Data Not Entered',
-                           'total_3_6_female_benefit_till_date': 'Data Not Entered',
-                           'total_3_6_male_benefit_till_date': 'Data Not Entered',
-                           'total_3_6_female_reg_till_date': 'Data Not Entered',
-                           'total_3_6_male_reg_till_date': 'Data Not Entered',
-                           'total_0_3_female_benefit_in_month': 'Data Not Entered',
-                           'total_0_3_male_benefit_in_month': 'Data Not Entered',
-                           'total_0_3_female_reg_in_month': 'Data Not Entered',
-                           'total_0_3_male_reg_in_month': 'Data Not Entered',
-                           'total_3_6_female_benefit_in_month': 'Data Not Entered',
-                           'total_3_6_male_benefit_in_month': 'Data Not Entered',
-                           'total_3_6_female_reg_in_month': 'Data Not Entered',
-                           'total_3_6_male_reg_in_month': 'Data Not Entered'},
+                           'total_0_3_female_benefit_till_date': None,
+                           'total_0_3_male_benefit_till_date': None,
+                           'total_0_3_female_reg_till_date': None,
+                           'total_0_3_male_reg_till_date': None,
+                           'total_3_6_female_benefit_till_date': None,
+                           'total_3_6_male_benefit_till_date': None,
+                           'total_3_6_female_reg_till_date': None,
+                           'total_3_6_male_reg_till_date': None,
+                           'total_0_3_female_benefit_in_month': None,
+                           'total_0_3_male_benefit_in_month': None,
+                           'total_0_3_female_reg_in_month': None,
+                           'total_0_3_male_reg_in_month': None,
+                           'total_3_6_female_benefit_in_month': None,
+                           'total_3_6_male_benefit_in_month': None,
+                           'total_3_6_female_reg_in_month': None,
+                           'total_3_6_male_reg_in_month': None},
+                          ], data)
+
+    def test_fetch_cbe_data(self):
+        limit = 1
+        _agg_governance_dashboard(date(2017, 5, 1))
+        query_filters = {'state_id': 'st2'}
+        order = ['awc_id']
+        data, count = get_cbe_data(limit, 2017, 5, order, query_filters)
+        self.assertEqual(len(data), limit)
+        self.assertEqual([{'awc_code': 'a13',
+                           'awc_id': 'a13',
+                           'cbe_conducted_1': 'yes',
+                           'cbe_conducted_2': 'yes',
+                           'cbe_date_1': datetime.date(2017, 5, 2),
+                           'cbe_date_2': datetime.date(2017, 5, 14),
+                           'cbe_type_1': 'annaprasan_diwas',
+                           'cbe_type_2': 'suposhan_diwas',
+                           'num_other_beneficiaries_1': 1,
+                           'num_other_beneficiaries_2': 0,
+                           'num_target_beneficiaries_1': 12,
+                           'num_target_beneficiaries_2': 8}
                           ], data)

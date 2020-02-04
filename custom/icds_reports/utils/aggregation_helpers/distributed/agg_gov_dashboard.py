@@ -1,9 +1,8 @@
-from dateutil.relativedelta import relativedelta
-
-from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_GOV_DASHBOARD_TABLE
 from custom.icds_reports.utils.aggregation_helpers import  month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
+from corehq.apps.userreports.util import get_table_name
+from dateutil.relativedelta import relativedelta
 
 
 class AggGovDashboardHelper(AggregationPartitionedHelper):
@@ -25,6 +24,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         return AggGovernanceDashboard
 
     def update_queries(self):
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
         columns = (
             ('state_id', 'awc_location_local.state_id'),
             ('district_id', 'awc_location_local.district_id'),
@@ -42,6 +42,7 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
             ('total_preg_benefit_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_reg_in_month,0)'),
             ('total_lact_reg_in_month', 'COALESCE(agg_awc.cases_ccs_lactating_all_reg_in_month,0)'),
             ('total_preg_reg_in_month', 'COALESCE(agg_awc.cases_ccs_pregnant_all_reg_in_month,0)')
+
         )
         yield """
                 INSERT INTO "{tmp_tablename}" (
@@ -179,6 +180,63 @@ class AggGovDashboardHelper(AggregationPartitionedHelper):
         yield """
         DROP TABLE temp_gov_dashboard;
         """, {}
+
+        yield """
+        CREATE TABLE temp_cbe_data AS
+            SELECT
+                ucr.awc_id,
+                ucr.state_id,
+                ucr.date_cbe_organise,
+                ucr.theme_cbe,
+                ucr.count_targeted_beneficiaries,
+                ucr.count_other_beneficiaries,
+                rank() OVER (
+                    PARTITION BY awc_id
+                    ORDER BY date_cbe_organise, submitted_on
+                    )
+
+            FROM "{cbe_ucr_table}" ucr
+            WHERE ucr.date_cbe_organise>=%(start_date)s AND ucr.date_cbe_organise<%(next_month_start_date)s;
+        """.format(
+            cbe_ucr_table=get_table_name(self.domain, 'static-cbe_form')
+        ), {
+            'start_date': self.month,
+            'next_month_start_date': next_month_start
+        }
+
+        yield """
+        UPDATE "{tmp_tablename}" gov_table
+        SET cbe_type_1=ut.cbe_type_1,
+            cbe_date_1=ut.cbe_date_1,
+            num_target_beneficiaries_1=ut.num_target_beneficiaries_1,
+            num_other_beneficiaries_1=ut.num_other_beneficiaries_1,
+            cbe_type_2=ut.cbe_type_2,
+            cbe_date_2=ut.cbe_date_2,
+            num_target_beneficiaries_2=ut.num_target_beneficiaries_2,
+            num_other_beneficiaries_2=ut.num_other_beneficiaries_2
+        FROM
+        (
+        SELECT
+            awc_id,
+            MIN(CASE WHEN rank=1 THEN theme_cbe END) as cbe_type_1,
+            MIN(CASE WHEN rank=1 THEN date_cbe_organise  END) as cbe_date_1,
+            MIN(CASE WHEN rank=1 THEN count_targeted_beneficiaries  END) as num_target_beneficiaries_1,
+            MIN(CASE WHEN rank=1 THEN count_other_beneficiaries  END) as num_other_beneficiaries_1,
+            MIN(CASE WHEN rank=2 THEN theme_cbe END) as cbe_type_2,
+            MIN(CASE WHEN rank=2 THEN date_cbe_organise  END) as cbe_date_2,
+            MIN(CASE WHEN rank=2 THEN count_targeted_beneficiaries  END) as num_target_beneficiaries_2,
+            MIN(CASE WHEN rank=2 THEN count_other_beneficiaries  END) as num_other_beneficiaries_2
+        FROM temp_cbe_data
+        group by awc_id
+        ) ut
+        WHERE gov_table.awc_id=ut.awc_id;
+        """.format(
+            tmp_tablename=self.staging_tablename,
+        ), {}
+
+        yield """
+                DROP TABLE temp_cbe_data;
+                """, {}
 
     def indexes(self):
         return []
