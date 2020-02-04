@@ -114,17 +114,7 @@ def request_new_domain(request, form, is_new_user=True):
     dom_req.domain = new_domain.name
 
     if not settings.ENTERPRISE_MODE:
-        with transaction.atomic():
-            ensure_community_or_paused_subscription(
-                new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-                web_user=current_user.username,
-            )
-
-        # add user's email as contact email for billing account for the domain
-        account = BillingAccount.get_account_by_domain(new_domain.name)
-        billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
-        billing_contact.email_list = [current_user.email]
-        billing_contact.save()
+        _setup_subscription(new_domain.name, current_user)
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -165,6 +155,20 @@ def request_new_domain(request, form, is_new_user=True):
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
+
+
+def _setup_subscription(domain_name, user):
+    with transaction.atomic():
+        ensure_community_or_paused_subscription(
+            domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=user.username,
+        )
+
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(domain_name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [user.email]
+    billing_contact.save()
 
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
