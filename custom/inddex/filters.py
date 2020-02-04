@@ -115,16 +115,16 @@ class GapDescriptionFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('conv factor available', 'conv factor available'),
-            ('fct data available', 'fct data available'),
-            ('no conversion factor available', 'no conversion factor available'),
-            ('no fct data available', 'no fct data available'),
-            ('not applicable', 'not applicable'),
-            (
-                'using conversion factor from the reference food code',
-                'using conversion factor from the reference food code'
-            ),
-            ('using fct data from the reference food code', 'using fct data from the reference food code'),
+            (x, x) for x in [
+                '1 - conversion factor available',
+                '1 - fct data available',
+                '2 - using conversion factor from base term food code',
+                '2 - using fct data from base term food code',
+                '3 - using fct data from reference food code',
+                '7 - ingredient(s) contain fct data gaps',
+                '8 - no conversion factor available',
+                '8 - no fct data available',
+            ]
         ]
 
 
@@ -136,8 +136,8 @@ class GapTypeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('fct', 'fct'),
             ('conversion factor', 'conversion factor'),
+            ('fct', 'fct'),
         ]
 
 

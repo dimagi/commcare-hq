@@ -27,10 +27,6 @@ class ConvFactorGapsSummaryData(GapsReportSummaryDataMixin):
             [8, 'no conversion factor available', 'non_std_food', 50],
             [8, 'no conversion factor available', 'std_recipe', 200],
             [8, 'no conversion factor available', 'non_std_recipe', 65],
-            [9, 'not applicable', 'food_item', 0],
-            [9, 'not applicable', 'non_std_food', 0],
-            [9, 'not applicable', 'std_recipe', 0],
-            [9, 'not applicable', 'non_std_recipe', 0]
         ]
 
 
@@ -66,8 +62,4 @@ class FCTGapsSummaryData(GapsReportSummaryDataMixin):
             [8, 'no fct data available', 'non_std_food', 50],
             [8, 'no fct data available', 'std_recipe', 0],
             [8, 'no fct data available', 'non_std_recipe', 65],
-            [9, 'not applicable', 'food_item', 0],
-            [9, 'not applicable', 'non_std_food', 0],
-            [9, 'not applicable', 'std_recipe', 0],
-            [9, 'not applicable', 'non_std_recipe', 0],
         ]
