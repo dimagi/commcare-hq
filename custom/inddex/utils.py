@@ -5,7 +5,7 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.userreports.reports.util import ReportExport
 from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter, PregnancyFilter, \
     BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter, CaseOwnersFilter, \
-    FaoWhoGiftFoodGroupDescriptionFilter, SupplementsFilter
+    FaoWhoGiftFoodGroupDescriptionFilter, SupplementsFilter, GapTypeFilter
 
 
 class MultiSheetReportExport(ReportExport):
@@ -105,6 +105,32 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         title = data_provider.slug
 
         return title, exported_rows
+
+
+class BaseGapsSummaryReport(MultiTabularReport):
+    export_only = False
+
+    @property
+    def fields(self):
+        return super().fields + [GapTypeFilter, RecallStatusFilter]
+
+    @property
+    def report_context(self):
+        context = super().report_context
+        context['export_only'] = self.export_only
+
+        return context
+
+    @property
+    def report_config(self):
+        report_config = super().report_config
+        report_config.update(recall_status=self.recall_status)
+
+        return report_config
+
+    @property
+    def recall_status(self):
+        return self.request.GET.get('recall_status') or ''
 
 
 class BaseNutrientReport(MultiTabularReport):
