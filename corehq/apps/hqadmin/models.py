@@ -25,7 +25,7 @@ class SQLHqDeploy(models.Model):
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         # Update or create couch doc
         if self.couch_id:
-            doc = HqDeploy.get_db().get(self.couch_id)
+            doc = HqDeploy.wrap(HqDeploy.get_db().get(self.couch_id))
         else:
             doc = HqDeploy(
                 date=self.date,
