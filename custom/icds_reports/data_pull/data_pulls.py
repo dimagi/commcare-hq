@@ -1,6 +1,6 @@
 import csv
 import io
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from copy import copy
 
 from custom.icds.utils.location import find_test_state_locations
@@ -159,7 +159,7 @@ class MonthlyPerformance(MonthBasedDataPull):
         }
 
     def _consolidate_data(self, data_files):
-        result = defaultdict(OrderedDict)
+        result = defaultdict(dict)
         test_state_names = self._get_test_state_names()
         state_name_column = 'state_name'
         for filename, filestream in data_files.items():
