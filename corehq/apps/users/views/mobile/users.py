@@ -1155,13 +1155,13 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             return self.get(request, *args, **kwargs)
 
         try:
-            usernames = [format_username(row['username'], request.domain) for row in sheet]
+            usernames = {format_username(row['username'], request.domain) for row in sheet}
         except KeyError:
             messages.error(request, _("No users found. Please check your file contains a 'username' column."))
             return self.get(request, *args, **kwargs)
 
         user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
-        usernames_not_found = set(usernames).difference(set([doc['username'] for doc in user_docs_by_id.values()]))
+        usernames_not_found = usernames - {doc['username'] for doc in user_docs_by_id.values()}
         user_ids_with_forms = (
             FormES()
             .domain(request.domain)
