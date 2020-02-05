@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.ext.couchdbkit import (
@@ -11,6 +12,19 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.apps.groups.models import dt_no_Z_re
 from corehq.apps.products.models import Product, SQLProduct
+
+
+class SQLProgram(models.Model):
+    domain = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=255)
+    last_modified = models.DateTimeField()
+    default = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        db_table = "programs_program"
 
 
 class Program(Document):
