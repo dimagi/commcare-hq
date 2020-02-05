@@ -71,10 +71,10 @@ class Command(BaseCommand):
         # we also have to manually populate metadata for the two states
         jk = new_states['objects']['ind']['geometries'][-2]
         jk['id'] = J_AND_K
-        jk['properties'] = {"State": "37", "name": J_AND_K}
+        jk['properties'] = {"State": "01", "name": J_AND_K}
         ladakh = new_states['objects']['ind']['geometries'][-1]
         ladakh['id'] = LADAKH
-        ladakh['properties'] = {"State": "38", "name": LADAKH}
+        ladakh['properties'] = {"State": "37", "name": LADAKH}
 
         # then rewrite the file again
         with open(new_state_filename, 'w+') as new_map_file:
