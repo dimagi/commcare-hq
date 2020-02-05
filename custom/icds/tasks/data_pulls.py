@@ -49,7 +49,7 @@ def run_data_pull(data_pull_slug, domain, month, location_id=None, email=None):
                     timeout=24 * 60,
                 )
             exposed_download = expose_blob_download(
-                filename, expiry=24 * 60,
+                filename, expiry=24 * 60 * 60,
                 mimetype=Format.from_format(Format.ZIP).mimetype,
                 content_disposition=safe_filename_header(filename),
                 download_id=download_id
