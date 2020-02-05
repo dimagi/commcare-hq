@@ -95,6 +95,7 @@ from corehq.apps.users.views import (
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.util.couch import IterDB
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
@@ -1170,10 +1171,17 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
         ).run().aggregations.user_id.keys
 
         deleted_count = 0
-        for user_id, doc in user_docs_by_id.items():
-            if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete()
-                deleted_count += 1
+        with IterDB(CommCareUser.get_db()) as iter_db:
+            for user_id, doc in user_docs_by_id.items():
+                if user_id not in user_ids_with_forms:
+                    iter_db.delete(doc)
+                    deleted_count += 1
+
+        if iter_db.error_ids:
+            message = _("The following users coould not be deleted, please try again: {}.").format(
+                ", ".join([raw_username(user_docs_by_id[user_id]['username'])
+                                   for user_id in iter_db.error_ids]))
+            messages.error(request, message)
 
         if usernames_not_found:
             message = _("The following users were not found: {}.").format(
