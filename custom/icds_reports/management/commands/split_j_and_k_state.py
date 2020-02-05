@@ -14,6 +14,10 @@ from custom.icds_reports.utils.topojson_util.topojson_util import (
     get_state_v3_topojson_file)
 
 
+J_AND_K = 'J&K'
+LADAKH = 'Ladakh'
+
+
 class Command(BaseCommand):
     help = (
         "Split Jammu and Kashmir and Ladakh into separate states, as per "
@@ -66,11 +70,11 @@ class Command(BaseCommand):
 
         # we also have to manually populate metadata for the two states
         jk = new_states['objects']['ind']['geometries'][-2]
-        jk['id'] = "J&K"
-        jk['properties'] = {"State": "37", "name": "J&K"}
+        jk['id'] = J_AND_K
+        jk['properties'] = {"State": "37", "name": J_AND_K}
         ladakh = new_states['objects']['ind']['geometries'][-1]
-        ladakh['id'] = "Ladakh"
-        ladakh['properties'] = {"State": "38", "name": "Ladakh"}
+        ladakh['id'] = LADAKH
+        ladakh['properties'] = {"State": "38", "name": LADAKH}
 
         # then rewrite the file again
         with open(new_state_filename, 'w+') as new_map_file:
