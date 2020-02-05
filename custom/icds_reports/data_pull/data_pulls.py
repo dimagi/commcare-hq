@@ -167,7 +167,7 @@ class MonthlyPerformance(MonthBasedDataPull):
             reader = csv.DictReader(filestream)
             for row in reader:
                 state_name = row[state_name_column]
-                if row[state_name] in test_state_names:
+                if state_name in test_state_names:
                     continue
                 for column_name, value in row.items():
                     if column_name != state_name_column:
