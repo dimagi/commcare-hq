@@ -37,9 +37,11 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     name = 'Multi Report'
     slug = 'multi_report'
     report_template_path = 'inddex/multi_report.html'
+    report_comment = ''
     flush_layout = True
     default_rows = 10
     exportable = True
+    export_only = False
 
     @property
     def fields(self):
@@ -66,7 +68,9 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     def report_context(self):
         return {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
+            'report_comment': self.report_comment,
+            'export_only': self.export_only
         }
 
     @property
@@ -108,18 +112,10 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
 
 class BaseGapsSummaryReport(MultiTabularReport):
-    export_only = False
 
     @property
     def fields(self):
         return super().fields + [GapTypeFilter, RecallStatusFilter]
-
-    @property
-    def report_context(self):
-        context = super().report_context
-        context['export_only'] = self.export_only
-
-        return context
 
     @property
     def report_config(self):

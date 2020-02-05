@@ -9,6 +9,13 @@ class GapsReportByItem(MultiTabularReport):
     title = 'Output 2b - Detailed Information on Gaps'
     name = title
     slug = 'output_2b_detailed_information_on_gaps'
+    report_comment = 'This output assists researchers in identifying incomplete or missing information in the ' \
+                     'recall data. Researchers can use this output to view the specific items reported by ' \
+                     'respondents that are missing conversion factor or food composition data. This output ' \
+                     'also includes the information collected from the respondent during the recall. All gaps ' \
+                     'in this report should be addressed before researchers conduct data analysis. Researchers ' \
+                     'therefore should not download Outputs 3 and 4 unless all gaps in this report have ' \
+                     'been addressed.'
 
     @property
     def fields(self):

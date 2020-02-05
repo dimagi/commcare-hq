@@ -14,6 +14,9 @@ class NutrientIntakesReport(BaseNutrientReport):
     slug = 'output_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'
     export_only = False
     show_filters = True
+    report_comment = 'This output provides information on the total quantity and total nutrient content for ' \
+                     'each individual food or recipe reported by each respondent in the recall. This output ' \
+                     'cannot be previewed. Users must download the data to access the information.'
 
     @property
     def fields(self):
