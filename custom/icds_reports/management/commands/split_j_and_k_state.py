@@ -22,6 +22,9 @@ class Command(BaseCommand):
     # this command was used for https://app.asana.com/0/1112385193248823/1157605674172491
 
     def handle(self, *args, **kwargs):
+        self._update_state_file()
+
+    def _update_state_file(self):
         input_dir = get_topojson_directory()
 
 
@@ -55,7 +58,7 @@ class Command(BaseCommand):
           -o {new_state_filename}
         """
         subprocess.call(mapshaper_command, shell=True)
-        
+
         # now open the newly created file
         with open(new_state_filename, 'r') as f:
             new_states = json.loads(f.read())
