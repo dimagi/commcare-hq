@@ -1165,7 +1165,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
         user_ids_with_forms = (
             FormES()
             .domain(request.domain)
-            .user_id([doc['_id'] for doc in user_docs_by_id.values()])
+            .user_id(list(user_docs_by_id))
             .terms_aggregation('form.meta.userID', 'user_id')
         ).run().aggregations.user_id.keys
 
