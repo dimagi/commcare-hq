@@ -341,33 +341,31 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
     query = (FormES(es_instance_alias=es_instance)
              .domain(domain)
-             .filter(date_filter_fn(gte=startdate, lt=enddate))
-             .aggregation(
-                 TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                     TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
-                     )
-                 )
-             )
-             .size(0)
-    )
+             .filter(date_filter_fn(gte=startdate, lt=enddate)))
 
     if user_ids:
         query = (query
             .user_ids_handle_unknown(user_ids)
             .remove_default_filter('has_user'))
         missing_users = None in user_ids
-        if missing_users:
-            query = query.aggregation(
-                MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
-                    TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
-                    )
-                )
-            )
 
     if xmlnss:
         query = query.xmlns(xmlnss)
+
+    query = query.aggregation(
+        TermsAggregation('user_id', 'form.meta.userID').aggregation(
+            TermsAggregation('app_id', 'app_id').aggregation(
+                TermsAggregation('xmlns', 'xmlns')
+            )
+        )).size(0)
+    if user_ids and missing_users:
+        query = query.aggregation(
+            MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                TermsAggregation('app_id', 'app_id').aggregation(
+                    TermsAggregation('xmlns', 'xmlns')
+                )
+            )
+        )
 
     counts = defaultdict(lambda: 0)
     aggregations = query.run().aggregations
