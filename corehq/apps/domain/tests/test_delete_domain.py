@@ -75,6 +75,7 @@ from corehq.apps.locations.models import (
 from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
+from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.registration.models import RegistrationRequest
@@ -690,6 +691,22 @@ class TestDeleteDomain(TestCase):
 
         self._assert_ota_counts(self.domain.name, 0)
         self._assert_ota_counts(self.domain2.name, 1)
+
+
+    def _assert_programs_count(self, domain_name, count):
+        self._assert_queryset_count([
+            Program.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_programs_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            Program.objects.create(domain=domain_name)
+            self._assert_programs_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_programs_count(self.domain.name, 0)
+        self._assert_programs_count(self.domain2.name, 1)
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([
