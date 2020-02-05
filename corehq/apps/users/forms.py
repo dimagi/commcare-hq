@@ -826,8 +826,8 @@ class CommtrackUserForm(forms.Form):
             source_css_id='id_assigned_locations',
         )
         if self.commtrack_enabled:
-            programs = Program.by_domain(self.domain, wrap=False)
-            choices = list((prog['_id'], prog['name']) for prog in programs)
+            programs = Program.by_domain(self.domain)
+            choices = list((prog.get_id, prog.name) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program_id'].choices = choices
         else:
