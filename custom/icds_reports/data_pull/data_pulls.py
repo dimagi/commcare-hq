@@ -1,6 +1,6 @@
 import csv
 import io
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from copy import copy
 
 from custom.icds.utils.location import find_test_state_locations
@@ -159,7 +159,7 @@ class MonthlyPerformance(MonthBasedDataPull):
         }
 
     def _consolidate_data(self, data_files):
-        result = defaultdict(dict)
+        result = defaultdict(OrderedDict)
         test_state_names = self._get_test_state_names()
         state_name_column = 'state_name'
         for filename, filestream in data_files.items():
@@ -181,9 +181,12 @@ class MonthlyPerformance(MonthBasedDataPull):
     @staticmethod
     def _dump_consolidated_data(result):
         result_file = io.StringIO()
-        headers = list(list(result.values())[0].keys())
-        fieldnames = ['State'] + headers
-        writer = csv.DictWriter(result_file, fieldnames)
+        headers = ['State']
+        for state_name, col_values in result.items():
+            for col_name in col_values:
+                if col_name not in headers:
+                    headers.append(col_name)
+        writer = csv.DictWriter(result_file, headers)
         writer.writeheader()
         for state_name, col_values in result.items():
             row = copy(col_values)
