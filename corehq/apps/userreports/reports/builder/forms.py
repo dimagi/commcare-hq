@@ -864,7 +864,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")
-        if location:
+        if location and location not in [c.get('property') for c in configured_columns]:
             configured_columns += [{
                 "property": location,
                 "calculation": UI_AGG_GROUP_BY  # Not aggregated
