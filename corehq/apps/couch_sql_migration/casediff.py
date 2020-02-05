@@ -24,7 +24,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
-from corehq.form_processor.exceptions import MissingFormXml
+from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
@@ -400,7 +400,10 @@ class WorkerState:
 
 def is_orphaned_case(couch_case):
     def references_case(form_id):
-        form = FormAccessorCouch.get_form(form_id)
+        try:
+            form = FormAccessorCouch.get_form(form_id)
+        except XFormNotFound:
+            return True  # assume case is referenced if form not found
         try:
             return case_id in get_case_ids_from_form(form)
         except MissingFormXml:
