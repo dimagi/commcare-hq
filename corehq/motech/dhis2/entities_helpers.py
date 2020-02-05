@@ -290,8 +290,8 @@ def get_tracked_entity_schema() -> dict:
         SchemaOptional("enrollments"): [{
             "program": DHIS2_ID_SCHEMA,
             SchemaOptional("orgUnit"): DHIS2_ID_SCHEMA,
-            SchemaOptional("enrollmentDate"): DHIS2_DATE_SCHEMA,
-            SchemaOptional("incidentDate"): DHIS2_DATE_SCHEMA,
+            SchemaOptional("enrollmentDate"): DHIS2_DATETIME_SCHEMA,
+            SchemaOptional("incidentDate"): DHIS2_DATETIME_SCHEMA,
             SchemaOptional("events"): [event_schema],
         }],
         SchemaOptional("featureType"): str,
