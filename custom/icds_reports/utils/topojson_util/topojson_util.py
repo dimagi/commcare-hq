@@ -4,6 +4,8 @@ from pathlib import Path
 
 import attr
 
+from corehq.util.soft_assert import soft_assert
+
 
 @attr.s
 class TopojsonFile:
@@ -81,7 +83,11 @@ def get_topojson_for_district(state, district):
         filename = district_topojson_data[state]['file_name']
     else:
         # legacy support - missing state name so look for the district by name across all states
-        # todo: add soft assert and/or remove this
+        _assert = soft_assert('@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
+        _assert(
+            False,
+            f"State {state} not found in district topojosn file!"
+        )
         for state, data in district_topojson_data.items():
             if district in data['districts']:
                 filename = data['file_name']
