@@ -1142,43 +1142,52 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        user_ids_with_forms = self._get_user_ids_with_forms(request, user_docs_by_id)
+        self._handle_usernames_not_found(request, user_docs_by_id, usernames)
+        self._delete_users(request, user_docs_by_id, user_ids_with_forms)
+
+        return self.get(request, *args, **kwargs)
+
+    def _get_usernames(self, request):
+        """
+            Get username list from Excel supplied in request.FILES.
+            Adds any errors to request.messages.
+        """
         try:
             workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
             messages.error(request, str(e))
-            return self.get(request, *args, **kwargs)
+            return None
 
         try:
             sheet = workbook.get_worksheet()
         except WorksheetNotFound:
             messages.error(request, _("Workbook has no worksheets"))
-            return self.get(request, *args, **kwargs)
+            return None
 
         try:
             usernames = {format_username(row['username'], request.domain) for row in sheet}
         except KeyError:
             messages.error(request, _("No users found. Please check your file contains a 'username' column."))
-            return self.get(request, *args, **kwargs)
+            return None
 
-        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
-        usernames_not_found = usernames - {doc['username'] for doc in user_docs_by_id.values()}
+        return usernames
+
+    def _get_user_ids_with_forms(self, request, user_docs_by_id):
+        """
+            Find users who have ever submitted a form, and add to request.messages if so.
+        """
         user_ids_with_forms = (
             FormES()
             .domain(request.domain)
             .user_id(list(user_docs_by_id))
             .terms_aggregation('form.meta.userID', 'user_id')
         ).run().aggregations.user_id.keys
-
-        deleted_count = 0
-        for user_id, doc in user_docs_by_id.items():
-            if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete()
-                deleted_count += 1
-
-        if usernames_not_found:
-            message = _("The following users were not found: {}.").format(
-                ", ".join(map(raw_username, usernames_not_found)))
-            messages.error(request, message)
 
         if user_ids_with_forms:
             message = _("""
@@ -1187,10 +1196,26 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
                                    for user_id in user_ids_with_forms]))
             messages.error(request, message)
 
+        return user_ids_with_forms
+
+    def _handle_usernames_not_found(self, request, user_docs_by_id, usernames):
+        """
+            The only side effect of this is to possibly add to request.messages.
+        """
+        usernames_not_found = usernames - {doc['username'] for doc in user_docs_by_id.values()}
+        if usernames_not_found:
+            message = _("The following users were not found: {}.").format(
+                ", ".join(map(raw_username, usernames_not_found)))
+            messages.error(request, message)
+
+    def _delete_users(self, request, user_docs_by_id, user_ids_with_forms):
+        deleted_count = 0
+        for user_id, doc in user_docs_by_id.items():
+            if user_id not in user_ids_with_forms:
+                CommCareUser.wrap(doc).delete()
+                deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
-
-        return self.get(request, *args, **kwargs)
 
 
 @require_can_edit_commcare_users
