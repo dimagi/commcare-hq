@@ -65,8 +65,8 @@ class Command(BaseCommand):
 
         # we also have to manually populate metadata for the two states
         jk = new_states['objects']['ind']['geometries'][-2]
-        jk['id'] = "Jammu and Kashmir"
-        jk['properties'] = {"State": "37", "name": "Jammu and Kashmir"}
+        jk['id'] = "J&K"
+        jk['properties'] = {"State": "37", "name": "J&K"}
         ladakh = new_states['objects']['ind']['geometries'][-1]
         ladakh['id'] = "Ladakh"
         ladakh['properties'] = {"State": "38", "name": "Ladakh"}
@@ -75,4 +75,4 @@ class Command(BaseCommand):
         with open(new_state_filename, 'w+') as new_map_file:
             new_map_file.write(json.dumps(new_states))
 
-        print(f'new file written to {new_state_filename}')
+        print(f'new state file written to {new_state_filename}')
