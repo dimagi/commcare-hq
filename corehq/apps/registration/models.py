@@ -24,7 +24,7 @@ class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
     tos_confirmed = models.BooleanField(default=False)
     request_time = models.DateTimeField()
     request_ip = models.CharField(max_length=31)
-    activation_guid = models.CharField(max_length=126)
+    activation_guid = models.CharField(max_length=126, unique=True)
     confirm_time = models.DateTimeField(null=True)
     confirm_ip = models.CharField(max_length=31, null=True)
     domain = models.CharField(max_length=255, null=True)
@@ -41,7 +41,9 @@ class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
             reduce=False,
             include_docs=True).first()
 
-        if not doc:
+        if doc:
+            doc = RegistrationRequest.wrap(doc)
+        else:
             doc = RegistrationRequest(
                 activation_guid=self.activation_guid,
                 tos_confirmed=self.tos_confirmed,
