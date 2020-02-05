@@ -30,7 +30,7 @@ class CustomDataPull(BaseProjectDataView):
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
-        return super(CustomDataPull, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @cached_property
     def form(self):
