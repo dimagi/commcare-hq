@@ -22,6 +22,14 @@ describe('Program Summary Directive', function () {
             demographics: { 'label': 'Demographics' },
             awc_infrastructure: { 'label': 'AWC Infrastructure' },
         });
+        $provide.constant("navMenuItems", {
+            sections: [
+                {'name': 'Maternal and Child Nutrition'},
+                {'name': 'ICDS-CAS Reach'},
+                {'name': 'Demographics'},
+                {'name': 'AWC Infrastructure'},
+            ],
+        });
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

@@ -16,7 +16,7 @@ class Command(PopulateSQLCommand):
         return HqDeploy
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class.objects.get_or_create(
+        model, created = self.sql_class().objects.get_or_create(
             couch_id=doc['_id'],
             defaults={
                 'date': doc['date'],

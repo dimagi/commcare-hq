@@ -2,7 +2,6 @@ from datetime import date, datetime
 
 from django.db import models
 
-from dimagi.ext.couchdbkit import *
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
     get_all_pillow_instances,
