@@ -77,8 +77,9 @@ class AbstractFormAccessor(metaclass=ABCMeta):
     def iter_forms_by_last_modified(start_datetime, end_datetime):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
-    def iter_form_ids_by_xmlns(self, xmlns=None):
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
         raise NotImplementedError
 
     @staticmethod
