@@ -1557,9 +1557,12 @@ def _child_health_monthly_aggregation(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
+        celery_task_logger.info('dropping old temp table')
         cursor.execute(helper.drop_temporary_table())
+        celery_task_logger.info('creating partition table')
         cursor.execute(helper.create_temporary_table())
         for state in state_ids:
+            celery_task_logger.info(f'create state partition for {state}')
             cursor.execute(helper.drop_partition(state))
             cursor.execute(helper.create_partition(state))
 
@@ -1567,7 +1570,8 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
-    pool.join(raise_error=True)
+    while not pool.join(timeout=120, raise_error=True):
+        celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
         g.get()
 
