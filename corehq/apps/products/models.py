@@ -303,7 +303,7 @@ class SQLProduct(models.Model):
     code = models.CharField(max_length=100, default='', null=True)
     description = models.TextField(null=True, default='')
     category = models.CharField(max_length=100, null=True, default='')
-    program_id = models.CharField(max_length=100, null=True, default='')
+    program_id = models.CharField(max_length=100, null=True, default='')    # TODO: all references to this need to be updated (PR2)
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     units = models.CharField(max_length=100, null=True, default='')
     product_data = jsonfield.JSONField(
