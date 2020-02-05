@@ -58,7 +58,7 @@ This should contain:
 * A new model, with a django migration to create it.
 
   * Expect to rename your model laster, and specify ``db_table`` with the final expected table name. If your couch model is ``MyModel``, name your SQL model ``SQLMyModel`` with ``db_table`` set to ``myapp_mymodel`` so that once the couch model is gone, you can rename the SQL model back to ``MyModel`` and remove the ``Meta``. It's a headache to rename models via django migrations, especially submodels.
-  * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26398/commits/5df642a5f798880e29d65f1a389d4c068aaa47c3>`_, a simple model with no related models. This example pulls functions common to booth couch and sql into a mixin used by both classes.
+  * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26555/commits/5df642a5f798880e29d65f1a389d4c068aaa47c3>`_, a simple model with no related models. This example pulls functions common to booth couch and sql into a mixin used by both classes.
   * It's frequently useful to include a column for the corresponding couch document id. The `HqDeploy migration <https://github.com/dimagi/commcare-hq/pull/26440/files>`_ does this (search for `couch_id`).
 
 * A standalone management command that fetches all couch docs and creates a corresponding SQL model if it doesn't already exist.
@@ -69,7 +69,7 @@ This should contain:
   
 * Adds code to keep the couch and sql items in sync.
 
-  * In the simple cases, this is just a matter of updating the ``save`` methods for both couch and sql to save themselves and also either find and update or create the corresponding item. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26398/commits/a157aa456850f1c1d076581035b273e6394d132a>`_.
+  * In the simple cases, this is just a matter of updating the ``save`` methods for both couch and sql to save themselves and also either find and update or create the corresponding item. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26555/commits/a157aa456850f1c1d076581035b273e6394d132a>`_.
   * The `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_ also exist for this purpose.
 
 * Most models belong to a domain. These models need to be deleted when the domain is deleted.
@@ -93,7 +93,7 @@ This should contain:
 * A django migration that verifies all couch docs have been migrated and cleans up any stragglers, using the `auto-managed migration pattern <https://commcare-hq.readthedocs.io/migration_command_pattern.html#auto-managed-migration-pattern>`_.
 
   * This should be trivial, since all the work is done in the populate command from the previous PR.
-  * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26400/commits/6a55c47d7d6ee21b9762e250d968968859d98166>`_.
+  * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26556/commits/6a55c47d7d6ee21b9762e250d968968859d98166>`_.
 * Replacements of all code that reads from the couch document to instead read from SQL. This is likely the most unique part of the migration. Some patterns are:
 
   * `Replacing couch queries with SQL queries <https://github.com/dimagi/commcare-hq/pull/26400/commits/e270e5c1fb932c850b6a356208f1ff6ae0e06299>`_
@@ -116,6 +116,6 @@ This is the cleanup PR. Wait a few days or weeks after the previous PR to merge 
 
 * If your sql model uses a ``couch_id``, remove it. `Sample commit for HqDeploy <https://github.com/dimagi/commcare-hq/pull/26442/commits/3fa10a6a511b0b592979cc4183d84d3a4e36f200>`_.
 * Remove the old couch model, which at this point should have no references.
-* Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this should include removing the sql model's ``Meta`` class and adding a small django migration. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26400/commits/483ea765f97da0ba0ac3449023a9a9fc637094e8>`_.
-* Add the couch class to ``deletable_doc_types``. `Sample commit for Dhis2Connection <https://github.com/dimagi/commcare-hq/pull/26400/commits/2004a8f1a6fd38789df719b8a8ab992ffc44d8dc>`_.
+* Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this should include removing the sql model's ``Meta`` class and adding a small django migration. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26557/commits/beb9d10f6d8d0906524912ef94a8d049f06c38e8>`_.
+* Add the couch class to ``DELETABLE_COUCH_DOC_TYPES``. `Sample commit for Dhis2Connection <https://github.com/dimagi/commcare-hq/pull/26400/commits/2a6e93e19ab689cfaf0b4cdc89c9039cbee33139>`_.
 * Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_
