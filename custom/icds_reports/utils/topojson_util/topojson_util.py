@@ -41,6 +41,10 @@ def get_district_topojson_file():
     return _get_topojson_file('districts_v2.topojson.js', truncate_before=24)
 
 
+def get_district_v3_topojson_file():
+    return _get_topojson_file('districts_v3_small.topojson', truncate_before=0)
+
+
 def get_state_topojson_file():
     return _get_topojson_file('states_v2.topojson.js', truncate_before=21)
 

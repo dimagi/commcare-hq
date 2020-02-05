@@ -1,17 +1,16 @@
+import copy
 import json
 import subprocess
-
-from pathlib import Path
 
 import os
 from django.core.management import BaseCommand
 
 from custom.icds_reports.utils.topojson_util.topojson_util import (
     get_topojson_directory,
-    get_block_topojson_file,
-    get_district_topojson_file,
     copy_custom_metadata,
-    get_state_v3_topojson_file)
+    get_state_v3_topojson_file,
+    get_district_v3_topojson_file
+)
 
 
 J_AND_K = 'J&K'
@@ -28,6 +27,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.input_dir = get_topojson_directory()
         self._update_state_file()
+        self._update_district_file()
 
     def _update_state_file(self):
         # loading state topojson object
@@ -81,3 +81,30 @@ class Command(BaseCommand):
             new_map_file.write(json.dumps(new_states))
 
         print(f'new state file written to {new_state_filename}')
+
+    def _update_district_file(self):
+        district_file = get_district_v3_topojson_file()
+        district_topojson = district_file.topojson
+        j_k = district_topojson['objects'][J_AND_K]
+        all_geometries = j_k['geometries']
+        # make a base copy for ladakh with same properties
+        ladakh = copy.deepcopy(j_k)
+        # wipe the geometries of both
+        j_k['geometries'] = []
+        ladakh['geometries'] = []
+        for geometry in all_geometries:
+            # only these two districts are in Ladakh state
+            if geometry['id'] in ('Leh(Ladakh)', 'Kargil'):
+                ladakh['geometries'].append(geometry)
+            else:
+                j_k['geometries'].append(geometry)
+
+        # add ladakh to the district topojson list
+        district_topojson['objects'][LADAKH] = ladakh
+
+        # save a new file
+        new_district_filename = os.path.join(self.input_dir, 'districts_v4.topojson')
+        with open(new_district_filename, 'w+') as new_district_file:
+            new_district_file.write(json.dumps(district_topojson))
+
+        print(f'new district topojson file written to {new_district_filename}')
