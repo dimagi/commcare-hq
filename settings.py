@@ -752,6 +752,8 @@ SUMOLOGIC_URL = None
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_MAJOR_VERSION = 1
+# If elasticsearch queries take more than this, they result in timeout errors
+ES_SEARCH_TIMEOUT = 30
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
