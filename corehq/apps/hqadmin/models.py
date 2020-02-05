@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
@@ -21,6 +21,26 @@ class SQLHqDeploy(models.Model):
 
     class Meta(object):
         db_table = "hqadmin_hqdeploy"
+
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
+        # Update or create couch doc
+        if self.couch_id:
+            doc = HqDeploy.get_db().get(self.couch_id)
+        else:
+            doc = HqDeploy(
+                date=self.date,
+                user=self.user,
+                environment=self.environment,
+                diff_url=self.diff_url,
+            )
+
+        doc.save(from_sql=True)
+        self.couch_id = doc.get_id
+
+        # Save to SQL
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
 
 class HqDeploy(Document):
@@ -55,19 +75,21 @@ class HqDeploy(Document):
         ).all()
 
     def save(self, *args, **kwargs):
-        # Save to SQL
-        model, created = SQLHqDeploy.objects.update_or_create(
-            couch_id=self.get_id,
-            defaults={
-                'date': self.date,
-                'user': self.user,
-                'environment': self.environment,
-                'diff_url': self.diff_url,
-            }
-        )
-
         # Save to couch
+        # This must happen first so the SQL save finds this doc and doesn't recreate it
         super().save(*args, **kwargs)
+
+        # Save to SQL
+        if not kwargs.pop('from_sql', False):
+            model, created = SQLHqDeploy.objects.update_or_create(
+                couch_id=self.get_id,
+                defaults={
+                    'date': self.date,
+                    'user': self.user,
+                    'environment': self.environment,
+                    'diff_url': self.diff_url,
+                }
+            )
 
 
 class HistoricalPillowCheckpoint(models.Model):
