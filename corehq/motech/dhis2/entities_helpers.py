@@ -130,9 +130,11 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
             attr_id,
             get_value(value_source_config, case_trigger_info),
         )
-    enrollments = get_enrollments(case_trigger_info, case_config)
-    if enrollments:
-        tracked_entity["enrollments"] = enrollments
+    enrollments_with_new_events = get_enrollments(case_trigger_info, case_config)
+    if enrollments_with_new_events:
+        tracked_entity["enrollments"] = append_new_events_to_enrollments(
+            tracked_entity, enrollments_with_new_events
+        )
     validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
@@ -150,6 +152,25 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
                                        attempt=attempt + 1)
     else:
         response.raise_for_status()
+
+
+def append_new_events_to_enrollments(
+    tracked_entity: Dict,
+    enrollments_with_new_events: List,
+) -> List:
+    """
+    Adds new events to current program enrollments and adds new
+    enrollments. Returns a complete list of enrollments.
+    """
+    current_enrollments = tracked_entity.get("enrollments", [])
+    enrollments_by_program_id = {e["program"]: e for e in current_enrollments}
+    for enrol in enrollments_with_new_events:
+        program_id = enrol["program"]
+        if program_id in enrollments_by_program_id:
+            enrollments_by_program_id[program_id]["events"].append(enrol["events"])
+        else:
+            enrollments_by_program_id[program_id] = enrol
+    return list(enrollments_by_program_id.values())
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
