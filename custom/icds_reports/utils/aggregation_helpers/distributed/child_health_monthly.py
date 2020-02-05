@@ -1,3 +1,5 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
@@ -14,6 +16,8 @@ from custom.icds_reports.utils.aggregation_helpers import (
     month_formatter,
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+
+logger = logging.getLogger(__name__)
 
 
 class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -36,11 +40,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
-
-        cursor.execute(drop_query, drop_params)
-
-        for query in self.aggregation_queries():
+        for i, query in enumerate(self.aggregation_queries()):
+            logger.info(f'executing query {i}')
             cursor.execute(query)
 
     @property
