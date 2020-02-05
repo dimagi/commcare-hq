@@ -1,3 +1,4 @@
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
@@ -26,8 +27,11 @@ class TestContent(TestCase):
     def setUpClass(cls):
         super(TestContent, cls).setUpClass()
         cls.domain = 'test-content'
+        cls.domain_obj = create_domain(cls.domain)
         cls.user = CommCareUser(phone_numbers=['9990000000000'], language='es')
-        cls.translation_doc = StandaloneTranslationDoc(domain=cls.domain, area='sms', langs=['en', 'es'])
+        from corehq.apps.sms.util import get_or_create_translation_doc
+        cls.translation_doc = get_or_create_translation_doc(cls.domain)
+        cls.translation_doc.set_translations('es', {})
         cls.translation_doc.save()
 
     @classmethod
@@ -54,7 +58,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -70,7 +74,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -87,7 +91,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -107,7 +111,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -128,7 +132,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
