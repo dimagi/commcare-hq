@@ -22,12 +22,10 @@ class Command(BaseCommand):
     # this command was used for https://app.asana.com/0/1112385193248823/1157605674172491
 
     def handle(self, *args, **kwargs):
+        self.input_dir = get_topojson_directory()
         self._update_state_file()
 
     def _update_state_file(self):
-        input_dir = get_topojson_directory()
-
-
         # loading state topojson object
         state_topojson_file = get_state_v3_topojson_file()
         state_topojson = state_topojson_file.topojson
@@ -38,16 +36,16 @@ class Command(BaseCommand):
         state_topojson['objects']['ind']['geometries'] = new_geometries
 
         # save a new file
-        tmp_state_filename = os.path.join(input_dir, 'states_v4_tmp.topojson')
+        tmp_state_filename = os.path.join(self.input_dir, 'states_v4_tmp.topojson')
         with open(tmp_state_filename, 'w+') as new_map_file:
             new_map_file.write(json.dumps(state_topojson))
 
         # assumes these files are in the input directory.
         # get them from  https://app.asana.com/0/1112385193248823/1157605674172491
-        j_k_file = os.path.join(input_dir, 'Jammu_and_Kashmir_State.shp')
-        ladakh_file = os.path.join(input_dir, 'Ladakh_State.shp')
+        j_k_file = os.path.join(self.input_dir, 'Jammu_and_Kashmir_State.shp')
+        ladakh_file = os.path.join(self.input_dir, 'Ladakh_State.shp')
 
-        new_state_filename = os.path.join(input_dir, 'states_v4.topojson')
+        new_state_filename = os.path.join(self.input_dir, 'states_v4.topojson')
 
         # now we merge in the new shape files using mapshaper : https://www.npmjs.com/package/mapshaper
         # see https://gis.stackexchange.com/a/221075/126250 for details
