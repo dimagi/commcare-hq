@@ -102,7 +102,7 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         var suggestedTop = event.layerY;
         var popupHeight = $('#' + divId).outerHeight(true);
         var outOfScreenHeight = suggestedTop + popupHeight - viewHeight;
-        return (viewHeight < (suggestedTop + popupHeight)) ? (suggestedTop - outOfScreenHeight) : suggestedTop;
+        return (outOfScreenHeight > 0) ? (suggestedTop - outOfScreenHeight) : suggestedTop;
     };
 
     vm.renderPopup = function (html, divId) {
