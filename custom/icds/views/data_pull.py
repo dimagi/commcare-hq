@@ -48,7 +48,7 @@ class CustomDataPull(BaseProjectDataView):
         if not can_initiate_data_pull():
             messages.warning(request, _("Request Ignored."))
         elif not data_pull_is_in_progress() and self.form.is_valid():
-            self.form.submit(request.user.email)
+            self.form.submit(request.domain, request.user.email)
             messages.success(request, _("Request Initiated. You will receive an email on completion."))
             return redirect(self.urlname, self.domain)
         return self.get(request, *args, **kwargs)
