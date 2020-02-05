@@ -1567,7 +1567,8 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
-    pool.join(raise_error=True)
+    while not pool.join(timeout=120, raise_error=True):
+        celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
         g.get()
 

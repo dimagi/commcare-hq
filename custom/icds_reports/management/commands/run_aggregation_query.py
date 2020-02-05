@@ -121,7 +121,8 @@ def run_task(agg_record, query_name):
         for state in state_ids:
             greenlets.append(pool.spawn(agg_query, state, agg_date))
         logger.info('Joining greenlets')
-        pool.join(raise_error=True)
+        while not pool.join(timeout=120, raise_error=True):
+            logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
         logger.info('Getting greenlets')
         for g in greenlets:
             logger.info('getting {}'.format(g))
