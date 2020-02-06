@@ -67,7 +67,7 @@ This should contain:
     from corehq.apps.hqadmin.models import HqDeploy
     attrs = ['environment', 'user', 'date']
     docs = list(get_all_docs_with_doc_types(HqDeploy.get_db(), ['HqDeploy']))
-    [(attr, len([doc for doc in docs if not doc.get(attr)]), max([len(doc.get(attr, '')) for doc in docs])) for attr in attrs]
+    [(attr, len([doc for doc in docs if not doc.get(attr)]), max([len(doc.get(attr)) for doc in docs if doc.get(attr)] + [0])) for attr in attrs]
 
 * A standalone management command that fetches all couch docs and creates a corresponding SQL model if it doesn't already exist.
 
