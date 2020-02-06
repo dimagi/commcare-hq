@@ -1998,8 +1998,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
     'ils-gateway': 'ils_dashboard_report'
 }
 
-REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
