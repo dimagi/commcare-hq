@@ -19,9 +19,9 @@ class Command(PopulateSQLCommand):
         model, created = self.sql_class().objects.get_or_create(
             couch_id=doc['_id'],
             defaults={
-                'date': doc['date'],
-                'user': doc['user'],
-                'environment': doc['environment'],
+                'date': doc.get('date'),
+                'user': doc.get('user'),
+                'environment': doc.get('environment'),
                 'diff_url': doc.get('diff_url'),
             })
         return (model, created)
