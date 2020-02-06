@@ -47,6 +47,7 @@ def get_event_schema() -> dict:
     True
 
     """
+    note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
     return {
         SchemaOptional("assignedUser"): id_schema,
@@ -79,7 +80,7 @@ def get_event_schema() -> dict:
         },
         SchemaOptional("lastUpdated"): datetime_schema,
         SchemaOptional("lastUpdatedAtClient"): datetime_schema,
-        SchemaOptional("notes"): list,
+        SchemaOptional("notes"): [note_schema],
         "orgUnit": id_schema,
         SchemaOptional("orgUnitName"): str,
         "program": id_schema,
@@ -88,6 +89,15 @@ def get_event_schema() -> dict:
         SchemaOptional("status"): event_status_schema,
         SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
+    }
+
+
+def get_note_schema() -> dict:
+    return {
+        SchemaOptional("note"): id_schema,
+        SchemaOptional("storedDate"): date_schema,
+        SchemaOptional("storedBy"): str,
+        "value": str,
     }
 
 
@@ -118,6 +128,7 @@ def get_tracked_entity_schema() -> dict:
     """
     attribute_schema = get_attribute_schema()
     event_schema = get_event_schema()
+    note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
     return {
         SchemaOptional("attributes"): [attribute_schema],
@@ -135,7 +146,7 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("incidentDate"): date_schema,
             SchemaOptional("lastUpdated"): datetime_schema,
             SchemaOptional("lastUpdatedAtClient"): datetime_schema,
-            SchemaOptional("notes"): list,
+            SchemaOptional("notes"): [note_schema],
             SchemaOptional("orgUnit"): id_schema,
             "program": id_schema,
             SchemaOptional("relationships"): [relationship_schema],
