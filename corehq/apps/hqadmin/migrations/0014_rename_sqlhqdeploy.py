@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hqadmin', '0012_remove_sqlhqdeploy_couch_id'),
+        ('hqadmin', '0013_remove_sqlhqdeploy_couch_id'),
     ]
 
     operations = [
