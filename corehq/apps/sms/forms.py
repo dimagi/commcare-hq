@@ -34,6 +34,7 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
+    get_or_create_translation_doc,
     get_sms_backend_classes,
     strip_plus,
     validate_phone_number,
@@ -378,7 +379,11 @@ class SettingsForm(Form):
                     "configured in the SMS languages and translations page "
                     "(Messaging -> Languages -> Messaging Translations)."),
             ),
-            hqcrispy.FieldWithHelpBubble(   # TODO: hide if project only has one language
+        ]
+
+        tdoc = get_or_create_translation_doc(self.domain)
+        if len(tdoc.langs) > 1:
+            fields.append(hqcrispy.FieldWithHelpBubble(
                 'language_fallback',
                 help_bubble_text=_("""
                     Choose what should happen when a broadcast or alert should be sent to a recipient but no
@@ -388,8 +393,7 @@ class SettingsForm(Form):
                     default SMS language. If that translation is also unavailable, you may choose to use
                     untranslated content, if there is any.
                 """),
-            ),
-        ]
+            ))
 
         return crispy.Fieldset(
             _("Registration Settings"),
