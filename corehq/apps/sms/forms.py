@@ -98,7 +98,7 @@ LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
 
 LANGUAGE_FALLBACK_CHOICES = (
     (LANGUAGE_FALLBACK_NONE, ugettext_lazy("Only send message if available in recipient's preferred language")),
-    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("Use the alert or broadcasts's default language as a backup")),
+    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("Use the alert or broadcast's default language as a backup")),
     (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
         Use the project's default language as a backup if the alert or broadcast's language is also unavailable
     """)),
