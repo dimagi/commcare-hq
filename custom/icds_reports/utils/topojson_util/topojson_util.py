@@ -4,6 +4,8 @@ from pathlib import Path
 
 import attr
 
+from corehq.util.soft_assert import soft_assert
+
 
 @attr.s
 class TopojsonFile:
@@ -23,8 +25,13 @@ def _get_topojson_file(filename, truncate_before):
     path = os.path.join(get_topojson_directory(), filename)
     with open(path) as f:
         content = f.read()
-        # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
-        topojson_text = content[truncate_before:][:-2]
+        if not truncate_before:
+            # no truncation necessary if it's already a json file
+            topojson_text = content
+        else:
+            # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+            topojson_text = content[truncate_before:][:-2]
+
         return TopojsonFile(path, topojson_text, json.loads(topojson_text))
 
 
@@ -36,12 +43,16 @@ def get_district_topojson_file():
     return _get_topojson_file('districts_v2.topojson.js', truncate_before=24)
 
 
+def get_district_v3_topojson_file():
+    return _get_topojson_file('districts_v3_small.topojson', truncate_before=0)
+
+
 def get_state_topojson_file():
     return _get_topojson_file('states_v2.topojson.js', truncate_before=21)
 
 
 def get_state_v3_topojson_file():
-    return _get_topojson_file('states_v3_small.topojson.js', truncate_before=21)
+    return _get_topojson_file('states_v3_small.topojson', truncate_before=0)
 
 
 def get_topojson_file_for_level(level):
@@ -72,7 +83,11 @@ def get_topojson_for_district(state, district):
         filename = district_topojson_data[state]['file_name']
     else:
         # legacy support - missing state name so look for the district by name across all states
-        # todo: add soft assert and/or remove this
+        _assert = soft_assert('@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
+        _assert(
+            False,
+            f"State {state} not found in district topojosn file!"
+        )
         for state, data in district_topojson_data.items():
             if district in data['districts']:
                 filename = data['file_name']

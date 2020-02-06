@@ -135,7 +135,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [
+        Ignore('diff', 'doc_type', old="CommCareCase-Deleted", new="CommCareCase"),
         Ignore('type', 'modified_on', old=None),
+        Ignore('missing', '-deletion_id', new=MISSING),
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
         Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
@@ -146,6 +148,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     ],
     'LedgerValue': [
         Ignore(path='_id'),  # couch != SQL
+        Ignore("missing", "location_id", old=MISSING, new=None),
     ],
     'case_attachment': [
         Ignore(path='attachment_properties', new=MISSING),

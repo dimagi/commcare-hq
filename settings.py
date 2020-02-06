@@ -752,6 +752,8 @@ SUMOLOGIC_URL = None
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_MAJOR_VERSION = 1
+# If elasticsearch queries take more than this, they result in timeout errors
+ES_SEARCH_TIMEOUT = 30
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -950,6 +952,11 @@ SESSION_BYPASS_URLS = [
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
+
+# If set to a positive number, exports requested more than this many seconds ago
+# without the email option will be quickly rejected.
+# This is useful for load-shedding in times of crisis.
+STALE_EXPORT_THRESHOLD = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1990,8 +1997,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
     'ews-ghana': 'dashboard_page',
     'ils-gateway': 'ils_dashboard_report'
 }
-
-REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',

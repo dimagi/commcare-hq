@@ -56,14 +56,9 @@ def test_db_unique_id():
 
 @with_setup(teardown=delete_db)
 def test_open_state_db():
-    with open_state_db("test", state_dir) as db:
-        with assert_raises(OperationalError):
-            db.unique_id
-        with assert_raises(OperationalError):
-            db.get_diff_stats()
-        with assert_raises(OperationalError):
-            db.set("key", 1)
     assert not os.path.exists(_get_state_db_filepath("test", state_dir))
+    with assert_raises(mod.Error):
+        open_state_db("test", state_dir)
     with init_db(memory=False) as db:
         uid = db.unique_id
         eq(db.get("key"), None)
@@ -227,12 +222,16 @@ def test_replace_case_diffs():
             ("stock state", "unaffected/x/y", [make_diff(3)]),
             ("CommCareCase", "stock-only", [make_diff(4)]),
             ("stock state", "stock-only/x/y", [make_diff(5)]),
+            ("CommCareCase", "gone", [make_diff(4)]),
+            ("stock state", "gone/x/y", [make_diff(5)]),
         ])
         # add new diffs
         db.replace_case_diffs([
             ("CommCareCase", case_id, [make_diff(6)]),
             ("stock state", case_id + "/y/z", [make_diff(7)]),
             ("stock state", "stock-only/y/z", [make_diff(8)]),
+            ("CommCareCase", "gone", []),
+            ("stock state", "gone/x/y", []),
         ])
         eq(
             {(d.kind, d.doc_id, hashable(d.json_diff)) for d in db.get_diffs()},
@@ -349,6 +348,7 @@ def test_clone_casediff_data_from_tables():
         mod.KeyValue,
         mod.DocCount,
         mod.DocDiffs,
+        mod.DocChanges,
         mod.MissingDoc,
         mod.NoActionCaseForm,
         mod.ProblemForm,

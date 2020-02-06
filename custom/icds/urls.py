@@ -1,4 +1,7 @@
 from django.conf.urls import url
+from custom.icds.views.data_pull import (
+    CustomDataPull,
+)
 from custom.icds.views.hosted_ccz import (
     ManageHostedCCZ,
     ManageHostedCCZLink,
@@ -26,4 +29,5 @@ urlpatterns = [
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/', ManageHostedCCZLink.as_view(),
         name=ManageHostedCCZLink.urlname),
     url(r'^ccz/hostings/(?P<identifier>[\w-]+)/', HostedCCZView.as_view(), name=HostedCCZView.urlname),
+    url(r'^custom_data_pull/', CustomDataPull.as_view(), name=CustomDataPull.urlname),
 ]

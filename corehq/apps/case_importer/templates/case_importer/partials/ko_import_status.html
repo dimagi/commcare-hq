@@ -50,3 +50,14 @@
 </div>
 <!--/ko-->
 <!--/ko-->
+<!--ko if: state === $root.states.FAILED && result && !_.isEmpty(result.errors)-->
+<div class="alert alert-warning">
+  <ul class="list-unstyled">
+    <!--ko foreach: result.errors-->
+    <li>
+      <p data-bind="text: description">
+    </li>
+    <!--/ko-->
+  </ul>
+</div>
+<!--/ko-->

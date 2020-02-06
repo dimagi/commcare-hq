@@ -10,3 +10,7 @@ class DatabaseNotFound(Exception):
 
 class AccessRestricted(Exception):
     pass
+
+
+class ParallelExecutionError(Exception):
+    pass

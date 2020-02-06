@@ -1,4 +1,5 @@
 from dimagi.ext import jsonobject
+from dimagi.utils.logging import notify_exception
 from soil.progress import STATES, get_task_status
 from soil.util import get_task
 
@@ -69,12 +70,36 @@ def normalize_task_status_result_errors(result):
 
 
 def get_task_status_json(task_id):
-    task_status = get_task_status(get_task(task_id))
+    try:
+        task_status = get_task_status(get_task(task_id))
+    except Exception:
+        # There was a period of time where the format of metadata we were setting
+        # from the task would cause a celery-internal failure
+        notify_exception(None, "Error fetching task")
+        return TaskStatus(
+            state=STATES.failed,
+            progress=None,
+            result=TaskStatusResult(errors=[TaskStatusResultError(description='Unknown Failure')]),
+        )
 
-    return TaskStatus(
-        state=task_status.state,
-        progress=TaskStatusProgress(
-            percent=task_status.progress.percent,
-        ),
-        result=normalize_task_status_result(task_status.result),
-    )
+    if task_status.state == STATES.failed:
+        errors = (
+            task_status.error if isinstance(task_status.error, (list, tuple))
+            else [task_status.error]
+        )
+        return TaskStatus(
+            state=task_status.state,
+            progress=TaskStatusProgress(
+                percent=task_status.progress.percent,
+            ),
+            result=TaskStatusResult(errors=[TaskStatusResultError(description=error)
+                                            for error in errors]),
+        )
+    else:
+        return TaskStatus(
+            state=task_status.state,
+            progress=TaskStatusProgress(
+                percent=task_status.progress.percent,
+            ),
+            result=normalize_task_status_result(task_status.result),
+        )
