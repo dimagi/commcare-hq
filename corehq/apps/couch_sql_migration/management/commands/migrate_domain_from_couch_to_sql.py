@@ -19,6 +19,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
+from corehq.apps.couch_sql_migration.missingdocs import find_missing_docs
 from corehq.apps.couch_sql_migration.progress import (
     couch_sql_migration_in_progress,
     get_couch_sql_migration_status,
@@ -144,6 +145,12 @@ class Command(BaseCommand):
                 and continuing with next form.
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
+        parser.add_argument('--use-missing-cache',
+            dest="refresh_missing", action='store_false', default=True,
+            help="""
+                Do not recalculate which documents are in Couch but not SQL.
+                Instead, use previously calculated data from the state db.
+            """)
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
@@ -159,13 +166,14 @@ class Command(BaseCommand):
             "stop_on_error",
             "forms",
             "rewind",
+            "refresh_missing",
         ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if action != MIGRATE and self.live_migrate:
-            raise CommandError("--live only allowed with `MIGRATE`")
+        if action not in [MIGRATE, STATS] and self.live_migrate:
+            raise CommandError(f"{action} --live not allowed")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != MIGRATE and self.forms:
@@ -246,6 +254,8 @@ class Command(BaseCommand):
 
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
+        if self.refresh_missing:
+            find_missing_docs(domain, self.state_dir, self.live_migrate)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
         db = open_state_db(domain, self.state_dir)
         try:

@@ -317,12 +317,19 @@ class StateDB(DiffDB):
                 assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
-        """DEPRECATED use diffs instead"""
         with self.session() as session:
             session.bulk_save_objects([
                 MissingDoc(kind=kind, doc_id=doc_id)
                 for doc_id in doc_ids
             ])
+
+    def delete_missing_docs(self, kind):
+        with self.session() as session:
+            (
+                session.query(MissingDoc)
+                .filter_by(kind=kind)
+                .delete(synchronize_session=False)
+            )
 
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
@@ -333,7 +340,7 @@ class StateDB(DiffDB):
         doc_id = couch_json["_id"]
         self.add_diffs(doc_type, doc_id, diffs)
         if diffs:
-            dd_count("commcare.couchsqlmigration.form.has_diffs")
+            dd_count("commcare.couchsqlmigration.form.has_diff")
 
     def replace_case_diffs(self, case_diffs, **kw):
         diffs_by_doc = defaultdict(list)
