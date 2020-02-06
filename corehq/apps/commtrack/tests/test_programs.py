@@ -18,7 +18,7 @@ class ProgramsTest(TestCase):
         self.addCleanup(self.domain.delete)
         bootstrap_products(self.domain.name)
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
-        self.default_program = Program.by_domain(self.domain.name, wrap=True).one()
+        self.default_program = Program.by_domain(self.domain.name).one()
         self.new_program = make_program(
             self.domain.name,
             'new program',
