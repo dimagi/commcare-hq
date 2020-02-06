@@ -255,10 +255,10 @@ class LocationForm(forms.Form):
                     'The site code cannot contain spaces or special characters.'
                 ))
             if (SQLLocation.objects
-                .filter(domain=self.domain,
-                        site_code__iexact=site_code)
-                .exclude(location_id=self.location.location_id)
-                .exists()):
+                    .filter(domain=self.domain,
+                            site_code__iexact=site_code)
+                    .exclude(location_id=self.location.location_id)
+                    .exists()):
                 raise forms.ValidationError(_(
                     'another location already uses this site code'
                 ))
