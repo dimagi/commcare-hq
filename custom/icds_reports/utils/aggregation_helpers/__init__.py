@@ -17,6 +17,11 @@ def get_child_health_tablename(month):
     return f"{base_tablename}_{month_string}"
 
 
+def get_child_health_temp_tablename(month):
+    tablename = get_child_health_tablename(month)
+    return f"tmp_{tablename}"
+
+
 def get_agg_child_temp_tablename():
     return 'tmp_agg_child_health_5'
 

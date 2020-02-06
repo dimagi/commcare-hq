@@ -34,6 +34,7 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     setup_aggregation,
     update_agg_child_health,
+    update_child_health_monthly_table,
     _agg_adolescent_girls_registration_table,
     create_df_indices,
     drop_df_indices,
@@ -65,6 +66,7 @@ STATE_TASKS = {
 ALL_STATES_TASKS = {
     'child_health_monthly': (None, _child_health_monthly_aggregation, None),
     'create_mbt_for_month': (None, create_all_mbt, None),
+    'update_child_health_monthly_table': (None, update_child_health_monthly_table, None),
 }
 
 NORMAL_TASKS = {
