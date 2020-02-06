@@ -1,6 +1,5 @@
 from schema import Optional as SchemaOptional
-from schema import Regex
-
+from schema import Regex, Schema
 
 id_schema = Regex(r"^[A-Za-z0-9]+$")
 # DHIS2 accepts date values, but returns datetime values for dates:
@@ -8,6 +7,19 @@ date_schema = Regex(r"^\d{4}-\d{2}-\d{2}(:?T\d{2}:\d{2}:\d{2}.\d{3})?$")
 datetime_schema = Regex(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
 enrollment_status_schema = Regex("^(ACTIVE|COMPLETED|CANCELED)$")
 event_status_schema = Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$")
+
+
+def get_attribute_schema() -> dict:
+    return {
+        "attribute": id_schema,
+        SchemaOptional("code"): str,
+        SchemaOptional("created"): datetime_schema,
+        SchemaOptional("displayName"): str,
+        SchemaOptional("lastUpdated"): datetime_schema,
+        SchemaOptional("storedBy"): str,
+        "value": object,
+        SchemaOptional("valueType"): str,
+    }
 
 
 def get_event_schema() -> dict:
@@ -104,28 +116,33 @@ def get_tracked_entity_schema() -> dict:
     """
     Returns the schema of a tracked entity instance.
     """
+    attribute_schema = get_attribute_schema()
     event_schema = get_event_schema()
     relationship_schema = get_relationship_schema()
     return {
-        SchemaOptional("attributes"): [{
-            "attribute": id_schema,
-            SchemaOptional("code"): str,
-            SchemaOptional("created"): datetime_schema,
-            SchemaOptional("displayName"): str,
-            SchemaOptional("lastUpdated"): datetime_schema,
-            SchemaOptional("storedBy"): str,
-            "value": object,
-            SchemaOptional("valueType"): str,
-        }],
+        SchemaOptional("attributes"): [attribute_schema],
         SchemaOptional("created"): datetime_schema,
         SchemaOptional("createdAtClient"): datetime_schema,
         SchemaOptional("deleted"): bool,
         SchemaOptional("enrollments"): [{
-            "program": id_schema,
-            SchemaOptional("orgUnit"): id_schema,
+            SchemaOptional("attributes"): [attribute_schema],
+            SchemaOptional("created"): datetime_schema,
+            SchemaOptional("createdAtClient"): datetime_schema,
+            SchemaOptional("deleted"): bool,
+            SchemaOptional("enrollment"): id_schema,
             SchemaOptional("enrollmentDate"): date_schema,
-            SchemaOptional("incidentDate"): date_schema,
             SchemaOptional("events"): [event_schema],
+            SchemaOptional("incidentDate"): date_schema,
+            SchemaOptional("lastUpdated"): datetime_schema,
+            SchemaOptional("lastUpdatedAtClient"): datetime_schema,
+            SchemaOptional("notes"): list,
+            SchemaOptional("orgUnit"): id_schema,
+            "program": id_schema,
+            SchemaOptional("relationships"): [relationship_schema],
+            SchemaOptional("status"): enrollment_status_schema,
+            SchemaOptional("storedBy"): str,
+            SchemaOptional("trackedEntityInstance"): id_schema,
+            SchemaOptional("trackedEntityType"): id_schema,
         }],
         SchemaOptional("featureType"): str,
         SchemaOptional("geometry"): {
