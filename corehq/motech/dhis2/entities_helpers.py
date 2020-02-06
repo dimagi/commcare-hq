@@ -4,25 +4,20 @@ from typing import Any, Dict, List
 from django.utils.translation import ugettext as _
 
 from requests import HTTPError
-from schema import Optional as SchemaOptional
 from schema import Schema, SchemaError
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import (
-    DHIS2_DATE_SCHEMA,
-    DHIS2_DATETIME_SCHEMA,
-    DHIS2_ID_SCHEMA,
-    XMLNS_DHIS2,
-)
-from corehq.motech.dhis2.events_helpers import get_event, get_event_schema
+from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
     MultipleInstancesFound,
 )
 from corehq.motech.dhis2.finders import TrackedEntityInstanceFinder
+from corehq.motech.dhis2.schema import get_tracked_entity_schema
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
@@ -287,45 +282,3 @@ def validate_tracked_entity(tracked_entity):
         Schema(get_tracked_entity_schema()).validate(tracked_entity)
     except SchemaError as err:
         raise ConfigurationError from err
-
-
-def get_tracked_entity_schema() -> dict:
-    """
-    Returns the schema of a tracked entity instance.
-    """
-    event_schema = get_event_schema()
-    return {
-        SchemaOptional("attributes"): [{
-            "attribute": DHIS2_ID_SCHEMA,
-            SchemaOptional("code"): str,
-            SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
-            SchemaOptional("displayName"): str,
-            SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
-            SchemaOptional("storedBy"): str,
-            "value": object,
-            SchemaOptional("valueType"): str,
-        }],
-        SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("createdAtClient"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("deleted"): bool,
-        SchemaOptional("enrollments"): [{
-            "program": DHIS2_ID_SCHEMA,
-            SchemaOptional("orgUnit"): DHIS2_ID_SCHEMA,
-            SchemaOptional("enrollmentDate"): DHIS2_DATE_SCHEMA,
-            SchemaOptional("incidentDate"): DHIS2_DATE_SCHEMA,
-            SchemaOptional("events"): [event_schema],
-        }],
-        SchemaOptional("featureType"): str,
-        SchemaOptional("geometry"): {
-            "type": str,
-            "coordinates": [float],
-        },
-        SchemaOptional("inactive"): bool,
-        SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("lastUpdatedAtClient"): DHIS2_DATETIME_SCHEMA,
-        "orgUnit": DHIS2_ID_SCHEMA,
-        SchemaOptional("programOwners"): [object],
-        SchemaOptional("relationships"): [object],
-        SchemaOptional("trackedEntityInstance"): DHIS2_ID_SCHEMA,
-        "trackedEntityType": DHIS2_ID_SCHEMA,
-    }

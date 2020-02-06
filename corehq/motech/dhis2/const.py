@@ -1,5 +1,3 @@
-from schema import Regex
-
 SEND_FREQUENCY_MONTHLY = 'monthly'
 SEND_FREQUENCY_QUARTERLY = 'quarterly'
 
@@ -48,10 +46,3 @@ DHIS2_MAX_VERSION = "2.33.0"
 # XMLNS to indicate that a case was updated with data from DHIS2.
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
-
-DHIS2_ID_SCHEMA = Regex(r"^[A-Za-z0-9]+$")
-# DHIS2 accepts date values, but returns datetime values for dates:
-DHIS2_DATE_SCHEMA = Regex(r"^\d{4}-\d{2}-\d{2}(:?T\d{2}:\d{2}:\d{2}.\d{3})?$")
-DHIS2_DATETIME_SCHEMA = Regex(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
-DHIS2_ENROLLMENT_STATUS_SCHEMA = Regex("^(ACTIVE|COMPLETED|CANCELED)$")
-DHIS2_EVENT_STATUS_SCHEMA = Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$")

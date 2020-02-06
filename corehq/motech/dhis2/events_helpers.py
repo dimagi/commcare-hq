@@ -1,13 +1,6 @@
-from schema import Optional as SchemaOptional
-from schema import Regex, Schema, SchemaError
+from schema import Schema, SchemaError
 
-from corehq.motech.dhis2.const import (
-    DHIS2_DATE_SCHEMA,
-    DHIS2_DATETIME_SCHEMA,
-    DHIS2_ENROLLMENT_STATUS_SCHEMA,
-    DHIS2_EVENT_STATUS_SCHEMA,
-    DHIS2_ID_SCHEMA,
-)
+from corehq.motech.dhis2.schema import get_event_schema
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -115,71 +108,3 @@ def validate_event_schema(event):
         Schema(get_event_schema()).validate(event)
     except SchemaError as err:
         raise ConfigurationError from err
-
-
-def get_event_schema() -> dict:
-    """
-    Returns the schema for a DHIS2 Event.
-
-    >>> event = {
-    ...   "program": "eBAyeGv0exc",
-    ...   "orgUnit": "DiszpKrYNg8",
-    ...   "eventDate": "2013-05-17",
-    ...   "status": "COMPLETED",
-    ...   "completedDate": "2013-05-18",
-    ...   "storedBy": "admin",
-    ...   "coordinate": {
-    ...     "latitude": 59.8,
-    ...     "longitude": 10.9
-    ...   },
-    ...   "dataValues": [
-    ...     { "dataElement": "qrur9Dvnyt5", "value": "22" },
-    ...     { "dataElement": "oZg33kd9taw", "value": "Male" },
-    ...     { "dataElement": "msodh3rEMJa", "value": "2013-05-18" }
-    ...   ]
-    ... }
-    >>> Schema(get_event_schema()).is_valid(event)
-    True
-
-    """
-    return {
-        SchemaOptional("assignedUser"): DHIS2_ID_SCHEMA,
-        SchemaOptional("attributeCategoryOptions"): DHIS2_ID_SCHEMA,
-        SchemaOptional("attributeOptionCombo"): DHIS2_ID_SCHEMA,
-        SchemaOptional("completedDate"): DHIS2_DATE_SCHEMA,
-        SchemaOptional("coordinate"): {
-            "latitude": float,
-            "longitude": float,
-        },
-        SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("createdAtClient"): DHIS2_DATETIME_SCHEMA,
-        "dataValues": [{
-            SchemaOptional("created"): DHIS2_DATETIME_SCHEMA,
-            "dataElement": DHIS2_ID_SCHEMA,
-            SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
-            SchemaOptional("providedElsewhere"): bool,
-            SchemaOptional("storedBy"): str,
-            "value": object,
-        }],
-        SchemaOptional("deleted"): bool,
-        SchemaOptional("dueDate"): DHIS2_DATE_SCHEMA,
-        SchemaOptional("enrollment"): DHIS2_ID_SCHEMA,
-        SchemaOptional("enrollmentStatus"): DHIS2_ENROLLMENT_STATUS_SCHEMA,
-        SchemaOptional("event"): DHIS2_ID_SCHEMA,
-        "eventDate": DHIS2_DATE_SCHEMA,
-        SchemaOptional("geometry"): {
-            "type": str,
-            "coordinates": [float],
-        },
-        SchemaOptional("lastUpdated"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("lastUpdatedAtClient"): DHIS2_DATETIME_SCHEMA,
-        SchemaOptional("notes"): list,  # TODO: list of what?
-        "orgUnit": DHIS2_ID_SCHEMA,
-        SchemaOptional("orgUnitName"): str,
-        "program": DHIS2_ID_SCHEMA,
-        SchemaOptional("programStage"): DHIS2_ID_SCHEMA,
-        SchemaOptional("relationships"): list,  # TODO: Add relationship schema
-        SchemaOptional("status"): DHIS2_EVENT_STATUS_SCHEMA,
-        SchemaOptional("storedBy"): str,
-        SchemaOptional("trackedEntityInstance"): DHIS2_ID_SCHEMA,
-    }
