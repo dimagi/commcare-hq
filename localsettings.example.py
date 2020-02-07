@@ -117,7 +117,6 @@ CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
 ####### Less/Django Compressor ########
 
-LESS_DEBUG = True
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 

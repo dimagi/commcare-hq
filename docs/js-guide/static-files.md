@@ -52,53 +52,10 @@ things get REAL slow. Plus if you want to use any javascript compilers like
 
 Make sure your `localsettings.py` file has the following set:
 ```
-LESS_DEBUG = True
-LESS_WATCH = True  # if you want less.js to watch for changes and compile on the fly!
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 ```
 
-### 2. On-the-fly server-side compression, with the cache refreshed as changes are made.
-
-Pros:
-- Faster than client-side compilation
-- Closer to production setup (so you find compressor errors as they happen)
-- Can use other features of django compressor (for javascript!)
-
-Cons:
-- Have to install multiple less versions (will not apply once we are fully migrated to Bootstrap 3).
-
-#### How is this enabled?
-Make sure your `localsettings.py` file has the following set:
-```
-LESS_DEBUG = False
-LESS_WATCH = False
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = False
-
-COMPRESS_MINT_DELAY = 30
-COMPRESS_MTIME_DELAY = 3  # set to higher or lower depending on how often you're editing static files
-COMPRESS_REBUILD_TIMEOUT = 6000
-```
-
-##### Compressor and Caching
-
-If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
-and don't want to guess whether or not the cache picked up your changes, set the
-following in `localsettings.py`:
-```
-COMPRESS_MINT_DELAY = 0
-COMPRESS_MTIME_DELAY = 0
-COMPRESS_REBUILD_TIMEOUT = 0
-```
-
-#### Slow JS Compression
-
-If pageloads feel a bit sluggish on your development machine and you don't need to rely on a javascript map to debug something, add this to your `localsettings.py` to use the default JS compressor.
-
-```
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-```
 
 #### How to install multiple LESS compilers to run compressor on `less` files
 
@@ -121,8 +78,6 @@ Do everything from Option 2 for LESS compilers setup.
 
 Have the following set in `localsettings.py`:
 ```
-LESS_DEBUG = False
-LESS_WATCH = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
