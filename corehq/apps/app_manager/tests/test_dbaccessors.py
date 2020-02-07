@@ -7,6 +7,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
+    get_app_cached,
     get_app_ids_in_domain,
     get_apps_by_id,
     get_apps_in_domain,
@@ -255,6 +256,10 @@ class TestAppGetters(TestCase):
     def test_get_current_app(self):
         app_doc = get_current_app(self.domain, self.app_id)
         self.assertEqual(app_doc['version'], 5)
+
+    def test_get_app_cached(self):
+        app_doc = get_app_cached(self.domain, self.v2_build.get_id)
+        self.assertEqual(app_doc['is_released'], True)
 
     def test_latest_saved_from_build(self):
         app_doc = get_app(self.domain, self.v2_build._id, latest=True, target='save')
