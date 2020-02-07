@@ -14,6 +14,7 @@ from custom.icds_reports.utils.topojson_util.topojson_util import (
 
 
 J_AND_K = 'J&K'
+J_AND_K_NEW = 'Jammu & Kashmir'
 LADAKH = 'Ladakh'
 
 
@@ -36,7 +37,7 @@ class Command(BaseCommand):
 
         # remove J&K from list of geometries
         geometries = state_topojson['objects']['ind']['geometries']
-        new_geometries = [g for g in geometries if g['id'] != 'J&K']
+        new_geometries = [g for g in geometries if g['id'] != J_AND_K]
         state_topojson['objects']['ind']['geometries'] = new_geometries
 
         # save a new file
@@ -70,8 +71,8 @@ class Command(BaseCommand):
 
         # we also have to manually populate metadata for the two states
         jk = new_states['objects']['ind']['geometries'][-2]
-        jk['id'] = J_AND_K
-        jk['properties'] = {"State": "01", "name": J_AND_K}
+        jk['id'] = J_AND_K_NEW
+        jk['properties'] = {"State": "01", "name": J_AND_K_NEW}
         ladakh = new_states['objects']['ind']['geometries'][-1]
         ladakh['id'] = LADAKH
         ladakh['properties'] = {"State": "37", "name": LADAKH}
