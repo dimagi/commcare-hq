@@ -14,9 +14,7 @@ class LessFilter(CompilerFilter):
     def input(self, **kwargs):
         if "{lessc}" in self.command:
             options = list(self.options)
-
-            # interim use b3 lessc path until final switchover
-            lessc_path = 'lessc'
+            lessc_path = './node_modules/less/bin/lessc'
 
             options.append(('lessc', lessc_path))
             self.options = tuple(options)
