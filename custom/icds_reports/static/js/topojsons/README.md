@@ -5,6 +5,7 @@
 | states_v2.topojson.js | Raw state shapes for the entire country | Master reference file only | JavaScript | 
 | states_v3_small.topojson | (Deprecated) Optimized state shapes for the entire country | - | topojson |
 | states_v4.topojson | Optimized state shapes for the entire country | Web and mobile dashboard | topojson |
+| states_v5.topojson | Same as v4 but J&K unclickable | Web and mobile dashboard | topojson |
 | districts_v2.topojson.js | Raw district shapes for the entire country | Master reference file only | JavaScript | 
 | districts_v3_small.topojson | (Deprecated) Optimized district shapes for the entire country | - | topojson |
 | districts_v4.topojson | Optimized district shapes for the entire country | Web and mobile dashboard | topojson |
