@@ -14,7 +14,7 @@ from compressor.utils.stringformat import FormattableString as fstr
 # Code taken from: https://roverdotcom.github.io/blog/2014/05/28/javascript-error-reporting-with-source-maps-in-django/
 class UglifySourcemapFilter(CompilerFilter):
     command = (
-        "./node_modules/uglify-js/bin/uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
+        "{uglifyjs} {infiles} -o {outfile} --source-map {mapfile}"
         " --source-map-url {mapurl} --source-map-root {maproot} -c -m")
 
     def input(self, **kwargs):
@@ -34,6 +34,9 @@ class UglifySourcemapFilter(CompilerFilter):
                 infiles.append(infile[1])
             else:
                 infiles.append(infile[2])
+
+        options['uglifyjs'] = os.path.join(
+            settings.BASE_DIR, 'node_modules', 'uglify-js', 'bin', 'uglifyjs')
 
         options['infiles'] = ' '.join(f for f in infiles)
 

@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 
 from compressor.filters import CompilerFilter
@@ -14,7 +16,8 @@ class LessFilter(CompilerFilter):
     def input(self, **kwargs):
         if "{lessc}" in self.command:
             options = list(self.options)
-            lessc_path = './node_modules/less/bin/lessc'
+            lessc_path = os.path.join(
+                settings.BASE_DIR, 'node_modules', 'less', 'bin', 'lessc')
 
             options.append(('lessc', lessc_path))
             self.options = tuple(options)
