@@ -437,23 +437,24 @@ class StateDB(DiffDB):
         fields:
 
         - total: number of items counted with `increment_counter`.
-        - missing: count of ids added with `add_missing_docs`.
+        - missing: count of ids found in Couch but not in SQL.
+        - diffs: count of docs with diffs.
         """
         with self.session() as session:
             totals = {dc.kind: dc.value for dc in session.query(DocCount)}
-            missing = {row[0]: row[1] for row in session.query(
+            diffs = dict(session.query(
+                DocDiffs.kind,
+                func.count(DocDiffs.doc_id),
+            ).group_by(DocDiffs.kind))
+            missing = dict(session.query(
                 MissingDoc.kind,
                 func.count(MissingDoc.doc_id),
-            ).group_by(MissingDoc.kind).all()}
+            ).group_by(MissingDoc.kind))
         return {kind: Counts(
             total=totals.get(kind, 0),
+            diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
-        ) for kind in set(missing) | set(totals)}
-
-    def has_doc_counts(self):
-        if not os.path.exists(self.db_filepath):
-            return False
-        return self.engine.dialect.has_table(self.engine, "doc_count")
+        ) for kind in set(totals) | set(missing) | set(diffs)}
 
     def get_missing_doc_ids(self, doc_type):
         return {
@@ -461,6 +462,9 @@ class StateDB(DiffDB):
             .query(MissingDoc.doc_id)
             .filter(MissingDoc.kind == doc_type)
         }
+
+    def get_diff_stats(self):
+        raise NotImplementedError("use get_doc_counts")
 
     def clone_casediff_data_from(self, casediff_state_path):
         """Copy casediff state into this state db
@@ -722,7 +726,11 @@ class ProblemForm(Base):
     id = Column(String(50), nullable=False, primary_key=True)
 
 
-Counts = namedtuple('Counts', 'total missing')
+@attr.s
+class Counts:
+    total = attr.ib(default=0)
+    diffs = attr.ib(default=0)
+    missing = attr.ib(default=0)
 
 
 def iter_large(query, pk_attr, maxrq=1000):

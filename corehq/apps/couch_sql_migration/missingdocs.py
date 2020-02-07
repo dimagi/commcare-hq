@@ -23,7 +23,7 @@ from .couchsqlmigration import (
 from .statedb import open_state_db
 
 
-def find_missing_docs(domain, state_dir, live_migrate):
+def find_missing_docs(domain, state_dir, live_migrate=False):
     """Update missing documents in state db
 
     Datadog metrics used for counting missing docs:

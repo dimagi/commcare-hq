@@ -65,7 +65,7 @@ def test_open_state_db():
         db.set("key", 2)
     with open_state_db("test", state_dir) as db:
         eq(db.unique_id, uid)
-        eq(db.get_diff_stats(), {})
+        eq(db.get_doc_counts(), {})
         eq(db.get("key"), 2)
         with assert_raises(OperationalError):
             db.set("key", 3)
@@ -270,9 +270,10 @@ def test_counters():
         db.increment_counter("def", 2)
         db.increment_counter("abc", 3)
         db.add_missing_docs("abc", ["doc2", "doc4"])
+        db.replace_case_diffs([("abc", "doc5", [make_diff(5)])])
         eq(db.get_doc_counts(), {
-            "abc": Counts(4, 3),
-            "def": Counts(2, 0),
+            "abc": Counts(total=4, diffs=1, missing=3),
+            "def": Counts(total=2),
         })
 
 

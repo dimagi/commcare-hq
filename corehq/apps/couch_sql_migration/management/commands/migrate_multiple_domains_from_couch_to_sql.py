@@ -3,15 +3,6 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
-
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
@@ -19,6 +10,7 @@ from corehq.form_processor.utils.general import (
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
 from ...couchsqlmigration import do_couch_to_sql_migration, setup_logging
+from ...missingdocs import find_missing_docs
 from ...progress import (
     couch_sql_migration_in_progress,
     set_couch_sql_migration_complete,
@@ -106,43 +98,16 @@ class Command(BaseCommand):
 
 
 def get_diff_stats(domain, state_dir, strict=True):
-    db = open_state_db(domain, state_dir)
-    diff_stats = db.get_diff_stats()
-
+    find_missing_docs(domain, state_dir)
+    statedb = open_state_db(domain, state_dir)
     stats = {}
-
-    def _update_stats(doc_type, couch_count, sql_count):
-        diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
-        if diff_count or couch_count != sql_count:
-            stats[doc_type] = (couch_count, sql_count, diff_count, num_docs_with_diffs)
-
-    for doc_type in doc_types():
-        form_ids_in_couch = len(set(get_form_ids_by_type(domain, doc_type)))
-        form_ids_in_sql = len(set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)))
-        _update_stats(doc_type, form_ids_in_couch, form_ids_in_sql)
-
-    form_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
-        domain, "XFormInstance-Deleted", XFormInstance.get_db())
-    ))
-    form_ids_in_sql = len(set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain)))
-    _update_stats("XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql)
-
-    case_ids_in_couch = len(set(get_case_ids_in_domain(domain)))
-    case_ids_in_sql = len(set(CaseAccessorSQL.get_case_ids_in_domain(domain)))
-    _update_stats("CommCareCase", case_ids_in_couch, case_ids_in_sql)
-
-    if strict:
-        # only care about these in strict mode
-        case_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
-            domain, "CommCareCase-Deleted", XFormInstance.get_db())
-        ))
-        case_ids_in_sql = len(set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)))
-        _update_stats("CommCareCase-Deleted", case_ids_in_couch, case_ids_in_sql)
-
-    if diff_stats:
-        for key in diff_stats.keys():
-            _update_stats(key, 0, 0)
-
+    for doc_type, counts in sorted(statedb.get_doc_counts().items()):
+        if not strict and doc_type == "CommCareCase-Deleted":
+            continue
+        if counts.diffs or counts.missing:
+            couch_count = counts.total
+            sql_count = counts.total - counts.missing
+            stats[doc_type] = (couch_count, sql_count, counts.diffs)
     return stats
 
 
@@ -155,9 +120,9 @@ def format_diff_stats(stats, header=None):
         class stream:
             write = lines.append
 
-        writer = SimpleTableWriter(stream, TableRowFormatter([30, 10, 10, 10, 10]))
+        writer = SimpleTableWriter(stream, TableRowFormatter([30, 10, 10, 10]))
         writer.write_table(
-            ['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'],
+            ['Doc Type', '# Couch', '# SQL', '# Docs with Diffs'],
             [(doc_type,) + stat for doc_type, stat in stats.items()],
         )
     return "\n".join(lines)

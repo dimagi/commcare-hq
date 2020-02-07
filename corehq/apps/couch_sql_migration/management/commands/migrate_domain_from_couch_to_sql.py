@@ -1,17 +1,14 @@
 import logging
 import os
 import sys
-from itertools import groupby, zip_longest
+from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
-from sqlalchemy.exc import OperationalError
-
 from corehq.apps.domain.models import Domain
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
+from couchforms.models import doc_types
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -34,8 +31,6 @@ from corehq.apps.couch_sql_migration.statedb import (
     init_state_db,
     open_state_db,
 )
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -257,119 +252,54 @@ class Command(BaseCommand):
         if self.refresh_missing:
             find_missing_docs(domain, self.state_dir, self.live_migrate)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = open_state_db(domain, self.state_dir)
-        try:
-            diff_stats = db.get_diff_stats()
-        except OperationalError:
-            diff_stats = {}
-
+        statedb = open_state_db(domain, self.state_dir)
+        doc_counts = statedb.get_doc_counts()
         has_diffs = False
-        for doc_type in doc_types():
-            form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
-            if doc_type == "XFormInstance":
-                form_ids_in_couch.update(get_doc_ids_in_domain_by_type(
-                    domain, "HQSubmission", XFormInstance.get_db()))
-            form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
-            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
-            has_diffs |= self._print_status(
-                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
-            )
-
-        form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-            domain, "XFormInstance-Deleted", XFormInstance.get_db())
-        )
-        form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
-        diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
-        has_diffs |= self._print_status(
-            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql,
-            diff_count, num_docs_with_diffs, short, diffs_only
-        )
-
-        ZERO = Counts(0, 0)
-        if db.has_doc_counts():
-            doc_counts = db.get_doc_counts()
-            couch_missing_cases = doc_counts.get("CommCareCase-couch", ZERO).missing
-        else:
-            doc_counts = None
-            couch_missing_cases = 0
-        for doc_type in CASE_DOC_TYPES:
-            if doc_counts is not None:
-                counts = doc_counts.get(doc_type, ZERO)
-                case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
-                case_ids_in_sql = counts
-            elif doc_type == "CommCareCase":
-                case_ids_in_couch = set(get_case_ids_in_domain(domain))
-                case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-            elif doc_type == "CommCareCase-Deleted":
-                case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-                    domain, "CommCareCase-Deleted", XFormInstance.get_db())
-                )
-                case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
-            else:
-                raise NotImplementedError(doc_type)
-            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
+        ZERO = Counts()
+        for doc_type in (
+            list(doc_types())
+            + ["HQSubmission", "XFormInstance-Deleted"]
+            + CASE_DOC_TYPES
+        ):
             has_diffs |= self._print_status(
                 doc_type,
-                case_ids_in_couch,
-                case_ids_in_sql,
-                diff_count,
-                num_docs_with_diffs,
+                doc_counts.get(doc_type, ZERO),
+                statedb,
                 short,
                 diffs_only,
             )
-            if doc_type == "CommCareCase" and couch_missing_cases:
-                has_diffs = True
-                print(shell_red("%s cases could not be loaded from Couch" % couch_missing_cases))
-                if not short:
-                    for case_id in db.get_missing_doc_ids("CommCareCase-couch"):
-                        print(case_id)
-
-        if diff_stats:
-            for key, counts in diff_stats.items():
-                diff_count, num_docs_with_diffs = counts
-                has_diffs |= self._print_status(
-                    key, set(), set(), diff_count, num_docs_with_diffs, short, diffs_only
-                )
 
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
-    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
-        if isinstance(ids_in_sql, Counts):
-            counts, ids_in_sql = ids_in_sql, set()
-            assert len(ids_in_couch) == counts.missing, (len(ids_in_couch), counts.missing)
-            n_couch = counts.total
-            n_sql = counts.total - counts.missing
-        else:
-            n_couch = len(ids_in_couch)
-            n_sql = len(ids_in_sql)
-        has_diff = ids_in_couch != ids_in_sql or diff_count
-
-        if diffs_only and not has_diff:
-            return False
-
+    def _print_status(self, name, counts, statedb, short, diffs_only):
         def _highlight(text):
-            return shell_red(text) if has_diff else text
+            return shell_red(text) if has_diffs else text
 
+        has_diffs = counts.missing or counts.diffs
+        if diffs_only and not has_diffs:
+            return False
         row = "{:^38} {} {:^38}"
-        sep = "|" if ids_in_couch == ids_in_sql else "≠"
+        sep = "≠" if counts.missing else "|"
+        n_couch = counts.total
+        n_sql = counts.total - counts.missing
         doc_count_row = row.format(n_couch, sep, n_sql)
 
         print('\n{:_^79}'.format(" %s " % name))
         print(row.format('Couch', '|', 'SQL'))
         print(_highlight(doc_count_row))
-        if diff_count:
-            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
+        if counts.diffs:
+            print(_highlight("{:^83}".format(f'{counts.diffs} docs with diffs')))
 
         if not short:
-            if ids_in_couch ^ ids_in_sql:
-                couch_only = list(ids_in_couch - ids_in_sql)
-                sql_only = list(ids_in_sql - ids_in_couch)
-                for couch, sql in zip_longest(couch_only, sql_only):
-                    print(row.format(couch or '', '|', sql or ''))
+            # missing ids were found in Couch but not in SQL
+            missing_ids = statedb.get_missing_doc_ids(name)
+            assert len(missing_ids) == counts.missing, (len(missing_ids), counts.missing)
+            for missing_id in missing_ids:
+                print(row.format('', '|', missing_id))
 
-        return True
+        return has_diffs
 
 
 def _confirm(message):
