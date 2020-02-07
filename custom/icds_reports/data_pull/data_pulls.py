@@ -181,9 +181,12 @@ class MonthlyPerformance(MonthBasedDataPull):
     @staticmethod
     def _dump_consolidated_data(result):
         result_file = io.StringIO()
-        headers = list(list(result.values())[0].keys())
-        fieldnames = ['State'] + headers
-        writer = csv.DictWriter(result_file, fieldnames)
+        headers = ['State']
+        for state_name, col_values in result.items():
+            for col_name in col_values:
+                if col_name not in headers:
+                    headers.append(col_name)
+        writer = csv.DictWriter(result_file, headers)
         writer.writeheader()
         for state_name, col_values in result.items():
             row = copy(col_values)
