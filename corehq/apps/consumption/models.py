@@ -17,7 +17,6 @@ class SQLDefaultConsumption(SyncSQLToCouchMixin, models.Model):
     supply_point_type = models.CharField(max_length=126, null=True)
     supply_point_id = models.CharField(max_length=126, null=True)
     default_consumption = models.DecimalField(max_digits=64, decimal_places=8, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
         db_table = "consumption_defaultconsumption"
