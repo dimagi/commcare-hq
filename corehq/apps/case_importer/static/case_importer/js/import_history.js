@@ -74,6 +74,7 @@ hqDefine('case_importer/js/import_history', [
             );
         };
         self.updateCaseUploads = function (data) {
+            /* Return true if there was an update, false if there was no update to apply */
             if (!uploadIdsInDataMatchCurrent(data) || !taskStatusesInDataMatchCurrent(data)) {
                 if (uploadIdsInDataMatchCurrent(data)) {
                     // in the easy case, update just the essential information (task_status) in place
@@ -90,8 +91,28 @@ hqDefine('case_importer/js/import_history', [
                 } else {
                     self.case_uploads(data);
                 }
+                return true;
+            } else {
+                return false;
             }
         };
+        var exponentialBackoff = (function () {
+            var minDelay = 5000;
+            var delay = minDelay;
+            return {
+                nextDelay: function () {
+                    try {
+                        return delay;
+                    } finally {
+                        delay *= 1.2;
+                    }
+                },
+                reset: function () {
+                    delay = minDelay;
+                }
+            };
+        }());
+
         self.goToPage = function (page) {
             if (self.state() === self.states.MISSING) {
                 // only show spinner on first fetch
@@ -107,11 +128,16 @@ hqDefine('case_importer/js/import_history', [
                 data = _.map(data, function (caseUpload) {
                     return uploadModel(caseUpload);
                 });
-                self.updateCaseUploads(data);
+                var neededUpdate = self.updateCaseUploads(data);
+
+                if (neededUpdate) {
+                    // If there are active updates, keep polling without any backoff
+                    exponentialBackoff.reset();
+                }
 
                 var anyInProgress = _.any(self.case_uploads(), function (caseUpload) {
                     return caseUpload.task_status().state === self.states.STARTED ||
-                            caseUpload.task_status().state === self.states.MISSING;
+                        (caseUpload.task_status().state === self.states.MISSING && !caseUpload.isExpiredUpload());
                 });
 
                 // If there's work in progress, try refreshing this page in a few seconds
@@ -119,8 +145,10 @@ hqDefine('case_importer/js/import_history', [
                     _.delay(function () {
                         if (page === self.currentPage()) {
                             self.goToPage(page);
+                        } else {
+                            exponentialBackoff.reset();
                         }
-                    }, 5000);
+                    }, exponentialBackoff.nextDelay());
                 }
                 self.currentPage(page);
             }).fail(function () {
