@@ -37,7 +37,7 @@ def make_link(label, url):
 
 
 class Command(BaseCommand):
-    help = "Creates an HqDeploy document to record a successful deployment."
+    help = "Creates an HqDeploy object to record a successful deployment."
 
     def add_arguments(self, parser):
         parser.add_argument('--user', help='User', default=False)
