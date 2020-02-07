@@ -8,7 +8,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, initialize_index_and_mapp
 
 
 class Command(BaseCommand):
-    help = ("")
+    help = ("Adhoc command for ICDS xforms reindex")
 
     def add_arguments(self, parser):
         parser.add_argument(
