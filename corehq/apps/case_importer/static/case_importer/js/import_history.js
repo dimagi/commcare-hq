@@ -17,6 +17,11 @@ hqDefine('case_importer/js/import_history', [
 
         self.comment = ko.observable(options.comment || '');
         self.task_status = ko.observable(options.task_status);
+        self.isExpiredUpload = function () {
+            var thresholdInDays = 2;
+            var thresholdDate = new Date(new Date().setDate(new Date().getDate() - thresholdInDays));
+            return new Date(self.created) < thresholdDate;
+        };
 
         self.commentUrl = function () {
             return initialPageData.reverse('case_importer_update_upload_comment', self.upload_id);
