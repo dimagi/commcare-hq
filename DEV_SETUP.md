@@ -222,13 +222,6 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-Install LESS and UglifyJS:
-
-1. Install [npm](https://www.npmjs.com/)
-2. Install less by running `npm install -g less`
-3. Install UglifyJS by running `npm install -g uglify-js@2.6.1`
-
-
 For all STATICFILES changes (primarily LESS and JavaScript), run:
 
     $ ./manage.py collectstatic
