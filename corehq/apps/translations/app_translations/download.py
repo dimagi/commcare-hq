@@ -52,7 +52,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
 
-def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
+def get_bulk_app_sheets_by_name(app, lang=None, eligible_for_transifex_only=False):
     """
     Data rows for bulk app translation download
 
@@ -68,21 +68,22 @@ def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
         if eligible_for_transifex_only and checker.exclude_module(module):
             continue
 
+        langs = [lang] if lang else app.langs
+
         module_sheet_name = get_module_sheet_name(module)
         rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
             row_type="Menu",
             sheet_name=module_sheet_name,
-            languages=[module.name.get(lang) for lang in app.langs],
-            media_image=[module.icon_by_language(lang) for lang in app.langs],
-            media_audio=[module.audio_by_language(lang) for lang in app.langs],
+            languages=[module.name.get(lang) for lang in langs],
+            media_image=[module.icon_by_language(lang) for lang in langs],
+            media_audio=[module.audio_by_language(lang) for lang in langs],
             unique_id=module.unique_id,
         ))
 
         rows[module_sheet_name] = []
-        for module_row in get_module_rows(app.langs, module):
+        for module_row in get_module_rows(langs, module):
             if eligible_for_transifex_only:
-                field_name, field_type, translations = module_row[0], module_row[1], module_row[2:]
-                # field_name, field_type, *translations = module_row  # TODO: Post-Py2
+                field_name, field_type, *translations = module_row
                 if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
                     continue
             rows[module_sheet_name].append(module_row)
@@ -95,14 +96,14 @@ def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
             rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
                 row_type="Form",
                 sheet_name=form_sheet_name,
-                languages=[form.name.get(lang) for lang in app.langs],
-                media_image=[form.icon_by_language(lang) for lang in app.langs],
-                media_audio=[form.audio_by_language(lang) for lang in app.langs],
+                languages=[form.name.get(lang) for lang in langs],
+                media_image=[form.icon_by_language(lang) for lang in langs],
+                media_audio=[form.audio_by_language(lang) for lang in langs],
                 unique_id=form.unique_id
             ))
 
             rows[form_sheet_name] = []
-            for label_name_media in get_form_question_label_name_media(app.langs, form):
+            for label_name_media in get_form_question_label_name_media(langs, form):
                 if (
                     eligible_for_transifex_only and
                     checker.is_label_to_skip(form.unique_id, label_name_media[0])
