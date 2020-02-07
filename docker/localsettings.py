@@ -221,7 +221,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
-    LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
     FORMPLAYER_URL = 'http://formplayer:8010'
