@@ -152,11 +152,21 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
     def testSetForSupplyPoint(self):
         self.assertEqual(None, SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id))
         default = set_default_consumption_for_supply_point(domain, product_id, supply_point_id, 50)
-        self.assertEqual(50, SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id).default_consumption)
+        self.assertEqual(
+            50,
+            SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id).default_consumption
+        )
         self.assertEqual(1, _count_consumptions())
         updated = set_default_consumption_for_supply_point(domain, product_id, supply_point_id, 40)
         self.assertEqual(default._id, updated._id)
-        self.assertEqual(40, SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id).default_consumption)
+        self.assertEqual(
+            40,
+            SQLDefaultConsumption.get_supply_point_default(
+                domain,
+                product_id,
+                supply_point_id
+            ).default_consumption
+        )
         self.assertEqual(1, _count_consumptions())
 
 
