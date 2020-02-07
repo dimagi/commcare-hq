@@ -778,8 +778,10 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
-COMPRESS_ENABLED = not DEBUG
-COMPRESS_OFFLINE = not DEBUG
+# if not overwritten in localsettings, these will be replaced by the value they return
+# using the local DEBUG value (which we don't have access to here yet)
+COMPRESS_ENABLED = lambda: not DEBUG
+COMPRESS_OFFLINE = lambda: not DEBUG
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -979,6 +981,12 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+if hasattr(COMPRESS_ENABLED, '__call__'):
+    COMPRESS_ENABLED = COMPRESS_ENABLED()
+if hasattr(COMPRESS_OFFLINE, '__call__'):
+    COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
