@@ -9,7 +9,6 @@ from django.contrib import messages
 import settingshelper as helper
 
 DEBUG = True
-LESS_DEBUG = DEBUG
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -779,7 +778,8 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
-COMPRESS_ENABLED = True
+COMPRESS_ENABLED = not DEBUG
+COMPRESS_OFFLINE = not DEBUG
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -2076,17 +2076,10 @@ DATADOG_DOMAINS = {
 
 #### Django Compressor Stuff after localsettings overrides ####
 
-# This makes sure that Django Compressor does not run at all
-# when LESS_DEBUG is set to True.
-if LESS_DEBUG:
-    COMPRESS_ENABLED = False
-    COMPRESS_PRECOMPILERS = ()
-
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
-    'less_debug': LESS_DEBUG,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
