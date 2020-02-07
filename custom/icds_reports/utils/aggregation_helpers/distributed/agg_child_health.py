@@ -1,4 +1,4 @@
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_tablename, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, get_agg_child_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -24,7 +24,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     @property
     def child_tablename(self):
-        return get_child_health_tablename(self.month)
+        return get_child_health_temp_tablename(self.month)
 
     @property
     def temporary_tablename(self):

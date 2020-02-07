@@ -15,7 +15,7 @@ class HqDeploy(models.Model):
     date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     user = models.CharField(max_length=100)
     environment = models.CharField(max_length=100, null=True)
-    diff_url = models.CharField(max_length=126, null=True)
+    diff_url = models.CharField(max_length=255, null=True)
 
     @classmethod
     def get_latest(cls, environment, limit=1):

@@ -12,6 +12,7 @@ from custom.icds_reports.const import (
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_tablename,
+    get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
 )
@@ -40,6 +41,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
+        cursor.execute(self.create_monthly_table())
         for i, query in enumerate(self.aggregation_queries()):
             logger.info(f'executing query {i}')
             cursor.execute(query)
@@ -62,11 +64,15 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     @property
     def temporary_tablename(self):
-        return 'tmp_{}'.format(get_child_health_tablename(self.month))
+        return get_child_health_temp_tablename(self.month)
 
     @property
     def monthly_tablename(self):
-        return '{}_{}'.format(self.base_tablename, self.month.strftime('%Y-%m-%d'))
+        return get_child_health_tablename(self.month)
+
+    @property
+    def new_tablename(self):
+        return f"new_{self.monthly_tablename}"
 
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
@@ -389,9 +395,15 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def create_temporary_table(self):
         return """
-        CREATE TABLE \"{table}\" (LIKE child_health_monthly) PARTITION BY LIST (state_id);
+        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly) PARTITION BY LIST (state_id);
         SELECT create_distributed_table('{table}', 'supervisor_id');
         """.format(table=self.temporary_tablename)
+
+    def create_monthly_table(self):
+        return """
+        CREATE TABLE \"{table}\" (LIKE child_health_monthly);
+        SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.new_tablename)
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
@@ -408,7 +420,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def aggregation_queries(self):
         return [
+            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
             'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
-            'ALTER TABLE "{tmp_tablename}" RENAME TO "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename, tmp_tablename=self.temporary_tablename),
+            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.new_tablename, tablename=self.monthly_tablename),
             """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]
