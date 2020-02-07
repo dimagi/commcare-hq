@@ -137,7 +137,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     params.fnServerData = function (sSource, aoData, fnCallback, oSettings) {
                         var custom_callback = function (data) {
                             if (data.warning) {
-                                throw Error(data.warning);
+                                throw new Error(data.warning);
                             }
                             var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
                             var i;
