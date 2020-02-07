@@ -23,7 +23,7 @@ To find how many documents of a given type exist in a given environment:
 ::
 
     from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class, get_deleted_doc_ids_by_class
-    
+
     len(list(get_doc_ids_by_class(MyDocumentClass) + get_deleted_doc_ids_by_class(MyDocumentClass)))
 
 There's a little extra value to migrating models that have dedicated views:
@@ -60,14 +60,7 @@ This should contain:
   * Expect to rename your model laster, and specify ``db_table`` with the final expected table name. If your couch model is ``MyModel``, name your SQL model ``SQLMyModel`` with ``db_table`` set to ``myapp_mymodel`` so that once the couch model is gone, you can rename the SQL model back to ``MyModel`` and remove the ``Meta``. It's a headache to rename models via django migrations, especially submodels.
   * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26555/commits/5df642a5f798880e29d65f1a389d4c068aaa47c3>`_, a simple model with no related models. This example pulls functions common to booth couch and sql into a mixin used by both classes.
   * It's frequently useful to include a column for the corresponding couch document id. The `HqDeploy migration <https://github.com/dimagi/commcare-hq/pull/26440/files>`_ does this (search for `couch_id`).
-  * Note that by default, the sql fields will be non-null. Boilerplate to run on production to identify which attributes are null in actual documents and what the maximum length is of each attribute, using ``HqDeploy`` as an example (note this loads all docs into memory):
-  ::
-  
-    from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
-    from corehq.apps.hqadmin.models import HqDeploy
-    attrs = ['environment', 'user', 'date']
-    docs = list(get_all_docs_with_doc_types(HqDeploy.get_db(), ['HqDeploy']))
-    [(attr, len([doc for doc in docs if not doc.get(attr)]), max([len(doc.get(attr)) for doc in docs if doc.get(attr)] + [0])) for attr in attrs]
+  * Note that by default, the sql fields will be non-null. You can run the management command ``evaluate_couch_model_for_sql MyDocType attr1 attr2 ...`` on a production environment to find out how production documents use the attribute: if it's ever blank and what its max length is.
 
 * A standalone management command that fetches all couch docs and creates a corresponding SQL model if it doesn't already exist.
 
