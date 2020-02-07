@@ -51,6 +51,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.consumption.models import SQLDefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -484,6 +485,20 @@ class TestDeleteDomain(TestCase):
 
         self._assert_cloudcare_counts(self.domain.name, 0)
         self._assert_cloudcare_counts(self.domain2.name, 1)
+
+    def _assert_consumption_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLDefaultConsumption.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_consumption(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLDefaultConsumption.objects.create(domain=domain_name)
+
+        self.domain.delete()
+
+        self._assert_consumption_counts(self.domain.name, 0)
+        self._assert_consumption_counts(self.domain2.name, 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
