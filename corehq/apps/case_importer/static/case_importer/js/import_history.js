@@ -109,7 +109,7 @@ hqDefine('case_importer/js/import_history', [
                 },
                 reset: function () {
                     delay = minDelay;
-                }
+                },
             };
         }());
 
