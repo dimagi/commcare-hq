@@ -42,12 +42,6 @@ class Command(BaseCommand):
                 reside on an NFS volume for migration state consistency.
                 Can be set in environment: CCHQ_MIGRATION_STATE_DIR
             """)
-        parser.add_argument('--live',
-            dest="live", action='store_true', default=False,
-            help='''
-                Do not diff cases modified after the most recently
-                migrated form.
-            ''')
         parser.add_argument('--cases',
             help='''
                 Diff specific cases. The value of this option may be
@@ -89,7 +83,6 @@ class Command(BaseCommand):
             "no_input",
             "debug",
             "state_path",
-            "live",
             "cases",
             "stop",
             "changes",
@@ -119,7 +112,7 @@ class Command(BaseCommand):
     def do_cases(self, domain):
         """Diff cases"""
         setup_logging(self.state_path, "case_diff", self.debug)
-        migrator = get_migrator(domain, self.state_path, self.live)
+        migrator = get_migrator(domain, self.state_path)
         return do_case_diffs(migrator, self.cases, self.stop, self.batch_size)
 
     def do_show(self, domain):

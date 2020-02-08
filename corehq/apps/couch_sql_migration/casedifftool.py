@@ -26,6 +26,7 @@ from .couchsqlmigration import (
     get_main_forms_iteration_stop_date,
 )
 from .parallel import Pool
+from .progress import MigrationStatus, get_couch_sql_migration_status
 from .util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
@@ -33,11 +34,13 @@ log = logging.getLogger(__name__)
 PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
 
 
-def get_migrator(domain, state_dir, live):
+def get_migrator(domain, state_dir):
     # Set backend for CouchSqlDomainMigrator._check_for_migration_restrictions
+    status = get_couch_sql_migration_status(domain)
+    live_migrate = status == MigrationStatus.DRY_RUN
     set_local_domain_sql_backend_override(domain)
     return CouchSqlDomainMigrator(
-        domain, state_dir, live_migrate=live, diff_process=None)
+        domain, state_dir, live_migrate=live_migrate, diff_process=None)
 
 
 def do_case_diffs(migrator, cases, stop, batch_size):

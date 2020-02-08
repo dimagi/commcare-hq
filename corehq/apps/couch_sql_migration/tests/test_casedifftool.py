@@ -80,7 +80,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.assert_backend("sql")
         case = self._get_case("case-1")
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
-        self.do_case_diffs(live=True)
+        self.do_case_diffs()
         self._compare_diffs([])
 
     def test_failed_diff(self):
@@ -203,8 +203,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             model.save()
         return thing1._id
 
-    def do_case_diffs(self, live=False, cases=None):
-        migrator = mod.get_migrator(self.domain_name, self.state_dir, live)
+    def do_case_diffs(self, cases=None):
+        migrator = mod.get_migrator(self.domain_name, self.state_dir)
         return mod.do_case_diffs(migrator, cases, stop=False, batch_size=100)
 
     @contextmanager
