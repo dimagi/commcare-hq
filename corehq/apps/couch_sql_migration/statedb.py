@@ -427,8 +427,8 @@ class StateDB(DiffDB):
         """DEPRECATED use iter_diffs(); the result may be very large"""
         return list(self.iter_diffs())
 
-    def increment_counter(self, kind, value):
-        self._upsert(DocCount, DocCount.kind, kind, value, incr=True)
+    def set_counter(self, kind, value):
+        self._upsert(DocCount, DocCount.kind, kind, value)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind

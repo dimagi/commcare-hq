@@ -84,7 +84,7 @@ class MissingIds:
         self.doc_types = self._doc_types[self.entity]
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
-        self._resume_keys = set()
+        self._iteration_keys = set()
 
     def __call__(self, doc_type):
         """Create a missing ids generator for the given doc type
@@ -98,15 +98,15 @@ class MissingIds:
         assert doc_type in self.doc_types, \
             f"'{doc_type}' is not a {self.entity} doc type"
         dd_type = f"find_{self.tag}_{self.entity}s"
-        offset_key = self.offset_key(doc_type)
-        resume_key = f"{self.domain}.{offset_key}.{self.statedb.unique_id}"
+        count_key = f"{doc_type}.id.{self.tag}"
+        resume_key = f"{self.domain}.{count_key}.{self.statedb.unique_id}"
         couch_ids = _iter_docs(self.domain, f"{doc_type}.id", resume_key, self.stopper)
-        couch_ids = self.with_progress(doc_type, couch_ids)
-        with self.counter, self.counter(dd_type, offset_key) as add_docs:
+        couch_ids = self.with_progress(doc_type, couch_ids, count_key)
+        with self.counter(dd_type, count_key) as add_docs:
             for batch in chunked(couch_ids, self.chunk_size, list):
-                add_docs(len(batch))
                 yield from self.drop_sql_ids(batch)
-        self._resume_keys.add(resume_key)
+                add_docs(len(batch))
+        self._iteration_keys.add((doc_type, count_key, resume_key))
 
     def drop_sql_ids(self, couch_ids):
         """Filter the given couch ids, removing ids that are in SQL"""
@@ -115,22 +115,20 @@ class MissingIds:
                 cursor.execute(self.sql, [form_ids])
                 yield from (form_id for form_id, in cursor.fetchall())
 
-    def with_progress(self, doc_type, iterable):
+    def with_progress(self, doc_type, iterable, count_key):
         couchdb = XFormInstance.get_db()
         return with_progress_bar(
             iterable,
             get_doc_count_in_domain_by_type(self.domain, doc_type, couchdb),
             prefix=f"Scanning {doc_type}",
-            offset=self.counter.get(self.offset_key(doc_type)),
+            offset=self.counter.get(count_key),
             oneline="concise",
         )
-
-    def offset_key(self, doc_type):
-        return f"{doc_type}.id.{self.tag}"
 
     def __enter__(self):
         if self.stopper.live_migrate and not hasattr(self.stopper, "stop_date"):
             self.stopper.stop_date = get_main_forms_iteration_stop_date(self.statedb)
+        self.counter.__enter__()
         return self
 
     def __exit__(self, *exc_info):
@@ -140,7 +138,19 @@ class MissingIds:
         if self.stopper.clean_break or exc_info[1] is not None:
             # incomplete iteration
             return
-        # discard iteration state on complete without stop or error so
-        # it is possible to run another iteration later
-        for key in self._resume_keys:
-            ResumableFunctionIterator(key, None, None, None).discard_state()
+        # discard iteration state so it is possible to do again later
+        for doc_type, count_key, resume_key in self._iteration_keys:
+            self.discard_iteration_state(resume_key)
+            self.reset_doc_count(doc_type, count_key)
+        self.counter.__exit__(*exc_info)
+
+    @staticmethod
+    def discard_iteration_state(resume_key):
+        ResumableFunctionIterator(resume_key, None, None, None).discard_state()
+
+    def reset_doc_count(self, doc_type, count_key):
+        count = self.counter.pop(count_key)
+        if not self.stopper.live_migrate:
+            couchdb = XFormInstance.get_db()
+            count = get_doc_count_in_domain_by_type(self.domain, doc_type, couchdb)
+        self.statedb.set_counter(doc_type, count)

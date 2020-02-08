@@ -1029,8 +1029,6 @@ class DocCounter:
     def __exit__(self, *exc_info):
         self.timing.stop()
         self._send_timings()
-        # HACK re-initialize timing so it can be used again
-        self.timing.__init__(self.timing.root.name)
 
     @contextmanager
     def __call__(self, dd_type, doc_type=None):
