@@ -113,7 +113,11 @@ class PopulateSQLCommand(BaseCommand):
             self.sql_class().__name__,
         ))
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            logger.info("{}Looking at doc with key {}".format(log_prefix, self.doc_key(doc)))
+            logger.info("{}Looking at {} doc with key {}".format(
+                log_prefix,
+                self.couch_doc_type(),
+                self.doc_key(doc))
+            )
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
                 if not dry_run:
