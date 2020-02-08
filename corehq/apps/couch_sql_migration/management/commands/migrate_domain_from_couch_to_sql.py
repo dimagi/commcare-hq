@@ -244,12 +244,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        db = open_state_db(domain, self.state_dir)
-        diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
-        for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
-            print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
-            for diff in diffs:
-                print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
+        print(f"replaced by: couch_sql_diff show {domain} [--select=DOC_TYPE]")
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)
