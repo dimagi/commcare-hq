@@ -984,17 +984,18 @@ def _iter_skipped_forms(statedb, live_migrate):
     from .missingdocs import MissingIds
     couch = XFormInstance.get_db()
     domain = statedb.domain
-    skipped_form_ids = MissingIds.forms(statedb, live_migrate, tag="skipped")
-    skipped_form_ids = skipped_form_ids("XFormInstance")
-    for form_ids in chunked(skipped_form_ids, _iter_docs.chunk_size, list):
-        for doc in get_docs(couch, form_ids):
-            assert doc["domain"] == domain, doc
-            yield doc
+    stopper = Stopper(live_migrate)
+    with MissingIds.forms(statedb, stopper, tag="skipped") as skipped:
+        skipped_form_ids = skipped("XFormInstance")
+        for form_ids in chunked(skipped_form_ids, _iter_docs.chunk_size, list):
+            for doc in get_docs(couch, form_ids):
+                assert doc["domain"] == domain, doc
+                yield doc
 
 
 def _drop_sql_form_ids(couch_ids, statedb):
     from .missingdocs import MissingIds
-    return MissingIds.forms(statedb, live_migrate=False).drop_sql_ids(couch_ids)
+    return MissingIds.forms(statedb, None).drop_sql_ids(couch_ids)
 
 
 def get_main_forms_iteration_stop_date(statedb):

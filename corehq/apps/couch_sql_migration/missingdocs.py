@@ -1,4 +1,4 @@
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack
 from functools import partial
 
 import attr
@@ -30,12 +30,14 @@ def find_missing_docs(domain, state_dir, live_migrate=False):
     - commcare.couchsqlmigration.form.has_diff
     - commcare.couchsqlmigration.case.has_diff
     """
+    stopper = Stopper(live_migrate)
     dd_count = partial(datadog_counter, tags=["domain:" + domain])
     statedb = open_state_db(domain, state_dir, readonly=False)
-    with statedb:
+    with statedb, ExitStack() as stop_it:
         for entity in ["form", "case"]:
             doc_types = MissingIds.doc_types[entity]
-            missing_ids = MissingIds(entity, statedb, live_migrate)
+            missing_ids = MissingIds(entity, statedb, stopper)
+            stop_it.enter_context(missing_ids)
             for doc_type in doc_types:
                 statedb.delete_missing_docs(doc_type)
                 for doc_id in missing_ids(doc_type):
@@ -53,7 +55,7 @@ class MissingIds:
 
     entity = attr.ib()
     statedb = attr.ib()
-    live_migrate = attr.ib()
+    stopper = attr.ib()
     tag = attr.ib(default="missing")
     chunk_size = attr.ib(default=5000)
 
@@ -82,6 +84,7 @@ class MissingIds:
         self.counter = DocCounter(self.statedb)
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
+        self._resume_keys = set()
 
     def __call__(self, doc_type):
         """Create a missing ids generator for the given doc type
@@ -90,29 +93,20 @@ class MissingIds:
         - type:find_missing_forms
         - type:find_missing_cases
         """
-        stopper = Stopper(self.live_migrate)
-        if self.live_migrate:
-            context = stop_at_previous_migration(self.statedb, stopper)
-        else:
-            context = ExitStack()
-        with self.counter, context:
-            yield from self._iter_doc_ids(doc_type, stopper)
-
-    def _iter_doc_ids(self, doc_type, stopper):
-        assert doc_type in self.doc_types[self.entity], \
+        if self.stopper.clean_break:
+            return
+        assert doc_type in self.doc_types, \
             f"'{doc_type}' is not a {self.entity} doc type"
+        dd_type = f"find_{self.tag}_{self.entity}s"
         offset_key = self.offset_key(doc_type)
         resume_key = f"{self.domain}.{offset_key}.{self.statedb.unique_id}"
-        couch_ids = _iter_docs(self.domain, f"{doc_type}.id", resume_key, stopper)
+        couch_ids = _iter_docs(self.domain, f"{doc_type}.id", resume_key, self.stopper)
         couch_ids = self.with_progress(doc_type, couch_ids)
-        with self.counter(f"find_{self.tag}_{self.entity}s", offset_key) as add_docs:
+        with self.counter, self.counter(dd_type, offset_key) as add_docs:
             for batch in chunked(couch_ids, self.chunk_size, list):
                 add_docs(len(batch))
                 yield from self.drop_sql_ids(batch)
-        if not stopper.clean_break:
-            # discard iteration state on successful completion so it is possible
-            # to run another skipped forms iteration later
-            ResumableFunctionIterator(resume_key, None, None, None).discard_state()
+        self._resume_keys.add(resume_key)
 
     def drop_sql_ids(self, couch_ids):
         """Filter the given couch ids, removing ids that are in SQL"""
@@ -134,13 +128,19 @@ class MissingIds:
     def offset_key(self, doc_type):
         return f"{doc_type}.id.{self.tag}"
 
+    def __enter__(self):
+        if self.stopper.live_migrate and not hasattr(self.stopper, "stop_date"):
+            self.stopper.stop_date = get_main_forms_iteration_stop_date(self.statedb)
+        return self
 
-@contextmanager
-def stop_at_previous_migration(statedb, stopper):
-    stop_date = get_main_forms_iteration_stop_date(statedb)
-    stopper.stop_date = stop_date
-    try:
-        yield
-    finally:
-        # remove stop date so main forms iteration will update it
-        del stopper.stop_date
+    def __exit__(self, *exc_info):
+        if self.stopper.live_migrate and hasattr(self.stopper, "stop_date"):
+            # remove stop date so main forms iteration may continue
+            del self.stopper.stop_date
+        if self.stopper.clean_break or exc_info[1] is not None:
+            # incomplete iteration
+            return
+        # discard iteration state on complete without stop or error so
+        # it is possible to run another iteration later
+        for key in self._resume_keys:
+            ResumableFunctionIterator(key, None, None, None).discard_state()
