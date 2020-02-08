@@ -35,10 +35,9 @@ def find_missing_docs(domain, state_dir, live_migrate=False):
     statedb = open_state_db(domain, state_dir, readonly=False)
     with statedb, ExitStack() as stop_it:
         for entity in ["form", "case"]:
-            doc_types = MissingIds.doc_types[entity]
             missing_ids = MissingIds(entity, statedb, stopper)
             stop_it.enter_context(missing_ids)
-            for doc_type in doc_types:
+            for doc_type in missing_ids.doc_types:
                 statedb.delete_missing_docs(doc_type)
                 for doc_id in missing_ids(doc_type):
                     statedb.add_missing_docs(doc_type, [doc_id])
@@ -74,7 +73,7 @@ class MissingIds:
         CASE: {"doc_id": "case_id", "table": "form_processor_commcarecasesql"},
     }
 
-    doc_types = {
+    _doc_types = {
         FORM: list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"],
         CASE: ['CommCareCase', 'CommCareCase-Deleted'],
     }
@@ -82,6 +81,7 @@ class MissingIds:
     def __attrs_post_init__(self):
         self.domain = self.statedb.domain
         self.counter = DocCounter(self.statedb)
+        self.doc_types = self._doc_types[self.entity]
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
         self._resume_keys = set()
