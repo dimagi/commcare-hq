@@ -12,8 +12,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.consumption.models import SQLDefaultConsumption
-        return SQLDefaultConsumption
+        from corehq.apps.consumption.models import DefaultConsumption
+        return DefaultConsumption
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.get_or_create(
