@@ -1,7 +1,9 @@
 from corehq.apps.es import CaseES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from custom.icds.data_management.base import ESBasedDataManagement
-from custom.icds.data_management.doc_processors import ResetMissingCaseNameDocProcessor
+from custom.icds.data_management.doc_processors import (
+    ResetMissingCaseNameDocProcessor,
+)
 
 
 class ResetMissingCaseName(ESBasedDataManagement):

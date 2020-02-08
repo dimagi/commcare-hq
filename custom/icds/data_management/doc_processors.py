@@ -3,7 +3,10 @@ from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.case.mock import CaseBlock
 
-from corehq.apps.hqcase.utils import submit_case_blocks, get_last_non_blank_value
+from corehq.apps.hqcase.utils import (
+    get_last_non_blank_value,
+    submit_case_blocks,
+)
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound

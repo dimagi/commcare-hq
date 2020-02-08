@@ -69,4 +69,3 @@ class DataManagementRequest(models.Model):
         iteration_key = "%s-%s-%s-%s-%s" % (self.slug, self.from_date, self.till_date, self.initiated_by,
                                             self.started_on)
         task_to_run.run(iteration_key)
-
