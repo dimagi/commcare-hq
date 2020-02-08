@@ -61,7 +61,7 @@ class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
         owner_id = doc.get('owner_id')
         if owner_id and owner_id in self.test_location_ids:
             return False
-        dob = doc.get[DOB_PROPERTY]
+        dob = doc.get(DOB_PROPERTY)
         if dob and dob >= self.cut_off_dob and not doc.get(MOTHER_NAME_PROPERTY):
             return True
         return False
