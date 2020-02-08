@@ -22,7 +22,8 @@ class Command(BaseCommand):
             'doc_type',
         )
         parser.add_argument(
-            'attrs',
+            '-a',
+            '--attrs',
             nargs='+',
         )
         parser.add_argument(
@@ -33,7 +34,8 @@ class Command(BaseCommand):
             help='Slug for couch data base. Leave off if querying main commcarehq db.',
         )
 
-    def handle(self, doc_type, attrs, **options):
+    def handle(self, doc_type, **options):
+        attrs = options.get('attrs', [])
         db = couch_config.get_db(options.get('db', None))
         blank_counts = defaultdict(lambda: 0)
         max_lengths = defaultdict(lambda: 0)
