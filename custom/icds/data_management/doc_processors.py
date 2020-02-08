@@ -3,7 +3,7 @@ from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.case.mock import CaseBlock
 
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, get_last_non_blank_value
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
@@ -103,3 +103,39 @@ class SanitizePhoneNumberDocProcessor(BaseDocProcessor):
         if doc.get(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_NO_VALUE:
             return doc.get(PHONE_NUMBER_PROPERTY) == '91'
         return False
+
+
+class ResetMissingCaseNameDocProcessor(BaseDocProcessor):
+    def __init__(self, domain):
+        self.domain = domain
+        self.case_accessor = CaseAccessors(self.domain)
+
+    @staticmethod
+    def _create_case_blocks(updates):
+        case_blocks = []
+        for case_id, name in updates.items():
+            case_block = CaseBlock(case_id,
+                                   update={'name': name},
+                                   user_id=SYSTEM_USER_ID)
+            case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
+            case_blocks.append(case_block)
+        return case_blocks
+
+    def process_bulk_docs(self, docs):
+        updates = {}
+        for doc in docs:
+            case_id = doc['_id']
+            case = self.case_accessor.get_case(case_id)
+            if not case.name:
+                update_to_name = get_last_non_blank_value(case, 'name')
+                updates[case_id] = update_to_name
+        if updates:
+            submit_case_blocks(self._create_case_blocks(updates), self.domain, user_id=SYSTEM_USER_ID)
+        return True
+
+    def handle_skip(self, doc):
+        print('Unable to process case {}'.format(doc['_id']))
+        return True
+
+    def should_process(self, doc):
+        return not bool(doc['name'])

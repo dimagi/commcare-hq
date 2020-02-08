@@ -1,3 +1,4 @@
+from corehq.apps.es import CaseES
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.util.doc_processor.interface import BulkDocProcessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -8,7 +9,7 @@ class DataManagement(object):
     name = ""
     case_type = None
 
-    def __init__(self, domain):
+    def __init__(self, domain, *args, **kwargs):
         self.domain = domain
 
     def run(self, iteration_key):
@@ -43,8 +44,22 @@ class SQLBasedDataManagement(DataManagement):
 
 
 class ESBasedDataManagement(DataManagement):
+    doc_processor = None
+
+    def _get_case_ids(self):
+        raise NotImplementedError
+
+    def case_accessor(self):
+        return CaseReindexAccessor(
+            domain=self.domain,
+            case_type=self.case_type,
+            case_ids=self._get_case_ids()
+        )
+
     def run(self, iteration_key):
         """
         find records to be updated via ES and then update them
         """
-        pass
+        record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
+        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
+        processor.run()
