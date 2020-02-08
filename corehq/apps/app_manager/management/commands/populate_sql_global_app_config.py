@@ -13,10 +13,6 @@ class Command(PopulateSQLCommand):
         return 'GlobalAppConfig'
 
     @classmethod
-    def couch_key(cls):
-        return set(['domain', 'app_id'])
-
-    @classmethod
     def sql_class(cls):
         from corehq.apps.app_manager.models import GlobalAppConfig
         return GlobalAppConfig
