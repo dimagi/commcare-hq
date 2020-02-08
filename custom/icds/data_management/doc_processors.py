@@ -14,6 +14,9 @@ DOB_PROPERTY = "dob"
 MOTHER_NAME_PROPERTY = "mother_name"
 CUT_OFF_AGE_IN_YEARS = 6
 MOTHER_INDEX_IDENTIFIER = "mother"
+PHONE_NUMBER_PROPERTY = "contact_phone_number"
+HAS_MOBILE_PROPERTY = "has_mobile"
+HAS_MOBILE_PROPERTY_NO_VALUE = "no"
 
 
 class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
@@ -64,4 +67,41 @@ class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
         dob = doc.get(DOB_PROPERTY)
         if dob and dob >= self.cut_off_dob and not doc.get(MOTHER_NAME_PROPERTY):
             return True
+        return False
+
+
+class SanitizePhoneNumberDocProcessor(BaseDocProcessor):
+    def __init__(self, domain):
+        self.domain = domain
+        self.test_location_ids = find_test_awc_location_ids(self.domain)
+
+    def _create_case_blocks(self, docs):
+        case_blocks = []
+        for doc in docs:
+            case_id = doc['_id']
+            case_block = CaseBlock(case_id,
+                                   update={PHONE_NUMBER_PROPERTY: ''},
+                                   user_id=SYSTEM_USER_ID)
+            case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
+            case_blocks.append(case_block)
+        return case_blocks
+
+    def process_doc(self, doc):
+        raise NotImplementedError
+
+    def process_bulk_docs(self, docs):
+        if docs:
+            submit_case_blocks(self._create_case_blocks(docs), self.domain, user_id=SYSTEM_USER_ID)
+        return True
+
+    def handle_skip(self, doc):
+        print('Unable to process case {}'.format(doc['_id']))
+        return True
+
+    def should_process(self, doc):
+        owner_id = doc.get('owner_id')
+        if owner_id and owner_id in self.test_location_ids:
+            return False
+        if doc.get(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_NO_VALUE:
+            return doc.get(PHONE_NUMBER_PROPERTY) == '91'
         return False
