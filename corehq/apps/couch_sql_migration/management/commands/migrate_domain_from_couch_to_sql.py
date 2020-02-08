@@ -55,6 +55,10 @@ REWIND = "rewind"
 STATS = "stats"
 DIFF = "diff"
 
+CACHED = "cached"
+RESUME = "resume"
+REBUILD = "rebuild"
+
 CASE_DIFF = {"process": True, "local": False, "none": None}
 
 
@@ -141,11 +145,14 @@ class Command(BaseCommand):
                 and continuing with next form.
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
-        parser.add_argument('--use-missing-cache',
-            dest="refresh_missing", action='store_false', default=True,
+        parser.add_argument('--missing-docs',
+            choices=[RESUME, REBUILD, CACHED], default=RESUME,
             help="""
-                Do not recalculate which documents are in Couch but not SQL.
-                Instead, use previously calculated data from the state db.
+                By default missing docs will be calculated before stats
+                are printed, resuming from the previous run if possible.
+                Use "rebuild" to discard previous results and
+                recalculate all missing docs that are in Couch but not
+                SQL. Use "cached" to use existing data from state db.
             """)
 
     def handle(self, domain, action, **options):
@@ -162,7 +169,7 @@ class Command(BaseCommand):
             "stop_on_error",
             "forms",
             "rewind",
-            "refresh_missing",
+            "missing_docs",
         ]:
             setattr(self, opt, options[opt])
 
@@ -178,6 +185,8 @@ class Command(BaseCommand):
             raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
+        if action not in [MIGRATE, STATS] and self.missing_docs != RESUME:
+            raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
 
@@ -252,8 +261,9 @@ class Command(BaseCommand):
         status = get_couch_sql_migration_status(domain)
         if not self.live_migrate:
             self.live_migrate = status == MigrationStatus.DRY_RUN
-        if self.refresh_missing:
-            find_missing_docs(domain, self.state_dir, self.live_migrate)
+        if self.missing_docs != CACHED:
+            resume = self.missing_docs == RESUME
+            find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
         statedb = open_state_db(domain, self.state_dir)
         doc_counts = statedb.get_doc_counts()

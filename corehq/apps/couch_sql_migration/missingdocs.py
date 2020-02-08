@@ -23,8 +23,12 @@ from .couchsqlmigration import (
 from .statedb import open_state_db
 
 
-def find_missing_docs(domain, state_dir, live_migrate=False):
+def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
     """Update missing documents in state db
+
+    Find each entity (form or case) that is in Couch but not in SQL.
+    Does not verify that each entity has the same doc type in Couch and
+    SQL; that is done by the diff process.
 
     Datadog metrics used for counting missing docs:
     - commcare.couchsqlmigration.form.has_diff
@@ -35,7 +39,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False):
     statedb = open_state_db(domain, state_dir, readonly=False)
     with statedb, ExitStack() as stop_it:
         for entity in ["form", "case"]:
-            missing_ids = MissingIds(entity, statedb, stopper)
+            missing_ids = MissingIds(entity, statedb, stopper, resume=resume)
             stop_it.enter_context(missing_ids)
             for doc_type in missing_ids.doc_types:
                 statedb.delete_missing_docs(doc_type)
@@ -55,8 +59,9 @@ class MissingIds:
     entity = attr.ib()
     statedb = attr.ib()
     stopper = attr.ib()
-    tag = attr.ib(default="missing")
-    chunk_size = attr.ib(default=5000)
+    resume = attr.ib(default=True, kw_only=True)
+    tag = attr.ib(default="missing", kw_only=True)
+    chunk_size = attr.ib(default=5000, kw_only=True)
 
     missing_docs_sql = """
         SELECT couch.{doc_id}
@@ -100,6 +105,9 @@ class MissingIds:
         dd_type = f"find_{self.tag}_{self.entity}s"
         count_key = f"{doc_type}.id.{self.tag}"
         resume_key = f"{self.domain}.{count_key}.{self.statedb.unique_id}"
+        if not self.resume:
+            self.discard_iteration_state(resume_key)
+            self.counter.pop(count_key)
         couch_ids = _iter_docs(self.domain, f"{doc_type}.id", resume_key, self.stopper)
         couch_ids = self.with_progress(doc_type, couch_ids, count_key)
         with self.counter(dd_type, count_key) as add_docs:
