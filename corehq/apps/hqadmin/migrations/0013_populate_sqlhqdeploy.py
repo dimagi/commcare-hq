@@ -6,7 +6,7 @@ from corehq.apps.hqadmin.management.commands.populate_sql_hq_deploy import Comma
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hqadmin', '0011_alter_hqdeploy_environment'),
+        ('hqadmin', '0012_alter_hqdeploy_diffurl'),
     ]
 
     operations = [
