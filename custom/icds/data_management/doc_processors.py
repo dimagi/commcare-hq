@@ -26,7 +26,8 @@ class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
         self.cut_off_dob = str(date_today.replace(year=date_today.year - CUT_OFF_AGE_IN_YEARS))
         self.test_location_ids = find_test_awc_location_ids(self.domain)
 
-    def _create_case_blocks(self, updates):
+    @staticmethod
+    def _create_case_blocks(updates):
         case_blocks = []
         for case_id, mother_name in updates.items():
             case_block = CaseBlock(case_id,
@@ -35,9 +36,6 @@ class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
             case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
             case_blocks.append(case_block)
         return case_blocks
-
-    def process_doc(self, doc):
-        raise NotImplementedError
 
     def process_bulk_docs(self, docs):
         updates = {}
@@ -75,7 +73,8 @@ class SanitizePhoneNumberDocProcessor(BaseDocProcessor):
         self.domain = domain
         self.test_location_ids = find_test_awc_location_ids(self.domain)
 
-    def _create_case_blocks(self, docs):
+    @staticmethod
+    def _create_case_blocks(docs):
         case_blocks = []
         for doc in docs:
             case_id = doc['_id']
@@ -85,9 +84,6 @@ class SanitizePhoneNumberDocProcessor(BaseDocProcessor):
             case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
             case_blocks.append(case_block)
         return case_blocks
-
-    def process_doc(self, doc):
-        raise NotImplementedError
 
     def process_bulk_docs(self, docs):
         if docs:
