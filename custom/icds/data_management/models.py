@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from django.db import models
 from django.utils.translation import ugettext_noop
+
+from custom.icds.data_management.const import DATA_MANAGEMENT_TASKS
 
 
 class DataManagementRequest(models.Model):
@@ -13,13 +17,16 @@ class DataManagementRequest(models.Model):
         (STATUS_SUCCESS, ugettext_noop('successful')),
         (STATUS_FAILED, ugettext_noop('failed'))
     )
+    STATUSES = [STATUS_PENDING, STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_FAILED]
     slug = models.CharField(max_length=255, blank=False, null=False)
+    domain = models.CharField(max_length=255, blank=False, null=False)
+    db_alias = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     initiated_by = models.CharField(max_length=255, blank=True, null=True)
 
     # timestamps of request runtime
     started_on = models.DateTimeField()
-    ended_on = models.DateTimeField()
+    ended_on = models.DateTimeField(blank=True, null=True)
 
     # to consider cases modified within range
     from_date = models.DateField(blank=True, null=True)
@@ -32,5 +39,34 @@ class DataManagementRequest(models.Model):
         """
         run the updates through DataManagement
         """
-        pass
+        self._set_in_progress()
+        if self.slug not in DATA_MANAGEMENT_TASKS:
+            self._note_error("Unexpected slug %s" % self.slug)
+        else:
+            try:
+                self._perform_task()
+            except Exception as e:
+                self._note_error(str(e))
+                raise
+            else:
+                self.status = self.STATUS_SUCCESS
+            finally:
+                self.ended_on = datetime.utcnow()
+                self.save()
+
+    def _set_in_progress(self):
+        self.status = self.STATUS_IN_PROGRESS
+        self.started_on = datetime.utcnow()
+        self.save()
+        self.refresh_from_db()
+
+    def _note_error(self, message):
+        self.error = message
+        self.status = self.STATUS_FAILED
+
+    def _perform_task(self):
+        task_to_run = DATA_MANAGEMENT_TASKS[self.slug](self.domain, self.db_alias, self.from_date, self.till_date)
+        iteration_key = "%s-%s-%s-%s-%s" % (self.slug, self.from_date, self.till_date, self.initiated_by,
+                                            self.started_on)
+        task_to_run.run(iteration_key)
 
