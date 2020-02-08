@@ -62,6 +62,6 @@ branches:
   - jls/bulk-app-trans-format-fixes # Jenny Jan 27
   - bmb/SAASP-10249  # Biyeun Feb 3
   - jls/migrate-HqDeploy-3 # Jenny Feb 5
-  - jls/migrate-ApiUser-1 # Jenny Feb 8
+  - jls/migrate-ApiUser-2 # Jenny Feb 8
   - dmr/use-npm-local-lessc  # Danny Feb 7
 submodules: {}
