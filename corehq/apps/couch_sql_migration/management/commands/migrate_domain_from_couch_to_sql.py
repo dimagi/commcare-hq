@@ -18,6 +18,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
 )
 from corehq.apps.couch_sql_migration.missingdocs import find_missing_docs
 from corehq.apps.couch_sql_migration.progress import (
+    MigrationStatus,
     couch_sql_migration_in_progress,
     get_couch_sql_migration_status,
     set_couch_sql_migration_complete,
@@ -167,7 +168,7 @@ class Command(BaseCommand):
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if action not in [MIGRATE, STATS] and self.live_migrate:
+        if action != MIGRATE and self.live_migrate:
             raise CommandError(f"{action} --live not allowed")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
@@ -249,6 +250,8 @@ class Command(BaseCommand):
 
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
+        if not self.live_migrate:
+            self.live_migrate = status == MigrationStatus.DRY_RUN
         if self.refresh_missing:
             find_missing_docs(domain, self.state_dir, self.live_migrate)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
