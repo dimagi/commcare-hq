@@ -8,8 +8,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.api.models import SQLApiUser
-        return SQLApiUser
+        from corehq.apps.api.models import ApiUser
+        return ApiUser
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
