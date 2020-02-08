@@ -70,7 +70,6 @@ from corehq.form_processor.utils.general import (
     set_local_domain_sql_backend_override,
 )
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
-from corehq.util import cache_utils
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
@@ -873,24 +872,15 @@ class Stopper:
 
 
 class MigrationPaginationEventHandler(PaginationEventHandler):
-    RETRIES = 5
 
     def __init__(self, domain, stopper):
         self.domain = domain
         self.stopper = stopper
         self.should_stop = stopper.get_stopper()
-        self.retries = self.RETRIES
 
     def page_start(self, *args, **kw):
         if self.stopper.clean_break:
             raise StopToResume
-
-    def page_exception(self, e):
-        if self.retries <= 0:
-            return False
-        self.retries -= 1
-        gevent.sleep(1)
-        return True
 
     def page(self, results):
         if self.should_stop is None or not results:
@@ -907,13 +897,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             return
         if self.should_stop(key_date):
             raise StopToResume
-
-    def page_end(self, total_emitted, duration, *args, **kwargs):
-        self.retries = self.RETRIES
-        cache_utils.clear_limit(self._cache_key())
-
-    def _cache_key(self):
-        return "couchsqlmigration.%s" % self.domain
 
     def stop(self):
         if self.should_stop is not None:
