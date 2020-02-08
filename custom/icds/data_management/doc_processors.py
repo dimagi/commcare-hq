@@ -7,6 +7,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.doc_processor.interface import BaseDocProcessor
 from custom.icds.utils.location import find_test_awc_location_ids
 
@@ -25,6 +26,7 @@ class PopulateMissingMotherNameDocProcessor(BaseDocProcessor):
         date_today = date.today()
         self.cut_off_dob = str(date_today.replace(year=date_today.year - CUT_OFF_AGE_IN_YEARS))
         self.test_location_ids = find_test_awc_location_ids(self.domain)
+        self.case_accessor = CaseAccessors(self.domain)
 
     @staticmethod
     def _create_case_blocks(updates):
