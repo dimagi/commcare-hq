@@ -16,7 +16,7 @@ class SQLHqDeploy(models.Model):
     date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     user = models.CharField(max_length=100)
     environment = models.CharField(max_length=100, null=True)
-    diff_url = models.CharField(max_length=126, null=True)
+    diff_url = models.CharField(max_length=255, null=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta(object):

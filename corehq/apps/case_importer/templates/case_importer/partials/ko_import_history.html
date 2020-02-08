@@ -30,10 +30,10 @@
       <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
       <span class="label label-danger">{% trans "Failed" %}</span>
       <!--/ko-->
-      <!--ko if: task_status().state == $root.states.FAILED-->
+      <!--ko if: task_status().state == $root.states.MISSING && isExpiredUpload() || task_status().state == $root.states.FAILED-->
       <span class="label label-danger">{% trans "Failed" %}</span>
       <!--/ko-->
-      <!--ko if: task_status().state == $root.states.MISSING || task_status().state == $root.states.NOT_STARTED -->
+      <!--ko if: task_status().state == $root.states.MISSING && !isExpiredUpload() || task_status().state == $root.states.NOT_STARTED-->
       {% trans "Waiting to start" %}
       <!--/ko-->
       <!--ko if: task_status().state == $root.states.STARTED-->
@@ -47,7 +47,7 @@
       </div>
       <!--/ko-->
     </td>
-    <td class="col-md-1" data-bind="text: created"></td>
+    <td class="col-md-1" data-bind="text: created_display"></td>
     <td class="col-md-1" data-bind="text: case_type">
     </td>
     <td class="col-md-4" data-bind="with: task_status()">

@@ -1,3 +1,4 @@
+import datetime
 import time
 from datetime import timedelta
 
@@ -6,6 +7,7 @@ from django.urls import reverse
 from django.test.client import Client
 from django.contrib.auth.models import User
 from django.test import TestCase
+from freezegun import freeze_time
 
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
@@ -40,16 +42,17 @@ class AuthenticationTestCase(TestCase):
         
         self.assertEqual(model_count+1, model_count2)    
         self.assertEqual(total_count+1, total_count2)
-    
-    def testModifyUser(self):
+
+    @freeze_time(datetime.datetime.utcnow(), as_arg=True)
+    def testModifyUser(frozen_time, self):
         model_count = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count = AuditEvent.view("auditcare/all_events").count()
         
         usr = User.objects.get(username='mockmock@mockmock.com')
         usr.first_name='aklsjfl'
-        time.sleep(1)
+        frozen_time.tick(datetime.timedelta(seconds=1))
         usr.save()
-        time.sleep(1)
+        frozen_time.tick(datetime.timedelta(seconds=1))
 
         model_count2 = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count2 = AuditEvent.view("auditcare/all_events").count()
@@ -90,8 +93,8 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(latest_audit.access_type, models.ACCESS_FAILED)
         self.assertEqual(latest_audit.failures_since_start, 1)
 
-
-    def testRepeatedFailedLogin(self):
+    @freeze_time(datetime.datetime.utcnow(), as_arg=True)
+    def testRepeatedFailedLogin(frozen_time, self):
         from auditcare.decorators import login
         login.FAILURE_LIMIT = 3
         login.LOCK_OUT_AT_FAILURE=True
@@ -118,8 +121,8 @@ class AuthenticationTestCase(TestCase):
             next_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
             self.assertEqual(next_audit.access_type, models.ACCESS_FAILED)
             self.assertEqual(next_audit.failures_since_start, n+start_failures)
-            time.sleep(1)
-        time.sleep(3)
+            frozen_time.tick(datetime.timedelta(seconds=1))
+        frozen_time.tick(datetime.timedelta(seconds=3))
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEqual(cooled_audit.failures_since_start, 1)
