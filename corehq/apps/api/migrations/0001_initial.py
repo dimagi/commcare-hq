@@ -20,8 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.CharField(max_length=255, primary_key=True, serialize=False)),
                 ('password', models.CharField(max_length=255, null=True)),
                 ('permissions', django.contrib.postgres.fields.ArrayField(
-                    base_field=models.CharField(blank=True, max_length=126, null=True), null=True, size=None)
-                ),
+                    base_field=models.CharField(blank=True, max_length=126, null=True), null=True, size=None)),
             ],
             options={
                 'db_table': 'api_apiuser',
