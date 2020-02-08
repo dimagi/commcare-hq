@@ -1,4 +1,3 @@
-from corehq.apps.es import CaseES
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.util.doc_processor.interface import BulkDocProcessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -8,6 +7,7 @@ class DataManagement(object):
     slug = ""
     name = ""
     case_type = None
+    doc_processor = None
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
@@ -15,10 +15,19 @@ class DataManagement(object):
     def run(self, iteration_key):
         raise NotImplementedError
 
+    def case_accessor(self):
+        raise NotImplementedError
+
+    def run(self, iteration_key):
+        """
+        iterate sql records and update them as and when needed
+        """
+        record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
+        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
+        processor.run()
+
 
 class SQLBasedDataManagement(DataManagement):
-    doc_processor = None
-
     def __init__(self, domain, db_alias, from_date=None, till_date=None):
         super().__init__(domain)
         self.db_aliases = [db_alias] if db_alias else None
@@ -34,18 +43,8 @@ class SQLBasedDataManagement(DataManagement):
             end_date=self.till_date
         )
 
-    def run(self, iteration_key):
-        """
-        iterate sql records and update them as and when needed
-        """
-        record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
-        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
-        processor.run()
-
 
 class ESBasedDataManagement(DataManagement):
-    doc_processor = None
-
     def _get_case_ids(self):
         raise NotImplementedError
 
@@ -55,11 +54,3 @@ class ESBasedDataManagement(DataManagement):
             case_type=self.case_type,
             case_ids=self._get_case_ids()
         )
-
-    def run(self, iteration_key):
-        """
-        find records to be updated via ES and then update them
-        """
-        record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
-        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
-        processor.run()
