@@ -48,7 +48,7 @@ class DataManagementForm(forms.Form):
     def clean(self):
         from_date = self.cleaned_data['from_date']
         till_date = self.cleaned_data['till_date']
-        if from_date and till_date and from_date < till_date:
+        if from_date and till_date and from_date > till_date:
             self.add_error("till_date", "Till date should be greater than from date")
 
     def submit(self, domain, username):
