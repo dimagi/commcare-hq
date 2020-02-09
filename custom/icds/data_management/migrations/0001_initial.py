@@ -27,7 +27,9 @@ class Migration(migrations.Migration):
                 ('from_date', models.DateField(blank=True, null=True)),
                 ('till_date', models.DateField(blank=True, null=True)),
                 ('error', models.TextField(blank=True, null=True)),
-                ('status', models.SmallIntegerField(choices=[(0, 'pending'), (1, 'in progress'), (2, 'successful'), (3, 'failed')], default=0)),
+                ('status', models.SmallIntegerField(choices=[
+                    (0, 'pending'), (1, 'in progress'), (2, 'successful'), (3, 'failed')
+                ], default=0)),
             ],
         ),
     ]

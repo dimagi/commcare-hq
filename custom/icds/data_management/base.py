@@ -12,9 +12,6 @@ class DataManagement(object):
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
 
-    def run(self, iteration_key):
-        raise NotImplementedError
-
     def case_accessor(self):
         raise NotImplementedError
 

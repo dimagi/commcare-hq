@@ -6,7 +6,7 @@ hqDefine('data_management/js/data_management', [
     $(function () {
         $('.date-picker').datepicker({
             dateFormat: "yy-mm-dd",
-            maxDate: 0
+            maxDate: 0,
         });
     });
 });
