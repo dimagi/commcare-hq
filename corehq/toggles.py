@@ -1810,3 +1810,11 @@ RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
