@@ -1,22 +1,34 @@
 from django.conf import settings
-from django.conf.urls import url, include
+from django.conf.urls import include, url
+from django.contrib import admin
 from django.shortcuts import render
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import RedirectView, TemplateView
 
+from corehq.apps.accounting.urls import \
+    domain_specific as accounting_domain_specific
 from corehq.apps.app_manager.views.formdesigner import ping
+from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
-
-from django.contrib import admin
-from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views.feedback import submit_feedback
-from corehq.apps.domain.views.settings import logo
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
-from corehq.apps.hqwebapp.views import apache_license, bsd_license, redirect_to_dimagi
-from corehq.apps.reports.views import ReportNotificationUnsubscribeView
+from corehq.apps.domain.views.settings import logo
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.registration.tasks import PRICING_LINK
+from corehq.apps.hqwebapp.urls import \
+    domain_specific as hqwebapp_domain_specific
 from corehq.apps.hqwebapp.urls import legacy_prelogin
+from corehq.apps.hqwebapp.views import (
+    apache_license,
+    bsd_license,
+    redirect_to_dimagi,
+)
+from corehq.apps.registration.tasks import PRICING_LINK
+from corehq.apps.reports.views import ReportNotificationUnsubscribeView
+from corehq.apps.settings.urls import domain_redirect
+from corehq.apps.settings.urls import \
+    domain_specific as settings_domain_specific
+from corehq.apps.settings.urls import users_redirect
+from corehq.apps.sms.urls import sms_admin_interface_urls
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -29,11 +41,6 @@ handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
 handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
-from corehq.apps.accounting.urls import domain_specific as accounting_domain_specific
-from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
-from corehq.apps.settings.urls import domain_specific as settings_domain_specific
-from corehq.apps.settings.urls import users_redirect, domain_redirect
-from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
 domain_specific = [
