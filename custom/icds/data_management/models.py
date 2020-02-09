@@ -22,7 +22,7 @@ class DataManagementRequest(models.Model):
     domain = models.CharField(max_length=255, blank=False, null=False)
     db_alias = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    initiated_by = models.CharField(max_length=255, blank=True, null=True)
+    initiated_by = models.CharField(max_length=255, blank=False, null=False)
 
     # timestamps of request runtime
     started_on = models.DateTimeField()
