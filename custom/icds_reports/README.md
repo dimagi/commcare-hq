@@ -319,6 +319,29 @@ This can be done by:
 
 See `program-summary.directive.js` for an example of this.
 
+Change Management
+-----------------
+
+## Overall Process
+
+There are two common ways development is done on Dashboard.
+
+**For small features and fixes, changes are generally tested locally, merged and deployed.**
+This would include text / style changes, indicator calculation changes, and often the addition of new indicators
+to existing reports.
+
+
+**For larger features, development is generally done behind a feature flag, tested on production, and then
+released to all users (by removing the flag)**.
+
+Typically, the same feature flag is used for all pre-release features.
+The ID for this feature flag is "features_in_dashboard_icds_reports", and it can be accessed by any superuser
+by going to \[server_root\]/hq/flags/edit/features_in_dashboard_icds_reports/.
+
+This flag is available in backend code, by calling `icds_pre_release_features(user)` and in the dashboard front-end
+code by passing the angular constant `haveAccessToFeatures` to any directive.
+In both cases a value of `true` indicates the user has access to the pre-release features.
+
 ## Change Management between Web and Mobile
 
 Generally, moving forwards the goal should be that any change made on the web dashboard *to a piece of functionality
