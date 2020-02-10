@@ -29,7 +29,8 @@ class SQLApiUser(models.Model):
     password = models.CharField(max_length=255, null=True)
     permissions = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
-        null=True
+        null=True,
+        default=list
     )
 
     class Meta:
