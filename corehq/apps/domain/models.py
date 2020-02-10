@@ -438,9 +438,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
 
-    # There is no longer a way to request a report builder trial, so this property should be removed in the near
-    # future. (Keeping it for now in case a user has requested a trial and but has not yet been granted it)
-    requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 
     report_whitelist = StringListProperty()
