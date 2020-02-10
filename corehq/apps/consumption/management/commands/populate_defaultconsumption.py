@@ -12,7 +12,7 @@ class Command(PopulateSQLCommand):
         return SQLDefaultConsumption
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class().objects.get_or_create(
+        model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],
             defaults={
                 "type": doc.get("type"),

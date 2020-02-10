@@ -11,7 +11,12 @@ TYPE_SUPPLY_POINT = 'supply-point'
 
 
 class SQLDefaultConsumption(SyncSQLToCouchMixin, models.Model):
-    type = models.CharField(max_length=32, null=True)  # 'domain', 'product', 'supply-point-type', 'supply-point'
+    type = models.CharField(max_length=32, null=True, choices=[
+        (TYPE_DOMAIN, TYPE_DOMAIN),
+        (TYPE_PRODUCT, TYPE_PRODUCT),
+        (TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT_TYPE),
+        (TYPE_SUPPLY_POINT, TYPE_SUPPLY_POINT),
+    ])
     domain = models.CharField(max_length=255, null=True)
     product_id = models.CharField(max_length=126, null=True)
     supply_point_type = models.CharField(max_length=126, null=True)
