@@ -4,6 +4,8 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
 from django.http import HttpResponse
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -20,6 +22,18 @@ from corehq.form_processor.interfaces.dbaccessors import (
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
+
+
+class SQLApiUser(models.Model):
+    id = models.CharField(max_length=255, primary_key=True)
+    password = models.CharField(max_length=255, null=True)
+    permissions = ArrayField(
+        models.CharField(max_length=126, null=True, blank=True),
+        null=True
+    )
+
+    class Meta:
+        db_table = "api_apiuser"
 
 
 class ApiUser(Document):
