@@ -16,6 +16,6 @@ class Command(PopulateSQLCommand):
             id=doc['_id'],
             defaults={
                 "password": doc.get("password"),
-                "permissions": doc.get("permissions"),
+                "permissions": doc.get("permissions", []),
             })
         return (model, created)
