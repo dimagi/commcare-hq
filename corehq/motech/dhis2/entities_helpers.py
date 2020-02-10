@@ -263,6 +263,16 @@ def set_te_attr(
     attr_id: str,
     value: Any
 ):
+    """
+    Updates a list of tracked entity attributes by reference
+
+    >>> attrs = [{"attribute": "abc123", "value": "ham"}]
+    >>> set_te_attr(attrs, "abc123", "spam")
+    >>> set_te_attr(attrs, "def456", "spam")
+    >>> attrs
+    [{'attribute': 'abc123', 'value': 'spam'}, {'attribute': 'def456', 'value': 'spam'}]
+
+    """
     for attr in attributes:
         if attr["attribute"] == attr_id:
             attr["value"] = value
