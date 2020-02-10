@@ -105,17 +105,15 @@ class ResetMissingCaseNameDocProcessor(DataManagementDocProcessor):
         super().__init__(domain)
         self.case_accessor = CaseAccessors(self.domain)
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, cases):
         updates = {}
-        for doc in docs:
-            case_id = doc['_id']
-            case = self.case_accessor.get_case(case_id)
-            if not case.name:
+        for case in cases:
+            if self.should_process(case):
                 update_to_name = get_last_non_blank_value(case, 'name')
-                updates[case_id] = update_to_name
+                updates[case.case_id] = update_to_name
         if updates:
             submit_case_blocks(self._create_case_blocks(updates, 'name'), self.domain, user_id=SYSTEM_USER_ID)
         return True
 
-    def should_process(self, doc):
-        return not bool(doc['name'])
+    def should_process(self, case):
+        return not bool(case.name)
