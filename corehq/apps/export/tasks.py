@@ -6,6 +6,8 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from corehq.apps.export.exceptions import RejectedStaleExport
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -15,7 +17,7 @@ from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.util.datadog.gauges import datadog_track_errors
+from corehq.util.datadog.gauges import datadog_track_errors, datadog_counter
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.quickcache import quickcache
@@ -39,6 +41,18 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+
+    email_requests = EmailExportWhenDoneRequest.objects.filter(
+        domain=domain,
+        download_id=download_id
+    )
+
+    if settings.STALE_EXPORT_THRESHOLD is not None and not email_requests.count():
+        delay = get_task_time_to_start(populate_export_download_task.request.id)
+        if delay.total_seconds() > settings.STALE_EXPORT_THRESHOLD:
+            datadog_counter('commcare.exports.rejected_unfresh_export')
+            raise RejectedStaleExport()
+
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
@@ -73,10 +87,6 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
                 download_id=download_id,
             )
 
-    email_requests = EmailExportWhenDoneRequest.objects.filter(
-        domain=domain,
-        download_id=download_id
-    )
     for email_request in email_requests:
         try:
             couch_user = CouchUser.get_by_user_id(email_request.user_id, domain=domain)

@@ -1,15 +1,24 @@
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.sms.change_publishers import change_meta_from_sms
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import (
+    get_checkpoint_for_elasticsearch_pillow,
+)
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import (
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
+
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.sms.models import SMS
+from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 
 
 def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
@@ -42,29 +51,34 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     )
 
 
+class SMSReindexAccessor(ReindexAccessor):
+    @property
+    def model_class(self):
+        return SMS
+
+    @property
+    def id_field(self):
+        return 'id'
+
+    def get_doc(self, doc_id):
+        return SMS.objects.get(pk=doc_id)
+
+
 class SmsReindexerFactory(ReindexerFactory):
     slug = 'sms'
     arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
         ReindexerFactory.elastic_reindexer_args,
     ]
 
     def build(self):
-        from corehq.apps.sms.models import SMS
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_sql_sms_pillow(),
-            change_provider=DjangoModelChangeProvider(SMS, _sql_sms_to_change),
+        iteration_key = f"SmsToElasticsearchPillow_{SMS_INDEX_INFO.index}_reindexer"
+        reindex_accessor = SMSReindexAccessor()
+        doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
             elasticsearch=get_es_new(),
             index_info=SMS_INDEX_INFO,
+            pillow=get_sql_sms_pillow(),
             **self.options
         )
-
-
-def _sql_sms_to_change(sms):
-    return Change(
-        id=sms.couch_id,
-        sequence_id=None,
-        document=sms.to_json(),
-        deleted=False,
-        metadata=change_meta_from_sms(sms),
-        document_store=None,
-    )

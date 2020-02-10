@@ -1,20 +1,35 @@
 import time
 from datetime import datetime
 
+from django.core.management import CommandError
 from django.core.management.base import BaseCommand
-from gevent.pool import Pool
 
-from corehq.apps.change_feed.producer import ChangeProducer
+from pillow_retry.api import _process_kafka_change
 from pillow_retry.models import PillowError
+from pillowtop import get_pillow_by_name
+from pillowtop.exceptions import PillowNotFoundError
+
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.producer import ChangeProducer
+from gevent.pool import Pool
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('pillow')
+        parser.add_argument('pillow_name')
 
-    def handle(self, pillow, **options):
+    def handle(self, pillow_name, **options):
         self.pool = Pool(10)
-        self.pillow = pillow
+        self.pillow_name = pillow_name
+
+        try:
+            pillow = get_pillow_by_name(pillow_name)
+        except PillowNotFoundError:
+            raise CommandError(f"Unknown pillow: {pillow_name}")
+
+        if not isinstance(pillow.get_change_feed(), KafkaChangeFeed):
+            raise CommandError(f"Only Kafka pillows are supported")
+
         self.count = 0
         self.start = time.time()
         self.producer = ChangeProducer(auto_flush=False)
@@ -28,7 +43,7 @@ class Command(BaseCommand):
         while num_retrieved > 0:
             pillow_errors = (
                 PillowError.objects
-                .filter(pillow=self.pillow)
+                .filter(pillow=self.pillow_name)
                 .order_by('date_next_attempt')
             )[:1000]
 
@@ -43,11 +58,8 @@ class Command(BaseCommand):
 
     def _process_errors(self, errors):
         for error in errors:
-            if error.change_object.metadata:
-                self.producer.send_change(
-                    error.change_object.metadata.data_source_name,
-                    error.change_object.metadata
-                )
+            _process_kafka_change(self.producer, error)
+
         self.producer.flush()
 
         self._delete_errors(errors)

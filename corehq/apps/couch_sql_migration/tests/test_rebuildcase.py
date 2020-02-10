@@ -10,9 +10,7 @@ def test_should_sort_sql_transactions():
         sql_case = Config(
             transactions=[Config(form_id=x, details={}) for x in sql_form_ids]
         )
-        couch_json = {
-            "actions": [{"xform_id": x} for x in couch_form_ids]
-        }
+        couch_json = {"actions": [{"xform_id": x} for x in couch_form_ids]}
         print(sql_case)
         print(couch_json)
         eq(mod.should_sort_sql_transactions(sql_case, couch_json), expect)
@@ -22,6 +20,42 @@ def test_should_sort_sql_transactions():
     yield test, "abc", "acb", True
     yield test, "abcd", "acb", False
     yield test, "abd", "acb", False
+
+
+def test_update_transaction_order():
+    def print_tx(label, txx):
+        print(f"transactions {label} update")
+        for tx in txx:
+            print(f"  {tx.id}  {tx.form_id: <1}  {tx.server_date}")
+
+    def to_date(chr):
+        return dx((ord("z") + 1) if chr == " " else ord(chr))
+
+    def test(sql_form_ids, couch_form_ids, expect=None, n_changes=0):
+        if expect is None:
+            expect = sql_form_ids
+        tx_updates = []
+        sql_case = Config(
+            transactions=[
+                Config(id=i, form_id=x.strip(), server_date=to_date(x), details={})
+                for i, x in enumerate(sql_form_ids)
+            ],
+            track_update=lambda tx: tx_updates.append(tx),
+        )
+        couch_json = {"actions": [{"xform_id": x.strip()} for x in couch_form_ids]}
+        print("couch case", couch_json)
+        print_tx("before", sql_case.transactions)
+        txx, server_dates = mod.update_transaction_order(sql_case, couch_json)
+        print_tx("after", txx)
+        eq("".join([tx.form_id if tx.form_id else " " for tx in txx]), expect)
+        eq(len(server_dates), n_changes, server_dates)
+        eq(len(tx_updates), n_changes, tx_updates)
+
+    yield test, "abc", "abc"
+    yield test, "abc ", "abc"
+    yield test, "abc", "aabbcc"
+    yield test, "abc", "acb", "acb", 1
+    yield test, "abc ", "a c b", "acb ", 1
 
 
 def test_iter_ascending_dates():

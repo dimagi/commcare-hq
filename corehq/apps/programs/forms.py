@@ -34,8 +34,8 @@ class ProgramForm(forms.Form):
             raise forms.ValidationError(_('This field is required.'))
 
         other_program_names = [
-            p['name'] for p in Program.by_domain(self.program.domain, wrap=False)
-            if p['_id'] != self.program._id
+            p.name for p in Program.by_domain(self.program.domain)
+            if p.get_id != self.program._id
         ]
         if name in other_program_names:
             raise forms.ValidationError(_('Name already in use'))

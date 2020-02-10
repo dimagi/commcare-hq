@@ -1,0 +1,116 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Return-Path: <>
+From: MAILER-DAEMON@amazonses.com
+To: commcarehq-bounces+production@dimagi.com
+Date: Fri, 10 Jan 2020 08:00:50 +0000
+X-MS-Exchange-Message-Is-Ndr: 
+Content-Language: en-US
+Subject: Undeliverable: Scheduled report from CommCare HQ
+X-Failed-Recipients: bouncedemail@fakecompany.org
+
+--0ea704e2-8fae-4243-b81b-4a0e6fee0320
+Content-Type: multipart/alternative; differences=Content-Type; boundary="36391675-b182-49b4-9aaf-1d294fffae1e"
+
+--36391675-b182-49b4-9aaf-1d294fffae1e
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Your message to bouncedemail@fakecompany.org couldn't be delivered.
+bouncedemail wasn't found at fakecompany.org.
+0100016f8e780fcd-145. . .       Office 365      bouncedemail
+Action Required                 Recipient
+Unknown To address
+
+Content-Type: multipart/mixed; boundary=3D"=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D2048517711541900724=3D=3D"
+MIME-Version: 1.0
+Subject: Scheduled report from CommCare HQ
+From: commcarehq-noreply@dimagi.com
+To: bouncedemail@fakecompany.org
+Date: Fri, 10 Jan 2020 08:00:30 +0000
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+
+
+--36391675-b182-49b4-9aaf-1d294fffae1e
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+
+Original message stripped
+
+Content-Type: multipart/mixed; boundary=3D"=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D2048517711541900724=3D=3D"
+MIME-Version: 1.0
+Subject: Scheduled report from CommCare HQ
+From: commcarehq-noreply@dimagi.com
+To: bouncedemail@fakecompany.org
+Date: Fri, 10 Jan 2020 08:00:30 +0000
+X-EOPAttributedMessage: 2
+X-MS-PublicTrafficType: Email
+X-Microsoft-Antispam-Untrusted: BCL:0;
+X-Microsoft-Antispam: BCL:0;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Jan 2020 08:00:42.3908
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+Original message stripped
+--36391675-b182-49b4-9aaf-1d294fffae1e--
+--0ea704e2-8fae-4243-b81b-4a0e6fee0320
+Content-Type: message/delivery-status
+
+
+--0ea704e2-8fae-4243-b81b-4a0e6fee0320
+Content-Type: message/rfc822
+
+Content-Type: multipart/mixed; boundary="===============2048517711541900724=="
+MIME-Version: 1.0
+Subject: Scheduled report from CommCare HQ
+From: commcarehq-noreply@dimagi.com
+To: bouncedemail@fakecompany.org
+Date: Fri, 10 Jan 2020 08:00:30 +0000
+X-SES-Outgoing: 2020.01.10-54.240.48.34
+X-EOPAttributedMessage: 2
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 2f89c482-a3b4-4312-e3d7-08d795a331b7
+X-MS-TrafficTypeDiagnostic: BN6PR16MB0017:|MN2PR16MB3376:|BYAPR16MB2984:
+X-LD-Processed: f2b49442-36c7-4303-aa08-51fdefa25eb0,ExtAddr,ExtAddr,ExtAddr
+X-MS-Oob-TLC-OOBClassifiers: OLM:3173;OLM:10000;OLM:10000;
+X-Microsoft-Antispam-Untrusted: BCL:0;
+X-Microsoft-Antispam: BCL:0;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Jan 2020 08:00:42.3908 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR16MB2984
+
+--===============2048517711541900724==
+Content-Type: multipart/alternative; boundary="===============5110796245272360611=="
+MIME-Version: 1.0
+
+--===============5110796245272360611==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+
+THIS EMAIL ORIGINATED OUTSIDE OF FAKE COMPANY, INC.
+
+LINKS AND ATTACHMENTS MAY CONTAIN MALWARE OR OTHER THREATS
+
+Do not click on links or attachments unless you recognize the sender; if in=
+ doubt forward to the IT Department for verification.
+
+
+--===============5110796245272360611==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8">
+</head>
+<body>
+</body>
+</html>
+
+
+--===============2048517711541900724==--
+
+--0ea704e2-8fae-4243-b81b-4a0e6fee0320--

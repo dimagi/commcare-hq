@@ -1,9 +1,8 @@
+import json
 import logging
 import os
-import pdb
-import signal
 import sys
-from contextlib import contextmanager, suppress
+from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -11,38 +10,31 @@ from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
-from corehq.util.log import with_progress_bar
 
-from ...casediff import (
-    ProcessNotAllowed,
-    global_diff_state,
-    get_casediff_state_path,
-    make_result_saver,
-)
-from ...couchsqlmigration import (
-    CouchSqlDomainMigrator,
-    get_main_forms_iteration_stop_date,
-    setup_logging,
-)
-from ...parallel import Pool
-from ...util import get_ids_from_string_or_file
+from ...casedifftool import do_case_diffs, format_diffs, get_migrator
+from ...couchsqlmigration import setup_logging
+from ...rewind import IterationState
+from ...statedb import StateDB, open_state_db
 
 log = logging.getLogger(__name__)
 
-PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
+CASES = "cases"
+SHOW = "show"
+
+PREPARE = "prepare"
+DELETE = "delete"
 
 
 class Command(BaseCommand):
     help = "Diff data in couch and SQL with parallel worker processes"
 
     def add_arguments(self, parser):
+        parser.add_argument('action', choices=[CASES, SHOW])
         parser.add_argument('domain')
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
-        parser.add_argument('--state-dir',
+        parser.add_argument('--state-dir', dest='state_path',
             default=os.environ.get("CCHQ_MIGRATION_STATE_DIR"),
             required="CCHQ_MIGRATION_STATE_DIR" not in os.environ,
             help="""
@@ -64,7 +56,12 @@ class Command(BaseCommand):
                 space-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
+
+                With the "show" action, this option should be a doc type.
             ''')
+        parser.add_argument('--changes',
+            dest="changes", action='store_true', default=False,
+            help="Show changes instead of diffs. Only valid with 'show' action")
         parser.add_argument('-x', '--stop',
             dest="stop", action='store_true', default=False,
             help='''
@@ -75,211 +72,186 @@ class Command(BaseCommand):
         parser.add_argument('-b', '--batch-size',
             dest="batch_size", default=100, type=int,
             help='''Diff cases in batches of this size.''')
+        parser.add_argument('--reset', choices=[PREPARE, DELETE],
+            help='''
+                Reset state to start fresh. This is a two-phase
+                operation: first run with --reset=prepare to save
+                resumable iterator state into the statedb. Then run with
+                --reset=delete to permanently delete diffs, changes, and
+                progress information from the statedb.
+            ''')
 
-    def handle(self, domain, **options):
+    def handle(self, action, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError(f'It looks like {domain} has already been migrated.')
 
-        for opt in ["no_input", "state_dir", "live", "cases", "stop", "batch_size"]:
+        for opt in [
+            "no_input",
+            "debug",
+            "state_path",
+            "live",
+            "cases",
+            "stop",
+            "changes",
+            "batch_size",
+            "reset",
+        ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
+        if self.changes and action != SHOW:
+            raise CommandError('--changes only allowed with "show" action')
 
-        assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
-        setup_logging(self.state_dir, "case_diff", options['debug'])
-        migrator = get_migrator(domain, self.state_dir, self.live)
-        msg = do_case_diffs(migrator, self.cases, self.stop, self.batch_size)
+        if self.reset:
+            if action == SHOW:
+                raise CommandError(f'invalid action for --reset: {action}')
+            self.do_reset(action, domain)
+            return
+
+        if action != SHOW:
+            assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
+        do_action = getattr(self, "do_" + action)
+        msg = do_action(domain)
         if msg:
             sys.exit(msg)
 
+    def do_cases(self, domain):
+        """Diff cases"""
+        setup_logging(self.state_path, "case_diff", self.debug)
+        migrator = get_migrator(domain, self.state_path, self.live)
+        return do_case_diffs(migrator, self.cases, self.stop, self.batch_size)
 
-def get_migrator(domain, state_dir, live):
-    # Set backend for CouchSqlDomainMigrator._check_for_migration_restrictions
-    set_local_domain_sql_backend_override(domain)
-    return CouchSqlDomainMigrator(
-        domain, state_dir, live_migrate=live, diff_process=None)
+    def do_show(self, domain):
+        """Show diffs from state db"""
+        def iter_json_diffs(doc_diffs):
+            for doc_id, diffs in doc_diffs:
+                yield doc_id, [d.json_diff for d in diffs if d.kind != "stock state"]
+                stock_diffs = [d for d in diffs if d.kind == "stock state"]
+                if stock_diffs:
+                    yield from iter_stock_diffs(stock_diffs)
 
+        def iter_stock_diffs(diffs):
+            def key(diff):
+                return diff.doc_id
+            for doc_id, diffs in groupby(sorted(diffs, key=key), key=key):
+                yield doc_id, [d.json_diff for d in diffs]
 
-def do_case_diffs(migrator, cases, stop, batch_size):
-    casediff = CaseDiffTool(migrator, cases, stop, batch_size)
-    log.info("cutoff_date = %s", casediff.cutoff_date)
-    with casediff.context() as add_cases:
-        save_result = make_result_saver(casediff.statedb, add_cases)
-        for data in casediff.iter_case_diff_results():
-            save_result(data)
-    if casediff.should_diff_pending():
-        return PENDING_WARNING
-
-
-class CaseDiffTool:
-
-    def __init__(self, migrator, cases, stop, batch_size):
-        self.migrator = migrator
-        self.domain = migrator.domain
-        self.statedb = migrator.statedb
-        self.cases = cases
-        self.stop = stop
-        self.batch_size = batch_size
-        if not migrator.live_migrate:
-            cutoff_date = None
-        elif hasattr(migrator.stopper, "stop_date"):
-            cutoff_date = migrator.stopper.stop_date
+        statedb = self.open_state_db(domain)
+        print(f"showing diffs from {statedb}")
+        if self.changes:
+            items = statedb.iter_doc_changes(self.cases)
         else:
-            cutoff_date = get_main_forms_iteration_stop_date(
-                self.domain, self.statedb.unique_id)
-            migrator.stopper.stop_date = cutoff_date
-        self.cutoff_date = cutoff_date
-        self.lock_out_casediff_process()
+            items = statedb.iter_doc_diffs(self.cases)
+        json_diffs = iter_json_diffs(items)
+        for chunk in chunked(json_diffs, self.batch_size, list):
+            print(format_diffs(dict(chunk)))
+            if not confirm("show more?"):
+                break
 
-    def lock_out_casediff_process(self):
-        if not self.statedb.get(ProcessNotAllowed.__name__):
-            state_path = get_casediff_state_path(self.statedb.db_filepath)
-            if os.path.exists(state_path):
-                self.statedb.clone_casediff_data_from(state_path)
-            self.statedb.set(ProcessNotAllowed.__name__, True)
+    def do_reset(self, action, domain):
+        itr_doc_type = {"cases": "CommCareCase.id"}[action]
+        db = self.open_state_db(domain, readonly=False)
+        itr_state = IterationState(db, domain, itr_doc_type)
+        if self.reset == PREPARE:
+            self.prepare_reset(action, db, itr_state)
+        else:
+            assert self.reset == DELETE, self.reset
+            self.reset_statedb(action, db, itr_state)
 
-    @contextmanager
-    def context(self):
-        with self.migrator.counter as counter, self.migrator.stopper:
-            with counter('diff_cases', 'CommCareCase.id') as add_cases:
-                yield add_cases
+    def open_state_db(self, domain, *, readonly=True):
+        state_path = os.path.expanduser(self.state_path)
+        if os.path.isdir(state_path):
+            return open_state_db(domain, state_path, readonly=readonly)
+        if os.path.isfile(state_path):
+            return StateDB.open(domain, state_path, readonly=readonly)
+        sys.exit(f"file or directory not found:\n{state_path}")
 
-    def iter_case_diff_results(self):
-        if self.cases is None:
-            return self.resumable_iter_diff_cases()
-        if self.cases == "pending":
-            return self.iter_diff_cases(self.get_pending_cases())
-        if self.cases == "with-diffs":
-            return self.iter_diff_cases_with_diffs()
-        case_ids = get_ids_from_string_or_file(self.cases)
-        return self.iter_diff_cases(case_ids, log_cases=True)
+    def prepare_reset(self, action, db, itr_state):
+        self.setup_reset_logging()
+        log.info(f"Saving {action} resumable iterator state in {db}")
+        value = itr_state.value
+        if itr_state.backup_resume_state(value):
+            log.info(
+                f"Backup {db.db_filepath} in a safe place.\n\n"
+                f"Then run `{action} --reset=delete` to permanently delete "
+                f"existing diffs, changes, and progress information from "
+                f"{db.db_filepath}"
+            )
 
-    def resumable_iter_diff_cases(self):
-        def diff_batch(case_ids):
-            case_ids = list(case_ids)
-            statedb.add_cases_to_diff(case_ids)  # add pending cases
-            return case_ids
-
-        statedb = self.statedb
-        case_ids = self.migrator._get_resumable_iterator(
-            ['CommCareCase.id'],
-            progress_name="Diff",
-            offset_key='CommCareCase.id',
+    def reset_statedb(self, action, db, itr_state):
+        print(
+            f"This will permanently delete existing diffs, changes, and "
+            f"progress information for {action} from {db.db_filepath}.\n"
+            f"\n"
+            f"You should have already run `{action} --reset=prepare` and "
+            f"made a backup prior to performing this step. Go back and do "
+            f"that now if necessary."
         )
-        return self.iter_diff_cases(case_ids, diff_batch)
+        ok = input("Enter 'ok' to delete: ").lower()
+        if ok != "ok":
+            return sys.exit("aborting...")
+        self.setup_reset_logging()
+        log.info(f"deleting {action} iteration state from {db}")
+        self.delete_resumable_iteration_state(itr_state)
+        self.reset_doc_count(db, itr_state.doc_type)
+        self.reset_diff_data(db, action)
+        log.info("vacuum state db")
+        db.vacuum()
+        log.info("done")
 
-    def iter_diff_cases_with_diffs(self):
-        count = self.statedb.count_case_ids_with_diffs()
-        cases = self.statedb.iter_case_ids_with_diffs()
-        cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
-        return self.iter_diff_cases(cases)
+    def setup_reset_logging(self):
+        path = self.state_path
+        log_dir = os.path.dirname(path) if os.path.isfile(path) else path
+        setup_logging(log_dir, "couch_sql_diff", self.debug)
 
-    def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
-        def list_or_stop(items):
-            if self.is_stopped():
-                raise StopIteration
-            return list(items)
+    def delete_resumable_iteration_state(self, itr_state):
+        pretty_value = json.dumps(itr_state.value, indent=2)
+        log.info("deleting iteration state from Couch: %s", pretty_value)
+        itr_state.drop_from_couch()
 
-        batches = chunked(case_ids, self.batch_size, batcher or list_or_stop)
-        if not self.stop:
-            yield from self.pool.imap_unordered(load_and_diff_cases, batches)
-            return
-        stop = [1]
-        with global_diff_state(*self.initargs), suppress(pdb.bdb.BdbQuit):
-            for batch in batches:
-                data = load_and_diff_cases(batch, log_cases=log_cases)
-                yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
-                if diffs:
-                    log.info("found cases with diffs:\n%s", format_diffs(diffs))
-                    if stop:
-                        pdb.set_trace()
+    def reset_doc_count(self, db, itr_doc_type):
+        counts = db.get("doc_counts")
+        if itr_doc_type not in counts:
+            log.warning(f"unexpected: {itr_doc_type} not in {counts}")
+        else:
+            log.info(f"doc_counts['{itr_doc_type}'] == {counts[itr_doc_type]}")
+            counts[itr_doc_type] = 0
+            db.set("doc_counts", counts)
 
-    def is_stopped(self):
-        return self.migrator.stopper.clean_break
-
-    def get_pending_cases(self):
-        count = self.statedb.count_undiffed_cases()
-        if not count:
-            return []
-        pending = self.statedb.iter_undiffed_case_ids()
-        return with_progress_bar(
-            pending, count, prefix="Pending case diffs", oneline=False)
-
-    def should_diff_pending(self):
-        return self.cases is None and self.get_pending_cases()
-
-    @property
-    def pool(self):
-        return Pool(
-            processes=os.cpu_count() * 2,
-            initializer=init_worker,
-            initargs=self.initargs,
-            maxtasksperchild=100,
+    def reset_diff_data(self, db, action):
+        from ...statedb import (
+            CaseToDiff,
+            DiffedCase,
+            DocChanges,
+            DocCount,
+            DocDiffs,
+            MissingDoc,
         )
 
-    @property
-    def initargs(self):
-        return self.domain, self.statedb.get_no_action_case_forms(), self.cutoff_date
+        def delete(model, kind):
+            log.info(f"DELETE FROM {model.__tablename__} WHERE kind = '{kind}'")
+            (
+                session.query(model)
+                .filter(model.kind == kind)
+                .delete(synchronize_session=False)
+            )
+
+        def delete_all(model):
+            log.info(f"DELETE FROM {model.__tablename__}")
+            session.query(model).delete(synchronize_session=False)
+
+        assert action == "cases", action
+        with db.session() as session:
+            delete(DocCount, "CommCareCase")
+            delete(DocDiffs, "CommCareCase")
+            delete(DocChanges, "CommCareCase")
+            delete(MissingDoc, "CommCareCase")
+            delete(MissingDoc, "CommCareCase-Deleted")
+            delete(MissingDoc, "CommCareCase-couch")
+            delete_all(CaseToDiff)
+            delete_all(DiffedCase)
 
 
-def load_and_diff_cases(case_ids, log_cases=False):
-    from ...casediff import _diff_state, get_couch_cases, diff_cases
-    should_diff = _diff_state.should_diff
-    couch_cases = {c.case_id: c.to_json()
-        for c in get_couch_cases(case_ids) if should_diff(c)}
-    if log_cases:
-        skipped = [id for id in case_ids if id not in couch_cases]
-        if skipped:
-            log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases(couch_cases, log_cases=log_cases)
-
-
-def iter_sql_cases_with_sorted_transactions(domain):
-    from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
-    from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-    from ...rebuildcase import SortTransactionsRebuild
-
-    sql = f"""
-        SELECT cx.case_id
-        FROM {CommCareCaseSQL._meta.db_table} cx
-        INNER JOIN {CaseTransaction._meta.db_table} tx ON cx.case_id = tx.case_id
-        WHERE cx.domain = %s AND tx.details LIKE %s
-    """
-    reason = f'%{SortTransactionsRebuild._REASON}%'
-    for dbname in get_db_aliases_for_partitioned_query():
-        with CommCareCaseSQL.get_cursor_for_partition_db(dbname) as cursor:
-            cursor.execute(sql, [domain, reason])
-            yield from iter(set(case_id for case_id, in cursor.fetchall()))
-
-
-def format_diffs(diff_dict):
-    lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
-        for diff in diffs:
-            if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
-                lines.append(f"  {diff.diff_type} {list(diff.path)}")
-                lines.append(f"    - {diff.old_value!r}")
-                lines.append(f"    + {diff.new_value!r}")
-            else:
-                lines.append(
-                    f"  {diff.diff_type} {list(diff.path)}"
-                    f" {diff.old_value!r} -> {diff.new_value!r}"
-                )
-    return "\n".join(lines)
-
-
-def init_worker(domain, *args):
-    def on_break(signum, frame):
-        nonlocal clean_break
-        if clean_break:
-            raise KeyboardInterrupt
-        print("clean break... (Ctrl+C to abort)")
-        clean_break = True
-
-    clean_break = False
-    signal.signal(signal.SIGINT, on_break)
-    set_local_domain_sql_backend_override(domain)
-    return global_diff_state(domain, *args)
+def confirm(msg):
+    return input(msg + " (Y/n) ").lower().strip() in ['', 'y', 'yes']

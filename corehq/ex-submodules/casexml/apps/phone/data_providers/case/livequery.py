@@ -180,7 +180,14 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
             for index in related
             for case_id in [index.case_id, index.referenced_id]
             if case_id not in all_ids}
-        rows = accessor.get_closed_and_deleted_ids(list(case_ids))
+
+        # we know these are open since we filter by closed and deleted when fetching the indexes
+        open_cases = {
+            index.case_id for index in related
+            if index.relationship == 'extension'
+        }
+        check_cases = list(set(case_ids) - open_cases)
+        rows = accessor.get_closed_and_deleted_ids(check_cases)
         for case_id, closed, deleted in rows:
             if deleted:
                 deleted_ids.add(case_id)

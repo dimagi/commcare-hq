@@ -285,14 +285,16 @@ def get_excel_format_value(value):
     # percentage without decimals
     if re.match(r"^[+-]?\d+%$", value):
         try:
-            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE, int(value.replace('%', '')))
+            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE,
+                                    float(int(value.replace('%', '')) / 100))
         except (ValueError, OverflowError):
             pass
 
     # percentage with decimals
     if re.match(r"^[+-]?\d+(\.)\d*%$", value):
         try:
-            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE_00, float(value.replace('%', '')))
+            return ExcelFormatValue(numbers.FORMAT_PERCENTAGE_00,
+                                    float(float(value.replace('%', '')) / 100))
         except (ValueError, OverflowError):
             pass
 

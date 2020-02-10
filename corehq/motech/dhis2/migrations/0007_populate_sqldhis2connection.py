@@ -6,6 +6,13 @@ from django.db import migrations
 from corehq.motech.dhis2.management.commands.populate_sql_dhis2_connection import Command
 
 
+def _migrate_from_migration(apps, schema_editor):
+    sql_class = Command.sql_class()
+    sql_class.objects.model._meta.db_table = "dhis2_sqldhis2connection"
+    Command.migrate_from_migration(apps, schema_editor)
+    sql_class.objects.model._meta.db_table = "dhis2_dhis2connection"
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,7 +20,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(Command.migrate_from_migration,
+        migrations.RunPython(_migrate_from_migration,
                              reverse_code=migrations.RunPython.noop,
                              elidable=True),
     ]

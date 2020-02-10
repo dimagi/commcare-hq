@@ -120,6 +120,25 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                     return True
         return False
 
+    def set_user_ids(self, user_ids):
+        """
+        A safe alternative to `group.users = user_ids` that updates removed_users as well
+
+        This method does *not* result in the group being saved.
+        """
+        target_users = set(user_ids)
+        current_users = set(self.users)
+        users_to_remove = current_users - target_users
+        users_to_add = target_users - current_users
+
+        for user_id in users_to_add:
+            self.add_user(user_id, save=False)  # default is to save
+
+        for user_id in users_to_remove:
+            self.remove_user(user_id)  # no option to save
+
+        assert set(self.users) == target_users
+
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active=is_active)]
 
