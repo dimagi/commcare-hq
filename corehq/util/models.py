@@ -67,7 +67,7 @@ class BouncedEmail(models.Model):
                 bounced_email__email__in=bounced_emails.difference(bad_emails)
             ).values_list('bounced_email__email', flat=True)
         )
-        bad_emails.union(complaints)
+        bad_emails.update(complaints)
 
         for remaining_email in bounced_emails.difference(bad_emails):
             meta_query = PermanentBounceMeta.objects.filter(
