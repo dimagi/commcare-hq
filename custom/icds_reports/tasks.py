@@ -102,7 +102,8 @@ from custom.icds_reports.models.aggregate import (
     DailyAttendance,
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
-    AggGovernanceDashboard
+    AggGovernanceDashboard,
+    AggServiceDeliveryReport
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1771,3 +1772,10 @@ def _agg_governance_dashboard(current_month):
         db_alias = router.db_for_write(AggGovernanceDashboard)
         with transaction.atomic(using=db_alias):
             AggGovernanceDashboard().aggregate(month)
+
+
+def update_service_delivery_report(target_date):
+    current_month = target_date.replace(day=1)
+    db_alias = router.db_for_write(AggServiceDeliveryReport)
+    with transaction.atomic(using=db_alias):
+        AggServiceDeliveryReport().aggregate(current_month)
