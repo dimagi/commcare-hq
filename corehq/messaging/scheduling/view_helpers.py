@@ -11,7 +11,6 @@ from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
-from corehq.messaging.tasks import initiate_messaging_rule_run
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -176,7 +175,6 @@ class ConditionalAlertUploader(object):
 
                 if dirty:
                     rule.save()
-                    initiate_messaging_rule_run(rule)
                     success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
