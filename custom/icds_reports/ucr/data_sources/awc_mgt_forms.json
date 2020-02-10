@@ -395,6 +395,25 @@
       },
       {
         "display_name": null,
+        "column_id": "awc_not_open_aww_not_available_v2",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_details",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "aww_helper_unavailable"
+        }
+      },
+      {
+        "display_name": null,
         "column_id": "awc_not_open_closed_early",
         "type": "boolean",
         "filter": {
@@ -404,6 +423,25 @@
             "type": "property_path",
             "property_path": [
               "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "closed_early"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_closed_early_v2",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_details",
               "center_questions",
               "awc_closed_reason"
             ]
@@ -431,6 +469,25 @@
       },
       {
         "display_name": null,
+        "column_id": "awc_not_open_holiday_v2",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_details",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "holiday"
+        }
+      },
+      {
+        "display_name": null,
         "column_id": "awc_not_open_unknown",
         "type": "boolean",
         "filter": {
@@ -449,6 +506,25 @@
       },
       {
         "display_name": null,
+        "column_id": "awc_not_open_unknown_v2",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_details",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "unknown"
+        }
+      },
+      {
+        "display_name": null,
         "column_id": "awc_not_open_other",
         "type": "boolean",
         "filter": {
@@ -458,6 +534,25 @@
             "type": "property_path",
             "property_path": [
               "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "other"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_other_v2",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_details",
               "center_questions",
               "awc_closed_reason"
             ]
