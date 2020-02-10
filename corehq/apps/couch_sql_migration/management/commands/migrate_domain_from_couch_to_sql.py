@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -281,32 +280,25 @@ class Command(BaseCommand):
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
-    def _print_status(self, name, counts, statedb, short, diffs_only):
-        def _highlight(text):
-            return shell_red(text) if has_diffs else text
-
+    def _print_status(self, doc_type, counts, statedb, short, diffs_only):
         has_diffs = counts.missing or counts.diffs
         if diffs_only and not has_diffs:
             return False
-        row = "{:^38} {} {:^38}"
-        sep = "≠" if counts.missing else "|"
-        n_couch = counts.total
-        n_sql = counts.total - counts.missing
-        doc_count_row = row.format(n_couch, sep, n_sql)
-
-        print('\n{:_^79}'.format(" %s " % name))
-        print(row.format('Couch', '|', 'SQL'))
-        print(_highlight(doc_count_row))
-        if counts.diffs:
-            print(_highlight("{:^83}".format(f'{counts.diffs} docs with diffs')))
 
         if not short:
-            # missing ids were found in Couch but not in SQL
-            missing_ids = statedb.get_missing_doc_ids(name)
+            print("_" * 40)
+        stats = [
+            f"{doc_type:<22} {counts.total:>9} docs",
+            shell_red(f"{counts.missing} missing from SQL") if counts.missing else "",
+            shell_red(f"{counts.diffs} have diffs") if counts.diffs else "",
+        ]
+        print(", ".join(x for x in stats if x))
+        if not short:
+            # print ids found in Couch but not in SQL
+            missing_ids = statedb.get_missing_doc_ids(doc_type)
             assert len(missing_ids) == counts.missing, (len(missing_ids), counts.missing)
             for missing_id in missing_ids:
-                print(row.format('', '|', missing_id))
-
+                print(missing_id)
         return has_diffs
 
 
