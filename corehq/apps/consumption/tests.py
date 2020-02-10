@@ -135,7 +135,7 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
         self.assertEqual(50, SQLDefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_monthly_consumption_for_domain(domain, 40)
-        self.assertEqual(default._id, updated._id)
+        self.assertEqual(default.id, updated.id)
         self.assertEqual(40, SQLDefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
@@ -145,7 +145,7 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
         self.assertEqual(50, SQLDefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_consumption_for_product(domain, product_id, 40)
-        self.assertEqual(default._id, updated._id)
+        self.assertEqual(default.id, updated.id)
         self.assertEqual(40, SQLDefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
@@ -158,7 +158,7 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
         )
         self.assertEqual(1, _count_consumptions())
         updated = set_default_consumption_for_supply_point(domain, product_id, supply_point_id, 40)
-        self.assertEqual(default._id, updated._id)
+        self.assertEqual(default.id, updated.id)
         self.assertEqual(
             40,
             SQLDefaultConsumption.get_supply_point_default(
