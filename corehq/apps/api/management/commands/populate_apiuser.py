@@ -7,10 +7,6 @@ class Command(PopulateSQLCommand):
         return 'ApiUser'
 
     @classmethod
-    def couch_key(self):
-        return set(['id'])
-
-    @classmethod
     def sql_class(self):
         from corehq.apps.api.models import SQLApiUser
         return SQLApiUser
