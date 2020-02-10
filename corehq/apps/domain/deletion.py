@@ -237,7 +237,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
     ModelDeletion('phone', 'SyncLogSQL', 'domain'),
-    ModelDeletion('registration', 'SQLRegistrationRequest', 'domain'),
+    ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
