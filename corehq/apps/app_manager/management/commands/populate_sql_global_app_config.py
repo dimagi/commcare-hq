@@ -18,7 +18,7 @@ class Command(PopulateSQLCommand):
         return GlobalAppConfig
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class().objects.get_or_create(
+        model, created = self.sql_class().objects.update_or_create(
             domain=doc['domain'],
             app_id=doc['app_id'],
             defaults={
