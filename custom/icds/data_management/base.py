@@ -25,19 +25,19 @@ class DataManagement(object):
 
 
 class SQLBasedDataManagement(DataManagement):
-    def __init__(self, domain, db_alias, from_date=None, till_date=None):
+    def __init__(self, domain, db_alias, start_date=None, end_date=None):
         super().__init__(domain)
         self.db_aliases = [db_alias] if db_alias else None
-        self.from_date = from_date
-        self.till_date = till_date
+        self.start_date = start_date
+        self.end_date = end_date
 
     def case_accessor(self):
         return CaseReindexAccessor(
             domain=self.domain,
             case_type=self.case_type,
             limit_db_aliases=self.db_aliases,
-            start_date=self.from_date,
-            end_date=self.till_date
+            start_date=self.start_date,
+            end_date=self.end_date
         )
 
 

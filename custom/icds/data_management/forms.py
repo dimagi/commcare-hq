@@ -19,8 +19,8 @@ class DataManagementForm(forms.Form):
     db_alias = forms.ChoiceField(label=ugettext_lazy("DB partition"), choices=(
         (db_alias, db_alias) for db_alias in get_db_aliases_for_partitioned_query()
     ))
-    from_date = forms.DateField(required=False, widget=forms.DateInput())
-    till_date = forms.DateField(required=False, widget=forms.DateInput())
+    start_date = forms.DateField(required=False, widget=forms.DateInput())
+    end_date = forms.DateField(required=False, widget=forms.DateInput())
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -29,8 +29,8 @@ class DataManagementForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field('slug'),
             crispy.Field('db_alias'),
-            crispy.Field('from_date', id="from_date_select", css_class="date-picker"),
-            crispy.Field('till_date', id="till_date_select", css_class="date-picker"),
+            crispy.Field('start_date', css_class="date-picker"),
+            crispy.Field('end_date', css_class="date-picker"),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     Submit('submit', ugettext_lazy("Submit"))
@@ -38,18 +38,18 @@ class DataManagementForm(forms.Form):
             )
         )
 
-    def clean_from_date(self):
-        from_date = self.cleaned_data['from_date']
+    def clean_start_date(self):
+        start_date = self.cleaned_data['start_date']
         slug = self.cleaned_data['slug']
-        if not from_date and issubclass(DATA_MANAGEMENT_TASKS[slug], SQLBasedDataManagement):
-            self.add_error("from_date", "From date needed to run SQL based tasks")
-        return from_date
+        if not start_date and issubclass(DATA_MANAGEMENT_TASKS[slug], SQLBasedDataManagement):
+            self.add_error("start_date", "Start date needed to run SQL based tasks")
+        return start_date
 
     def clean(self):
-        from_date = self.cleaned_data['from_date']
-        till_date = self.cleaned_data['till_date']
-        if from_date and till_date and from_date > till_date:
-            self.add_error("till_date", "Till date should be greater than from date")
+        start_date = self.cleaned_data['start_date']
+        end_date = self.cleaned_data['end_date']
+        if start_date and end_date and start_date > end_date:
+            self.add_error("end_date", "End date should be greater than start date")
 
     def submit(self, domain, username):
         execute_data_management.delay(
@@ -57,6 +57,6 @@ class DataManagementForm(forms.Form):
             domain,
             self.cleaned_data['db_alias'],
             username,
-            self.cleaned_data['from_date'],
-            self.cleaned_data['till_date']
+            self.cleaned_data['start_date'],
+            self.cleaned_data['end_date']
         )

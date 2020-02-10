@@ -24,8 +24,8 @@ class Migration(migrations.Migration):
                 ('initiated_by', models.CharField(max_length=255)),
                 ('started_on', models.DateTimeField()),
                 ('ended_on', models.DateTimeField(blank=True, null=True)),
-                ('from_date', models.DateField(blank=True, null=True)),
-                ('till_date', models.DateField(blank=True, null=True)),
+                ('start_date', models.DateField(blank=True, null=True)),
+                ('end_date', models.DateField(blank=True, null=True)),
                 ('error', models.TextField(blank=True, null=True)),
                 ('status', models.SmallIntegerField(choices=[
                     (0, 'pending'), (1, 'in progress'), (2, 'successful'), (3, 'failed')

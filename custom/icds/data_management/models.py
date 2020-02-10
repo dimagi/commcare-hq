@@ -29,8 +29,8 @@ class DataManagementRequest(models.Model):
     ended_on = models.DateTimeField(blank=True, null=True)
 
     # to consider cases modified within range
-    from_date = models.DateField(blank=True, null=True)
-    till_date = models.DateField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
 
     error = models.TextField(blank=True, null=True)
     status = models.SmallIntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING)
@@ -67,7 +67,7 @@ class DataManagementRequest(models.Model):
         self.status = self.STATUS_FAILED
 
     def _perform_task(self):
-        task_to_run = DATA_MANAGEMENT_TASKS[self.slug](self.domain, self.db_alias, self.from_date, self.till_date)
-        iteration_key = "%s-%s-%s-%s-%s" % (self.slug, self.from_date, self.till_date, self.initiated_by,
+        task_to_run = DATA_MANAGEMENT_TASKS[self.slug](self.domain, self.db_alias, self.start_date, self.end_date)
+        iteration_key = "%s-%s-%s-%s-%s" % (self.slug, self.start_date, self.end_date, self.initiated_by,
                                             self.started_on)
         return task_to_run.run(iteration_key)
