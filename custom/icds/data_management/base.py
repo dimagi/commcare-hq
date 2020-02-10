@@ -21,7 +21,7 @@ class DataManagement(object):
         """
         record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
         processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
-        processor.run()
+        return processor.run()
 
 
 class SQLBasedDataManagement(DataManagement):

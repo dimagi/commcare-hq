@@ -42,9 +42,10 @@ class DataManagementRequest(models.Model):
         self._set_in_progress()
         if self.slug not in DATA_MANAGEMENT_TASKS:
             self._note_error("Unexpected slug %s" % self.slug)
+            return None, None
         else:
             try:
-                self._perform_task()
+                processed, skipped = self._perform_task()
             except Exception as e:
                 self._note_error(str(e))
                 raise
@@ -53,6 +54,7 @@ class DataManagementRequest(models.Model):
             finally:
                 self.ended_on = datetime.utcnow()
                 self.save()
+        return processed, skipped
 
     def _set_in_progress(self):
         self.status = self.STATUS_IN_PROGRESS
@@ -68,4 +70,4 @@ class DataManagementRequest(models.Model):
         task_to_run = DATA_MANAGEMENT_TASKS[self.slug](self.domain, self.db_alias, self.from_date, self.till_date)
         iteration_key = "%s-%s-%s-%s-%s" % (self.slug, self.from_date, self.till_date, self.initiated_by,
                                             self.started_on)
-        task_to_run.run(iteration_key)
+        return task_to_run.run(iteration_key)
