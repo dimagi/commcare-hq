@@ -1,3 +1,4 @@
+import logging
 from contextlib import ExitStack
 from functools import partial
 
@@ -22,6 +23,8 @@ from .couchsqlmigration import (
 )
 from .statedb import open_state_db
 
+log = logging.getLogger(__name__)
+
 
 def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
     """Update missing documents in state db
@@ -37,7 +40,9 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
     stopper = Stopper(live_migrate)
     dd_count = partial(datadog_counter, tags=["domain:" + domain])
     statedb = open_state_db(domain, state_dir, readonly=False)
-    with statedb, ExitStack() as stop_it:
+    if live_migrate:
+        log.info(f"stopping at {get_main_forms_iteration_stop_date(statedb)}")
+    with statedb, stopper, ExitStack() as stop_it:
         for entity in ["form", "case"]:
             missing_ids = MissingIds(entity, statedb, stopper, resume=resume)
             stop_it.enter_context(missing_ids)

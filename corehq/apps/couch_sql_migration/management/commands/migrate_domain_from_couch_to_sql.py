@@ -134,8 +134,9 @@ class Command(BaseCommand):
                 Migrate specific forms. The value of this option should
                 be a space-delimited list of form ids OR a file path to
                 a file having one form id per line OR 'skipped' to
-                migrate forms skipped by previous migration. The file
-                path must begin with / or ./
+                migrate forms skipped by previous migration OR 'missing'
+                to migrate missing forms cached in the statedb by the
+                'stats' command. The file path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
@@ -295,10 +296,11 @@ class Command(BaseCommand):
         print(", ".join(x for x in stats if x))
         if not short:
             # print ids found in Couch but not in SQL
-            missing_ids = statedb.get_missing_doc_ids(doc_type)
-            assert len(missing_ids) == counts.missing, (len(missing_ids), counts.missing)
-            for missing_id in missing_ids:
+            i = 0
+            missing_ids = statedb.iter_missing_doc_ids(doc_type)
+            for i, missing_id in enumerate(missing_ids, start=1):
                 print(missing_id)
+            assert i == counts.missing, (i, counts.missing)
         return has_diffs
 
 

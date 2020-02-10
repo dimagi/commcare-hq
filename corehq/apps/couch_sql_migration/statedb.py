@@ -331,6 +331,14 @@ class StateDB(DiffDB):
                 .delete(synchronize_session=False)
             )
 
+    def doc_not_missing(self, kind, doc_id):
+        with self.session() as session:
+            (
+                session.query(MissingDoc.doc_id)
+                .filter_by(kind=kind, doc_id=doc_id)
+                .delete(synchronize_session=False)
+            )
+
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
@@ -456,12 +464,13 @@ class StateDB(DiffDB):
             missing=missing.get(kind, 0),
         ) for kind in set(totals) | set(missing) | set(diffs)}
 
-    def get_missing_doc_ids(self, doc_type):
-        return {
-            missing.doc_id for missing in self.Session()
-            .query(MissingDoc.doc_id)
-            .filter(MissingDoc.kind == doc_type)
-        }
+    def iter_missing_doc_ids(self, kind):
+        with self.session() as session:
+            query = (
+                session.query(MissingDoc.doc_id)
+                .filter(MissingDoc.kind == kind)
+            )
+            yield from iter_large(query, MissingDoc.doc_id)
 
     def get_diff_stats(self):
         raise NotImplementedError("use get_doc_counts")
@@ -709,9 +718,8 @@ class KeyValue(Base):
 class MissingDoc(Base):
     __tablename__ = 'missing_doc'
 
-    id = Column(Integer, primary_key=True)
-    kind = Column(String(50), nullable=False)
-    doc_id = Column(String(50), nullable=False)
+    kind = Column(String(50), nullable=False, primary_key=True)
+    doc_id = Column(String(50), nullable=False, primary_key=True)
 
 
 class NoActionCaseForm(Base):
